@@ -320,10 +320,14 @@ styleNode (AnimState _ animGroups) =
 
 styleNodeFor : AnimGroupName -> AnimState -> Html msg
 styleNodeFor animGroupName (AnimState _ animGroups) =
-    AnimGroups.get animGroupName animGroups
-        |> Maybe.andThen AnimGroup.getAnimation
-        |> Maybe.map (\anim -> Html.node "style" [] [ Html.text (Animation.getKeyframes anim) ])
-        |> Maybe.withDefault (Html.text "")
+    let
+        keyframes =
+            AnimGroups.get animGroupName animGroups
+                |> Maybe.andThen AnimGroup.getAnimation
+                |> Maybe.map Animation.getKeyframes
+                |> Maybe.withDefault ""
+    in
+    Html.node "style" [] [ Html.text keyframes ]
 
 
 maybeKeyframesString : AnimGroupName -> AnimState -> Maybe String

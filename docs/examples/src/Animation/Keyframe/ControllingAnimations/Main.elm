@@ -10,7 +10,6 @@ import Html exposing (Html, button, div, text)
 import Html.Attributes exposing (class, id, style)
 import Html.Events exposing (onClick)
 import Motion.Easing as Easing exposing (Easing(..))
-import Process
 import Task
 
 
@@ -35,13 +34,7 @@ main =
 type alias Model =
     { animState : Keyframe.AnimState
     , canvasH : Float
-    , animPlayState : AnimPlayState
     }
-
-
-type AnimPlayState
-    = NotStarted
-    | Started
 
 
 animGroup : String
@@ -74,10 +67,8 @@ init _ =
             Keyframe.init
                 [ Translate.initY animGroup topY ]
       , canvasH = 0
-      , animPlayState = NotStarted
       }
-    , Process.sleep 100
-        |> Task.perform (\_ -> OnResize)
+    , measureCanvas
     )
 
 
@@ -130,8 +121,7 @@ update msg model =
     case msg of
         Animate ->
             ( { model
-                | animPlayState = Started
-                , animState =
+                | animState =
                     Keyframe.animate model.animState <|
                         dropBall (bottomY model.canvasH)
               }
@@ -183,7 +173,23 @@ update msg model =
             ( model, measureCanvas )
 
         GotCanvas (Ok element) ->
-            ( handleResize { model | canvasH = element.element.height }
+            let
+                newCanvasH =
+                    element.element.height
+
+                isFirstMeasurement =
+                    model.canvasH == 0
+            in
+            ( { model
+                | canvasH = newCanvasH
+                , animState =
+                    if isFirstMeasurement then
+                        model.animState
+
+                    else
+                        Keyframe.retarget model.animState <|
+                            dropBall (bottomY newCanvasH)
+              }
             , Cmd.none
             )
 
@@ -192,20 +198,6 @@ update msg model =
 
         GotAnimMsg _ ->
             ( model, Cmd.none )
-
-
-handleResize : Model -> Model
-handleResize model =
-    case model.animPlayState of
-        NotStarted ->
-            model
-
-        Started ->
-            { model
-                | animState =
-                    Keyframe.retarget model.animState <|
-                        dropBall (bottomY model.canvasH)
-            }
 
 
 
