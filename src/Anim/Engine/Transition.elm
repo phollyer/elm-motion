@@ -4,7 +4,7 @@ module Anim.Engine.Transition exposing
     , TimelineBuilder
     , EngineBuilder
     , init
-    , animate
+    , animate, retarget
     , CurrentTargetId, TargetId, AnimEvent(..)
     , AnimMsg, update
     , attributes
@@ -18,6 +18,7 @@ module Anim.Engine.Transition exposing
     , getPropertyEnd
     , getColorPropertyEnd
     , getOpacityEnd
+    , getPerspectiveOriginEnd
     , getRotateEnd
     , getScaleEnd
     , getSizeEnd
@@ -72,7 +73,7 @@ Use the `EngineBuilder` when you want to restrict helpers to the Transition Engi
 
 # Trigger
 
-@docs animate
+@docs animate, retarget
 
 📖 See [Triggering Animations](https://phollyer.github.io/elm-motion/animation/workflow/trigger/) in the docs.
 
@@ -165,6 +166,11 @@ To render a CSS transition animation, you need to apply the animation `attribute
 ## Opacity
 
 @docs getOpacityEnd
+
+
+## Perspective Origin
+
+@docs getPerspectiveOriginEnd
 
 
 ## Rotate
@@ -323,6 +329,29 @@ init =
 animate : AnimState -> (EngineBuilder -> EngineBuilder) -> AnimState
 animate =
     Internal.animate
+
+
+{-| Re-anchor an animation to a new target by snapping to the new end values.
+
+The Transition engine has no JavaScript-side runtime snapshot of the
+currently rendered values - it only knows the previous _target_, not where
+the element actually is on screen. That makes it impossible to smoothly
+continue an in-flight transition when the target changes mid-flight (the
+typical resize-handler case).
+
+`retarget` therefore guarantees a deterministic outcome: the element snaps
+to the freshly computed end values with `transition: none` and the
+animation group is marked complete. It's safe to call repeatedly during a
+drag or resize without accumulating partial transitions or visual glitches.
+
+The Sub and WAAPI engines provide a `retarget` with the same builder API
+that smoothly continues from the current rendered position - swap in those
+engines if you need visual continuity instead of a snap.
+
+-}
+retarget : AnimState -> (EngineBuilder -> EngineBuilder) -> AnimState
+retarget =
+    Internal.retarget
 
 
 
@@ -860,6 +889,22 @@ Returns `Nothing` if the element has no opacity animation.
 getOpacityEnd : AnimGroupName -> AnimState -> Maybe Float
 getOpacityEnd =
     CSS.getOpacityEnd
+
+
+
+-- ============================
+-- PERSPECTIVE ORIGIN
+-- ============================
+
+
+{-| Get the end perspective origin of an element being animated.
+
+Returns `Nothing` if the element has no perspective origin animation.
+
+-}
+getPerspectiveOriginEnd : AnimGroupName -> AnimState -> Maybe { x : Float, y : Float }
+getPerspectiveOriginEnd =
+    CSS.getPerspectiveOriginEnd
 
 
 

@@ -5,7 +5,7 @@ import Anim.Engine.Keyframe as Keyframe
 import Anim.Property.Opacity as Opacity
 import Browser
 import Html exposing (Html, div, text)
-import Html.Attributes exposing (style)
+import Html.Attributes exposing (class, style)
 
 
 
@@ -75,16 +75,13 @@ init =
 view : Model -> Html msg
 view model =
     div
-        [ style "display" "flex"
-        , style "align-items" "center"
-        , style "justify-content" "center"
+        [ class "example-stage"
         , style "font-size" "48px"
         , style "font-weight" "bold"
-        , style "height" "100vh"
-        , style "width" "100vw"
         ]
         ---8<-- [start:render]
-        [ Keyframe.styleNode model.animState
+        [ div [ class "example-badge example-badge--responsive" ] [ text "RESPONSIVE" ]
+        , Keyframe.styleNode model.animState
         , div
             (Keyframe.attributes groupName model.animState)
             [ text "Hello World!" ]

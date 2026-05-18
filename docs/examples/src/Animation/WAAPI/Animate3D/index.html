@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>WAAPI Engine - 3D Cube Example</title>
     <link rel="stylesheet" href="../../../../css/base.css">
+    <link rel="stylesheet" href="../../../../css/responsive.css">
     <link rel="stylesheet" href="../../../../css/ui-components.css">
     <script src="../../../../js/elm-motion.js"></script>
     <script src="index.js"></script>
@@ -16,6 +17,7 @@
     <script>
         function startElmWhenReady() {
             const width = Math.floor(window.innerWidth || 0);
+            const height = Math.floor(window.innerHeight || 0);
 
             if (width <= 0) {
                 requestAnimationFrame(startElmWhenReady);
@@ -23,7 +25,7 @@
             }
             var app = Elm.Animation.WAAPI.Animate3D.Main.init({
                 node: document.getElementById('elm'),
-                flags: { window: { width: window.innerWidth } }
+                flags: { window: { width: window.innerWidth, height: window.innerHeight } }
             });
             ElmMotion.init(app.ports);
         }

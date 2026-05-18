@@ -9,10 +9,14 @@ module Anim.Internal.Builder.Translate exposing
     , byY
     , byYZ
     , byZ
+    , clampX
+    , clampY
+    , clampZ
     , delay
     , duration
     , easing
     , for
+    , forContinuing
     , from
     , fromX
     , fromXY
@@ -31,6 +35,9 @@ module Anim.Internal.Builder.Translate exposing
     , toY
     , toYZ
     , toZ
+    , unclampX
+    , unclampY
+    , unclampZ
     )
 
 import Anim.Internal.Builder as Builder exposing (AnimBuilder)
@@ -84,7 +91,38 @@ for animGroupName builder =
                     Nothing
 
         config =
-            PropertyBuilder.for animGroupName PropertyBaselines.getTranslate extractExisting defaultConfig builder
+            PropertyBuilder.for animGroupName "translate" PropertyBaselines.getTranslate extractExisting defaultConfig builder
+    in
+    TranslateBuilder config <|
+        Builder.for animGroupName builder
+
+
+forContinuing : String -> AnimBuilder mode -> TranslateBuilder mode
+forContinuing animGroupName builder =
+    let
+        extractExisting propertyConfig =
+            case propertyConfig of
+                Builder.TranslateConfig cfg ->
+                    Just cfg
+
+                _ ->
+                    Nothing
+
+        extractProcessedTiming processed =
+            case processed of
+                Builder.ProcessedTranslateConfig p ->
+                    Just
+                        { timing = Just p.timing
+                        , easing = Just p.easing
+                        , spring = p.spring
+                        , delay = Just p.delay
+                        }
+
+                _ ->
+                    Nothing
+
+        config =
+            PropertyBuilder.forContinuing animGroupName "translate" PropertyBaselines.getTranslate extractExisting extractProcessedTiming defaultConfig builder
     in
     TranslateBuilder config <|
         Builder.for animGroupName builder
@@ -92,6 +130,10 @@ for animGroupName builder =
 
 build : TranslateBuilder mode -> AnimBuilder mode
 build (TranslateBuilder config builder) =
+    let
+        clampedConfig =
+            applyClamps builder config
+    in
     PropertyBuilder.upsert
         (Builder.TranslateConfig
             (PropertyBuilder.applyFrozenAxes "translate"
@@ -99,10 +141,65 @@ build (TranslateBuilder config builder) =
                 Translate.fromRecord
                 Translate.distance
                 builder
-                config
+                clampedConfig
             )
         )
         builder
+
+
+applyClamps : AnimBuilder mode -> TranslateConfig -> TranslateConfig
+applyClamps builder config =
+    case Builder.getCurrentAnimGroupName builder of
+        Nothing ->
+            config
+
+        Just animGroupName ->
+            let
+                cx =
+                    Builder.getClamp animGroupName "translate" "x" builder
+
+                cy =
+                    Builder.getClamp animGroupName "translate" "y" builder
+
+                cz =
+                    Builder.getClamp animGroupName "translate" "z" builder
+            in
+            if cx == Nothing && cy == Nothing && cz == Nothing then
+                config
+
+            else
+                let
+                    clampValue value =
+                        Translate.fromTriple
+                            ( clampAxis cx (Translate.getX value)
+                            , clampAxis cy (Translate.getY value)
+                            , clampAxis cz (Translate.getZ value)
+                            )
+
+                    clampedStart =
+                        Maybe.map clampValue config.start
+
+                    clampedEnd =
+                        clampValue config.end
+
+                    startForDistance =
+                        Maybe.withDefault Translate.default clampedStart
+                in
+                { config
+                    | start = clampedStart
+                    , end = clampedEnd
+                    , distance = Translate.distance startForDistance clampedEnd
+                }
+
+
+clampAxis : Maybe ( Float, Float ) -> Float -> Float
+clampAxis range v =
+    case range of
+        Just ( lo, hi ) ->
+            clamp lo hi v
+
+        Nothing ->
+            v
 
 
 
@@ -389,3 +486,49 @@ easing easing_ (TranslateBuilder config builder) =
 spring : Spring -> TranslateBuilder mode -> TranslateBuilder mode
 spring s (TranslateBuilder config builder) =
     TranslateBuilder (PropertyBuilder.spring s config) builder
+
+
+
+-- ============================================================
+-- BOUNDS
+-- ============================================================
+
+
+clampX : Float -> Float -> TranslateBuilder mode -> TranslateBuilder mode
+clampX lo hi =
+    updateBuilderClamp (\name -> Builder.setClamp name "translate" "x" lo hi)
+
+
+clampY : Float -> Float -> TranslateBuilder mode -> TranslateBuilder mode
+clampY lo hi =
+    updateBuilderClamp (\name -> Builder.setClamp name "translate" "y" lo hi)
+
+
+clampZ : Float -> Float -> TranslateBuilder mode -> TranslateBuilder mode
+clampZ lo hi =
+    updateBuilderClamp (\name -> Builder.setClamp name "translate" "z" lo hi)
+
+
+unclampX : TranslateBuilder mode -> TranslateBuilder mode
+unclampX =
+    updateBuilderClamp (\name -> Builder.clearClamp name "translate" "x")
+
+
+unclampY : TranslateBuilder mode -> TranslateBuilder mode
+unclampY =
+    updateBuilderClamp (\name -> Builder.clearClamp name "translate" "y")
+
+
+unclampZ : TranslateBuilder mode -> TranslateBuilder mode
+unclampZ =
+    updateBuilderClamp (\name -> Builder.clearClamp name "translate" "z")
+
+
+updateBuilderClamp : (String -> AnimBuilder mode -> AnimBuilder mode) -> TranslateBuilder mode -> TranslateBuilder mode
+updateBuilderClamp f (TranslateBuilder config builder) =
+    case Builder.getCurrentAnimGroupName builder of
+        Just animGroupName ->
+            TranslateBuilder config (f animGroupName builder)
+
+        Nothing ->
+            TranslateBuilder config builder

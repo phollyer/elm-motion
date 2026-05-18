@@ -2,12 +2,15 @@ module Anim.Property.Translate exposing
     ( Builder, AnimGroupName
     , initXYZ, initXY, initXZ, initX, initYZ, initY, initZ
     , for, build
+    , continueFor
     , fromXYZ, fromXY, fromXZ, fromX, fromYZ, fromY, fromZ
     , toXYZ, toXY, toXZ, toX, toYZ, toY, toZ
     , byXYZ, byXY, byXZ, byX, byYZ, byY, byZ
     , delay, duration, speed
     , easing
     , spring
+    , clampX, clampY, clampZ, unclampX, unclampY, unclampZ
+    , resizePolicy, bounds
     )
 
 {-| Move elements along the X, Y, and Z axes.
@@ -47,6 +50,11 @@ will use the current end value as the start, ensuring a smooth transition betwee
 # Build
 
 @docs for, build
+
+
+# Continue a Running Animation
+
+@docs continueFor
 
 
 # Configure
@@ -113,10 +121,33 @@ so relative movements are based on the start and end values of the current/previ
 
 @docs spring
 
+
+## Bounds
+
+Declare a per-axis range that every translate value on this animGroup must
+stay within. Clamps are persistent across `animate` / `retarget` calls until
+you clear them, and apply to every value that flows through the property
+pipeline — explicit `from*` / `to*`, relative `by*`, and the auto-from value
+used by `continueFor` / `retarget`.
+
+A value outside the range snaps to the nearest boundary. A relative `byX`
+that would push the element past the boundary stops at the boundary instead
+— useful for keeping a player ship on-screen, or making sure a resize from
+landscape to portrait pulls a now-off-canvas element back into view.
+
+@docs clampX, clampY, clampZ, unclampX, unclampY, unclampZ
+
+
+## Resize
+
+@docs resizePolicy, bounds
+
 -}
 
-import Anim.Internal.Builder exposing (AnimBuilder)
+import Anim.Internal.Builder as Builder exposing (AnimBuilder)
 import Anim.Internal.Builder.Translate as TB
+import Anim.Internal.Resize.Builder as ResizeBuilder
+import Anim.Resize as Resize
 import Motion.Easing exposing (Easing)
 import Motion.Spring exposing (Spring)
 
@@ -158,6 +189,37 @@ Use this to start configuring a translate animation.
 for : AnimGroupName -> AnimBuilder mode -> Builder mode
 for =
     TB.for
+
+
+{-| Like [for](#for), but inherits `easing`, `spring`, `delay`, and timing
+(`duration` / `speed`) from the previous translate animation on the same
+animation group.
+
+Use this when the surrounding world changed (e.g. window resize, parent
+relayout) and the animation should continue toward an updated target while
+keeping the same visual character.
+
+    -- on resize:
+    Translate.continueFor "box"
+        >> Translate.toX newTargetX
+        >> Translate.build
+
+Any of the four inherited fields can still be overridden by setting them
+explicitly after `continueFor`:
+
+    Translate.continueFor "box"
+        >> Translate.toX newTargetX
+        >> Translate.speed 200
+        -- override inherited timing
+        >> Translate.build
+
+If no previous translate animation exists for the group, `continueFor`
+behaves exactly like `for`.
+
+-}
+continueFor : AnimGroupName -> AnimBuilder mode -> Builder mode
+continueFor =
+    TB.forContinuing
 
 
 {-| Set the initial X, Y, and Z position.
@@ -779,3 +841,172 @@ This would animate from `0` to `100` on the Z axis.
 byZ : Float -> Builder mode -> Builder mode
 byZ =
     TB.byZ
+
+
+
+-- ============================================================
+-- BOUNDS
+-- ============================================================
+
+
+{-| Constrain the X axis of the named animGroup's translate to `[min, max]`.
+
+The clamp is persistent: once declared it applies to every subsequent
+`animate` / `retarget` call on this animGroup until you call [unclampX](#unclampX)
+(or call `clampX` again with new bounds). It is enforced at build time on
+every value that flows through the pipeline \\u2014 explicit `fromX` / `toX`,
+relative `byX`, and the auto-from value used by `continueFor` / `retarget`.
+
+A typical use is the resize handler on a fluid layout, declaring the
+playfield bounds whenever the canvas size changes:
+
+    update msg model =
+        case msg of
+            GotCanvas (Ok element) ->
+                let
+                    w =
+                        element.element.width
+
+                    h =
+                        element.element.height
+                in
+                ( { model | canvasW = w, canvasH = h }
+                , WAAPI.retarget model.animState <|
+                    Translate.continueFor animGroupName
+                        >> Translate.clampX 0 (w - boxWidth)
+                        >> Translate.clampY 0 (h - boxWidth)
+                        >> Translate.toXY (targetX model.xPos w) (targetY h)
+                        >> Translate.build
+                )
+
+Clamps are applied at [build](#build) time, so they affect every value
+declared in the pipeline regardless of order \\u2014 explicit `from*` / `to*`
+called before or after `clampX` are clamped, and so is the runtime snapshot
+used by `continueFor`. If `min > max` the arguments are swapped automatically.
+
+-}
+clampX : Float -> Float -> Builder mode -> Builder mode
+clampX =
+    TB.clampX
+
+
+{-| Constrain the Y axis of the active animGroup's translate to `[min, max]`.
+
+See [clampX](#clampX) for behaviour and example.
+
+-}
+clampY : Float -> Float -> Builder mode -> Builder mode
+clampY =
+    TB.clampY
+
+
+{-| Constrain the Z axis of the active animGroup's translate to `[min, max]`.
+
+See [clampX](#clampX) for behaviour and example.
+
+-}
+clampZ : Float -> Float -> Builder mode -> Builder mode
+clampZ =
+    TB.clampZ
+
+
+{-| Remove a previously declared X axis clamp on the active animGroup. No-op
+if no clamp is set.
+-}
+unclampX : Builder mode -> Builder mode
+unclampX =
+    TB.unclampX
+
+
+{-| Remove a previously declared Y axis clamp on the active animGroup. No-op
+if no clamp is set.
+-}
+unclampY : Builder mode -> Builder mode
+unclampY =
+    TB.unclampY
+
+
+{-| Remove a previously declared Z axis clamp on the active animGroup. No-op
+if no clamp is set.
+-}
+unclampZ : Builder mode -> Builder mode
+unclampZ =
+    TB.unclampZ
+
+
+
+-- ============================================================
+-- RESIZE
+-- ============================================================
+
+
+{-| Set the translate resize policy for an anim group.
+
+Call this once at init time. Later, when `Translate.bounds` is used, the
+engine applies these rules to the in-flight translate animation.
+
+    WAAPI.init motionCmd
+        motionMsg
+        [ Translate.initX "box" 0
+            >> Translate.resizePolicy "box" Resize.retarget
+        ]
+
+If you do not set a policy, translate uses
+[`Resize.proportional`](Anim-Resize#proportional).
+
+-}
+resizePolicy : AnimGroupName -> Resize.Policy -> AnimBuilder mode -> AnimBuilder mode
+resizePolicy groupName policy =
+    Builder.setPropertyResizePolicy groupName "translate" (toInternalResizePolicy policy)
+
+
+toInternalResizePolicy : Resize.Policy -> ResizeBuilder.Policy
+toInternalResizePolicy p =
+    { range =
+        case Resize.range p of
+            Resize.Pinned ->
+                ResizeBuilder.Pinned
+
+            Resize.Adaptive ->
+                ResizeBuilder.Adaptive
+    , current =
+        case Resize.current p of
+            Resize.Fixed ->
+                ResizeBuilder.Fixed
+
+            Resize.Relative ->
+                ResizeBuilder.Relative
+    , timing =
+        case Resize.timing p of
+            Resize.SolveFromCurrent ->
+                ResizeBuilder.SolveFromCurrent
+
+            Resize.PreserveProgress ->
+                ResizeBuilder.PreserveProgress
+    }
+
+
+{-| Apply new translate bounds for an anim group during resize.
+
+Pass this to `WAAPI.onResize` or `Sub.onResize`:
+
+    WAAPI.onResize model.animState <|
+        Translate.bounds "box"
+            { x = Just { min = 0, max = newWidth - boxSize }
+            , y = Nothing
+            , z = Nothing
+            }
+
+You can resize multiple anim groups in one call:
+
+    WAAPI.onResize model.animState <|
+        Translate.bounds "box" boxBounds
+            >> Translate.bounds "card" cardBounds
+
+Leave an axis as `Nothing` to ignore it. Set the matching policy first with
+[`resizePolicy`](#resizePolicy).
+
+-}
+bounds : AnimGroupName -> Resize.Bounds -> Resize.Builder -> Resize.Builder
+bounds =
+    ResizeBuilder.setTranslate

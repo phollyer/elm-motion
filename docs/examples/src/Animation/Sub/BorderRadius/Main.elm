@@ -118,25 +118,22 @@ subscriptions model =
 view : Model -> Html Msg
 view model =
     div
-        [ style "text-align" "center"
-        , style "height" "90vh"
-        , style "width" "100%"
-        , style "padding-top" "10px"
-        ]
-        [ button
-            [ onClick TriggerRound
-            , class "ui-action-button primary"
-            , style "margin-right" "10px"
+        [ class "example-stage" ]
+        [ div [ class "example-badge example-badge--responsive" ] [ text "RESPONSIVE" ]
+        , div [ class "example-controls" ]
+            [ button
+                [ onClick TriggerRound
+                , class "ui-action-button primary"
+                ]
+                [ text "Round" ]
+            , button
+                [ onClick TriggerSquare
+                , class "ui-action-button primary"
+                ]
+                [ text "Square" ]
             ]
-            [ text "Round" ]
-        , button
-            [ onClick TriggerSquare
-            , class "ui-action-button primary"
-            ]
-            [ text "Square" ]
         , div
-            [ style "height" "80vh"
-            , style "width" "100%"
+            [ style "width" "100%"
             , style "display" "flex"
             , style "align-items" "center"
             , style "justify-content" "center"
@@ -144,8 +141,7 @@ view model =
             ]
             [ div
                 (Sub.attributes animGroup model.animState
-                    ++ [ style "height" "200px"
-                       , style "width" "200px"
+                    ++ [ class "example-box"
                        , style "background-color" "#6366f1"
                        ]
                 )

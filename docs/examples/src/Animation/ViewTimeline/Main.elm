@@ -6,7 +6,7 @@ import Anim.Property.Opacity as Opacity
 import Anim.Property.Translate as Translate
 import Browser
 import Html exposing (Html, div, h2, p, span, text)
-import Html.Attributes exposing (id, style)
+import Html.Attributes exposing (class, id, style)
 import Json.Encode as Encode
 import Motion.Easing as Easing exposing (Easing(..))
 
@@ -83,7 +83,10 @@ view _ =
         , style "color" "#1f2937"
         , style "background" "#f9fafb"
         ]
-        [ -- Page header
+        [ div
+            [ class "example-badge example-badge--responsive" ]
+            [ text "RESPONSIVE" ]
+        , -- Page header
           div
             [ style "text-align" "center"
             , style "padding" "80px 40px 60px"

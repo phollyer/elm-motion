@@ -4,11 +4,12 @@ module Anim.Engine.WAAPI exposing
     , TimelineBuilder
     , EngineBuilder
     , init
-    , animate, fireAndForget
+    , animate, fireAndForget, retarget
     , AnimEvent(..)
     , AnimMsg, update
     , subscriptions
     , attributes
+    , onResize
     , iterations, loopForever, alternate
     , delay, duration, speed
     , easing
@@ -23,6 +24,7 @@ module Anim.Engine.WAAPI exposing
     , getPropertyCurrent, getPropertyEnd, getPropertyRange, getPropertyStart
     , getColorPropertyCurrent, getColorPropertyEnd, getColorPropertyRange, getColorPropertyStart
     , getOpacityRange, getOpacityStart, getOpacityEnd, getOpacityCurrent
+    , getPerspectiveOriginRange, getPerspectiveOriginStart, getPerspectiveOriginEnd, getPerspectiveOriginCurrent
     , getRotateRange, getRotateStart, getRotateEnd, getRotateCurrent
     , getScaleRange, getScaleStart, getScaleEnd, getScaleCurrent
     , getSizeRange, getSizeStart, getSizeEnd, getSizeCurrent
@@ -80,7 +82,7 @@ on WAAPI-only APIs.
 
 # Trigger
 
-@docs animate, fireAndForget
+@docs animate, fireAndForget, retarget
 
 📖 See [Triggering Animations](https://phollyer.github.io/elm-motion/animation/workflow/trigger/) in the docs.
 
@@ -115,6 +117,11 @@ This ensures the element displays the correct property values before, during, an
 @docs attributes
 
 📖 See [Render](https://phollyer.github.io/elm-motion/animation/workflow/render/) in the docs.
+
+
+# Responsive Animations
+
+@docs onResize
 
 
 # Playback
@@ -206,6 +213,11 @@ This ensures the element displays the correct property values before, during, an
 @docs getOpacityRange, getOpacityStart, getOpacityEnd, getOpacityCurrent
 
 
+## Perspective Origin
+
+@docs getPerspectiveOriginRange, getPerspectiveOriginStart, getPerspectiveOriginEnd, getPerspectiveOriginCurrent
+
+
 ## Rotate
 
 @docs getRotateRange, getRotateStart, getRotateEnd, getRotateCurrent
@@ -236,6 +248,7 @@ import Anim.Extra.Color exposing (Color)
 import Anim.Extra.TransformOrder exposing (TransformProperty)
 import Anim.Internal.Builder as Builder
 import Anim.Internal.Engine.WAAPI as Internal
+import Anim.Resize as Resize
 import Html
 import Json.Decode as Decode
 import Json.Encode as Encode
@@ -375,6 +388,37 @@ Returns the updated animation state and the command to send to JavaScript.
 animate : AnimState msg -> (EngineBuilder -> EngineBuilder) -> ( AnimState msg, Cmd msg )
 animate =
     Internal.animate
+
+
+{-| Continue an in-flight animation toward a new target without restarting it.
+
+Works like [animate](#animate), but for any property the engine currently
+reports as `Running`, [continueFor](Anim-Property-Translate#continueFor) will
+inherit the in-flight timing (duration / speed / easing / delay) and use the
+property's current animated value as the new `from` — producing smooth
+retargeting instead of a fresh animation.
+
+Idle properties fall back to `for`-style behaviour: they snap to the new
+value rather than animating. This is the typical resize-handler pattern —
+while the user is mid-drag the box keeps animating; once the resize stops,
+the box snaps to its final position.
+
+    import Anim.Engine.WAAPI as WAAPI
+    import Anim.Property.Translate as Translate
+
+    let
+        ( animState, animCmd ) =
+            WAAPI.retarget model.animState <|
+                Translate.continueFor "box"
+                    >> Translate.toX newX
+                    >> Translate.build
+    in
+    ( { model | animState = animState }, animCmd )
+
+-}
+retarget : AnimState msg -> (EngineBuilder -> EngineBuilder) -> ( AnimState msg, Cmd msg )
+retarget =
+    Internal.retarget
 
 
 {-| Execute a fire-and-forget animation without state tracking.
@@ -554,6 +598,50 @@ the element when the animation is triggered.
 attributes : AnimGroupName -> AnimState msg -> List (Html.Attribute msg)
 attributes =
     Internal.attributes
+
+
+
+-- ============================================================
+-- RESPONSIVE ANIMATIONS
+-- ============================================================
+
+
+{-| A resize handler that updates animation configurations based on the provided resize strategy.
+
+Use with [Resize.bounds](Anim-Resize#bounds) to create a resize handler that updates
+animation configurations for all affected properties in the group.
+
+Not all properties in a group are affected by a resize — `Opacity` for example is unaffected by resizing —
+but those that are (e.g., `Translate`, `Scale`) have their own `bounds` helper that you can use to target
+just that property, and override the per-group default set with
+[`Anim.Resize.bounds`](Anim-Resize#bounds).
+
+Example resize handler targeting two groups in one call:
+
+    import Anim.Engine.WAAPI as WAAPI
+    import Anim.Property.Scale as Scale
+    import Anim.Property.Translate as Translate
+    import Anim.Resize as Resize
+
+    GotTrack (Ok element) ->
+        let
+            ( animState, animCmd ) =
+                WAAPI.onResize model.animState <|
+                    Resize.bounds "box" defaultBounds
+                        >> Translate.bounds "box" translateBounds
+                        >> Scale.bounds "cube" scaleBounds
+        in
+        ( { model
+            | trackPx = element.element.width
+            , animState = animState
+          }
+        , animCmd
+        )
+
+-}
+onResize : AnimState msg -> (Resize.Builder -> Resize.Builder) -> ( AnimState msg, Cmd msg )
+onResize =
+    Internal.onResize
 
 
 
@@ -1314,6 +1402,56 @@ Returns `Nothing` if the element has no opacity animation.
 getOpacityRange : AnimGroupName -> AnimState msg -> Maybe { start : Maybe Float, end : Float }
 getOpacityRange =
     Internal.getOpacityRange
+
+
+
+-- ============================
+-- PERSPECTIVE ORIGIN
+-- ============================
+
+
+{-| Get the start perspective origin of an element being animated.
+
+Returns `Nothing` if the element has no perspective origin animation.
+
+Returns `Just { x = 50, y = 50 }` if no explicit start value was set, which is the default when no start value is set.
+
+-}
+getPerspectiveOriginStart : AnimGroupName -> AnimState msg -> Maybe { x : Float, y : Float }
+getPerspectiveOriginStart =
+    Internal.getPerspectiveOriginStart
+
+
+{-| Get the end perspective origin of an element being animated.
+
+Returns `Nothing` if the element has no perspective origin animation.
+
+-}
+getPerspectiveOriginEnd : AnimGroupName -> AnimState msg -> Maybe { x : Float, y : Float }
+getPerspectiveOriginEnd =
+    Internal.getPerspectiveOriginEnd
+
+
+{-| Get the current perspective origin of an element based on its animation state.
+
+Returns `Nothing` if the element has no perspective origin animation.
+
+Returns the current perspective origin from the latest engine snapshot.
+
+-}
+getPerspectiveOriginCurrent : AnimGroupName -> AnimState msg -> Maybe { x : Float, y : Float }
+getPerspectiveOriginCurrent =
+    Internal.getPerspectiveOriginCurrent
+
+
+{-| Get the perspective origin range (start and end) of an element being animated.
+
+Returns `Nothing` if the element has no perspective origin animation.
+
+-}
+getPerspectiveOriginRange : AnimGroupName -> AnimState msg -> Maybe { start : Maybe { x : Float, y : Float }, end : { x : Float, y : Float } }
+getPerspectiveOriginRange =
+    Internal.getPerspectiveOriginRange
 
 
 

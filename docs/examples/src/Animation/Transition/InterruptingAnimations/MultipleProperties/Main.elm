@@ -6,23 +6,26 @@ import Anim.Extra.Color as Color exposing (Color)
 import Anim.Property.CustomColor as BgColor
 import Anim.Property.Translate as Translate
 import Browser
+import Browser.Dom as Dom
+import Browser.Events
 import Html exposing (Html, div, text)
-import Html.Attributes exposing (class, style)
+import Html.Attributes exposing (class, id, style)
 import Html.Events exposing (onClick)
 import Motion.Easing as Easing exposing (Easing(..))
+import Task
 
 
 
 -- MAIN
 
 
-main : Program { width : Float, height : Float } Model Msg
+main : Program () Model Msg
 main =
     Browser.element
         { init = init
         , update = update
         , view = view
-        , subscriptions = always Sub.none
+        , subscriptions = subscriptions
         }
 
 
@@ -32,9 +35,16 @@ main =
 
 type alias Model =
     { animState : Transition.AnimState
-    , width : Float
-    , height : Float
+    , canvasW : Float
+    , canvasH : Float
+    , xPos : XPos
     }
+
+
+type XPos
+    = XLeft
+    | XCenter
+    | XRight
 
 
 animGroupName : String
@@ -42,30 +52,56 @@ animGroupName =
     "movingBox"
 
 
+canvasId : String
+canvasId =
+    "anim-canvas"
+
+
 boxWidth : Float
 boxWidth =
     100
 
 
-init : { width : Float, height : Float } -> ( Model, Cmd Msg )
-init { width, height } =
-    let
-        w =
-            width - 20
-
-        h =
-            height - 75
-    in
+init : () -> ( Model, Cmd Msg )
+init _ =
     ( { animState =
             Transition.init
-                [ Translate.initXY animGroupName ((w - boxWidth) / 2) ((h - boxWidth) / 2)
+                [ Translate.initXY animGroupName 0 0
                 , BgColor.init animGroupName BgColor.BackgroundColor <| Color.rgb 118 118 118
                 ]
-      , width = w
-      , height = h
+      , canvasW = 0
+      , canvasH = 0
+      , xPos = XCenter
       }
-    , Cmd.none
+    , measureCanvas
     )
+
+
+measureCanvas : Cmd Msg
+measureCanvas =
+    Task.attempt GotCanvas (Dom.getElement canvasId)
+
+
+
+-- POSITION HELPERS
+
+
+targetX : XPos -> Float -> Float
+targetX pos w =
+    case pos of
+        XLeft ->
+            0
+
+        XCenter ->
+            (w - boxWidth) / 2
+
+        XRight ->
+            w - boxWidth
+
+
+targetY : Float -> Float
+targetY h =
+    (h - boxWidth) / 2
 
 
 
@@ -96,12 +132,34 @@ color4 =
 -- ANIMATIONS
 
 
-moveBox : (Translate.Builder mode -> Translate.Builder mode) -> AnimBuilder mode -> AnimBuilder mode
-moveBox moveFunc =
+moveBoxX : Float -> AnimBuilder mode -> AnimBuilder mode
+moveBoxX x =
     Translate.for animGroupName
-        >> moveFunc
+        >> Translate.toX x
         >> Translate.speed 100
         >> Translate.easing BounceOut
+        >> Translate.build
+
+
+{-| Re-anchor the translate to a new target. The same builder works
+across every engine - only the engine's `retarget` semantics differ.
+
+The Transition engine has no JavaScript-side runtime snapshot of the
+currently rendered position, so it cannot smoothly continue an in-flight
+transition when the target moves. Instead, `Transition.retarget` snaps
+to the freshly computed end values and marks the animation complete.
+That's the right call for resize: the box always ends up exactly where
+the new viewport puts it, no matter how rapidly the resize handler
+fires.
+
+The Sub and WAAPI engines, given the identical builder, smoothly
+continue from the current rendered position toward the new target.
+
+-}
+retargetBoxXY : Float -> Float -> Float -> Float -> AnimBuilder mode -> AnimBuilder mode
+retargetBoxXY _ _ x y =
+    Translate.continueFor animGroupName
+        >> Translate.toXY x y
         >> Translate.build
 
 
@@ -123,6 +181,8 @@ type Msg
     | MoveLeft
     | MoveRight
     | ChangeColor Color
+    | Resize
+    | GotCanvas (Result Dom.Error Dom.Element)
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -139,18 +199,20 @@ update msg model =
 
         MoveLeft ->
             ( { model
-                | animState =
+                | xPos = XLeft
+                , animState =
                     Transition.animate model.animState <|
-                        moveBox (Translate.toX 0)
+                        moveBoxX (targetX XLeft model.canvasW)
               }
             , Cmd.none
             )
 
         MoveRight ->
             ( { model
-                | animState =
+                | xPos = XRight
+                , animState =
                     Transition.animate model.animState <|
-                        moveBox (Translate.toX (model.width - boxWidth))
+                        moveBoxX (targetX XRight model.canvasW)
               }
             , Cmd.none
             )
@@ -164,6 +226,41 @@ update msg model =
             , Cmd.none
             )
 
+        Resize ->
+            ( model, measureCanvas )
+
+        GotCanvas (Ok element) ->
+            let
+                w =
+                    element.element.width
+
+                h =
+                    element.element.height
+
+                newAnimState =
+                    Transition.retarget model.animState <|
+                        retargetBoxXY w h (targetX model.xPos w) (targetY h)
+            in
+            ( { model
+                | canvasW = w
+                , canvasH = h
+                , animState = newAnimState
+              }
+            , Cmd.none
+            )
+
+        GotCanvas (Err _) ->
+            ( model, Cmd.none )
+
+
+
+-- SUBSCRIPTIONS
+
+
+subscriptions : Model -> Sub Msg
+subscriptions _ =
+    Browser.Events.onResize (\_ _ -> Resize)
+
 
 
 -- VIEW
@@ -173,52 +270,45 @@ view : Model -> Html Msg
 view model =
     let
         posButton bgColor label onClickMsg =
-            div
+            Html.button
                 [ onClick onClickMsg
                 , class "ui-action-button"
-                , style "display" "inline-block"
-                , style "margin-left" "10px"
-                , style "margin-right" "10px"
-                , style "padding" "10px"
                 , style "background-color" bgColor
-                , style "color" "white"
-                , style "cursor" "pointer"
                 ]
                 [ text label ]
 
         colorButton color label =
-            div
+            Html.button
                 [ onClick (ChangeColor color)
                 , class "ui-action-button"
-                , style "display" "inline-block"
-                , style "margin-left" "10px"
-                , style "margin-right" "10px"
-                , style "padding" "10px"
                 , style "background-color" (Color.toHex color)
-                , style "color" "white"
-                , style "cursor" "pointer"
                 ]
                 [ text label ]
     in
-    div [ style "text-align" "center" ]
-        [ div [ style "margin-bottom" "10px" ]
+    div [ class "example-stage" ]
+        [ div [ class "example-badge example-badge--static" ] [ text "Static" ]
+        , div [ class "example-controls" ]
             [ posButton "#333" "Move Left" MoveLeft
             , posButton "#333" "Move Right" MoveRight
             ]
-        , div []
+        , div [ class "example-controls" ]
             [ colorButton color1 "Color 1"
             , colorButton color2 "Color 2"
             , colorButton color3 "Color 3"
             , colorButton color4 "Color 4"
             ]
-        , div
-            (Transition.attributes animGroupName model.animState
-                ++ Transition.events GotAnimationUpdate
-                ++ [ style "width" (String.fromFloat boxWidth ++ "px")
-                   , style "height" (String.fromFloat boxWidth ++ "px")
-                   , style "position" "relative"
-                   , style "margin-top" "20px"
-                   ]
-            )
-            []
+        , div [ id canvasId, class "example-canvas--fluid" ]
+            [ div
+                (Transition.attributes animGroupName model.animState
+                    ++ Transition.events GotAnimationUpdate
+                    ++ [ style "width" (String.fromFloat boxWidth ++ "px")
+                       , style "height" (String.fromFloat boxWidth ++ "px")
+                       , style "position" "absolute"
+                       , style "top" "0"
+                       , style "left" "0"
+                       , style "border-radius" "8px"
+                       ]
+                )
+                []
+            ]
         ]

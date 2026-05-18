@@ -157,17 +157,11 @@ view : Model -> Html Msg
 view model =
     let
         button bgColor label onClickMsg =
-            div
+            Html.button
                 [ onClick onClickMsg
                 , class "ui-action-button"
-                , style "display" "inline-block"
-                , style "margin-left" "10px"
-                , style "margin-right" "10px"
-                , style "padding" "10px"
                 , style "background-color" <|
                     Color.toHex bgColor
-                , style "color" "white"
-                , style "cursor" "pointer"
                 ]
                 [ text label ]
 
@@ -183,21 +177,17 @@ view model =
         color4Button =
             button color4 "Color 4" Color4
     in
-    div
-        [ style "text-align" "center"
-        ]
-        [ color1Button
-        , color2Button
-        , color3Button
-        , color4Button
+    div [ class "example-stage" ]
+        [ div [ class "example-badge example-badge--responsive" ] [ text "RESPONSIVE" ]
+        , div [ class "example-controls" ]
+            [ color1Button
+            , color2Button
+            , color3Button
+            , color4Button
+            ]
         , div
             (Transition.attributes animGroupName model.animState
-                ++ [ style "width" "calc(100vw - 20px)"
-                   , style "height" "calc(100vh - 75px)"
-                   , style "margin-top" "20px"
-                   , style "margin-left" "auto"
-                   , style "margin-right" "auto"
-                   ]
+                ++ [ class "example-canvas" ]
             )
             []
         ]

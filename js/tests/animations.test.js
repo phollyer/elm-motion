@@ -356,4 +356,209 @@ describe('processElementAnimation', () => {
             })
         ).not.toThrow();
     });
+
+    it('carries a still-running non-transform animation forward when a transform-only call comes in, so its finish does not prematurely wipe activeAnimations', () => {
+        // Regression: when a snapshot/resize-driven `animate` arrives with
+        // only transform properties, the previously running bgcolor (or any
+        // other non-transform) animation must remain in `activeAnimations`
+        // and be counted toward the new generation's `totalProperties`. If
+        // the new transform's `finish` event were to treat the group as
+        // complete on its own, `cleanupAnimGroup` would wipe the still-
+        // running bgcolor's entry, freezing the per-frame propertyUpdate
+        // values Elm uses for snapshot baselines.
+        const animGroup = 'carryover-box';
+        const transformAnim1 = createFakeAnimation({ duration: 500 });
+        const colorAnim = createFakeAnimation({ duration: 3000 });
+        colorAnim.playState = 'running';
+        const transformAnim2 = createFakeAnimation({ duration: 1 });
+
+        const element = makeElement({
+            animGroup,
+            animations: [transformAnim1, colorAnim, transformAnim2]
+        });
+        installDom({ element, targetId: animGroup });
+
+        // First call: starts a long-running bgcolor animation alongside a transform.
+        processElementAnimation(animGroup, {
+            properties: [
+                {
+                    type: 'translate',
+                    startX: 0, startY: 0, startZ: 0,
+                    endX: 100, endY: 0, endZ: 0,
+                    duration: 500, easing: 'linear', version: 1
+                },
+                {
+                    type: 'customColorProperty',
+                    cssProperty: 'background-color',
+                    startValue: 'rgb(118, 118, 118)',
+                    endValue: 'rgb(255, 87, 51)',
+                    duration: 3000, easing: 'linear', version: 1
+                }
+            ]
+        });
+
+        const elementAnims = activeAnimations.get(animGroup);
+        expect(elementAnims.has('customColor:background-color')).toBe(true);
+        expect(elementAnims.has('transform')).toBe(true);
+        const colorEntryAfterFirst = elementAnims.get('customColor:background-color');
+        const firstGeneration = animationGroups.get(animGroup).generation;
+        expect(colorEntryAfterFirst.generation).toBe(firstGeneration);
+
+        // Second call: transform-only (mimics a snapshot/resize-driven animate
+        // while bgcolor is still running). This must NOT cancel or evict the
+        // bgcolor entry, and the new generation must include bgcolor in its
+        // totalProperties so the transform's finish does not wipe everything.
+        processElementAnimation(animGroup, {
+            properties: [
+                {
+                    type: 'translate',
+                    startX: 50, startY: 0, startZ: 0,
+                    endX: 200, endY: 0, endZ: 0,
+                    duration: 1, easing: 'linear', version: 2
+                }
+            ]
+        });
+
+        expect(colorAnim.cancelCalls).toBe(0);
+        expect(elementAnims.has('customColor:background-color')).toBe(true);
+
+        const newGeneration = animationGroups.get(animGroup).generation;
+        expect(newGeneration).toBe(firstGeneration + 1);
+
+        const colorEntryAfterSecond = elementAnims.get('customColor:background-color');
+        expect(colorEntryAfterSecond.generation).toBe(newGeneration);
+
+        const groupInfo = animationGroups.get(animGroup);
+        expect(groupInfo.totalProperties).toBe(2);
+
+        // Now simulate the new (1ms) transform finishing. Because bgcolor is
+        // counted toward totalProperties, the group must NOT be considered
+        // complete and `activeAnimations` must still hold the bgcolor entry.
+        const newTransformEntry = elementAnims.get('transform');
+        newTransformEntry.animation.finish();
+
+        expect(activeAnimations.get(animGroup)).toBeDefined();
+        expect(activeAnimations.get(animGroup).has('customColor:background-color')).toBe(true);
+        expect(animationGroups.get(animGroup)).toBeDefined();
+    });
+});
+
+describe('processElementAnimation transformBaseline seeding', () => {
+    it('seeds lastKnownTransforms from transformBaseline when cache is empty', () => {
+        const animGroup = 'cube-baseline';
+        const animation = createFakeAnimation({ duration: 200 });
+        const element = makeElement({ animGroup, animations: [animation] });
+        installDom({ element, targetId: animGroup });
+
+        processAnimationData({
+            elements: {
+                [animGroup]: {
+                    transformBaseline: {
+                        translate: { x: 0, y: 0, z: 200 },
+                        scale: { x: 1, y: 1, z: 1 }
+                    },
+                    properties: [{
+                        type: 'rotate',
+                        startX: 0, startY: 0, startZ: 0,
+                        endX: 360, endY: 360, endZ: 360,
+                        duration: 200, easing: 'linear', version: 1
+                    }]
+                }
+            }
+        });
+
+        const cached = lastKnownTransforms.get(animGroup);
+        expect(cached).toBeDefined();
+        expect(cached.z).toBe(200);
+        expect(cached.scaleX).toBe(1);
+        expect(cached.x).toBe(0);
+        expect(cached.y).toBe(0);
+    });
+
+    it('keyframes built after baseline seeding include translate3d with init Z value', () => {
+        const animGroup = 'cube-keyframes';
+        const animation = createFakeAnimation({ duration: 200 });
+        const element = makeElement({ animGroup, animations: [animation] });
+        installDom({ element, targetId: animGroup });
+
+        processAnimationData({
+            elements: {
+                [animGroup]: {
+                    transformBaseline: {
+                        translate: { x: 0, y: 0, z: 200 }
+                    },
+                    properties: [{
+                        type: 'rotate',
+                        startX: 0, startY: 0, startZ: 0,
+                        endX: 360, endY: 360, endZ: 360,
+                        duration: 200, easing: 'linear', version: 1
+                    }]
+                }
+            }
+        });
+
+        const [keyframes] = element.animate.mock.calls[0];
+        // Every keyframe must include the init Z=200 translate, otherwise the
+        // cube would visually shrink due to perspective foreshortening when
+        // ownership of `transform` flips from Elm to JS.
+        for (const frame of keyframes) {
+            expect(frame.transform).toContain('translate3d(0px, 0px, 200px)');
+        }
+    });
+
+    it('does not overwrite lastKnownTransforms when cache already has values', () => {
+        const animGroup = 'cube-cached';
+        lastKnownTransforms.set(animGroup, {
+            x: 10, y: 20, z: 30,
+            scaleX: 2, scaleY: 2, scaleZ: 2,
+            rotateX: 45, rotateY: 0, rotateZ: 0,
+            skewX: 0, skewY: 0
+        });
+
+        const animation = createFakeAnimation({ duration: 200 });
+        const element = makeElement({ animGroup, animations: [animation] });
+        installDom({ element, targetId: animGroup });
+
+        processAnimationData({
+            elements: {
+                [animGroup]: {
+                    transformBaseline: {
+                        translate: { x: 0, y: 0, z: 999 }
+                    },
+                    properties: [{
+                        type: 'rotate',
+                        startX: 0, startY: 0, startZ: 0,
+                        endX: 0, endY: 0, endZ: 90,
+                        duration: 200, easing: 'linear', version: 1
+                    }]
+                }
+            }
+        });
+
+        const cached = lastKnownTransforms.get(animGroup);
+        expect(cached.x).toBe(10);
+        expect(cached.z).toBe(30);
+        expect(cached.scaleX).toBe(2);
+    });
+
+    it('handles missing transformBaseline gracefully', () => {
+        const animGroup = 'no-baseline';
+        const animation = createFakeAnimation({ duration: 200 });
+        const element = makeElement({ animGroup, animations: [animation] });
+        installDom({ element, targetId: animGroup });
+
+        expect(() => processAnimationData({
+            elements: {
+                [animGroup]: {
+                    properties: [{
+                        type: 'opacity',
+                        startValue: 0, endValue: 1,
+                        duration: 200, easing: 'linear', version: 1
+                    }]
+                }
+            }
+        })).not.toThrow();
+
+        expect(lastKnownTransforms.has(animGroup)).toBe(false);
+    });
 });

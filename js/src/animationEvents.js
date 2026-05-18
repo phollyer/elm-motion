@@ -223,28 +223,108 @@ function updateGroupIterationState(animGroup, groupGeneration, propertyIndex, an
     }
 }
 
-function getAnimationProgress(animGroup, animation) {
+export function getAnimationProgress(animGroup, animation) {
+    // Always read the LIVE per-iteration duration off the animation's own
+    // effect. `resizeTransformAnimation` recreates the animation with a
+    // new duration on every resize, but `groupInfo.propertyConfigs` is
+    // populated only once at setup time and is never refreshed. Using the
+    // cached config duration here returns
+    //   (newCurrentTime % oldDuration) / oldDuration
+    // after a resize — which wraps the just-seeked `currentTime` (e.g.
+    // 1630 ms set against the new 2895 ms duration) back through the OLD
+    // 1435 ms duration and reports 0.136 instead of 0.563. Elm then stores
+    // that bogus progress and uses it on the NEXT resize, drifting the box
+    // away from its true proportional position on every orientation switch.
+    //
+    // The animation is created with a single `duration` covering the max
+    // of all sub-property durations (see `createMergedTransformAnimation`
+    // and the `maxDuration` calc in `resizeTransformAnimation`), so the
+    // live timing is the authoritative max-duration after any resize.
+    const liveDuration = Number(animation.effect?.getTiming?.()?.duration) || 0;
     const groupInfo = animationGroups.get(animGroup);
-    const maxDuration = groupInfo?.propertyConfigs?.length > 0
+    const fallbackDuration = groupInfo?.propertyConfigs?.length > 0
         ? Math.max(...groupInfo.propertyConfigs.map(property => property.duration))
-        : animation.effect?.getTiming()?.duration || 0;
-    const currentTime = animation.currentTime || 0;
-    return maxDuration > 0
-        ? Math.min(1.0, Math.max(0.0, currentTime / maxDuration))
         : 0;
+    const maxDuration = liveDuration > 0 ? liveDuration : fallbackDuration;
+    const currentTime = animation.currentTime || 0;
+    if (maxDuration <= 0) {
+        return 0;
+    }
+    // Per-iteration raw progress. WAAPI's `currentTime` is total elapsed time
+    // across all iterations and keeps growing forever on looping animations,
+    // so a naive `currentTime / maxDuration` saturates at 1.0 after the first
+    // iteration and gets clamped to 1 thereafter, telling Elm the animation
+    // is permanently at end-of-leg. That poisons resize math in
+    // `Anim.Internal.Engine.WAAPI.applyTranslateResize` (Proportional path),
+    // which computes `(oldIter + progress) * newDuration` — with a stale
+    // `progress=1` it lands the new `currentTime` exactly on the next
+    // iteration boundary, snapping the box to the start of the next leg.
+    return (currentTime % maxDuration) / maxDuration;
 }
 
-function getLiveTransformState(animGroup, animation, resolvedTransformValues, transformAnimDuration) {
+export function getLiveTransformState(animGroup, animation, resolvedTransformValues, transformAnimDuration) {
     if (!resolvedTransformValues) {
         return lastKnownTransforms.get(animGroup) || getDefaultTransformState();
     }
 
+    // While a freshly-created animation is in `pending` state (after
+    // `element.animate(...)` but before its ready promise resolves on the
+    // first compositor frame), `animation.currentTime` is null/0 even if
+    // we explicitly set a target `currentTime` for resize continuity.
+    // Returning the cached snapshot avoids emitting a one-frame
+    // `t.x = 0` propertyUpdate that visually snaps the element to the
+    // start of its keyframes before WAAPI applies the requested time.
+    if (animation.playState === 'pending') {
+        return lastKnownTransforms.get(animGroup) || getDefaultTransformState();
+    }
+
+    // Always read the live per-iteration duration from the effect rather
+    // than relying on the duration captured at `setupAnimationEvents` time.
+    // `resizeTransformAnimation` mutates the running animation in place via
+    // `effect.updateTiming`, after which the captured value is stale and
+    // would skew the modulo + reverse-leg math below — leaving the box at
+    // the wrong position for the rest of the resized animation.
+    const timing = animation.effect?.getTiming?.() || {};
+    const liveDuration = Number(timing.duration) || transformAnimDuration || 0;
     const currentTime = animation.currentTime || 0;
-    const animProgress = transformAnimDuration > 0
-        ? Math.min(1.0, Math.max(0.0, currentTime / transformAnimDuration))
+    // Per-iteration progress: WAAPI's `currentTime` is the animation's total
+    // elapsed time across all iterations, not the progress within the current
+    // iteration. Without the modulo, multi-iteration animations (looping or
+    // alternate) saturate `rawProgress` at 1.0 forever once `currentTime`
+    // exceeds the per-iteration duration, which then poisons the snapshot
+    // (especially after `flip` for alternate's reverse leg, where it would
+    // collapse to 0).
+    const rawProgress = liveDuration > 0
+        ? ((currentTime % liveDuration) / liveDuration)
         : 0;
-    const transformState = computeTransformFromResolved(resolvedTransformValues, animProgress, transformAnimDuration);
+
+    // Flip progress on the reverse half of an `alternate`/`alternate-reverse`
+    // iteration so the snapshot reflects the live visual position. WAAPI's
+    // `currentTime` keeps marching forward each iteration, so for odd-indexed
+    // alternate iterations the box is visually traveling end → start while
+    // `currentTime / duration` keeps reading 0 → 1. Without this flip the
+    // snapshot stays glued near `endX` for the whole reverse leg, which then
+    // poisons resize math (proportional rescaling treats `oldEnd` as the
+    // current position and snaps the box).
+    const direction = timing.direction || 'normal';
+    let animProgress = rawProgress;
+    if (direction === 'alternate' || direction === 'alternate-reverse') {
+        const computed = animation.effect?.getComputedTiming?.() || {};
+        const iter = computed.currentIteration;
+        if (Number.isFinite(iter)) {
+            const startsReversed = direction === 'alternate-reverse';
+            const isReverseLeg = (iter % 2 === 1) !== startsReversed;
+            if (isReverseLeg) {
+                animProgress = 1 - rawProgress;
+            }
+        }
+    } else if (direction === 'reverse') {
+        animProgress = 1 - rawProgress;
+    }
+
+    const transformState = computeTransformFromResolved(resolvedTransformValues, animProgress, liveDuration);
     lastKnownTransforms.set(animGroup, transformState);
+
     return transformState;
 }
 
@@ -257,19 +337,33 @@ function finalizeAnimationTracking(animGroup, groupGeneration, status) {
     groupInfo.completedProperties++;
     const allComplete = groupInfo.completedProperties >= groupInfo.totalProperties;
     if (allComplete) {
-        sendLifecycleEvent(status, animGroup);
+        // Tear down JS-side bookkeeping BEFORE notifying Elm. `sendLifecycleEvent`
+        // dispatches to an Elm port synchronously: Elm's `update` runs, returns
+        // a Cmd that calls back into `processElementAnimation` to set up the
+        // next animation — all before `sendLifecycleEvent` returns. If
+        // `cleanupAnimGroup` ran after, it would wipe the freshly-set entry
+        // and the next animation's `finish` event would find no entry,
+        // silently skipping the next lifecycle emission and stalling the
+        // example's state machine.
         cleanupAnimGroup(animGroup);
+        sendLifecycleEvent(status, animGroup);
     }
     return allComplete;
 }
 
 export function setupAnimationEvents(animGroup, propertyType, element, animation, version, resolvedTransformValues) {
-    const groupGeneration = animationGroups.get(animGroup)?.generation || 0;
-    const groupInfoForIndex = animationGroups.get(animGroup);
-    let propertyIndex = 0;
-    if (groupInfoForIndex) {
-        propertyIndex = groupInfoForIndex.nextPropertyIndex;
-        groupInfoForIndex.nextPropertyIndex++;
+    // Generation and propertyIndex are looked up per-event from the
+    // `elementAnims` entry instead of being captured in this closure. This
+    // lets `processElementAnimation` "carry forward" still-running animations
+    // into a new generation (re-keying their entry's `generation` /
+    // `propertyIndex` fields) without them mistakenly failing the generation
+    // check at finish/cancel time.
+    function getEntry() {
+        return activeAnimations.get(animGroup)?.get(propertyType);
+    }
+    function isActiveEntry() {
+        const entry = getEntry();
+        return !!entry && entry.version === version;
     }
     const transformAnimDuration = resolvedTransformValues
         ? (animation.effect?.getTiming()?.duration || 0)
@@ -283,11 +377,17 @@ export function setupAnimationEvents(animGroup, propertyType, element, animation
 
     function sendAnimationUpdate() {
         const now = performance.now();
+        const playStateAtTick = animation.playState;
         if (propertyUpdateIntervalMs <= 0 || now - lastTime >= propertyUpdateIntervalMs) {
-            updateGroupIterationState(animGroup, groupGeneration, propertyIndex, animation);
+            const entry = getEntry();
+            if (entry && entry.version === version) {
+                updateGroupIterationState(animGroup, entry.generation, entry.propertyIndex, animation);
+            }
 
             const transformState = getLiveTransformState(animGroup, animation, resolvedTransformValues, transformAnimDuration);
             lastComputedTransformState = transformState;
+
+            const isAnimatingFlag = playStateAtTick === 'running';
 
             sendTrackedPropertyUpdate(
                 animGroup,
@@ -295,7 +395,7 @@ export function setupAnimationEvents(animGroup, propertyType, element, animation
                 null,
                 transformState,
                 element,
-                true,
+                isAnimatingFlag,
                 getAnimationProgress(animGroup, animation)
             );
             lastTime = now;
@@ -340,10 +440,12 @@ export function setupAnimationEvents(animGroup, propertyType, element, animation
             }
         }
 
+        const wasActive = isActiveEntry();
+        const entryGeneration = getEntry()?.generation;
         removeTrackedAnimationVersion(animGroup, propertyType, version);
 
-        if (animationGroups.get(animGroup)?.generation === groupGeneration) {
-            const allComplete = finalizeAnimationTracking(animGroup, groupGeneration, 'completed');
+        if (wasActive && entryGeneration != null && animationGroups.get(animGroup)?.generation === entryGeneration) {
+            const allComplete = finalizeAnimationTracking(animGroup, entryGeneration, 'completed');
             const finalTransformState = getTrackedTransformState(
                 animGroup,
                 resolvedTransformValues,
@@ -356,10 +458,12 @@ export function setupAnimationEvents(animGroup, propertyType, element, animation
     animation.addEventListener('cancel', () => {
         if (finishHandled) return;
 
+        const wasActive = isActiveEntry();
+        const entryGeneration = getEntry()?.generation;
         removeTrackedAnimationVersion(animGroup, propertyType, version);
 
-        if (animationGroups.get(animGroup)?.generation === groupGeneration) {
-            const allCancelled = finalizeAnimationTracking(animGroup, groupGeneration, 'cancelled');
+        if (wasActive && entryGeneration != null && animationGroups.get(animGroup)?.generation === entryGeneration) {
+            const allCancelled = finalizeAnimationTracking(animGroup, entryGeneration, 'cancelled');
             const cancelTransformState = getTrackedTransformState(animGroup, resolvedTransformValues, lastComputedTransformState);
             sendTrackedPropertyUpdate(animGroup, propertyType, version, cancelTransformState, element, !allCancelled);
         }

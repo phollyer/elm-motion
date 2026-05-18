@@ -4,7 +4,7 @@ module Anim.Engine.Keyframe exposing
     , TimelineBuilder
     , EngineBuilder
     , init
-    , animate
+    , animate, retarget
     , CurrentTargetId, TargetId, AnimEvent(..)
     , AnimMsg, update
     , attributes
@@ -21,6 +21,7 @@ module Anim.Engine.Keyframe exposing
     , getPropertyEnd, getPropertyRange, getPropertyStart
     , getColorPropertyEnd, getColorPropertyRange, getColorPropertyStart
     , getOpacityStart, getOpacityEnd, getOpacityRange
+    , getPerspectiveOriginStart, getPerspectiveOriginEnd, getPerspectiveOriginRange
     , getRotateStart, getRotateEnd, getRotateRange
     , getScaleStart, getScaleEnd, getScaleRange
     , getSizeStart, getSizeEnd, getSizeRange
@@ -76,7 +77,7 @@ on Keyframe-only APIs.
 
 # Trigger
 
-@docs animate
+@docs animate, retarget
 
 📖 See [Triggering Animations](https://phollyer.github.io/elm-motion/animation/workflow/trigger/) in the docs.
 
@@ -186,6 +187,11 @@ and include a `<style>` node with the generated keyframes.
 ## Opacity
 
 @docs getOpacityStart, getOpacityEnd, getOpacityRange
+
+
+## Perspective Origin
+
+@docs getPerspectiveOriginStart, getPerspectiveOriginEnd, getPerspectiveOriginRange
 
 
 ## Rotate
@@ -345,6 +351,30 @@ init =
 animate : AnimState -> (EngineBuilder -> EngineBuilder) -> AnimState
 animate =
     Internal.animate
+
+
+{-| Re-anchor an animation to a new target by snapping to the new end values.
+
+The Keyframe engine has no JavaScript-side runtime snapshot of the
+currently rendered values - it only knows the previous _target_, not where
+the element actually is on screen. That makes it impossible to smoothly
+continue an in-flight keyframe animation when the target changes
+mid-flight (the typical resize-handler case).
+
+`retarget` therefore guarantees a deterministic outcome: the freshly
+computed end values are written inline, the keyframe animation is
+cleared, and the group is marked complete. It's safe to call repeatedly
+during a drag or resize without accumulating partial animations or visual
+glitches.
+
+The Sub and WAAPI engines provide a `retarget` with the same builder API
+that smoothly continues from the current rendered position - swap in
+those engines if you need visual continuity instead of a snap.
+
+-}
+retarget : AnimState -> (EngineBuilder -> EngineBuilder) -> AnimState
+retarget =
+    Internal.retarget
 
 
 
@@ -1113,6 +1143,44 @@ Returns `Nothing` if the element has no opacity animation.
 getOpacityRange : AnimGroupName -> AnimState -> Maybe { start : Maybe Float, end : Float }
 getOpacityRange =
     CSS.getOpacityRange
+
+
+
+-- ============================
+-- PERSPECTIVE ORIGIN
+-- ============================
+
+
+{-| Get the start perspective origin of an element being animated.
+
+Returns `Nothing` if the element has no perspective origin animation.
+
+Returns `Just { x = 50, y = 50 }` if no explicit start value was set, which is the default when no start value is set.
+
+-}
+getPerspectiveOriginStart : AnimGroupName -> AnimState -> Maybe { x : Float, y : Float }
+getPerspectiveOriginStart =
+    CSS.getPerspectiveOriginStart
+
+
+{-| Get the end perspective origin of an element being animated.
+
+Returns `Nothing` if the element has no perspective origin animation.
+
+-}
+getPerspectiveOriginEnd : AnimGroupName -> AnimState -> Maybe { x : Float, y : Float }
+getPerspectiveOriginEnd =
+    CSS.getPerspectiveOriginEnd
+
+
+{-| Get the perspective origin range (start and end) of an element being animated.
+
+Returns `Nothing` if the element has no perspective origin animation.
+
+-}
+getPerspectiveOriginRange : AnimGroupName -> AnimState -> Maybe { start : Maybe { x : Float, y : Float }, end : { x : Float, y : Float } }
+getPerspectiveOriginRange =
+    CSS.getPerspectiveOriginRange
 
 
 

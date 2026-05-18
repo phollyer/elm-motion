@@ -103,26 +103,27 @@ update msg model =
 view : Model -> Html Msg
 view model =
     div
-        [ style "text-align" "center"
-        , style "height" "90vh"
-        , style "width" "100%"
-        , style "padding-top" "10px"
+        [ class "example-stage"
+        , style "text-align" "center"
         ]
-        [ Keyframe.styleNode model.animState
-        , button
-            [ onClick TriggerRed
-            , class "ui-action-button primary"
-            , style "margin-right" "10px"
+        [ div [ class "example-badge example-badge--responsive" ] [ text "RESPONSIVE" ]
+        , Keyframe.styleNode model.animState
+        , div [ class "example-controls" ]
+            [ button
+                [ onClick TriggerRed
+                , class "ui-action-button"
+                , style "background-color" "#ef4444"
+                ]
+                [ text "Red Border" ]
+            , button
+                [ onClick TriggerBlue
+                , class "ui-action-button"
+                , style "background-color" "#3b82f6"
+                ]
+                [ text "Blue Border" ]
             ]
-            [ text "Red Border" ]
-        , button
-            [ onClick TriggerBlue
-            , class "ui-action-button primary"
-            ]
-            [ text "Blue Border" ]
         , div
-            [ style "height" "80vh"
-            , style "width" "100%"
+            [ style "width" "100%"
             , style "display" "flex"
             , style "align-items" "center"
             , style "justify-content" "center"
@@ -130,8 +131,7 @@ view model =
             ]
             [ div
                 (Keyframe.attributes animGroup model.animState
-                    ++ [ style "height" "200px"
-                       , style "width" "200px"
+                    ++ [ class "example-box"
                        , style "background-color" "#f8fafc"
                        , style "border" "4px solid #6366f1"
                        , style "border-radius" "8px"

@@ -9,7 +9,7 @@ import Anim.Property.Skew as Skew
 import Anim.Property.Translate as Translate
 import Browser
 import Html exposing (Html, button, div, text)
-import Html.Attributes exposing (style)
+import Html.Attributes exposing (class, style)
 import Html.Events exposing (onClick)
 import Motion.Easing as Easing exposing (Easing(..))
 
@@ -291,27 +291,12 @@ update msg model =
 
 view : Model -> Html Msg
 view model =
-    div
-        [ style "display" "flex"
-        , style "flex-direction" "column"
-        , style "align-items" "center"
-        , style "gap" "16px"
-        , style "padding" "16px"
-        , style "font-family" "sans-serif"
-        ]
-        [ Keyframe.styleNode model.animState
-        , div
-            [ style "display" "flex"
-            , style "flex-wrap" "wrap"
-            , style "justify-content" "center"
-            , style "gap" "8px"
-            ]
+    div [ class "example-stage" ]
+        [ div [ class "example-badge example-badge--static" ] [ text "Static" ]
+        , Keyframe.styleNode model.animState
+        , div [ class "example-controls" ]
             (List.map permButton allPermutations)
-        , div
-            [ style "display" "flex"
-            , style "gap" "8px"
-            , style "justify-content" "center"
-            ]
+        , div [ class "example-controls" ]
             [ actionButton "▶️ All" AnimateAll "#16a34a"
             , actionButton "⏮️ Reset All" ResetAll "#d97706"
             ]
@@ -354,10 +339,8 @@ actionButton label msg color =
 animationArea : Keyframe.AnimState -> Html Msg
 animationArea animState =
     div
-        [ style "position" "relative"
-        , style "width" "100%"
-        , style "max-width" "500px"
-        , style "height" "350px"
+        [ class "example-canvas"
+        , style "position" "relative"
         , style "background-color" "#ffffff"
         , style "border-radius" "12px"
         , style "box-shadow" "0 4px 8px rgba(0, 0, 0, 0.1)"

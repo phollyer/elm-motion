@@ -26,6 +26,7 @@ module Anim.Internal.Builder exposing
     , addAnimationToHistory
     , alternate
     , clearAnimData
+    , clearClamp
     , delay
     , discreteEntry
     , discreteExit
@@ -40,9 +41,12 @@ module Anim.Internal.Builder exposing
     , getAnimGroupConfig
     , getAnimGroups
     , getAnimTarget
+    , getAnimationConfigs
     , getAnimationDirection
     , getBaseline
+    , getClamp
     , getCurrentAnimGroupConfig
+    , getCurrentAnimGroupName
     , getCurrentAnimationConfig
     , getDelay
     , getDelayWithDefault
@@ -52,6 +56,7 @@ module Anim.Internal.Builder exposing
     , getEasingWithDefault
     , getFrozenAxes
     , getIterations
+    , getResizePolicy
     , getRuntimeBaseline
     , getScrollAxis
     , getScrollSource
@@ -65,13 +70,19 @@ module Anim.Internal.Builder exposing
     , initDefaults
     , initPlayback
     , injectCurrentStates
+    , injectRunningProperties
+    , isPropertyRunning
     , iterations
     , loopForever
     , mergeBaselines
     , normalizeTransformOrder
+    , policy
     , process
     , processProperties
+    , processedPropertyType
     , setAnimTarget
+    , setClamp
+    , setPropertyResizePolicy
     , setScrollAxis
     , setScrollSource
     , setViewRangeEnd
@@ -81,6 +92,7 @@ module Anim.Internal.Builder exposing
     , transformOrder
     , transitionMode
     , unfreezeAxes
+    , updateBaselines
     , updateCurrentConfig
     )
 
@@ -95,9 +107,11 @@ import Anim.Internal.Property.Scale as Scale exposing (Scale)
 import Anim.Internal.Property.Size as Size exposing (Size)
 import Anim.Internal.Property.Skew as Skew exposing (Skew)
 import Anim.Internal.Property.Translate as Translate exposing (Translate)
+import Anim.Internal.Resize.Builder as Resize
 import Dict exposing (Dict)
 import Motion.Easing exposing (Easing(..))
 import Motion.Internal.Spring as SpringInt exposing (Spring)
+import Set exposing (Set)
 import Shared.Spring as SpringSolver
 import Shared.TimeSpec as TimeSpec exposing (TimeSpec(..))
 
@@ -263,11 +277,35 @@ type alias ProcessedAnimationData =
 
 
 {-| Persistent state preserved across animate calls.
+
+`runningProperties` is the exception: it is populated only by the
+engine-level `retarget` function and cleared by `clearAnimData` after
+the pipeline runs. It tells per-property `continueFor` resolvers which
+property animations were still running on each animGroup at the moment
+`retarget` was invoked.
+
 -}
 type alias PersistentState =
     { animationHistories : AnimGroups AnimationHistory
     , baselines : AnimGroups PropertyBaselines
     , runtimeBaselines : AnimGroups PropertyBaselines
+    , runningProperties : Dict AnimGroupName (Set String)
+    , propertyClamps : Dict ( AnimGroupName, String, String ) ( Float, Float )
+    , resizePolicies : Dict AnimGroupName GroupResizePolicies
+    }
+
+
+{-| Per-group resize policy storage.
+
+  - `default` - the group-wide fallback policy applied when no per-property
+    entry exists for a given property.
+  - `perProperty` - explicit policies keyed by property name (e.g. "translate",
+    "scale"). Future properties ("opacity", "size", etc.) are added here.
+
+-}
+type alias GroupResizePolicies =
+    { default : Maybe Resize.Policy
+    , perProperty : Dict String Resize.Policy
     }
 
 
@@ -401,6 +439,9 @@ initState =
     { animationHistories = AnimGroups.init
     , baselines = AnimGroups.init
     , runtimeBaselines = AnimGroups.init
+    , runningProperties = Dict.empty
+    , propertyClamps = Dict.empty
+    , resizePolicies = Dict.empty
     }
 
 
@@ -555,6 +596,23 @@ getCurrentAnimationConfig : AnimGroupName -> AnimBuilder mode -> Maybe Processed
 getCurrentAnimationConfig animGroupName (AnimBuilder data) =
     AnimGroups.get animGroupName data.state.animationHistories
         |> Maybe.map .current
+
+
+{-| Get the full animation history for a group, ordered most-recent-first
+(`current` followed by previous entries). Used by engines that need to find
+the most recent config containing a particular property even when the latest
+animation didn't include that property (for example, a static `Scale.init`
+seeded at startup must remain discoverable to `Scale.bounds` after a
+later Scale-less animation runs).
+-}
+getAnimationConfigs : AnimGroupName -> AnimBuilder mode -> List ProcessedAnimGroupConfig
+getAnimationConfigs animGroupName (AnimBuilder data) =
+    case AnimGroups.get animGroupName data.state.animationHistories of
+        Nothing ->
+            []
+
+        Just h ->
+            h.current :: h.history
 
 
 
@@ -818,6 +876,14 @@ getAnimGroups (AnimBuilder data) =
     data.animation.animGroups
 
 
+{-| The name of the animGroup the next pipeline step will configure, set
+by `for` / `forContinuing`. `Nothing` before any `for` call.
+-}
+getCurrentAnimGroupName : AnimBuilder mode -> Maybe AnimGroupName
+getCurrentAnimGroupName (AnimBuilder data) =
+    data.animation.currentAnimGroup
+
+
 getCurrentAnimGroupConfig : AnimBuilder mode -> AnimGroupConfig
 getCurrentAnimGroupConfig (AnimBuilder data) =
     case data.animation.currentAnimGroup of
@@ -963,11 +1029,156 @@ injectCurrentStates animGroups (AnimBuilder data) =
         }
 
 
+{-| Inject the set of currently-running property keys per animGroup.
+
+Engines call this from their `retarget` function to tell per-property
+`continueFor` resolvers which property animations are still in flight.
+The set is cleared by `clearAnimData` after the pipeline runs, so it
+lives only for the duration of one pipeline invocation.
+
+-}
+injectRunningProperties : Dict AnimGroupName (Set String) -> AnimBuilder mode -> AnimBuilder mode
+injectRunningProperties running (AnimBuilder data) =
+    let
+        state =
+            data.state
+    in
+    AnimBuilder
+        { data
+            | state = { state | runningProperties = running }
+        }
+
+
+{-| True when the named property type is currently running on the given
+animGroup, as reported by the most recent `injectRunningProperties` call.
+-}
+isPropertyRunning : AnimGroupName -> String -> AnimBuilder mode -> Bool
+isPropertyRunning animGroupName propertyKey (AnimBuilder data) =
+    Dict.get animGroupName data.state.runningProperties
+        |> Maybe.map (Set.member propertyKey)
+        |> Maybe.withDefault False
+
+
+{-| Get a clamp range for a (animGroup, propertyKey, axis) triple, if any.
+-}
+getClamp : AnimGroupName -> String -> String -> AnimBuilder mode -> Maybe ( Float, Float )
+getClamp animGroupName propertyKey axis (AnimBuilder data) =
+    Dict.get ( animGroupName, propertyKey, axis ) data.state.propertyClamps
+
+
+{-| Set a clamp range. Bounds are normalised so the smaller value becomes
+the lower bound regardless of argument order.
+-}
+setClamp : AnimGroupName -> String -> String -> Float -> Float -> AnimBuilder mode -> AnimBuilder mode
+setClamp animGroupName propertyKey axis lo hi (AnimBuilder data) =
+    let
+        state =
+            data.state
+
+        nextDict =
+            Dict.insert ( animGroupName, propertyKey, axis ) (orderedRange lo hi) state.propertyClamps
+    in
+    AnimBuilder { data | state = { state | propertyClamps = nextDict } }
+
+
+{-| Remove a clamp range for a (animGroup, propertyKey, axis) triple.
+-}
+clearClamp : AnimGroupName -> String -> String -> AnimBuilder mode -> AnimBuilder mode
+clearClamp animGroupName propertyKey axis (AnimBuilder data) =
+    let
+        state =
+            data.state
+
+        nextDict =
+            Dict.remove ( animGroupName, propertyKey, axis ) state.propertyClamps
+    in
+    AnimBuilder { data | state = { state | propertyClamps = nextDict } }
+
+
+orderedRange : Float -> Float -> ( Float, Float )
+orderedRange a b =
+    if a <= b then
+        ( a, b )
+
+    else
+        ( b, a )
+
+
+{-| Set the group-wide default resize policy for the named anim group.
+
+Used by engines as the fallback when no per-property policy is stored.
+
+-}
+policy : (a -> Resize.Policy) -> AnimGroupName -> a -> AnimBuilder mode -> AnimBuilder mode
+policy toInternalPolicy groupName policy_ (AnimBuilder data) =
+    let
+        state =
+            data.state
+
+        current =
+            Maybe.withDefault { default = Nothing, perProperty = Dict.empty }
+                (Dict.get groupName state.resizePolicies)
+
+        updated =
+            { current | default = Just <| toInternalPolicy policy_ }
+    in
+    AnimBuilder { data | state = { state | resizePolicies = Dict.insert groupName updated state.resizePolicies } }
+
+
+{-| Set a per-property resize policy for the named anim group.
+
+`propertyKey` is a stable string identifier for the property, e.g. `"translate"` or `"scale"`.
+Future properties such as `"opacity"` or `"size"` are added here.
+
+-}
+setPropertyResizePolicy : AnimGroupName -> String -> Resize.Policy -> AnimBuilder mode -> AnimBuilder mode
+setPropertyResizePolicy groupName propertyKey policy_ (AnimBuilder data) =
+    let
+        state =
+            data.state
+
+        current =
+            Maybe.withDefault { default = Nothing, perProperty = Dict.empty }
+                (Dict.get groupName state.resizePolicies)
+
+        updated =
+            { current | perProperty = Dict.insert propertyKey policy_ current.perProperty }
+    in
+    AnimBuilder { data | state = { state | resizePolicies = Dict.insert groupName updated state.resizePolicies } }
+
+
+{-| Look up the effective resize policy for a given anim group and property.
+
+Resolution order:
+
+1.  Per-property entry for `propertyKey` in the group
+2.  Group-wide default for the group
+3.  Library default: `Resize.proportionalPolicy`
+
+-}
+getResizePolicy : AnimGroupName -> String -> AnimBuilder mode -> Resize.Policy
+getResizePolicy groupName propertyKey (AnimBuilder data) =
+    case Dict.get groupName data.state.resizePolicies of
+        Nothing ->
+            Resize.proportionalPolicy
+
+        Just policies ->
+            case Dict.get propertyKey policies.perProperty of
+                Just p ->
+                    p
+
+                Nothing ->
+                    Maybe.withDefault Resize.proportionalPolicy policies.default
+
+
 clearAnimData : AnimBuilder mode -> AnimBuilder mode
 clearAnimData (AnimBuilder data) =
     let
         pb =
             data.playback
+
+        st =
+            data.state
     in
     AnimBuilder
         { data
@@ -977,6 +1188,7 @@ clearAnimData (AnimBuilder data) =
                     | discreteEntryProperties = Dict.empty
                     , discreteExitProperties = Dict.empty
                 }
+            , state = { st | runningProperties = Dict.empty }
         }
 
 
@@ -1003,6 +1215,34 @@ mergeBaselines (AnimBuilder ({ state, animation } as data)) =
             }
     in
     AnimBuilder { data | state = newState }
+
+
+{-| Amend the stored baselines for a single animGroup using a transform
+function.
+
+Used by engines that need to update baselines outside the normal `animate`
+pipeline — for example, after a resize that shifts the in-flight
+animation's end target. Subsequent builders look up the new end via
+`getBaseline` (so that `Translate.for >> Translate.toY` and friends inherit
+the resized X/Z values), and that lookup must reflect the post-resize
+target rather than the pre-resize one captured by the prior `animate`.
+
+-}
+updateBaselines : String -> (PropertyBaselines -> PropertyBaselines) -> AnimBuilder mode -> AnimBuilder mode
+updateBaselines key f (AnimBuilder data) =
+    let
+        state =
+            data.state
+
+        current =
+            AnimGroups.get key state.baselines
+                |> Maybe.withDefault PropertyBaselines.empty
+    in
+    AnimBuilder
+        { data
+            | state =
+                { state | baselines = AnimGroups.insert key (f current) state.baselines }
+        }
 
 
 extractBaselinesFromConfig : AnimGroupConfig -> PropertyBaselines
@@ -1117,6 +1357,41 @@ propertyType prop =
             "skew"
 
         TranslateConfig _ ->
+            "translate"
+
+
+{-| Get the type tag of a ProcessedPropertyConfig. Mirrors `propertyType`
+but for the post-process variant. The returned string matches the keys
+used by `injectRunningProperties` / `isPropertyRunning`.
+-}
+processedPropertyType : ProcessedPropertyConfig -> String
+processedPropertyType prop =
+    case prop of
+        ProcessedCustomPropertyConfig cssName _ _ ->
+            "custom:" ++ cssName
+
+        ProcessedCustomColorPropertyConfig cssName _ ->
+            "customColor:" ++ cssName
+
+        ProcessedOpacityConfig _ ->
+            "opacity"
+
+        ProcessedPerspectiveOriginConfig _ ->
+            "perspectiveOrigin"
+
+        ProcessedRotateConfig _ ->
+            "rotate"
+
+        ProcessedScaleConfig _ ->
+            "scale"
+
+        ProcessedSizeConfig _ ->
+            "size"
+
+        ProcessedSkewConfig _ ->
+            "skew"
+
+        ProcessedTranslateConfig _ ->
             "translate"
 
 

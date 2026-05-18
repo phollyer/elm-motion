@@ -6,19 +6,19 @@
 
     === "Transition"
 
-        <iframe src="../../../../examples/src/Animation/Transition/BorderColor/index.html" style="width: 100%; height: 320px; border: 1px solid var(--md-default-fg-color--lightest); border-radius: 8px;" loading="lazy"></iframe>
+        <iframe src="../../../../examples/src/Animation/Transition/BorderColor/index.html" class="example-iframe" loading="lazy", style="height:300px;min-height:300px;max-height:300px"></iframe>
 
     === "Keyframe"
 
-        <iframe src="../../../../examples/src/Animation/Keyframe/BorderColor/index.html" style="width: 100%; height: 320px; border: 1px solid var(--md-default-fg-color--lightest); border-radius: 8px;" loading="lazy"></iframe>
+        <iframe src="../../../../examples/src/Animation/Keyframe/BorderColor/index.html" class="example-iframe" loading="lazy", style="height:300px;min-height:300px;max-height:300px"></iframe>
 
     === "Sub"
 
-        <iframe src="../../../../examples/src/Animation/Sub/BorderColor/index.html" style="width: 100%; height: 320px; border: 1px solid var(--md-default-fg-color--lightest); border-radius: 8px;" loading="lazy"></iframe>
+        <iframe src="../../../../examples/src/Animation/Sub/BorderColor/index.html" class="example-iframe" loading="lazy", style="height:300px;min-height:300px;max-height:300px"></iframe>
 
     === "WAAPI"
 
-        <iframe src="../../../../examples/src/Animation/WAAPI/BorderColor/index.html" style="width: 100%; height: 320px; border: 1px solid var(--md-default-fg-color--lightest); border-radius: 8px;" loading="lazy"></iframe>
+        <iframe src="../../../../examples/src/Animation/WAAPI/BorderColor/index.html" class="example-iframe" loading="lazy", style="height:300px;min-height:300px;max-height:300px"></iframe>
 
 --8<-- [end:examples]
 

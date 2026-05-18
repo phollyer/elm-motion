@@ -2,6 +2,7 @@ module Anim.Internal.Engine.WAAPI.Encoder exposing
     ( encode
     , encodeCommandWithProperties
     , encodeProcessedData
+    , encodeResize
     , encodeRestart
     , encodeScroll
     , encodeView
@@ -9,6 +10,7 @@ module Anim.Internal.Engine.WAAPI.Encoder exposing
 
 import Anim.Extra.TransformOrder as TransformProperty exposing (TransformProperty)
 import Anim.Internal.Builder as Builder exposing (AnimationDirection(..), DiscreteExitProperty)
+import Anim.Internal.Builder.PropertyBaselines as PropertyBaselines exposing (PropertyBaselines)
 import Anim.Internal.Engine.Shared.AnimGroups as AnimGroups exposing (AnimGroups)
 import Anim.Internal.Engine.WAAPI.AnimGroup as AnimGroup exposing (AnimGroup, PropertyState)
 import Anim.Internal.Engine.WAAPI.Generator as Generator
@@ -55,6 +57,11 @@ encode animGroups processed =
                                 animGroup
                                     |> Maybe.map AnimGroup.getTransformOrder
                                     |> Maybe.withDefault TransformProperty.default
+
+                            snapshot =
+                                animGroup
+                                    |> Maybe.map AnimGroup.getPropertySnapshot
+                                    |> Maybe.withDefault PropertyBaselines.empty
                         in
                         ( animGroupName
                         , encodeProcessedAnimGroupConfig
@@ -62,6 +69,7 @@ encode animGroups processed =
                             animGroupName
                             (Just propertyStatesGroup)
                             (Just animTransformOrder)
+                            (encodeTransformBaseline snapshot)
                             config.properties
                         )
                     )
@@ -95,6 +103,11 @@ encodeRestart iterationsConfig directionConfig animGroup configGroup =
                                 elementAnim
                                     |> Maybe.map AnimGroup.getTransformOrder
                                     |> Maybe.withDefault TransformProperty.default
+
+                            snapshot =
+                                elementAnim
+                                    |> Maybe.map AnimGroup.getPropertySnapshot
+                                    |> Maybe.withDefault PropertyBaselines.empty
                         in
                         ( animGroupName
                         , encodeProcessedAnimGroupConfig
@@ -102,6 +115,7 @@ encodeRestart iterationsConfig directionConfig animGroup configGroup =
                             animGroupName
                             (Just elementProps)
                             (Just elemTransformOrder)
+                            (encodeTransformBaseline snapshot)
                             config.properties
                         )
                     )
@@ -127,6 +141,7 @@ encodeProcessedData data =
                         , encodeProcessedAnimGroupConfig
                             animGroupName
                             animGroupName
+                            Nothing
                             Nothing
                             Nothing
                             config.properties
@@ -203,14 +218,79 @@ encodeAnimationDirection direction =
             Encode.string "alternate"
 
 
+{-| Encode a `resize` command for the JS side. The JS handler mutates the
+running translate animation in place via `effect.setKeyframes` and
+`effect.updateTiming`, preserving WAAPI's own `currentIteration`,
+direction, and play state.
+
+Elm decides where to seek and ships an explicit `currentTimeMs` when it
+has an authoritative answer (the `Proportional` strategy: temporal-ratio
+preservation for looping legs, `0` for the collapsed one-shot leg). For
+the `Clamp` strategy, `currentTimeMs` is omitted and JS solves for the
+time that places the box at the supplied `current` value via legacy
+linear inversion.
+
+-}
+encodeResize :
+    { animGroupName : AnimGroupName
+    , property : String
+    , start : { x : Float, y : Float, z : Float }
+    , end : { x : Float, y : Float, z : Float }
+    , current : { x : Float, y : Float, z : Float }
+    , durationMs : Float
+    , currentTimeMs : Maybe Float
+    , hasAnimationBaseline : Bool
+    , unit : Maybe String
+    }
+    -> Encode.Value
+encodeResize r =
+    let
+        baseFields =
+            [ ( "type", Encode.string "resize" )
+            , ( "elementId", Encode.string r.animGroupName )
+            , ( "animGroup", Encode.string r.animGroupName )
+            , ( "property", Encode.string r.property )
+            , ( "startX", Encode.float r.start.x )
+            , ( "startY", Encode.float r.start.y )
+            , ( "startZ", Encode.float r.start.z )
+            , ( "endX", Encode.float r.end.x )
+            , ( "endY", Encode.float r.end.y )
+            , ( "endZ", Encode.float r.end.z )
+            , ( "currentX", Encode.float r.current.x )
+            , ( "currentY", Encode.float r.current.y )
+            , ( "currentZ", Encode.float r.current.z )
+            , ( "duration", Encode.float r.durationMs )
+            , ( "hasAnimationBaseline", Encode.bool r.hasAnimationBaseline )
+            , ( "currentTimeMs"
+              , case r.currentTimeMs of
+                    Just t ->
+                        Encode.float t
+
+                    Nothing ->
+                        Encode.null
+              )
+            ]
+
+        unitField =
+            case r.unit of
+                Just unit ->
+                    [ ( "unit", Encode.string unit ) ]
+
+                Nothing ->
+                    []
+    in
+    Encode.object (baseFields ++ unitField)
+
+
 encodeProcessedAnimGroupConfig :
     AnimGroupName
     -> String
     -> Maybe (AnimGroups PropertyState)
     -> Maybe (List TransformProperty)
+    -> Maybe Encode.Value
     -> List Builder.ProcessedPropertyConfig
     -> Encode.Value
-encodeProcessedAnimGroupConfig animGroupName targetId propertyState transformOrder_ propertyConfigs =
+encodeProcessedAnimGroupConfig animGroupName targetId propertyState transformOrder_ transformBaseline propertyConfigs =
     let
         baseFields =
             [ ( "properties", Encode.list (encodeProcessedPropertyConfig propertyState) propertyConfigs )
@@ -218,12 +298,96 @@ encodeProcessedAnimGroupConfig animGroupName targetId propertyState transformOrd
             , ( "target", Encode.string targetId )
             ]
 
-        optionalFields =
+        orderField =
             transformOrder_
                 |> Maybe.map (\order -> [ ( "transformOrder", encodeTransformOrder order ) ])
                 |> Maybe.withDefault []
+
+        baselineField =
+            transformBaseline
+                |> Maybe.map (\baseline -> [ ( "transformBaseline", baseline ) ])
+                |> Maybe.withDefault []
     in
-    Encode.object (baseFields ++ optionalFields)
+    Encode.object (baseFields ++ orderField ++ baselineField)
+
+
+{-| Encode the Elm-side transform snapshot baseline (init values plus any
+latest committed runtime values) so JavaScript can seed its
+`lastKnownTransforms` cache before computing keyframes for the first
+animation that touches a transform sub-property on this animGroup.
+
+Without this, when ownership of the inline `transform` style flips from
+Elm to JS (because a transform sub-property begins animating), JS reads
+an empty inline transform, defaults missing axes to identity, and silently
+drops init-only values such as `Translate.initZ animGroup 200`.
+
+Returns `Nothing` when the snapshot has none of translate / scale /
+rotate / skew set, so the encoded payload stays compact
+when the element only animates non-transform properties.
+
+-}
+encodeTransformBaseline : PropertyBaselines -> Maybe Encode.Value
+encodeTransformBaseline snapshot =
+    let
+        translateField =
+            PropertyBaselines.getTranslate snapshot
+                |> Maybe.map
+                    (\t ->
+                        ( "translate"
+                        , Encode.object
+                            [ ( "x", Encode.float (Translate.getX t) )
+                            , ( "y", Encode.float (Translate.getY t) )
+                            , ( "z", Encode.float (Translate.getZ t) )
+                            ]
+                        )
+                    )
+
+        scaleField =
+            PropertyBaselines.getScale snapshot
+                |> Maybe.map
+                    (\s ->
+                        ( "scale"
+                        , Encode.object
+                            [ ( "x", Encode.float (Scale.getX s) )
+                            , ( "y", Encode.float (Scale.getY s) )
+                            , ( "z", Encode.float (Scale.getZ s) )
+                            ]
+                        )
+                    )
+
+        rotateField =
+            PropertyBaselines.getRotate snapshot
+                |> Maybe.map
+                    (\r ->
+                        ( "rotate"
+                        , Encode.object
+                            [ ( "x", Encode.float (Rotate.getX r) )
+                            , ( "y", Encode.float (Rotate.getY r) )
+                            , ( "z", Encode.float (Rotate.getZ r) )
+                            ]
+                        )
+                    )
+
+        skewField =
+            PropertyBaselines.getSkew snapshot
+                |> Maybe.map
+                    (\sk ->
+                        ( "skew"
+                        , Encode.object
+                            [ ( "x", Encode.float (Skew.getX sk) )
+                            , ( "y", Encode.float (Skew.getY sk) )
+                            ]
+                        )
+                    )
+
+        fields =
+            List.filterMap identity [ translateField, scaleField, rotateField, skewField ]
+    in
+    if List.isEmpty fields then
+        Nothing
+
+    else
+        Just (Encode.object fields)
 
 
 encodeDiscreteEntryFields : Dict.Dict String String -> List ( String, Encode.Value )
@@ -663,6 +827,7 @@ encodeScroll builder =
                             (Builder.getAnimTarget animGroupName builder |> Maybe.withDefault animGroupName)
                             Nothing
                             config.transformOrder
+                            Nothing
                             config.properties
                         )
                     )
@@ -729,6 +894,7 @@ encodeView builder =
                             (Builder.getAnimTarget animGroupName builder |> Maybe.withDefault animGroupName)
                             Nothing
                             config.transformOrder
+                            Nothing
                             config.properties
                         )
                     )

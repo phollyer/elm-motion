@@ -5,10 +5,13 @@ import Anim.Engine.Transition as Transition
 import Anim.Extra.View3D as View3D
 import Anim.Property.PerspectiveOrigin as PerspectiveOrigin
 import Anim.Property.Rotate as Rotate
+import Anim.Property.Scale as Scale
 import Anim.Property.Translate as Translate
 import Browser exposing (Document)
+import Browser.Dom as Dom
+import Browser.Events
 import Html exposing (Html, div, text)
-import Html.Attributes exposing (id, style)
+import Html.Attributes exposing (class, id, style)
 import Motion.Easing as Easing exposing (Easing(..))
 import Process
 import Task
@@ -18,13 +21,13 @@ import Task
 -- MAIN
 
 
-main : Program { window : { width : Int } } Model Msg
+main : Program { window : { width : Int, height : Int } } Model Msg
 main =
     Browser.document
         { init = init
         , view = view
         , update = update
-        , subscriptions = \_ -> Sub.none
+        , subscriptions = subscriptions
         }
 
 
@@ -57,24 +60,16 @@ vanishingPointDot =
 -- Cube configuration
 
 
+cubeGroupName : String
+cubeGroupName =
+    "cubeAnim"
+
+
 type alias CubeConfig =
     { id : String
     , groupName : String
     , size : Int
     }
-
-
-cube : CubeConfig
-cube =
-    { id = "cube"
-    , groupName = "cubeAnim"
-    , size = 100
-    }
-
-
-depth : Float
-depth =
-    toFloat cube.size / 2
 
 
 
@@ -195,13 +190,6 @@ bottomFace =
     }
 
 
-type State
-    = Opening
-    | Closing
-    | RotatingOpen
-    | RotatingClosed
-
-
 type PerspectiveStep
     = MoveToTopRight
     | MoveToBottomRight
@@ -211,9 +199,42 @@ type PerspectiveStep
 
 type alias Model =
     { animState : Transition.AnimState
-    , state : State
     , perspectiveStep : PerspectiveStep
-    , animAreaSize : { width : Int, height : Int }
+    , initialAnimAreaSize : { width : Float, height : Float }
+    , currentAnimAreaSize : { width : Float, height : Float }
+    , cube : CubeConfig
+    }
+
+
+{-| Square animation area sized off the smaller viewport axis so it
+always fits the page in either orientation. Mirrors the responsive
+strategy used by `Animation.WAAPI.Animate3D.Main`.
+-}
+animAreaSize : Float -> Float -> { width : Float, height : Float }
+animAreaSize windowWidth windowHeight =
+    if windowWidth < windowHeight then
+        { width = windowWidth, height = windowWidth }
+
+    else
+        { width = windowHeight, height = windowHeight }
+
+
+{-| Width of the perspective container's border (must match the inline
+`border` style applied to `viewAnimationArea`). The dot is absolutely
+positioned relative to the padding box, so animating its anchor all the
+way to `element.width` / `element.height` would place it `2 * borderWidth`
+past the inner edge of the border. Subtracting `2 * borderWidth` from the
+measured area keeps the dot tracing the visible border on all four sides.
+-}
+containerBorderWidth : Float
+containerBorderWidth =
+    1
+
+
+toInnerArea : { width : Float, height : Float } -> { width : Float, height : Float }
+toInnerArea { width, height } =
+    { width = max 0 (width - 2 * containerBorderWidth)
+    , height = max 0 (height - 2 * containerBorderWidth)
     }
 
 
@@ -221,14 +242,19 @@ type alias Model =
 -- INIT
 
 
-init : { window : { width : Int } } -> ( Model, Cmd Msg )
+init : { window : { width : Int, height : Int } } -> ( Model, Cmd Msg )
 init flags =
     let
-        animAreaWidth =
-            min 500 (flags.window.width - 40)
+        initialAreaSize =
+            animAreaSize
+                (toFloat flags.window.width)
+                (toFloat flags.window.height)
 
-        animAreaHeight =
-            350
+        cubeSize =
+            min (toFloat flags.window.width) (toFloat flags.window.height) * 0.8 / 4
+
+        depth =
+            cubeSize / 2
 
         initialAnimState =
             Transition.init
@@ -241,7 +267,10 @@ init flags =
                 -- so that it doesn't get clipped by the
                 -- z=0 clipping plane when we expand the
                 -- sides and rotate
-                , Translate.initZ cube.groupName 200
+                , Translate.initZ cubeGroupName 300
+                    -- Static no-op scale so subsequent `Scale.to*` calls
+                    -- on resize have a baseline to transition from.
+                    >> Scale.init cubeGroupName 1
 
                 -- Position each face in 3D space along the axis it faces
                 -- Front/Back faces move on Z (forward/backward)
@@ -268,34 +297,19 @@ init flags =
                 ]
     in
     ( { animState = initialAnimState
-      , state = Opening
       , perspectiveStep = MoveToTopRight
-      , animAreaSize =
-            { width = animAreaWidth
-            , height = animAreaHeight
+      , initialAnimAreaSize = initialAreaSize
+      , currentAnimAreaSize = initialAreaSize
+      , cube =
+            { id = "cube"
+            , groupName = cubeGroupName
+            , size = round cubeSize
             }
       }
-    , Process.sleep 0
-        |> Task.perform (always TriggerAnimation)
+    , Process.sleep 100
+        |> Task.andThen (\_ -> Dom.getElement perspectiveContainer.id)
+        |> Task.attempt InitStageElement
     )
-
-
-selectAnimation : State -> AnimBuilder mode -> AnimBuilder mode
-selectAnimation state =
-    case state of
-        Opening ->
-            moveSidesOut
-                >> moveTextsOut
-
-        Closing ->
-            moveSidesIn
-                >> moveTextsIn
-
-        RotatingOpen ->
-            rotateCubeClockwise
-
-        RotatingClosed ->
-            rotateCubeAntiClockwise
 
 
 perspectiveStepDuration : Int
@@ -319,7 +333,7 @@ nextPerspectiveStep step =
             MoveToTopRight
 
 
-perspectiveAnimation : { width : Int, height : Int } -> PerspectiveStep -> AnimBuilder mode -> AnimBuilder mode
+perspectiveAnimation : { width : Float, height : Float } -> PerspectiveStep -> AnimBuilder mode -> AnimBuilder mode
 perspectiveAnimation areaSize step =
     case step of
         MoveToTopRight ->
@@ -342,7 +356,7 @@ perspectiveAnimation areaSize step =
 -- container in sync with the cube animation
 
 
-movePerspectiveOrigin : Float -> Float -> Int -> { width : Int, height : Int } -> AnimBuilder mode -> AnimBuilder mode
+movePerspectiveOrigin : Float -> Float -> Int -> { width : Float, height : Float } -> AnimBuilder mode -> AnimBuilder mode
 movePerspectiveOrigin x y ms areaSize =
     PerspectiveOrigin.for perspectiveContainer.groupName
         >> PerspectiveOrigin.percent
@@ -351,209 +365,26 @@ movePerspectiveOrigin x y ms areaSize =
         >> PerspectiveOrigin.easing Linear
         >> PerspectiveOrigin.build
         >> Translate.for vanishingPointDot.groupName
-        >> Translate.toX (x / 100 * toFloat areaSize.width)
-        >> Translate.toY (y / 100 * toFloat areaSize.height)
+        >> Translate.toX (x / 100 * areaSize.width)
+        >> Translate.toY (y / 100 * areaSize.height)
         >> Translate.duration ms
         >> Translate.easing Linear
         >> Translate.build
 
 
-
--- CUBE - 1st level of 3D animation
---
--- We only rotate the cube, not individual faces, they maintain their
--- position in 3D space because we use `View3D.transformStyle View3D.Preserve3D`
--- on the cube container
-
-
-rotateCube : Float -> AnimBuilder mode -> AnimBuilder mode
-rotateCube to =
-    Rotate.for cube.groupName
-        >> Rotate.toXYZ to to to
-        >> Rotate.easing BackInOut
-        >> Rotate.duration 8000
-        >> Rotate.build
-
-
-rotateCubeClockwise : AnimBuilder mode -> AnimBuilder mode
-rotateCubeClockwise =
-    rotateCube 360
-
-
-rotateCubeAntiClockwise : AnimBuilder mode -> AnimBuilder mode
-rotateCubeAntiClockwise =
-    rotateCube 0
-
-
-
--- SIDES - 2nd level of 3D animation
---
--- For the side movement animations, we build complex animations out of
--- smaller pieces.
-
-
-moveSidesOut : AnimBuilder mode -> AnimBuilder mode
-moveSidesOut =
-    moveFrontFaceOut
-        >> moveBackFaceOut
-        >> moveRightFaceOut
-        >> moveLeftFaceOut
-        >> moveTopFaceOut
-        >> moveBottomFaceOut
-
-
-moveSidesIn : AnimBuilder mode -> AnimBuilder mode
-moveSidesIn =
-    moveFrontFaceIn
-        >> moveBackFaceIn
-        >> moveRightFaceIn
-        >> moveLeftFaceIn
-        >> moveTopFaceIn
-        >> moveBottomFaceIn
-
-
-sharedTiming : AnimBuilder mode -> AnimBuilder mode
-sharedTiming =
-    Transition.duration 1000
-        >> Transition.easing CircInOut
-
-
-moveFace : FaceConfig -> (Translate.Builder mode -> Translate.Builder mode) -> AnimBuilder mode -> AnimBuilder mode
-moveFace { groupName } moveToBuilder =
-    sharedTiming
-        >> Translate.for groupName
-        >> moveToBuilder
-        >> Translate.build
-
-
-
--- Each face moves along the axis it faces by a `moveAmount` number
--- of pixels when the cube expands, and moves back to it's original position
--- when the cube closes.
---
--- Front/Back faces move on Z (forward/backward)
--- Left/Right faces move on X (sideways)
--- Top/Bottom faces move on Y (up/down)
-
-
-moveAmount : Float
-moveAmount =
-    50
-
-
-moveFrontFaceOut : AnimBuilder mode -> AnimBuilder mode
-moveFrontFaceOut =
-    moveFace frontFace <|
-        Translate.toZ (depth + moveAmount)
-
-
-moveFrontFaceIn : AnimBuilder mode -> AnimBuilder mode
-moveFrontFaceIn =
-    moveFace frontFace <|
-        Translate.toZ depth
-
-
-moveBackFaceOut : AnimBuilder mode -> AnimBuilder mode
-moveBackFaceOut =
-    moveFace backFace <|
-        Translate.toZ (-1 * depth - moveAmount)
-
-
-moveBackFaceIn : AnimBuilder mode -> AnimBuilder mode
-moveBackFaceIn =
-    moveFace backFace <|
-        Translate.toZ (-1 * depth)
-
-
-moveRightFaceOut : AnimBuilder mode -> AnimBuilder mode
-moveRightFaceOut =
-    moveFace rightFace <|
-        Translate.toX (depth + moveAmount)
-
-
-moveRightFaceIn : AnimBuilder mode -> AnimBuilder mode
-moveRightFaceIn =
-    moveFace rightFace <|
-        Translate.toX depth
-
-
-moveLeftFaceOut : AnimBuilder mode -> AnimBuilder mode
-moveLeftFaceOut =
-    moveFace leftFace <|
-        Translate.toX (-1 * depth - moveAmount)
-
-
-moveLeftFaceIn : AnimBuilder mode -> AnimBuilder mode
-moveLeftFaceIn =
-    moveFace leftFace <|
-        Translate.toX (-1 * depth)
-
-
-moveTopFaceOut : AnimBuilder mode -> AnimBuilder mode
-moveTopFaceOut =
-    moveFace topFace <|
-        Translate.toY (-1 * depth - moveAmount)
-
-
-moveTopFaceIn : AnimBuilder mode -> AnimBuilder mode
-moveTopFaceIn =
-    moveFace topFace <|
-        Translate.toY (-1 * depth)
-
-
-moveBottomFaceOut : AnimBuilder mode -> AnimBuilder mode
-moveBottomFaceOut =
-    moveFace bottomFace <|
-        Translate.toY (depth + moveAmount)
-
-
-moveBottomFaceIn : AnimBuilder mode -> AnimBuilder mode
-moveBottomFaceIn =
-    moveFace bottomFace <|
-        Translate.toY depth
-
-
-
--- TEXT - 3rd level of 3D animation
---
--- Text moves forward (Z+20) and rotates (to Z=360deg) when sides expand,
--- and then moves back (to Z=0) and rotates back (to Z=0deg) when sides close
-
-
-textMoveAmount : Float
-textMoveAmount =
-    20
-
-
-moveText : TextConfig -> Float -> Float -> AnimBuilder mode -> AnimBuilder mode
-moveText { groupName } toZ toRotate =
-    sharedTiming
-        >> Translate.for groupName
-        >> Translate.toZ toZ
-        >> Translate.build
-        >> Rotate.for groupName
-        >> Rotate.toZ toRotate
-        >> Rotate.build
-
-
-moveTextsOut : AnimBuilder mode -> AnimBuilder mode
-moveTextsOut =
-    moveText frontFace.text textMoveAmount 360
-        >> moveText backFace.text textMoveAmount 360
-        >> moveText rightFace.text textMoveAmount 360
-        >> moveText leftFace.text textMoveAmount 360
-        >> moveText topFace.text textMoveAmount 360
-        >> moveText bottomFace.text textMoveAmount 360
-
-
-moveTextsIn : AnimBuilder mode -> AnimBuilder mode
-moveTextsIn =
-    moveText frontFace.text 0 0
-        >> moveText backFace.text 0 0
-        >> moveText rightFace.text 0 0
-        >> moveText leftFace.text 0 0
-        >> moveText topFace.text 0 0
-        >> moveText bottomFace.text 0 0
+{-| Scale a group uniformly on x/y/z to the given ratio.
+Used on resize to make the cube and dot grow/shrink with the
+container, mirroring the responsive strategy of `WAAPI.Animate3D`.
+-}
+scaleGroupTo : String -> Float -> AnimBuilder mode -> AnimBuilder mode
+scaleGroupTo groupName ratio =
+    Scale.for groupName
+        >> Scale.toX ratio
+        >> Scale.toY ratio
+        >> Scale.toZ ratio
+        >> Scale.duration 200
+        >> Scale.easing Linear
+        >> Scale.build
 
 
 
@@ -564,6 +395,9 @@ type Msg
     = NoOp
     | TriggerAnimation
     | GotTransitionsMsg Transition.AnimMsg
+    | InitStageElement (Result Dom.Error Dom.Element)
+    | GotStageElement (Result Dom.Error Dom.Element)
+    | OnWindowResize Int Int
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -576,8 +410,7 @@ update msg model =
             ( { model
                 | animState =
                     Transition.animate model.animState <|
-                        selectAnimation model.state
-                            >> perspectiveAnimation model.animAreaSize model.perspectiveStep
+                        perspectiveAnimation model.currentAnimAreaSize model.perspectiveStep
                 , perspectiveStep =
                     nextPerspectiveStep model.perspectiveStep
               }
@@ -593,16 +426,60 @@ update msg model =
             , Cmd.none
             )
 
+        InitStageElement (Ok { element }) ->
+            let
+                measured =
+                    toInnerArea
+                        { width = element.width, height = element.height }
+            in
+            ( { model
+                | initialAnimAreaSize = measured
+                , currentAnimAreaSize = measured
+              }
+            , Process.sleep 0
+                |> Task.perform (always TriggerAnimation)
+            )
+
+        InitStageElement (Err _) ->
+            ( model, Cmd.none )
+
+        GotStageElement (Ok { element }) ->
+            -- Transition engine cannot remap in-flight CSS transitions on
+            -- resize, but we can fire a fresh `Transition.animate` that
+            -- scales the cube and dot to the new container ratio. CSS
+            -- transitions smoothly interpolate to the new scale.
+            let
+                newAreaSize =
+                    toInnerArea
+                        { width = element.width, height = element.height }
+
+                scale =
+                    newAreaSize.width
+                        / model.initialAnimAreaSize.width
+            in
+            ( { model
+                | currentAnimAreaSize = newAreaSize
+                , animState =
+                    Transition.animate model.animState <|
+                        scaleGroupTo cubeGroupName scale
+                            >> scaleGroupTo vanishingPointDot.groupName scale
+              }
+            , Cmd.none
+            )
+
+        GotStageElement (Err _) ->
+            ( model, Cmd.none )
+
+        OnWindowResize _ _ ->
+            ( model
+            , Task.attempt GotStageElement <|
+                Dom.getElement perspectiveContainer.id
+            )
+
 
 handleEvent : Transition.AnimEvent -> Model -> Model
 handleEvent animEvent model =
     case animEvent of
-        Transition.Ended _ _ "cubeAnim" ->
-            cubeRotationEnded model
-
-        Transition.Ended _ _ "frontFaceAnim" ->
-            sidesMovementEnded model
-
         Transition.Ended _ _ "vanishingPointDotAnim" ->
             perspectiveStepEnded model
 
@@ -610,51 +487,24 @@ handleEvent animEvent model =
             model
 
 
-cubeRotationEnded : Model -> Model
-cubeRotationEnded model =
-    case model.state of
-        RotatingOpen ->
-            stateChanged Closing model
-
-        RotatingClosed ->
-            stateChanged Opening model
-
-        _ ->
-            model
-
-
-sidesMovementEnded : Model -> Model
-sidesMovementEnded model =
-    case model.state of
-        Opening ->
-            stateChanged RotatingOpen model
-
-        Closing ->
-            stateChanged RotatingClosed model
-
-        _ ->
-            model
-
-
-stateChanged : State -> Model -> Model
-stateChanged state model =
-    { model
-        | state = state
-        , animState =
-            Transition.animate model.animState <|
-                selectAnimation state
-    }
-
-
 perspectiveStepEnded : Model -> Model
 perspectiveStepEnded model =
     { model
         | animState =
             Transition.animate model.animState <|
-                perspectiveAnimation model.animAreaSize model.perspectiveStep
+                perspectiveAnimation model.currentAnimAreaSize model.perspectiveStep
         , perspectiveStep =
             nextPerspectiveStep model.perspectiveStep
     }
+
+
+
+-- SUBSCRIPTIONS
+
+
+subscriptions : Model -> Sub Msg
+subscriptions _ =
+    Browser.Events.onResize OnWindowResize
 
 
 
@@ -665,17 +515,9 @@ view : Model -> Document Msg
 view model =
     { title = "Transition Engine - 3D Perspective Origin Example"
     , body =
-        [ div
-            [ style "min-height" "100vh"
-            , style "background" "linear-gradient(to bottom, rgb(226, 232, 240), rgb(248, 250, 252))"
-            ]
-            [ div
-                [ style "font-family" "system-ui, sans-serif"
-                , style "padding" "20px 40px"
-                , style "max-width" "700px"
-                , style "margin" "0 auto"
-                ]
-                [ viewAnimationArea model ]
+        [ div [ class "example-stage" ]
+            [ div [ class "example-badge example-badge--static" ] [ text "Static" ]
+            , viewAnimationArea model
             ]
         ]
     }
@@ -689,7 +531,7 @@ viewAnimationArea model =
             ++ [ id perspectiveContainer.id
 
                -- Perspective container - perspective-origin is animated by the engine
-               , View3D.perspective 1000
+               , View3D.perspective 1200
 
                --
                -- Workaround for Chrome on macOS GPU compositing issues with 3D transforms.
@@ -701,16 +543,23 @@ viewAnimationArea model =
                , style "display" "flex"
                , style "justify-content" "center"
                , style "align-items" "center"
-               , style "width" (String.fromInt model.animAreaSize.width ++ "px")
-               , style "height" (String.fromInt model.animAreaSize.height ++ "px")
-               , style "margin" "0 auto"
-               , style "background-color" "#ffffff"
-               , style "border-radius" "12px"
-               , style "box-shadow" "0 4px 8px rgba(0,0,0,0.1)"
+               , style "flex" "1 1 auto"
+               , style "width" "100%"
+               , style "min-height" "0"
+               , style "aspect-ratio" "1 / 1"
+               , style "background-color" "#ececf688"
+               , style "border" "1px solid #4f4f7f18"
                ]
         )
         [ viewVanishingPoint model.animState
-        , viewCube model
+        , div
+            [ View3D.transformStyle View3D.Preserve3D
+            , style "position" "absolute"
+            , style "left" "50%"
+            , style "top" "50%"
+            , style "transform" "translate(-50%, -50%)"
+            ]
+            [ viewCube model ]
         ]
 
 
@@ -763,32 +612,35 @@ viewCube : Model -> Html Msg
 viewCube model =
     let
         cubeAttrs =
-            Transition.attributes cube.groupName model.animState
+            Transition.attributes cubeGroupName model.animState
 
         cubeEvents =
             Transition.events GotTransitionsMsg
+
+        cubeSize =
+            toFloat model.cube.size
     in
     div
         (cubeAttrs
             ++ cubeEvents
             ++ [ View3D.transformStyle View3D.Preserve3D
-               , id cube.id
-               , style "width" (String.fromInt cube.size ++ "px")
-               , style "height" (String.fromInt cube.size ++ "px")
+               , id model.cube.id
+               , style "width" (String.fromFloat cubeSize ++ "px")
+               , style "height" (String.fromFloat cubeSize ++ "px")
                , style "position" "relative"
                ]
         )
-        [ viewFace model.animState frontFace
-        , viewFace model.animState backFace
-        , viewFace model.animState rightFace
-        , viewFace model.animState leftFace
-        , viewFace model.animState topFace
-        , viewFace model.animState bottomFace
+        [ viewFace cubeSize model.animState frontFace
+        , viewFace cubeSize model.animState backFace
+        , viewFace cubeSize model.animState rightFace
+        , viewFace cubeSize model.animState leftFace
+        , viewFace cubeSize model.animState topFace
+        , viewFace cubeSize model.animState bottomFace
         ]
 
 
-viewFace : Transition.AnimState -> FaceConfig -> Html Msg
-viewFace animState config =
+viewFace : Float -> Transition.AnimState -> FaceConfig -> Html Msg
+viewFace cubeSize animState config =
     let
         faceAnimAttributes =
             Transition.attributes config.groupName animState
@@ -801,8 +653,8 @@ viewFace animState config =
             ++ [ View3D.transformStyle View3D.Preserve3D
                , id config.id
                , style "position" "absolute"
-               , style "width" (String.fromInt cube.size ++ "px")
-               , style "height" (String.fromInt cube.size ++ "px")
+               , style "width" (String.fromFloat cubeSize ++ "px")
+               , style "height" (String.fromFloat cubeSize ++ "px")
                , style "background-color" config.background
                , style "border" ("2px solid " ++ config.borderColor)
                , style "box-sizing" "border-box"

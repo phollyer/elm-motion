@@ -4,7 +4,8 @@ module Anim.Engine.Sub exposing
     , TimelineBuilder
     , EngineBuilder
     , init
-    , animate
+    , animate, retarget
+    , onResize
     , AnimEvent(..)
     , AnimMsg, update
     , subscriptions
@@ -23,6 +24,7 @@ module Anim.Engine.Sub exposing
     , getPropertyCurrent, getPropertyEnd, getPropertyRange, getPropertyStart
     , getColorPropertyCurrent, getColorPropertyEnd, getColorPropertyRange, getColorPropertyStart
     , getOpacityRange, getOpacityStart, getOpacityEnd, getOpacityCurrent
+    , getPerspectiveOriginRange, getPerspectiveOriginStart, getPerspectiveOriginEnd, getPerspectiveOriginCurrent
     , getRotateRange, getRotateStart, getRotateEnd, getRotateCurrent
     , getScaleRange, getScaleStart, getScaleEnd, getScaleCurrent
     , getSizeRange, getSizeStart, getSizeEnd, getSizeCurrent
@@ -78,7 +80,12 @@ on Sub-only APIs.
 
 # Trigger
 
-@docs animate
+@docs animate, retarget
+
+
+## Resize
+
+@docs onResize
 
 📖 See [Triggering Animations](https://phollyer.github.io/elm-motion/animation/workflow/trigger/) in the docs.
 
@@ -202,6 +209,11 @@ To render an animation, you need to apply the animation `attributes` to your ele
 @docs getOpacityRange, getOpacityStart, getOpacityEnd, getOpacityCurrent
 
 
+## Perspective Origin
+
+@docs getPerspectiveOriginRange, getPerspectiveOriginStart, getPerspectiveOriginEnd, getPerspectiveOriginCurrent
+
+
 ## Rotate
 
 @docs getRotateRange, getRotateStart, getRotateEnd, getRotateCurrent
@@ -232,6 +244,7 @@ import Anim.Extra.Color exposing (Color)
 import Anim.Extra.TransformOrder exposing (TransformProperty)
 import Anim.Internal.Builder as Builder
 import Anim.Internal.Engine.Sub as Internal
+import Anim.Resize as Resize
 import Browser exposing (UrlRequest(..))
 import Html
 import Motion.Easing exposing (Easing)
@@ -358,6 +371,63 @@ init =
 animate : AnimState -> (EngineBuilder -> EngineBuilder) -> AnimState
 animate =
     Internal.animate
+
+
+{-| Continue an in-flight animation toward a new target without restarting it.
+
+Works like [animate](#animate), but for any property currently mid-animation,
+[continueFor](Anim-Property-Translate#continueFor) will inherit the
+in-flight timing (duration / speed / easing / delay) and use the property's
+current animated value as the new `from` — producing smooth retargeting
+instead of a fresh animation.
+
+Idle properties fall back to `for`-style behaviour: they snap to the new
+value rather than animating. This is the typical resize-handler pattern —
+while the user is mid-drag the box keeps animating; once the resize stops,
+the box snaps to its final position.
+
+-}
+retarget : AnimState -> (EngineBuilder -> EngineBuilder) -> AnimState
+retarget =
+    Internal.retarget
+
+
+{-| Adjust the in-flight properties of every anim group named in the
+builder to match new container sizes, using the directives composed in
+a [`Anim.Resize.Builder`](Anim-Resize#Builder).
+
+Each property `onResize` call names the anim group it targets, so a
+single `Sub.onResize` invocation can update many groups at once.
+Properties without a directive on a given group are left untouched.
+
+Typical resize handler:
+
+    import Anim.Engine.Sub as Sub
+    import Anim.Property.Translate as Translate
+    import Anim.Resize as Resize
+
+    GotTrack (Ok element) ->
+        let
+            bounds =
+                { x = Just { min = 0, max = element.element.width - boxSize }
+                , y = Nothing
+                , z = Nothing
+                }
+        in
+        ( { model
+            | trackPx = element.element.width
+            , animState =
+                Sub.onResize model.animState <|
+                    Resize.bounds "box" bounds
+                        >> Translate.bounds "card" bounds
+          }
+        , Cmd.none
+        )
+
+-}
+onResize : AnimState -> (Resize.Builder -> Resize.Builder) -> AnimState
+onResize =
+    Internal.onResize
 
 
 
@@ -1249,6 +1319,60 @@ Returns the end opacity if the animation has completed.
 getOpacityCurrent : AnimGroupName -> AnimState -> Maybe Float
 getOpacityCurrent =
     Internal.getOpacityCurrent
+
+
+
+-- ============================
+-- PERSPECTIVE ORIGIN
+-- ============================
+
+
+{-| Get the perspective origin range (start and end) of an element being animated.
+
+Returns `Nothing` if the element has no perspective origin animation.
+
+-}
+getPerspectiveOriginRange : AnimGroupName -> AnimState -> Maybe { start : Maybe { x : Float, y : Float }, end : { x : Float, y : Float } }
+getPerspectiveOriginRange =
+    Internal.getPerspectiveOriginRange
+
+
+{-| Get the start perspective origin of an element being animated.
+
+Returns `Nothing` if the element has no perspective origin animation.
+
+Returns `Just { x = 50, y = 50 }` if no explicit start value was set, which is the default when no start value is set.
+
+-}
+getPerspectiveOriginStart : AnimGroupName -> AnimState -> Maybe { x : Float, y : Float }
+getPerspectiveOriginStart =
+    Internal.getPerspectiveOriginStart
+
+
+{-| Get the end perspective origin of an element being animated.
+
+Returns `Nothing` if the element has no perspective origin animation.
+
+-}
+getPerspectiveOriginEnd : AnimGroupName -> AnimState -> Maybe { x : Float, y : Float }
+getPerspectiveOriginEnd =
+    Internal.getPerspectiveOriginEnd
+
+
+{-| Get the current perspective origin of an element based on its animation state.
+
+Returns `Nothing` if the element has no perspective origin animation.
+
+Returns the start perspective origin if the animation has not started yet.
+
+Returns the current interpolated perspective origin if the animation is running.
+
+Returns the end perspective origin if the animation has completed.
+
+-}
+getPerspectiveOriginCurrent : AnimGroupName -> AnimState -> Maybe { x : Float, y : Float }
+getPerspectiveOriginCurrent =
+    Internal.getPerspectiveOriginCurrent
 
 
 

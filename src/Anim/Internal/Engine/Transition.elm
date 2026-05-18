@@ -11,6 +11,7 @@ module Anim.Internal.Engine.Transition exposing
     , eventsStopPropagation
     , init
     , reset
+    , retarget
     , startingStyleNode
     , startingStyleNodeFor
     , stop
@@ -20,8 +21,9 @@ module Anim.Internal.Engine.Transition exposing
 import Anim.Extra.TransformOrder exposing (TransformProperty)
 import Anim.Internal.Builder as Builder
 import Anim.Internal.Engine.CSS.CSS as CSS exposing (AnimState(..))
-import Anim.Internal.Engine.CSS.Styles exposing (Styles)
+import Anim.Internal.Engine.CSS.Styles as Styles exposing (Styles)
 import Anim.Internal.Engine.Shared.AnimGroups as AnimGroups exposing (AnimGroups)
+import Anim.Internal.Engine.Shared.PlayState as PlayState
 import Anim.Internal.Engine.Transition.AnimGroup as AnimGroup exposing (AnimGroup)
 import Anim.Internal.Engine.Transition.Generator as Generator exposing (AnimGroupName)
 import Anim.Internal.Engine.Transition.Styles as TransitionStyles
@@ -119,6 +121,61 @@ animate =
                     AnimGroups.insert animGroupName styles acc
     in
     CSS.animate AnimGroup.setPlayState generateAnimGroup insertAnimGroup
+
+
+{-| Re-anchor an animation to a new target by snapping to the new end values.
+
+The Transition engine is a thin wrapper over CSS transitions, with no
+JavaScript-side runtime snapshot of the currently rendered values - it
+only knows the previous _target_, not where the element actually is on
+screen. That makes it impossible to smoothly continue an in-flight
+transition when the target changes mid-flight (typical of resize
+handlers): the engine would have to interpolate from the previous target
+rather than the actual rendered position, producing visual glitches.
+
+`retarget` therefore guarantees a deterministic outcome: the element
+snaps to the freshly computed end values with `transition: none`, and
+the animation group is marked complete. The element ends up exactly
+where the new builder placed it - safe to call repeatedly during a drag
+or resize without accumulating partial transitions.
+
+If you need smooth visual continuity instead of a snap, use the `Sub` or
+`WAAPI` engines, both of which keep a runtime snapshot of the current
+animated value and can interpolate from it.
+
+-}
+retarget : AnimState -> (EngineBuilder -> EngineBuilder) -> AnimState
+retarget ((AnimState origState _) as animState) build =
+    let
+        touchedGroups =
+            (Builder.process (build origState.builder)).groups
+
+        (AnimState newState newGroups) =
+            animate animState build
+
+        snapGroup group =
+            group
+                |> AnimGroup.setStyles
+                    (AnimGroup.getStyles group
+                        |> Styles.insert "transition" "none"
+                        |> Styles.remove "transition-behavior"
+                    )
+                |> AnimGroup.setPlayState PlayState.Complete
+
+        snappedGroups =
+            AnimGroups.foldl
+                (\name _ acc ->
+                    case AnimGroups.get name acc of
+                        Just group ->
+                            AnimGroups.insert name (snapGroup group) acc
+
+                        Nothing ->
+                            acc
+                )
+                newGroups
+                touchedGroups
+    in
+    AnimState newState snappedGroups
 
 
 toCssPropertyNames : List Builder.ProcessedPropertyConfig -> List String

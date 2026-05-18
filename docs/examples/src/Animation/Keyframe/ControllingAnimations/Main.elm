@@ -4,24 +4,26 @@ import Anim.Builder exposing (AnimBuilder)
 import Anim.Engine.Keyframe as Keyframe
 import Anim.Property.Translate as Translate
 import Browser
-import Html exposing (Html, button, div, h1, text)
-import Html.Attributes exposing (class, style)
+import Browser.Dom as Dom
+import Browser.Events
+import Html exposing (Html, button, div, text)
+import Html.Attributes exposing (class, id, style)
 import Html.Events exposing (onClick)
 import Motion.Easing as Easing exposing (Easing(..))
-import Motion.Spring as Spring
+import Task
 
 
 
 -- MAIN
 
 
-main : Program { window : { width : Int } } Model Msg
+main : Program () Model Msg
 main =
     Browser.element
         { init = init
         , view = view
         , update = update
-        , subscriptions = always Sub.none
+        , subscriptions = subscriptions
         }
 
 
@@ -31,6 +33,7 @@ main =
 
 type alias Model =
     { animState : Keyframe.AnimState
+    , canvasH : Float
     }
 
 
@@ -39,36 +42,59 @@ animGroup =
     "bouncingBall"
 
 
+canvasId : String
+canvasId =
+    "anim-canvas"
+
+
+ballSize : Float
+ballSize =
+    50
+
+
+topY : Float
+topY =
+    25
+
+
 
 -- INIT
 
 
-init : { window : { width : Int } } -> ( Model, Cmd Msg )
-init { window } =
-    let
-        animAreaWidth =
-            min 500 (window.width - 40)
-
-        xPos =
-            toFloat animAreaWidth / 2 - 25
-    in
+init : () -> ( Model, Cmd Msg )
+init _ =
     ( { animState =
-            Keyframe.init <|
-                [ Translate.initXY animGroup xPos 50 ]
+            Keyframe.init
+                [ Translate.initY animGroup topY ]
+      , canvasH = 0
       }
-    , Cmd.none
+    , measureCanvas
     )
+
+
+measureCanvas : Cmd Msg
+measureCanvas =
+    Task.attempt GotCanvas (Dom.getElement canvasId)
+
+
+
+-- POSITION HELPERS
+
+
+bottomY : Float -> Float
+bottomY h =
+    h - ballSize
 
 
 
 -- ANIMATION
 
 
-dropBall : AnimBuilder mode -> AnimBuilder mode
-dropBall =
+dropBall : Float -> AnimBuilder mode -> AnimBuilder mode
+dropBall toBottomY =
     Translate.for animGroup
-        >> Translate.fromY 50
-        >> Translate.toY 300
+        >> Translate.fromY topY
+        >> Translate.toY toBottomY
         >> Translate.speed 200
         >> Translate.easing BounceOut
         >> Translate.build
@@ -81,10 +107,12 @@ dropBall =
 type Msg
     = Animate
     | Stop
-    | Reset
-    | Restart
     | Pause
     | Resume
+    | Reset
+    | Restart
+    | OnResize
+    | GotCanvas (Result Dom.Error Dom.Element)
     | GotAnimMsg Keyframe.AnimMsg
 
 
@@ -93,7 +121,9 @@ update msg model =
     case msg of
         Animate ->
             ( { model
-                | animState = Keyframe.animate model.animState dropBall
+                | animState =
+                    Keyframe.animate model.animState <|
+                        dropBall (bottomY model.canvasH)
               }
             , Cmd.none
             )
@@ -105,6 +135,24 @@ update msg model =
             )
 
         ---8<-- [end:stop]
+        ---8<-- [start:pause]
+        Pause ->
+            let
+                ( newState, pauseCmd ) =
+                    Keyframe.pause animGroup GotAnimMsg model.animState
+            in
+            ( { model | animState = newState }, pauseCmd )
+
+        ---8<-- [end:pause]
+        ---8<-- [start:resume]
+        Resume ->
+            let
+                ( newState, resumeCmd ) =
+                    Keyframe.resume animGroup GotAnimMsg model.animState
+            in
+            ( { model | animState = newState }, resumeCmd )
+
+        ---8<-- [end:resume]
         ---8<-- [start:reset]
         Reset ->
             ( { model | animState = Keyframe.reset animGroup model.animState }
@@ -115,74 +163,68 @@ update msg model =
         ---8<-- [start:restart]
         Restart ->
             let
-                ( newState, eventCmd ) =
+                ( newState, restartCmd ) =
                     Keyframe.restart animGroup GotAnimMsg model.animState
             in
-            ( { model | animState = newState }, eventCmd )
+            ( { model | animState = newState }, restartCmd )
 
         ---8<-- [end:restart]
-        ---8<-- [start:pause]
-        Pause ->
-            let
-                ( newState, eventCmd ) =
-                    Keyframe.pause animGroup GotAnimMsg model.animState
-            in
-            ( { model | animState = newState }, eventCmd )
+        OnResize ->
+            ( model, measureCanvas )
 
-        ---8<-- [end:pause]
-        ---8<-- [start:resume]
-        Resume ->
+        GotCanvas (Ok element) ->
             let
-                ( newState, eventCmd ) =
-                    Keyframe.resume animGroup GotAnimMsg model.animState
-            in
-            ( { model | animState = newState }, eventCmd )
+                newCanvasH =
+                    element.element.height
 
-        ---8<-- [end:resume]
+                isFirstMeasurement =
+                    model.canvasH == 0
+            in
+            ( { model
+                | canvasH = newCanvasH
+                , animState =
+                    if isFirstMeasurement then
+                        model.animState
+
+                    else
+                        Keyframe.retarget model.animState <|
+                            dropBall (bottomY newCanvasH)
+              }
+            , Cmd.none
+            )
+
+        GotCanvas (Err _) ->
+            ( model, Cmd.none )
+
         GotAnimMsg _ ->
             ( model, Cmd.none )
 
 
 
----8<-- [end:resume]
+-- SUBSCRIPTIONS
+
+
+subscriptions : Model -> Sub Msg
+subscriptions _ =
+    Browser.Events.onResize (\_ _ -> OnResize)
+
+
+
 -- VIEW
 
 
 view : Model -> Html Msg
 view model =
-    div
-        [ style "display" "flex"
-        , style "flex-direction" "column"
-        , style "align-items" "center"
-        , style "gap" "24px"
-        , style "padding" "20px"
-        ]
-        [ Keyframe.styleNodeFor animGroup model.animState
-        , div [ class "ui-wrapped-row" ]
-            [ div
-                [ style "display" "flex"
-                , style "flex-direction" "column"
-                , style "gap" "16px"
-                ]
-                [ button [ onClick Animate, class "ui-action-button primary" ] [ text "🏀 Animate" ]
-                , button [ onClick Stop, class "ui-action-button warning" ] [ text "⏹️ Stop" ]
-                ]
-            , div
-                [ style "display" "flex"
-                , style "flex-direction" "column"
-                , style "gap" "16px"
-                ]
-                [ button [ onClick Pause, class "ui-action-button success" ] [ text "⏸️ Pause" ]
-                , button [ onClick Resume, class "ui-action-button success" ] [ text "▶️ Resume" ]
-                ]
-            , div
-                [ style "display" "flex"
-                , style "flex-direction" "column"
-                , style "gap" "16px"
-                ]
-                [ button [ onClick Reset, class "ui-action-button purple" ] [ text "⏮️ Reset" ]
-                , button [ onClick Restart, class "ui-action-button purple" ] [ text "🔄 Restart" ]
-                ]
+    div [ class "example-stage" ]
+        [ div [ class "example-badge example-badge--static" ] [ text "Static" ]
+        , Keyframe.styleNodeFor animGroup model.animState
+        , div [ class "example-controls" ]
+            [ button [ onClick Animate, class "ui-action-button primary" ] [ text "🏀 Animate" ]
+            , button [ onClick Pause, class "ui-action-button success" ] [ text "⏸️ Pause" ]
+            , button [ onClick Resume, class "ui-action-button success" ] [ text "▶️ Resume" ]
+            , button [ onClick Stop, class "ui-action-button warning" ] [ text "⏹️ Stop" ]
+            , button [ onClick Reset, class "ui-action-button purple" ] [ text "⏮️ Reset" ]
+            , button [ onClick Restart, class "ui-action-button purple" ] [ text "🔄 Restart" ]
             ]
         , animationArea model.animState
         ]
@@ -191,16 +233,15 @@ view model =
 animationArea : Keyframe.AnimState -> Html msg
 animationArea animState =
     div
-        [ style "width" "100%"
-        , style "max-width" "500px"
-        , style "height" "350px"
-        , style "background" "white"
-        , style "border-radius" "12px"
-        , style "box-shadow" "0 4px 8px rgba(0, 0, 0, 0.1)"
+        [ id canvasId
+        , class "example-canvas--fluid"
+        , style "border-bottom" "2px solid #333"
         ]
         [ div
             (Keyframe.attributes animGroup animState
-                ++ [ style "position" "relative"
+                ++ [ style "position" "absolute"
+                   , style "top" "0"
+                   , style "left" "calc(50% - 25px)"
                    , style "width" "50px"
                    , style "height" "50px"
                    , style "font-size" "50px"
