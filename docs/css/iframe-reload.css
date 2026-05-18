@@ -18,6 +18,15 @@
     border-radius: 8px;
 }
 
+@media (orientation: portrait) {
+    .example-iframe.square {
+        height: auto;
+        aspect-ratio: 1 / 1;
+        min-height: 300px !important;
+        max-height: none;
+    }
+}
+
 /* Keep the reload button aligned to the iframe's right edge, not the container's. */
 .iframe-container .iframe-reload-btn {
     right: calc(50% - min(50%, 300px) + 8px);

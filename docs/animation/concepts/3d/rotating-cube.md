@@ -12,15 +12,15 @@ Rotating cube with expanding sides.
 
     === "Transition"
 
-        <iframe src="../../../../examples/src/Animation/Transition/Animate3D/index.html" class="example-iframe" loading="lazy"></iframe>
+        <iframe src="../../../../examples/src/Animation/Transition/Animate3D/index.html" class="example-iframe square" loading="lazy"></iframe>
 
     === "Keyframe"
 
-        <iframe src="../../../../examples/src/Animation/Keyframe/Animate3D/index.html" class="example-iframe" loading="lazy"></iframe>
+        <iframe src="../../../../examples/src/Animation/Keyframe/Animate3D/index.html" class="example-iframe square" loading="lazy"></iframe>
 
     === "Sub"
 
-        <iframe src="../../../../examples/src/Animation/Sub/Animate3D/index.html" class="example-iframe" loading="lazy"></iframe>
+        <iframe src="../../../../examples/src/Animation/Sub/Animate3D/index.html" class="example-iframe square" loading="lazy"></iframe>
 
     === "WAAPI"
 
