@@ -81,9 +81,12 @@ view _ =
     div
         [ style "font-family" "system-ui, sans-serif"
         , style "color" "#1f2937"
+        , style "background" "#ffffff"
         ]
         [ div
-            [ class "example-badge example-badge--responsive" ]
+            [ class "example-badge example-badge--responsive"
+            , style "background" "#ffffff"
+            ]
             [ text "RESPONSIVE" ]
         , -- Fixed progress bar at top of page
           div

@@ -19,19 +19,17 @@
             min-height: 100vh;
             overflow: auto;
         }
+
         body {
             width: auto;
             height: auto;
             min-height: 100vh;
             display: block;
             overflow: visible;
-            /* Reserve space at the top for the fixed progress bar (5px)
-               and the fixed RESPONSIVE badge so neither overlaps the
-               heading or scrolling cards. */
-            padding-top: 48px;
         }
-        /* Keep the badge fixed above the scroll area (clearly visible at
-           all times) but anchored just below the 5px progress bar. */
+
+        /* Keep the badge fixed and floating above the scroll area so it
+           stays clearly visible at all times. */
         .example-badge {
             position: fixed;
             top: 12px;
