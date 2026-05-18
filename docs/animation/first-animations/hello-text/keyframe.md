@@ -3,7 +3,7 @@
 
 --8<-- [start:example]
 
-<iframe src="../../../../examples/src/Animation/Keyframe/HelloText/index.html" class="example-iframe" loading="lazy"></iframe>
+<iframe src="../../../../examples/src/Animation/Keyframe/HelloText/index.html" class="example-iframe" style="height:300px;min-height:300px;max-height:300px" loading="lazy"></iframe>
 
 --8<-- [end:example]
 

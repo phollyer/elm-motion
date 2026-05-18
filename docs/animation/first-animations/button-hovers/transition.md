@@ -3,7 +3,7 @@
 
 --8<-- [start:example]
 
-<iframe src="../../../../examples/src/Animation/Transition/ButtonHovers/index.html" class="example-iframe" loading="lazy"></iframe>
+<iframe src="../../../../examples/src/Animation/Transition/ButtonHovers/index.html" class="example-iframe" loading="lazy", style="height:300px;min-height:300px;max-height:300px"></iframe>
 
 --8<-- [end:example]
 
