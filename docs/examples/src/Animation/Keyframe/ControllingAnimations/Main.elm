@@ -220,9 +220,9 @@ view model =
         , Keyframe.styleNodeFor animGroup model.animState
         , div [ class "example-controls" ]
             [ button [ onClick Animate, class "ui-action-button primary" ] [ text "🏀 Animate" ]
-            , button [ onClick Stop, class "ui-action-button warning" ] [ text "⏹️ Stop" ]
             , button [ onClick Pause, class "ui-action-button success" ] [ text "⏸️ Pause" ]
             , button [ onClick Resume, class "ui-action-button success" ] [ text "▶️ Resume" ]
+            , button [ onClick Stop, class "ui-action-button warning" ] [ text "⏹️ Stop" ]
             , button [ onClick Reset, class "ui-action-button purple" ] [ text "⏮️ Reset" ]
             , button [ onClick Restart, class "ui-action-button purple" ] [ text "🔄 Restart" ]
             ]
