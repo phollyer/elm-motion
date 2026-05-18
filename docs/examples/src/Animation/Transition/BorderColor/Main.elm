@@ -120,12 +120,20 @@ view model =
                 [ text "Blue Border" ]
             ]
         , div
-            (Transition.attributes animGroup model.animState
-                ++ [ class "example-box"
-                   , style "background-color" "#f8fafc"
-                   , style "border" "4px solid #6366f1"
-                   , style "border-radius" "8px"
-                   ]
-            )
-            []
+            [ style "width" "100%"
+            , style "display" "flex"
+            , style "align-items" "center"
+            , style "justify-content" "center"
+            , style "padding-top" "10px"
+            ]
+            [ div
+                (Transition.attributes animGroup model.animState
+                    ++ [ class "example-box"
+                       , style "background-color" "#f8fafc"
+                       , style "border" "4px solid #6366f1"
+                       , style "border-radius" "8px"
+                       ]
+                )
+                []
+            ]
         ]

@@ -6,19 +6,19 @@
 
     === "Transition"
 
-        <iframe src="../../../../examples/src/Animation/Transition/BorderRadius/index.html" class="example-iframe" loading="lazy"></iframe>
+        <iframe src="../../../../examples/src/Animation/Transition/BorderRadius/index.html" class="example-iframe" loading="lazy", style="height:300px;min-height:300px;max-height:300px"></iframe>
 
     === "Keyframe"
 
-        <iframe src="../../../../examples/src/Animation/Keyframe/BorderRadius/index.html" class="example-iframe" loading="lazy"></iframe>
+        <iframe src="../../../../examples/src/Animation/Keyframe/BorderRadius/index.html" class="example-iframe" loading="lazy", style="height:300px;min-height:300px;max-height:300px"></iframe>
 
     === "Sub"
 
-        <iframe src="../../../../examples/src/Animation/Sub/BorderRadius/index.html" class="example-iframe" loading="lazy"></iframe>
+        <iframe src="../../../../examples/src/Animation/Sub/BorderRadius/index.html" class="example-iframe" loading="lazy", style="height:300px;min-height:300px;max-height:300px"></iframe>
 
     === "WAAPI"
 
-        <iframe src="../../../../examples/src/Animation/WAAPI/BorderRadius/index.html" class="example-iframe" loading="lazy"></iframe>
+        <iframe src="../../../../examples/src/Animation/WAAPI/BorderRadius/index.html" class="example-iframe" loading="lazy", style="height:300px;min-height:300px;max-height:300px"></iframe>
 
 --8<-- [end:examples]
 

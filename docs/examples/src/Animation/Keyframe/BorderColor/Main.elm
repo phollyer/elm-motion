@@ -111,12 +111,14 @@ view model =
         , div [ class "example-controls" ]
             [ button
                 [ onClick TriggerRed
-                , class "ui-action-button primary"
+                , class "ui-action-button"
+                , style "background-color" "#ef4444"
                 ]
                 [ text "Red Border" ]
             , button
                 [ onClick TriggerBlue
-                , class "ui-action-button primary"
+                , class "ui-action-button"
+                , style "background-color" "#3b82f6"
                 ]
                 [ text "Blue Border" ]
             ]

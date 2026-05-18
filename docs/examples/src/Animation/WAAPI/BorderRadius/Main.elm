@@ -137,9 +137,7 @@ subscriptions model =
 view : Model -> Html Msg
 view model =
     div
-        [ class "example-stage"
-        , style "text-align" "center"
-        ]
+        [ class "example-stage" ]
         [ div [ class "example-badge example-badge--responsive" ] [ text "RESPONSIVE" ]
         , div [ class "example-controls" ]
             [ button

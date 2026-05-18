@@ -114,10 +114,18 @@ view model =
                 [ text "Square" ]
             ]
         , div
-            (Transition.attributes animGroup model.animState
-                ++ [ class "example-box"
-                   , style "background-color" "#6366f1"
-                   ]
-            )
-            []
+            [ style "width" "100%"
+            , style "display" "flex"
+            , style "align-items" "center"
+            , style "justify-content" "center"
+            , style "padding-top" "10px"
+            ]
+            [ div
+                (Transition.attributes animGroup model.animState
+                    ++ [ class "example-box"
+                       , style "background-color" "#6366f1"
+                       ]
+                )
+                []
+            ]
         ]
