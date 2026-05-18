@@ -432,8 +432,8 @@ restartAnimation animGroupName properties (AnimState state animGroups) =
     in
     AnimState state animGroups
         |> reset animGroupName
-        |> setPlayState animGroupName PlayState.Running
         |> updateAnimGroup animGroupName animGroup
+        |> setPlayState animGroupName PlayState.Running
 
 
 updateAnimGroup : AnimGroupName -> AnimGroup -> AnimState -> AnimState
