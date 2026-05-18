@@ -86,7 +86,7 @@ init flags =
                 -- Bring the cube forward on the Z axis
                 -- so that it doesn't get clipped by the
                 -- z=0 clipping plane.
-                , Translate.initZ cubeGroupName 420
+                , Translate.initZ cubeGroupName 300
                     >> Scale.init cubeGroupName 1
                     >> Scale.resizePolicy cubeGroupName Resize.proportional
                     -- Seed the dot at the top-left corner (0, 0) so that

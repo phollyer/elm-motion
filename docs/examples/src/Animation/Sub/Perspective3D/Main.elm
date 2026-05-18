@@ -591,7 +591,7 @@ viewAnimationArea model =
             ++ [ id perspectiveContainer.id
 
                -- Perspective container - perspective-origin is animated by the engine
-               , View3D.perspective 1000
+               , View3D.perspective 1200
 
                --
                -- Workaround for Chrome on macOS GPU compositing issues with 3D transforms.

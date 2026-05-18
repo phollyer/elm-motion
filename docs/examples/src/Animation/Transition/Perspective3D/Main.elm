@@ -271,7 +271,6 @@ init flags =
                     -- Static no-op scale so subsequent `Scale.to*` calls
                     -- on resize have a baseline to transition from.
                     >> Scale.init cubeGroupName 1
-                    >> Scale.init vanishingPointDot.groupName 1
 
                 -- Position each face in 3D space along the axis it faces
                 -- Front/Back faces move on Z (forward/backward)
@@ -532,7 +531,7 @@ viewAnimationArea model =
             ++ [ id perspectiveContainer.id
 
                -- Perspective container - perspective-origin is animated by the engine
-               , View3D.perspective 1000
+               , View3D.perspective 1200
 
                --
                -- Workaround for Chrome on macOS GPU compositing issues with 3D transforms.
