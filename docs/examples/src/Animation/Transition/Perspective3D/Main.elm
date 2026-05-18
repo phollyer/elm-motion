@@ -234,6 +234,25 @@ animAreaSize windowWidth windowHeight =
         { width = windowHeight, height = windowHeight }
 
 
+{-| Width of the perspective container's border (must match the inline
+`border` style applied to `viewAnimationArea`). The dot is absolutely
+positioned relative to the padding box, so animating its anchor all the
+way to `element.width` / `element.height` would place it `2 * borderWidth`
+past the inner edge of the border. Subtracting `2 * borderWidth` from the
+measured area keeps the dot tracing the visible border on all four sides.
+-}
+containerBorderWidth : Float
+containerBorderWidth =
+    1
+
+
+toInnerArea : { width : Float, height : Float } -> { width : Float, height : Float }
+toInnerArea { width, height } =
+    { width = max 0 (width - 2 * containerBorderWidth)
+    , height = max 0 (height - 2 * containerBorderWidth)
+    }
+
+
 
 -- INIT
 
@@ -633,7 +652,8 @@ update msg model =
         InitStageElement (Ok { element }) ->
             let
                 measured =
-                    animAreaSize element.width element.height
+                    toInnerArea
+                        { width = element.width, height = element.height }
             in
             ( { model
                 | initialAnimAreaSize = measured
@@ -653,7 +673,8 @@ update msg model =
             -- transitions smoothly interpolate to the new scale.
             let
                 newAreaSize =
-                    animAreaSize element.width element.height
+                    toInnerArea
+                        { width = element.width, height = element.height }
 
                 scale =
                     newAreaSize.width
@@ -791,6 +812,8 @@ viewAnimationArea model =
                , style "width" "100%"
                , style "min-height" "0"
                , style "aspect-ratio" "1 / 1"
+               , style "background-color" "#ececf688"
+               , style "border" "1px solid #4f4f7f18"
                ]
         )
         [ viewVanishingPoint model.animState

@@ -666,8 +666,8 @@ viewAnimationArea model =
                , style "width" "100%"
                , style "min-height" "0"
                , style "aspect-ratio" "1 / 1"
-               , style "background-color" "#ececf6"
-               , style "border" "1px solid #16161e"
+               , style "background-color" "#ececf688"
+               , style "border" "1px solid #4f4f7f18"
                ]
         )
         [ viewVanishingPoint model.animState

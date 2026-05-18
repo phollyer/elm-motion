@@ -215,6 +215,19 @@ type alias Model =
     }
 
 
+{-| Width of the perspective container's border (must match the inline
+`border` style applied to `viewAnimationArea`). The dot is absolutely
+positioned relative to the padding box, so animating its anchor all the
+way to the container's outer width / height would place it
+`2 * borderWidth` past the inner edge of the border. Subtracting
+`2 * borderWidth` from the static `animAreaSize` keeps the dot tracing the
+visible border on all four sides.
+-}
+containerBorderWidth : Int
+containerBorderWidth =
+    1
+
+
 
 -- INIT
 
@@ -223,10 +236,10 @@ init : { window : { width : Int } } -> ( Model, Cmd Msg )
 init flags =
     let
         animAreaWidth =
-            min 500 (flags.window.width - 40)
+            min 500 (flags.window.width - 40) - 2 * containerBorderWidth
 
         animAreaHeight =
-            350
+            350 - 2 * containerBorderWidth
 
         initialAnimState =
             Keyframe.init
@@ -684,10 +697,10 @@ viewAnimationArea model =
                , style "display" "flex"
                , style "justify-content" "center"
                , style "align-items" "center"
-               , style "flex" "1 1 auto"
-               , style "width" "100%"
-               , style "min-height" "0"
-               , style "aspect-ratio" "1 / 1"
+               , style "width" (String.fromInt model.animAreaSize.width ++ "px")
+               , style "height" (String.fromInt model.animAreaSize.height ++ "px")
+               , style "background-color" "#ececf688"
+               , style "border" (String.fromInt containerBorderWidth ++ "px solid #4f4f7f18")
                ]
         )
         [ viewVanishingPoint model.animState
