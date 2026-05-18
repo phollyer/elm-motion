@@ -102,7 +102,8 @@ view model =
         [ class "example-stage"
         , style "text-align" "center"
         ]
-        [ Keyframe.styleNode model.animState
+        [ div [ class "example-badge example-badge--responsive" ] [ text "RESPONSIVE" ]
+        , Keyframe.styleNode model.animState
         , div [ class "example-controls" ]
             [ button
                 [ onClick TriggerRound

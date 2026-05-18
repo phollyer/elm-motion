@@ -151,8 +151,9 @@ view model =
     div
         [ class "example-stage"
         ]
-        [ div
-            [ class "ui-wrapped-row" ]
+        [ div [ class "example-badge example-badge--responsive" ] [ text "RESPONSIVE" ]
+        , div
+            [ class "example-controls" ]
             [ button
                 [ onClick TriggerFadeIn
                 , class "ui-action-button primary"
@@ -167,8 +168,11 @@ view model =
         , ---8<-- [start:render]
           div
             (WAAPI.attributes animGroup model.animState
-                ++ [ class "example-square"
-                   , style "background-color" "red"
+                ++ [ style "background-color" "red"
+                   , style "border-radius" "8px"
+                   , style "width" "100%"
+                   , style "flex" "1 1 auto"
+                   , style "min-height" "0"
                    ]
             )
             []

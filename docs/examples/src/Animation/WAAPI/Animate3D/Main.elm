@@ -122,7 +122,7 @@ init flags =
     , Process.sleep 100
         |> Task.andThen
             (\_ ->
-                Dom.getElement "animation-area"
+                Dom.getElement "example-stage"
             )
         |> Task.attempt InitStageElement
     )
@@ -613,7 +613,7 @@ update msg model =
         OnWindowResize _ _ ->
             ( model
             , Task.attempt GotStageElement <|
-                Dom.getElement "animation-area"
+                Dom.getElement "example-stage"
             )
 
 
@@ -694,16 +694,23 @@ view model =
     , body =
         [ div
             [ Html.Attributes.class "example-stage"
-            , style "background" "linear-gradient(to bottom, rgb(226, 232, 240), rgb(248, 250, 252))"
-            , style "font-family" "system-ui, sans-serif"
+            , id "example-stage"
+            , style "width" "min(90vw, 90vh)"
+            , style "height" "min(90vw, 90vh)"
             ]
-            [ viewAnimationArea model ]
+            [ div [ Html.Attributes.class "example-badge example-badge--responsive" ] [ text "RESPONSIVE" ]
+            , viewAnimationArea model
+            ]
         ]
     }
 
 
 viewAnimationArea : Model -> Html Msg
 viewAnimationArea model =
+    let
+        size =
+            String.fromFloat model.currentAnimAreaSize.width ++ "px"
+    in
     div
         [ -- Perspective container
           View3D.perspective 1000
@@ -719,11 +726,9 @@ viewAnimationArea model =
         , style "display" "flex"
         , style "justify-content" "center"
         , style "align-items" "center"
-        , style "width" "80vw"
-        , style "height" "80vh"
-        , style "background-color" "#ffffff"
-        , style "border-radius" "12px"
-        , style "box-shadow" "0 4px 8px rgba(0,0,0,0.1)"
+        , style "width" size
+        , style "height" size
+        , style "flex" "0 0 auto"
         ]
         [ viewCube model ]
 

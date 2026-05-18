@@ -2,7 +2,7 @@
 
 --8<-- [start:example]
 
-<iframe src="../../../../../examples/src/Animation/WAAPI/Animate3D/index.html" class="example-iframe example-iframe--md" loading="lazy"></iframe>
+<iframe src="../../../../../examples/src/Animation/WAAPI/Animate3D/index.html" class="example-iframe" loading="lazy"></iframe>
 
 --8<-- [end:example]
 

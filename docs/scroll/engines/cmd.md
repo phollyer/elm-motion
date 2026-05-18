@@ -9,7 +9,7 @@ The Scroll Cmd Engine provides fire-and-forget scrolling. Call `scroll` and the 
 ## Example
 
 ??? example "View Example"
-    <iframe src="../../../examples/src/Scroll/Cmd/FirstScroll/index.html" class="example-iframe example-iframe--lg" loading="lazy"></iframe>
+    <iframe src="../../../examples/src/Scroll/Cmd/FirstScroll/index.html" class="example-iframe" loading="lazy"></iframe>
 
 ??? example "View Source Code"
 

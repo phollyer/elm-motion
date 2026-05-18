@@ -80,7 +80,8 @@ view model =
         , style "font-weight" "bold"
         ]
         ---8<-- [start:render]
-        [ Keyframe.styleNode model.animState
+        [ div [ class "example-badge example-badge--responsive" ] [ text "RESPONSIVE" ]
+        , Keyframe.styleNode model.animState
         , div
             (Keyframe.attributes groupName model.animState)
             [ text "Hello World!" ]

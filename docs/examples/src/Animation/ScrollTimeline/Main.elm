@@ -7,7 +7,7 @@ import Anim.Property.CustomColor as CustomColor exposing (ColorProperty(..))
 import Anim.Property.Scale as Scale
 import Browser
 import Html exposing (Html, div, h2, p, span, text)
-import Html.Attributes exposing (id, style)
+import Html.Attributes exposing (class, id, style)
 import Json.Encode as Encode
 import Motion.Easing as Easing exposing (Easing(..))
 
@@ -82,7 +82,10 @@ view _ =
         [ style "font-family" "system-ui, sans-serif"
         , style "color" "#1f2937"
         ]
-        [ -- Fixed progress bar at top of page
+        [ div
+            [ class "example-badge example-badge--responsive" ]
+            [ text "RESPONSIVE" ]
+        , -- Fixed progress bar at top of page
           div
             [ style "position" "fixed"
             , style "top" "0"

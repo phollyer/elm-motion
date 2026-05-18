@@ -819,12 +819,10 @@ view : Model -> Document Msg
 view model =
     { title = "Sub Engine - 3D Perspective Origin Example"
     , body =
-        [ div
-            [ class "example-stage"
-            , style "background" "linear-gradient(to bottom, rgb(226, 232, 240), rgb(248, 250, 252))"
-            , style "font-family" "system-ui, sans-serif"
+        [ div [ class "example-stage" ]
+            [ div [ class "example-badge example-badge--responsive" ] [ text "RESPONSIVE" ]
+            , viewAnimationArea model
             ]
-            [ viewAnimationArea model ]
         ]
     }
 
@@ -848,15 +846,10 @@ viewAnimationArea model =
                , style "display" "flex"
                , style "justify-content" "center"
                , style "align-items" "center"
-               , style "width" "80vw"
-               , style "height" "80vh"
-               , style "max-width" "600px"
-               , style "max-height" "600px"
+               , style "flex" "1 1 auto"
+               , style "width" "100%"
+               , style "min-height" "0"
                , style "aspect-ratio" "1 / 1"
-               , style "margin" "0 auto"
-               , style "background-color" "#ffffff"
-               , style "border-radius" "12px"
-               , style "box-shadow" "0 4px 8px rgba(0,0,0,0.1)"
                ]
         )
         [ viewVanishingPoint model.animState

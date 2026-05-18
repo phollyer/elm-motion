@@ -293,8 +293,9 @@ view model =
                 )
                 []
     in
-    div [ style "text-align" "center" ]
-        [ div [ class "example-controls" ]
+    div [ class "example-stage" ]
+        [ div [ class "example-badge example-badge--responsive" ] [ text "RESPONSIVE" ]
+        , div [ class "example-controls" ]
             [ moveLeftButton
             , moveRightButton
             , moveUpButton

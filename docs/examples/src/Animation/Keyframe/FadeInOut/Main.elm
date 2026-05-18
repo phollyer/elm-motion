@@ -105,10 +105,9 @@ update msg model =
 view : Model -> Html Msg
 view model =
     div
-        [ class "example-stage"
-        , style "text-align" "center"
-        ]
-        [ Keyframe.styleNode model.animState
+        [ class "example-stage" ]
+        [ div [ class "example-badge example-badge--responsive" ] [ text "RESPONSIVE" ]
+        , Keyframe.styleNode model.animState
         , div [ class "example-controls" ]
             [ button
                 [ onClick TriggerFadeIn
@@ -121,22 +120,18 @@ view model =
                 ]
                 [ text "Fade Out" ]
             ]
+
+        ---8<-- [start:render]
         , div
-            [ style "width" "100%"
-            , style "display" "flex"
-            , style "align-items" "center"
-            , style "justify-content" "center"
-            , style "padding-top" "10px"
-            ]
-            ---8<-- [start:render]
-            [ div
-                (Keyframe.attributes animGroup model.animState
-                    ++ [ class "example-square"
-                       , style "background-color" "red"
-                       ]
-                )
-                []
-            ]
+            (Keyframe.attributes animGroup model.animState
+                ++ [ style "background-color" "red"
+                   , style "border-radius" "8px"
+                   , style "width" "100%"
+                   , style "flex" "1 1 auto"
+                   , style "min-height" "0"
+                   ]
+            )
+            []
 
         ---8<-- [end:render]
         ]

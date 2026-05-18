@@ -6,19 +6,19 @@
 
     === "Transition"
 
-        <iframe src="../../../../examples/src/Animation/Transition/BorderColor/index.html" class="example-iframe example-iframe--md" loading="lazy"></iframe>
+        <iframe src="../../../../examples/src/Animation/Transition/BorderColor/index.html" class="example-iframe" loading="lazy"></iframe>
 
     === "Keyframe"
 
-        <iframe src="../../../../examples/src/Animation/Keyframe/BorderColor/index.html" class="example-iframe example-iframe--md" loading="lazy"></iframe>
+        <iframe src="../../../../examples/src/Animation/Keyframe/BorderColor/index.html" class="example-iframe" loading="lazy"></iframe>
 
     === "Sub"
 
-        <iframe src="../../../../examples/src/Animation/Sub/BorderColor/index.html" class="example-iframe example-iframe--md" loading="lazy"></iframe>
+        <iframe src="../../../../examples/src/Animation/Sub/BorderColor/index.html" class="example-iframe" loading="lazy"></iframe>
 
     === "WAAPI"
 
-        <iframe src="../../../../examples/src/Animation/WAAPI/BorderColor/index.html" class="example-iframe example-iframe--md" loading="lazy"></iframe>
+        <iframe src="../../../../examples/src/Animation/WAAPI/BorderColor/index.html" class="example-iframe" loading="lazy"></iframe>
 
 --8<-- [end:examples]
 

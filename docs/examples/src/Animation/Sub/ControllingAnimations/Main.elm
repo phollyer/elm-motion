@@ -235,38 +235,15 @@ subscriptions model =
 
 view : Model -> Html Msg
 view model =
-    div
-        [ style "display" "flex"
-        , style "flex-direction" "column"
-        , style "align-items" "center"
-        , style "gap" "24px"
-        , style "padding" "20px"
-        ]
-        [ div [ class "ui-wrapped-row" ]
-            [ div
-                [ style "display" "flex"
-                , style "flex-direction" "column"
-                , style "gap" "16px"
-                ]
-                [ button [ onClick Animate, class "ui-action-button primary" ] [ text "🏀 Animate" ]
-                , button [ onClick Stop, class "ui-action-button warning" ] [ text "⏹️ Stop" ]
-                ]
-            , div
-                [ style "display" "flex"
-                , style "flex-direction" "column"
-                , style "gap" "16px"
-                ]
-                [ button [ onClick Pause, class "ui-action-button success" ] [ text "⏸️ Pause" ]
-                , button [ onClick Resume, class "ui-action-button success" ] [ text "▶️ Resume" ]
-                ]
-            , div
-                [ style "display" "flex"
-                , style "flex-direction" "column"
-                , style "gap" "16px"
-                ]
-                [ button [ onClick Reset, class "ui-action-button purple" ] [ text "⏮️ Reset" ]
-                , button [ onClick Restart, class "ui-action-button purple" ] [ text "🔄 Restart" ]
-                ]
+    div [ class "example-stage" ]
+        [ div [ class "example-badge example-badge--responsive" ] [ text "RESPONSIVE" ]
+        , div [ class "example-controls" ]
+            [ button [ onClick Animate, class "ui-action-button primary" ] [ text "🏀 Animate" ]
+            , button [ onClick Stop, class "ui-action-button warning" ] [ text "⏹️ Stop" ]
+            , button [ onClick Pause, class "ui-action-button success" ] [ text "⏸️ Pause" ]
+            , button [ onClick Resume, class "ui-action-button success" ] [ text "▶️ Resume" ]
+            , button [ onClick Reset, class "ui-action-button purple" ] [ text "⏮️ Reset" ]
+            , button [ onClick Restart, class "ui-action-button purple" ] [ text "🔄 Restart" ]
             ]
         , animationArea model.animState
         ]
@@ -277,9 +254,7 @@ animationArea animState =
     div
         [ id canvasId
         , class "example-canvas--fluid"
-        , style "background" "white"
-        , style "border-radius" "12px"
-        , style "box-shadow" "0 4px 8px rgba(0, 0, 0, 0.1)"
+        , style "border-bottom" "2px solid #333"
         ]
         [ div
             (Sub.attributes animGroup animState

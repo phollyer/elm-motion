@@ -101,7 +101,8 @@ view model =
         , style "font-weight" "bold"
         ]
         ---8<-- [start:render]
-        [ div
+        [ div [ class "example-badge example-badge--responsive" ] [ text "RESPONSIVE" ]
+        , div
             (WAAPI.attributes groupName model.animState)
             [ text "Hello World!" ]
         ]

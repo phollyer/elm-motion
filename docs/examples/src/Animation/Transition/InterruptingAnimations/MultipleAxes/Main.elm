@@ -287,8 +287,9 @@ view model =
                 )
                 []
     in
-    div [ style "text-align" "center" ]
-        [ div [ class "example-controls" ]
+    div [ class "example-stage" ]
+        [ div [ class "example-badge example-badge--static" ] [ text "Static" ]
+        , div [ class "example-controls" ]
             [ moveLeftButton
             , moveRightButton
             , moveUpButton

@@ -303,7 +303,8 @@ view model =
     div
         [ class "example-stage"
         ]
-        [ Keyframe.styleNode model.animState
+        [ div [ class "example-badge example-badge--responsive" ] [ text "RESPONSIVE" ]
+        , Keyframe.styleNode model.animState
         , div
             [ style "padding" "7px"
             , style "border-radius" "12px"

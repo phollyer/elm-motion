@@ -9,7 +9,7 @@
 
         ✅ **Behaviour**: Smooth redirect from current position
 
-        <iframe src="../../../../examples/src/Animation/Transition/InterruptingAnimations/MultipleAxes/index.html" class="example-iframe example-iframe--lg" loading="lazy"></iframe>
+        <iframe src="../../../../examples/src/Animation/Transition/InterruptingAnimations/MultipleAxes/index.html" class="example-iframe" loading="lazy"></iframe>
 
     === "Keyframe"
 
@@ -17,20 +17,20 @@
 
         📖 **See**: [Keyframe Engine — Interrupting Animations](/animation/engines/keyframes.md#interrupting-animations) for details.
 
-        <iframe src="../../../../examples/src/Animation/Keyframe/InterruptingAnimations/MultipleAxes/index.html" class="example-iframe example-iframe--lg" loading="lazy"></iframe>
+        <iframe src="../../../../examples/src/Animation/Keyframe/InterruptingAnimations/MultipleAxes/index.html" class="example-iframe" loading="lazy"></iframe>
 
 
     === "Sub"
 
         ✅ **Behaviour**: Seamless interruption to new target
 
-        <iframe src="../../../../examples/src/Animation/Sub/InterruptingAnimations/MultipleAxes/index.html" class="example-iframe example-iframe--lg" loading="lazy"></iframe>
+        <iframe src="../../../../examples/src/Animation/Sub/InterruptingAnimations/MultipleAxes/index.html" class="example-iframe" loading="lazy"></iframe>
 
     === "WAAPI"
 
         ✅ **Behaviour**: Seamless interruption to new target
 
-        <iframe src="../../../../examples/src/Animation/WAAPI/InterruptingAnimations/MultipleAxes/index.html" class="example-iframe example-iframe--lg" loading="lazy"></iframe>
+        <iframe src="../../../../examples/src/Animation/WAAPI/InterruptingAnimations/MultipleAxes/index.html" class="example-iframe" loading="lazy"></iframe>
 
 --8<-- [end:examples]
 

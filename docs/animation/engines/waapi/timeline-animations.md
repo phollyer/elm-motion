@@ -14,7 +14,7 @@ Use `ScrollTimeline.animate` from the `Anim.Engine.ScrollTimeline` module. Pass 
 
 ??? example "View Example"
 
-    <iframe src="../../../../examples/src/Animation/ScrollTimeline/index.html" class="example-iframe example-iframe--md" loading="lazy"></iframe>
+    <iframe src="../../../../examples/src/Animation/ScrollTimeline/index.html" class="example-iframe" loading="lazy"></iframe>
 
 ??? example "View Source Code"
 
@@ -39,7 +39,7 @@ Use `ViewTimeline.animate` from the `Anim.Engine.ViewTimeline` module. The subje
 
 ??? example "View Example"
 
-    <iframe src="../../../../examples/src/Animation/ViewTimeline/index.html" class="example-iframe example-iframe--lg" loading="lazy"></iframe>
+    <iframe src="../../../../examples/src/Animation/ViewTimeline/index.html" class="example-iframe" loading="lazy"></iframe>
 
 ??? example "View Source Code"
 

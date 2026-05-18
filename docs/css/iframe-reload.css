@@ -1,31 +1,26 @@
 .iframe-container {
     position: relative;
+    display: flex;
+    justify-content: center;
 }
 
 /* Responsive iframe wrapper for example embeds.
-   Use modifier classes to pick a height bracket; the container
-   shrinks proportionally on narrow viewports via clamp(). */
+   Single sizing rule: expand to the available width up to 600px,
+   and to the available height between 400px and 600px. */
 .example-iframe {
+    display: block;
     width: min(100%, 600px);
+    max-width: 600px;
+    height: clamp(400px, 80vh, 600px);
+    min-height: 400px;
+    max-height: 600px;
     border: 1px solid var(--md-default-fg-color--lightest);
     border-radius: 8px;
-    max-width: 600px;
-    min-height: 300px;
-    height: var(--example-iframe-h, clamp(220px, 56vw, 360px));
-    max-height: 600px;
-    display: block;
 }
 
-.example-iframe--sm {
-    --example-iframe-h: clamp(200px, 48vw, 280px);
-}
-
-.example-iframe--md {
-    --example-iframe-h: clamp(220px, 56vw, 360px);
-}
-
-.example-iframe--lg {
-    --example-iframe-h: clamp(320px, 70vw, 600px);
+/* Keep the reload button aligned to the iframe's right edge, not the container's. */
+.iframe-container .iframe-reload-btn {
+    right: calc(50% - min(50%, 300px) + 8px);
 }
 
 .iframe-reload-btn {

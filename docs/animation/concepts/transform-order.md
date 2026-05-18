@@ -30,15 +30,15 @@ There are 6 boxes in the center, each one is triggered with the **same** animati
 
 === "Keyframe"
 
-    <iframe src="../../../examples/src/Animation/Keyframe/TransformOrder/index.html" class="example-iframe example-iframe--lg" loading="lazy"></iframe>
+    <iframe src="../../../examples/src/Animation/Keyframe/TransformOrder/index.html" class="example-iframe" loading="lazy"></iframe>
 
 === "Sub"
 
-    <iframe src="../../../examples/src/Animation/Sub/TransformOrder/index.html" class="example-iframe example-iframe--lg" loading="lazy"></iframe>
+    <iframe src="../../../examples/src/Animation/Sub/TransformOrder/index.html" class="example-iframe" loading="lazy"></iframe>
 
 === "WAAPI"
 
-    <iframe src="../../../examples/src/Animation/WAAPI/TransformOrder/index.html" class="example-iframe example-iframe--lg" loading="lazy"></iframe>
+    <iframe src="../../../examples/src/Animation/WAAPI/TransformOrder/index.html" class="example-iframe" loading="lazy"></iframe>
 
 ??? example "View Source Code"
 

@@ -98,8 +98,10 @@ view model =
         , style "font-size" "48px"
         , style "font-weight" "bold"
         ]
+        [ div [ class "example-badge example-badge--responsive" ] [ text "RESPONSIVE" ]
+
         ---8<-- [start:render]
-        [ div
+        , div
             (Transition.attributes groupName model.animState)
             [ text "Hello World!" ]
         ]

@@ -2,109 +2,30 @@
    Elm Animate - Responsive Design CSS
    ============================================ */
 
-/* Content styling for responsive layouts */
-.responsive-content-title {
-    font-size: inherit !important;
-}
-
-.responsive-content-description {
-    font-size: inherit !important;
-    line-height: 1.5 !important;
-}
-
-/* Paragraph styling for responsive content */
-.responsive-paragraph {
-    padding: 20px 16px !important;
-    margin: 0 16px;
-}
-
-/* Mobile-first responsive design */
-@media (max-width: 768px) {
-    .responsive-paragraph {
-        padding: 16px 12px !important;
-        margin: 0 12px;
-    }
-
-    .responsive-paragraph h1,
-    .responsive-paragraph h2,
-    .responsive-paragraph h3 {
-        font-size: 20px !important;
-    }
-
-    .responsive-content-title {
-        font-size: 18px !important;
-    }
-
-    .responsive-content-description {
-        font-size: 14px !important;
-    }
-}
-
-@media (max-width: 480px) {
-    .responsive-paragraph {
-        padding: 12px 8px !important;
-        margin: 0 8px;
-    }
-
-    .responsive-content-title {
-        font-size: 16px !important;
-    }
-
-    .responsive-content-description {
-        font-size: 13px !important;
-    }
-}
-
-/* Animation container for responsive layouts */
-.responsive-animation-container {
-    position: relative;
-    overflow: hidden;
-    width: 100%;
-    height: 300px;
-}
-
-/* Mobile responsive animation container */
-@media (max-width: 768px) {
-    .responsive-animation-container {
-        height: 250px !important;
-    }
-}
-
-@media (max-width: 480px) {
-    .responsive-animation-container {
-        height: 200px !important;
-    }
-}
-
 /* ============================================
    Example stage helpers (responsive scaffold)
    ============================================ */
 
-/* Outer wrapper for individual example pages: fills the iframe viewport,
-   centres content, respects iOS safe-area, and lets short landscape phones
-   tighten vertical padding. The 100dvh floor only applies when the page is
-   viewed standalone; when embedded (parent JS adds the .in-iframe marker),
-   the stage shrinks to its natural content height so the host iframe can
-   auto-size without leaving large empty margins. */
+/* The visible "stage" sitting middle-centred on the page (the body
+   provides the centring). Sized at 90vw × 90vh so it always fits
+   within the iframe wrapper, which is itself capped at 600px wide.
+   Demos render their subject + controls inside this box. */
 .example-stage {
+    position: relative;
     box-sizing: border-box;
-    min-height: 100dvh;
-    width: 100%;
+    width: 90vw;
+    height: 90vh;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
+    gap: clamp(8px, 2vmin, 24px);
     padding:
         max(10px, env(safe-area-inset-top)) max(10px, env(safe-area-inset-right)) max(10px, env(safe-area-inset-bottom)) max(10px, env(safe-area-inset-left));
-    gap: clamp(8px, 2vmin, 24px);
-}
-
-body.in-iframe .example-stage {
-    /* Trade the standalone 100dvh fill for a modest floor so visually
-       small examples (e.g. just an animated word) still get breathing
-       room without forcing the host iframe to leave huge empty margins
-       on tall content. */
-    min-height: clamp(160px, 30vmin, 240px);
+    background-color: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    overflow: hidden;
 }
 
 @media (orientation: landscape) and (max-height: 480px) {
@@ -115,13 +36,39 @@ body.in-iframe .example-stage {
     }
 }
 
-/* Square animated subject sized off the smaller axis so it always fits. */
-.example-square {
-    aspect-ratio: 1 / 1;
-    width: clamp(120px, 70vmin, 600px);
-    height: auto;
-    margin: 0 auto;
+/* Small pill that tags an example as responsive (animation reacts to
+   resize) or static (only the layout responds; the animation itself
+   does not adapt mid-flight). Fixed to the iframe viewport, centred
+   in the 5vh gutter above the stage. Sizing is expressed in vh with
+   clamp() floors/ceilings so the pill grows with the iframe height
+   without ever spilling onto the stage or ballooning on tall pages. */
+.example-badge {
+    position: fixed;
+    top: 2.5vh;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    padding: clamp(1px, 0.3vh, 3px) clamp(6px, 1.4vh, 14px);
+    font-size: clamp(8px, 1.6vh, 13px);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border-radius: 999px;
+    line-height: 1.4;
+    z-index: 200;
+    pointer-events: none;
+    user-select: none;
 }
+
+.example-badge--responsive {
+    background-color: #d1fae5;
+    color: #065f46;
+}
+
+.example-badge--static {
+    background-color: #fef3c7;
+    color: #92400e;
+}
+
 
 /* Horizontal row of action buttons sitting inside .example-stage.
    Wraps onto multiple lines on phones so adjacent buttons stay readable. */
@@ -143,23 +90,23 @@ body.in-iframe .example-stage {
 }
 
 /* Generic playing-field used by Controlling/TransformOrder/Interrupting demos.
-   Fixed minimum height so absolute-pixel translations have room to play. */
+   Flexes to fill the remaining stage height once controls have laid out. */
 .example-canvas {
     width: 100%;
-    max-width: 500px;
-    height: clamp(280px, 50vh, 350px);
-    min-height: 260px;
+    flex: 1 1 auto;
+    min-height: 0;
     box-sizing: border-box;
+    border-radius: 8px;
 }
 
 /* Fluid playing-field for translation demos that re-anchor on resize.
-   Fills the available width (no max-width cap) so the moving subject has
-   the largest possible runway, while keeping a sensible vertical band. */
+   Same flex behaviour as .example-canvas plus relative positioning and
+   overflow clipping for absolutely-positioned subjects. */
 .example-canvas--fluid {
     position: relative;
     width: 100%;
-    height: clamp(220px, 40vh, 320px);
-    min-height: 200px;
+    flex: 1 1 auto;
+    min-height: 0;
     box-sizing: border-box;
     overflow: hidden;
 }

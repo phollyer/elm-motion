@@ -1,7 +1,7 @@
 
 --8<-- [start:example]
 
-<iframe src="../../../../../examples/src/Animation/Sub/ControllingAnimations/index.html" class="example-iframe example-iframe--lg" loading="lazy"></iframe>
+<iframe src="../../../../../examples/src/Animation/Sub/ControllingAnimations/index.html" class="example-iframe" loading="lazy"></iframe>
 
 --8<-- [end:example]
 

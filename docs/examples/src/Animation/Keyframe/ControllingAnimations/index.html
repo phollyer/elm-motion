@@ -14,13 +14,8 @@
 <body>
     <div id="elm-app"></div>
     <script>
-        const app = Elm.Animation.Keyframe.ControllingAnimations.Main.init({
-            node: document.getElementById('elm-app'),
-            flags: {
-                window: {
-                    width: window.innerWidth
-                }
-            }
+        Elm.Animation.Keyframe.ControllingAnimations.Main.init({
+            node: document.getElementById('elm-app')
         });
     </script>
 </body>

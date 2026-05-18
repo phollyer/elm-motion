@@ -12,11 +12,11 @@ Control the ball animation with the buttons.
 
     === "Transition"
 
-        <iframe src="../../../../examples/src/Animation/Transition/ControllingAnimations/index.html" class="example-iframe example-iframe--lg" loading="lazy"></iframe>
+        <iframe src="../../../../examples/src/Animation/Transition/ControllingAnimations/index.html" class="example-iframe" loading="lazy"></iframe>
 
     === "Keyframe"
 
-        <iframe src="../../../../examples/src/Animation/Keyframe/ControllingAnimations/index.html" class="example-iframe example-iframe--lg" loading="lazy"></iframe>
+        <iframe src="../../../../examples/src/Animation/Keyframe/ControllingAnimations/index.html" class="example-iframe" loading="lazy"></iframe>
 
     === "Sub"
 
@@ -25,7 +25,7 @@ Control the ball animation with the buttons.
 
     === "WAAPI"
 
-        <iframe src="../../../../examples/src/Animation/WAAPI/ControllingAnimations/index.html" class="example-iframe example-iframe--lg" loading="lazy"></iframe>
+        <iframe src="../../../../examples/src/Animation/WAAPI/ControllingAnimations/index.html" class="example-iframe" loading="lazy"></iframe>
 
 --8<-- [end:examples]
 

@@ -285,8 +285,9 @@ view model =
                 ]
                 [ text label ]
     in
-    div [ style "text-align" "center" ]
-        [ div [ class "example-controls" ]
+    div [ class "example-stage" ]
+        [ div [ class "example-badge example-badge--static" ] [ text "Static" ]
+        , div [ class "example-controls" ]
             [ posButton "#333" "Move Left" MoveLeft
             , posButton "#333" "Move Right" MoveRight
             ]
@@ -305,6 +306,7 @@ view model =
                        , style "position" "absolute"
                        , style "top" "0"
                        , style "left" "0"
+                       , style "border-radius" "8px"
                        ]
                 )
                 []

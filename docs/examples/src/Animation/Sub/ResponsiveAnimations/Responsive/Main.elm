@@ -283,6 +283,9 @@ view model =
     div
         [ style "text-align" "center" ]
         [ div
+            [ class "example-badge example-badge--responsive" ]
+            [ text "RESPONSIVE" ]
+        , div
             [ class "example-controls"
             , style "margin-top" "5px"
             ]

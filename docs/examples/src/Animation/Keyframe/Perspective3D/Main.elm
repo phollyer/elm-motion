@@ -8,7 +8,7 @@ import Anim.Property.Rotate as Rotate
 import Anim.Property.Translate as Translate
 import Browser exposing (Document)
 import Html exposing (Html, div, text)
-import Html.Attributes exposing (id, style)
+import Html.Attributes exposing (class, id, style)
 import Motion.Easing as Easing exposing (Easing(..))
 
 
@@ -656,17 +656,9 @@ view model =
     { title = "Keyframe Engine - 3D Perspective Origin Example"
     , body =
         [ Keyframe.styleNode model.animState
-        , div
-            [ style "min-height" "100vh"
-            , style "background" "linear-gradient(to bottom, rgb(226, 232, 240), rgb(248, 250, 252))"
-            ]
-            [ div
-                [ style "font-family" "system-ui, sans-serif"
-                , style "padding" "20px 40px"
-                , style "max-width" "700px"
-                , style "margin" "0 auto"
-                ]
-                [ viewAnimationArea model ]
+        , div [ class "example-stage" ]
+            [ div [ class "example-badge example-badge--static" ] [ text "Static" ]
+            , viewAnimationArea model
             ]
         ]
     }
@@ -692,12 +684,10 @@ viewAnimationArea model =
                , style "display" "flex"
                , style "justify-content" "center"
                , style "align-items" "center"
-               , style "width" (String.fromInt model.animAreaSize.width ++ "px")
-               , style "height" (String.fromInt model.animAreaSize.height ++ "px")
-               , style "margin" "0 auto"
-               , style "background-color" "#ffffff"
-               , style "border-radius" "12px"
-               , style "box-shadow" "0 4px 8px rgba(0,0,0,0.1)"
+               , style "flex" "1 1 auto"
+               , style "width" "100%"
+               , style "min-height" "0"
+               , style "aspect-ratio" "1 / 1"
                ]
         )
         [ viewVanishingPoint model.animState

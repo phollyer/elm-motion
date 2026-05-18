@@ -146,57 +146,38 @@ subscriptions model =
 
 view : Model -> Html Msg
 view model =
-    div
-        [ style "text-align" "center"
-        , style "padding-top" "20px"
-        , style "font-family" "sans-serif"
-        ]
-        [ div
-            [ style "display" "flex"
-            , style "gap" "10px"
-            , style "justify-content" "center"
-            , style "margin-bottom" "20px"
-            ]
+    div [ class "example-stage" ]
+        [ div [ class "example-badge example-badge--responsive" ] [ text "RESPONSIVE" ]
+        , div [ class "example-controls" ]
             [ button
                 [ onClick Show
                 , class "ui-action-button primary"
-                , style "padding" "8px 16px"
-                , style "font-size" "14px"
-                , style "margin-right" "10px"
                 ]
                 [ text "Show" ]
             , button
                 [ onClick Hide
                 , class "ui-action-button primary"
-                , style "padding" "8px 16px"
-                , style "font-size" "14px"
                 ]
                 [ text "Hide" ]
             ]
         , p
             [ style "color" "#666"
             , style "font-size" "13px"
-            , style "margin-bottom" "20px"
+            , style "text-align" "center"
+            , style "margin" "0"
             ]
             [ text "Uses discreteEntry/discreteExit to flip display on first/last frames." ]
         , div
-            [ style "display" "flex"
-            , style "align-items" "center"
-            , style "justify-content" "center"
-            , style "min-height" "220px"
-            ]
-            [ div
-                (WAAPI.attributes animGroup model.animState
-                    ++ [ class "example-box"
-                       , style "background-color" "#4a90d9"
-                       , style "border-radius" "12px"
-                       , style "align-items" "center"
-                       , style "justify-content" "center"
-                       , style "color" "white"
-                       , style "font-size" "18px"
-                       , style "font-weight" "bold"
-                       ]
-                )
-                [ text "Hello!" ]
-            ]
+            (WAAPI.attributes animGroup model.animState
+                ++ [ class "example-box"
+                   , style "background-color" "#4a90d9"
+                   , style "border-radius" "12px"
+                   , style "align-items" "center"
+                   , style "justify-content" "center"
+                   , style "color" "white"
+                   , style "font-size" "18px"
+                   , style "font-weight" "bold"
+                   ]
+            )
+            [ text "Hello!" ]
         ]

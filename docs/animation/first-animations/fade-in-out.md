@@ -12,19 +12,19 @@ Fade an element in and out with buttons.
 
     === "Transition"
 
-        <iframe src="../../../examples/src/Animation/Transition/FadeInOut/index.html" class="example-iframe example-iframe--md" loading="lazy"></iframe>
+        <iframe src="../../../examples/src/Animation/Transition/FadeInOut/index.html" class="example-iframe" loading="lazy", style="height:300px;min-height:300px;max-height:300px"></iframe>
 
     === "Keyframe"
 
-        <iframe src="../../../examples/src/Animation/Keyframe/FadeInOut/index.html" class="example-iframe example-iframe--md" loading="lazy"></iframe>
+        <iframe src="../../../examples/src/Animation/Keyframe/FadeInOut/index.html" class="example-iframe" loading="lazy", style="height:300px;min-height:300px;max-height:300px"></iframe>
 
     === "Sub"
 
-        <iframe src="../../../examples/src/Animation/Sub/FadeInOut/index.html" class="example-iframe example-iframe--md" loading="lazy"></iframe>
+        <iframe src="../../../examples/src/Animation/Sub/FadeInOut/index.html" class="example-iframe" loading="lazy", style="height:300px;min-height:300px;max-height:300px"></iframe>
 
     === "WAAPI"
 
-        <iframe src="../../../examples/src/Animation/WAAPI/FadeInOut/index.html" class="example-iframe example-iframe--md" loading="lazy"></iframe>
+        <iframe src="../../../examples/src/Animation/WAAPI/FadeInOut/index.html" class="example-iframe" loading="lazy", style="height:300px;min-height:300px;max-height:300px"></iframe>
 
 
 --8<-- [end:examples]

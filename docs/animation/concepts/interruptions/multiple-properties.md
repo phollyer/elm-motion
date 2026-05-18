@@ -9,7 +9,7 @@
 
         ✅ **Behaviour**: `Translate` and `CustomColor` (`BackgroundColor`) run independently side by side.
 
-        <iframe src="../../../../examples/src/Animation/Transition/InterruptingAnimations/MultipleProperties/index.html" class="example-iframe example-iframe--lg" loading="lazy"></iframe>
+        <iframe src="../../../../examples/src/Animation/Transition/InterruptingAnimations/MultipleProperties/index.html" class="example-iframe" loading="lazy", style="height:300px;min-height:300px;max-height:300px"></iframe>
 
     === "Keyframe"
 
@@ -17,20 +17,20 @@
 
         📖 **See**: [Keyframe Engine — Interrupting Animations](/animation/engines/keyframes.md#interrupting-animations) for details.
 
-        <iframe src="../../../../examples/src/Animation/Keyframe/InterruptingAnimations/MultipleProperties/index.html" class="example-iframe example-iframe--lg" loading="lazy"></iframe>
+        <iframe src="../../../../examples/src/Animation/Keyframe/InterruptingAnimations/MultipleProperties/index.html" class="example-iframe" loading="lazy", style="height:300px;min-height:300px;max-height:300px"></iframe>
 
 
     === "Sub"
 
         ✅ **Behaviour**: `Translate` and `CustomColor` (`BackgroundColor`) run independently side by side.
 
-        <iframe src="../../../../examples/src/Animation/Sub/InterruptingAnimations/MultipleProperties/index.html" class="example-iframe example-iframe--lg" loading="lazy"></iframe>
+        <iframe src="../../../../examples/src/Animation/Sub/InterruptingAnimations/MultipleProperties/index.html" class="example-iframe" loading="lazy", style="height:300px;min-height:300px;max-height:300px"></iframe>
 
     === "WAAPI"
 
         ✅ **Behaviour**: `Translate` and `CustomColor` (`BackgroundColor`) run independently side by side.
 
-        <iframe src="../../../../examples/src/Animation/WAAPI/InterruptingAnimations/MultipleProperties/index.html" class="example-iframe example-iframe--lg" loading="lazy"></iframe>
+        <iframe src="../../../../examples/src/Animation/WAAPI/InterruptingAnimations/MultipleProperties/index.html" class="example-iframe" loading="lazy", style="height:300px;min-height:300px;max-height:300px"></iframe>
 
 --8<-- [end:examples]
 

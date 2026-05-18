@@ -9,7 +9,7 @@
 
         ✅ **Behaviour**: Smooth redirect from current mid-flight value to new end target value
 
-        <iframe src="../../../../examples/src/Animation/Transition/InterruptingAnimations/SingleProperty/index.html" class="example-iframe example-iframe--lg" loading="lazy"></iframe>
+        <iframe src="../../../../examples/src/Animation/Transition/InterruptingAnimations/SingleProperty/index.html" class="example-iframe" loading="lazy", style="height:300px;min-height:300px;max-height:300px"></iframe>
 
     === "Keyframe"
 
@@ -17,20 +17,20 @@
 
         📖 **See**: [Keyframe Engine — Interrupting Animations](/animation/engines/keyframes.md#interrupting-animations) for details.
 
-        <iframe src="../../../../examples/src/Animation/Keyframe/InterruptingAnimations/SingleProperty/index.html" class="example-iframe example-iframe--lg" loading="lazy"></iframe>
+        <iframe src="../../../../examples/src/Animation/Keyframe/InterruptingAnimations/SingleProperty/index.html" class="example-iframe" loading="lazy", style="height:300px;min-height:300px;max-height:300px"></iframe>
 
 
     === "Sub"
 
         ✅ **Behaviour**: Smooth redirect from current mid-flight value to new end target value
 
-        <iframe src="../../../../examples/src/Animation/Sub/InterruptingAnimations/SingleProperty/index.html" class="example-iframe example-iframe--lg" loading="lazy"></iframe>
+        <iframe src="../../../../examples/src/Animation/Sub/InterruptingAnimations/SingleProperty/index.html" class="example-iframe" loading="lazy", style="height:300px;min-height:300px;max-height:300px"></iframe>
 
     === "WAAPI"
 
         ✅ **Behaviour**: Smooth redirect from current mid-flight value to new end target value
 
-        <iframe src="../../../../examples/src/Animation/WAAPI/InterruptingAnimations/SingleProperty/index.html" class="example-iframe example-iframe--lg" loading="lazy"></iframe>
+        <iframe src="../../../../examples/src/Animation/WAAPI/InterruptingAnimations/SingleProperty/index.html" class="example-iframe" loading="lazy", style="height:300px;min-height:300px;max-height:300px"></iframe>
 
 --8<-- [end:examples]
 

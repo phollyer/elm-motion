@@ -1,25 +1,30 @@
 module Animation.Transition.ControllingAnimations.Main exposing (main)
 
-import Anim.Engine.Transition as Transition exposing (EngineBuilder)
+import Anim.Builder exposing (AnimBuilder)
+import Anim.Engine.Transition as Transition
 import Anim.Property.Translate as Translate
 import Browser
-import Html exposing (Html, button, div, h1, text)
-import Html.Attributes exposing (class, style)
+import Browser.Dom as Dom
+import Browser.Events
+import Html exposing (Html, button, div, text)
+import Html.Attributes exposing (class, id, style)
 import Html.Events exposing (onClick)
 import Motion.Easing as Easing exposing (Easing(..))
+import Process
+import Task
 
 
 
 -- MAIN
 
 
-main : Program { window : { width : Int } } Model Msg
+main : Program () Model Msg
 main =
     Browser.element
         { init = init
         , view = view
         , update = update
-        , subscriptions = always Sub.none
+        , subscriptions = subscriptions
         }
 
 
@@ -29,7 +34,14 @@ main =
 
 type alias Model =
     { animState : Transition.AnimState
+    , canvasH : Float
+    , animPlayState : AnimPlayState
     }
+
+
+type AnimPlayState
+    = NotStarted
+    | Started
 
 
 animGroup : String
@@ -37,36 +49,61 @@ animGroup =
     "bouncingBall"
 
 
+canvasId : String
+canvasId =
+    "anim-canvas"
+
+
+ballSize : Float
+ballSize =
+    50
+
+
+topY : Float
+topY =
+    25
+
+
 
 -- INIT
 
 
-init : { window : { width : Int } } -> ( Model, Cmd Msg )
-init { window } =
-    let
-        animAreaWidth =
-            min 500 (window.width - 40)
-
-        xPos =
-            toFloat animAreaWidth / 2 - 25
-    in
+init : () -> ( Model, Cmd Msg )
+init _ =
     ( { animState =
-            Transition.init <|
-                [ Translate.initXY animGroup xPos 50 ]
+            Transition.init
+                [ Translate.initY animGroup topY ]
+      , canvasH = 0
+      , animPlayState = NotStarted
       }
-    , Cmd.none
+    , Process.sleep 100
+        |> Task.perform (\_ -> OnResize)
     )
+
+
+measureCanvas : Cmd Msg
+measureCanvas =
+    Task.attempt GotCanvas (Dom.getElement canvasId)
+
+
+
+-- POSITION HELPERS
+
+
+bottomY : Float -> Float
+bottomY h =
+    h - ballSize
 
 
 
 -- ANIMATION
 
 
-dropBall : EngineBuilder -> EngineBuilder
-dropBall =
+dropBall : Float -> AnimBuilder mode -> AnimBuilder mode
+dropBall toBottomY =
     Translate.for animGroup
-        >> Translate.fromY 50
-        >> Translate.toY 300
+        >> Translate.fromY topY
+        >> Translate.toY toBottomY
         >> Translate.speed 200
         >> Translate.easing BounceOut
         >> Translate.build
@@ -80,6 +117,8 @@ type Msg
     = Animate
     | Stop
     | Reset
+    | OnResize
+    | GotCanvas (Result Dom.Error Dom.Element)
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -87,7 +126,10 @@ update msg model =
     case msg of
         Animate ->
             ( { model
-                | animState = Transition.animate model.animState dropBall
+                | animPlayState = Started
+                , animState =
+                    Transition.animate model.animState <|
+                        dropBall (bottomY model.canvasH)
               }
             , Cmd.none
             )
@@ -105,22 +147,51 @@ update msg model =
             , Cmd.none
             )
 
+        ---8<-- [end:reset]
+        OnResize ->
+            ( model, measureCanvas )
+
+        GotCanvas (Ok element) ->
+            ( handleResize { model | canvasH = element.element.height }
+            , Cmd.none
+            )
+
+        GotCanvas (Err _) ->
+            ( model, Cmd.none )
 
 
----8<-- [end:reset]
+handleResize : Model -> Model
+handleResize model =
+    case model.animPlayState of
+        NotStarted ->
+            model
+
+        Started ->
+            { model
+                | animState =
+                    Transition.retarget model.animState <|
+                        dropBall (bottomY model.canvasH)
+            }
+
+
+
+-- SUBSCRIPTIONS
+
+
+subscriptions : Model -> Sub Msg
+subscriptions _ =
+    Browser.Events.onResize (\_ _ -> OnResize)
+
+
+
 -- VIEW
 
 
 view : Model -> Html Msg
 view model =
-    div
-        [ style "display" "flex"
-        , style "flex-direction" "column"
-        , style "align-items" "center"
-        , style "gap" "24px"
-        , style "padding" "20px"
-        ]
-        [ div [ class "ui-wrapped-row" ]
+    div [ class "example-stage" ]
+        [ div [ class "example-badge example-badge--static" ] [ text "Static" ]
+        , div [ class "example-controls" ]
             [ button [ onClick Animate, class "ui-action-button primary" ] [ text "🏀 Animate" ]
             , button [ onClick Stop, class "ui-action-button warning" ] [ text "⏹️ Stop" ]
             , button [ onClick Reset, class "ui-action-button purple" ] [ text "⏮️ Reset" ]
@@ -132,14 +203,15 @@ view model =
 animationArea : Transition.AnimState -> Html msg
 animationArea animState =
     div
-        [ class "example-canvas"
-        , style "background" "white"
-        , style "border-radius" "12px"
-        , style "box-shadow" "0 4px 8px rgba(0, 0, 0, 0.1)"
+        [ id canvasId
+        , class "example-canvas--fluid"
+        , style "border-bottom" "2px solid #333"
         ]
         [ div
             (Transition.attributes animGroup animState
-                ++ [ style "position" "relative"
+                ++ [ style "position" "absolute"
+                   , style "top" "0"
+                   , style "left" "calc(50% - 25px)"
                    , style "width" "50px"
                    , style "height" "50px"
                    , style "font-size" "50px"

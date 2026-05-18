@@ -186,7 +186,8 @@ view model =
         [ class "example-stage"
         , style "text-align" "center"
         ]
-        [ div [ class "example-controls" ]
+        [ div [ class "example-badge example-badge--responsive" ] [ text "RESPONSIVE" ]
+        , div [ class "example-controls" ]
             [ color1Button
             , color2Button
             , color3Button

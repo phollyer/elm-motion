@@ -287,8 +287,9 @@ view model =
                 )
                 []
     in
-    div [ style "text-align" "center" ]
-        [ Keyframe.styleNode model.animState
+    div [ class "example-stage" ]
+        [ div [ class "example-badge example-badge--static" ] [ text "Static" ]
+        , Keyframe.styleNode model.animState
         , div [ class "example-controls" ]
             [ moveLeftButton
             , moveRightButton

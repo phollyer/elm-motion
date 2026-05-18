@@ -99,11 +99,9 @@ update msg model =
 
 view : Model -> Html Msg
 view model =
-    div
-        [ class "example-stage"
-        , style "text-align" "center"
-        ]
-        [ div [ class "example-controls" ]
+    div [ class "example-stage" ]
+        [ div [ class "example-badge example-badge--responsive" ] [ text "RESPONSIVE" ]
+        , div [ class "example-controls" ]
             [ button
                 [ onClick TriggerRound
                 , class "ui-action-button primary"
@@ -116,18 +114,10 @@ view model =
                 [ text "Square" ]
             ]
         , div
-            [ style "width" "100%"
-            , style "display" "flex"
-            , style "align-items" "center"
-            , style "justify-content" "center"
-            , style "padding-top" "10px"
-            ]
-            [ div
-                (Transition.attributes animGroup model.animState
-                    ++ [ class "example-box"
-                       , style "background-color" "#6366f1"
-                       ]
-                )
-                []
-            ]
+            (Transition.attributes animGroup model.animState
+                ++ [ class "example-box"
+                   , style "background-color" "#6366f1"
+                   ]
+            )
+            []
         ]

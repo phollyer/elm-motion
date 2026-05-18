@@ -6,15 +6,15 @@ Simple vertical scrolling to elment id's.
 ??? example "View Example"
     === "Cmd"
 
-        <iframe src="../../../examples/src/Scroll/Cmd/FirstScroll/index.html" class="example-iframe example-iframe--lg" loading="lazy"></iframe>
+        <iframe src="../../../examples/src/Scroll/Cmd/FirstScroll/index.html" class="example-iframe" loading="lazy"></iframe>
 
     === "Task"
 
-        <iframe src="../../../examples/src/Scroll/Task/FirstScroll/index.html" class="example-iframe example-iframe--lg" loading="lazy"></iframe>
+        <iframe src="../../../examples/src/Scroll/Task/FirstScroll/index.html" class="example-iframe" loading="lazy"></iframe>
 
     === "Sub"
 
-        <iframe src="../../../examples/src/Scroll/Sub/FirstScroll/index.html" class="example-iframe example-iframe--lg" loading="lazy"></iframe>
+        <iframe src="../../../examples/src/Scroll/Sub/FirstScroll/index.html" class="example-iframe" loading="lazy"></iframe>
 
 --8<-- [end:examples]
 

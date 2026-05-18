@@ -10,13 +10,13 @@
 
         ✅ **Behaviour**: Frozen axis holds its current position while the other axis animates to the new target
 
-        <iframe src="../../../../examples/src/Animation/Sub/InterruptingAnimations/FreezeAxis/index.html" class="example-iframe example-iframe--lg" loading="lazy"></iframe>
+        <iframe src="../../../../examples/src/Animation/Sub/InterruptingAnimations/FreezeAxis/index.html" class="example-iframe" loading="lazy"></iframe>
 
     === "WAAPI"
 
         ✅ **Behaviour**: Frozen axis holds its current position while the other axis animates to the new target
 
-        <iframe src="../../../../examples/src/Animation/WAAPI/InterruptingAnimations/FreezeAxis/index.html" class="example-iframe example-iframe--lg" loading="lazy"></iframe>
+        <iframe src="../../../../examples/src/Animation/WAAPI/InterruptingAnimations/FreezeAxis/index.html" class="example-iframe" loading="lazy"></iframe>
 
 --8<-- [end:examples]
 

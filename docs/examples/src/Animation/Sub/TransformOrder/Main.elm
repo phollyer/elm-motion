@@ -310,26 +310,11 @@ subscriptions model =
 
 view : Model -> Html Msg
 view model =
-    div
-        [ style "display" "flex"
-        , style "flex-direction" "column"
-        , style "align-items" "center"
-        , style "gap" "16px"
-        , style "padding" "16px"
-        , style "font-family" "sans-serif"
-        ]
-        [ div
-            [ style "display" "flex"
-            , style "flex-wrap" "wrap"
-            , style "justify-content" "center"
-            , style "gap" "8px"
-            ]
+    div [ class "example-stage" ]
+        [ div [ class "example-badge example-badge--responsive" ] [ text "RESPONSIVE" ]
+        , div [ class "example-controls" ]
             (List.map permButton allPermutations)
-        , div
-            [ style "display" "flex"
-            , style "gap" "8px"
-            , style "justify-content" "center"
-            ]
+        , div [ class "example-controls" ]
             [ actionButton "▶️ All" AnimateAll "#16a34a"
             , actionButton "⏮️ Reset All" ResetAll "#d97706"
             ]
