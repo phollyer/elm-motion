@@ -26,6 +26,16 @@
             display: block;
             overflow: visible;
         }
+        /* The shared badge is position:fixed which would float over the
+           scrolling cards. Pin it to the top of the document instead so
+           it sits clearly above the scroll area on page load. */
+        .example-badge {
+            position: absolute;
+            top: 14px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 200;
+        }
     </style>
     <script src="../../../js/elm-motion.js"></script>
     <script src="index.js"></script>
