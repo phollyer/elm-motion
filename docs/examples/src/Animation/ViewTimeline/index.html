@@ -10,15 +10,21 @@
     <link rel="stylesheet" href="../../../css/ui-components.css">
     <style>
         /* This example requires page scrolling; opt out of the
-           global no-scroll / flex-centred stage from base.css. */
-        html, body {
+           global no-scroll / flex-centred stage from base.css.
+           Only the root (html) scrolls so the document is the single
+           scroll source ViewTimeline subjects attach to. */
+        html {
             width: auto;
             height: auto;
             min-height: 100vh;
             overflow: auto;
         }
         body {
+            width: auto;
+            height: auto;
+            min-height: 100vh;
             display: block;
+            overflow: visible;
         }
     </style>
     <script src="../../../js/elm-motion.js"></script>
