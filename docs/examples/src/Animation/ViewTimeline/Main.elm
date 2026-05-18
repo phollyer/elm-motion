@@ -175,6 +175,7 @@ cardView card =
     div
         (ViewTimeline.attributes card.animGroupName
             ++ [ style "display" "flex"
+               , style "flex-direction" "column"
                , style "gap" "24px"
                , style "align-items" "flex-start"
                , style "padding" "32px"
@@ -184,29 +185,42 @@ cardView card =
                , style "opacity" "0"
                ]
         )
-        [ span
-            [ style "font-size" "2rem"
-            , style "font-weight" "800"
-            , style "color" card.color
-            , style "flex-shrink" "0"
-            , style "line-height" "1"
-            , style "padding-top" "4px"
+        [ div
+            [ style "display" "flex"
+            , style "flex-direction" "row"
+            , style "gap" "16px"
+            , style "align-items" "center"
             ]
-            [ text card.label ]
-        , div []
-            [ h2
-                [ style "font-size" "1.3rem"
-                , style "font-weight" "700"
-                , style "margin" "0 0 10px"
-                , style "color" "#111827"
+            [ span
+                [ style "font-size" "2rem"
+                , style "font-weight" "800"
+                , style "color" card.color
+                , style "flex-shrink" "0"
+                , style "line-height" "1"
+                , style "padding-top" "4px"
                 ]
-                [ text card.title ]
-            , p
-                [ style "font-size" "1rem"
-                , style "line-height" "1.7"
-                , style "color" "#6b7280"
-                , style "margin" "0"
+                [ text card.label ]
+            , div
+                [ style "flex" "1"
+                , style "min-width" "0"
+                , style "text-align" "center"
                 ]
-                [ text card.body ]
+                [ h2
+                    [ style "font-size" "1.3rem"
+                    , style "font-weight" "700"
+                    , style "margin" "0"
+                    , style "color" "#111827"
+                    , style "overflow-wrap" "break-word"
+                    , style "word-break" "break-word"
+                    ]
+                    [ text card.title ]
+                ]
             ]
+        , p
+            [ style "font-size" "1rem"
+            , style "line-height" "1.7"
+            , style "color" "#6b7280"
+            , style "margin" "0"
+            ]
+            [ text card.body ]
         ]
