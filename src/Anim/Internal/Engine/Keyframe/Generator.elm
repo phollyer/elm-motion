@@ -122,20 +122,33 @@ generate name counter maybeOrder iterationCount direction maybeTargetValues disc
                         ( maxDuration, maxDelay ) =
                             getMaxTimings properties
 
-                        keyframesString =
-                            properties
-                                |> generateSteps maybeOrder maybeTargetValues maxDuration maxDelay discrete
-                                |> buildKeyframesString name
+                        totalDuration =
+                            maxDuration + maxDelay
                     in
-                    AnimGroup.setAnimation
-                        (Animation.init
-                            |> Animation.setAnimationName name
-                            |> Animation.setKeyframes keyframesString
-                            |> Animation.setDuration (maxDuration + maxDelay)
-                            |> Animation.setIterations iterationCount
-                            |> Animation.setDirection direction
-                        )
+                    if totalDuration == 0 then
+                        -- No real animation - just baseline styles. Skip the
+                        -- @keyframes rule so the browser does not fire a
+                        -- 0-duration animationend event that the state
+                        -- machine might misinterpret as a completed
+                        -- animation.
                         animGroup
+
+                    else
+                        let
+                            keyframesString =
+                                properties
+                                    |> generateSteps maybeOrder maybeTargetValues maxDuration maxDelay discrete
+                                    |> buildKeyframesString name
+                        in
+                        AnimGroup.setAnimation
+                            (Animation.init
+                                |> Animation.setAnimationName name
+                                |> Animation.setKeyframes keyframesString
+                                |> Animation.setDuration totalDuration
+                                |> Animation.setIterations iterationCount
+                                |> Animation.setDirection direction
+                            )
+                            animGroup
            )
 
 
