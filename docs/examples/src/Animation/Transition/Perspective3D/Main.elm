@@ -60,24 +60,16 @@ vanishingPointDot =
 -- Cube configuration
 
 
+cubeGroupName : String
+cubeGroupName =
+    "cubeAnim"
+
+
 type alias CubeConfig =
     { id : String
     , groupName : String
     , size : Int
     }
-
-
-cube : CubeConfig
-cube =
-    { id = "cube"
-    , groupName = "cubeAnim"
-    , size = 100
-    }
-
-
-depth : Float
-depth =
-    toFloat cube.size / 2
 
 
 
@@ -210,6 +202,7 @@ type alias Model =
     , perspectiveStep : PerspectiveStep
     , initialAnimAreaSize : { width : Float, height : Float }
     , currentAnimAreaSize : { width : Float, height : Float }
+    , cube : CubeConfig
     }
 
 
@@ -257,6 +250,12 @@ init flags =
                 (toFloat flags.window.width)
                 (toFloat flags.window.height)
 
+        cubeSize =
+            min (toFloat flags.window.width) (toFloat flags.window.height) * 0.8 / 4
+
+        depth =
+            cubeSize / 2
+
         initialAnimState =
             Transition.init
                 [ -- Initialize the perspective origin at the top-left corner (0%, 0%)
@@ -268,10 +267,10 @@ init flags =
                 -- so that it doesn't get clipped by the
                 -- z=0 clipping plane when we expand the
                 -- sides and rotate
-                , Translate.initZ cube.groupName 200
+                , Translate.initZ cubeGroupName 300
                     -- Static no-op scale so subsequent `Scale.to*` calls
                     -- on resize have a baseline to transition from.
-                    >> Scale.init cube.groupName 1
+                    >> Scale.init cubeGroupName 1
                     >> Scale.init vanishingPointDot.groupName 1
 
                 -- Position each face in 3D space along the axis it faces
@@ -302,6 +301,11 @@ init flags =
       , perspectiveStep = MoveToTopRight
       , initialAnimAreaSize = initialAreaSize
       , currentAnimAreaSize = initialAreaSize
+      , cube =
+            { id = "cube"
+            , groupName = cubeGroupName
+            , size = round cubeSize
+            }
       }
     , Process.sleep 100
         |> Task.andThen (\_ -> Dom.getElement perspectiveContainer.id)
@@ -458,7 +462,7 @@ update msg model =
                 | currentAnimAreaSize = newAreaSize
                 , animState =
                     Transition.animate model.animState <|
-                        scaleGroupTo cube.groupName scale
+                        scaleGroupTo cubeGroupName scale
                             >> scaleGroupTo vanishingPointDot.groupName scale
               }
             , Cmd.none
@@ -549,7 +553,14 @@ viewAnimationArea model =
                ]
         )
         [ viewVanishingPoint model.animState
-        , viewCube model
+        , div
+            [ View3D.transformStyle View3D.Preserve3D
+            , style "position" "absolute"
+            , style "left" "50%"
+            , style "top" "50%"
+            , style "transform" "translate(-50%, -50%)"
+            ]
+            [ viewCube model ]
         ]
 
 
@@ -602,32 +613,35 @@ viewCube : Model -> Html Msg
 viewCube model =
     let
         cubeAttrs =
-            Transition.attributes cube.groupName model.animState
+            Transition.attributes cubeGroupName model.animState
 
         cubeEvents =
             Transition.events GotTransitionsMsg
+
+        cubeSize =
+            toFloat model.cube.size
     in
     div
         (cubeAttrs
             ++ cubeEvents
             ++ [ View3D.transformStyle View3D.Preserve3D
-               , id cube.id
-               , style "width" (String.fromInt cube.size ++ "px")
-               , style "height" (String.fromInt cube.size ++ "px")
+               , id model.cube.id
+               , style "width" (String.fromFloat cubeSize ++ "px")
+               , style "height" (String.fromFloat cubeSize ++ "px")
                , style "position" "relative"
                ]
         )
-        [ viewFace model.animState frontFace
-        , viewFace model.animState backFace
-        , viewFace model.animState rightFace
-        , viewFace model.animState leftFace
-        , viewFace model.animState topFace
-        , viewFace model.animState bottomFace
+        [ viewFace cubeSize model.animState frontFace
+        , viewFace cubeSize model.animState backFace
+        , viewFace cubeSize model.animState rightFace
+        , viewFace cubeSize model.animState leftFace
+        , viewFace cubeSize model.animState topFace
+        , viewFace cubeSize model.animState bottomFace
         ]
 
 
-viewFace : Transition.AnimState -> FaceConfig -> Html Msg
-viewFace animState config =
+viewFace : Float -> Transition.AnimState -> FaceConfig -> Html Msg
+viewFace cubeSize animState config =
     let
         faceAnimAttributes =
             Transition.attributes config.groupName animState
@@ -640,8 +654,8 @@ viewFace animState config =
             ++ [ View3D.transformStyle View3D.Preserve3D
                , id config.id
                , style "position" "absolute"
-               , style "width" (String.fromInt cube.size ++ "px")
-               , style "height" (String.fromInt cube.size ++ "px")
+               , style "width" (String.fromFloat cubeSize ++ "px")
+               , style "height" (String.fromFloat cubeSize ++ "px")
                , style "background-color" config.background
                , style "border" ("2px solid " ++ config.borderColor)
                , style "box-sizing" "border-box"

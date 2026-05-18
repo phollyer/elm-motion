@@ -20,7 +20,7 @@ import Task
 -- MAIN
 
 
-main : Program { window : { width : Int } } Model Msg
+main : Program { window : { width : Int, height : Int } } Model Msg
 main =
     Browser.document
         { init = init
@@ -59,24 +59,16 @@ vanishingPointDot =
 -- Cube configuration
 
 
+cubeGroupName : String
+cubeGroupName =
+    "cubeAnim"
+
+
 type alias CubeConfig =
     { id : String
     , groupName : String
     , size : Int
     }
-
-
-cube : CubeConfig
-cube =
-    { id = "cube"
-    , groupName = "cubeAnim"
-    , size = 100
-    }
-
-
-depth : Float
-depth =
-    toFloat cube.size / 2
 
 
 
@@ -208,6 +200,7 @@ type alias Model =
     { animState : Keyframe.AnimState
     , perspectiveStep : PerspectiveStep
     , currentAnimAreaSize : { width : Float, height : Float }
+    , cube : CubeConfig
     }
 
 
@@ -234,9 +227,15 @@ toInnerArea { width, height } =
 -- INIT
 
 
-init : { window : { width : Int } } -> ( Model, Cmd Msg )
-init _ =
+init : { window : { width : Int, height : Int } } -> ( Model, Cmd Msg )
+init flags =
     let
+        cubeSize =
+            min (toFloat flags.window.width) (toFloat flags.window.height) * 0.8 / 4
+
+        depth =
+            cubeSize / 2
+
         initialAnimState =
             Keyframe.init
                 [ -- Initialize the perspective origin at the top-left corner (0%, 0%)
@@ -247,7 +246,7 @@ init _ =
                 -- Bring the cube forward on the Z axis
                 -- so that it doesn't get clipped by the
                 -- z=0 clipping plane.
-                , Translate.initZ cube.groupName 200
+                , Translate.initZ cubeGroupName 300
 
                 -- Position each face in 3D space along the axis it faces
                 -- Front/Back faces move on Z (forward/backward)
@@ -276,6 +275,11 @@ init _ =
     ( { animState = initialAnimState
       , perspectiveStep = MoveToTopRight
       , currentAnimAreaSize = { width = 0, height = 0 }
+      , cube =
+            { id = "cube"
+            , groupName = cubeGroupName
+            , size = round cubeSize
+            }
       }
     , Process.sleep 100
         |> Task.andThen (\_ -> Dom.getElement perspectiveContainer.id)
@@ -489,7 +493,14 @@ viewAnimationArea model =
                ]
         )
         [ viewVanishingPoint model.animState
-        , viewCube model
+        , div
+            [ View3D.transformStyle View3D.Preserve3D
+            , style "position" "absolute"
+            , style "left" "50%"
+            , style "top" "50%"
+            , style "transform" "translate(-50%, -50%)"
+            ]
+            [ viewCube model ]
         ]
 
 
@@ -497,27 +508,30 @@ viewCube : Model -> Html Msg
 viewCube model =
     let
         cubeAttrs =
-            Keyframe.attributes cube.groupName model.animState
+            Keyframe.attributes cubeGroupName model.animState
 
         cubeEvents =
             Keyframe.events GotKeyframeMsg
+
+        cubeSize =
+            toFloat model.cube.size
     in
     div
         (cubeAttrs
             ++ cubeEvents
             ++ [ View3D.transformStyle View3D.Preserve3D
-               , id cube.id
-               , style "width" (String.fromInt cube.size ++ "px")
-               , style "height" (String.fromInt cube.size ++ "px")
+               , id model.cube.id
+               , style "width" (String.fromFloat cubeSize ++ "px")
+               , style "height" (String.fromFloat cubeSize ++ "px")
                , style "position" "relative"
                ]
         )
-        [ viewFace model.animState frontFace
-        , viewFace model.animState backFace
-        , viewFace model.animState rightFace
-        , viewFace model.animState leftFace
-        , viewFace model.animState topFace
-        , viewFace model.animState bottomFace
+        [ viewFace cubeSize model.animState frontFace
+        , viewFace cubeSize model.animState backFace
+        , viewFace cubeSize model.animState rightFace
+        , viewFace cubeSize model.animState leftFace
+        , viewFace cubeSize model.animState topFace
+        , viewFace cubeSize model.animState bottomFace
         ]
 
 
@@ -566,8 +580,8 @@ viewVanishingPoint animState =
         ]
 
 
-viewFace : Keyframe.AnimState -> FaceConfig -> Html Msg
-viewFace animState config =
+viewFace : Float -> Keyframe.AnimState -> FaceConfig -> Html Msg
+viewFace cubeSize animState config =
     let
         faceAnimAttributes =
             Keyframe.attributes config.groupName animState
@@ -580,8 +594,8 @@ viewFace animState config =
             ++ [ View3D.transformStyle View3D.Preserve3D
                , id config.id
                , style "position" "absolute"
-               , style "width" (String.fromInt cube.size ++ "px")
-               , style "height" (String.fromInt cube.size ++ "px")
+               , style "width" (String.fromFloat cubeSize ++ "px")
+               , style "height" (String.fromFloat cubeSize ++ "px")
                , style "background-color" config.background
                , style "border" ("2px solid " ++ config.borderColor)
                , style "box-sizing" "border-box"
