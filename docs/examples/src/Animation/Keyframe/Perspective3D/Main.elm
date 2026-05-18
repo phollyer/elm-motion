@@ -7,9 +7,13 @@ import Anim.Property.PerspectiveOrigin as PerspectiveOrigin
 import Anim.Property.Rotate as Rotate
 import Anim.Property.Translate as Translate
 import Browser exposing (Document)
+import Browser.Dom as Dom
+import Browser.Events
 import Html exposing (Html, div, text)
 import Html.Attributes exposing (class, id, style)
 import Motion.Easing as Easing exposing (Easing(..))
+import Process
+import Task
 
 
 
@@ -22,7 +26,7 @@ main =
         { init = init
         , view = view
         , update = update
-        , subscriptions = \_ -> Sub.none
+        , subscriptions = subscriptions
         }
 
 
@@ -193,13 +197,6 @@ bottomFace =
     }
 
 
-type State
-    = Opening
-    | Closing
-    | RotatingOpen
-    | RotatingClosed
-
-
 type PerspectiveStep
     = MoveToTopRight
     | MoveToBottomRight
@@ -209,23 +206,28 @@ type PerspectiveStep
 
 type alias Model =
     { animState : Keyframe.AnimState
-    , state : State
     , perspectiveStep : PerspectiveStep
-    , animAreaSize : { width : Int, height : Int }
+    , currentAnimAreaSize : { width : Float, height : Float }
     }
 
 
 {-| Width of the perspective container's border (must match the inline
 `border` style applied to `viewAnimationArea`). The dot is absolutely
 positioned relative to the padding box, so animating its anchor all the
-way to the container's outer width / height would place it
-`2 * borderWidth` past the inner edge of the border. Subtracting
-`2 * borderWidth` from the static `animAreaSize` keeps the dot tracing the
-visible border on all four sides.
+way to `element.width` / `element.height` would place it `2 * borderWidth`
+past the inner edge of the border. Subtracting `2 * borderWidth` from the
+measured area keeps the dot tracing the visible border on all four sides.
 -}
-containerBorderWidth : Int
+containerBorderWidth : Float
 containerBorderWidth =
     1
+
+
+toInnerArea : { width : Float, height : Float } -> { width : Float, height : Float }
+toInnerArea { width, height } =
+    { width = max 0 (width - 2 * containerBorderWidth)
+    , height = max 0 (height - 2 * containerBorderWidth)
+    }
 
 
 
@@ -233,25 +235,18 @@ containerBorderWidth =
 
 
 init : { window : { width : Int } } -> ( Model, Cmd Msg )
-init flags =
+init _ =
     let
-        animAreaWidth =
-            min 500 (flags.window.width - 40) - 2 * containerBorderWidth
-
-        animAreaHeight =
-            350 - 2 * containerBorderWidth
-
         initialAnimState =
             Keyframe.init
                 [ -- Initialize the perspective origin at the top-left corner (0%, 0%)
-                  -- It will travel around the corners in sync with the cube animation:
+                  -- It will travel around the corners in sync with the dot animation:
                   -- (0,0) -> (100,0) -> (100,100) -> (0,100) -> (0,0)
                   PerspectiveOrigin.initPercent perspectiveContainer.groupName 0 0
 
                 -- Bring the cube forward on the Z axis
                 -- so that it doesn't get clipped by the
-                -- z=0 clipping plane when we expand the
-                -- sides and rotate
+                -- z=0 clipping plane.
                 , Translate.initZ cube.groupName 200
 
                 -- Position each face in 3D space along the axis it faces
@@ -277,41 +272,15 @@ init flags =
                 -- at z=0, which is the default starting position for elements, so we don't need
                 -- to initialize them
                 ]
-
-        state =
-            Opening
     in
-    ( { animState =
-            Keyframe.animate initialAnimState <|
-                selectAnimation state
-                    >> perspectiveAnimation { width = animAreaWidth, height = animAreaHeight } MoveToTopRight
-      , state = state
-      , perspectiveStep = MoveToBottomRight
-      , animAreaSize =
-            { width = animAreaWidth
-            , height = animAreaHeight
-            }
+    ( { animState = initialAnimState
+      , perspectiveStep = MoveToTopRight
+      , currentAnimAreaSize = { width = 0, height = 0 }
       }
-    , Cmd.none
+    , Process.sleep 100
+        |> Task.andThen (\_ -> Dom.getElement perspectiveContainer.id)
+        |> Task.attempt InitStageElement
     )
-
-
-selectAnimation : State -> AnimBuilder mode -> AnimBuilder mode
-selectAnimation state =
-    case state of
-        Opening ->
-            moveSidesOut
-                >> moveTextsOut
-
-        Closing ->
-            moveSidesIn
-                >> moveTextsIn
-
-        RotatingOpen ->
-            rotateCubeClockwise
-
-        RotatingClosed ->
-            rotateCubeAntiClockwise
 
 
 perspectiveStepDuration : Int
@@ -335,7 +304,7 @@ nextPerspectiveStep step =
             MoveToTopRight
 
 
-perspectiveAnimation : { width : Int, height : Int } -> PerspectiveStep -> AnimBuilder mode -> AnimBuilder mode
+perspectiveAnimation : { width : Float, height : Float } -> PerspectiveStep -> AnimBuilder mode -> AnimBuilder mode
 perspectiveAnimation areaSize step =
     case step of
         MoveToTopRight ->
@@ -358,7 +327,7 @@ perspectiveAnimation areaSize step =
 -- container in sync with the cube animation
 
 
-movePerspectiveOrigin : Float -> Float -> Int -> { width : Int, height : Int } -> AnimBuilder mode -> AnimBuilder mode
+movePerspectiveOrigin : Float -> Float -> Int -> { width : Float, height : Float } -> AnimBuilder mode -> AnimBuilder mode
 movePerspectiveOrigin x y ms areaSize =
     PerspectiveOrigin.for perspectiveContainer.groupName
         >> PerspectiveOrigin.percent
@@ -367,209 +336,11 @@ movePerspectiveOrigin x y ms areaSize =
         >> PerspectiveOrigin.easing Linear
         >> PerspectiveOrigin.build
         >> Translate.for vanishingPointDot.groupName
-        >> Translate.toX (x / 100 * toFloat areaSize.width)
-        >> Translate.toY (y / 100 * toFloat areaSize.height)
+        >> Translate.toX (x / 100 * areaSize.width)
+        >> Translate.toY (y / 100 * areaSize.height)
         >> Translate.duration ms
         >> Translate.easing Linear
         >> Translate.build
-
-
-
--- CUBE - 1st level of 3D animation
---
--- We only rotate the cube, not individual faces, they maintain their
--- position in 3D space because we use `View3D.transformStyle View3D.Preserve3D`
--- on the cube container
-
-
-rotateCube : Float -> AnimBuilder mode -> AnimBuilder mode
-rotateCube to =
-    Rotate.for cube.groupName
-        >> Rotate.toXYZ to to to
-        >> Rotate.easing BackInOut
-        >> Rotate.duration 8000
-        >> Rotate.build
-
-
-rotateCubeClockwise : AnimBuilder mode -> AnimBuilder mode
-rotateCubeClockwise =
-    rotateCube 360
-
-
-rotateCubeAntiClockwise : AnimBuilder mode -> AnimBuilder mode
-rotateCubeAntiClockwise =
-    rotateCube 0
-
-
-
--- SIDES - 2nd level of 3D animation
---
--- For the side movement animations, we build complex animations out of
--- smaller pieces.
-
-
-moveSidesOut : AnimBuilder mode -> AnimBuilder mode
-moveSidesOut =
-    moveFrontFaceOut
-        >> moveBackFaceOut
-        >> moveRightFaceOut
-        >> moveLeftFaceOut
-        >> moveTopFaceOut
-        >> moveBottomFaceOut
-
-
-moveSidesIn : AnimBuilder mode -> AnimBuilder mode
-moveSidesIn =
-    moveFrontFaceIn
-        >> moveBackFaceIn
-        >> moveRightFaceIn
-        >> moveLeftFaceIn
-        >> moveTopFaceIn
-        >> moveBottomFaceIn
-
-
-sharedTiming : AnimBuilder mode -> AnimBuilder mode
-sharedTiming =
-    Keyframe.duration 1000
-        >> Keyframe.easing CircInOut
-
-
-moveFace : FaceConfig -> (Translate.Builder mode -> Translate.Builder mode) -> AnimBuilder mode -> AnimBuilder mode
-moveFace { groupName } moveToBuilder =
-    sharedTiming
-        >> Translate.for groupName
-        >> moveToBuilder
-        >> Translate.build
-
-
-
--- Each face moves along the axis it faces by a `moveAmount` number
--- of pixels when the cube expands, and moves back to it's original position
--- when the cube closes.
---
--- Front/Back faces move on Z (forward/backward)
--- Left/Right faces move on X (sideways)
--- Top/Bottom faces move on Y (up/down)
-
-
-moveAmount : Float
-moveAmount =
-    50
-
-
-moveFrontFaceOut : AnimBuilder mode -> AnimBuilder mode
-moveFrontFaceOut =
-    moveFace frontFace <|
-        Translate.toZ (depth + moveAmount)
-
-
-moveFrontFaceIn : AnimBuilder mode -> AnimBuilder mode
-moveFrontFaceIn =
-    moveFace frontFace <|
-        Translate.toZ depth
-
-
-moveBackFaceOut : AnimBuilder mode -> AnimBuilder mode
-moveBackFaceOut =
-    moveFace backFace <|
-        Translate.toZ (-1 * depth - moveAmount)
-
-
-moveBackFaceIn : AnimBuilder mode -> AnimBuilder mode
-moveBackFaceIn =
-    moveFace backFace <|
-        Translate.toZ (-1 * depth)
-
-
-moveRightFaceOut : AnimBuilder mode -> AnimBuilder mode
-moveRightFaceOut =
-    moveFace rightFace <|
-        Translate.toX (depth + moveAmount)
-
-
-moveRightFaceIn : AnimBuilder mode -> AnimBuilder mode
-moveRightFaceIn =
-    moveFace rightFace <|
-        Translate.toX depth
-
-
-moveLeftFaceOut : AnimBuilder mode -> AnimBuilder mode
-moveLeftFaceOut =
-    moveFace leftFace <|
-        Translate.toX (-1 * depth - moveAmount)
-
-
-moveLeftFaceIn : AnimBuilder mode -> AnimBuilder mode
-moveLeftFaceIn =
-    moveFace leftFace <|
-        Translate.toX (-1 * depth)
-
-
-moveTopFaceOut : AnimBuilder mode -> AnimBuilder mode
-moveTopFaceOut =
-    moveFace topFace <|
-        Translate.toY (-1 * depth - moveAmount)
-
-
-moveTopFaceIn : AnimBuilder mode -> AnimBuilder mode
-moveTopFaceIn =
-    moveFace topFace <|
-        Translate.toY (-1 * depth)
-
-
-moveBottomFaceOut : AnimBuilder mode -> AnimBuilder mode
-moveBottomFaceOut =
-    moveFace bottomFace <|
-        Translate.toY (depth + moveAmount)
-
-
-moveBottomFaceIn : AnimBuilder mode -> AnimBuilder mode
-moveBottomFaceIn =
-    moveFace bottomFace <|
-        Translate.toY depth
-
-
-
--- TEXT - 3rd level of 3D animation
---
--- Text moves forward (Z+20) and rotates (to Z=360deg) when sides expand,
--- and then moves back (to Z=0) and rotates back (to Z=0deg) when sides close
-
-
-textMoveAmount : Float
-textMoveAmount =
-    20
-
-
-moveText : TextConfig -> Float -> Float -> AnimBuilder mode -> AnimBuilder mode
-moveText { groupName } toZ toRotate =
-    sharedTiming
-        >> Translate.for groupName
-        >> Translate.toZ toZ
-        >> Translate.build
-        >> Rotate.for groupName
-        >> Rotate.toZ toRotate
-        >> Rotate.build
-
-
-moveTextsOut : AnimBuilder mode -> AnimBuilder mode
-moveTextsOut =
-    moveText frontFace.text textMoveAmount 360
-        >> moveText backFace.text textMoveAmount 360
-        >> moveText rightFace.text textMoveAmount 360
-        >> moveText leftFace.text textMoveAmount 360
-        >> moveText topFace.text textMoveAmount 360
-        >> moveText bottomFace.text textMoveAmount 360
-
-
-moveTextsIn : AnimBuilder mode -> AnimBuilder mode
-moveTextsIn =
-    moveText frontFace.text 0 0
-        >> moveText backFace.text 0 0
-        >> moveText rightFace.text 0 0
-        >> moveText leftFace.text 0 0
-        >> moveText topFace.text 0 0
-        >> moveText bottomFace.text 0 0
 
 
 
@@ -579,6 +350,14 @@ moveTextsIn =
 type Msg
     = NoOp
     | GotKeyframeMsg Keyframe.AnimMsg
+    | InitStageElement (Result Dom.Error Dom.Element)
+    | GotStageElement (Result Dom.Error Dom.Element)
+    | OnWindowResize Int Int
+
+
+subscriptions : Model -> Sub Msg
+subscriptions _ =
+    Browser.Events.onResize OnWindowResize
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -596,16 +375,56 @@ update msg model =
             , Cmd.none
             )
 
+        InitStageElement result ->
+            case result of
+                Ok element ->
+                    let
+                        innerArea =
+                            toInnerArea
+                                { width = element.element.width
+                                , height = element.element.height
+                                }
+                    in
+                    ( { model
+                        | currentAnimAreaSize = innerArea
+                        , animState =
+                            Keyframe.animate model.animState <|
+                                perspectiveAnimation innerArea model.perspectiveStep
+                        , perspectiveStep = nextPerspectiveStep model.perspectiveStep
+                      }
+                    , Cmd.none
+                    )
+
+                Err _ ->
+                    ( model, Cmd.none )
+
+        GotStageElement result ->
+            case result of
+                Ok element ->
+                    let
+                        innerArea =
+                            toInnerArea
+                                { width = element.element.width
+                                , height = element.element.height
+                                }
+                    in
+                    ( { model | currentAnimAreaSize = innerArea }
+                    , Cmd.none
+                    )
+
+                Err _ ->
+                    ( model, Cmd.none )
+
+        OnWindowResize _ _ ->
+            ( model
+            , Dom.getElement perspectiveContainer.id
+                |> Task.attempt GotStageElement
+            )
+
 
 handleEvent : Keyframe.AnimEvent -> Model -> Model
 handleEvent animEvent model =
     case animEvent of
-        Keyframe.Ended _ _ "cubeAnim" ->
-            cubeRotationEnded model
-
-        Keyframe.Ended _ _ "frontFaceAnim" ->
-            sidesMovementEnded model
-
         Keyframe.Ended _ _ "vanishingPointDotAnim" ->
             perspectiveStepEnded model
 
@@ -613,48 +432,12 @@ handleEvent animEvent model =
             model
 
 
-cubeRotationEnded : Model -> Model
-cubeRotationEnded model =
-    case model.state of
-        RotatingOpen ->
-            stateChanged Closing model
-
-        RotatingClosed ->
-            stateChanged Opening model
-
-        _ ->
-            model
-
-
-sidesMovementEnded : Model -> Model
-sidesMovementEnded model =
-    case model.state of
-        Opening ->
-            stateChanged RotatingOpen model
-
-        Closing ->
-            stateChanged RotatingClosed model
-
-        _ ->
-            model
-
-
-stateChanged : State -> Model -> Model
-stateChanged state model =
-    { model
-        | state = state
-        , animState =
-            Keyframe.animate model.animState <|
-                selectAnimation state
-    }
-
-
 perspectiveStepEnded : Model -> Model
 perspectiveStepEnded model =
     { model
         | animState =
             Keyframe.animate model.animState <|
-                perspectiveAnimation model.animAreaSize model.perspectiveStep
+                perspectiveAnimation model.currentAnimAreaSize model.perspectiveStep
         , perspectiveStep =
             nextPerspectiveStep model.perspectiveStep
     }
@@ -697,10 +480,12 @@ viewAnimationArea model =
                , style "display" "flex"
                , style "justify-content" "center"
                , style "align-items" "center"
-               , style "width" (String.fromInt model.animAreaSize.width ++ "px")
-               , style "height" (String.fromInt model.animAreaSize.height ++ "px")
+               , style "flex" "1 1 auto"
+               , style "width" "100%"
+               , style "min-height" "0"
+               , style "aspect-ratio" "1 / 1"
                , style "background-color" "#ececf688"
-               , style "border" (String.fromInt containerBorderWidth ++ "px solid #4f4f7f18")
+               , style "border" (String.fromFloat containerBorderWidth ++ "px solid #4f4f7f18")
                ]
         )
         [ viewVanishingPoint model.animState

@@ -199,13 +199,6 @@ bottomFace =
     }
 
 
-type State
-    = Opening
-    | Closing
-    | RotatingOpen
-    | RotatingClosed
-
-
 type PerspectiveStep
     = MoveToTopRight
     | MoveToBottomRight
@@ -215,7 +208,6 @@ type PerspectiveStep
 
 type alias Model =
     { animState : Sub.AnimState
-    , state : State
     , perspectiveStep : PerspectiveStep
     , initialAnimAreaSize : { width : Float, height : Float }
     , currentAnimAreaSize : { width : Float, height : Float }
@@ -315,7 +307,6 @@ init flags =
                 ]
     in
     ( { animState = initialAnimState
-      , state = Opening
       , perspectiveStep = MoveToTopRight
       , initialAnimAreaSize = initialAreaSize
       , currentAnimAreaSize = initialAreaSize
@@ -324,24 +315,6 @@ init flags =
         |> Task.andThen (\_ -> Dom.getElement perspectiveContainer.id)
         |> Task.attempt InitStageElement
     )
-
-
-selectAnimation : State -> AnimBuilder mode -> AnimBuilder mode
-selectAnimation state =
-    case state of
-        Opening ->
-            moveSidesOut
-                >> moveTextsOut
-
-        Closing ->
-            moveSidesIn
-                >> moveTextsIn
-
-        RotatingOpen ->
-            rotateCubeClockwise
-
-        RotatingClosed ->
-            rotateCubeAntiClockwise
 
 
 perspectiveStepDuration : Int
@@ -435,204 +408,6 @@ movePerspectiveOrigin x y ms areaSize =
 
 
 
--- CUBE - 1st level of 3D animation
---
--- We only rotate the cube, not individual faces, they maintain their
--- position in 3D space because we use `View3D.transformStyle View3D.Preserve3D`
--- on the cube container
-
-
-rotateCube : Float -> AnimBuilder mode -> AnimBuilder mode
-rotateCube to =
-    Rotate.for cube.groupName
-        >> Rotate.toXYZ to to to
-        >> Rotate.easing BackInOut
-        >> Rotate.duration 8000
-        >> Rotate.build
-
-
-rotateCubeClockwise : AnimBuilder mode -> AnimBuilder mode
-rotateCubeClockwise =
-    rotateCube 360
-
-
-rotateCubeAntiClockwise : AnimBuilder mode -> AnimBuilder mode
-rotateCubeAntiClockwise =
-    rotateCube 0
-
-
-
--- SIDES - 2nd level of 3D animation
---
--- For the side movement animations, we build complex animations out of
--- smaller pieces.
-
-
-moveSidesOut : AnimBuilder mode -> AnimBuilder mode
-moveSidesOut =
-    moveFrontFaceOut
-        >> moveBackFaceOut
-        >> moveRightFaceOut
-        >> moveLeftFaceOut
-        >> moveTopFaceOut
-        >> moveBottomFaceOut
-
-
-moveSidesIn : AnimBuilder mode -> AnimBuilder mode
-moveSidesIn =
-    moveFrontFaceIn
-        >> moveBackFaceIn
-        >> moveRightFaceIn
-        >> moveLeftFaceIn
-        >> moveTopFaceIn
-        >> moveBottomFaceIn
-
-
-sharedTiming : AnimBuilder mode -> AnimBuilder mode
-sharedTiming =
-    Sub.duration 1000
-        >> Sub.easing CircInOut
-
-
-moveFace : FaceConfig -> (Translate.Builder mode -> Translate.Builder mode) -> AnimBuilder mode -> AnimBuilder mode
-moveFace { groupName } moveToBuilder =
-    sharedTiming
-        >> Translate.for groupName
-        >> moveToBuilder
-        >> Translate.build
-
-
-
--- Each face moves along the axis it faces by a `moveAmount` number
--- of pixels when the cube expands, and moves back to it's original position
--- when the cube closes.
---
--- Front/Back faces move on Z (forward/backward)
--- Left/Right faces move on X (sideways)
--- Top/Bottom faces move on Y (up/down)
-
-
-moveAmount : Float
-moveAmount =
-    50
-
-
-moveFrontFaceOut : AnimBuilder mode -> AnimBuilder mode
-moveFrontFaceOut =
-    moveFace frontFace <|
-        Translate.toZ (depth + moveAmount)
-
-
-moveFrontFaceIn : AnimBuilder mode -> AnimBuilder mode
-moveFrontFaceIn =
-    moveFace frontFace <|
-        Translate.toZ depth
-
-
-moveBackFaceOut : AnimBuilder mode -> AnimBuilder mode
-moveBackFaceOut =
-    moveFace backFace <|
-        Translate.toZ (-1 * depth - moveAmount)
-
-
-moveBackFaceIn : AnimBuilder mode -> AnimBuilder mode
-moveBackFaceIn =
-    moveFace backFace <|
-        Translate.toZ (-1 * depth)
-
-
-moveRightFaceOut : AnimBuilder mode -> AnimBuilder mode
-moveRightFaceOut =
-    moveFace rightFace <|
-        Translate.toX (depth + moveAmount)
-
-
-moveRightFaceIn : AnimBuilder mode -> AnimBuilder mode
-moveRightFaceIn =
-    moveFace rightFace <|
-        Translate.toX depth
-
-
-moveLeftFaceOut : AnimBuilder mode -> AnimBuilder mode
-moveLeftFaceOut =
-    moveFace leftFace <|
-        Translate.toX (-1 * depth - moveAmount)
-
-
-moveLeftFaceIn : AnimBuilder mode -> AnimBuilder mode
-moveLeftFaceIn =
-    moveFace leftFace <|
-        Translate.toX (-1 * depth)
-
-
-moveTopFaceOut : AnimBuilder mode -> AnimBuilder mode
-moveTopFaceOut =
-    moveFace topFace <|
-        Translate.toY (-1 * depth - moveAmount)
-
-
-moveTopFaceIn : AnimBuilder mode -> AnimBuilder mode
-moveTopFaceIn =
-    moveFace topFace <|
-        Translate.toY (-1 * depth)
-
-
-moveBottomFaceOut : AnimBuilder mode -> AnimBuilder mode
-moveBottomFaceOut =
-    moveFace bottomFace <|
-        Translate.toY (depth + moveAmount)
-
-
-moveBottomFaceIn : AnimBuilder mode -> AnimBuilder mode
-moveBottomFaceIn =
-    moveFace bottomFace <|
-        Translate.toY depth
-
-
-
--- TEXT - 3rd level of 3D animation
---
--- Text moves forward (Z+20) and rotates (to Z=360deg) when sides expand,
--- and then moves back (to Z=0) and rotates back (to Z=0deg) when sides close
-
-
-textMoveAmount : Float
-textMoveAmount =
-    20
-
-
-moveText : TextConfig -> Float -> Float -> AnimBuilder mode -> AnimBuilder mode
-moveText { groupName } toZ toRotate =
-    sharedTiming
-        >> Translate.for groupName
-        >> Translate.toZ toZ
-        >> Translate.build
-        >> Rotate.for groupName
-        >> Rotate.toZ toRotate
-        >> Rotate.build
-
-
-moveTextsOut : AnimBuilder mode -> AnimBuilder mode
-moveTextsOut =
-    moveText frontFace.text textMoveAmount 360
-        >> moveText backFace.text textMoveAmount 360
-        >> moveText rightFace.text textMoveAmount 360
-        >> moveText leftFace.text textMoveAmount 360
-        >> moveText topFace.text textMoveAmount 360
-        >> moveText bottomFace.text textMoveAmount 360
-
-
-moveTextsIn : AnimBuilder mode -> AnimBuilder mode
-moveTextsIn =
-    moveText frontFace.text 0 0
-        >> moveText backFace.text 0 0
-        >> moveText rightFace.text 0 0
-        >> moveText leftFace.text 0 0
-        >> moveText topFace.text 0 0
-        >> moveText bottomFace.text 0 0
-
-
-
 -- UPDATE
 
 
@@ -655,8 +430,7 @@ update msg model =
             ( { model
                 | animState =
                     Sub.animate model.animState <|
-                        selectAnimation model.state
-                            >> perspectiveAnimation model.currentAnimAreaSize model.perspectiveStep
+                        perspectiveAnimation model.currentAnimAreaSize model.perspectiveStep
                 , perspectiveStep =
                     nextPerspectiveStep model.perspectiveStep
               }
@@ -760,53 +534,11 @@ handleSubEvents =
 handleSubEvent : Sub.AnimEvent -> Model -> Model
 handleSubEvent animEvent model =
     case animEvent of
-        Sub.Ended "cubeAnim" ->
-            cubeRotationEnded model
-
-        Sub.Ended "frontFaceAnim" ->
-            sidesMovementEnded model
-
         Sub.Ended "vanishingPointDotAnim" ->
             perspectiveStepEnded model
 
         _ ->
             model
-
-
-cubeRotationEnded : Model -> Model
-cubeRotationEnded model =
-    case model.state of
-        RotatingOpen ->
-            stateChanged Closing model
-
-        RotatingClosed ->
-            stateChanged Opening model
-
-        _ ->
-            model
-
-
-sidesMovementEnded : Model -> Model
-sidesMovementEnded model =
-    case model.state of
-        Opening ->
-            stateChanged RotatingOpen model
-
-        Closing ->
-            stateChanged RotatingClosed model
-
-        _ ->
-            model
-
-
-stateChanged : State -> Model -> Model
-stateChanged state model =
-    { model
-        | state = state
-        , animState =
-            Sub.animate model.animState <|
-                selectAnimation state
-    }
 
 
 perspectiveStepEnded : Model -> Model
