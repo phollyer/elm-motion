@@ -6,6 +6,7 @@ import Anim.Resize as Resize
 import Browser
 import Browser.Dom as Dom
 import Browser.Events
+import Dict exposing (Dict)
 import Html exposing (Html, div, text)
 import Html.Attributes exposing (class, id, style)
 import Html.Events exposing (onClick)
@@ -47,7 +48,7 @@ type alias Model =
     { animState : WAAPI.AnimState Msg
     , widthPct : WidthPct
     , trackPx : Float
-    , animPlayState : AnimPlayState
+    , rowStates : Dict AnimGroupName AnimPlayState
     }
 
 
@@ -81,9 +82,30 @@ topBoxAnim =
     "topBoxAnim"
 
 
+middleBoxAnim : String
+middleBoxAnim =
+    "middleBoxAnim"
+
+
 bottomBoxAnim : String
 bottomBoxAnim =
     "bottomBoxAnim"
+
+
+allGroups : List AnimGroupName
+allGroups =
+    [ topBoxAnim, middleBoxAnim, bottomBoxAnim ]
+
+
+rowState : AnimGroupName -> Model -> AnimPlayState
+rowState group model =
+    Dict.get group model.rowStates
+        |> Maybe.withDefault NotStarted
+
+
+setRowState : AnimGroupName -> AnimPlayState -> Model -> Model
+setRowState group state model =
+    { model | rowStates = Dict.insert group state model.rowStates }
 
 
 {-| One id is enough — both rows share the same inner width because they
@@ -110,11 +132,12 @@ init _ =
     ( { animState =
             WAAPI.init motionCmd motionMsg <|
                 [ Translate.initX topBoxAnim 0
+                , Translate.initX middleBoxAnim 0
                 , Translate.initX bottomBoxAnim 0
                 ]
       , widthPct = Normal
       , trackPx = 0
-      , animPlayState = NotStarted
+      , rowStates = Dict.empty
       }
     , Process.sleep 100
         |> Task.perform (\_ -> OnResize)
@@ -133,16 +156,24 @@ animate animGroupName endTarget =
         >> Translate.build
 
 
+
+---8<-- [start:policy-init]
+
+
 setResizePolicy : AnimGroupName -> WAAPI.AnimBuilder mode -> WAAPI.AnimBuilder mode
 setResizePolicy animGroupName =
     if animGroupName == topBoxAnim then
         Translate.resizePolicy animGroupName Resize.proportional
+
+    else if animGroupName == middleBoxAnim then
+        Translate.resizePolicy animGroupName Resize.clamp
 
     else
         Translate.resizePolicy animGroupName Resize.retarget
 
 
 
+---8<-- [end:policy-init]
 -- UPDATE
 
 
@@ -150,6 +181,8 @@ type Msg
     = GotAnimUpdate WAAPI.AnimMsg
     | Start
     | Stop
+    | StartRow AnimGroupName
+    | StopRow AnimGroupName
     | SetWidth WidthPct
     | OnResize
     | GotTrack (Result Dom.Error Dom.Element)
@@ -166,32 +199,16 @@ update msg model =
             ( { model | animState = newState }, Cmd.none )
 
         Start ->
-            case model.animPlayState of
-                NotStarted ->
-                    startAnimation model
-
-                Paused ->
-                    resumeAnimation model
-
-                Playing ->
-                    ( model, Cmd.none )
+            foldGroups startRow model
 
         Stop ->
-            case model.animPlayState of
-                Playing ->
-                    let
-                        ( s1, c1 ) =
-                            WAAPI.pause topBoxAnim model.animState
+            foldGroups stopRow model
 
-                        ( s2, c2 ) =
-                            WAAPI.pause bottomBoxAnim s1
-                    in
-                    ( { model | animPlayState = Paused, animState = s2 }
-                    , Cmd.batch [ c1, c2 ]
-                    )
+        StartRow group ->
+            startRow group ( model, Cmd.none )
 
-                _ ->
-                    ( model, Cmd.none )
+        StopRow group ->
+            stopRow group ( model, Cmd.none )
 
         SetWidth pct ->
             ( { model | widthPct = pct }
@@ -200,6 +217,7 @@ update msg model =
                 |> Task.perform (\_ -> OnResize)
             )
 
+        ---8<-- [start:on-resize-update]
         OnResize ->
             ( model
             , Task.attempt GotTrack <|
@@ -213,73 +231,110 @@ update msg model =
             ( model, Cmd.none )
 
 
+
+---8<-- [end:on-resize-update]
+
+
 startAnimation : Model -> ( Model, Cmd Msg )
 startAnimation model =
+    foldGroups startRow model
+
+
+foldGroups : (AnimGroupName -> ( Model, Cmd Msg ) -> ( Model, Cmd Msg )) -> Model -> ( Model, Cmd Msg )
+foldGroups f model =
+    let
+        ( finalModel, cmds ) =
+            List.foldl
+                (\g ( m, acc ) ->
+                    let
+                        ( m2, c ) =
+                            f g ( m, Cmd.none )
+                    in
+                    ( m2, c :: acc )
+                )
+                ( model, [] )
+                allGroups
+    in
+    ( finalModel, Cmd.batch cmds )
+
+
+startRow : AnimGroupName -> ( Model, Cmd Msg ) -> ( Model, Cmd Msg )
+startRow group ( model, prevCmd ) =
     let
         target =
             model.trackPx - boxSize
-
-        ( s1, c1 ) =
-            WAAPI.animate model.animState (setResizePolicy topBoxAnim >> animate topBoxAnim target)
-
-        ( s2, c2 ) =
-            WAAPI.animate s1 (setResizePolicy bottomBoxAnim >> animate bottomBoxAnim target)
     in
-    ( { model | animPlayState = Playing, animState = s2 }
-    , Cmd.batch [ c1, c2 ]
-    )
+    case rowState group model of
+        Playing ->
+            ( model, prevCmd )
 
-
-resumeAnimation : Model -> ( Model, Cmd Msg )
-resumeAnimation model =
-    let
-        ( s1, c1 ) =
-            WAAPI.resume topBoxAnim model.animState
-
-        ( s2, c2 ) =
-            WAAPI.resume bottomBoxAnim s1
-    in
-    ( { model | animPlayState = Playing, animState = s2 }
-    , Cmd.batch [ c1, c2 ]
-    )
-
-
-{-| The two rows demonstrate the two `WAAPI.onResize` strategies.
-
-  - `topBoxAnim` uses `Proportional` - the box's progress along the
-    track is preserved, so the rhythm of the animation continues to feel
-    natural even as the track changes width.
-      - `bottomBoxAnim` uses `Retarget` - the box keeps its current pixel
-        position, but the leg endpoint follows the new bounds so the
-        animation remains edge-to-edge as the track grows or shrinks.
-
--}
-handleResize : Model -> ( Model, Cmd Msg )
-handleResize model =
-    case model.animPlayState of
-        NotStarted ->
-            ( model, Cmd.none )
-
-        _ ->
+        Paused ->
             let
-                bounds =
-                    { x = Just { min = 0, max = model.trackPx - boxSize }
-                    , y = Nothing
-                    , z = Nothing
-                    }
-
-                ( newAnimState, cmd ) =
-                    WAAPI.onResize model.animState <|
-                        Translate.bounds topBoxAnim bounds
-                            >> Translate.bounds bottomBoxAnim bounds
+                ( newState, cmd ) =
+                    WAAPI.resume group model.animState
             in
-            ( { model | animState = newAnimState }
-            , cmd
+            ( setRowState group Playing { model | animState = newState }
+            , Cmd.batch [ prevCmd, cmd ]
+            )
+
+        NotStarted ->
+            let
+                ( newState, cmd ) =
+                    WAAPI.animate model.animState
+                        (setResizePolicy group >> animate group target)
+            in
+            ( setRowState group Playing { model | animState = newState }
+            , Cmd.batch [ prevCmd, cmd ]
             )
 
 
+stopRow : AnimGroupName -> ( Model, Cmd Msg ) -> ( Model, Cmd Msg )
+stopRow group ( model, prevCmd ) =
+    case rowState group model of
+        Playing ->
+            let
+                ( newState, cmd ) =
+                    WAAPI.pause group model.animState
+            in
+            ( setRowState group Paused { model | animState = newState }
+            , Cmd.batch [ prevCmd, cmd ]
+            )
 
+        _ ->
+            ( model, prevCmd )
+
+
+
+---8<-- [start:on-resize-handler]
+
+
+handleResize : Model -> ( Model, Cmd Msg )
+handleResize model =
+    let
+        bounds =
+            { x = Just { min = 0, max = model.trackPx - boxSize }
+            , y = Nothing
+            , z = Nothing
+            }
+
+        applyBoundsFor group builder =
+            if rowState group model == NotStarted then
+                builder
+
+            else
+                Translate.bounds group bounds builder
+
+        ( newAnimState, cmd ) =
+            WAAPI.onResize model.animState <|
+                List.foldl (\g acc -> acc >> applyBoundsFor g) identity allGroups
+    in
+    ( { model | animState = newAnimState }, cmd )
+
+
+
+---8<-- [end:on-resize-handler]
 -- SUBSCRIPTIONS
+---8<-- [start:subscriptions]
 
 
 subscriptions : Model -> Sub Msg
@@ -291,6 +346,7 @@ subscriptions model =
 
 
 
+---8<-- [end:subscriptions]
 -- VIEW
 
 
@@ -307,7 +363,9 @@ view model =
                 [ text label ]
     in
     div
-        [ style "text-align" "center" ]
+        [ class "example-stage"
+        , style "justify-content" "flex-start"
+        ]
         [ div
             [ class "example-badge example-badge--responsive" ]
             [ text "RESPONSIVE" ]
@@ -327,22 +385,50 @@ view model =
             , ctrlBtn "Widen" "" (SetWidth Widen)
             ]
         , div
-            [ class "responsive-stage"
-            , style "width" (String.fromFloat (widthPctToFloat model.widthPct) ++ "%")
+            [ class "example-canvas"
+            , style "align-self" "flex-start"
+            , style "flex" "0 0 auto"
+            , style "border" "1px solid #0c0c0d"
+            , style "padding" "8px"
+            , style "background-color" "#d6d9dd"
             ]
-            [ trackRow "Proportional" trackId topBoxAnim proportionalColor model
-            , trackRow "Retarget" "" bottomBoxAnim clampColor model
+            [ div
+                [ style "width" (String.fromFloat (widthPctToFloat model.widthPct) ++ "%")
+                , style "align-self" "flex-start"
+                ]
+                [ trackRow "Proportional" trackId topBoxAnim proportionalColor model
+                , trackRow "Clamp" "" middleBoxAnim clampColor model
+                , trackRow "Retarget" "" bottomBoxAnim retargetColor model
+                ]
             ]
         ]
 
 
 trackRow : String -> String -> String -> String -> Model -> Html Msg
 trackRow label rowId group color model =
-    div [ class "responsive-row" ]
+    let
+        state =
+            rowState group model
+
+        rowBtn btnLabel cls msg =
+            Html.button
+                [ onClick msg
+                , class ("ui-action-button " ++ cls)
+                , style "background-color" "blue"
+                , style "color" "white"
+                , style "padding" "2px 8px"
+                , style "font-size" "12px"
+                ]
+                [ text btnLabel ]
+    in
+    div
+        [ class "responsive-row" ]
         [ div [ class "responsive-row__label" ] [ text label ]
         , div
             ([ class "responsive-row__track"
              , style "background-color" "#f9de10"
+             , style "border" "1px solid #0c0c0d"
+             , style "border-radius" "9px"
              ]
                 ++ (if String.isEmpty rowId then
                         []
@@ -364,7 +450,35 @@ trackRow label rowId group color model =
                 )
                 []
             ]
+        , div
+            [ style "display" "flex"
+            , style "gap" "4px"
+            , style "margin-left" "8px"
+            ]
+            [ rowBtn "Start" "success" (StartRow group)
+            , rowBtn "Stop" "warning" (StopRow group)
+            , div
+                [ style "font-size" "11px"
+                , style "align-self" "center"
+                , style "color" "#555"
+                , style "min-width" "60px"
+                ]
+                [ text (rowStateLabel state) ]
+            ]
         ]
+
+
+rowStateLabel : AnimPlayState -> String
+rowStateLabel state =
+    case state of
+        NotStarted ->
+            "idle"
+
+        Playing ->
+            "playing"
+
+        Paused ->
+            "paused"
 
 
 proportionalColor : String
@@ -374,4 +488,9 @@ proportionalColor =
 
 clampColor : String
 clampColor =
+    "#fd7e14"
+
+
+retargetColor : String
+retargetColor =
     "#dc3545"

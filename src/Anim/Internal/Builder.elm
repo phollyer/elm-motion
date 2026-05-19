@@ -1109,8 +1109,8 @@ orderedRange a b =
 Used by engines as the fallback when no per-property policy is stored.
 
 -}
-policy : (a -> Resize.Policy) -> AnimGroupName -> a -> AnimBuilder mode -> AnimBuilder mode
-policy toInternalPolicy groupName policy_ (AnimBuilder data) =
+policy : AnimGroupName -> Resize.Policy -> AnimBuilder mode -> AnimBuilder mode
+policy groupName policy_ (AnimBuilder data) =
     let
         state =
             data.state
@@ -1120,7 +1120,7 @@ policy toInternalPolicy groupName policy_ (AnimBuilder data) =
                 (Dict.get groupName state.resizePolicies)
 
         updated =
-            { current | default = Just <| toInternalPolicy policy_ }
+            { current | default = Just policy_ }
     in
     AnimBuilder { data | state = { state | resizePolicies = Dict.insert groupName updated state.resizePolicies } }
 

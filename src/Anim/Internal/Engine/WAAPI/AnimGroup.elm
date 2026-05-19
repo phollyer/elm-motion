@@ -10,6 +10,7 @@ module Anim.Internal.Engine.WAAPI.AnimGroup exposing
     , emptyProportion
     , getAnimationDirection
     , getCurrentIteration
+    , getCurrentPerspectiveOriginState
     , getCurrentScaleState
     , getCurrentTranslateState
     , getDiscreteEntry
@@ -25,6 +26,7 @@ module Anim.Internal.Engine.WAAPI.AnimGroup exposing
     , isRunning
     , setAnimationDirection
     , setCurrentIteration
+    , setCurrentPerspectiveOriginState
     , setCurrentScaleState
     , setCurrentTranslateState
     , setDiscreteEntry
@@ -62,6 +64,7 @@ type AnimGroup
         , currentIteration : Int -- Latest iteration index reported by WAAPI (0 = first leg)
         , currentTranslateState : Maybe ResizeAxisState -- Latest resize-updated translate bounds, duration & per-axis proportion snapshot; Nothing on a fresh `animate` call
         , currentScaleState : Maybe ResizeAxisState -- Latest resize-updated scale bounds, duration & per-axis proportion snapshot; Nothing on a fresh `animate` call
+        , currentPerspectiveOriginState : Maybe ResizeAxisState -- Latest resize-updated perspective-origin bounds & duration (z is unused, always 0); Nothing on a fresh `animate` call
         , animationDirection : Builder.AnimationDirection
         , discreteEntry : Dict String Builder.DiscreteEntryProperty
         , discreteExit : Dict String Builder.DiscreteExitProperty
@@ -140,6 +143,7 @@ init =
         , currentIteration = 0
         , currentTranslateState = Nothing
         , currentScaleState = Nothing
+        , currentPerspectiveOriginState = Nothing
         , animationDirection = Builder.Normal
         , discreteEntry = Dict.empty
         , discreteExit = Dict.empty
@@ -197,6 +201,11 @@ getCurrentTranslateState (AnimGroup group) =
 getCurrentScaleState : AnimGroup -> Maybe ResizeAxisState
 getCurrentScaleState (AnimGroup group) =
     group.currentScaleState
+
+
+getCurrentPerspectiveOriginState : AnimGroup -> Maybe ResizeAxisState
+getCurrentPerspectiveOriginState (AnimGroup group) =
+    group.currentPerspectiveOriginState
 
 
 getDiscreteEntry : AnimGroup -> Dict String Builder.DiscreteEntryProperty
@@ -258,6 +267,11 @@ setCurrentTranslateState newState (AnimGroup group) =
 setCurrentScaleState : ResizeAxisState -> AnimGroup -> AnimGroup
 setCurrentScaleState newState (AnimGroup group) =
     AnimGroup { group | currentScaleState = Just newState }
+
+
+setCurrentPerspectiveOriginState : ResizeAxisState -> AnimGroup -> AnimGroup
+setCurrentPerspectiveOriginState newState (AnimGroup group) =
+    AnimGroup { group | currentPerspectiveOriginState = Just newState }
 
 
 {-| Update _only_ the per-axis proportion snapshot of the cached

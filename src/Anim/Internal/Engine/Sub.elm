@@ -124,6 +124,7 @@ type AnimState
         { builder : EngineBuilder
         , subscriptionsActive : Bool
         , pendingControlEvents : List ControlEvent
+        , lastResize : ResizeBuilder.Builder
         }
         (AnimGroups AnimGroup)
 
@@ -158,6 +159,7 @@ init propertyInitializers =
                 { builder = Builder.init []
                 , subscriptionsActive = False
                 , pendingControlEvents = []
+                , lastResize = ResizeBuilder.empty
                 }
                 AnimGroups.init
 
@@ -183,6 +185,7 @@ init propertyInitializers =
                         |> Builder.mergeBaselines
                         |> Builder.clearAnimData
                 , pendingControlEvents = []
+                , lastResize = ResizeBuilder.empty
                 }
                 (AnimGroups.map initGroup animGroups)
 
@@ -229,20 +232,31 @@ animate (AnimState state animGroups) build =
         startedEvents =
             AnimGroups.names processed.groups
                 |> List.map Started
+
+        nextAnimGroups =
+            processed.groups
+                |> AnimGroups.map generateAnimGroup
+                |> AnimGroups.foldl insertAnimGroup animGroups
+
+        nextState =
+            AnimState
+                { subscriptionsActive = True
+                , builder =
+                    builder
+                        |> Builder.addAnimationToHistory processed
+                        |> Builder.mergeBaselines
+                        |> Builder.clearAnimData
+                , pendingControlEvents = state.pendingControlEvents ++ startedEvents
+                , lastResize = state.lastResize
+                }
+                nextAnimGroups
     in
-    AnimState
-        { subscriptionsActive = True
-        , builder =
-            builder
-                |> Builder.addAnimationToHistory processed
-                |> Builder.mergeBaselines
-                |> Builder.clearAnimData
-        , pendingControlEvents = state.pendingControlEvents ++ startedEvents
-        }
-        (processed.groups
-            |> AnimGroups.map generateAnimGroup
-            |> AnimGroups.foldl insertAnimGroup animGroups
-        )
+    -- Re-apply cached resize bounds against any group that was just
+    -- (re)configured. This makes a mid-animation policy swap take effect
+    -- immediately against the most recent known bounds, without waiting
+    -- for another resize event. If `onResize` has never fired,
+    -- `lastResize` is empty and the fold is a no-op.
+    List.foldl (applyGroupResize state.lastResize) nextState (AnimGroups.names processed.groups)
 
 
 setSnapshot : AnimGroups AnimGroup -> AnimGroups { propertySnapshot : PropertyBaselines }
@@ -277,12 +291,18 @@ skipped.
 
 -}
 onResize : AnimState -> (ResizeBuilder.Builder -> ResizeBuilder.Builder) -> AnimState
-onResize ((AnimState _ _) as animState) buildResize =
+onResize ((AnimState state animGroups) as animState) buildResize =
     let
         builder =
             ResizeBuilder.build buildResize
+
+        merged =
+            ResizeBuilder.merge state.lastResize builder
+
+        animStateWithCache =
+            AnimState { state | lastResize = merged } animGroups
     in
-    List.foldl (applyGroupResize builder) animState (ResizeBuilder.groups builder)
+    List.foldl (applyGroupResize builder) animStateWithCache (ResizeBuilder.groups builder)
 
 
 applyGroupResize : ResizeBuilder.Builder -> AnimGroupName -> AnimState -> AnimState
@@ -1188,6 +1208,7 @@ update msg (AnimState state animGroups) =
                 { subscriptionsActive = stillRunning
                 , builder = state.builder
                 , pendingControlEvents = []
+                , lastResize = state.lastResize
                 }
                 updatedGroups
             , List.map Control state.pendingControlEvents
@@ -2125,18 +2146,36 @@ interpolateSize =
 
 
 getPerspectiveOriginRange : AnimGroupName -> AnimState -> Maybe { start : Maybe { x : Float, y : Float }, end : { x : Float, y : Float } }
-getPerspectiveOriginRange animGroupName =
-    getBuilder >> Property.getPerspectiveOriginRange animGroupName
+getPerspectiveOriginRange animGroupName state =
+    case getRuntimePerspectiveOrigin animGroupName state of
+        Just cfg ->
+            Just
+                { start = Just (PerspectiveOrigin.toRecord cfg.start)
+                , end = PerspectiveOrigin.toRecord cfg.end
+                }
+
+        Nothing ->
+            (getBuilder >> Property.getPerspectiveOriginRange animGroupName) state
 
 
 getPerspectiveOriginStart : AnimGroupName -> AnimState -> Maybe { x : Float, y : Float }
-getPerspectiveOriginStart animGroupName =
-    getBuilder >> Property.getPerspectiveOriginStart animGroupName
+getPerspectiveOriginStart animGroupName state =
+    case getRuntimePerspectiveOrigin animGroupName state of
+        Just cfg ->
+            Just (PerspectiveOrigin.toRecord cfg.start)
+
+        Nothing ->
+            (getBuilder >> Property.getPerspectiveOriginStart animGroupName) state
 
 
 getPerspectiveOriginEnd : AnimGroupName -> AnimState -> Maybe { x : Float, y : Float }
-getPerspectiveOriginEnd animGroupName =
-    getBuilder >> Property.getPerspectiveOriginEnd animGroupName
+getPerspectiveOriginEnd animGroupName state =
+    case getRuntimePerspectiveOrigin animGroupName state of
+        Just cfg ->
+            Just (PerspectiveOrigin.toRecord cfg.end)
+
+        Nothing ->
+            (getBuilder >> Property.getPerspectiveOriginEnd animGroupName) state
 
 
 getPerspectiveOriginCurrent : AnimGroupName -> AnimState -> Maybe { x : Float, y : Float }
@@ -2149,6 +2188,27 @@ getPerspectiveOriginCurrent =
                         |> interpolateEasedProgress interpolatePerspectiveOrigin
                         |> PerspectiveOrigin.toRecord
                         |> Just
+
+                _ ->
+                    Nothing
+        )
+
+
+{-| Look up the live `PropertyAnimation PerspectiveOrigin` for a group, if
+any.
+
+Like Translate and Scale, PerspectiveOrigin's runtime state can diverge
+from the builder snapshot via [`onResize`](#onResize), so its getters
+consult the runtime first and fall back to the builder.
+
+-}
+getRuntimePerspectiveOrigin : AnimGroupName -> AnimState -> Maybe (PropertyAnimation PerspectiveOrigin)
+getRuntimePerspectiveOrigin =
+    getPropertyValue "perspectiveOrigin"
+        (\prop ->
+            case prop of
+                PerspectiveOrigin cfg ->
+                    Just cfg
 
                 _ ->
                     Nothing
@@ -2243,9 +2303,9 @@ getTranslateEnd animGroupName state =
 
 {-| Look up the live `PropertyAnimation Translate` for a group, if any.
 
-Translate is the only property whose runtime state can diverge from the
-builder snapshot (via [`onResize`](#onResize)), so its getters consult the
-runtime first and fall back to the builder.
+Translate is one of the properties whose runtime state can diverge from
+the builder snapshot via [`onResize`](#onResize), so its getters consult
+the runtime first and fall back to the builder.
 
 -}
 getRuntimeTranslate : AnimGroupName -> AnimState -> Maybe (PropertyAnimation Translate)

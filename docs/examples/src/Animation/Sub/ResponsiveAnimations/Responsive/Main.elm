@@ -6,6 +6,7 @@ import Anim.Resize as Resize
 import Browser
 import Browser.Dom as Dom
 import Browser.Events
+import Dict exposing (Dict)
 import Html exposing (Html, div, text)
 import Html.Attributes exposing (class, id, style)
 import Html.Events exposing (onClick)
@@ -36,7 +37,7 @@ type alias Model =
     { animState : Sub.AnimState
     , widthPct : WidthPct
     , trackPx : Float
-    , animPlayState : AnimPlayState
+    , rowStates : Dict AnimGroupName AnimPlayState
     }
 
 
@@ -65,14 +66,47 @@ widthPctToFloat pct =
             100
 
 
-retargetGroup : String
-retargetGroup =
-    "retargetBox"
+topBoxAnim : String
+topBoxAnim =
+    "topBoxAnim"
 
 
-animateGroup : String
-animateGroup =
-    "animateBox"
+middleBoxAnim : String
+middleBoxAnim =
+    "middleBoxAnim"
+
+
+bottomBoxAnim : String
+bottomBoxAnim =
+    "bottomBoxAnim"
+
+
+allGroups : List AnimGroupName
+allGroups =
+    [ topBoxAnim, middleBoxAnim, bottomBoxAnim ]
+
+
+rowState : AnimGroupName -> Model -> AnimPlayState
+rowState group model =
+    Dict.get group model.rowStates
+        |> Maybe.withDefault NotStarted
+
+
+setRowState : AnimGroupName -> AnimPlayState -> Model -> Model
+setRowState group state model =
+    { model | rowStates = Dict.insert group state model.rowStates }
+
+
+policyFor : AnimGroupName -> Resize.Policy
+policyFor group =
+    if group == topBoxAnim then
+        Resize.proportional
+
+    else if group == middleBoxAnim then
+        Resize.clamp
+
+    else
+        Resize.retarget
 
 
 {-| One id is enough — both rows share the same inner width because they
@@ -98,12 +132,13 @@ init : () -> ( Model, Cmd Msg )
 init _ =
     ( { animState =
             Sub.init
-                [ Translate.initX retargetGroup 0
-                , Translate.initX animateGroup 0
+                [ Translate.initX bottomBoxAnim 0
+                , Translate.initX middleBoxAnim 0
+                , Translate.initX topBoxAnim 0
                 ]
       , widthPct = Normal
       , trackPx = 0
-      , animPlayState = NotStarted
+      , rowStates = Dict.empty
       }
     , Process.sleep 100
         |> Task.perform (\_ -> OnResize)
@@ -130,6 +165,8 @@ type Msg
     = GotAnimUpdate Sub.AnimMsg
     | Start
     | Stop
+    | StartRow AnimGroupName
+    | StopRow AnimGroupName
     | SetWidth WidthPct
     | OnResize
     | GotTrack (Result Dom.Error Dom.Element)
@@ -146,31 +183,16 @@ update msg model =
             ( { model | animState = newState }, Cmd.none )
 
         Start ->
-            case model.animPlayState of
-                NotStarted ->
-                    ( startAnimation model, Cmd.none )
-
-                Paused ->
-                    ( resumeAnimation model, Cmd.none )
-
-                Playing ->
-                    ( model, Cmd.none )
+            ( List.foldl startRow model allGroups, Cmd.none )
 
         Stop ->
-            ( { model
-                | animPlayState =
-                    if model.animPlayState == Playing then
-                        Paused
+            ( List.foldl stopRow model allGroups, Cmd.none )
 
-                    else
-                        model.animPlayState
-                , animState =
-                    model.animState
-                        |> Sub.pause retargetGroup
-                        |> Sub.pause animateGroup
-              }
-            , Cmd.none
-            )
+        StartRow group ->
+            ( startRow group model, Cmd.none )
+
+        StopRow group ->
+            ( stopRow group model, Cmd.none )
 
         SetWidth pct ->
             ( { model | widthPct = pct }
@@ -179,6 +201,7 @@ update msg model =
                 |> Task.perform (\_ -> OnResize)
             )
 
+        ---8<-- [start:on-resize-update]
         OnResize ->
             ( model
             , Task.attempt GotTrack <|
@@ -194,30 +217,49 @@ update msg model =
             ( model, Cmd.none )
 
 
-startAnimation : Model -> Model
-startAnimation model =
+
+---8<-- [end:on-resize-update]
+---8<-- [start:policy-init]
+
+
+startRow : AnimGroupName -> Model -> Model
+startRow group model =
     let
         target =
             model.trackPx - boxSize
     in
-    { model
-        | animPlayState = Playing
-        , animState =
-            model.animState
-                |> (\s -> Sub.animate s (Translate.resizePolicy retargetGroup Resize.proportional >> animate retargetGroup target))
-                |> (\s -> Sub.animate s (Translate.resizePolicy animateGroup Resize.retarget >> animate animateGroup target))
-    }
+    case rowState group model of
+        Playing ->
+            model
+
+        Paused ->
+            { model | animState = Sub.resume group model.animState }
+                |> setRowState group Playing
+
+        NotStarted ->
+            { model
+                | animState =
+                    Sub.animate model.animState
+                        (Translate.resizePolicy group (policyFor group)
+                            >> animate group target
+                        )
+            }
+                |> setRowState group Playing
 
 
-resumeAnimation : Model -> Model
-resumeAnimation model =
-    { model
-        | animPlayState = Playing
-        , animState =
-            model.animState
-                |> Sub.resume retargetGroup
-                |> Sub.resume animateGroup
-    }
+stopRow : AnimGroupName -> Model -> Model
+stopRow group model =
+    case rowState group model of
+        Playing ->
+            { model | animState = Sub.pause group model.animState }
+                |> setRowState group Paused
+
+        _ ->
+            model
+
+
+
+---8<-- [end:policy-init]
 
 
 {-| The two rows demonstrate the two `Sub.onResize` strategies.
@@ -230,30 +272,39 @@ resumeAnimation model =
         animation remains edge-to-edge as the track grows or shrinks.
 
 -}
+
+
+
+---8<-- [start:on-resize-handler]
+
+
 handleResize : Model -> Model
 handleResize model =
-    case model.animPlayState of
-        NotStarted ->
-            model
-
-        _ ->
-            let
-                bounds =
-                    { x = Just { min = 0, max = model.trackPx - boxSize }
-                    , y = Nothing
-                    , z = Nothing
-                    }
-            in
-            { model
-                | animState =
-                    Sub.onResize model.animState <|
-                        Translate.bounds retargetGroup bounds
-                            >> Translate.bounds animateGroup bounds
+    let
+        bounds =
+            { x = Just { min = 0, max = model.trackPx - boxSize }
+            , y = Nothing
+            , z = Nothing
             }
 
+        applyBoundsFor group builder =
+            if rowState group model == NotStarted then
+                builder
+
+            else
+                Translate.bounds group bounds builder
+    in
+    { model
+        | animState =
+            Sub.onResize model.animState <|
+                List.foldl (\g acc -> acc >> applyBoundsFor g) identity allGroups
+    }
 
 
+
+---8<-- [end:on-resize-handler]
 -- SUBSCRIPTIONS
+---8<-- [start:subscriptions]
 
 
 subscriptions : Model -> Sub.Sub Msg
@@ -265,6 +316,7 @@ subscriptions model =
 
 
 
+---8<-- [end:subscriptions]
 -- VIEW
 
 
@@ -281,7 +333,9 @@ view model =
                 [ text label ]
     in
     div
-        [ style "text-align" "center" ]
+        [ class "example-stage"
+        , style "justify-content" "flex-start"
+        ]
         [ div
             [ class "example-badge example-badge--responsive" ]
             [ text "RESPONSIVE" ]
@@ -301,22 +355,50 @@ view model =
             , ctrlBtn "Widen" "" (SetWidth Widen)
             ]
         , div
-            [ class "responsive-stage"
-            , style "width" (String.fromFloat (widthPctToFloat model.widthPct) ++ "%")
+            [ class "example-canvas"
+            , style "align-self" "flex-start"
+            , style "flex" "0 0 auto"
+            , style "border" "1px solid #0c0c0d"
+            , style "padding" "8px"
+            , style "background-color" "#d6d9dd"
             ]
-            [ trackRow "Proportional" trackId retargetGroup proportionalColor model
-            , trackRow "Retarget" "" animateGroup clampColor model
+            [ div
+                [ style "width" (String.fromFloat (widthPctToFloat model.widthPct) ++ "%")
+                , style "align-self" "flex-start"
+                ]
+                [ trackRow "Proportional" trackId topBoxAnim proportionalColor model
+                , trackRow "Clamp" "" middleBoxAnim clampColor model
+                , trackRow "Retarget" "" bottomBoxAnim retargetColor model
+                ]
             ]
         ]
 
 
 trackRow : String -> String -> String -> String -> Model -> Html Msg
 trackRow label rowId group color model =
-    div [ class "responsive-row" ]
+    let
+        state =
+            rowState group model
+
+        rowBtn btnLabel cls msg =
+            Html.button
+                [ onClick msg
+                , class ("ui-action-button " ++ cls)
+                , style "background-color" "blue"
+                , style "color" "white"
+                , style "padding" "2px 8px"
+                , style "font-size" "12px"
+                ]
+                [ text btnLabel ]
+    in
+    div
+        [ class "responsive-row" ]
         [ div [ class "responsive-row__label" ] [ text label ]
         , div
             ([ class "responsive-row__track"
              , style "background-color" "#f9de10"
+             , style "border" "1px solid #0c0c0d"
+             , style "border-radius" "9px"
              ]
                 ++ (if String.isEmpty rowId then
                         []
@@ -338,7 +420,35 @@ trackRow label rowId group color model =
                 )
                 []
             ]
+        , div
+            [ style "display" "flex"
+            , style "gap" "4px"
+            , style "margin-left" "8px"
+            ]
+            [ rowBtn "Start" "success" (StartRow group)
+            , rowBtn "Stop" "warning" (StopRow group)
+            , div
+                [ style "font-size" "11px"
+                , style "align-self" "center"
+                , style "color" "#555"
+                , style "min-width" "60px"
+                ]
+                [ text (rowStateLabel state) ]
+            ]
         ]
+
+
+rowStateLabel : AnimPlayState -> String
+rowStateLabel state =
+    case state of
+        NotStarted ->
+            "idle"
+
+        Playing ->
+            "playing"
+
+        Paused ->
+            "paused"
 
 
 proportionalColor : String
@@ -348,4 +458,9 @@ proportionalColor =
 
 clampColor : String
 clampColor =
+    "#fd7e14"
+
+
+retargetColor : String
+retargetColor =
     "#dc3545"

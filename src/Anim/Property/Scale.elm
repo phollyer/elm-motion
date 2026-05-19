@@ -813,30 +813,4 @@ If you do not set a policy, scale uses
 -}
 resizePolicy : AnimGroupName -> Resize.Policy -> AnimBuilder mode -> AnimBuilder mode
 resizePolicy groupName policy =
-    Builder.setPropertyResizePolicy groupName "scale" (toInternalResizePolicy policy)
-
-
-toInternalResizePolicy : Resize.Policy -> ResizeBuilder.Policy
-toInternalResizePolicy p =
-    { range =
-        case Resize.range p of
-            Resize.Pinned ->
-                ResizeBuilder.Pinned
-
-            Resize.Adaptive ->
-                ResizeBuilder.Adaptive
-    , current =
-        case Resize.current p of
-            Resize.Fixed ->
-                ResizeBuilder.Fixed
-
-            Resize.Relative ->
-                ResizeBuilder.Relative
-    , timing =
-        case Resize.timing p of
-            Resize.SolveFromCurrent ->
-                ResizeBuilder.SolveFromCurrent
-
-            Resize.PreserveProgress ->
-                ResizeBuilder.PreserveProgress
-    }
+    Builder.setPropertyResizePolicy groupName "scale" policy

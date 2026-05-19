@@ -19,6 +19,7 @@ module Anim.Internal.Resize.Builder exposing
     , getTranslate
     , groups
     , isEmpty
+    , merge
     , proportionalPolicy
     , retargetPolicy
     , setPerspectiveOrigin
@@ -189,6 +190,44 @@ the empty builder.
 build : (Builder -> Builder) -> Builder
 build fn =
     fn empty
+
+
+{-| Right-biased merge of two builders. For each anim group present in
+both builders, per-property entries from the right builder override those
+from the left. Used by engines to fold incoming resize directives into a
+cached builder so policy swaps can be re-applied against the most recent
+bounds without requiring another resize event.
+-}
+merge : Builder -> Builder -> Builder
+merge (Builder left) (Builder right) =
+    Builder
+        (Dict.merge
+            Dict.insert
+            (\name leftEntries rightEntries -> Dict.insert name (mergeEntries leftEntries rightEntries))
+            Dict.insert
+            left
+            right
+            Dict.empty
+        )
+
+
+mergeEntries : GroupEntries -> GroupEntries -> GroupEntries
+mergeEntries left right =
+    { default = orMaybe right.default left.default
+    , translate = orMaybe right.translate left.translate
+    , scale = orMaybe right.scale left.scale
+    , perspectiveOrigin = orMaybe right.perspectiveOrigin left.perspectiveOrigin
+    }
+
+
+orMaybe : Maybe a -> Maybe a -> Maybe a
+orMaybe preferred fallback =
+    case preferred of
+        Just _ ->
+            preferred
+
+        Nothing ->
+            fallback
 
 
 updateEntries : (GroupEntries -> GroupEntries) -> Maybe GroupEntries -> Maybe GroupEntries

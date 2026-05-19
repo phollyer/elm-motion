@@ -839,4 +839,78 @@ suite =
                     endX afterCycles
                         |> within 0.001 500
             ]
+        , describe "Policy swap mid-animation auto-applies cached bounds"
+            [ test "swapping policy while starting a new animation re-applies the most recent bounds" <|
+                \_ ->
+                    let
+                        -- Run a resize event so the engine caches bounds 0..200
+                        -- under Proportional. (Initial animation just gives the
+                        -- engine something to mutate; we discard its state by
+                        -- starting a fresh animation in the next step.)
+                        stateAfterResize =
+                            initialState
+                                |> (\s -> Sub.animate s (moveX 500))
+                                |> step 250
+                                |> onResize groupName
+                                    Resize.proportional
+                                    { x = Just { min = 0, max = 200 }
+                                    , y = Nothing
+                                    }
+
+                        -- Start a new animation that would reach 1000 under
+                        -- the authored bounds, but swap policy to Clamp. The
+                        -- cached 0..200 bounds should be auto-applied with
+                        -- the new policy, clamping endX to 200 without any
+                        -- further `onResize` call.
+                        afterPolicySwap =
+                            Sub.animate stateAfterResize
+                                (Translate.resizePolicy groupName Resize.clamp
+                                    >> moveX 1000
+                                )
+                    in
+                    endX afterPolicySwap
+                        |> within 0.001 200
+            , test "policy swap before any resize is a silent no-op (animation runs as authored)" <|
+                \_ ->
+                    let
+                        -- No `onResize` has fired, so `lastResize` is empty.
+                        -- A policy swap paired with a new animation should
+                        -- leave the authored end untouched.
+                        afterPolicySwap =
+                            Sub.animate initialState
+                                (Translate.resizePolicy groupName Resize.clamp
+                                    >> moveX 500
+                                )
+                    in
+                    endX afterPolicySwap
+                        |> within 0.001 500
+            , test "policy swap retargets to the most recent of several resize events" <|
+                \_ ->
+                    let
+                        -- Two resize events; the second one (0..300) is the
+                        -- most recent and should win in the cache.
+                        stateAfterResizes =
+                            initialState
+                                |> (\s -> Sub.animate s (moveX 500))
+                                |> step 100
+                                |> onResize groupName
+                                    Resize.proportional
+                                    { x = Just { min = 0, max = 100 }
+                                    , y = Nothing
+                                    }
+                                |> onResize groupName
+                                    Resize.proportional
+                                    { x = Just { min = 0, max = 300 }
+                                    , y = Nothing
+                                    }
+
+                        afterPolicySwap =
+                            Sub.animate stateAfterResizes
+                                (Translate.resizePolicy groupName Resize.clamp
+                                    >> moveX 1000
+                                )
+                    in
+                    endX afterPolicySwap
+                        |> within 0.001 300
+            ]
         ]
