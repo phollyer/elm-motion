@@ -372,11 +372,22 @@ applyTranslateResize animGroupName bounds (AnimState state animGroups) =
 resizeTranslate : ResizeBuilder.Policy -> Bounds -> Bool -> Bool -> PropertyAnimation Translate -> PropertyAnimation Translate
 resizeTranslate policy bounds isLooping isPaused cfg =
     let
+        -- Pinned treats the authored start/end as the animation's intent
+        -- (clipping them into bounds each resize), so widening can restore
+        -- the authored target. All other policies operate on the live leg.
+        ( legStart, legEnd ) =
+            case policy.range of
+                ResizeBuilder.Pinned ->
+                    ( cfg.authoredStart, cfg.authoredEnd )
+
+                ResizeBuilder.Adaptive ->
+                    ( cfg.start, cfg.end )
+
         oldStart =
-            Translate.toRecord cfg.start
+            Translate.toRecord legStart
 
         oldEnd =
-            Translate.toRecord cfg.end
+            Translate.toRecord legEnd
 
         oldCurrent =
             cfg
@@ -641,11 +652,19 @@ only the value type and its toRecord/fromRecord/distance helpers differ.
 resizeScale : ResizeBuilder.Policy -> Bounds -> Bool -> Bool -> PropertyAnimation Scale -> PropertyAnimation Scale
 resizeScale policy bounds isLooping isPaused cfg =
     let
+        ( legStart, legEnd ) =
+            case policy.range of
+                ResizeBuilder.Pinned ->
+                    ( cfg.authoredStart, cfg.authoredEnd )
+
+                ResizeBuilder.Adaptive ->
+                    ( cfg.start, cfg.end )
+
         oldStart =
-            Scale.toRecord cfg.start
+            Scale.toRecord legStart
 
         oldEnd =
-            Scale.toRecord cfg.end
+            Scale.toRecord legEnd
 
         oldCurrent =
             cfg
@@ -863,11 +882,19 @@ applyPerspectiveOriginResize animGroupName bounds (AnimState state animGroups) =
 resizePerspectiveOrigin : ResizeBuilder.Policy -> Bounds -> Bool -> Bool -> PropertyAnimation PerspectiveOrigin -> PropertyAnimation PerspectiveOrigin
 resizePerspectiveOrigin policy bounds isLooping isPaused cfg =
     let
+        ( legStart, legEnd ) =
+            case policy.range of
+                ResizeBuilder.Pinned ->
+                    ( cfg.authoredStart, cfg.authoredEnd )
+
+                ResizeBuilder.Adaptive ->
+                    ( cfg.start, cfg.end )
+
         oldStart =
-            PerspectiveOrigin.toRecord cfg.start
+            PerspectiveOrigin.toRecord legStart
 
         oldEnd =
-            PerspectiveOrigin.toRecord cfg.end
+            PerspectiveOrigin.toRecord legEnd
 
         oldCurrent =
             cfg

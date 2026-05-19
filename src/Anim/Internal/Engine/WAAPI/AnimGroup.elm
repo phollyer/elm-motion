@@ -92,10 +92,20 @@ type alias AxisProportion =
 is the single source of truth for "where on the leg are we" across
 resize round-trips; `start`/`end`/`durationMs` are the resize-rebased
 leg endpoints and timing used to feed WAAPI on the next resize.
+
+`authoredStart`/`authoredEnd` capture the original (pre-resize) leg as
+configured at `animate` time and remain immutable across subsequent
+resizes. Under the `Pinned` range policy they are fed back into
+`applyAxis` so that widening bounds restores the originally-authored
+extremes instead of one-way ratcheting toward the most recently clamped
+values. Adaptive policies ignore them and operate on the live leg.
+
 -}
 type alias ResizeAxisState =
     { start : Vec3
     , end : Vec3
+    , authoredStart : Vec3
+    , authoredEnd : Vec3
     , durationMs : Float
     , proportion : AxisProportion
     }

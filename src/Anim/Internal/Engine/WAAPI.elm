@@ -396,6 +396,8 @@ applyTranslateResize animGroupName bounds ((AnimState state animGroups) as animS
                                     >> AnimGroup.setCurrentTranslateState
                                         { start = payload.command.start
                                         , end = payload.command.end
+                                        , authoredStart = payload.authoredStart
+                                        , authoredEnd = payload.authoredEnd
                                         , durationMs = payload.command.durationMs
                                         , proportion = payload.proportion
                                         }
@@ -439,6 +441,8 @@ computeResizePayload :
                 }
             , newSnapshot : PropertyBaselines
             , proportion : AnimGroup.AxisProportion
+            , authoredStart : { x : Float, y : Float, z : Float }
+            , authoredEnd : { x : Float, y : Float, z : Float }
             }
 computeResizePayload animGroupName bounds (AnimState state animGroups) =
     AnimGroups.get animGroupName animGroups
@@ -470,6 +474,8 @@ computeResizePayload animGroupName bounds (AnimState state animGroups) =
                                             -- to re-render the new transform inline.
                                             { start = Translate.toRecord currentTranslate
                                             , end = Translate.toRecord currentTranslate
+                                            , authoredStart = Translate.toRecord currentTranslate
+                                            , authoredEnd = Translate.toRecord currentTranslate
                                             , durationMs = 0
                                             , proportion = AnimGroup.emptyProportion
                                             }
@@ -505,17 +511,30 @@ computeResizePayload animGroupName bounds (AnimState state animGroups) =
                                 effectiveLooping =
                                     isLooping || treatAsSettled
 
+                                strategy =
+                                    toResizePolicy animGroupName "translate" state.builder
+
+                                -- Pinned treats the authored start/end as the
+                                -- animation's intent (clipping them into bounds
+                                -- each resize), so widening can restore the
+                                -- authored target. Adaptive policies operate on
+                                -- the live, resize-rebased leg.
+                                ( legStart, legEnd ) =
+                                    case strategy.range of
+                                        ResizeBuilder.Pinned ->
+                                            ( baseline.authoredStart, baseline.authoredEnd )
+
+                                        ResizeBuilder.Adaptive ->
+                                            ( baseline.start, baseline.end )
+
                                 oldStart =
-                                    baseline.start
+                                    legStart
 
                                 oldEnd =
-                                    baseline.end
+                                    legEnd
 
                                 oldCurrent =
                                     Translate.toRecord currentTranslate
-
-                                strategy =
-                                    toResizePolicy animGroupName "translate" state.builder
 
                                 rx =
                                     ResizeBuilder.applyAxis strategy effectiveLooping bounds.x oldStart.x oldEnd.x oldCurrent.x
@@ -566,9 +585,19 @@ computeResizePayload animGroupName bounds (AnimState state animGroups) =
                                             { x = rx.current, y = ry.current, z = rz.current }
 
                                 newDurationMs =
+                                    -- Always use the LIVE leg distance ratio
+                                    -- (not Pinned-authored), so Pinned resize
+                                    -- duration scaling is symmetric: a shrink
+                                    -- followed by a widen restores the
+                                    -- previously-scaled duration. Feeding
+                                    -- authored extremes here while
+                                    -- `oldDurationMs` is the already-scaled
+                                    -- baseline duration would double-apply the
+                                    -- previous clip and make the animation
+                                    -- speed up on every widen.
                                     scaleDurationForResize
-                                        { oldStart = Translate.fromRecord oldStart
-                                        , oldEnd = Translate.fromRecord oldEnd
+                                        { oldStart = baseline.start |> Translate.fromRecord
+                                        , oldEnd = baseline.end |> Translate.fromRecord
                                         , newStart = Translate.fromRecord newStart
                                         , newEnd = Translate.fromRecord newEnd
                                         , oldDurationMs = baseline.durationMs
@@ -599,8 +628,8 @@ computeResizePayload animGroupName bounds (AnimState state animGroups) =
                                         }
 
                                 noChange =
-                                    translateRecordsNearlyEqual newStart oldStart
-                                        && translateRecordsNearlyEqual newEnd oldEnd
+                                    translateRecordsNearlyEqual newStart baseline.start
+                                        && translateRecordsNearlyEqual newEnd baseline.end
                                         && translateRecordsNearlyEqual newCurrent oldCurrent
                                         && floatNearlyEqual newDurationMs baseline.durationMs
                                         && maybeFloatNearlyEqual currentTimeMs oldCurrentTimeMs
@@ -626,6 +655,8 @@ computeResizePayload animGroupName bounds (AnimState state animGroups) =
                                             (Translate.fromRecord newCurrent)
                                             snapshot
                                     , proportion = axisProportion
+                                    , authoredStart = baseline.authoredStart
+                                    , authoredEnd = baseline.authoredEnd
                                     }
                         )
             )
@@ -849,11 +880,19 @@ resolveResizeBaseline animGroupName animGroup builder =
             findCurrentTranslate animGroupName builder
                 |> Maybe.map
                     (\cfg ->
-                        { start =
-                            cfg.start
-                                |> Maybe.withDefault Translate.default
-                                |> Translate.toRecord
-                        , end = Translate.toRecord cfg.end
+                        let
+                            startR =
+                                cfg.start
+                                    |> Maybe.withDefault Translate.default
+                                    |> Translate.toRecord
+
+                            endR =
+                                Translate.toRecord cfg.end
+                        in
+                        { start = startR
+                        , end = endR
+                        , authoredStart = startR
+                        , authoredEnd = endR
                         , durationMs = toFloat cfg.duration
                         , proportion = AnimGroup.emptyProportion
                         }
@@ -903,18 +942,34 @@ match the cached, resize-aware translate state captured by the most recent
 `onResize`. Non-translate properties pass through unchanged. Used by
 `restart` so a Restart triggered after a resize re-animates within the
 current bounds rather than the original (pre-resize) ones.
+
+Under the `Pinned` range policy the restart targets the originally-authored
+end (clipped into current bounds at the next resize) so widening always
+restores the authored intent; Adaptive policies restart toward the live,
+resize-rebased end.
+
 -}
 rebaseTranslateConfig :
-    ResizeAxisState
+    ResizeBuilder.Policy
+    -> ResizeAxisState
     -> Builder.ProcessedPropertyConfig
     -> Builder.ProcessedPropertyConfig
-rebaseTranslateConfig cached config =
+rebaseTranslateConfig policy cached config =
     case config of
         Builder.ProcessedTranslateConfig cfg ->
+            let
+                ( legStart, legEnd ) =
+                    case policy.range of
+                        ResizeBuilder.Pinned ->
+                            ( cached.authoredStart, cached.authoredEnd )
+
+                        ResizeBuilder.Adaptive ->
+                            ( cached.start, cached.end )
+            in
             Builder.ProcessedTranslateConfig
                 { cfg
-                    | start = Just (Translate.fromRecord cached.start)
-                    , end = Translate.fromRecord cached.end
+                    | start = Just (Translate.fromRecord legStart)
+                    , end = Translate.fromRecord legEnd
                     , duration = round cached.durationMs
                 }
 
@@ -941,6 +996,8 @@ applyScaleResize animGroupName bounds ((AnimState state animGroups) as animState
                                     >> AnimGroup.setCurrentScaleState
                                         { start = payload.command.start
                                         , end = payload.command.end
+                                        , authoredStart = payload.authoredStart
+                                        , authoredEnd = payload.authoredEnd
                                         , durationMs = payload.command.durationMs
                                         , proportion = payload.proportion
                                         }
@@ -982,6 +1039,8 @@ computeScaleResizePayload :
                 }
             , newSnapshot : PropertyBaselines
             , proportion : AnimGroup.AxisProportion
+            , authoredStart : { x : Float, y : Float, z : Float }
+            , authoredEnd : { x : Float, y : Float, z : Float }
             }
 computeScaleResizePayload animGroupName bounds (AnimState state animGroups) =
     AnimGroups.get animGroupName animGroups
@@ -1013,6 +1072,8 @@ computeScaleResizePayload animGroupName bounds (AnimState state animGroups) =
                                             -- re-render the new transform inline.
                                             { start = Scale.toRecord currentScale
                                             , end = Scale.toRecord currentScale
+                                            , authoredStart = Scale.toRecord currentScale
+                                            , authoredEnd = Scale.toRecord currentScale
                                             , durationMs = 0
                                             , proportion = AnimGroup.emptyProportion
                                             }
@@ -1038,17 +1099,27 @@ computeScaleResizePayload animGroupName bounds (AnimState state animGroups) =
                                 effectiveLooping =
                                     isLooping || treatAsSettled
 
+                                strategy =
+                                    toResizePolicy animGroupName "scale" state.builder
+
+                                -- See `computeResizePayload`: Pinned restores
+                                -- authored extremes when bounds widen.
+                                ( legStart, legEnd ) =
+                                    case strategy.range of
+                                        ResizeBuilder.Pinned ->
+                                            ( baseline.authoredStart, baseline.authoredEnd )
+
+                                        ResizeBuilder.Adaptive ->
+                                            ( baseline.start, baseline.end )
+
                                 oldStart =
-                                    baseline.start
+                                    legStart
 
                                 oldEnd =
-                                    baseline.end
+                                    legEnd
 
                                 oldCurrent =
                                     Scale.toRecord currentScale
-
-                                strategy =
-                                    toResizePolicy animGroupName "scale" state.builder
 
                                 rx =
                                     ResizeBuilder.applyAxis strategy effectiveLooping bounds.x oldStart.x oldEnd.x oldCurrent.x
@@ -1094,9 +1165,13 @@ computeScaleResizePayload animGroupName bounds (AnimState state animGroups) =
                                             { x = rx.current, y = ry.current, z = rz.current }
 
                                 newDurationMs =
+                                    -- See translate's `newDurationMs` note: feed
+                                    -- LIVE leg distances so Pinned resize
+                                    -- scaling is symmetric across shrink/widen
+                                    -- cycles.
                                     scaleScaleDurationForResize
-                                        { oldStart = Scale.fromRecord oldStart
-                                        , oldEnd = Scale.fromRecord oldEnd
+                                        { oldStart = baseline.start |> Scale.fromRecord
+                                        , oldEnd = baseline.end |> Scale.fromRecord
                                         , newStart = Scale.fromRecord newStart
                                         , newEnd = Scale.fromRecord newEnd
                                         , oldDurationMs = baseline.durationMs
@@ -1127,8 +1202,8 @@ computeScaleResizePayload animGroupName bounds (AnimState state animGroups) =
                                         }
 
                                 noChange =
-                                    translateRecordsNearlyEqual newStart oldStart
-                                        && translateRecordsNearlyEqual newEnd oldEnd
+                                    translateRecordsNearlyEqual newStart baseline.start
+                                        && translateRecordsNearlyEqual newEnd baseline.end
                                         && translateRecordsNearlyEqual newCurrent oldCurrent
                                         && floatNearlyEqual newDurationMs baseline.durationMs
                                         && maybeFloatNearlyEqual currentTimeMs oldCurrentTimeMs
@@ -1154,6 +1229,8 @@ computeScaleResizePayload animGroupName bounds (AnimState state animGroups) =
                                             (Scale.fromRecord newCurrent)
                                             snapshot
                                     , proportion = axisProportion
+                                    , authoredStart = baseline.authoredStart
+                                    , authoredEnd = baseline.authoredEnd
                                     }
                         )
             )
@@ -1203,11 +1280,19 @@ resolveScaleResizeBaseline animGroupName animGroup builder =
             findCurrentScale animGroupName builder
                 |> Maybe.map
                     (\cfg ->
-                        { start =
-                            cfg.start
-                                |> Maybe.withDefault Scale.default
-                                |> Scale.toRecord
-                        , end = Scale.toRecord cfg.end
+                        let
+                            startR =
+                                cfg.start
+                                    |> Maybe.withDefault Scale.default
+                                    |> Scale.toRecord
+
+                            endR =
+                                Scale.toRecord cfg.end
+                        in
+                        { start = startR
+                        , end = endR
+                        , authoredStart = startR
+                        , authoredEnd = endR
                         , durationMs = toFloat cfg.duration
                         , proportion = AnimGroup.emptyProportion
                         }
@@ -1238,16 +1323,26 @@ findCurrentScale animGroupName builder =
 {-| Scale's mirror of [`rebaseTranslateConfig`](#rebaseTranslateConfig).
 -}
 rebaseScaleConfig :
-    ResizeAxisState
+    ResizeBuilder.Policy
+    -> ResizeAxisState
     -> Builder.ProcessedPropertyConfig
     -> Builder.ProcessedPropertyConfig
-rebaseScaleConfig cached config =
+rebaseScaleConfig policy cached config =
     case config of
         Builder.ProcessedScaleConfig cfg ->
+            let
+                ( legStart, legEnd ) =
+                    case policy.range of
+                        ResizeBuilder.Pinned ->
+                            ( cached.authoredStart, cached.authoredEnd )
+
+                        ResizeBuilder.Adaptive ->
+                            ( cached.start, cached.end )
+            in
             Builder.ProcessedScaleConfig
                 { cfg
-                    | start = Just (Scale.fromRecord cached.start)
-                    , end = Scale.fromRecord cached.end
+                    | start = Just (Scale.fromRecord legStart)
+                    , end = Scale.fromRecord legEnd
                     , duration = round cached.durationMs
                 }
 
@@ -2310,12 +2405,18 @@ restartSingleKey resolvedKey (AnimState state animGroups) =
 
                         rebasedProcessedData =
                             let
+                                translatePolicy =
+                                    toResizePolicy resolvedKey "translate" state.builder
+
+                                scalePolicy =
+                                    toResizePolicy resolvedKey "scale" state.builder
+
                                 afterTranslate =
                                     case cachedTranslate of
                                         Just cached ->
                                             { processedData
                                                 | properties =
-                                                    List.map (rebaseTranslateConfig cached) processedData.properties
+                                                    List.map (rebaseTranslateConfig translatePolicy cached) processedData.properties
                                             }
 
                                         Nothing ->
@@ -2325,7 +2426,7 @@ restartSingleKey resolvedKey (AnimState state animGroups) =
                                 Just cached ->
                                     { afterTranslate
                                         | properties =
-                                            List.map (rebaseScaleConfig cached) afterTranslate.properties
+                                            List.map (rebaseScaleConfig scalePolicy cached) afterTranslate.properties
                                     }
 
                                 Nothing ->

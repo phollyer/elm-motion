@@ -108,9 +108,14 @@ toAnimation isComplete propertyConfig =
 
                         Nothing ->
                             Easing.toFunction config.easing
+
+                resolvedStart =
+                    Maybe.withDefault default config.start
             in
-            { start = Maybe.withDefault default config.start
+            { start = resolvedStart
             , end = config.end
+            , authoredStart = resolvedStart
+            , authoredEnd = config.end
             , easingFunction = easingFn
             , delayMs = toFloat config.delay
             , isComplete = isComplete

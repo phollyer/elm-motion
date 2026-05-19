@@ -762,4 +762,81 @@ suite =
                     currentX resized
                         |> within 0.001 100
             ]
+        , describe "Clamp strategy is symmetric (Pinned remembers authored extremes)"
+            [ test "widening bounds after a shrink restores the authored end" <|
+                \_ ->
+                    let
+                        -- Authored: 0 -> 500. Shrink to [0,200] -> end clamped to 200.
+                        -- Then widen to [0,500] -> end should restore to authored 500.
+                        afterShrink =
+                            initialState
+                                |> (\s -> Sub.animate s (moveX 500))
+                                |> step 100
+                                |> onResize groupName
+                                    Resize.clamp
+                                    { x = Just { min = 0, max = 200 }
+                                    , y = Nothing
+                                    }
+
+                        afterWiden =
+                            afterShrink
+                                |> onResize groupName
+                                    Resize.clamp
+                                    { x = Just { min = 0, max = 500 }
+                                    , y = Nothing
+                                    }
+                    in
+                    Expect.all
+                        [ \_ -> endX afterShrink |> within 0.001 200
+                        , \_ -> endX afterWiden |> within 0.001 500
+                        ]
+                        ()
+            , test "widening past authored end does not exceed authored end" <|
+                \_ ->
+                    let
+                        -- Authored: 0 -> 500. Shrink, then widen to 800. End must stay at 500.
+                        resized =
+                            initialState
+                                |> (\s -> Sub.animate s (moveX 500))
+                                |> step 100
+                                |> onResize groupName
+                                    Resize.clamp
+                                    { x = Just { min = 0, max = 200 }
+                                    , y = Nothing
+                                    }
+                                |> onResize groupName
+                                    Resize.clamp
+                                    { x = Just { min = 0, max = 800 }
+                                    , y = Nothing
+                                    }
+                    in
+                    endX resized
+                        |> within 0.001 500
+            , test "repeated shrink/widen cycles converge back to authored end each time" <|
+                \_ ->
+                    let
+                        cycle s =
+                            s
+                                |> onResize groupName
+                                    Resize.clamp
+                                    { x = Just { min = 0, max = 150 }
+                                    , y = Nothing
+                                    }
+                                |> onResize groupName
+                                    Resize.clamp
+                                    { x = Just { min = 0, max = 500 }
+                                    , y = Nothing
+                                    }
+
+                        afterCycles =
+                            List.foldl (\_ s -> cycle s)
+                                (initialState
+                                    |> (\s -> Sub.animate s (moveX 500))
+                                    |> step 50
+                                )
+                                (List.range 1 5)
+                    in
+                    endX afterCycles
+                        |> within 0.001 500
+            ]
         ]

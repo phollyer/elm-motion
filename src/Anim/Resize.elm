@@ -200,7 +200,9 @@ toInternalPolicy (Policy p) =
 
 {-| Determines how an animation's range adjusts to new bounds.
 
-  - `Pinned`: keep configured start/end values, clamped into the new bounds.
+  - `Pinned`: keep the originally-authored start/end values, clipping them into
+    the current bounds on each resize. Widening past a previous clamp restores
+    the authored extremes - the behaviour is symmetric, not a one-way ratchet.
   - `Adaptive`: adapt the animation range to match the new bounds.
 
 Quick rule:
@@ -303,7 +305,10 @@ proportional =
 {-| Keep configured targets, clamp into bounds, then continue from the current
 visual value.
 
-Best when bounds are a safety limit, not the track itself.
+Best when bounds are a safety limit, not the track itself. The authored
+start/end are remembered across resizes: shrinking clips them into the
+new bounds, and widening restores them up to the authored extremes (never
+past).
 
     Resize.clamp
     -- { range = Pinned

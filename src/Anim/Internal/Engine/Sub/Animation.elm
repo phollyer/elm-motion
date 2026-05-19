@@ -42,6 +42,8 @@ type Animation
 type alias PropertyAnimation property =
     { start : property
     , end : property
+    , authoredStart : property
+    , authoredEnd : property
     , easingFunction : Float -> Float
     , delayMs : Float
     , isComplete : Bool
@@ -122,7 +124,12 @@ reverse : Animation -> Animation
 reverse anim =
     let
         swap a =
-            { a | start = a.end, end = a.start }
+            { a
+                | start = a.end
+                , end = a.start
+                , authoredStart = a.authoredEnd
+                , authoredEnd = a.authoredStart
+            }
     in
     case anim of
         Translate a ->
