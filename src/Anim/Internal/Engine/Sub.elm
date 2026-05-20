@@ -418,11 +418,6 @@ resizeTranslate previousBounds bounds isLooping isPaused cfg =
         oldEnd =
             Translate.toRecord cfg.end
 
-        oldCurrent =
-            cfg
-                |> interpolateEasedProgress interpolateTranslate
-                |> Translate.toRecord
-
         -- A one-shot animation that isn't actively progressing (completed or
         -- paused) should preserve the full leg (`start` → `end`) rather than
         -- collapsing `start` to `current`. Collapsing degenerates the
@@ -431,22 +426,19 @@ resizeTranslate previousBounds bounds isLooping isPaused cfg =
             (cfg.isComplete || isPaused) && not isLooping
 
         rx =
-            ResizeBuilder.applyAxis previousBounds.x bounds.x oldStart.x oldEnd.x oldCurrent.x
+            ResizeBuilder.applyAxisLeg previousBounds.x bounds.x oldStart.x oldEnd.x
 
         ry =
-            ResizeBuilder.applyAxis previousBounds.y bounds.y oldStart.y oldEnd.y oldCurrent.y
+            ResizeBuilder.applyAxisLeg previousBounds.y bounds.y oldStart.y oldEnd.y
 
         rz =
-            ResizeBuilder.applyAxis previousBounds.z bounds.z oldStart.z oldEnd.z oldCurrent.z
+            ResizeBuilder.applyAxisLeg previousBounds.z bounds.z oldStart.z oldEnd.z
 
         newStart =
             Translate.fromRecord { x = rx.start, y = ry.start, z = rz.start }
 
         newEnd =
             Translate.fromRecord { x = rx.end, y = ry.end, z = rz.end }
-
-        newCurrent =
-            Translate.fromRecord { x = rx.current, y = ry.current, z = rz.current }
 
         oldDistance =
             Translate.distance cfg.start cfg.end
@@ -480,7 +472,10 @@ resizeTranslate previousBounds bounds isLooping isPaused cfg =
             , isComplete = True
         }
 
-    else if isLooping then
+    else
+        -- All other active paths (looping, paused, one-shot mid-flight)
+        -- preserve the temporal ratio. See
+        -- [`preserveProgress`](#preserveProgress).
         preserveProgress
             { cfg = cfg
             , newStart = newStart
@@ -489,48 +484,18 @@ resizeTranslate previousBounds bounds isLooping isPaused cfg =
             , newLegDistance = newLegDistance
             }
 
-    else
-        let
-            -- One-shot: continue from current toward target.
-            oneShotStart =
-                newCurrent
 
-            oneShotDistance =
-                Translate.distance oneShotStart newEnd
+{-| Update a translate animation across a resize while preserving the
+**temporal progress ratio** (`elapsedMs / totalDurationMs`).
 
-            newDuration =
-                if oldDistance > 0 && cfg.totalDurationMs > 0 then
-                    (oneShotDistance / oldDistance) * cfg.totalDurationMs
+Because eased progress is a function of that ratio, leaving the ratio
+alone makes the ball land at the same proportional, eased position along
+the new leg automatically. Both `elapsedMs` and `totalDurationMs` scale
+by the leg-length factor so resume-speed matches the new leg.
 
-                else
-                    cfg.totalDurationMs
-        in
-        if oneShotDistance == 0 then
-            { cfg
-                | start = oneShotStart
-                , end = newEnd
-                , elapsedMs = cfg.totalDurationMs
-                , isComplete = True
-            }
-
-        else
-            { cfg
-                | start = oneShotStart
-                , end = newEnd
-                , elapsedMs = 0
-                , totalDurationMs = newDuration
-                , isComplete = False
-            }
-
-
-{-| Update a translate animation that is preserving its full leg across a
-resize - either looping (active leg-cycling) or paused (frozen mid-leg).
-
-Preserves the **temporal progress ratio** (`elapsedMs / totalDurationMs`).
-Because eased progress is a function of that ratio, leaving the ratio alone
-makes the ball land at the same proportional, eased position along the new
-leg automatically. Both `elapsedMs` and `totalDurationMs` scale by the
-leg-length factor so resume-speed matches the new leg.
+Used for every active resize path (looping, paused, and one-shot
+mid-flight) so that properties in the same group remain synchronised
+across resize.
 
 -}
 preserveProgress :
@@ -693,31 +658,23 @@ resizeScale previousBounds bounds isLooping isPaused cfg =
         oldEnd =
             Scale.toRecord cfg.end
 
-        oldCurrent =
-            cfg
-                |> interpolateEasedProgress interpolateScale
-                |> Scale.toRecord
-
         treatAsSettled =
             (cfg.isComplete || isPaused) && not isLooping
 
         rx =
-            ResizeBuilder.applyAxis previousBounds.x bounds.x oldStart.x oldEnd.x oldCurrent.x
+            ResizeBuilder.applyAxisLeg previousBounds.x bounds.x oldStart.x oldEnd.x
 
         ry =
-            ResizeBuilder.applyAxis previousBounds.y bounds.y oldStart.y oldEnd.y oldCurrent.y
+            ResizeBuilder.applyAxisLeg previousBounds.y bounds.y oldStart.y oldEnd.y
 
         rz =
-            ResizeBuilder.applyAxis previousBounds.z bounds.z oldStart.z oldEnd.z oldCurrent.z
+            ResizeBuilder.applyAxisLeg previousBounds.z bounds.z oldStart.z oldEnd.z
 
         newStart =
             Scale.fromRecord { x = rx.start, y = ry.start, z = rz.start }
 
         newEnd =
             Scale.fromRecord { x = rx.end, y = ry.end, z = rz.end }
-
-        newCurrent =
-            Scale.fromRecord { x = rx.current, y = ry.current, z = rz.current }
 
         oldDistance =
             Scale.distance cfg.start cfg.end
@@ -751,45 +708,13 @@ resizeScale previousBounds bounds isLooping isPaused cfg =
             , isComplete = True
         }
 
-    else if isLooping then
+    else
         preserveScaleProgress
             { cfg = cfg
             , newStart = newStart
             , newEnd = newEnd
             , oldDistance = oldDistance
             , newLegDistance = newLegDistance
-            }
-
-    else
-        let
-            oneShotStart =
-                newCurrent
-
-            oneShotDistance =
-                Scale.distance oneShotStart newEnd
-
-            newDuration =
-                if oldDistance > 0 && cfg.totalDurationMs > 0 then
-                    (oneShotDistance / oldDistance) * cfg.totalDurationMs
-
-                else
-                    cfg.totalDurationMs
-        in
-        if oneShotDistance == 0 then
-            { cfg
-                | start = oneShotStart
-                , end = newEnd
-                , elapsedMs = cfg.totalDurationMs
-                , isComplete = True
-            }
-
-        else
-            { cfg
-                | start = oneShotStart
-                , end = newEnd
-                , elapsedMs = 0
-                , totalDurationMs = newDuration
-                , isComplete = False
             }
 
 
@@ -953,19 +878,14 @@ resizePerspectiveOrigin previousBounds bounds isLooping isPaused cfg =
         oldEnd =
             PerspectiveOrigin.toRecord cfg.end
 
-        oldCurrent =
-            cfg
-                |> interpolateEasedProgress interpolatePerspectiveOrigin
-                |> PerspectiveOrigin.toRecord
-
         treatAsSettled =
             (cfg.isComplete || isPaused) && not isLooping
 
         rx =
-            ResizeBuilder.applyAxis previousBounds.x bounds.x oldStart.x oldEnd.x oldCurrent.x
+            ResizeBuilder.applyAxisLeg previousBounds.x bounds.x oldStart.x oldEnd.x
 
         ry =
-            ResizeBuilder.applyAxis previousBounds.y bounds.y oldStart.y oldEnd.y oldCurrent.y
+            ResizeBuilder.applyAxisLeg previousBounds.y bounds.y oldStart.y oldEnd.y
 
         unit =
             PerspectiveOrigin.getUnit cfg.end
@@ -975,9 +895,6 @@ resizePerspectiveOrigin previousBounds bounds isLooping isPaused cfg =
 
         newEnd =
             PerspectiveOrigin.fromRecord unit { x = rx.end, y = ry.end }
-
-        newCurrent =
-            PerspectiveOrigin.fromRecord unit { x = rx.current, y = ry.current }
 
         oldDistance =
             PerspectiveOrigin.distance cfg.start cfg.end
@@ -1011,45 +928,13 @@ resizePerspectiveOrigin previousBounds bounds isLooping isPaused cfg =
             , isComplete = True
         }
 
-    else if isLooping then
+    else
         preservePerspectiveOriginProgress
             { cfg = cfg
             , newStart = newStart
             , newEnd = newEnd
             , oldDistance = oldDistance
             , newLegDistance = newLegDistance
-            }
-
-    else
-        let
-            oneShotStart =
-                newCurrent
-
-            oneShotDistance =
-                PerspectiveOrigin.distance oneShotStart newEnd
-
-            newDuration =
-                if oldDistance > 0 && cfg.totalDurationMs > 0 then
-                    (oneShotDistance / oldDistance) * cfg.totalDurationMs
-
-                else
-                    cfg.totalDurationMs
-        in
-        if oneShotDistance == 0 then
-            { cfg
-                | start = oneShotStart
-                , end = newEnd
-                , elapsedMs = cfg.totalDurationMs
-                , isComplete = True
-            }
-
-        else
-            { cfg
-                | start = oneShotStart
-                , end = newEnd
-                , elapsedMs = 0
-                , totalDurationMs = newDuration
-                , isComplete = False
             }
 
 

@@ -7,6 +7,7 @@ module Anim.Internal.Resize.Builder exposing
     , Entry
     , Position
     , applyAxis
+    , applyAxisLeg
     , applyAxisPosition
     , bounds
     , build
@@ -427,7 +428,7 @@ applyAxis maybePrevBounds maybeNewBounds startV endV currentV =
                                 ( pb.min, pb.max - pb.min )
 
                             Nothing ->
-                                ( Basics.min startV endV
+                                ( min startV endV
                                 , abs (endV - startV)
                                 )
 
@@ -445,6 +446,34 @@ applyAxis maybePrevBounds maybeNewBounds startV endV currentV =
                 , end = legEnd
                 , current = newCurrent
                 }
+
+
+{-| Variant of [`applyAxis`](#applyAxis) for engines that re-derive the
+current visual value every frame from `(start, end, progress)` and so do
+not need the remapped `current` field.
+
+The Sub engine fits this profile: a property's live value is recomputed
+each frame via `interpolateEasedProgress`, so resize only needs to update
+the leg endpoints; preserving the temporal ratio
+(`elapsedMs / totalDurationMs`) handles the visual-position continuity.
+
+Internally delegates to `applyAxis` with `currentV` set to the start, then
+discards the `current` field. Returns just `{ start, end }` to make the
+caller's intent explicit and keep dead bindings out of call sites.
+
+-}
+applyAxisLeg :
+    Maybe AxisBounds
+    -> Maybe AxisBounds
+    -> Float
+    -> Float
+    -> { start : Float, end : Float }
+applyAxisLeg maybePrevBounds maybeNewBounds startV endV =
+    let
+        result =
+            applyAxis maybePrevBounds maybeNewBounds startV endV startV
+    in
+    { start = result.start, end = result.end }
 
 
 {-| Apply a one-shot position snap to one axis.
