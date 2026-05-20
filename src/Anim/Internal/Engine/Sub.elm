@@ -422,17 +422,14 @@ resizeTranslate previousBounds bounds isLooping isPaused cfg =
         treatAsSettled =
             (cfg.isComplete || isPaused) && not isLooping
 
-        effectiveLooping =
-            isLooping || treatAsSettled
-
         rx =
-            ResizeBuilder.applyAxis effectiveLooping previousBounds.x bounds.x oldStart.x oldEnd.x oldCurrent.x
+            ResizeBuilder.applyAxis previousBounds.x bounds.x oldStart.x oldEnd.x oldCurrent.x
 
         ry =
-            ResizeBuilder.applyAxis effectiveLooping previousBounds.y bounds.y oldStart.y oldEnd.y oldCurrent.y
+            ResizeBuilder.applyAxis previousBounds.y bounds.y oldStart.y oldEnd.y oldCurrent.y
 
         rz =
-            ResizeBuilder.applyAxis effectiveLooping previousBounds.z bounds.z oldStart.z oldEnd.z oldCurrent.z
+            ResizeBuilder.applyAxis previousBounds.z bounds.z oldStart.z oldEnd.z oldCurrent.z
 
         newStart =
             Translate.fromRecord { x = rx.start, y = ry.start, z = rz.start }
@@ -696,17 +693,14 @@ resizeScale previousBounds bounds isLooping isPaused cfg =
         treatAsSettled =
             (cfg.isComplete || isPaused) && not isLooping
 
-        effectiveLooping =
-            isLooping || treatAsSettled
-
         rx =
-            ResizeBuilder.applyAxis effectiveLooping previousBounds.x bounds.x oldStart.x oldEnd.x oldCurrent.x
+            ResizeBuilder.applyAxis previousBounds.x bounds.x oldStart.x oldEnd.x oldCurrent.x
 
         ry =
-            ResizeBuilder.applyAxis effectiveLooping previousBounds.y bounds.y oldStart.y oldEnd.y oldCurrent.y
+            ResizeBuilder.applyAxis previousBounds.y bounds.y oldStart.y oldEnd.y oldCurrent.y
 
         rz =
-            ResizeBuilder.applyAxis effectiveLooping previousBounds.z bounds.z oldStart.z oldEnd.z oldCurrent.z
+            ResizeBuilder.applyAxis previousBounds.z bounds.z oldStart.z oldEnd.z oldCurrent.z
 
         newStart =
             Scale.fromRecord { x = rx.start, y = ry.start, z = rz.start }
@@ -898,14 +892,11 @@ resizePerspectiveOrigin previousBounds bounds isLooping isPaused cfg =
         treatAsSettled =
             (cfg.isComplete || isPaused) && not isLooping
 
-        effectiveLooping =
-            isLooping || treatAsSettled
-
         rx =
-            ResizeBuilder.applyAxis effectiveLooping previousBounds.x bounds.x oldStart.x oldEnd.x oldCurrent.x
+            ResizeBuilder.applyAxis previousBounds.x bounds.x oldStart.x oldEnd.x oldCurrent.x
 
         ry =
-            ResizeBuilder.applyAxis effectiveLooping previousBounds.y bounds.y oldStart.y oldEnd.y oldCurrent.y
+            ResizeBuilder.applyAxis previousBounds.y bounds.y oldStart.y oldEnd.y oldCurrent.y
 
         unit =
             PerspectiveOrigin.getUnit cfg.end

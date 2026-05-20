@@ -353,24 +353,24 @@ align with the original viewport extents.
 
 Using the previous bounds (rather than the current leg endpoints) is what
 preserves visual position across **successive** resizes during a single
-in-flight one-shot leg: after the first resize chops the leg to
-`(newCurrent, legEnd)`, the leg range no longer represents the viewport
-range, so a leg-derived `oldRange` would compress the proportional remap.
+in-flight one-shot leg: a leg-derived `oldRange` would compress the
+proportional remap once the leg has been replayed inside a smaller viewport.
 
-`isLooping` controls whether the result preserves full extremes (so that
-ping-pong continues to span the full new range) or shrinks to a single
-leg (one-shot animations finish at the new target).
+The result is **canonical leg geometry**: `start = legStart`, `end = legEnd`,
+`current = newCurrent`. Engines never receive a pre-rebased leg from this
+function. Every engine sees the same shape for looping and one-shot
+animations, so a single resize (orientation flip) and successive resizes
+(drag) drive identical code paths downstream.
 
 -}
 applyAxis :
-    Bool
-    -> Maybe AxisBounds
+    Maybe AxisBounds
     -> Maybe AxisBounds
     -> Float
     -> Float
     -> Float
     -> AxisResult
-applyAxis isLooping maybePrevBounds maybeNewBounds startV endV currentV =
+applyAxis maybePrevBounds maybeNewBounds startV endV currentV =
     case maybeNewBounds of
         Nothing ->
             { start = startV, end = endV, current = currentV }
@@ -415,17 +415,10 @@ applyAxis isLooping maybePrevBounds maybeNewBounds startV endV currentV =
                         else
                             b.min + ((currentV - oldMin) / oldRange) * newRange
                 in
-                if isLooping then
-                    { start = legStart
-                    , end = legEnd
-                    , current = newCurrent
-                    }
-
-                else
-                    { start = newCurrent
-                    , end = legEnd
-                    , current = newCurrent
-                    }
+                { start = legStart
+                , end = legEnd
+                , current = newCurrent
+                }
 
 
 {-| Apply a one-shot position snap to one axis.

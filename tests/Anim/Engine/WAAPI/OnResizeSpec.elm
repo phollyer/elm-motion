@@ -46,14 +46,13 @@ resizeMathTests =
     describe "Resize.applyAxis (proportional)"
         [ test "Nothing bounds leaves axis untouched" <|
             \_ ->
-                ResizeBuilder.applyAxis True Nothing Nothing 0 200 100
+                ResizeBuilder.applyAxis Nothing Nothing 0 200 100
                     |> Expect.equal { start = 0, end = 200, current = 100 }
         , test "Looping preserves normalized progress" <|
             \_ ->
                 -- old leg [0, 200], current 100 -> halfway
                 -- new leg [0, 400], halfway -> 200
                 ResizeBuilder.applyAxis
-                    True
                     Nothing
                     (Just { min = 0, max = 400 })
                     0
@@ -65,24 +64,25 @@ resizeMathTests =
                 -- old leg [200, 0] (reverse), current 50 -> 75% to end
                 -- new leg [400, 0] reverse -> 75% -> 100
                 ResizeBuilder.applyAxis
-                    True
                     Nothing
                     (Just { min = 0, max = 400 })
                     200
                     0
                     50
                     |> Expect.equal { start = 400, end = 0, current = 100 }
-        , test "One-shot collapses to remaining leg" <|
+        , test "One-shot remaps to canonical leg geometry" <|
             \_ ->
-                -- not looping -> start becomes current; end becomes new max
+                -- Unified: same canonical (start, end, current) output
+                -- regardless of animation kind. The previous "chop to
+                -- (newCurrent, legEnd)" branch has been removed; one-shots
+                -- now use the same proportional remap as looping.
                 ResizeBuilder.applyAxis
-                    False
                     Nothing
                     (Just { min = 0, max = 400 })
                     0
                     200
                     100
-                    |> Expect.equal { start = 200, end = 400, current = 200 }
+                    |> Expect.equal { start = 0, end = 400, current = 200 }
         , test "Zero old range preserves current (clamped into new bounds)" <|
             -- When start == end the leg has collapsed (e.g. a previous resize
             -- on a finished one-shot animation, or an init-only property
@@ -91,7 +91,6 @@ resizeMathTests =
             -- the leg to `current` clamped into the new bounds.
             \_ ->
                 ResizeBuilder.applyAxis
-                    True
                     Nothing
                     (Just { min = 50, max = 250 })
                     100
@@ -101,35 +100,23 @@ resizeMathTests =
         , test "Zero old range clamps an out-of-range current into new bounds" <|
             \_ ->
                 ResizeBuilder.applyAxis
-                    False
                     Nothing
                     (Just { min = 0, max = 100 })
                     300
                     300
                     300
                     |> Expect.equal { start = 100, end = 100, current = 100 }
-        , test "Successive one-shot resizes remap current against previous bounds, not the chopped leg" <|
-            -- Regression for the bounds-reference bug: after a one-shot resize
-            -- chops the leg to (newCurrent, legEnd), the next resize must use
-            -- the *previous viewport bounds* as the reference range, not the
-            -- (now shrunken) leg endpoints. Without `previousBounds`, the
-            -- second resize would interpret the small remaining leg as the
-            -- full viewport range and snap the box near `b.min`.
+        , test "Successive resizes remap current against previous bounds, not the chopped leg" <|
+            -- Regression for the bounds-reference bug: after a resize
+            -- the next resize must use the *previous viewport bounds* as
+            -- the reference range, not the (now shrunken) leg endpoints.
+            -- Without `previousBounds`, the second resize would interpret
+            -- the small remaining leg as the full viewport range and snap
+            -- the box near `b.min`.
             \_ ->
                 let
-                    -- First resize: viewport [0..290], box mid-leg at x=248
-                    -- (about 85% across the viewport). Old leg endpoints
-                    -- (247, 290) - already a chopped post-resize leg, NOT
-                    -- spanning the full prior viewport.
-                    --
-                    -- Without prev bounds: oldRange = 290-247 = 43;
-                    --   newCurrent = 0 + ((248-247)/43)*580 ~= 13 (BUG)
-                    --
-                    -- With prev bounds {0,290}: oldRange = 290;
-                    --   newCurrent = 0 + (248/290)*580 ~= 496 (CORRECT)
                     result =
                         ResizeBuilder.applyAxis
-                            False
                             (Just { min = 0, max = 290 })
                             (Just { min = 0, max = 580 })
                             247
@@ -219,54 +206,43 @@ proportionFromProgressTests =
 currentTimeForResizeTests : Test
 currentTimeForResizeTests =
     describe "WAAPI.currentTimeForResize"
-        [ test "collapsed one-shot restarts at leg start when still in-flight" <|
+        [ test "first iteration: progress * duration" <|
             \_ ->
                 WAAPI.currentTimeForResize
-                    { isLooping = False
-                    , treatAsSettled = False
-                    , isComplete = False
-                    , durationMs = 640
+                    { durationMs = 640
                     , currentIteration = 0
                     , progress = 0.2
-                    , isCollapsedOneShot = True
                     }
-                    |> Expect.equal (Just 0)
-        , test "collapsed settled one-shot seeks to duration" <|
-            \_ ->
-                WAAPI.currentTimeForResize
-                    { isLooping = False
-                    , treatAsSettled = True
-                    , isComplete = False
-                    , durationMs = 640
-                    , currentIteration = 0
-                    , progress = 0.2
-                    , isCollapsedOneShot = True
-                    }
-                    |> Expect.equal (Just 640)
+                    |> Expect.equal (Just 128)
         , test "looping preserves iteration offset" <|
             \_ ->
+                -- iter 2 + progress 0.25 of a 1000ms leg = 2250ms
                 WAAPI.currentTimeForResize
-                    { isLooping = True
-                    , treatAsSettled = False
-                    , isComplete = False
-                    , durationMs = 1000
+                    { durationMs = 1000
                     , currentIteration = 2
                     , progress = 0.25
-                    , isCollapsedOneShot = False
                     }
                     |> Expect.equal (Just 2250)
-        , test "paused settled one-shot uses in-leg progress" <|
+        , test "mid-leg in-flight non-looping uses (iter + progress) * dur" <|
+            \_ ->
+                -- Unified formula: no special-casing for non-looping.
+                -- Combined with canonical applyAxis geometry and
+                -- scaleDurationForResize, this lands the dot at exactly
+                -- easing(0.13) of the new leg.
+                WAAPI.currentTimeForResize
+                    { durationMs = 3049
+                    , currentIteration = 0
+                    , progress = 0.13
+                    }
+                    |> Expect.equal (Just (0.13 * 3049))
+        , test "completed one-shot: iteration 1 with progress 0 lands at end of leg 1" <|
             \_ ->
                 WAAPI.currentTimeForResize
-                    { isLooping = False
-                    , treatAsSettled = True
-                    , isComplete = False
-                    , durationMs = 900
-                    , currentIteration = 0
-                    , progress = 0.5
-                    , isCollapsedOneShot = False
+                    { durationMs = 900
+                    , currentIteration = 1
+                    , progress = 0
                     }
-                    |> Expect.equal (Just 450)
+                    |> Expect.equal (Just 900)
         ]
 
 

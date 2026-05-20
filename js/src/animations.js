@@ -40,51 +40,6 @@ function distance2(a, b) {
     return Math.sqrt(dx * dx + dy * dy);
 }
 
-function isSuspiciousResetToZero(elmCurrentTimeMs, oldCurrentTime, startPoint, currentPoint) {
-    if (!(typeof elmCurrentTimeMs === 'number' && isFinite(elmCurrentTimeMs) && elmCurrentTimeMs === 0)) {
-        return false;
-    }
-
-    if (!isFiniteNumber(oldCurrentTime) || oldCurrentTime <= 0) {
-        return false;
-    }
-
-    if (!startPoint || !currentPoint) {
-        return false;
-    }
-
-    const hasZ = isFiniteNumber(startPoint.z) && isFiniteNumber(currentPoint.z);
-    const distanceFromStart = hasZ
-        ? distance3(startPoint, currentPoint)
-        : distance2(startPoint, currentPoint);
-
-    // Ignore zero-time resets when the target is clearly not at leg start.
-    return distanceFromStart > 0.5;
-}
-
-function isSuspiciousZeroFromContinuity(elmCurrentTimeMs, oldCurrentTime, oldVisualPoint, currentPoint) {
-    if (!(typeof elmCurrentTimeMs === 'number' && isFinite(elmCurrentTimeMs) && elmCurrentTimeMs === 0)) {
-        return false;
-    }
-
-    if (!isFiniteNumber(oldCurrentTime) || oldCurrentTime <= 0) {
-        return false;
-    }
-
-    if (!oldVisualPoint || !currentPoint) {
-        return false;
-    }
-
-    const hasZ = isFiniteNumber(oldVisualPoint.z) && isFiniteNumber(currentPoint.z);
-    const continuityDistance = hasZ
-        ? distance3(oldVisualPoint, currentPoint)
-        : distance2(oldVisualPoint, currentPoint);
-
-    // If resize target is still very close to the pre-resize visual position,
-    // forcing currentTime=0 is almost certainly an unintended restart.
-    return continuityDistance <= 12;
-}
-
 function computeLegProgress(oldCurrentTime, oldDuration, oldDirection, animation) {
     if (!isFiniteNumber(oldCurrentTime) || !isFiniteNumber(oldDuration) || oldDuration <= 0) {
         return null;
@@ -107,18 +62,6 @@ function computeLegProgress(oldCurrentTime, oldDuration, oldDirection, animation
     }
 
     return oldLegProgress;
-}
-
-function scaleCurrentTimeForResize(oldCurrentTime, oldDuration, newDuration) {
-    if (!isFiniteNumber(oldCurrentTime)
-        || !isFiniteNumber(oldDuration)
-        || !isFiniteNumber(newDuration)
-        || oldDuration <= 0
-        || newDuration <= 0) {
-        return null;
-    }
-
-    return (oldCurrentTime / oldDuration) * newDuration;
 }
 
 function axisBoundsChanged(oldStart, oldEnd, newStart, newEnd, epsilon = 0.001) {
@@ -1144,89 +1087,53 @@ export function _resizeTransformAnimationImmediate(commandData) {
     //   For a 1D translate (the common resize case) this is exact for
     //   Linear easing and approximate for non-linear, matching Clamp's
     //   "preserve current value" promise.
+    //
+    // Elm is the source of truth: when `currentTimeMs` is present, JS
+    // must apply it as-is. Any second-guessing here masks Elm-side bugs.
+    // `commandData.legRedefined === true` makes the intent explicit —
+    // Elm has rebased `start` to the current visual position and the
+    // authoritative seek is `0` on the redefined leg.
     let newCurrentTime = null;
-    const elmCurrentTimeMs = commandData.currentTimeMs;
-    let useElmCurrentTime = false;
-    let suspiciousZeroReset = false;
     if (hasElmCurrentTime) {
-        const suspiciousResetFromStart = isSuspiciousResetToZero(
-            elmCurrentTimeMs,
-            oldCurrentTime,
-            {
-                x: Number(commandData.startX),
-                y: Number(commandData.startY),
-                z: Number(commandData.startZ)
-            },
-            targetPosition
-        );
-        const suspiciousResetFromContinuity = isSuspiciousZeroFromContinuity(
-            elmCurrentTimeMs,
-            oldCurrentTime,
-            oldVisualPosition,
-            targetPosition
-        );
-        const suspiciousReset = suspiciousResetFromStart || suspiciousResetFromContinuity;
-        suspiciousZeroReset = suspiciousReset;
+        newCurrentTime = commandData.currentTimeMs;
+    } else if (targetPosition !== null && newDuration > 0 && oldDuration > 0) {
+        const newStartX = Number(commandData.startX);
+        const newEndX = Number(commandData.endX);
+        const newStartY = Number(commandData.startY);
+        const newEndY = Number(commandData.endY);
+        const newStartZ = Number(commandData.startZ);
+        const newEndZ = Number(commandData.endZ);
 
-        if (!suspiciousReset) {
-            useElmCurrentTime = true;
-            newCurrentTime = elmCurrentTimeMs;
+        const spans = {
+            x: newEndX - newStartX,
+            y: newEndY - newStartY,
+            z: newEndZ - newStartZ
+        };
+
+        const chosenAxis = chooseDominantAxis(spans);
+        let pWanted = 0;
+        if (chosenAxis === 'x') {
+            pWanted = (targetPosition.x - newStartX) / spans.x;
+        } else if (chosenAxis === 'y') {
+            pWanted = (targetPosition.y - newStartY) / spans.y;
+        } else if (chosenAxis === 'z') {
+            pWanted = (targetPosition.z - newStartZ) / spans.z;
         }
+        if (pWanted < 0) pWanted = 0;
+        if (pWanted > 1) pWanted = 1;
 
-    }
-
-    if (!useElmCurrentTime && targetPosition !== null && newDuration > 0 && oldDuration > 0) {
-        if (suspiciousZeroReset) {
-            const scaledCurrentTime = scaleCurrentTimeForResize(oldCurrentTime, oldDuration, newDuration);
-            if (scaledCurrentTime !== null) {
-                newCurrentTime = scaledCurrentTime;
-            }
-        }
-
-        if (newCurrentTime !== null && suspiciousZeroReset) {
-            // Prefer proportional time preservation for suspicious reset payloads.
-            // This keeps timeline continuity even when Elm start/end bounds are
-            // rebuilt around the current point during live resizing.
-        } else {
-            const newStartX = Number(commandData.startX);
-            const newEndX = Number(commandData.endX);
-            const newStartY = Number(commandData.startY);
-            const newEndY = Number(commandData.endY);
-            const newStartZ = Number(commandData.startZ);
-            const newEndZ = Number(commandData.endZ);
-
-            const spans = {
-                x: newEndX - newStartX,
-                y: newEndY - newStartY,
-                z: newEndZ - newStartZ
-            };
-
-            const chosenAxis = chooseDominantAxis(spans);
-            let pWanted = 0;
-            if (chosenAxis === 'x') {
-                pWanted = (targetPosition.x - newStartX) / spans.x;
-            } else if (chosenAxis === 'y') {
-                pWanted = (targetPosition.y - newStartY) / spans.y;
-            } else if (chosenAxis === 'z') {
-                pWanted = (targetPosition.z - newStartZ) / spans.z;
-            }
-            if (pWanted < 0) pWanted = 0;
-            if (pWanted > 1) pWanted = 1;
-
-            const oldIter = Math.floor(oldCurrentTime / oldDuration);
-            let pWithinIter = pWanted;
-            if (oldDirection === 'alternate' || oldDirection === 'alternate-reverse') {
-                const startsReversed = oldDirection === 'alternate-reverse';
-                const isReverseLeg = (oldIter % 2 === 1) !== startsReversed;
-                if (isReverseLeg) {
-                    pWithinIter = 1 - pWanted;
-                }
-            } else if (oldDirection === 'reverse') {
+        const oldIter = Math.floor(oldCurrentTime / oldDuration);
+        let pWithinIter = pWanted;
+        if (oldDirection === 'alternate' || oldDirection === 'alternate-reverse') {
+            const startsReversed = oldDirection === 'alternate-reverse';
+            const isReverseLeg = (oldIter % 2 === 1) !== startsReversed;
+            if (isReverseLeg) {
                 pWithinIter = 1 - pWanted;
             }
-            newCurrentTime = (oldIter + pWithinIter) * newDuration;
-
+        } else if (oldDirection === 'reverse') {
+            pWithinIter = 1 - pWanted;
         }
+        newCurrentTime = (oldIter + pWithinIter) * newDuration;
     }
 
     // Cancel + recreate (not in-place mutate). The in-place approach
@@ -1573,82 +1480,39 @@ function resizePerspectiveOriginAnimation(commandData, animGroup, element) {
     const wasPaused = animation.playState === 'paused';
 
     let newCurrentTime = null;
-    const elmCurrentTimeMs = commandData.currentTimeMs;
-    let useElmCurrentTime = false;
-    let suspiciousZeroReset = false;
     if (hasElmCurrentTime) {
-        const suspiciousResetFromStart = isSuspiciousResetToZero(
-            elmCurrentTimeMs,
-            oldCurrentTime,
-            {
-                x: Number(commandData.startX),
-                y: Number(commandData.startY)
-            },
-            {
-                x: Number(commandData.currentX),
-                y: Number(commandData.currentY)
-            }
-        );
-        const suspiciousResetFromContinuity = isSuspiciousZeroFromContinuity(
-            elmCurrentTimeMs,
-            oldCurrentTime,
-            oldVisual,
-            effectiveCurrentPosition
-        );
-        const suspiciousReset = suspiciousResetFromStart || suspiciousResetFromContinuity;
-        suspiciousZeroReset = suspiciousReset;
+        // Elm is the source of truth for the seek target; apply unconditionally.
+        newCurrentTime = commandData.currentTimeMs;
+    } else if (oldDuration > 0 && newDuration > 0) {
+        const oldIter = Math.floor(oldCurrentTime / oldDuration);
+        const startsReversed = oldDirection === 'alternate-reverse';
+        const isAlternate = oldDirection === 'alternate' || oldDirection === 'alternate-reverse';
+        const isReverseLeg = isAlternate ? ((oldIter % 2 === 1) !== startsReversed) : oldDirection === 'reverse';
 
-        if (!suspiciousReset) {
-            useElmCurrentTime = true;
-            newCurrentTime = elmCurrentTimeMs;
+        const xStart = Number(commandData.startX);
+        const xEnd = Number(commandData.endX);
+        const yStart = Number(commandData.startY);
+        const yEnd = Number(commandData.endY);
+
+        const spans = {
+            x: xEnd - xStart,
+            y: yEnd - yStart,
+            z: 0
+        };
+
+        const chosenAxis = chooseDominantAxis(spans);
+
+        let pWanted = 0;
+        if (chosenAxis === 'x') {
+            pWanted = (effectiveCurrentPosition.x - xStart) / spans.x;
+        } else if (chosenAxis === 'y') {
+            pWanted = (effectiveCurrentPosition.y - yStart) / spans.y;
         }
+        if (pWanted < 0) pWanted = 0;
+        if (pWanted > 1) pWanted = 1;
 
-    }
-
-    if (!useElmCurrentTime && oldDuration > 0 && newDuration > 0) {
-        if (suspiciousZeroReset) {
-            const scaledCurrentTime = scaleCurrentTimeForResize(oldCurrentTime, oldDuration, newDuration);
-            if (scaledCurrentTime !== null) {
-                newCurrentTime = scaledCurrentTime;
-            }
-        }
-
-        if (newCurrentTime !== null && suspiciousZeroReset) {
-            // Prefer proportional time preservation for suspicious reset payloads.
-            // This keeps timeline continuity even when Elm start/end bounds are
-            // rebuilt around the current point during live resizing.
-        } else {
-            const oldIter = Math.floor(oldCurrentTime / oldDuration);
-            const startsReversed = oldDirection === 'alternate-reverse';
-            const isAlternate = oldDirection === 'alternate' || oldDirection === 'alternate-reverse';
-            const isReverseLeg = isAlternate ? ((oldIter % 2 === 1) !== startsReversed) : oldDirection === 'reverse';
-
-            const xStart = Number(commandData.startX);
-            const xEnd = Number(commandData.endX);
-            const yStart = Number(commandData.startY);
-            const yEnd = Number(commandData.endY);
-
-            const spans = {
-                x: xEnd - xStart,
-                y: yEnd - yStart,
-                z: 0
-            };
-
-            const chosenAxis = chooseDominantAxis(spans);
-
-            let pWanted = 0;
-            if (chosenAxis === 'x') {
-                pWanted = (effectiveCurrentPosition.x - xStart) / spans.x;
-            } else if (chosenAxis === 'y') {
-                pWanted = (effectiveCurrentPosition.y - yStart) / spans.y;
-            }
-            if (pWanted < 0) pWanted = 0;
-            if (pWanted > 1) pWanted = 1;
-
-            const pWithinIter = isReverseLeg ? 1 - pWanted : pWanted;
-            newCurrentTime = (oldIter + pWithinIter) * newDuration;
-
-        }
+        const pWithinIter = isReverseLeg ? 1 - pWanted : pWanted;
+        newCurrentTime = (oldIter + pWithinIter) * newDuration;
     }
 
     const oldVersion = entry.version;

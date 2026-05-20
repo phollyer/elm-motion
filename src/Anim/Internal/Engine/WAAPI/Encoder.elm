@@ -224,12 +224,17 @@ running translate animation in place via `effect.setKeyframes` and
 `effect.updateTiming`, preserving WAAPI's own `currentIteration`,
 direction, and play state.
 
-Elm decides where to seek and ships an explicit `currentTimeMs` when it
-has an authoritative answer (the `Proportional` strategy: temporal-ratio
-preservation for looping legs, `0` for the collapsed one-shot leg). For
-the `Clamp` strategy, `currentTimeMs` is omitted and JS solves for the
-time that places the box at the supplied `current` value via legacy
-linear inversion.
+Elm decides where to seek and ships an explicit `currentTimeMs`. The
+seek formula is unified: `(currentIteration + progress) * newDur`,
+which combined with `applyAxis`'s canonical leg geometry and the
+px/ms-preserving `scaleDurationForResize` places the dot at exactly
+`easing(progress)` of the new leg - the same proportional visual
+position it occupied before the resize.
+
+JS is a thin executor: it applies `currentTimeMs` as-is via
+`anim.currentTime = t` without any heuristic correction. Drag-resize
+(many resizes in quick succession) and orientation flip (one resize)
+drive identical math, so the two scenarios behave identically.
 
 -}
 encodeResize :

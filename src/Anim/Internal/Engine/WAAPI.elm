@@ -337,7 +337,7 @@ Multiple groups in a single call have their commands batched.
 
 -}
 onResize : AnimState msg -> (ResizeBuilder.Builder -> ResizeBuilder.Builder) -> ( AnimState msg, Cmd msg )
-onResize ((AnimState state animGroups) as animState) buildResize =
+onResize (AnimState state animGroups) buildResize =
     let
         builder =
             ResizeBuilder.build buildResize
@@ -420,25 +420,10 @@ applyTranslateResize animGroupName previousBounds bounds ((AnimState state animG
     else
         case computeResizePayload animGroupName previousBounds bounds animState of
             Nothing ->
-                let
-                    _ =
-                        Debug.log "[elm-motion resize] SKIP (noChange or no anim)" animGroupName
-                in
                 ( animState, Cmd.none )
 
             Just payload ->
                 let
-                    _ =
-                        Debug.log "[elm-motion resize] EMIT"
-                            { animGroup = animGroupName
-                            , start = payload.command.start
-                            , end = payload.command.end
-                            , current = payload.command.current
-                            , durationMs = payload.command.durationMs
-                            , currentTimeMs = payload.command.currentTimeMs
-                            , hasBaseline = payload.command.hasAnimationBaseline
-                            }
-
                     updatedAnimGroups =
                         AnimGroups.update animGroupName
                             (Maybe.map
@@ -521,13 +506,6 @@ applyTranslatePositionResize animGroupName pos ((AnimState state animGroups) as 
                         state.builder
                             |> Builder.updateBaselines animGroupName
                                 (PropertyBaselines.setTranslate newTranslate)
-
-                    _ =
-                        Debug.log "[elm-motion position] EMIT"
-                            { animGroup = animGroupName
-                            , pos = pos
-                            , prevCurrent = current
-                            }
                 in
                 ( AnimState { state | builder = updatedBuilder } updatedAnimGroups
                 , state.commandPort
@@ -597,36 +575,6 @@ computeResizePayload animGroupName previousBounds bounds (AnimState state animGr
                                             }
                             in
                             let
-                                iters =
-                                    AnimGroup.getIterations animGroup
-
-                                isLooping =
-                                    case iters of
-                                        Builder.Once ->
-                                            False
-
-                                        _ ->
-                                            True
-
-                                -- Mirror the Sub engine fix: a one-shot animation that
-                                -- isn't actively progressing (completed or paused) must
-                                -- preserve the *full* new leg (`legStart` -> `legEnd`)
-                                -- rather than collapsing `start` to `current`. Collapsing
-                                -- degenerates the Proportional formula on the next resize
-                                -- (oldRange shrinks, oldCurrent sits at oldStart, the box
-                                -- maps proportionally to `b.min` and teleports back to the
-                                -- top - even on sub-pixel layout wobble). Preserving the
-                                -- full leg also keeps Reset/Restart honest because they
-                                -- re-animate from the original `legStart`.
-                                treatAsSettled =
-                                    (AnimGroup.isComplete animGroup
-                                        || AnimGroup.isPaused animGroup
-                                    )
-                                        && not isLooping
-
-                                effectiveLooping =
-                                    isLooping || treatAsSettled
-
                                 oldStart =
                                     baseline.start
 
@@ -637,13 +585,13 @@ computeResizePayload animGroupName previousBounds bounds (AnimState state animGr
                                     Translate.toRecord currentTranslate
 
                                 rx =
-                                    ResizeBuilder.applyAxis effectiveLooping previousBounds.x bounds.x oldStart.x oldEnd.x oldCurrent.x
+                                    ResizeBuilder.applyAxis previousBounds.x bounds.x oldStart.x oldEnd.x oldCurrent.x
 
                                 ry =
-                                    ResizeBuilder.applyAxis effectiveLooping previousBounds.y bounds.y oldStart.y oldEnd.y oldCurrent.y
+                                    ResizeBuilder.applyAxis previousBounds.y bounds.y oldStart.y oldEnd.y oldCurrent.y
 
                                 rz =
-                                    ResizeBuilder.applyAxis effectiveLooping previousBounds.z bounds.z oldStart.z oldEnd.z oldCurrent.z
+                                    ResizeBuilder.applyAxis previousBounds.z bounds.z oldStart.z oldEnd.z oldCurrent.z
 
                                 newStart =
                                     { x = rx.start, y = ry.start, z = rz.start }
@@ -688,24 +636,16 @@ computeResizePayload animGroupName previousBounds bounds (AnimState state animGr
 
                                 oldCurrentTimeMs =
                                     currentTimeForResize
-                                        { isLooping = isLooping
-                                        , treatAsSettled = treatAsSettled
-                                        , isComplete = AnimGroup.isComplete animGroup
-                                        , durationMs = baseline.durationMs
+                                        { durationMs = baseline.durationMs
                                         , currentIteration = AnimGroup.getCurrentIteration animGroup
                                         , progress = AnimGroup.getProgress animGroup
-                                        , isCollapsedOneShot = not isLooping && translateRecordsEqual oldStart oldEnd
                                         }
 
                                 currentTimeMs =
                                     currentTimeForResize
-                                        { isLooping = isLooping
-                                        , treatAsSettled = treatAsSettled
-                                        , isComplete = AnimGroup.isComplete animGroup
-                                        , durationMs = newDurationMs
+                                        { durationMs = newDurationMs
                                         , currentIteration = AnimGroup.getCurrentIteration animGroup
                                         , progress = AnimGroup.getProgress animGroup
-                                        , isCollapsedOneShot = not isLooping && translateRecordsEqual newStart newEnd
                                         }
 
                                 noChange =
@@ -823,40 +763,32 @@ perspectiveOriginRecordsNearlyEqual a b =
         && floatNearlyEqual a.y b.y
 
 
+{-| Compute the WAAPI `currentTime` (in ms) to seek to after a resize.
+
+Unified across looping and non-looping animations: the seek is always
+`(currentIteration + progress) * newDur`. Because [`applyAxis`](Anim-Internal-Resize-Builder#applyAxis)
+returns canonical leg geometry (`legStart -> legEnd`) regardless of
+animation kind, and [`scaleDurationForResize`](#scaleDurationForResize)
+preserves px/ms by scaling `newDur` against the full-leg distance, this
+formula lands the dot at exactly `easing(progress)` of the new leg -
+the same proportional visual position it occupied before the resize.
+
+Drag-resize (many resizes in quick succession) and orientation flip
+(one resize) drive identical math: each tick recomputes `newDur` against
+the _cached_ resize baseline (the previous tick's `(start, end)`), so
+successive ticks self-stabilize.
+
+-}
 currentTimeForResize :
-    { isLooping : Bool
-    , treatAsSettled : Bool
-    , isComplete : Bool
-    , durationMs : Float
+    { durationMs : Float
     , currentIteration : Int
     , progress : Float
-    , isCollapsedOneShot : Bool
     }
     -> Maybe Float
 currentTimeForResize cfg =
-    if cfg.isCollapsedOneShot then
-        if cfg.treatAsSettled || cfg.isComplete then
-            Just cfg.durationMs
-
-        else
-            -- Mid-flight one-shot collapse should restart the eased
-            -- leg from the new start instead of parking at end.
-            Just 0
-
-    else if cfg.treatAsSettled then
-        if cfg.isComplete then
-            Just cfg.durationMs
-
-        else
-            Just (cfg.progress * cfg.durationMs)
-
-    else if cfg.isLooping then
-        Just <|
-            (toFloat cfg.currentIteration + cfg.progress)
-                * cfg.durationMs
-
-    else
-        Just (cfg.progress * cfg.durationMs)
+    Just <|
+        (toFloat cfg.currentIteration + cfg.progress)
+            * cfg.durationMs
 
 
 {-| Derive forward-axis position-as-proportion (0 = at `b.min`, 1 = at
@@ -1148,26 +1080,6 @@ computeScaleResizePayload animGroupName previousBounds bounds (AnimState state a
                                             }
                             in
                             let
-                                iters =
-                                    AnimGroup.getIterations animGroup
-
-                                isLooping =
-                                    case iters of
-                                        Builder.Once ->
-                                            False
-
-                                        _ ->
-                                            True
-
-                                treatAsSettled =
-                                    (AnimGroup.isComplete animGroup
-                                        || AnimGroup.isPaused animGroup
-                                    )
-                                        && not isLooping
-
-                                effectiveLooping =
-                                    isLooping || treatAsSettled
-
                                 oldStart =
                                     baseline.start
 
@@ -1178,13 +1090,13 @@ computeScaleResizePayload animGroupName previousBounds bounds (AnimState state a
                                     Scale.toRecord currentScale
 
                                 rx =
-                                    ResizeBuilder.applyAxis effectiveLooping previousBounds.x bounds.x oldStart.x oldEnd.x oldCurrent.x
+                                    ResizeBuilder.applyAxis previousBounds.x bounds.x oldStart.x oldEnd.x oldCurrent.x
 
                                 ry =
-                                    ResizeBuilder.applyAxis effectiveLooping previousBounds.y bounds.y oldStart.y oldEnd.y oldCurrent.y
+                                    ResizeBuilder.applyAxis previousBounds.y bounds.y oldStart.y oldEnd.y oldCurrent.y
 
                                 rz =
-                                    ResizeBuilder.applyAxis effectiveLooping previousBounds.z bounds.z oldStart.z oldEnd.z oldCurrent.z
+                                    ResizeBuilder.applyAxis previousBounds.z bounds.z oldStart.z oldEnd.z oldCurrent.z
 
                                 newStart =
                                     { x = rx.start, y = ry.start, z = rz.start }
@@ -1226,24 +1138,16 @@ computeScaleResizePayload animGroupName previousBounds bounds (AnimState state a
 
                                 oldCurrentTimeMs =
                                     currentTimeForResize
-                                        { isLooping = isLooping
-                                        , treatAsSettled = treatAsSettled
-                                        , isComplete = AnimGroup.isComplete animGroup
-                                        , durationMs = baseline.durationMs
+                                        { durationMs = baseline.durationMs
                                         , currentIteration = AnimGroup.getCurrentIteration animGroup
                                         , progress = AnimGroup.getProgress animGroup
-                                        , isCollapsedOneShot = not isLooping && translateRecordsEqual oldStart oldEnd
                                         }
 
                                 currentTimeMs =
                                     currentTimeForResize
-                                        { isLooping = isLooping
-                                        , treatAsSettled = treatAsSettled
-                                        , isComplete = AnimGroup.isComplete animGroup
-                                        , durationMs = newDurationMs
+                                        { durationMs = newDurationMs
                                         , currentIteration = AnimGroup.getCurrentIteration animGroup
                                         , progress = AnimGroup.getProgress animGroup
-                                        , isCollapsedOneShot = not isLooping && translateRecordsEqual newStart newEnd
                                         }
 
                                 noChange =
@@ -1474,26 +1378,6 @@ computePerspectiveOriginResizePayload animGroupName previousBounds bounds (AnimS
                                              }
                                             )
 
-                                iters =
-                                    AnimGroup.getIterations animGroup
-
-                                isLooping =
-                                    case iters of
-                                        Builder.Once ->
-                                            False
-
-                                        _ ->
-                                            True
-
-                                treatAsSettled =
-                                    (AnimGroup.isComplete animGroup
-                                        || AnimGroup.isPaused animGroup
-                                    )
-                                        && not isLooping
-
-                                effectiveLooping =
-                                    isLooping || treatAsSettled
-
                                 oldStart =
                                     { x = baseline.start.x, y = baseline.start.y }
 
@@ -1504,10 +1388,10 @@ computePerspectiveOriginResizePayload animGroupName previousBounds bounds (AnimS
                                     PerspectiveOrigin.toRecord currentPerspectiveOrigin
 
                                 rx =
-                                    ResizeBuilder.applyAxis effectiveLooping previousBounds.x bounds.x oldStart.x oldEnd.x oldCurrent.x
+                                    ResizeBuilder.applyAxis previousBounds.x bounds.x oldStart.x oldEnd.x oldCurrent.x
 
                                 ry =
-                                    ResizeBuilder.applyAxis effectiveLooping previousBounds.y bounds.y oldStart.y oldEnd.y oldCurrent.y
+                                    ResizeBuilder.applyAxis previousBounds.y bounds.y oldStart.y oldEnd.y oldCurrent.y
 
                                 newStart2d =
                                     { x = rx.start, y = ry.start }
@@ -1555,24 +1439,16 @@ computePerspectiveOriginResizePayload animGroupName previousBounds bounds (AnimS
 
                                 oldCurrentTimeMs =
                                     currentTimeForResize
-                                        { isLooping = isLooping
-                                        , treatAsSettled = treatAsSettled
-                                        , isComplete = AnimGroup.isComplete animGroup
-                                        , durationMs = baseline.durationMs
+                                        { durationMs = baseline.durationMs
                                         , currentIteration = AnimGroup.getCurrentIteration animGroup
                                         , progress = AnimGroup.getProgress animGroup
-                                        , isCollapsedOneShot = not isLooping && perspectiveOriginRecordsEqual liveOldStart2d liveOldEnd2d
                                         }
 
                                 currentTimeMs =
                                     currentTimeForResize
-                                        { isLooping = isLooping
-                                        , treatAsSettled = treatAsSettled
-                                        , isComplete = AnimGroup.isComplete animGroup
-                                        , durationMs = newDurationMs
+                                        { durationMs = newDurationMs
                                         , currentIteration = AnimGroup.getCurrentIteration animGroup
                                         , progress = AnimGroup.getProgress animGroup
-                                        , isCollapsedOneShot = not isLooping && perspectiveOriginRecordsEqual newStart2d newEnd2d
                                         }
 
                                 noChange =
