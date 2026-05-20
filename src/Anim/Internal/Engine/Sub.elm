@@ -970,34 +970,39 @@ extractElementCurrentStates =
 
 
 extractPropertyCurrentState : Animation -> PropertyBaselines -> PropertyBaselines
-extractPropertyCurrentState anim states =
+extractPropertyCurrentState anim =
+    let
+        interpolated : (a -> PropertyBaselines -> PropertyBaselines) -> (Float -> a -> a -> a) -> PropertyAnimation a -> PropertyBaselines -> PropertyBaselines
+        interpolated set interp a =
+            set (interpolateEasedProgress interp a)
+    in
     case anim of
         CustomProperty cssName unit a ->
-            PropertyBaselines.setCustomProperty cssName (interpolateEasedProgress interpolateFloat a) unit states
+            PropertyBaselines.setCustomProperty cssName (interpolateEasedProgress interpolateFloat a) unit
 
         CustomColorProperty cssName a ->
-            PropertyBaselines.setCustomColorProperty cssName (interpolateEasedProgress Color.interpolate a) states
+            PropertyBaselines.setCustomColorProperty cssName (interpolateEasedProgress Color.interpolate a)
 
         Opacity a ->
-            PropertyBaselines.setOpacity (interpolateEasedProgress interpolateOpacity a) states
+            interpolated PropertyBaselines.setOpacity interpolateOpacity a
 
         PerspectiveOrigin a ->
-            PropertyBaselines.setPerspectiveOrigin (interpolateEasedProgress interpolatePerspectiveOrigin a) states
+            interpolated PropertyBaselines.setPerspectiveOrigin interpolatePerspectiveOrigin a
 
         Rotate a ->
-            PropertyBaselines.setRotate (interpolateEasedProgress interpolateRotate a) states
+            interpolated PropertyBaselines.setRotate interpolateRotate a
 
         Scale a ->
-            PropertyBaselines.setScale (interpolateEasedProgress interpolateScale a) states
+            interpolated PropertyBaselines.setScale interpolateScale a
 
         Size a ->
-            PropertyBaselines.setSize (interpolateEasedProgress interpolateSize a) states
+            interpolated PropertyBaselines.setSize interpolateSize a
 
         Skew a ->
-            PropertyBaselines.setSkew (interpolateEasedProgress interpolateSkew a) states
+            interpolated PropertyBaselines.setSkew interpolateSkew a
 
         Translate a ->
-            PropertyBaselines.setTranslate (interpolateEasedProgress interpolateTranslate a) states
+            interpolated PropertyBaselines.setTranslate interpolateTranslate a
 
 
 

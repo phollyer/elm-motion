@@ -302,44 +302,43 @@ generateTransformPart totalTime default interpolate toCssString cfg =
 
 generateNonTransformStyles : Float -> List Builder.ProcessedPropertyConfig -> List ( String, String )
 generateNonTransformStyles totalTime =
-    List.concat
-        << List.filterMap
-            (\p ->
-                case p of
-                    Builder.ProcessedCustomPropertyConfig cssName unit cfg ->
-                        Just
-                            [ ( cssName, generateTransformPart totalTime 0 interpolateFloat (\v -> String.fromFloat v ++ unit) cfg ) ]
+    let
+        part : String -> a -> (Float -> a -> a -> a) -> (a -> String) -> Builder.ProcessedAnimationConfig a -> ( String, String )
+        part cssName default interpolate toCssString cfg =
+            ( cssName, generateTransformPart totalTime default interpolate toCssString cfg )
+    in
+    List.concatMap
+        (\p ->
+            case p of
+                Builder.ProcessedCustomPropertyConfig cssName unit cfg ->
+                    [ part cssName 0 interpolateFloat (\v -> String.fromFloat v ++ unit) cfg ]
 
-                    Builder.ProcessedCustomColorPropertyConfig cssName cfg ->
-                        Just
-                            [ ( cssName, generateTransformPart totalTime (Color.fromRGB { r = 0, g = 0, b = 0 }) Color.interpolate Color.toCssString cfg ) ]
+                Builder.ProcessedCustomColorPropertyConfig cssName cfg ->
+                    [ part cssName (Color.fromRGB { r = 0, g = 0, b = 0 }) Color.interpolate Color.toCssString cfg ]
 
-                    Builder.ProcessedOpacityConfig cfg ->
-                        Just
-                            [ ( "opacity", generateTransformPart totalTime Opacity.default Opacity.interpolate Opacity.toCssString cfg ) ]
+                Builder.ProcessedOpacityConfig cfg ->
+                    [ part "opacity" Opacity.default Opacity.interpolate Opacity.toCssString cfg ]
 
-                    Builder.ProcessedPerspectiveOriginConfig cfg ->
-                        Just
-                            [ ( "perspective-origin", generateTransformPart totalTime PerspectiveOrigin.default PerspectiveOrigin.interpolate PerspectiveOrigin.toCssString cfg ) ]
+                Builder.ProcessedPerspectiveOriginConfig cfg ->
+                    [ part "perspective-origin" PerspectiveOrigin.default PerspectiveOrigin.interpolate PerspectiveOrigin.toCssString cfg ]
 
-                    Builder.ProcessedRotateConfig _ ->
-                        Nothing
+                Builder.ProcessedSizeConfig cfg ->
+                    [ part "width" Size.default Size.interpolate Size.widthToCssString cfg
+                    , part "height" Size.default Size.interpolate Size.heightToCssString cfg
+                    ]
 
-                    Builder.ProcessedScaleConfig _ ->
-                        Nothing
+                Builder.ProcessedRotateConfig _ ->
+                    []
 
-                    Builder.ProcessedSizeConfig cfg ->
-                        Just
-                            [ ( "width", generateTransformPart totalTime Size.default Size.interpolate Size.widthToCssString cfg )
-                            , ( "height", generateTransformPart totalTime Size.default Size.interpolate Size.heightToCssString cfg )
-                            ]
+                Builder.ProcessedScaleConfig _ ->
+                    []
 
-                    Builder.ProcessedSkewConfig _ ->
-                        Nothing
+                Builder.ProcessedSkewConfig _ ->
+                    []
 
-                    Builder.ProcessedTranslateConfig _ ->
-                        Nothing
-            )
+                Builder.ProcessedTranslateConfig _ ->
+                    []
+        )
 
 
 interpolateFloat : Float -> Float -> Float -> Float
