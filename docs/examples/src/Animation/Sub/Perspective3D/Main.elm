@@ -12,6 +12,7 @@ import Browser.Dom as Dom
 import Browser.Events
 import Html exposing (Html, div, text)
 import Html.Attributes exposing (class, id, style)
+import Json.Encode as Encode
 import Motion.Easing as Easing exposing (Easing(..))
 import Process
 import Task
@@ -33,6 +34,96 @@ main =
 
 
 -- MODEL
+
+
+type alias Model =
+    { animState : Sub.AnimState
+    , perspectiveStep : PerspectiveStep
+    , currentAnimAreaSize : { width : Float, height : Float }
+    , cube : CubeConfig
+    }
+
+
+
+-- INIT
+
+
+init : { window : { width : Int, height : Int } } -> ( Model, Cmd Msg )
+init flags =
+    let
+        initialAreaSize =
+            { width = toFloat flags.window.width * 0.8, height = toFloat flags.window.height * 0.8 }
+
+        cubeSize =
+            min initialAreaSize.width initialAreaSize.height / 4
+
+        depth =
+            cubeSize / 2
+
+        initialAnimState =
+            Sub.init <|
+                [ -- Initialize the perspective origin at the top-left corner (0%, 0%)
+                  -- It will travel around the corners in sync with the dot animation:
+                  -- (0,0) -> (100,0) -> (100,100) -> (0,100) -> (0,0)
+                  PerspectiveOrigin.initPx perspectiveContainer.groupName 0 0
+                , Translate.initXY vanishingPointDot.groupName 0 0
+
+                -- Bring the cube forward on the Z axis
+                -- so that it doesn't get clipped by the
+                -- z=0 clipping plane.
+                , Translate.initZ cubeGroupName 300
+                    >> Scale.init cubeGroupName 1
+                    -- Seed the dot at the top-left corner (0, 0) so that
+                    -- `Translate.bounds` has runtime state to remap
+                    -- when the container resizes.
+                    >> Translate.initXY vanishingPointDot.groupName 0 0
+
+                -- Position each face in 3D space along the axis it faces
+                -- Front/Back faces move on Z (forward/backward)
+                -- Left/Right faces move on X (sideways)
+                -- Top/Bottom faces move on Y (up/down)
+                , Translate.initZ frontFace.groupName depth
+                , Translate.initZ backFace.groupName (depth * -1)
+                    -- Rotate each face into position to build the cube
+                    -- Front face is not rotated due to facing forward by default
+                    >> Rotate.initY backFace.groupName 180
+                , Translate.initX rightFace.groupName depth
+                    >> Rotate.initY rightFace.groupName 90
+                , Translate.initX leftFace.groupName (-1 * depth)
+                    >> Rotate.initY leftFace.groupName -90
+                , Translate.initY topFace.groupName (-1 * depth)
+                    >> Rotate.initX topFace.groupName 90
+                , Translate.initY bottomFace.groupName depth
+                    >> Rotate.initX bottomFace.groupName -90
+
+                -- The text labels all start on the same plane as their faces
+                -- at z=0, which is the default starting position for elements, so we don't need
+                -- to initialize them
+                ]
+    in
+    ( { animState = initialAnimState
+      , perspectiveStep = MoveToTopRight
+      , currentAnimAreaSize = initialAreaSize
+      , cube =
+            { id = "cube"
+            , groupName = cubeGroupName
+            , size = round cubeSize
+            }
+      }
+    , Process.sleep 100
+        |> Task.andThen (\_ -> Dom.getElement perspectiveContainer.id)
+        |> Task.attempt InitStageElement
+    )
+
+
+type PerspectiveStep
+    = MoveToTopRight
+    | MoveToBottomRight
+    | MoveToBottomLeft
+    | MoveToTopLeft
+
+
+
 -- Perspective container configuration
 
 
@@ -78,7 +169,6 @@ type alias CubeConfig =
 
 type alias TextConfig =
     { id : String
-    , groupName : String
     , label : String
     , color : String
     }
@@ -103,7 +193,6 @@ frontFace =
     , borderColor = "rgb(41, 128, 185)"
     , text =
         { id = "front-face-text"
-        , groupName = "frontFaceTextAnim"
         , label = "FRONT"
         , color = "rgb(0,0 ,0   )"
         }
@@ -119,7 +208,6 @@ backFace =
     , borderColor = "rgb(33, 97, 140)"
     , text =
         { id = "back-face-text"
-        , groupName = "backFaceTextAnim"
         , label = "BACK"
         , color = "rgb(0,0 ,0   )"
         }
@@ -135,7 +223,6 @@ rightFace =
     , borderColor = "rgb(192, 57, 43)"
     , text =
         { id = "right-face-text"
-        , groupName = "rightFaceTextAnim"
         , label = "RIGHT"
         , color = "rgb(0,0 ,0   )"
         }
@@ -151,7 +238,6 @@ leftFace =
     , borderColor = "rgb(211, 84, 0)"
     , text =
         { id = "left-face-text"
-        , groupName = "leftFaceTextAnim"
         , label = "LEFT"
         , color = "rgb(0,0 ,0   )"
         }
@@ -167,7 +253,6 @@ topFace =
     , borderColor = "rgb(39, 174, 96)"
     , text =
         { id = "top-face-text"
-        , groupName = "topFaceTextAnim"
         , label = "TOP"
         , color = "rgb(0,0 ,0   )"
         }
@@ -183,40 +268,15 @@ bottomFace =
     , borderColor = "rgb(142, 68, 173)"
     , text =
         { id = "bottom-face-text"
-        , groupName = "bottomFaceTextAnim"
         , label = "BOTTOM"
         , color = "rgb(0,0 ,0   )"
         }
     }
 
 
-type PerspectiveStep
-    = MoveToTopRight
-    | MoveToBottomRight
-    | MoveToBottomLeft
-    | MoveToTopLeft
-
-
-type alias Model =
-    { animState : Sub.AnimState
-    , perspectiveStep : PerspectiveStep
-    , initialAnimAreaSize : { width : Float, height : Float }
-    , currentAnimAreaSize : { width : Float, height : Float }
-    , cube : CubeConfig
-    }
-
-
-{-| Square animation area sized off the smaller viewport axis so it
-always fits the page in either orientation. Mirrors the responsive
-strategy used by `Animation.WAAPI.Animate3D.Main`.
--}
-animAreaSize : Float -> Float -> { width : Float, height : Float }
-animAreaSize windowWidth windowHeight =
-    if windowWidth < windowHeight then
-        { width = windowWidth, height = windowWidth }
-
-    else
-        { width = windowHeight, height = windowHeight }
+perspectiveStepSpeed : Float
+perspectiveStepSpeed =
+    150
 
 
 {-| Width of the perspective container's border (must match the inline
@@ -238,90 +298,6 @@ toInnerArea { width, height } =
     }
 
 
-
--- INIT
-
-
-init : { window : { width : Int, height : Int } } -> ( Model, Cmd Msg )
-init flags =
-    let
-        initialAreaSize =
-            animAreaSize
-                (toFloat flags.window.width)
-                (toFloat flags.window.height)
-
-        cubeSize =
-            min (toFloat flags.window.width) (toFloat flags.window.height) * 0.8 / 4
-
-        depth =
-            cubeSize / 2
-
-        initialAnimState =
-            Sub.init
-                [ -- Initialize the perspective origin at the top-left corner (0%, 0%)
-                  -- It will travel around the corners in sync with the cube animation:
-                  -- (0,0) -> (100,0) -> (100,100) -> (0,100) -> (0,0)
-                  PerspectiveOrigin.initPercent perspectiveContainer.groupName 0 0
-
-                -- Bring the cube forward on the Z axis
-                -- so that it doesn't get clipped by the
-                -- z=0 clipping plane when we expand the
-                -- sides and rotate
-                , Translate.initZ cubeGroupName 300
-                    -- Static no-op scale so that `Scale.bounds` has
-                    -- runtime state to remap when the container resizes.
-                    >> Scale.init cubeGroupName 1
-                    >> Scale.init vanishingPointDot.groupName 1
-                    -- Seed the dot at the top-left corner (0, 0) so that
-                    -- `Translate.bounds` has runtime state to remap
-                    -- when the container resizes.
-                    >> Translate.initXY vanishingPointDot.groupName 0 0
-
-                -- Position each face in 3D space along the axis it faces
-                -- Front/Back faces move on Z (forward/backward)
-                -- Left/Right faces move on X (sideways)
-                -- Top/Bottom faces move on Y (up/down)
-                , Translate.initZ frontFace.groupName depth
-                , Translate.initZ backFace.groupName (depth * -1)
-                , Translate.initX rightFace.groupName depth
-                , Translate.initX leftFace.groupName (-1 * depth)
-                , Translate.initY topFace.groupName (-1 * depth)
-                , Translate.initY bottomFace.groupName depth
-
-                -- Rotate each face into position to build the cube
-                -- Front face is not rotated due to facing forward by default
-                , Rotate.initY backFace.groupName 180
-                , Rotate.initY rightFace.groupName 90
-                , Rotate.initY leftFace.groupName -90
-                , Rotate.initX topFace.groupName 90
-                , Rotate.initX bottomFace.groupName -90
-
-                -- The text labels all start on the same plane as their faces
-                -- at z=0, which is the default starting position for elements, so we don't need
-                -- to initialize them
-                ]
-    in
-    ( { animState = initialAnimState
-      , perspectiveStep = MoveToTopRight
-      , initialAnimAreaSize = initialAreaSize
-      , currentAnimAreaSize = initialAreaSize
-      , cube =
-            { id = "cube"
-            , groupName = cubeGroupName
-            , size = round cubeSize
-            }
-      }
-    , Process.sleep 100
-        |> Task.andThen (\_ -> Dom.getElement perspectiveContainer.id)
-        |> Task.attempt InitStageElement
-    )
-
-
-perspectiveStepDuration : Int
-perspectiveStepDuration =
-    3000
-
-
 nextPerspectiveStep : PerspectiveStep -> PerspectiveStep
 nextPerspectiveStep step =
     case step of
@@ -338,10 +314,10 @@ nextPerspectiveStep step =
             MoveToTopRight
 
 
-{-| Which axis is moving for the leg currently in flight.
-The model's `perspectiveStep` field always holds the _next_ step
-(it is advanced immediately after `TriggerAnimation` fires), so the
-in-flight leg is the one that produced the current `perspectiveStep`.
+{-| Which axis is moving for the leg currently in flight. Mirrors the
+helper of the same name in the `Sub` Perspective3D example - the
+in-flight leg drives both `Translate.bounds` (moving axis only) and
+`Translate.position` (static axis snap).
 -}
 type LegAxis
     = XAxisLeg
@@ -349,22 +325,22 @@ type LegAxis
 
 
 inFlightPerspectiveStep : PerspectiveStep -> LegAxis
-inFlightPerspectiveStep nextStep =
-    case nextStep of
+inFlightPerspectiveStep step =
+    case step of
         -- in-flight = MoveToTopRight: (0,0) -> (W,0)
-        MoveToBottomRight ->
+        MoveToTopRight ->
             XAxisLeg
 
         -- in-flight = MoveToBottomRight: (W,0) -> (W,H)
-        MoveToBottomLeft ->
+        MoveToBottomRight ->
             YAxisLeg
 
         -- in-flight = MoveToBottomLeft: (W,H) -> (0,H)
-        MoveToTopLeft ->
+        MoveToBottomLeft ->
             XAxisLeg
 
         -- in-flight = MoveToTopLeft: (0,H) -> (0,0)
-        MoveToTopRight ->
+        MoveToTopLeft ->
             YAxisLeg
 
 
@@ -375,30 +351,26 @@ axis animates and the other sits pinned to an edge. `Translate.bounds`
 remaps the moving axis; this helper provides the matching pixel target
 for the static axis, fed to `Translate.position` so the engine can
 relocate `start = end = current` together (a current-only nudge would
-be overwritten by the next Sub interpolation frame).
-
-The value passed in is `model.perspectiveStep`, which is already the
-_next_ step at the time the resize is observed, so the cases match the
-in-flight leg one-for-one with `inFlightPerspectiveStep`.
+be overwritten by the next interpolation frame).
 
 -}
 staticAxisSnap : PerspectiveStep -> { width : Float, height : Float } -> { x : Maybe Float, y : Maybe Float, z : Maybe Float }
-staticAxisSnap nextStep area =
-    case nextStep of
+staticAxisSnap step area =
+    case step of
         -- in-flight = MoveToTopRight (X-leg): y pinned to 0
-        MoveToBottomRight ->
+        MoveToTopRight ->
             { x = Nothing, y = Just 0, z = Nothing }
 
         -- in-flight = MoveToBottomRight (Y-leg): x pinned to W
-        MoveToBottomLeft ->
+        MoveToBottomRight ->
             { x = Just area.width, y = Nothing, z = Nothing }
 
         -- in-flight = MoveToBottomLeft (X-leg): y pinned to H
-        MoveToTopLeft ->
+        MoveToBottomLeft ->
             { x = Nothing, y = Just area.height, z = Nothing }
 
         -- in-flight = MoveToTopLeft (Y-leg): x pinned to 0
-        MoveToTopRight ->
+        MoveToTopLeft ->
             { x = Just 0, y = Nothing, z = Nothing }
 
 
@@ -406,16 +378,20 @@ perspectiveAnimation : { width : Float, height : Float } -> PerspectiveStep -> A
 perspectiveAnimation areaSize step =
     case step of
         MoveToTopRight ->
-            movePerspectiveOrigin 100 0 perspectiveStepDuration areaSize
+            movePerspectiveRight perspectiveStepSpeed areaSize
+                >> movePerspectiveTargetRight perspectiveStepSpeed areaSize
 
         MoveToBottomRight ->
-            movePerspectiveOrigin 100 100 perspectiveStepDuration areaSize
+            movePerspectiveDown perspectiveStepSpeed areaSize
+                >> movePerspectiveTargetDown perspectiveStepSpeed areaSize
 
         MoveToBottomLeft ->
-            movePerspectiveOrigin 0 100 perspectiveStepDuration areaSize
+            movePerspectiveLeft perspectiveStepSpeed areaSize
+                >> movePerspectiveTargetLeft perspectiveStepSpeed areaSize
 
         MoveToTopLeft ->
-            movePerspectiveOrigin 0 0 perspectiveStepDuration areaSize
+            movePerspectiveUp perspectiveStepSpeed areaSize
+                >> movePerspectiveTargetUp perspectiveStepSpeed areaSize
 
 
 
@@ -425,20 +401,100 @@ perspectiveAnimation areaSize step =
 -- container in sync with the cube animation
 
 
-movePerspectiveOrigin : Float -> Float -> Int -> { width : Float, height : Float } -> AnimBuilder mode -> AnimBuilder mode
-movePerspectiveOrigin x y ms areaSize =
+movePerspectiveOrigin : Float -> (PerspectiveOrigin.Builder mode -> PerspectiveOrigin.Builder mode) -> AnimBuilder mode -> AnimBuilder mode
+movePerspectiveOrigin speed moveTo =
     PerspectiveOrigin.for perspectiveContainer.groupName
-        >> PerspectiveOrigin.percent
-        >> PerspectiveOrigin.toXY x y
-        >> PerspectiveOrigin.duration ms
+        >> PerspectiveOrigin.px
+        >> moveTo
+        >> PerspectiveOrigin.speed speed
         >> PerspectiveOrigin.easing Linear
         >> PerspectiveOrigin.build
-        >> Translate.for vanishingPointDot.groupName
-        >> Translate.toX (x / 100 * areaSize.width)
-        >> Translate.toY (y / 100 * areaSize.height)
-        >> Translate.duration ms
+
+
+movePerspectiveRight : Float -> { a | width : Float } -> AnimBuilder mode -> AnimBuilder mode
+movePerspectiveRight speed { width } =
+    movePerspectiveOrigin speed <|
+        PerspectiveOrigin.toX width
+            >> PerspectiveOrigin.clampY 0 0
+            >> PerspectiveOrigin.clampX 0 width
+
+
+movePerspectiveLeft : Float -> { a | height : Float, width : Float } -> AnimBuilder mode -> AnimBuilder mode
+movePerspectiveLeft speed { height, width } =
+    movePerspectiveOrigin speed <|
+        PerspectiveOrigin.toX 0
+            >> PerspectiveOrigin.clampY height height
+            >> PerspectiveOrigin.clampX 0 width
+
+
+movePerspectiveDown : Float -> { a | height : Float, width : Float } -> AnimBuilder mode -> AnimBuilder mode
+movePerspectiveDown speed { height, width } =
+    movePerspectiveOrigin speed <|
+        PerspectiveOrigin.toY height
+            >> PerspectiveOrigin.clampX width width
+            >> PerspectiveOrigin.clampY 0 height
+
+
+movePerspectiveUp : Float -> { a | height : Float } -> AnimBuilder mode -> AnimBuilder mode
+movePerspectiveUp speed { height } =
+    movePerspectiveOrigin speed <|
+        PerspectiveOrigin.toY 0
+            >> PerspectiveOrigin.clampX 0 0
+            >> PerspectiveOrigin.clampY 0 height
+
+
+movePerspectiveTarget : Float -> (Translate.Builder mode -> Translate.Builder mode) -> AnimBuilder mode -> AnimBuilder mode
+movePerspectiveTarget speed moveTo =
+    Translate.for vanishingPointDot.groupName
+        >> moveTo
+        >> Translate.speed speed
         >> Translate.easing Linear
         >> Translate.build
+
+
+movePerspectiveTargetRight : Float -> { a | width : Float } -> AnimBuilder mode -> AnimBuilder mode
+movePerspectiveTargetRight speed { width } =
+    movePerspectiveTarget speed <|
+        Translate.toX width
+            >> Translate.clampY 0 0
+            >> Translate.clampX 0 width
+
+
+movePerspectiveTargetLeft : Float -> { a | height : Float, width : Float } -> AnimBuilder mode -> AnimBuilder mode
+movePerspectiveTargetLeft speed { height, width } =
+    movePerspectiveTarget speed <|
+        Translate.toX 0
+            >> Translate.clampY height height
+            >> Translate.clampX 0 width
+
+
+movePerspectiveTargetDown : Float -> { a | height : Float, width : Float } -> AnimBuilder mode -> AnimBuilder mode
+movePerspectiveTargetDown speed { height, width } =
+    movePerspectiveTarget speed <|
+        Translate.toY height
+            >> Translate.clampX width width
+            >> Translate.clampY 0 height
+
+
+movePerspectiveTargetUp : Float -> { a | height : Float } -> AnimBuilder mode -> AnimBuilder mode
+movePerspectiveTargetUp speed { height } =
+    movePerspectiveTarget speed <|
+        Translate.toY 0
+            >> Translate.clampX 0 0
+            >> Translate.clampY 0 height
+
+
+resizeEpsilon : Float
+resizeEpsilon =
+    0.01
+
+
+isSameArea : { width : Float, height : Float } -> { width : Float, height : Float } -> Bool
+isSameArea a b =
+    abs (a.width - b.width)
+        < resizeEpsilon
+        && abs (a.height - b.height)
+        < resizeEpsilon
 
 
 
@@ -461,22 +517,23 @@ update msg model =
             ( model, Cmd.none )
 
         TriggerAnimation ->
-            ( { model
-                | animState =
+            let
+                animState =
                     Sub.animate model.animState <|
                         perspectiveAnimation model.currentAnimAreaSize model.perspectiveStep
-                , perspectiveStep =
-                    nextPerspectiveStep model.perspectiveStep
+            in
+            ( { model
+                | animState = animState
               }
             , Cmd.none
             )
 
         GotSubMsg animMsg ->
             let
-                ( animState, animEvents ) =
+                ( animState, events ) =
                     Sub.update animMsg model.animState
             in
-            ( handleSubEvents { model | animState = animState } animEvents
+            ( List.foldl handleMotionEvent { model | animState = animState } events
             , Cmd.none
             )
 
@@ -484,12 +541,9 @@ update msg model =
             let
                 measured =
                     toInnerArea
-                        { width = element.width, height = element.height }
+                        { height = element.height, width = element.width }
             in
-            ( { model
-                | initialAnimAreaSize = measured
-                , currentAnimAreaSize = measured
-              }
+            ( { model | currentAnimAreaSize = measured }
             , Process.sleep 0
                 |> Task.perform (always TriggerAnimation)
             )
@@ -501,51 +555,83 @@ update msg model =
             let
                 newAreaSize =
                     toInnerArea
-                        { width = element.width, height = element.height }
-
-                scale =
-                    newAreaSize.width
-                        / model.initialAnimAreaSize.width
-
-                scaleBounds =
-                    { x = Just { min = scale, max = scale }
-                    , y = Just { min = scale, max = scale }
-                    , z = Just { min = scale, max = scale }
-                    }
-
-                translateBounds =
-                    -- Only constrain the axis that is actually moving for
-                    -- the in-flight leg. Bounding the static axis would
-                    -- re-clamp its endpoint into the new bounds and pull
-                    -- the dot off the corner it currently sits on.
-                    case inFlightPerspectiveStep model.perspectiveStep of
-                        XAxisLeg ->
-                            { x = Just { min = 0, max = newAreaSize.width }
-                            , y = Nothing
-                            , z = Nothing
-                            }
-
-                        YAxisLeg ->
-                            { x = Nothing
-                            , y = Just { min = 0, max = newAreaSize.height }
-                            , z = Nothing
-                            }
-
-                animState =
-                    Sub.onResize model.animState <|
-                        Scale.bounds cubeGroupName scaleBounds
-                            >> Scale.bounds vanishingPointDot.groupName scaleBounds
-                            >> Translate.bounds vanishingPointDot.groupName
-                                translateBounds
-                            >> Translate.position vanishingPointDot.groupName
-                                (staticAxisSnap model.perspectiveStep newAreaSize)
+                        { height = element.height, width = element.width }
             in
-            ( { model
-                | animState = animState
-                , currentAnimAreaSize = newAreaSize
-              }
-            , Cmd.none
-            )
+            if isSameArea newAreaSize model.currentAnimAreaSize then
+                ( model, Cmd.none )
+
+            else
+                let
+                    scale =
+                        min newAreaSize.width newAreaSize.height
+                            / min model.currentAnimAreaSize.width model.currentAnimAreaSize.height
+
+                    scaleBounds =
+                        { x = Just { min = scale, max = scale }
+                        , y = Just { min = scale, max = scale }
+                        , z = Just { min = scale, max = scale }
+                        }
+
+                    legBounds =
+                        -- Only constrain the axis that is actually moving for
+                        -- the in-flight leg. The dot (translate) and the
+                        -- camera (perspective-origin) share the same perimeter
+                        -- path, so the same bounds value drives both.
+                        --
+                        -- Bounding the static axis would re-clamp its
+                        -- endpoint into the new bounds and pull the dot off
+                        -- the corner it currently sits on - and (more
+                        -- importantly during a drag) each resize event would
+                        -- mutate the static axis bounds and force another
+                        -- cancel+recreate of the running animation, drifting
+                        -- the perspective-origin compositor clock behind the
+                        -- dot's. The static-axis pin is delivered separately
+                        -- via `Translate.position` / `PerspectiveOrigin.position`
+                        -- below.
+                        case inFlightPerspectiveStep model.perspectiveStep of
+                            XAxisLeg ->
+                                { x = Just { min = 0, max = newAreaSize.width }
+                                , y = Nothing
+                                , z = Nothing
+                                }
+
+                            YAxisLeg ->
+                                { x = Nothing
+                                , y = Just { min = 0, max = newAreaSize.height }
+                                , z = Nothing
+                                }
+
+                    legSnap =
+                        -- Static-axis pin shared by translate and
+                        -- perspective-origin: both ride the same perimeter
+                        -- track, so they snap to the same edge.
+                        staticAxisSnap model.perspectiveStep newAreaSize
+
+                    animState =
+                        -- `Scale.bounds` remaps the cube scale snapshot
+                        -- proportionally to the new container (policy set at init).
+                        -- `Translate.bounds` remaps the moving axis only -
+                        -- `Translate.position` snaps the static axis to its
+                        -- new pixel edge without a cancel+recreate cycle.
+                        -- `PerspectiveOrigin.bounds` + `PerspectiveOrigin.position`
+                        -- mirror that split for the camera, keeping its live
+                        -- compositor clock in lockstep with the dot.
+                        -- Group-wide `Resize.bounds` is avoided here because
+                        -- it would also clamp `Translate.initZ 200` into the
+                        -- scale-ratio bounds and collapse the cube's z-depth.
+                        Sub.onResize model.animState <|
+                            Scale.bounds cubeGroupName scaleBounds
+                                >> Translate.bounds vanishingPointDot.groupName legBounds
+                                >> Translate.position vanishingPointDot.groupName legSnap
+                                >> PerspectiveOrigin.bounds perspectiveContainer.groupName legBounds
+                                >> PerspectiveOrigin.position perspectiveContainer.groupName { x = legSnap.x, y = legSnap.y }
+                in
+                ( { model
+                    | animState = animState
+                    , currentAnimAreaSize = newAreaSize
+                  }
+                , Cmd.none
+                )
 
         GotStageElement (Err _) ->
             ( model, Cmd.none )
@@ -557,15 +643,10 @@ update msg model =
             )
 
 
-handleSubEvents : Model -> List Sub.AnimEvent -> Model
-handleSubEvents =
-    List.foldl handleSubEvent
-
-
-handleSubEvent : Sub.AnimEvent -> Model -> Model
-handleSubEvent animEvent model =
+handleMotionEvent : Sub.AnimEvent -> Model -> Model
+handleMotionEvent animEvent model =
     case animEvent of
-        Sub.Ended "vanishingPointDotAnim" ->
+        Sub.Ended "perspectiveContainerAnim" ->
             perspectiveStepEnded model
 
         _ ->
@@ -574,12 +655,15 @@ handleSubEvent animEvent model =
 
 perspectiveStepEnded : Model -> Model
 perspectiveStepEnded model =
+    let
+        nextStep =
+            nextPerspectiveStep model.perspectiveStep
+    in
     { model
         | animState =
             Sub.animate model.animState <|
-                perspectiveAnimation model.currentAnimAreaSize model.perspectiveStep
-        , perspectiveStep =
-            nextPerspectiveStep model.perspectiveStep
+                perspectiveAnimation model.currentAnimAreaSize nextStep
+        , perspectiveStep = nextStep
     }
 
 
@@ -686,7 +770,7 @@ viewVanishingPoint animState =
             , style "width" "10px"
             , style "height" "10px"
             , style "border-radius" "50%"
-            , style "background" "rgba(40, 40, 40, 0.8)"
+            , style "background" "rgba(40, 40, 40, 0.3)"
             , style "border" "2px solid rgba(255, 255, 255, 0.9)"
             , style "box-shadow" "0 0 6px rgba(0, 0, 0, 0.4)"
             , style "transform" "translate(-50%, -50%)"
@@ -727,9 +811,6 @@ viewFace cubeSize animState config =
     let
         faceAnimAttributes =
             Sub.attributes config.groupName animState
-
-        textAnimAttributes =
-            Sub.attributes config.text.groupName animState
     in
     div
         (faceAnimAttributes
@@ -754,11 +835,9 @@ viewFace cubeSize animState config =
             ]
             [ text config.label ]
         , div
-            (textAnimAttributes
-                ++ [ id config.text.id
-                   , style "color" config.text.color
-                   , style "position" "absolute"
-                   ]
-            )
+            [ id config.text.id
+            , style "color" config.text.color
+            , style "position" "absolute"
+            ]
             [ text config.text.label ]
         ]
