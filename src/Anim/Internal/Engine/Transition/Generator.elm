@@ -183,46 +183,57 @@ transformTransitionFromProcessed properties =
                     )
                 |> List.head
     in
-    case ( rotateConfig, skewConfig ) of
-        ( Just config, _ ) ->
-            Just ("transform " ++ String.fromInt config.duration ++ "ms " ++ timingFunction config.spring config.easing ++ " " ++ String.fromInt config.delay ++ "ms")
+    case rotateConfig of
+        Just config ->
+            Just (transitionRule "transform" config)
 
-        ( Nothing, Just config ) ->
-            Just ("transform " ++ String.fromInt config.duration ++ "ms " ++ timingFunction config.spring config.easing ++ " " ++ String.fromInt config.delay ++ "ms")
-
-        ( Nothing, Nothing ) ->
-            Nothing
+        Nothing ->
+            Maybe.map (transitionRule "transform") skewConfig
 
 
 nonTransformTransitionFromProcessed : Builder.ProcessedPropertyConfig -> Maybe String
 nonTransformTransitionFromProcessed property =
     case property of
         Builder.ProcessedCustomPropertyConfig cssName _ config ->
-            Just (cssName ++ " " ++ String.fromInt config.duration ++ "ms " ++ timingFunction config.spring config.easing ++ " " ++ String.fromInt config.delay ++ "ms")
+            Just (transitionRule cssName config)
 
         Builder.ProcessedCustomColorPropertyConfig cssName config ->
-            Just (cssName ++ " " ++ String.fromInt config.duration ++ "ms " ++ timingFunction config.spring config.easing ++ " " ++ String.fromInt config.delay ++ "ms")
+            Just (transitionRule cssName config)
 
         Builder.ProcessedOpacityConfig config ->
-            Just ("opacity " ++ String.fromInt config.duration ++ "ms " ++ timingFunction config.spring config.easing ++ " " ++ String.fromInt config.delay ++ "ms")
+            Just (transitionRule "opacity" config)
 
         Builder.ProcessedPerspectiveOriginConfig config ->
-            Just ("perspective-origin " ++ String.fromInt config.duration ++ "ms " ++ timingFunction config.spring config.easing ++ " " ++ String.fromInt config.delay ++ "ms")
+            Just (transitionRule "perspective-origin" config)
 
         Builder.ProcessedRotateConfig _ ->
             Nothing
 
         Builder.ProcessedScaleConfig config ->
-            Just ("scale " ++ String.fromInt config.duration ++ "ms " ++ timingFunction config.spring config.easing ++ " " ++ String.fromInt config.delay ++ "ms")
+            Just (transitionRule "scale" config)
 
         Builder.ProcessedSizeConfig config ->
-            Just ("width " ++ String.fromInt config.duration ++ "ms " ++ timingFunction config.spring config.easing ++ " " ++ String.fromInt config.delay ++ "ms, height " ++ String.fromInt config.duration ++ "ms " ++ timingFunction config.spring config.easing ++ " " ++ String.fromInt config.delay ++ "ms")
+            Just (transitionRule "width" config ++ ", " ++ transitionRule "height" config)
 
         Builder.ProcessedSkewConfig _ ->
             Nothing
 
         Builder.ProcessedTranslateConfig config ->
-            Just ("translate " ++ String.fromInt config.duration ++ "ms " ++ timingFunction config.spring config.easing ++ " " ++ String.fromInt config.delay ++ "ms")
+            Just (transitionRule "translate" config)
+
+
+{-| Build a single CSS `transition` rule for a given property name.
+-}
+transitionRule : String -> Builder.ProcessedAnimationConfig a -> String
+transitionRule cssName cfg =
+    cssName
+        ++ " "
+        ++ String.fromInt cfg.duration
+        ++ "ms "
+        ++ timingFunction cfg.spring cfg.easing
+        ++ " "
+        ++ String.fromInt cfg.delay
+        ++ "ms"
 
 
 {-| Resolve the CSS `transition-timing-function` for a property.

@@ -306,49 +306,36 @@ onResize (AnimState state animGroups) buildResize =
 applyGroupResize : ResizeBuilder.Builder -> ResizeBuilder.Builder -> AnimGroupName -> AnimState -> AnimState
 applyGroupResize previousBuilder builder animGroupName animState =
     let
+        prevBoundsFor : (AnimGroupName -> ResizeBuilder.Builder -> Maybe ResizeBuilder.Entry) -> Bounds
         prevBoundsFor lookup =
             lookup animGroupName previousBuilder
                 |> Maybe.map .bounds
                 |> Maybe.withDefault emptyBounds
 
-        afterTranslate =
-            case ResizeBuilder.getTranslate animGroupName builder of
+        withBounds : (AnimGroupName -> ResizeBuilder.Builder -> Maybe ResizeBuilder.Entry) -> (AnimGroupName -> Bounds -> Bounds -> AnimState -> AnimState) -> AnimState -> AnimState
+        withBounds lookup apply state =
+            case lookup animGroupName builder of
                 Nothing ->
-                    animState
+                    state
 
                 Just { bounds } ->
-                    applyTranslateResize animGroupName (prevBoundsFor ResizeBuilder.getTranslate) bounds animState
+                    apply animGroupName (prevBoundsFor lookup) bounds state
 
-        afterTranslatePosition =
-            case ResizeBuilder.getTranslatePosition animGroupName builder of
+        withPosition : (AnimGroupName -> ResizeBuilder.Builder -> Maybe ResizeBuilder.Position) -> (AnimGroupName -> ResizeBuilder.Position -> AnimState -> AnimState) -> AnimState -> AnimState
+        withPosition lookup apply state =
+            case lookup animGroupName builder of
                 Nothing ->
-                    afterTranslate
+                    state
 
                 Just pos ->
-                    applyTranslatePositionResize animGroupName pos afterTranslate
-
-        afterScale =
-            case ResizeBuilder.getScale animGroupName builder of
-                Nothing ->
-                    afterTranslatePosition
-
-                Just { bounds } ->
-                    applyScaleResize animGroupName (prevBoundsFor ResizeBuilder.getScale) bounds afterTranslatePosition
-
-        afterPerspectiveOrigin =
-            case ResizeBuilder.getPerspectiveOrigin animGroupName builder of
-                Nothing ->
-                    afterScale
-
-                Just { bounds } ->
-                    applyPerspectiveOriginResize animGroupName (prevBoundsFor ResizeBuilder.getPerspectiveOrigin) bounds afterScale
+                    apply animGroupName pos state
     in
-    case ResizeBuilder.getPerspectiveOriginPosition animGroupName builder of
-        Nothing ->
-            afterPerspectiveOrigin
-
-        Just pos ->
-            applyPerspectiveOriginPositionResize animGroupName pos afterPerspectiveOrigin
+    animState
+        |> withBounds ResizeBuilder.getTranslate applyTranslateResize
+        |> withPosition ResizeBuilder.getTranslatePosition applyTranslatePositionResize
+        |> withBounds ResizeBuilder.getScale applyScaleResize
+        |> withBounds ResizeBuilder.getPerspectiveOrigin applyPerspectiveOriginResize
+        |> withPosition ResizeBuilder.getPerspectiveOriginPosition applyPerspectiveOriginPositionResize
 
 
 emptyBounds : Bounds
@@ -418,13 +405,6 @@ resizeTranslate previousBounds bounds isLooping isPaused cfg =
         oldEnd =
             Translate.toRecord cfg.end
 
-        -- A one-shot animation that isn't actively progressing (completed or
-        -- paused) should preserve the full leg (`start` → `end`) rather than
-        -- collapsing `start` to `current`. Collapsing degenerates the
-        -- Proportional formula on the *next* resize.
-        treatAsSettled =
-            (cfg.isComplete || isPaused) && not isLooping
-
         rx =
             applyAxisLeg previousBounds.x bounds.x oldStart.x oldEnd.x
 
@@ -446,25 +426,18 @@ resizeTranslate previousBounds bounds isLooping isPaused cfg =
         newLegDistance =
             Translate.distance newStart newEnd
     in
-    if treatAsSettled then
-        if cfg.isComplete then
-            { cfg
-                | start = newStart
-                , end = newEnd
-                , elapsedMs = cfg.totalDurationMs
-                , isComplete = True
-            }
+    if cfg.isComplete && not isLooping then
+        -- Completed one-shot: stay complete, pinned to the rescaled endpoint.
+        { cfg
+            | start = newStart
+            , end = newEnd
+            , elapsedMs = cfg.totalDurationMs
+            , isComplete = True
+        }
 
-        else
-            preserveProgress
-                { cfg = cfg
-                , newStart = newStart
-                , newEnd = newEnd
-                , oldDistance = oldDistance
-                , newLegDistance = newLegDistance
-                }
-
-    else if newLegDistance == 0 then
+    else if newLegDistance == 0 && not (isPaused && not isLooping) then
+        -- Resize collapsed the leg to zero length. Auto-complete - except
+        -- when the user has paused a one-shot, where we keep the pause intact.
         { cfg
             | start = newStart
             , end = newEnd
@@ -473,9 +446,6 @@ resizeTranslate previousBounds bounds isLooping isPaused cfg =
         }
 
     else
-        -- All other active paths (looping, paused, one-shot mid-flight)
-        -- preserve the temporal ratio. See
-        -- [`preserveProgress`](#preserveProgress).
         preserveProgress
             { cfg = cfg
             , newStart = newStart
@@ -672,9 +642,6 @@ resizeScale previousBounds bounds isLooping isPaused cfg =
         oldEnd =
             Scale.toRecord cfg.end
 
-        treatAsSettled =
-            (cfg.isComplete || isPaused) && not isLooping
-
         rx =
             applyAxisLeg previousBounds.x bounds.x oldStart.x oldEnd.x
 
@@ -696,25 +663,15 @@ resizeScale previousBounds bounds isLooping isPaused cfg =
         newLegDistance =
             Scale.distance newStart newEnd
     in
-    if treatAsSettled then
-        if cfg.isComplete then
-            { cfg
-                | start = newStart
-                , end = newEnd
-                , elapsedMs = cfg.totalDurationMs
-                , isComplete = True
-            }
+    if cfg.isComplete && not isLooping then
+        { cfg
+            | start = newStart
+            , end = newEnd
+            , elapsedMs = cfg.totalDurationMs
+            , isComplete = True
+        }
 
-        else
-            preserveScaleProgress
-                { cfg = cfg
-                , newStart = newStart
-                , newEnd = newEnd
-                , oldDistance = oldDistance
-                , newLegDistance = newLegDistance
-                }
-
-    else if newLegDistance == 0 then
+    else if newLegDistance == 0 && not (isPaused && not isLooping) then
         { cfg
             | start = newStart
             , end = newEnd
@@ -892,9 +849,6 @@ resizePerspectiveOrigin previousBounds bounds isLooping isPaused cfg =
         oldEnd =
             PerspectiveOrigin.toRecord cfg.end
 
-        treatAsSettled =
-            (cfg.isComplete || isPaused) && not isLooping
-
         rx =
             applyAxisLeg previousBounds.x bounds.x oldStart.x oldEnd.x
 
@@ -916,25 +870,15 @@ resizePerspectiveOrigin previousBounds bounds isLooping isPaused cfg =
         newLegDistance =
             PerspectiveOrigin.distance newStart newEnd
     in
-    if treatAsSettled then
-        if cfg.isComplete then
-            { cfg
-                | start = newStart
-                , end = newEnd
-                , elapsedMs = cfg.totalDurationMs
-                , isComplete = True
-            }
+    if cfg.isComplete && not isLooping then
+        { cfg
+            | start = newStart
+            , end = newEnd
+            , elapsedMs = cfg.totalDurationMs
+            , isComplete = True
+        }
 
-        else
-            preservePerspectiveOriginProgress
-                { cfg = cfg
-                , newStart = newStart
-                , newEnd = newEnd
-                , oldDistance = oldDistance
-                , newLegDistance = newLegDistance
-                }
-
-    else if newLegDistance == 0 then
+    else if newLegDistance == 0 && not (isPaused && not isLooping) then
         { cfg
             | start = newStart
             , end = newEnd

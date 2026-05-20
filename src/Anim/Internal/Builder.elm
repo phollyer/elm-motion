@@ -78,6 +78,7 @@ module Anim.Internal.Builder exposing
     , process
     , processProperties
     , processedPropertyType
+    , processedTimings
     , setAnimTarget
     , setClamp
     , setScrollAxis
@@ -1306,6 +1307,41 @@ processedPropertyType prop =
 
         ProcessedTranslateConfig _ ->
             "translate"
+
+
+{-| Extract `duration` and `delay` (in milliseconds) from a
+[`ProcessedPropertyConfig`](#ProcessedPropertyConfig), regardless of which
+property variant it wraps.
+-}
+processedTimings : ProcessedPropertyConfig -> { duration : Int, delay : Int }
+processedTimings prop =
+    case prop of
+        ProcessedCustomPropertyConfig _ _ cfg ->
+            { duration = cfg.duration, delay = cfg.delay }
+
+        ProcessedCustomColorPropertyConfig _ cfg ->
+            { duration = cfg.duration, delay = cfg.delay }
+
+        ProcessedOpacityConfig cfg ->
+            { duration = cfg.duration, delay = cfg.delay }
+
+        ProcessedPerspectiveOriginConfig cfg ->
+            { duration = cfg.duration, delay = cfg.delay }
+
+        ProcessedRotateConfig cfg ->
+            { duration = cfg.duration, delay = cfg.delay }
+
+        ProcessedScaleConfig cfg ->
+            { duration = cfg.duration, delay = cfg.delay }
+
+        ProcessedSizeConfig cfg ->
+            { duration = cfg.duration, delay = cfg.delay }
+
+        ProcessedSkewConfig cfg ->
+            { duration = cfg.duration, delay = cfg.delay }
+
+        ProcessedTranslateConfig cfg ->
+            { duration = cfg.duration, delay = cfg.delay }
 
 
 

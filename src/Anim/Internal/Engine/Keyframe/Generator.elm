@@ -533,35 +533,6 @@ generateName maybeSuffix maybeOrder discrete animGroupName properties =
 getMaxTimings : List Builder.ProcessedPropertyConfig -> ( Int, Int )
 getMaxTimings processedProps =
     processedProps
-        |> List.map
-            (\p ->
-                case p of
-                    Builder.ProcessedCustomPropertyConfig _ _ cfg ->
-                        ( cfg.duration, cfg.delay )
-
-                    Builder.ProcessedCustomColorPropertyConfig _ cfg ->
-                        ( cfg.duration, cfg.delay )
-
-                    Builder.ProcessedOpacityConfig cfg ->
-                        ( cfg.duration, cfg.delay )
-
-                    Builder.ProcessedPerspectiveOriginConfig cfg ->
-                        ( cfg.duration, cfg.delay )
-
-                    Builder.ProcessedRotateConfig cfg ->
-                        ( cfg.duration, cfg.delay )
-
-                    Builder.ProcessedScaleConfig cfg ->
-                        ( cfg.duration, cfg.delay )
-
-                    Builder.ProcessedSizeConfig cfg ->
-                        ( cfg.duration, cfg.delay )
-
-                    Builder.ProcessedSkewConfig cfg ->
-                        ( cfg.duration, cfg.delay )
-
-                    Builder.ProcessedTranslateConfig cfg ->
-                        ( cfg.duration, cfg.delay )
-            )
+        |> List.map (Builder.processedTimings >> (\t -> ( t.duration, t.delay )))
         |> List.maximum
         |> Maybe.withDefault ( 0, 0 )

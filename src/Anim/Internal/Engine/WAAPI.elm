@@ -2776,8 +2776,20 @@ getPropertyEnd animGroupName cssName =
 
 getPropertyCurrent : AnimGroupName -> String -> AnimState msg -> Maybe Float
 getPropertyCurrent animGroupName cssName (AnimState _ animGroups) =
+    getSnapshotProperty (PropertyBaselines.getCustomProperty cssName) animGroupName animGroups
+
+
+{-| Pull a property value out of a group's current snapshot, if the group
+exists and the snapshot has a value for the requested property.
+-}
+getSnapshotProperty :
+    (PropertyBaselines.PropertyBaselines -> Maybe a)
+    -> AnimGroupName
+    -> AnimGroups.AnimGroups AnimGroup.AnimGroup
+    -> Maybe a
+getSnapshotProperty getter animGroupName animGroups =
     AnimGroups.get animGroupName animGroups
-        |> Maybe.andThen (AnimGroup.getPropertySnapshot >> PropertyBaselines.getCustomProperty cssName)
+        |> Maybe.andThen (AnimGroup.getPropertySnapshot >> getter)
 
 
 getPropertyRange : AnimGroupName -> String -> AnimState msg -> Maybe { start : Maybe Float, end : Float }
@@ -2803,8 +2815,7 @@ getColorPropertyEnd animGroupName cssName =
 
 getColorPropertyCurrent : AnimGroupName -> String -> AnimState msg -> Maybe Color
 getColorPropertyCurrent animGroupName cssName (AnimState _ animGroups) =
-    AnimGroups.get animGroupName animGroups
-        |> Maybe.andThen (AnimGroup.getPropertySnapshot >> PropertyBaselines.getCustomColorProperty cssName)
+    getSnapshotProperty (PropertyBaselines.getCustomColorProperty cssName) animGroupName animGroups
 
 
 getColorPropertyRange : AnimGroupName -> String -> AnimState msg -> Maybe { start : Maybe Color, end : Color }
@@ -2830,8 +2841,7 @@ getOpacityEnd animGroupName =
 
 getOpacityCurrent : AnimGroupName -> AnimState msg -> Maybe Float
 getOpacityCurrent animGroupName (AnimState _ animGroups) =
-    AnimGroups.get animGroupName animGroups
-        |> Maybe.andThen (AnimGroup.getPropertySnapshot >> PropertyBaselines.getOpacity)
+    getSnapshotProperty PropertyBaselines.getOpacity animGroupName animGroups
         |> Maybe.map Opacity.toFloat
 
 
@@ -2858,8 +2868,7 @@ getRotateEnd animGroupName =
 
 getRotateCurrent : AnimGroupName -> AnimState msg -> Maybe { x : Float, y : Float, z : Float }
 getRotateCurrent animGroupName (AnimState _ animGroups) =
-    AnimGroups.get animGroupName animGroups
-        |> Maybe.andThen (AnimGroup.getPropertySnapshot >> PropertyBaselines.getRotate)
+    getSnapshotProperty PropertyBaselines.getRotate animGroupName animGroups
         |> Maybe.map Rotate.toRecord
 
 
@@ -2896,8 +2905,7 @@ getScaleEnd animGroupName state =
 
 getScaleCurrent : AnimGroupName -> AnimState msg -> Maybe { x : Float, y : Float, z : Float }
 getScaleCurrent animGroupName (AnimState _ animGroups) =
-    AnimGroups.get animGroupName animGroups
-        |> Maybe.andThen (AnimGroup.getPropertySnapshot >> PropertyBaselines.getScale)
+    getSnapshotProperty PropertyBaselines.getScale animGroupName animGroups
         |> Maybe.map Scale.toRecord
 
 
@@ -2942,8 +2950,7 @@ getSizeEnd animGroupName =
 
 getSizeCurrent : AnimGroupName -> AnimState msg -> Maybe { width : Float, height : Float }
 getSizeCurrent animGroupName (AnimState _ animGroups) =
-    AnimGroups.get animGroupName animGroups
-        |> Maybe.andThen (AnimGroup.getPropertySnapshot >> PropertyBaselines.getSize)
+    getSnapshotProperty PropertyBaselines.getSize animGroupName animGroups
         |> Maybe.map Size.toRecord
 
 
@@ -2980,8 +2987,7 @@ getPerspectiveOriginEnd animGroupName state =
 
 getPerspectiveOriginCurrent : AnimGroupName -> AnimState msg -> Maybe { x : Float, y : Float }
 getPerspectiveOriginCurrent animGroupName (AnimState _ animGroups) =
-    AnimGroups.get animGroupName animGroups
-        |> Maybe.andThen (AnimGroup.getPropertySnapshot >> PropertyBaselines.getPerspectiveOrigin)
+    getSnapshotProperty PropertyBaselines.getPerspectiveOrigin animGroupName animGroups
         |> Maybe.map PerspectiveOrigin.toRecord
 
 
@@ -3031,8 +3037,7 @@ getSkewEnd animGroupName =
 
 getSkewCurrent : AnimGroupName -> AnimState msg -> Maybe { x : Float, y : Float }
 getSkewCurrent animGroupName (AnimState _ animGroups) =
-    AnimGroups.get animGroupName animGroups
-        |> Maybe.andThen (AnimGroup.getPropertySnapshot >> PropertyBaselines.getSkew)
+    getSnapshotProperty PropertyBaselines.getSkew animGroupName animGroups
         |> Maybe.map Skew.toRecord
 
 
@@ -3069,8 +3074,7 @@ getTranslateEnd animGroupName state =
 
 getTranslateCurrent : AnimGroupName -> AnimState msg -> Maybe { x : Float, y : Float, z : Float }
 getTranslateCurrent animGroupName (AnimState _ animGroups) =
-    AnimGroups.get animGroupName animGroups
-        |> Maybe.andThen (AnimGroup.getPropertySnapshot >> PropertyBaselines.getTranslate)
+    getSnapshotProperty PropertyBaselines.getTranslate animGroupName animGroups
         |> Maybe.map Translate.toRecord
 
 
