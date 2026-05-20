@@ -274,14 +274,8 @@ setSnapshot anims =
 
 
 {-| Like [animate](#animate), but inherits in-flight timing for any property
-the engine currently reports as `Running` (per-property). Use when you want a
-new build to "continue" a property mid-flight instead of starting fresh — for
-example when a window resize fires repeatedly and you only want smooth
-retargeting while the box is in motion.
-
-`continueFor` reads the running set populated here; idle properties fall back
-to `for`-style snap behaviour.
-
+the engine currently reports as `Running`; idle properties fall back to
+`for`-style snap behaviour.
 -}
 retarget : AnimState msg -> (EngineBuilder -> EngineBuilder) -> ( AnimState msg, Cmd msg )
 retarget ((AnimState _ animGroups) as animState) build =
@@ -322,19 +316,9 @@ extractRunningProperties =
 -- ============================================================
 
 
-{-| Adjust the in-flight properties of every anim group named in the
-builder to new bounding ranges, using the directives composed in a
+{-| Adjust the in-flight properties of every anim group named in the builder
+to new bounding ranges, using the directives composed in a
 [`Anim.Resize.Builder`](Anim-Resize#Builder).
-
-Compatible with the Sub engine's `onResize`. For each property with a
-directive, sends an appropriate `resize` command on the WAAPI port; the
-JS side updates the running Web Animation in place (replacing keyframes,
-updating timing, and setting `currentTime`) so the element continues
-moving smoothly without restarting.
-
-Groups with no in-flight directive-targeted property emit no command.
-Multiple groups in a single call have their commands batched.
-
 -}
 onResize : AnimState msg -> (ResizeBuilder.Builder -> ResizeBuilder.Builder) -> ( AnimState msg, Cmd msg )
 onResize (AnimState state animGroups) buildResize =

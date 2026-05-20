@@ -158,9 +158,7 @@ encodeProcessedData data =
         ]
 
 
-{-| Encode a command with an optional property filter.
-When properties is Nothing, the command affects all properties.
-When properties is Just [...], only those property types are affected.
+{-| Encode a command with an optional property filter (`Nothing` = all properties).
 -}
 encodeCommandWithProperties : String -> String -> Maybe (List String) -> Encode.Value
 encodeCommandWithProperties commandType animGroupName maybeProperties =
@@ -181,9 +179,7 @@ encodeCommandWithProperties commandType animGroupName maybeProperties =
     Encode.object (baseFields ++ propertyField)
 
 
-{-| Encode iterations config for JavaScript.
-Returns a JSON object with type and count fields.
-JavaScript will use this to set the animation iterations.
+{-| Encode iterations config as a JSON object with `type` and `count` fields.
 -}
 encodeIterations : Builder.Iterations -> Encode.Value
 encodeIterations iterations_ =
@@ -207,8 +203,7 @@ encodeIterations iterations_ =
                 ]
 
 
-{-| Encode animation direction for JavaScript.
-Returns a string that matches Web Animations API direction values.
+{-| Encode animation direction as a Web Animations API direction string.
 -}
 encodeAnimationDirection : AnimationDirection -> Encode.Value
 encodeAnimationDirection direction =
@@ -220,23 +215,8 @@ encodeAnimationDirection direction =
             Encode.string "alternate"
 
 
-{-| Encode a `resize` command for the JS side. The JS handler mutates the
-running translate animation in place via `effect.setKeyframes` and
-`effect.updateTiming`, preserving WAAPI's own `currentIteration`,
-direction, and play state.
-
-Elm decides where to seek and ships an explicit `currentTimeMs`. The
-seek formula is unified: `(currentIteration + progress) * newDur`,
-which combined with `applyAxis`'s canonical leg geometry and the
-px/ms-preserving `scaleDurationForResize` places the dot at exactly
-`easing(progress)` of the new leg - the same proportional visual
-position it occupied before the resize.
-
-JS is a thin executor: it applies `currentTimeMs` as-is via
-`anim.currentTime = t` without any heuristic correction. Drag-resize
-(many resizes in quick succession) and orientation flip (one resize)
-drive identical math, so the two scenarios behave identically.
-
+{-| Encode a `resize` command, including the seek position (`currentTimeMs`)
+computed on the Elm side.
 -}
 encodeResize :
     { animGroupName : AnimGroupName
@@ -289,16 +269,8 @@ encodeResize r =
     Encode.object (baseFields ++ unitField)
 
 
-{-| Encode a `translatePosition` directive.
-
-This is a static-axis snap request emitted by
-[`Anim.Property.Translate.position`](Anim-Property-Translate#position) via
-the WAAPI engine's `onResize`. Each axis is either `Just newPos` (snap
-this axis to `newPos`) or `Nothing` (leave this axis alone). JS-side
-static-axis validation lives in `js/src/animations.js` -
-`_translatePositionImmediate` only snaps an axis whose running
-animation has equal start/end values.
-
+{-| Encode a `translatePosition` directive: per-axis static-axis snap requests
+(`Just newPos` to snap, `Nothing` to leave alone).
 -}
 encodeTranslatePosition :
     { animGroupName : AnimGroupName
@@ -318,13 +290,8 @@ encodeTranslatePosition r =
         ]
 
 
-{-| Encode a `perspectiveOriginPosition` port command. Mirrors
-[`encodeTranslatePosition`](#encodeTranslatePosition) — each axis is
-either `Just newPos` (snap that axis to `newPos`) or `Nothing` (leave
-this axis alone). JS-side static-axis validation lives in
-`js/src/animations.js` - `_perspectiveOriginPositionAnimationImmediate`
-only snaps an axis whose running perspective-origin animation has equal
-start/end values.
+{-| Encode a `perspectiveOriginPosition` port command: per-axis static-axis
+snap requests (`Just newPos` to snap, `Nothing` to leave alone).
 -}
 encodePerspectiveOriginPosition :
     { animGroupName : AnimGroupName

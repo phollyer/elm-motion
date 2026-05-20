@@ -103,28 +103,8 @@ for animGroupName propertyTypeTag extractBaseline extractExisting =
 
 
 {-| Like [for](#for), but inherits `easing`, `spring`, `delay`, and `timing`
-from the previous animation's config when re-targeting an already-configured
-property.
-
-The previous values are looked up in two places, in order:
-
-1.  The in-progress builder's current animation group config (when multiple
-    `for*` calls are chained inside one `animate` batch).
-2.  The most recent processed animation in the group's history (the typical
-    case across `animate` calls).
-
-Inheritance from history (case 2) only applies when the engine reports the
-property as currently running, via `Builder.injectRunningProperties`. This is
-how engine-level `retarget` opts in to mid-flight continuation - plain
-`animate` does not inject the running set, so `forContinuing` degrades to
-[for](#for) semantics outside `retarget`.
-
-Any of the four inherited fields can still be overridden by setting them
-explicitly after the `forContinuing` call.
-
-If no previous animation exists for the group, `forContinuing` behaves
-identically to [for](#for).
-
+from the previous animation's config; falls back to [for](#for) if there is
+no previous config.
 -}
 forContinuing :
     AnimGroupName

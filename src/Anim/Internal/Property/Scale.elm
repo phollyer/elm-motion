@@ -153,32 +153,12 @@ interpolate =
     Axis.interpolate support
 
 
-
-{- Calculate distance between two Scale values using max-axis distance.
-
-   Uses the maximum absolute difference across all scale axes (x, y, z).
-   This provides more intuitive animation timing where the longest-changing axis
-   determines the duration.
-
-     - distance = max(|sx2-sx1|, |sy2-sy1|, |sz2-sz1|)
-
-   Example:
-   distance (fromTriple (1.0, 1.0, 1.0)) (fromTriple (2.0, 1.5, 1.2))
-   -- Returns: max(1.0, 0.5, 0.2) = 1.0
-
--}
-
-
 distance : Scale -> Scale -> Float
 distance =
     Axis.distance support
 
 
 {-| Calculate animation speed from distance, duration, and time specification.
-
-For Duration-based timing: speed = distance / (duration in seconds)
-For Speed-based timing: returns the specified speed directly
-
 -}
 speed : Float -> Float -> TimeSpec -> Float
 speed =
@@ -186,10 +166,6 @@ speed =
 
 
 {-| Calculate animation duration from distance and time specification.
-
-For Duration-based timing: returns the specified duration in milliseconds
-For Speed-based timing: duration = (distance / speed) \* 1000
-
 -}
 duration : Float -> TimeSpec -> Float
 duration =

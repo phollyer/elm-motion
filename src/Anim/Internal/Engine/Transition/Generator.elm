@@ -236,17 +236,8 @@ transitionRule cssName cfg =
         ++ "ms"
 
 
-{-| Resolve the CSS `transition-timing-function` for a property.
-
-CSS `transition` only supports a single timing function per property,
-so spring physics cannot be expressed faithfully on this engine. When
-a `Spring` is set, we fall back to a single overshoot cubic-bezier
-(`cubic-bezier(0.34, 1.56, 0.64, 1)`) that conveys a spring-like
-"snap" feel, with the duration already overridden to the spring's
-settle time by `processStandardAnimation`. The full bouncing
-character of an under-damped spring is only available on engines
-that emit per-step keyframes (Keyframe, WAAPI, Sub).
-
+{-| Resolve the CSS `transition-timing-function` for a property. Falls back to
+an overshoot cubic-bezier when a `Spring` is set.
 -}
 timingFunction : Maybe Spring -> Easing -> String
 timingFunction maybeSpring easing =

@@ -260,9 +260,8 @@ setSnapshot anims =
 
 
 {-| Like [animate](#animate), but inherits in-flight timing for any property
-that is currently mid-animation (per-property). `continueFor` reads the
-running set populated here; idle properties fall back to `for`-style snap
-behaviour.
+that is currently mid-animation; idle properties fall back to `for`-style
+snap behaviour.
 -}
 retarget : AnimState -> (EngineBuilder -> EngineBuilder) -> AnimState
 retarget ((AnimState _ animGroups) as animState) build =
@@ -471,11 +470,6 @@ applyAxisLeg maybePrevBounds maybeNewBounds startV endV =
 
 {-| Rescale an in-flight `PropertyAnimation` so that the elapsed
 fraction of the new leg matches the elapsed fraction of the old leg.
-
-Works for any value type `a` because the body only touches the
-type-generic timing fields (`totalDurationMs`, `elapsedMs`) and
-assigns `newStart` / `newEnd` to `start` / `end`.
-
 -}
 preserveProgress :
     { cfg : PropertyAnimation a
@@ -513,9 +507,7 @@ preserveProgress { cfg, newStart, newEnd, oldDistance, newLegDistance } =
     }
 
 
-{-| Apply a one-shot translate-position snap to every translate animation
-in a group. Only static axes (`start == end`) are affected; animating
-axes are left alone (see `ResizeBuilder.applyAxisPosition`).
+{-| Dispatch a translate-position snap to the group's translate animation, if it has one.
 -}
 applyTranslatePositionResize : AnimGroupName -> ResizeBuilder.Position -> AnimState -> AnimState
 applyTranslatePositionResize animGroupName pos (AnimState state animGroups) =
@@ -546,8 +538,7 @@ applyTranslatePositionResize animGroupName pos (AnimState state animGroups) =
             AnimState state updatedAnimGroups
 
 
-{-| Per-translate-animation position snap. Static axes are snapped to the
-new position; animating axes are unchanged.
+{-| Apply a position snap to each translate axis via `ResizeBuilder.applyAxisPosition`.
 -}
 positionTranslate : ResizeBuilder.Position -> PropertyAnimation Translate -> PropertyAnimation Translate
 positionTranslate pos cfg =
@@ -624,9 +615,7 @@ applyScaleResize animGroupName previousBounds bounds (AnimState state animGroups
                     updatedAnimGroups
 
 
-{-| Resize the in-memory scale animation to match new bounds. Mirrors
-[`resizeTranslate`](#resizeTranslate) - the math is property-agnostic;
-only the value type and its toRecord/fromRecord/distance helpers differ.
+{-| Resize the in-memory scale animation to match new bounds.
 -}
 resizeScale : Bounds -> Bounds -> Bool -> Bool -> PropertyAnimation Scale -> PropertyAnimation Scale
 resizeScale previousBounds bounds isLooping isPaused cfg =
@@ -684,10 +673,7 @@ resizeScale previousBounds bounds isLooping isPaused cfg =
             }
 
 
-{-| Apply a one-shot perspective-origin position snap to every
-perspective-origin animation in a group. Only static axes
-(`start == end`) are affected; animating axes are left alone
-(see `ResizeBuilder.applyAxisPosition`).
+{-| Dispatch a perspective-origin position snap to the group's perspective-origin animation, if it has one.
 -}
 applyPerspectiveOriginPositionResize : AnimGroupName -> ResizeBuilder.Position -> AnimState -> AnimState
 applyPerspectiveOriginPositionResize animGroupName pos (AnimState state animGroups) =
@@ -718,8 +704,7 @@ applyPerspectiveOriginPositionResize animGroupName pos (AnimState state animGrou
             AnimState state updatedAnimGroups
 
 
-{-| Per-perspective-origin-animation position snap. Static axes are snapped
-to the new position; animating axes are unchanged.
+{-| Apply a position snap to each perspective-origin axis via `ResizeBuilder.applyAxisPosition`.
 -}
 positionPerspectiveOrigin : ResizeBuilder.Position -> PropertyAnimation PerspectiveOrigin -> PropertyAnimation PerspectiveOrigin
 positionPerspectiveOrigin pos cfg =

@@ -274,13 +274,6 @@ type alias ProcessedAnimationData =
 
 
 {-| Persistent state preserved across animate calls.
-
-`runningProperties` is the exception: it is populated only by the
-engine-level `retarget` function and cleared by `clearAnimData` after
-the pipeline runs. It tells per-property `continueFor` resolvers which
-property animations were still running on each animGroup at the moment
-`retarget` was invoked.
-
 -}
 type alias PersistentState =
     { animationHistories : AnimGroups AnimationHistory
@@ -579,12 +572,7 @@ getCurrentAnimationConfig animGroupName (AnimBuilder data) =
         |> Maybe.map .current
 
 
-{-| Get the full animation history for a group, ordered most-recent-first
-(`current` followed by previous entries). Used by engines that need to find
-the most recent config containing a particular property even when the latest
-animation didn't include that property (for example, a static `Scale.init`
-seeded at startup must remain discoverable to `Scale.bounds` after a
-later Scale-less animation runs).
+{-| Full animation history for a group, ordered most-recent-first.
 -}
 getAnimationConfigs : AnimGroupName -> AnimBuilder mode -> List ProcessedAnimGroupConfig
 getAnimationConfigs animGroupName (AnimBuilder data) =
@@ -605,12 +593,6 @@ getAnimationConfigs animGroupName (AnimBuilder data) =
 
 
 {-| Set the animation to repeat a specific number of times.
-
-**Note:** This only works with CSS keyframe animations, not CSS transitions.
-
-    CSS.animate model.animState <|
-        (iterations 3 >> bounce)  -- Bounces 3 times
-
 -}
 iterations : Int -> AnimBuilder mode -> AnimBuilder mode
 iterations count (AnimBuilder data) =
@@ -622,12 +604,6 @@ iterations count (AnimBuilder data) =
 
 
 {-| Set the animation to loop forever.
-
-**Note:** This only works with CSS keyframe animations, not CSS transitions.
-
-    CSS.animate model.animState <|
-        (loopForever >> pulse)  -- Pulses continuously
-
 -}
 loopForever : AnimBuilder mode -> AnimBuilder mode
 loopForever (AnimBuilder data) =
@@ -638,13 +614,7 @@ loopForever (AnimBuilder data) =
     AnimBuilder { data | playback = { pb | iterations = Infinite } }
 
 
-{-| Set the animation to alternate direction each iteration (ping-pong effect).
-
-Combine with `loopForever` or `iterations` for continuous back-and-forth motion:
-
-    CSS.animate model.animState <|
-        (loopForever >> alternate >> rotate "element")  -- Rotates back and forth forever
-
+{-| Set the animation to alternate direction each iteration.
 -}
 alternate : AnimBuilder mode -> AnimBuilder mode
 alternate (AnimBuilder data) =
@@ -756,7 +726,6 @@ type FreezeProperty
 
 
 {-| Freeze specific axes of the given properties at their current baseline values.
-The axis names (e.g., ["x", "y"]) are added to the frozen set for each property.
 -}
 freezeAxes : List String -> List FreezeProperty -> AnimBuilder mode -> AnimBuilder mode
 freezeAxes axes properties (AnimBuilder data) =
@@ -857,8 +826,7 @@ getAnimGroups (AnimBuilder data) =
     data.animation.animGroups
 
 
-{-| The name of the animGroup the next pipeline step will configure, set
-by `for` / `forContinuing`. `Nothing` before any `for` call.
+{-| Name of the animGroup the next pipeline step will configure, or `Nothing` if not set.
 -}
 getCurrentAnimGroupName : AnimBuilder mode -> Maybe AnimGroupName
 getCurrentAnimGroupName (AnimBuilder data) =
