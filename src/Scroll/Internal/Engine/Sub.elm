@@ -421,8 +421,6 @@ update fromInternalEvent toMsg msg (ScrollState scrollData) =
             ( ScrollState scrollData, [], Cmd.none )
 
 
-{-| Update a single scroll animation.
--}
 updateScrollAnimation : Float -> ScrollAnimation -> ScrollAnimation
 updateScrollAnimation deltaMs animation =
     if not animation.delayComplete then
@@ -700,8 +698,6 @@ easing =
 -- ============================================================
 
 
-{-| Check if any scroll animations are currently running (not paused).
--}
 anyRunning : ScrollState -> Maybe Bool
 anyRunning (ScrollState scrollData) =
     if Dict.isEmpty scrollData.scrolls then
@@ -720,8 +716,6 @@ anyRunning (ScrollState scrollData) =
 -- ============================================================
 
 
-{-| Get current scroll position for a specific container.
--}
 getScrollPosition : String -> ScrollState -> Maybe { x : Float, y : Float }
 getScrollPosition containerId (ScrollState scrollData) =
     scrollData.scrolls
@@ -731,24 +725,18 @@ getScrollPosition containerId (ScrollState scrollData) =
         |> Maybe.map (\scrollAnim -> { x = scrollAnim.currentX, y = scrollAnim.currentY })
 
 
-{-| Get current horizontal scroll position for a specific container.
--}
 getScrollPositionX : String -> ScrollState -> Maybe Float
 getScrollPositionX containerId scrollState =
     getScrollPosition containerId scrollState
         |> Maybe.map .x
 
 
-{-| Get current vertical scroll position for a specific container.
--}
 getScrollPositionY : String -> ScrollState -> Maybe Float
 getScrollPositionY containerId scrollState =
     getScrollPosition containerId scrollState
         |> Maybe.map .y
 
 
-{-| Check if container matches a string ID.
--}
 containerMatches : String -> Container -> Bool
 containerMatches id container =
     case container of
@@ -759,8 +747,6 @@ containerMatches id container =
             id == elementId
 
 
-{-| Convert a Container to its string representation.
--}
 containerToString : Container -> String
 containerToString container =
     case container of
@@ -771,8 +757,6 @@ containerToString container =
             cid
 
 
-{-| Check if a specific container is currently animating.
--}
 isRunning : String -> ScrollState -> Maybe Bool
 isRunning containerId (ScrollState scrollData) =
     if Dict.isEmpty scrollData.scrolls then

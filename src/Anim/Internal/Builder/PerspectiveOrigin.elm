@@ -145,15 +145,11 @@ clampAxis range v =
 -- ============================================================
 
 
-{-| Set all values in this animation to pixels (default).
--}
 px : PerspectiveOriginBuilder mode -> PerspectiveOriginBuilder mode
 px (PerspectiveOriginBuilder _ config builder) =
     PerspectiveOriginBuilder PxUnit config builder
 
 
-{-| Set all values in this animation to percentages.
--}
 percent : PerspectiveOriginBuilder mode -> PerspectiveOriginBuilder mode
 percent (PerspectiveOriginBuilder _ config builder) =
     PerspectiveOriginBuilder PercentUnit config builder

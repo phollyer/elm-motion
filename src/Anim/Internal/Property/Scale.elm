@@ -158,15 +158,11 @@ distance =
     Axis.distance support
 
 
-{-| Calculate animation speed from distance, duration, and time specification.
--}
 speed : Float -> Float -> TimeSpec -> Float
 speed =
     TimeSpec.speed
 
 
-{-| Calculate animation duration from distance and time specification.
--}
 duration : Float -> TimeSpec -> Float
 duration =
     TimeSpec.duration

@@ -112,8 +112,6 @@ updateCustomProperty cssPropertyName value baselines =
             baselines
 
 
-{-| Update custom color properties from a dictionary of color strings.
--}
 updateCustomColorProperties : Dict String String -> PropertyBaselines -> PropertyBaselines
 updateCustomColorProperties customColorProperties baselines =
     Dict.foldl updateCustomColorProperty baselines customColorProperties

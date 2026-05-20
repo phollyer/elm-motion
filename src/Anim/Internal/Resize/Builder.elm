@@ -204,8 +204,6 @@ bounds name bounds_ (Builder d) =
         )
 
 
-{-| Record a translate-axis resize bounds directive for the given anim group.
--}
 setTranslate : AnimGroupName -> Bounds -> Builder -> Builder
 setTranslate name bounds_ (Builder d) =
     Builder
@@ -252,8 +250,6 @@ getTranslatePosition name (Builder d) =
         |> Maybe.andThen .translatePosition
 
 
-{-| Record a scale-axis resize bounds directive for the given anim group.
--}
 setScale : AnimGroupName -> Bounds -> Builder -> Builder
 setScale name bounds_ (Builder d) =
     Builder
@@ -280,8 +276,6 @@ getScale name (Builder d) =
             )
 
 
-{-| Record a perspective-origin resize bounds directive for the given anim group.
--}
 setPerspectiveOrigin : AnimGroupName -> Bounds -> Builder -> Builder
 setPerspectiveOrigin name bounds_ (Builder d) =
     Builder
@@ -320,9 +314,6 @@ setPerspectiveOriginPosition name pos (Builder d) =
         )
 
 
-{-| Read the perspective-origin position snap recorded for the given anim
-group, if any.
--}
 getPerspectiveOriginPosition : AnimGroupName -> Builder -> Maybe Position
 getPerspectiveOriginPosition name (Builder d) =
     Dict.get name d

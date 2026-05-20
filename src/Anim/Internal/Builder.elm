@@ -572,8 +572,6 @@ getCurrentAnimationConfig animGroupName (AnimBuilder data) =
         |> Maybe.map .current
 
 
-{-| Full animation history for a group, ordered most-recent-first.
--}
 getAnimationConfigs : AnimGroupName -> AnimBuilder mode -> List ProcessedAnimGroupConfig
 getAnimationConfigs animGroupName (AnimBuilder data) =
     case AnimGroups.get animGroupName data.state.animationHistories of
@@ -592,8 +590,6 @@ getAnimationConfigs animGroupName (AnimBuilder data) =
 -- ============================================================
 
 
-{-| Set the animation to repeat a specific number of times.
--}
 iterations : Int -> AnimBuilder mode -> AnimBuilder mode
 iterations count (AnimBuilder data) =
     let
@@ -603,8 +599,6 @@ iterations count (AnimBuilder data) =
     AnimBuilder { data | playback = { pb | iterations = Times count } }
 
 
-{-| Set the animation to loop forever.
--}
 loopForever : AnimBuilder mode -> AnimBuilder mode
 loopForever (AnimBuilder data) =
     let
@@ -614,8 +608,6 @@ loopForever (AnimBuilder data) =
     AnimBuilder { data | playback = { pb | iterations = Infinite } }
 
 
-{-| Set the animation to alternate direction each iteration.
--}
 alternate : AnimBuilder mode -> AnimBuilder mode
 alternate (AnimBuilder data) =
     let
@@ -625,8 +617,6 @@ alternate (AnimBuilder data) =
     AnimBuilder { data | playback = { pb | animationDirection = Alternate } }
 
 
-{-| Check if discrete transitions are enabled for this animation.
--}
 discreteTransitionsEnabled : AnimBuilder mode -> Bool
 discreteTransitionsEnabled (AnimBuilder data) =
     data.playback.discreteTransitions
@@ -682,29 +672,21 @@ discreteExit propertyName from to (AnimBuilder data) =
         }
 
 
-{-| Get the discrete entry properties for keyframe animations.
--}
 getDiscreteEntryProperties : AnimBuilder mode -> Dict String String
 getDiscreteEntryProperties (AnimBuilder data) =
     data.playback.discreteEntryProperties
 
 
-{-| Get the discrete exit properties for keyframe animations.
--}
 getDiscreteExitProperties : AnimBuilder mode -> Dict String DiscreteExitProperty
 getDiscreteExitProperties (AnimBuilder data) =
     data.playback.discreteExitProperties
 
 
-{-| Get the configured iteration count.
--}
 getIterations : AnimBuilder mode -> Iterations
 getIterations (AnimBuilder data) =
     data.playback.iterations
 
 
-{-| Get the configured animation direction.
--}
 getAnimationDirection : AnimBuilder mode -> AnimationDirection
 getAnimationDirection (AnimBuilder data) =
     data.playback.animationDirection
@@ -725,8 +707,6 @@ type FreezeProperty
     | FreexeSkew
 
 
-{-| Freeze specific axes of the given properties at their current baseline values.
--}
 freezeAxes : List String -> List FreezeProperty -> AnimBuilder mode -> AnimBuilder mode
 freezeAxes axes properties (AnimBuilder data) =
     let
@@ -756,8 +736,6 @@ freezeAxes axes properties (AnimBuilder data) =
     AnimBuilder { data | animation = { anim | frozenAxes = newFrozenAxes } }
 
 
-{-| Remove specific axes from the frozen set of the given properties.
--}
 unfreezeAxes : List String -> List FreezeProperty -> AnimBuilder mode -> AnimBuilder mode
 unfreezeAxes axes properties (AnimBuilder data) =
     let
@@ -897,8 +875,6 @@ getTimeSpec (AnimBuilder data) =
     data.defaults.globalTiming
 
 
-{-| Get TimeSpec with default fallback.
--}
 getTimeSpecWithDefault : AnimBuilder mode -> TimeSpec
 getTimeSpecWithDefault (AnimBuilder data) =
     data.defaults.globalTiming |> Maybe.withDefault (Duration 0)
@@ -909,15 +885,11 @@ getEasing (AnimBuilder data) =
     data.defaults.globalEasing
 
 
-{-| Get the global default Spring (if any).
--}
 getSpring : AnimBuilder mode -> Maybe Spring
 getSpring (AnimBuilder data) =
     data.defaults.globalSpring
 
 
-{-| Get Easing with default fallback.
--}
 getEasingWithDefault : AnimBuilder mode -> Easing
 getEasingWithDefault (AnimBuilder data) =
     data.defaults.globalEasing |> Maybe.withDefault QuintOut
@@ -928,8 +900,6 @@ getDelay (AnimBuilder data) =
     data.defaults.globalDelay
 
 
-{-| Get Delay with default fallback.
--}
 getDelayWithDefault : AnimBuilder mode -> Int
 getDelayWithDefault (AnimBuilder data) =
     data.defaults.globalDelay |> Maybe.withDefault 0
@@ -1569,15 +1539,11 @@ type alias TransformParts =
     }
 
 
-{-| Extract transforms from ProcessedPropertyConfig list in correct order.
--}
 extractTransformsFromProcessed : List ProcessedPropertyConfig -> TransformParts
 extractTransformsFromProcessed properties =
     List.foldl collectProcessedTransform emptyTransformParts properties
 
 
-{-| Extract transforms from PropertyConfig list in correct order.
--}
 extractTransformsFromProperty : List PropertyConfig -> TransformParts
 extractTransformsFromProperty properties =
     List.foldl collectPropertyTransform emptyTransformParts properties
@@ -1592,8 +1558,6 @@ emptyTransformParts =
     }
 
 
-{-| Collect transform from ProcessedPropertyConfig.
--}
 collectProcessedTransform : ProcessedPropertyConfig -> TransformParts -> TransformParts
 collectProcessedTransform property acc =
     case property of
@@ -1613,8 +1577,6 @@ collectProcessedTransform property acc =
             acc
 
 
-{-| Collect transform from PropertyConfig.
--}
 collectPropertyTransform : PropertyConfig -> TransformParts -> TransformParts
 collectPropertyTransform property acc =
     case property of

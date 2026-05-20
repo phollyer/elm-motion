@@ -31,8 +31,6 @@ positions, elements, or coordinates within containers.
 -}
 
 
-{-| Scroll target configuration
--}
 type ScrollTarget
     = ScrollTarget ScrollTargetData
 
@@ -51,8 +49,6 @@ type alias ScrollTargetData =
     }
 
 
-{-| Type of scroll target
--}
 type ScrollTargetType
     = Coordinates Float Float
     | Element String
@@ -60,8 +56,6 @@ type ScrollTargetType
     | Delta Float Float
 
 
-{-| Axis configuration for scroll movement
--}
 type Axis
     = X
     | Y
