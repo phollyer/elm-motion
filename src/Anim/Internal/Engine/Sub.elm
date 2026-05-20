@@ -334,13 +334,21 @@ applyGroupResize previousBuilder builder animGroupName animState =
 
                 Just { bounds } ->
                     applyScaleResize animGroupName (prevBoundsFor ResizeBuilder.getScale) bounds afterTranslatePosition
-    in
-    case ResizeBuilder.getPerspectiveOrigin animGroupName builder of
-        Nothing ->
-            afterScale
 
-        Just { bounds } ->
-            applyPerspectiveOriginResize animGroupName (prevBoundsFor ResizeBuilder.getPerspectiveOrigin) bounds afterScale
+        afterPerspectiveOrigin =
+            case ResizeBuilder.getPerspectiveOrigin animGroupName builder of
+                Nothing ->
+                    afterScale
+
+                Just { bounds } ->
+                    applyPerspectiveOriginResize animGroupName (prevBoundsFor ResizeBuilder.getPerspectiveOrigin) bounds afterScale
+    in
+    case ResizeBuilder.getPerspectiveOriginPosition animGroupName builder of
+        Nothing ->
+            afterPerspectiveOrigin
+
+        Just pos ->
+            applyPerspectiveOriginPositionResize animGroupName pos afterPerspectiveOrigin
 
 
 emptyBounds : Bounds
@@ -821,6 +829,67 @@ preserveScaleProgress { cfg, newStart, newEnd, oldDistance, newLegDistance } =
         , totalDurationMs = newTotalDuration
         , elapsedMs = newElapsedMs
         , isComplete = False
+    }
+
+
+{-| Apply a one-shot perspective-origin position snap to every
+perspective-origin animation in a group. Only static axes
+(`start == end`) are affected; animating axes are left alone
+(see `ResizeBuilder.applyAxisPosition`).
+-}
+applyPerspectiveOriginPositionResize : AnimGroupName -> ResizeBuilder.Position -> AnimState -> AnimState
+applyPerspectiveOriginPositionResize animGroupName pos (AnimState state animGroups) =
+    case AnimGroups.get animGroupName animGroups of
+        Nothing ->
+            AnimState state animGroups
+
+        Just animGroup ->
+            let
+                updatedAnimations =
+                    AnimGroup.getAnimations animGroup
+                        |> Animations.map
+                            (\_ anim ->
+                                case anim of
+                                    PerspectiveOrigin cfg ->
+                                        PerspectiveOrigin (positionPerspectiveOrigin pos cfg)
+
+                                    _ ->
+                                        anim
+                            )
+
+                updatedGroup =
+                    AnimGroup.setAnimations updatedAnimations animGroup
+
+                updatedAnimGroups =
+                    AnimGroups.insert animGroupName updatedGroup animGroups
+            in
+            AnimState state updatedAnimGroups
+
+
+{-| Per-perspective-origin-animation position snap. Static axes are snapped
+to the new position; animating axes are unchanged.
+-}
+positionPerspectiveOrigin : ResizeBuilder.Position -> PropertyAnimation PerspectiveOrigin -> PropertyAnimation PerspectiveOrigin
+positionPerspectiveOrigin pos cfg =
+    let
+        oldStart =
+            PerspectiveOrigin.toRecord cfg.start
+
+        oldEnd =
+            PerspectiveOrigin.toRecord cfg.end
+
+        rx =
+            ResizeBuilder.applyAxisPosition pos.x oldStart.x oldEnd.x oldStart.x
+
+        ry =
+            ResizeBuilder.applyAxisPosition pos.y oldStart.y oldEnd.y oldStart.y
+
+        unit =
+            PerspectiveOrigin.getUnit cfg.end
+    in
+    { cfg
+        | start = PerspectiveOrigin.fromRecord unit { x = rx.start, y = ry.start }
+        , end = PerspectiveOrigin.fromRecord unit { x = rx.end, y = ry.end }
     }
 
 

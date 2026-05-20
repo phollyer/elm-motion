@@ -32,6 +32,7 @@ suite =
         , currentTimeForResizeTests
         , encoderTests
         , translatePositionEncoderTests
+        , perspectiveOriginPositionEncoderTests
         ]
 
 
@@ -416,5 +417,65 @@ translatePositionEncoderTests =
                             ++ ",\"elementId\":\"empty\""
                             ++ ",\"animGroup\":\"empty\""
                             ++ ",\"x\":null,\"y\":null,\"z\":null}"
+                        )
+        ]
+
+
+
+-- ============================================================
+-- PERSPECTIVE ORIGIN POSITION ENCODER
+-- ============================================================
+
+
+perspectiveOriginPositionEncoderTests : Test
+perspectiveOriginPositionEncoderTests =
+    describe "Encoder.encodePerspectiveOriginPosition"
+        [ test "emits both axes plus unit when every axis has a value" <|
+            \_ ->
+                Encoder.encodePerspectiveOriginPosition
+                    { animGroupName = "camera"
+                    , x = Just 75
+                    , y = Just 25
+                    , unit = "%"
+                    }
+                    |> Encode.encode 0
+                    |> Expect.equal
+                        ("{\"type\":\"perspectiveOriginPosition\""
+                            ++ ",\"elementId\":\"camera\""
+                            ++ ",\"animGroup\":\"camera\""
+                            ++ ",\"x\":75,\"y\":25"
+                            ++ ",\"unit\":\"%\"}"
+                        )
+        , test "emits null for the axis left untouched and preserves px unit" <|
+            \_ ->
+                Encoder.encodePerspectiveOriginPosition
+                    { animGroupName = "camera"
+                    , x = Just 480
+                    , y = Nothing
+                    , unit = "px"
+                    }
+                    |> Encode.encode 0
+                    |> Expect.equal
+                        ("{\"type\":\"perspectiveOriginPosition\""
+                            ++ ",\"elementId\":\"camera\""
+                            ++ ",\"animGroup\":\"camera\""
+                            ++ ",\"x\":480,\"y\":null"
+                            ++ ",\"unit\":\"px\"}"
+                        )
+        , test "emits null for every axis when both are Nothing" <|
+            \_ ->
+                Encoder.encodePerspectiveOriginPosition
+                    { animGroupName = "empty"
+                    , x = Nothing
+                    , y = Nothing
+                    , unit = "%"
+                    }
+                    |> Encode.encode 0
+                    |> Expect.equal
+                        ("{\"type\":\"perspectiveOriginPosition\""
+                            ++ ",\"elementId\":\"empty\""
+                            ++ ",\"animGroup\":\"empty\""
+                            ++ ",\"x\":null,\"y\":null"
+                            ++ ",\"unit\":\"%\"}"
                         )
         ]

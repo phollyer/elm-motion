@@ -1,6 +1,6 @@
 /* eslint-env browser */
 import { isTransformProperty, easingFunctions, parseIterations } from './utils.js';
-import { activeAnimations, animationGroups, elementTransformOrders, cleanupAnimGroup, lastKnownTransforms } from './state.js';
+import { activeAnimations, animationGroups, elementTransformOrders, cleanupAnimGroup, lastKnownTransforms, lastKnownPerspectiveOrigins } from './state.js';
 import { getTransformState, getElementOrder, interpolateSubProperty, computeTransformFromResolved, buildTransformString, getDefaultTransformState } from './transform.js';
 import { resolveNonTransformValues, createPropertyAnimation, extractPropertyConfig, buildPropertyKeyframes } from './properties.js';
 import { sendLifecycleEvent } from './ports.js';
@@ -143,6 +143,36 @@ function isResizeGeometryUnchanged(commandData, slot, oldDuration) {
         && Number(commandData.endY) === Number(slot.endY)
         && Number(commandData.endZ) === Number(slot.endZ)
         && newDuration === Number(slot.duration);
+}
+
+/**
+ * Perspective-origin counterpart of `isResizeGeometryUnchanged`. Same
+ * short-circuit purpose, with two differences from the translate version:
+ *
+ * - Perspective-origin is 2D, so Z is omitted.
+ * - The slot has a `unit` (`%` / `px`); a unit change must invalidate the
+ *   skip even if the numeric start/end are unchanged.
+ *
+ * Duration is read from `oldDuration` (the live WAAPI timing) because
+ * the resolved non-transform slot does not store a `duration` field —
+ * the animation's own effect timing is the source of truth.
+ */
+function isPerspectiveOriginGeometryUnchanged(commandData, slot, oldDuration) {
+    if (!slot) {
+        return false;
+    }
+    const incomingUnit = typeof commandData.unit === 'string' ? commandData.unit : '%';
+    if (incomingUnit !== slot.unit) {
+        return false;
+    }
+    const payloadDuration = sanitizeResizeDuration(Number(commandData.duration), oldDuration);
+    const hasBaseline = commandData.hasAnimationBaseline !== false;
+    const newDuration = hasBaseline ? payloadDuration : oldDuration;
+    return Number(commandData.startX) === Number(slot.startX)
+        && Number(commandData.startY) === Number(slot.startY)
+        && Number(commandData.endX) === Number(slot.endX)
+        && Number(commandData.endY) === Number(slot.endY)
+        && newDuration === oldDuration;
 }
 
 const TRANSFORM_STATE_KEYS = {
@@ -743,6 +773,7 @@ export function resizeTransformAnimation(commandData) {
  */
 const pendingResizes = new Map();
 const pendingPositions = new Map();
+const pendingPerspectivePositions = new Map();
 let pendingResizeFrame = null;
 
 function scheduleResize(commandData) {
@@ -767,6 +798,16 @@ function schedulePosition(commandData) {
     // Position snaps are translate-only, so a single key per group is
     // sufficient — the latest payload wins per frame.
     pendingPositions.set(animGroup, commandData);
+    armResizeFrame();
+}
+
+function schedulePerspectiveOriginPosition(commandData) {
+    const animGroup = commandData.elementId || commandData.animGroup;
+    if (!animGroup) {
+        _perspectiveOriginPositionAnimationImmediate(commandData);
+        return;
+    }
+    pendingPerspectivePositions.set(animGroup, commandData);
     armResizeFrame();
 }
 
@@ -795,13 +836,66 @@ function armResizeFrame() {
  * snap gets the final word on the static-axis baseline.
  */
 export function flushPendingResizes() {
-    if (pendingResizes.size === 0 && pendingPositions.size === 0) {
+    if (pendingResizes.size === 0 && pendingPositions.size === 0 && pendingPerspectivePositions.size === 0) {
         return;
     }
     const resizeBatch = Array.from(pendingResizes.values());
     const positionBatch = Array.from(pendingPositions.values());
+    const perspectivePositionBatch = Array.from(pendingPerspectivePositions.values());
     pendingResizes.clear();
     pendingPositions.clear();
+    pendingPerspectivePositions.clear();
+    motionDebug('flushPendingResizes', {
+        resizeBatch: resizeBatch.map((p) => ({
+            property: p.property,
+            animGroup: p.elementId || p.animGroup,
+            start: { x: p.startX, y: p.startY, z: p.startZ },
+            end: { x: p.endX, y: p.endY, z: p.endZ },
+            current: { x: p.currentX, y: p.currentY, z: p.currentZ },
+            currentTimeMs: p.currentTimeMs,
+            durationMs: p.duration
+        })),
+        positionBatch: positionBatch.map((p) => ({
+            animGroup: p.elementId || p.animGroup,
+            x: p.x, y: p.y, z: p.z
+        })),
+        perspectivePositionBatch: perspectivePositionBatch.map((p) => ({
+            animGroup: p.elementId || p.animGroup,
+            x: p.x, y: p.y, unit: p.unit
+        }))
+    });
+
+    // Diagnostic: live clock snapshot of every active animation in any
+    // group touched by this flush. Captured BEFORE any rebuild runs so
+    // sibling phase-lock can be inspected per-frame. If two co-emitted
+    // animations are configured identically they should show matching
+    // `liveCurrentTime` / `liveDuration` here on every flush.
+    if (typeof globalThis !== 'undefined' && globalThis.__ELM_MOTION_DEBUG) {
+        const touchedGroups = new Set();
+        for (const p of resizeBatch) touchedGroups.add(p.elementId || p.animGroup);
+        for (const p of positionBatch) touchedGroups.add(p.elementId || p.animGroup);
+        for (const p of perspectivePositionBatch) touchedGroups.add(p.elementId || p.animGroup);
+        const coRunningClocks = [];
+        for (const animGroup of touchedGroups) {
+            const elementAnims = activeAnimations.get(animGroup);
+            if (!elementAnims) continue;
+            for (const [property, entry] of elementAnims) {
+                const anim = entry && entry.animation;
+                if (!anim) continue;
+                const timing = anim.effect ? anim.effect.getTiming() : null;
+                coRunningClocks.push({
+                    animGroup,
+                    property,
+                    liveCurrentTime: anim.currentTime,
+                    liveDuration: timing ? timing.duration : null,
+                    direction: timing ? timing.direction : null,
+                    iterations: timing ? timing.iterations : null,
+                    playState: anim.playState
+                });
+            }
+        }
+        motionDebug('flushPendingResizes.coRunningClocks', { groups: coRunningClocks });
+    }
     for (const payload of resizeBatch) {
         try {
             _resizeTransformAnimationImmediate(payload);
@@ -819,6 +913,18 @@ export function flushPendingResizes() {
             _translatePositionAnimationImmediate(payload);
         } catch (err) {
             reportError(`translatePosition flush failed: ${err && err.message ? err.message : err}`, {
+                source: 'animation',
+                severity: 'error',
+                code: 'COMMAND_FAILED',
+                engine: 'WAAPI'
+            });
+        }
+    }
+    for (const payload of perspectivePositionBatch) {
+        try {
+            _perspectiveOriginPositionAnimationImmediate(payload);
+        } catch (err) {
+            reportError(`perspectiveOriginPosition flush failed: ${err && err.message ? err.message : err}`, {
                 source: 'animation',
                 severity: 'error',
                 code: 'COMMAND_FAILED',
@@ -1402,15 +1508,173 @@ export function _translatePositionAnimationImmediate(commandData) {
     }
 }
 
+/**
+ * Public entry for `perspectiveOriginPosition` port commands. Coalesces
+ * snaps via `requestAnimationFrame` so per-axis updates emitted during
+ * a drag-resize collapse to at most one per displayed frame.
+ *
+ * The directive is a per-axis one-shot snap: each axis is either `null`
+ * (leave alone) or a numeric position to snap the static axis to. An
+ * axis is snapped only when the running perspective-origin animation has
+ * `startAxis === endAxis` (i.e. it is not animating). Animating axes are
+ * left alone so an in-flight animation is never visibly hijacked. When
+ * no perspective-origin animation is running, the inline style is
+ * updated unconditionally for the snapped axes.
+ *
+ * @param {object} commandData - Decoded `perspectiveOriginPosition` payload.
+ *   - `elementId` / `animGroup`: target animation group.
+ *   - `x`, `y`: position per axis (in the unit reported by `unit`), or `null`.
+ *   - `unit`: `'%'` or `'px'`.
+ */
+export function perspectiveOriginPositionAnimation(commandData) {
+    schedulePerspectiveOriginPosition(commandData);
+}
+
+/**
+ * Synchronous perspectiveOriginPosition worker. Direct callers (tests,
+ * `flushPendingResizes`) use this to bypass the per-frame coalescing
+ * layer.
+ *
+ * Static axes are snapped via in-place `setKeyframes` so the live
+ * `currentTime` / iteration / direction are preserved — no cancel, no
+ * seek, no drift relative to co-running animations in the same anim
+ * group.
+ */
+export function _perspectiveOriginPositionAnimationImmediate(commandData) {
+    const animGroup = commandData.elementId || commandData.animGroup;
+    if (!animGroup) {
+        reportError('perspectiveOriginPosition command missing elementId/animGroup', {
+            source: 'animation',
+            severity: 'warning',
+            code: 'COMMAND_INVALID',
+            engine: 'WAAPI'
+        });
+        return;
+    }
+
+    const element = findAnimTarget(animGroup);
+    if (!element) {
+        reportError(`Element with data-anim-target="${animGroup}" not found`, {
+            source: 'animation',
+            severity: 'warning',
+            code: 'TARGET_NOT_FOUND',
+            engine: 'WAAPI',
+            elementId: animGroup
+        });
+        return;
+    }
+
+    const px = typeof commandData.x === 'number' && isFinite(commandData.x) ? commandData.x : null;
+    const py = typeof commandData.y === 'number' && isFinite(commandData.y) ? commandData.y : null;
+    const unit = typeof commandData.unit === 'string' ? commandData.unit : '%';
+
+    const elementAnims = activeAnimations.get(animGroup);
+    const entry = elementAnims ? elementAnims.get('perspectiveOrigin') : null;
+    const resolved = entry ? entry.resolvedNonTransform : null;
+
+    let snapX = px !== null;
+    let snapY = py !== null;
+    let skipReasonX = null;
+    let skipReasonY = null;
+    if (px === null) skipReasonX = 'payloadNull';
+    if (py === null) skipReasonY = 'payloadNull';
+    if (resolved) {
+        if (snapX && Number(resolved.startX) !== Number(resolved.endX)) {
+            // X axis is animating — leave it alone.
+            snapX = false;
+            skipReasonX = 'axisAnimating';
+        }
+        if (snapY && Number(resolved.startY) !== Number(resolved.endY)) {
+            snapY = false;
+            skipReasonY = 'axisAnimating';
+        }
+    }
+
+    motionDebug('perspectiveOriginPosition.enter', {
+        animGroup,
+        payloadPosition: { x: px, y: py, unit },
+        slot: resolved
+            ? { startX: resolved.startX, startY: resolved.startY, endX: resolved.endX, endY: resolved.endY }
+            : null,
+        liveCurrentTime: entry && entry.animation ? entry.animation.currentTime : null,
+        liveTimingDuration: entry && entry.animation && entry.animation.effect
+            ? entry.animation.effect.getTiming().duration
+            : null,
+        snapX,
+        snapY,
+        skipReasonX,
+        skipReasonY
+    });
+
+    if (px === null && py === null) {
+        return;
+    }
+
+    if (!snapX && !snapY) {
+        return;
+    }
+
+    // Update the resolved slot so any subsequent resize / animate sees
+    // the snapped baseline.
+    if (resolved) {
+        if (snapX) {
+            resolved.startX = px;
+            resolved.endX = px;
+        }
+        if (snapY) {
+            resolved.startY = py;
+            resolved.endY = py;
+        }
+        resolved.unit = unit;
+    }
+
+    // Update inline style + cache so the snap survives outside the
+    // animation lifetime.
+    const cached = lastKnownPerspectiveOrigins.get(animGroup) || { x: 50, y: 50, unit: unit };
+    const newX = snapX ? px : cached.x;
+    const newY = snapY ? py : cached.y;
+    lastKnownPerspectiveOrigins.set(animGroup, { x: newX, y: newY, unit: unit });
+    element.style.perspectiveOrigin = `${newX}${unit} ${newY}${unit}`;
+
+    // Rebuild keyframes in place on the running animation so the snapped
+    // axes hold their new value across every frame. WAAPI preserves
+    // `currentTime` / iteration / direction across `setKeyframes`, so any
+    // co-running animation (translate / scale / etc.) in this anim group
+    // stays in lockstep with the perspective-origin compositor clock.
+    if (entry && entry.animation && entry.animation.effect && resolved) {
+        const keyframeData = buildPropertyKeyframes(resolved, entry.easingKeyframes, 'linear');
+        if (keyframeData && keyframeData.keyframes) {
+            try {
+                entry.animation.effect.setKeyframes(keyframeData.keyframes);
+                motionDebug('perspectiveOriginPosition.setKeyframes', {
+                    animGroup,
+                    liveCurrentTimeAfter: entry.animation.currentTime,
+                    liveTimingDurationAfter: entry.animation.effect.getTiming().duration
+                });
+            } catch (err) {
+                reportError(`setKeyframes failed during perspectiveOriginPosition: ${err && err.message ? err.message : err}`, {
+                    source: 'animation',
+                    severity: 'warning',
+                    code: 'PERSPECTIVE_ORIGIN_POSITION_SET_KEYFRAMES_FAILED',
+                    engine: 'WAAPI',
+                    elementId: animGroup
+                });
+            }
+        }
+    }
+}
+
 function resizePerspectiveOriginAnimation(commandData, animGroup, element) {
     const elementAnims = activeAnimations.get(animGroup);
     if (!elementAnims || !elementAnims.has('perspectiveOrigin')) {
+        motionDebug('perspectiveOriginBounds.skipNoEntry', { animGroup });
         return;
     }
 
     const entry = elementAnims.get('perspectiveOrigin');
     const animation = entry.animation;
     if (!animation || !animation.effect) {
+        motionDebug('perspectiveOriginBounds.skipNoAnimation', { animGroup });
         return;
     }
 
@@ -1418,10 +1682,53 @@ function resizePerspectiveOriginAnimation(commandData, animGroup, element) {
     const oldDuration = Number(oldTiming.duration) || 0;
     const oldCurrentTime = Number(animation.currentTime) || 0;
     const oldDirection = oldTiming.direction || 'normal';
+    motionDebug('perspectiveOriginBounds.enter', {
+        animGroup,
+        incoming: {
+            start: { x: commandData.startX, y: commandData.startY },
+            end: { x: commandData.endX, y: commandData.endY },
+            current: { x: commandData.currentX, y: commandData.currentY },
+            currentTimeMs: commandData.currentTimeMs,
+            durationMs: commandData.duration,
+            unit: commandData.unit
+        },
+        live: {
+            currentTime: oldCurrentTime,
+            duration: oldDuration,
+            direction: oldDirection,
+            playState: animation.playState
+        },
+        previousResolved: entry.resolvedNonTransform
+            ? {
+                startX: entry.resolvedNonTransform.startX,
+                startY: entry.resolvedNonTransform.startY,
+                endX: entry.resolvedNonTransform.endX,
+                endY: entry.resolvedNonTransform.endY,
+                unit: entry.resolvedNonTransform.unit
+            }
+            : null
+    });
+
+    // Fast-path skip: when start/end/duration/unit of the perspective-origin
+    // slot are identical to what JS already has, the resize cmd is purely
+    // advisory (Elm fired because `currentTimeMs` advanced via Progress
+    // ticks during a continuous drag). Mirrors the translate handler's
+    // `isResizeGeometryUnchanged` early-return at the top of
+    // `_resizeTransformAnimationImmediate` — without it, the perspective
+    // animation gets cancel+recreate+seek-to-stale-`commandData.currentTimeMs`
+    // every flush while its sibling translate just `setKeyframes` and
+    // keeps ticking, so perspective falls 8-16 ms behind translate per
+    // flush and the dot finishes the leg before the perspective container
+    // catches up.
+    const previousResolved = entry.resolvedNonTransform || null;
+    if (isPerspectiveOriginGeometryUnchanged(commandData, previousResolved, oldDuration)) {
+        motionDebug('perspectiveOriginBounds.fastPathSkip', { animGroup });
+        return;
+    }
+
     const oldLegProgress = computeLegProgress(oldCurrentTime, oldDuration, oldDirection, animation);
 
     const unit = typeof commandData.unit === 'string' ? commandData.unit : '%';
-    const previousResolved = entry.resolvedNonTransform || null;
     const oldVisual =
         oldLegProgress !== null
             && previousResolved
@@ -1564,6 +1871,20 @@ function resizePerspectiveOriginAnimation(commandData, animGroup, element) {
         newVersion,
         null
     );
+    motionDebug('perspectiveOriginBounds.recreated', {
+        animGroup,
+        seekedTo: newCurrentTime,
+        liveCurrentTimeAfter: newAnimation.currentTime,
+        liveDurationAfter: newDuration,
+        resolvedAfter: {
+            startX: resolved.startX,
+            startY: resolved.startY,
+            endX: resolved.endX,
+            endY: resolved.endY,
+            unit: resolved.unit
+        },
+        effectivePosition: effectiveCurrentPosition
+    });
 }
 
 export function processAnimationData(animationData) {

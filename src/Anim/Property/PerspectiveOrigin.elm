@@ -9,7 +9,7 @@ module Anim.Property.PerspectiveOrigin exposing
     , easing
     , spring
     , clampX, clampY, unclampX, unclampY
-    , bounds
+    , bounds, position
     )
 
 {-| Animate the CSS `perspective-origin` property, which controls the vanishing point
@@ -115,7 +115,7 @@ the pipeline. See [clampX](#clampX) for behaviour.
 Set how perspective-origin responds to viewport/container resize and provide
 new bounds during `onResize`.
 
-@docs bounds
+@docs bounds, position
 
 -}
 
@@ -502,3 +502,37 @@ Leave an axis as `Nothing` to ignore it. `z` is ignored for this property.
 bounds : AnimGroupName -> Resize.Bounds -> Resize.Builder -> Resize.Builder
 bounds =
     ResizeBuilder.setPerspectiveOrigin
+
+
+{-| One-shot position snap for an anim group's perspective-origin during resize.
+
+Use `position` when an axis is **not** animating (`start == end`) but its
+correct screen position depends on layout - for example, a perspective
+camera that sits at the right edge of an area needs `x = newWidth` after
+a portrait → landscape resize.
+
+    WAAPI.onResize model.animState <|
+        PerspectiveOrigin.bounds "camera"
+            { x = Nothing
+            , y = Just { min = 0, max = newHeight }
+            , z = Nothing
+            }
+            >> PerspectiveOrigin.position "camera"
+                { x = Just newWidth
+                , y = Nothing
+                }
+
+Each axis is `Just newPos` to snap that axis, or `Nothing` to leave it
+untouched. On a static axis the snap sets `start`, `end`, and `current`
+to `newPos`. On an animating axis (`start /= end`) the snap is ignored,
+because the next interpolation frame would overwrite a current-only
+change. Use [`bounds`](#bounds) (with its proportional remap) to retarget
+animating axes.
+
+Z is ignored for this property.
+
+-}
+position : AnimGroupName -> { x : Maybe Float, y : Maybe Float } -> Resize.Builder -> Resize.Builder
+position name pos =
+    ResizeBuilder.setPerspectiveOriginPosition name
+        { x = pos.x, y = pos.y, z = Nothing }

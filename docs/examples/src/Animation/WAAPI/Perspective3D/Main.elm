@@ -396,11 +396,11 @@ perspectiveAnimation areaSize step =
                 >> movePerspectiveTargetDown perspectiveStepSpeed areaSize
 
         MoveToBottomLeft ->
-            movePerspectiveLeft perspectiveStepSpeed
+            movePerspectiveLeft perspectiveStepSpeed areaSize
                 >> movePerspectiveTargetLeft perspectiveStepSpeed areaSize
 
         MoveToTopLeft ->
-            movePerspectiveUp perspectiveStepSpeed
+            movePerspectiveUp perspectiveStepSpeed areaSize
                 >> movePerspectiveTargetUp perspectiveStepSpeed areaSize
 
 
@@ -422,27 +422,35 @@ movePerspectiveOrigin speed moveTo =
 
 
 movePerspectiveRight : Float -> { a | width : Float } -> AnimBuilder mode -> AnimBuilder mode
-movePerspectiveRight speed areaSize =
+movePerspectiveRight speed { width } =
     movePerspectiveOrigin speed <|
-        PerspectiveOrigin.toX areaSize.width
+        PerspectiveOrigin.toX width
+            >> PerspectiveOrigin.clampY 0 0
+            >> PerspectiveOrigin.clampX 0 width
 
 
-movePerspectiveLeft : Float -> AnimBuilder mode -> AnimBuilder mode
-movePerspectiveLeft speed =
+movePerspectiveLeft : Float -> { a | height : Float, width : Float } -> AnimBuilder mode -> AnimBuilder mode
+movePerspectiveLeft speed { height, width } =
     movePerspectiveOrigin speed <|
         PerspectiveOrigin.toX 0
+            >> PerspectiveOrigin.clampY height height
+            >> PerspectiveOrigin.clampX 0 width
 
 
-movePerspectiveDown : Float -> { a | height : Float } -> AnimBuilder mode -> AnimBuilder mode
-movePerspectiveDown speed areaSize =
+movePerspectiveDown : Float -> { a | height : Float, width : Float } -> AnimBuilder mode -> AnimBuilder mode
+movePerspectiveDown speed { height, width } =
     movePerspectiveOrigin speed <|
-        PerspectiveOrigin.toY areaSize.height
+        PerspectiveOrigin.toY height
+            >> PerspectiveOrigin.clampX width width
+            >> PerspectiveOrigin.clampY 0 height
 
 
-movePerspectiveUp : Float -> AnimBuilder mode -> AnimBuilder mode
-movePerspectiveUp speed =
+movePerspectiveUp : Float -> { a | height : Float } -> AnimBuilder mode -> AnimBuilder mode
+movePerspectiveUp speed { height } =
     movePerspectiveOrigin speed <|
         PerspectiveOrigin.toY 0
+            >> PerspectiveOrigin.clampX 0 0
+            >> PerspectiveOrigin.clampY 0 height
 
 
 movePerspectiveTarget : Float -> (Translate.Builder mode -> Translate.Builder mode) -> AnimBuilder mode -> AnimBuilder mode
@@ -577,14 +585,22 @@ update msg model =
                         , z = Just { min = scale, max = scale }
                         }
 
-                    translateBounds =
+                    legBounds =
                         -- Only constrain the axis that is actually moving for
-                        -- the in-flight leg. Bounding the static axis would
-                        -- re-clamp its endpoint into the new bounds and pull
-                        -- the dot off the corner it currently sits on - and
-                        -- (more importantly during a drag) each resize event
-                        -- would mutate the static axis bounds and force
-                        -- another cancel+recreate of the running animation.
+                        -- the in-flight leg. The dot (translate) and the
+                        -- camera (perspective-origin) share the same perimeter
+                        -- path, so the same bounds value drives both.
+                        --
+                        -- Bounding the static axis would re-clamp its
+                        -- endpoint into the new bounds and pull the dot off
+                        -- the corner it currently sits on - and (more
+                        -- importantly during a drag) each resize event would
+                        -- mutate the static axis bounds and force another
+                        -- cancel+recreate of the running animation, drifting
+                        -- the perspective-origin compositor clock behind the
+                        -- dot's. The static-axis pin is delivered separately
+                        -- via `Translate.position` / `PerspectiveOrigin.position`
+                        -- below.
                         case inFlightPerspectiveStep model.perspectiveStep of
                             XAxisLeg ->
                                 { x = Just { min = 0, max = newAreaSize.width }
@@ -598,36 +614,11 @@ update msg model =
                                 , z = Nothing
                                 }
 
-                    perspectiveOriginBounds =
-                        -- The perspective origin pin remains a bounds-based
-                        -- pin on the static axis - perspective origin has no
-                        -- `position` directive, and unlike a translate this
-                        -- axis travels its endpoint regardless, so a no-op
-                        -- {min,max} pin is safe here.
-                        case model.perspectiveStep of
-                            MoveToTopRight ->
-                                { x = Just { min = 0, max = newAreaSize.width }
-                                , y = Just { min = 0, max = 0 }
-                                , z = Nothing
-                                }
-
-                            MoveToBottomRight ->
-                                { x = Just { min = newAreaSize.width, max = newAreaSize.width }
-                                , y = Just { min = 0, max = newAreaSize.height }
-                                , z = Nothing
-                                }
-
-                            MoveToBottomLeft ->
-                                { x = Just { min = 0, max = newAreaSize.width }
-                                , y = Just { min = newAreaSize.height, max = newAreaSize.height }
-                                , z = Nothing
-                                }
-
-                            MoveToTopLeft ->
-                                { x = Just { min = 0, max = 0 }
-                                , y = Just { min = 0, max = newAreaSize.height }
-                                , z = Nothing
-                                }
+                    legSnap =
+                        -- Static-axis pin shared by translate and
+                        -- perspective-origin: both ride the same perimeter
+                        -- track, so they snap to the same edge.
+                        staticAxisSnap model.perspectiveStep newAreaSize
 
                     ( animState, cmd ) =
                         -- `Scale.bounds` remaps the cube scale snapshot
@@ -635,17 +626,18 @@ update msg model =
                         -- `Translate.bounds` remaps the moving axis only -
                         -- `Translate.position` snaps the static axis to its
                         -- new pixel edge without a cancel+recreate cycle.
-                        -- `PerspectiveOrigin.bounds` uses the same resize bounds so
-                        -- the camera vanishing point follows the exact same track.
+                        -- `PerspectiveOrigin.bounds` + `PerspectiveOrigin.position`
+                        -- mirror that split for the camera, keeping its live
+                        -- compositor clock in lockstep with the dot.
                         -- Group-wide `Resize.bounds` is avoided here because
                         -- it would also clamp `Translate.initZ 200` into the
                         -- scale-ratio bounds and collapse the cube's z-depth.
                         WAAPI.onResize model.animState <|
                             Scale.bounds cubeGroupName scaleBounds
-                                >> Translate.bounds vanishingPointDot.groupName translateBounds
-                                >> Translate.position vanishingPointDot.groupName
-                                    (staticAxisSnap model.perspectiveStep newAreaSize)
-                                >> PerspectiveOrigin.bounds perspectiveContainer.groupName perspectiveOriginBounds
+                                >> Translate.bounds vanishingPointDot.groupName legBounds
+                                >> Translate.position vanishingPointDot.groupName legSnap
+                                >> PerspectiveOrigin.bounds perspectiveContainer.groupName legBounds
+                                >> PerspectiveOrigin.position perspectiveContainer.groupName { x = legSnap.x, y = legSnap.y }
                 in
                 ( { model
                     | animState = animState

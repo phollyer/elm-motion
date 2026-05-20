@@ -1,6 +1,7 @@
 module Anim.Internal.Engine.WAAPI.Encoder exposing
     ( encode
     , encodeCommandWithProperties
+    , encodePerspectiveOriginPosition
     , encodeProcessedData
     , encodeResize
     , encodeRestart
@@ -314,6 +315,32 @@ encodeTranslatePosition r =
         , ( "x", encodeMaybeFloat r.x )
         , ( "y", encodeMaybeFloat r.y )
         , ( "z", encodeMaybeFloat r.z )
+        ]
+
+
+{-| Encode a `perspectiveOriginPosition` port command. Mirrors
+[`encodeTranslatePosition`](#encodeTranslatePosition) — each axis is
+either `Just newPos` (snap that axis to `newPos`) or `Nothing` (leave
+this axis alone). JS-side static-axis validation lives in
+`js/src/animations.js` - `_perspectiveOriginPositionAnimationImmediate`
+only snaps an axis whose running perspective-origin animation has equal
+start/end values.
+-}
+encodePerspectiveOriginPosition :
+    { animGroupName : AnimGroupName
+    , x : Maybe Float
+    , y : Maybe Float
+    , unit : String
+    }
+    -> Encode.Value
+encodePerspectiveOriginPosition r =
+    Encode.object
+        [ ( "type", Encode.string "perspectiveOriginPosition" )
+        , ( "elementId", Encode.string r.animGroupName )
+        , ( "animGroup", Encode.string r.animGroupName )
+        , ( "x", encodeMaybeFloat r.x )
+        , ( "y", encodeMaybeFloat r.y )
+        , ( "unit", Encode.string r.unit )
         ]
 
 

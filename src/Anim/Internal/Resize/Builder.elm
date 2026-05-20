@@ -12,6 +12,7 @@ module Anim.Internal.Resize.Builder exposing
     , build
     , empty
     , getPerspectiveOrigin
+    , getPerspectiveOriginPosition
     , getScale
     , getTranslate
     , getTranslatePosition
@@ -19,6 +20,7 @@ module Anim.Internal.Resize.Builder exposing
     , isEmpty
     , merge
     , setPerspectiveOrigin
+    , setPerspectiveOriginPosition
     , setScale
     , setTranslate
     , setTranslatePosition
@@ -71,6 +73,7 @@ type alias GroupEntries =
     , scale : Maybe Entry
     , perspectiveOrigin : Maybe Entry
     , translatePosition : Maybe Position
+    , perspectiveOriginPosition : Maybe Position
     }
 
 
@@ -132,6 +135,7 @@ emptyEntries =
     , scale = Nothing
     , perspectiveOrigin = Nothing
     , translatePosition = Nothing
+    , perspectiveOriginPosition = Nothing
     }
 
 
@@ -169,6 +173,7 @@ mergeEntries left right =
     , scale = orMaybe right.scale left.scale
     , perspectiveOrigin = orMaybe right.perspectiveOrigin left.perspectiveOrigin
     , translatePosition = orMaybe right.translatePosition left.translatePosition
+    , perspectiveOriginPosition = orMaybe right.perspectiveOriginPosition left.perspectiveOriginPosition
     }
 
 
@@ -301,6 +306,27 @@ getPerspectiveOrigin name (Builder d) =
                     Nothing ->
                         e.default
             )
+
+
+{-| Record a one-shot perspective-origin position snap for the given anim
+group. Applied after any bounds directive; only static axes are affected.
+-}
+setPerspectiveOriginPosition : AnimGroupName -> Position -> Builder -> Builder
+setPerspectiveOriginPosition name pos (Builder d) =
+    Builder
+        (Dict.update name
+            (updateEntries (\e -> { e | perspectiveOriginPosition = Just pos }))
+            d
+        )
+
+
+{-| Read the perspective-origin position snap recorded for the given anim
+group, if any.
+-}
+getPerspectiveOriginPosition : AnimGroupName -> Builder -> Maybe Position
+getPerspectiveOriginPosition name (Builder d) =
+    Dict.get name d
+        |> Maybe.andThen .perspectiveOriginPosition
 
 
 {-| All anim group names that have at least one directive recorded

@@ -403,8 +403,16 @@ applyGroupResize previousBuilder builder animGroupName ( animState, accCmds ) =
 
                 Just { bounds } ->
                     applyPerspectiveOriginResize animGroupName (prevBoundsFor ResizeBuilder.getPerspectiveOrigin) bounds afterScale
+
+        ( afterPerspectiveOriginPosition, perspectiveOriginPositionCmd ) =
+            case ResizeBuilder.getPerspectiveOriginPosition animGroupName builder of
+                Nothing ->
+                    ( afterPerspectiveOrigin, Cmd.none )
+
+                Just pos ->
+                    applyPerspectiveOriginPositionResize animGroupName pos afterPerspectiveOrigin
     in
-    ( afterPerspectiveOrigin, perspectiveOriginCmd :: scaleCmd :: translatePositionCmd :: translateCmd :: accCmds )
+    ( afterPerspectiveOriginPosition, perspectiveOriginPositionCmd :: perspectiveOriginCmd :: scaleCmd :: translatePositionCmd :: translateCmd :: accCmds )
 
 
 emptyBounds : Bounds
@@ -490,22 +498,41 @@ applyTranslatePositionResize animGroupName pos ((AnimState state animGroups) as 
                             |> Maybe.map Translate.toRecord
                             |> Maybe.withDefault { x = 0, y = 0, z = 0 }
 
-                    newTranslate =
+                    -- Snapshot follows the live current value for axes not
+                    -- being snapped, so `current` is the right default here.
+                    newSnapshotT =
                         Translate.fromRecord
                             { x = Maybe.withDefault current.x pos.x
                             , y = Maybe.withDefault current.y pos.y
                             , z = Maybe.withDefault current.z pos.z
                             }
 
+                    -- Baseline must follow the existing baseline (the leg's
+                    -- end target, freshly updated by `Translate.bounds`) for
+                    -- axes not being snapped — not the live snapshot, which
+                    -- holds the mid-flight current value.
+                    existingBaselineT =
+                        Builder.getBaseline animGroupName state.builder
+                            |> Maybe.andThen PropertyBaselines.getTranslate
+                            |> Maybe.map Translate.toRecord
+                            |> Maybe.withDefault current
+
+                    newBaselineT =
+                        Translate.fromRecord
+                            { x = Maybe.withDefault existingBaselineT.x pos.x
+                            , y = Maybe.withDefault existingBaselineT.y pos.y
+                            , z = Maybe.withDefault existingBaselineT.z pos.z
+                            }
+
                     updatedAnimGroups =
                         AnimGroups.update animGroupName
-                            (Maybe.map (AnimGroup.setSnapshot (PropertyBaselines.setTranslate newTranslate snapshot)))
+                            (Maybe.map (AnimGroup.setSnapshot (PropertyBaselines.setTranslate newSnapshotT snapshot)))
                             animGroups
 
                     updatedBuilder =
                         state.builder
                             |> Builder.updateBaselines animGroupName
-                                (PropertyBaselines.setTranslate newTranslate)
+                                (PropertyBaselines.setTranslate newBaselineT)
                 in
                 ( AnimState { state | builder = updatedBuilder } updatedAnimGroups
                 , state.commandPort
@@ -514,6 +541,96 @@ applyTranslatePositionResize animGroupName pos ((AnimState state animGroups) as 
                         , x = pos.x
                         , y = pos.y
                         , z = pos.z
+                        }
+                    )
+                )
+
+
+{-| Apply a `PerspectiveOrigin.position` directive for a group's
+perspective-origin. Mirror of [`applyTranslatePositionResize`](#applyTranslatePositionResize):
+writes per-axis `Just newPos` into the snapshot's perspective-origin baseline
+and the builder baseline, then ships a `perspectiveOriginPosition` port
+command. JS validates the static-axis precondition and either snaps the
+live perspective-origin animation's keyframes in place (no cancel, no
+seek) or no-ops the axis. Axes set to `Nothing` are left alone.
+-}
+applyPerspectiveOriginPositionResize : AnimGroupName -> ResizeBuilder.Position -> AnimState msg -> ( AnimState msg, Cmd msg )
+applyPerspectiveOriginPositionResize animGroupName pos ((AnimState state animGroups) as animState) =
+    if pos.x == Nothing && pos.y == Nothing then
+        ( animState, Cmd.none )
+
+    else
+        case AnimGroups.get animGroupName animGroups of
+            Nothing ->
+                ( animState, Cmd.none )
+
+            Just animGroup ->
+                let
+                    snapshot =
+                        AnimGroup.getPropertySnapshot animGroup
+
+                    currentPO =
+                        PropertyBaselines.getPerspectiveOrigin snapshot
+
+                    unit =
+                        currentPO
+                            |> Maybe.map PerspectiveOrigin.getUnit
+                            |> Maybe.withDefault PerspectiveOrigin.PercentUnit
+
+                    current =
+                        currentPO
+                            |> Maybe.map PerspectiveOrigin.toRecord
+                            |> Maybe.withDefault { x = 50, y = 50 }
+
+                    -- Snapshot follows the live current value for axes not
+                    -- being snapped, so `current` is the right default here.
+                    newSnapshotPO =
+                        PerspectiveOrigin.fromRecord unit
+                            { x = Maybe.withDefault current.x pos.x
+                            , y = Maybe.withDefault current.y pos.y
+                            }
+
+                    -- Baseline must follow the existing baseline (the leg's
+                    -- end target, freshly updated by `PerspectiveOrigin.bounds`)
+                    -- for axes not being snapped — not the live snapshot,
+                    -- which holds the mid-flight current value.
+                    existingBaselinePO =
+                        Builder.getBaseline animGroupName state.builder
+                            |> Maybe.andThen PropertyBaselines.getPerspectiveOrigin
+                            |> Maybe.map PerspectiveOrigin.toRecord
+                            |> Maybe.withDefault current
+
+                    newBaselinePO =
+                        PerspectiveOrigin.fromRecord unit
+                            { x = Maybe.withDefault existingBaselinePO.x pos.x
+                            , y = Maybe.withDefault existingBaselinePO.y pos.y
+                            }
+
+                    updatedAnimGroups =
+                        AnimGroups.update animGroupName
+                            (Maybe.map (AnimGroup.setSnapshot (PropertyBaselines.setPerspectiveOrigin newSnapshotPO snapshot)))
+                            animGroups
+
+                    updatedBuilder =
+                        state.builder
+                            |> Builder.updateBaselines animGroupName
+                                (PropertyBaselines.setPerspectiveOrigin newBaselinePO)
+
+                    unitStr =
+                        case unit of
+                            PerspectiveOrigin.PercentUnit ->
+                                "%"
+
+                            PerspectiveOrigin.PxUnit ->
+                                "px"
+                in
+                ( AnimState { state | builder = updatedBuilder } updatedAnimGroups
+                , state.commandPort
+                    (encodePerspectiveOriginPosition
+                        { animGroupName = animGroupName
+                        , x = pos.x
+                        , y = pos.y
+                        , unit = unitStr
                         }
                     )
                 )
