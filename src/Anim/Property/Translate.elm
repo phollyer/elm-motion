@@ -146,7 +146,7 @@ landscape to portrait pulls a now-off-canvas element back into view.
 
 -}
 
-import Anim.Internal.Builder as Builder exposing (AnimBuilder)
+import Anim.Internal.Builder exposing (AnimBuilder)
 import Anim.Internal.Builder.Translate as TB
 import Anim.Internal.Resize.Builder as ResizeBuilder
 import Anim.Resize as Resize

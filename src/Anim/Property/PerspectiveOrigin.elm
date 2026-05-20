@@ -119,7 +119,7 @@ new bounds during `onResize`.
 
 -}
 
-import Anim.Internal.Builder as Builder exposing (AnimBuilder)
+import Anim.Internal.Builder exposing (AnimBuilder)
 import Anim.Internal.Builder.PerspectiveOrigin as PB
 import Anim.Internal.Resize.Builder as ResizeBuilder
 import Anim.Resize as Resize

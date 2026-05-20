@@ -286,7 +286,7 @@ skipped.
 
 -}
 onResize : AnimState -> (ResizeBuilder.Builder -> ResizeBuilder.Builder) -> AnimState
-onResize ((AnimState state animGroups) as animState) buildResize =
+onResize (AnimState state animGroups) buildResize =
     let
         builder =
             ResizeBuilder.build buildResize
@@ -426,13 +426,13 @@ resizeTranslate previousBounds bounds isLooping isPaused cfg =
             (cfg.isComplete || isPaused) && not isLooping
 
         rx =
-            ResizeBuilder.applyAxisLeg previousBounds.x bounds.x oldStart.x oldEnd.x
+            applyAxisLeg previousBounds.x bounds.x oldStart.x oldEnd.x
 
         ry =
-            ResizeBuilder.applyAxisLeg previousBounds.y bounds.y oldStart.y oldEnd.y
+            applyAxisLeg previousBounds.y bounds.y oldStart.y oldEnd.y
 
         rz =
-            ResizeBuilder.applyAxisLeg previousBounds.z bounds.z oldStart.z oldEnd.z
+            applyAxisLeg previousBounds.z bounds.z oldStart.z oldEnd.z
 
         newStart =
             Translate.fromRecord { x = rx.start, y = ry.start, z = rz.start }
@@ -483,6 +483,20 @@ resizeTranslate previousBounds bounds isLooping isPaused cfg =
             , oldDistance = oldDistance
             , newLegDistance = newLegDistance
             }
+
+
+applyAxisLeg :
+    Maybe ResizeBuilder.AxisBounds
+    -> Maybe ResizeBuilder.AxisBounds
+    -> Float
+    -> Float
+    -> { start : Float, end : Float }
+applyAxisLeg maybePrevBounds maybeNewBounds startV endV =
+    let
+        result =
+            ResizeBuilder.applyAxis maybePrevBounds maybeNewBounds startV endV startV
+    in
+    { start = result.start, end = result.end }
 
 
 {-| Update a translate animation across a resize while preserving the
@@ -662,13 +676,13 @@ resizeScale previousBounds bounds isLooping isPaused cfg =
             (cfg.isComplete || isPaused) && not isLooping
 
         rx =
-            ResizeBuilder.applyAxisLeg previousBounds.x bounds.x oldStart.x oldEnd.x
+            applyAxisLeg previousBounds.x bounds.x oldStart.x oldEnd.x
 
         ry =
-            ResizeBuilder.applyAxisLeg previousBounds.y bounds.y oldStart.y oldEnd.y
+            applyAxisLeg previousBounds.y bounds.y oldStart.y oldEnd.y
 
         rz =
-            ResizeBuilder.applyAxisLeg previousBounds.z bounds.z oldStart.z oldEnd.z
+            applyAxisLeg previousBounds.z bounds.z oldStart.z oldEnd.z
 
         newStart =
             Scale.fromRecord { x = rx.start, y = ry.start, z = rz.start }
@@ -882,10 +896,10 @@ resizePerspectiveOrigin previousBounds bounds isLooping isPaused cfg =
             (cfg.isComplete || isPaused) && not isLooping
 
         rx =
-            ResizeBuilder.applyAxisLeg previousBounds.x bounds.x oldStart.x oldEnd.x
+            applyAxisLeg previousBounds.x bounds.x oldStart.x oldEnd.x
 
         ry =
-            ResizeBuilder.applyAxisLeg previousBounds.y bounds.y oldStart.y oldEnd.y
+            applyAxisLeg previousBounds.y bounds.y oldStart.y oldEnd.y
 
         unit =
             PerspectiveOrigin.getUnit cfg.end

@@ -98,7 +98,7 @@ the pipeline. See [clampX](#clampX) for behaviour and example.
 
 -}
 
-import Anim.Internal.Builder as Builder exposing (AnimBuilder)
+import Anim.Internal.Builder exposing (AnimBuilder)
 import Anim.Internal.Builder.Scale as SB
 import Anim.Internal.Resize.Builder as ResizeBuilder
 import Anim.Resize as Resize

@@ -832,18 +832,6 @@ scaleDurationForResize r =
         r.oldDurationMs
 
 
-{-| Per-axis equality on translate records. Used by `computeResizePayload`
-to short-circuit a resize that would result in no visual change (e.g. a
-viewport resize event whose new bounds match the running animation's
-current bounds). Without this guard the library would `cancel()` the
-running WAAPI animation and recreate it, which causes a visible jump on
-alternate-loop animations.
--}
-translateRecordsEqual : { x : Float, y : Float, z : Float } -> { x : Float, y : Float, z : Float } -> Bool
-translateRecordsEqual a b =
-    a.x == b.x && a.y == b.y && a.z == b.z
-
-
 resizeNoopEpsilon : Float
 resizeNoopEpsilon =
     0.001
@@ -1720,11 +1708,6 @@ scalePerspectiveOriginDurationForResize r =
 
     else
         r.oldDurationMs
-
-
-perspectiveOriginRecordsEqual : { x : Float, y : Float } -> { x : Float, y : Float } -> Bool
-perspectiveOriginRecordsEqual a b =
-    a.x == b.x && a.y == b.y
 
 
 
