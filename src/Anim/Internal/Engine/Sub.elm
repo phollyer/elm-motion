@@ -469,27 +469,22 @@ applyAxisLeg maybePrevBounds maybeNewBounds startV endV =
     { start = result.start, end = result.end }
 
 
-{-| Update a translate animation across a resize while preserving the
-**temporal progress ratio** (`elapsedMs / totalDurationMs`).
+{-| Rescale an in-flight `PropertyAnimation` so that the elapsed
+fraction of the new leg matches the elapsed fraction of the old leg.
 
-Because eased progress is a function of that ratio, leaving the ratio
-alone makes the ball land at the same proportional, eased position along
-the new leg automatically. Both `elapsedMs` and `totalDurationMs` scale
-by the leg-length factor so resume-speed matches the new leg.
-
-Used for every active resize path (looping, paused, and one-shot
-mid-flight) so that properties in the same group remain synchronised
-across resize.
+Works for any value type `a` because the body only touches the
+type-generic timing fields (`totalDurationMs`, `elapsedMs`) and
+assigns `newStart` / `newEnd` to `start` / `end`.
 
 -}
 preserveProgress :
-    { cfg : PropertyAnimation Translate
-    , newStart : Translate
-    , newEnd : Translate
+    { cfg : PropertyAnimation a
+    , newStart : a
+    , newEnd : a
     , oldDistance : Float
     , newLegDistance : Float
     }
-    -> PropertyAnimation Translate
+    -> PropertyAnimation a
 preserveProgress { cfg, newStart, newEnd, oldDistance, newLegDistance } =
     let
         scale =
@@ -680,52 +675,13 @@ resizeScale previousBounds bounds isLooping isPaused cfg =
         }
 
     else
-        preserveScaleProgress
+        preserveProgress
             { cfg = cfg
             , newStart = newStart
             , newEnd = newEnd
             , oldDistance = oldDistance
             , newLegDistance = newLegDistance
             }
-
-
-{-| Scale's mirror of [`preserveProgress`](#preserveProgress). See that
-function's doc comment for the strategy semantics.
--}
-preserveScaleProgress :
-    { cfg : PropertyAnimation Scale
-    , newStart : Scale
-    , newEnd : Scale
-    , oldDistance : Float
-    , newLegDistance : Float
-    }
-    -> PropertyAnimation Scale
-preserveScaleProgress { cfg, newStart, newEnd, oldDistance, newLegDistance } =
-    let
-        scale =
-            if oldDistance > 0 then
-                newLegDistance / oldDistance
-
-            else
-                1
-
-        newTotalDuration =
-            if cfg.totalDurationMs > 0 then
-                scale * cfg.totalDurationMs
-
-            else
-                cfg.totalDurationMs
-
-        newElapsedMs =
-            scale * cfg.elapsedMs
-    in
-    { cfg
-        | start = newStart
-        , end = newEnd
-        , totalDurationMs = newTotalDuration
-        , elapsedMs = newElapsedMs
-        , isComplete = False
-    }
 
 
 {-| Apply a one-shot perspective-origin position snap to every
@@ -887,49 +843,13 @@ resizePerspectiveOrigin previousBounds bounds isLooping isPaused cfg =
         }
 
     else
-        preservePerspectiveOriginProgress
+        preserveProgress
             { cfg = cfg
             , newStart = newStart
             , newEnd = newEnd
             , oldDistance = oldDistance
             , newLegDistance = newLegDistance
             }
-
-
-preservePerspectiveOriginProgress :
-    { cfg : PropertyAnimation PerspectiveOrigin
-    , newStart : PerspectiveOrigin
-    , newEnd : PerspectiveOrigin
-    , oldDistance : Float
-    , newLegDistance : Float
-    }
-    -> PropertyAnimation PerspectiveOrigin
-preservePerspectiveOriginProgress { cfg, newStart, newEnd, oldDistance, newLegDistance } =
-    let
-        scale =
-            if oldDistance > 0 then
-                newLegDistance / oldDistance
-
-            else
-                1
-
-        newTotalDuration =
-            if cfg.totalDurationMs > 0 then
-                scale * cfg.totalDurationMs
-
-            else
-                cfg.totalDurationMs
-
-        newElapsedMs =
-            scale * cfg.elapsedMs
-    in
-    { cfg
-        | start = newStart
-        , end = newEnd
-        , totalDurationMs = newTotalDuration
-        , elapsedMs = newElapsedMs
-        , isComplete = False
-    }
 
 
 extractRunningProperties : AnimGroups AnimGroup -> Dict.Dict String (Set String)
