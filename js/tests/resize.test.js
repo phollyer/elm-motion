@@ -786,4 +786,97 @@ describe('resizeTransformAnimation', () => {
         expect(options.duration).toBe(1200);
         expect(newAnim.currentTime).toBeCloseTo(300, 5);
     });
+
+    it('skips cancel+recreate when start/end/duration are unchanged (currentTimeMs-only ticks)', () => {
+        // During a continuous window drag, Elm fires a resize cmd every
+        // Progress tick because `currentTimeMs` advanced - even though
+        // the actual leg geometry (start/end/duration of the moving axis)
+        // is unchanged. Re-running the cancel+recreate path each rAF
+        // jitters the seek and visually appears to speed the animation
+        // up. The fast path must short-circuit this case.
+        const liveAnim = createFakeAnimation({ duration: 1000 });
+        liveAnim.playState = 'running';
+        liveAnim.currentTime = 250;
+        const animateMock = vi.fn(() => createFakeAnimation({ duration: 1000 }));
+        const element = makeElement('box', animateMock);
+        installDom({ element: element, targetId: 'box' });
+
+        const elementAnims = new Map();
+        elementAnims.set('transform', {
+            animation: liveAnim,
+            version: 1,
+            animGroup: 'box',
+            easingKeyframes: null,
+            transformProperties: [],
+            resolvedValues: defaultResolved(),
+            generation: 1,
+            propertyIndex: 0,
+            updateFn: vi.fn()
+        });
+        activeAnimations.set('box', elementAnims);
+        animationGroups.set('box', { propertyIterations: [0], propertyConfigs: [] });
+
+        // Geometry exactly matches resolved.translate (start 0,0,0 -> end
+        // 200,0,0, duration 1000). Only `currentTimeMs` differs from the
+        // running animation's live `currentTime`.
+        resizeTransformAnimation({
+            elementId: 'box',
+            startX: 0, startY: 0, startZ: 0,
+            endX: 200, endY: 0, endZ: 0,
+            currentX: 50, currentY: 0, currentZ: 0,
+            duration: 1000,
+            currentTimeMs: 400
+        });
+
+        // No cancel, no recreate, no seek.
+        expect(liveAnim.cancelCalls).toBe(0);
+        expect(animateMock).not.toHaveBeenCalled();
+        expect(liveAnim.setKeyframesCalls).toHaveLength(0);
+        expect(liveAnim.updateTimingCalls).toHaveLength(0);
+        expect(liveAnim.currentTime).toBe(250);
+
+        // Entry still points at the original animation, version untouched.
+        const entry = activeAnimations.get('box').get('transform');
+        expect(entry.animation).toBe(liveAnim);
+        expect(entry.version).toBe(1);
+    });
+
+    it('still cancels+recreates when only the duration changes', () => {
+        // Sanity check: a real geometry change (duration alone) must
+        // still go through the full path.
+        const liveAnim = createFakeAnimation({ duration: 1000 });
+        liveAnim.playState = 'running';
+        liveAnim.currentTime = 250;
+        const newAnim = createFakeAnimation({ duration: 1500 });
+        const animateMock = vi.fn(() => newAnim);
+        const element = makeElement('box', animateMock);
+        installDom({ element: element, targetId: 'box' });
+
+        const elementAnims = new Map();
+        elementAnims.set('transform', {
+            animation: liveAnim,
+            version: 1,
+            animGroup: 'box',
+            easingKeyframes: null,
+            transformProperties: [],
+            resolvedValues: defaultResolved(),
+            generation: 1,
+            propertyIndex: 0,
+            updateFn: vi.fn()
+        });
+        activeAnimations.set('box', elementAnims);
+        animationGroups.set('box', { propertyIterations: [0], propertyConfigs: [] });
+
+        resizeTransformAnimation({
+            elementId: 'box',
+            startX: 0, startY: 0, startZ: 0,
+            endX: 200, endY: 0, endZ: 0,
+            currentX: 50, currentY: 0, currentZ: 0,
+            duration: 1500,
+            currentTimeMs: 400
+        });
+
+        expect(liveAnim.cancelCalls).toBe(1);
+        expect(animateMock).toHaveBeenCalledTimes(1);
+    });
 });

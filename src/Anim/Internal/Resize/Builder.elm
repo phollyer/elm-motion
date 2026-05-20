@@ -4,27 +4,24 @@ module Anim.Internal.Resize.Builder exposing
     , AxisResult
     , Bounds
     , Builder
-    , CurrentPolicy(..)
     , Entry
-    , Policy
-    , RangePolicy(..)
-    , TimingPolicy(..)
+    , Position
     , applyAxis
+    , applyAxisPosition
     , bounds
     , build
-    , clampPolicy
     , empty
     , getPerspectiveOrigin
     , getScale
     , getTranslate
+    , getTranslatePosition
     , groups
     , isEmpty
     , merge
-    , proportionalPolicy
-    , retargetPolicy
     , setPerspectiveOrigin
     , setScale
     , setTranslate
+    , setTranslatePosition
     )
 
 {-| Internal accumulator used by `Anim.Resize.Builder.Builder` (the public
@@ -37,83 +34,15 @@ exposed from property modules - e.g.
 
 Each call records a bounds directive against a specific anim group, so a single
 builder can target many groups at once. Per-group group-wide defaults
-may also be supplied via [`Anim.Resize.bounds`](Anim-Resize#bounds);
-engines look up the resize policy for each property from the `AnimBuilder`'s
-persistent state and fall back to `proportionalPolicy` by default.
+may also be supplied via [`Anim.Resize.bounds`](Anim-Resize#bounds).
+
+Resize behaviour is always proportional: endpoints track the new bounds,
+the current value is proportionally remapped from the old range into the
+new range, and the timing cursor's normalised progress is preserved.
 
 -}
 
 import Dict exposing (Dict)
-
-
-{-| Determines whether animation endpoints follow the new bounds or keep their
-configured values.
--}
-type RangePolicy
-    = Pinned
-    | Adaptive
-
-
-{-| Determines how the in-flight current value is repositioned when bounds
-change.
--}
-type CurrentPolicy
-    = Fixed
-    | Relative
-
-
-{-| Determines how the animation's time cursor is updated after a resize.
--}
-type TimingPolicy
-    = SolveFromCurrent
-    | PreserveProgress
-
-
-{-| Composable resize policy controlling endpoint, current-value, and timing
-behaviour independently.
-
-Use the preset helpers (`proportionalPolicy`, `clampPolicy`, `retargetPolicy`)
-as a starting point and combine field-level setters for fine-grained control.
-
--}
-type alias Policy =
-    { range : RangePolicy
-    , current : CurrentPolicy
-    , timing : TimingPolicy
-    }
-
-
-{-| Preserve normalised progress: endpoints track the new bounds, current
-value is proportionally remapped, and the timing cursor is preserved.
--}
-proportionalPolicy : Policy
-proportionalPolicy =
-    { range = Adaptive
-    , current = Relative
-    , timing = PreserveProgress
-    }
-
-
-{-| Clamp to new bounds: endpoints stay at their configured values (clipped),
-and the current value is clipped. JS solves for the matching time cursor.
--}
-clampPolicy : Policy
-clampPolicy =
-    { range = Pinned
-    , current = Fixed
-    , timing = SolveFromCurrent
-    }
-
-
-{-| Track bounds edge-to-edge: endpoints follow the new bounds, current value
-stays on its pixel (clamped), and JS solves for the matching time cursor.
--}
-retargetPolicy : Policy
-retargetPolicy =
-    { range = Adaptive
-    , current = Fixed
-    , timing = SolveFromCurrent
-    }
 
 
 {-| The name of an anim group a directive targets.
@@ -123,8 +52,7 @@ type alias AnimGroupName =
 
 
 {-| One pending resize bounds directive for a single property (or the group
-default). The policy controlling how bounds are applied is stored in the
-`AnimBuilder`'s persistent state and looked up at resize time.
+default).
 -}
 type alias Entry =
     { bounds : Bounds }
@@ -142,11 +70,29 @@ type alias GroupEntries =
     , translate : Maybe Entry
     , scale : Maybe Entry
     , perspectiveOrigin : Maybe Entry
+    , translatePosition : Maybe Position
     }
 
 
 type alias AxisBounds =
     { min : Float, max : Float }
+
+
+{-| Per-axis one-shot position snap for a static axis (an axis where the
+property's `start` equals its `end`).
+
+Each axis is `Just newPos` to snap that axis, or `Nothing` to leave it
+untouched. Engines apply this AFTER any bounds directive, and only on
+static axes - an animating axis (`start /= end`) is left unchanged
+because the next interpolation frame would overwrite a current-only
+snap.
+
+-}
+type alias Position =
+    { x : Maybe Float
+    , y : Maybe Float
+    , z : Maybe Float
+    }
 
 
 {-| Per-axis bounds describing the new container size. An axis left as
@@ -181,7 +127,12 @@ empty =
 
 emptyEntries : GroupEntries
 emptyEntries =
-    { default = Nothing, translate = Nothing, scale = Nothing, perspectiveOrigin = Nothing }
+    { default = Nothing
+    , translate = Nothing
+    , scale = Nothing
+    , perspectiveOrigin = Nothing
+    , translatePosition = Nothing
+    }
 
 
 {-| Apply a builder transformer (composed property `onResize` calls) to
@@ -195,8 +146,8 @@ build fn =
 {-| Right-biased merge of two builders. For each anim group present in
 both builders, per-property entries from the right builder override those
 from the left. Used by engines to fold incoming resize directives into a
-cached builder so policy swaps can be re-applied against the most recent
-bounds without requiring another resize event.
+cached builder so re-applying the most recent bounds doesn't require
+another resize event.
 -}
 merge : Builder -> Builder -> Builder
 merge (Builder left) (Builder right) =
@@ -217,6 +168,7 @@ mergeEntries left right =
     , translate = orMaybe right.translate left.translate
     , scale = orMaybe right.scale left.scale
     , perspectiveOrigin = orMaybe right.perspectiveOrigin left.perspectiveOrigin
+    , translatePosition = orMaybe right.translatePosition left.translatePosition
     }
 
 
@@ -273,6 +225,26 @@ getTranslate name (Builder d) =
                     Nothing ->
                         e.default
             )
+
+
+{-| Record a one-shot translate-position snap for the given anim group.
+Applied after any bounds directive; only static axes are affected.
+-}
+setTranslatePosition : AnimGroupName -> Position -> Builder -> Builder
+setTranslatePosition name pos (Builder d) =
+    Builder
+        (Dict.update name
+            (updateEntries (\e -> { e | translatePosition = Just pos }))
+            d
+        )
+
+
+{-| Read the translate-position snap recorded for the given anim group, if any.
+-}
+getTranslatePosition : AnimGroupName -> Builder -> Maybe Position
+getTranslatePosition name (Builder d) =
+    Dict.get name d
+        |> Maybe.andThen .translatePosition
 
 
 {-| Record a scale-axis resize bounds directive for the given anim group.
@@ -367,9 +339,23 @@ isEmpty bounds_ =
     bounds_.x == Nothing && bounds_.y == Nothing && bounds_.z == Nothing
 
 
-{-| Compute new per-axis start / end / current.
+{-| Compute new per-axis start / end / current under proportional resize.
 
-`Nothing` bounds = leave axis untouched.
+`maybeNewBounds = Nothing` leaves the axis untouched.
+
+`maybePrevBounds` is the bounds last applied to this axis (i.e. the viewport
+range that `currentV` is currently positioned within). When `Just`, the
+current value is proportionally remapped from the previous viewport range
+into the new viewport range. When `Nothing` (first resize for this axis,
+no prior bounds recorded) the leg endpoints `startV..endV` are used as a
+fallback reference range - correct when the user's animation endpoints
+align with the original viewport extents.
+
+Using the previous bounds (rather than the current leg endpoints) is what
+preserves visual position across **successive** resizes during a single
+in-flight one-shot leg: after the first resize chops the leg to
+`(newCurrent, legEnd)`, the leg range no longer represents the viewport
+range, so a leg-derived `oldRange` would compress the proportional remap.
 
 `isLooping` controls whether the result preserves full extremes (so that
 ping-pong continues to span the full new range) or shrinks to a single
@@ -377,15 +363,15 @@ leg (one-shot animations finish at the new target).
 
 -}
 applyAxis :
-    Policy
-    -> Bool
+    Bool
+    -> Maybe AxisBounds
     -> Maybe AxisBounds
     -> Float
     -> Float
     -> Float
     -> AxisResult
-applyAxis policy isLooping maybeBounds startV endV currentV =
-    case maybeBounds of
+applyAxis isLooping maybePrevBounds maybeNewBounds startV endV currentV =
+    case maybeNewBounds of
         Nothing ->
             { start = startV, end = endV, current = currentV }
 
@@ -408,64 +394,65 @@ applyAxis policy isLooping maybeBounds startV endV currentV =
 
                         else
                             ( b.max, b.min )
-                in
-                case policy.range of
-                    Pinned ->
-                        -- The configured start/end are treated as the
-                        -- animation's intent; the new bounds only act as a
-                        -- clip box.
-                        { start = clamp b.min b.max startV
-                        , end = clamp b.min b.max endV
-                        , current = clamp b.min b.max currentV
-                        }
 
-                    Adaptive ->
-                        -- Bounds drive the leg's endpoints.
-                        let
-                            newCurrent =
-                                case policy.current of
-                                    Fixed ->
-                                        -- Current value stays on its pixel
-                                        -- (clamped into bounds) - no visual jump.
-                                        clamp b.min b.max currentV
+                    ( oldMin, oldRange ) =
+                        case maybePrevBounds of
+                            Just pb ->
+                                ( pb.min, pb.max - pb.min )
 
-                                    Relative ->
-                                        -- Current value is proportionally
-                                        -- remapped from old range into new range.
-                                        let
-                                            oldMin =
-                                                Basics.min startV endV
+                            Nothing ->
+                                ( Basics.min startV endV
+                                , abs (endV - startV)
+                                )
 
-                                            oldMax =
-                                                Basics.max startV endV
+                    newRange =
+                        b.max - b.min
 
-                                            oldRange =
-                                                oldMax - oldMin
-
-                                            newRange =
-                                                b.max - b.min
-                                        in
-                                        b.min + ((currentV - oldMin) / oldRange) * newRange
-                        in
-                        if isLooping then
-                            { start = legStart
-                            , end = legEnd
-                            , current = newCurrent
-                            }
+                    newCurrent =
+                        if oldRange == 0 then
+                            clamp b.min b.max currentV
 
                         else
-                            case policy.timing of
-                                -- Keep full leg extrema for SolveFromCurrent so
-                                -- the runtime can recover in-flight progress from
-                                -- `current` against a non-degenerate range.
-                                SolveFromCurrent ->
-                                    { start = legStart
-                                    , end = legEnd
-                                    , current = newCurrent
-                                    }
+                            b.min + ((currentV - oldMin) / oldRange) * newRange
+                in
+                if isLooping then
+                    { start = legStart
+                    , end = legEnd
+                    , current = newCurrent
+                    }
 
-                                PreserveProgress ->
-                                    { start = newCurrent
-                                    , end = legEnd
-                                    , current = newCurrent
-                                    }
+                else
+                    { start = newCurrent
+                    , end = legEnd
+                    , current = newCurrent
+                    }
+
+
+{-| Apply a one-shot position snap to one axis.
+
+  - `Nothing` -> axis unchanged.
+  - `Just p` on a static axis (`startV == endV`) -> snap all three of
+    `start`, `end`, `current` to `p`.
+  - `Just p` on an animating axis (`startV /= endV`) -> axis unchanged.
+    The next interpolation frame would overwrite a current-only snap,
+    so `position` is meaningless on an animating axis. Callers should
+    use `bounds` (with proportional remap) to retarget animating axes.
+
+-}
+applyAxisPosition :
+    Maybe Float
+    -> Float
+    -> Float
+    -> Float
+    -> AxisResult
+applyAxisPosition maybeNewPos startV endV currentV =
+    case maybeNewPos of
+        Nothing ->
+            { start = startV, end = endV, current = currentV }
+
+        Just newPos ->
+            if startV == endV then
+                { start = newPos, end = newPos, current = newPos }
+
+            else
+                { start = startV, end = endV, current = currentV }

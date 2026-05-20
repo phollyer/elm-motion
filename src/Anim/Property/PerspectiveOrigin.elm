@@ -9,7 +9,7 @@ module Anim.Property.PerspectiveOrigin exposing
     , easing
     , spring
     , clampX, clampY, unclampX, unclampY
-    , resizePolicy, bounds
+    , bounds
     )
 
 {-| Animate the CSS `perspective-origin` property, which controls the vanishing point
@@ -115,7 +115,7 @@ the pipeline. See [clampX](#clampX) for behaviour.
 Set how perspective-origin responds to viewport/container resize and provide
 new bounds during `onResize`.
 
-@docs resizePolicy, bounds
+@docs bounds
 
 -}
 
@@ -491,27 +491,12 @@ unclampY =
 -- ============================================================
 
 
-{-| Set the perspective-origin resize policy for an anim group.
-
-Call this once at init time. Later, when `PerspectiveOrigin.bounds` is used,
-the engine applies these rules to in-flight perspective-origin animation.
-
-If you do not set a policy, perspective-origin uses
-[`Resize.proportional`](Anim-Resize#proportional).
-
--}
-resizePolicy : AnimGroupName -> Resize.Policy -> AnimBuilder mode -> AnimBuilder mode
-resizePolicy groupName policy =
-    Builder.setPropertyResizePolicy groupName "perspectiveOrigin" policy
-
-
 {-| Perspective-origin's contribution to a resize bounds directive for the
 named anim group.
 
 Pass this to `WAAPI.onResize` or `Sub.onResize`.
 
 Leave an axis as `Nothing` to ignore it. `z` is ignored for this property.
-Set the matching policy first with [`resizePolicy`](#resizePolicy).
 
 -}
 bounds : AnimGroupName -> Resize.Bounds -> Resize.Builder -> Resize.Builder

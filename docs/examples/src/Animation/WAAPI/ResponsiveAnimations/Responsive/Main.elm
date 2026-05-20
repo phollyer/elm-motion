@@ -2,7 +2,6 @@ port module Animation.WAAPI.ResponsiveAnimations.Responsive.Main exposing (..)
 
 import Anim.Engine.WAAPI as WAAPI exposing (AnimGroupName)
 import Anim.Property.Translate as Translate
-import Anim.Resize as Resize
 import Browser
 import Browser.Dom as Dom
 import Browser.Events
@@ -77,24 +76,14 @@ widthPctToFloat pct =
             100
 
 
-topBoxAnim : String
-topBoxAnim =
-    "topBoxAnim"
-
-
-middleBoxAnim : String
-middleBoxAnim =
-    "middleBoxAnim"
-
-
-bottomBoxAnim : String
-bottomBoxAnim =
-    "bottomBoxAnim"
+boxAnim : String
+boxAnim =
+    "boxAnim"
 
 
 allGroups : List AnimGroupName
 allGroups =
-    [ topBoxAnim, middleBoxAnim, bottomBoxAnim ]
+    [ boxAnim ]
 
 
 rowState : AnimGroupName -> Model -> AnimPlayState
@@ -108,10 +97,6 @@ setRowState group state model =
     { model | rowStates = Dict.insert group state model.rowStates }
 
 
-{-| One id is enough — both rows share the same inner width because they
-sit in the same fixed-width stage. Whichever row we measure tells us the
-runway available to both boxes.
--}
 trackId : String
 trackId =
     "proportional-track"
@@ -131,9 +116,7 @@ init : () -> ( Model, Cmd Msg )
 init _ =
     ( { animState =
             WAAPI.init motionCmd motionMsg <|
-                [ Translate.initX topBoxAnim 0
-                , Translate.initX middleBoxAnim 0
-                , Translate.initX bottomBoxAnim 0
+                [ Translate.initX boxAnim 0
                 ]
       , widthPct = Normal
       , trackPx = 0
@@ -157,23 +140,6 @@ animate animGroupName endTarget =
 
 
 
----8<-- [start:policy-init]
-
-
-setResizePolicy : AnimGroupName -> WAAPI.AnimBuilder mode -> WAAPI.AnimBuilder mode
-setResizePolicy animGroupName =
-    if animGroupName == topBoxAnim then
-        Translate.resizePolicy animGroupName Resize.proportional
-
-    else if animGroupName == middleBoxAnim then
-        Translate.resizePolicy animGroupName Resize.clamp
-
-    else
-        Translate.resizePolicy animGroupName Resize.retarget
-
-
-
----8<-- [end:policy-init]
 -- UPDATE
 
 
@@ -212,7 +178,6 @@ update msg model =
 
         SetWidth pct ->
             ( { model | widthPct = pct }
-              -- mimic Browser.onResize event by setting the new width and then dispatching the OnResize msg after a short delay.
             , Process.sleep 100
                 |> Task.perform (\_ -> OnResize)
             )
@@ -233,11 +198,6 @@ update msg model =
 
 
 ---8<-- [end:on-resize-update]
-
-
-startAnimation : Model -> ( Model, Cmd Msg )
-startAnimation model =
-    foldGroups startRow model
 
 
 foldGroups : (AnimGroupName -> ( Model, Cmd Msg ) -> ( Model, Cmd Msg )) -> Model -> ( Model, Cmd Msg )
@@ -280,8 +240,7 @@ startRow group ( model, prevCmd ) =
         NotStarted ->
             let
                 ( newState, cmd ) =
-                    WAAPI.animate model.animState
-                        (setResizePolicy group >> animate group target)
+                    WAAPI.animate model.animState (animate group target)
             in
             ( setRowState group Playing { model | animState = newState }
             , Cmd.batch [ prevCmd, cmd ]
@@ -396,9 +355,7 @@ view model =
                 [ style "width" (String.fromFloat (widthPctToFloat model.widthPct) ++ "%")
                 , style "align-self" "flex-start"
                 ]
-                [ trackRow "Proportional" trackId topBoxAnim proportionalColor model
-                , trackRow "Clamp" "" middleBoxAnim clampColor model
-                , trackRow "Retarget" "" bottomBoxAnim retargetColor model
+                [ trackRow "Proportional" trackId boxAnim proportionalColor model
                 ]
             ]
         ]
@@ -484,13 +441,3 @@ rowStateLabel state =
 proportionalColor : String
 proportionalColor =
     "#28a745"
-
-
-clampColor : String
-clampColor =
-    "#fd7e14"
-
-
-retargetColor : String
-retargetColor =
-    "#dc3545"

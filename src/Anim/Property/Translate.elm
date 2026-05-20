@@ -10,7 +10,8 @@ module Anim.Property.Translate exposing
     , easing
     , spring
     , clampX, clampY, clampZ, unclampX, unclampY, unclampZ
-    , resizePolicy, bounds
+    , bounds
+    , position
     )
 
 {-| Move elements along the X, Y, and Z axes.
@@ -140,7 +141,8 @@ landscape to portrait pulls a now-off-canvas element back into view.
 
 ## Resize
 
-@docs resizePolicy, bounds
+@docs bounds
+@docs position
 
 -}
 
@@ -940,26 +942,6 @@ unclampZ =
 -- ============================================================
 
 
-{-| Set the translate resize policy for an anim group.
-
-Call this once at init time. Later, when `Translate.bounds` is used, the
-engine applies these rules to the in-flight translate animation.
-
-    WAAPI.init motionCmd
-        motionMsg
-        [ Translate.initX "box" 0
-            >> Translate.resizePolicy "box" Resize.retarget
-        ]
-
-If you do not set a policy, translate uses
-[`Resize.proportional`](Anim-Resize#proportional).
-
--}
-resizePolicy : AnimGroupName -> Resize.Policy -> AnimBuilder mode -> AnimBuilder mode
-resizePolicy groupName policy =
-    Builder.setPropertyResizePolicy groupName "translate" policy
-
-
 {-| Apply new translate bounds for an anim group during resize.
 
 Pass this to `WAAPI.onResize` or `Sub.onResize`:
@@ -977,10 +959,37 @@ You can resize multiple anim groups in one call:
         Translate.bounds "box" boxBounds
             >> Translate.bounds "card" cardBounds
 
-Leave an axis as `Nothing` to ignore it. Set the matching policy first with
-[`resizePolicy`](#resizePolicy).
+Leave an axis as `Nothing` to ignore it.
 
 -}
 bounds : AnimGroupName -> Resize.Bounds -> Resize.Builder -> Resize.Builder
 bounds =
     ResizeBuilder.setTranslate
+
+
+{-| One-shot position snap for an anim group's translate property during resize.
+
+Use `position` when an axis is **not** animating (`start == end`) but its
+correct screen position depends on layout - for example, a dot that sits
+on the right edge of an area needs `x = newWidth` after a portrait →
+landscape resize.
+
+    Sub.onResize model.animState <|
+        Translate.bounds "dot" newBounds
+            >> Translate.position "dot"
+                { x = Just newAreaSize.width
+                , y = Nothing
+                , z = Nothing
+                }
+
+Each axis is `Just newPos` to snap that axis, or `Nothing` to leave it
+untouched. On a static axis the snap sets `start`, `end`, and `current`
+to `newPos`. On an animating axis (`start /= end`) the snap is ignored,
+because the next interpolation frame would overwrite a current-only
+change. Use [`bounds`](#bounds) (with its proportional remap) to
+retarget animating axes.
+
+-}
+position : AnimGroupName -> { x : Maybe Float, y : Maybe Float, z : Maybe Float } -> Resize.Builder -> Resize.Builder
+position =
+    ResizeBuilder.setTranslatePosition

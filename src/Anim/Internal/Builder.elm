@@ -56,7 +56,6 @@ module Anim.Internal.Builder exposing
     , getEasingWithDefault
     , getFrozenAxes
     , getIterations
-    , getResizePolicy
     , getRuntimeBaseline
     , getScrollAxis
     , getScrollSource
@@ -76,13 +75,11 @@ module Anim.Internal.Builder exposing
     , loopForever
     , mergeBaselines
     , normalizeTransformOrder
-    , policy
     , process
     , processProperties
     , processedPropertyType
     , setAnimTarget
     , setClamp
-    , setPropertyResizePolicy
     , setScrollAxis
     , setScrollSource
     , setViewRangeEnd
@@ -107,7 +104,6 @@ import Anim.Internal.Property.Scale as Scale exposing (Scale)
 import Anim.Internal.Property.Size as Size exposing (Size)
 import Anim.Internal.Property.Skew as Skew exposing (Skew)
 import Anim.Internal.Property.Translate as Translate exposing (Translate)
-import Anim.Internal.Resize.Builder as Resize
 import Dict exposing (Dict)
 import Motion.Easing exposing (Easing(..))
 import Motion.Internal.Spring as SpringInt exposing (Spring)
@@ -291,21 +287,6 @@ type alias PersistentState =
     , runtimeBaselines : AnimGroups PropertyBaselines
     , runningProperties : Dict AnimGroupName (Set String)
     , propertyClamps : Dict ( AnimGroupName, String, String ) ( Float, Float )
-    , resizePolicies : Dict AnimGroupName GroupResizePolicies
-    }
-
-
-{-| Per-group resize policy storage.
-
-  - `default` - the group-wide fallback policy applied when no per-property
-    entry exists for a given property.
-  - `perProperty` - explicit policies keyed by property name (e.g. "translate",
-    "scale"). Future properties ("opacity", "size", etc.) are added here.
-
--}
-type alias GroupResizePolicies =
-    { default : Maybe Resize.Policy
-    , perProperty : Dict String Resize.Policy
     }
 
 
@@ -441,7 +422,6 @@ initState =
     , runtimeBaselines = AnimGroups.init
     , runningProperties = Dict.empty
     , propertyClamps = Dict.empty
-    , resizePolicies = Dict.empty
     }
 
 
@@ -1102,73 +1082,6 @@ orderedRange a b =
 
     else
         ( b, a )
-
-
-{-| Set the group-wide default resize policy for the named anim group.
-
-Used by engines as the fallback when no per-property policy is stored.
-
--}
-policy : AnimGroupName -> Resize.Policy -> AnimBuilder mode -> AnimBuilder mode
-policy groupName policy_ (AnimBuilder data) =
-    let
-        state =
-            data.state
-
-        current =
-            Maybe.withDefault { default = Nothing, perProperty = Dict.empty }
-                (Dict.get groupName state.resizePolicies)
-
-        updated =
-            { current | default = Just policy_ }
-    in
-    AnimBuilder { data | state = { state | resizePolicies = Dict.insert groupName updated state.resizePolicies } }
-
-
-{-| Set a per-property resize policy for the named anim group.
-
-`propertyKey` is a stable string identifier for the property, e.g. `"translate"` or `"scale"`.
-Future properties such as `"opacity"` or `"size"` are added here.
-
--}
-setPropertyResizePolicy : AnimGroupName -> String -> Resize.Policy -> AnimBuilder mode -> AnimBuilder mode
-setPropertyResizePolicy groupName propertyKey policy_ (AnimBuilder data) =
-    let
-        state =
-            data.state
-
-        current =
-            Maybe.withDefault { default = Nothing, perProperty = Dict.empty }
-                (Dict.get groupName state.resizePolicies)
-
-        updated =
-            { current | perProperty = Dict.insert propertyKey policy_ current.perProperty }
-    in
-    AnimBuilder { data | state = { state | resizePolicies = Dict.insert groupName updated state.resizePolicies } }
-
-
-{-| Look up the effective resize policy for a given anim group and property.
-
-Resolution order:
-
-1.  Per-property entry for `propertyKey` in the group
-2.  Group-wide default for the group
-3.  Library default: `Resize.proportionalPolicy`
-
--}
-getResizePolicy : AnimGroupName -> String -> AnimBuilder mode -> Resize.Policy
-getResizePolicy groupName propertyKey (AnimBuilder data) =
-    case Dict.get groupName data.state.resizePolicies of
-        Nothing ->
-            Resize.proportionalPolicy
-
-        Just policies ->
-            case Dict.get propertyKey policies.perProperty of
-                Just p ->
-                    p
-
-                Nothing ->
-                    Maybe.withDefault Resize.proportionalPolicy policies.default
 
 
 clearAnimData : AnimBuilder mode -> AnimBuilder mode

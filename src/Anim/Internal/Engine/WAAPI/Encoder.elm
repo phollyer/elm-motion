@@ -5,6 +5,7 @@ module Anim.Internal.Engine.WAAPI.Encoder exposing
     , encodeResize
     , encodeRestart
     , encodeScroll
+    , encodeTranslatePosition
     , encodeView
     )
 
@@ -280,6 +281,40 @@ encodeResize r =
                     []
     in
     Encode.object (baseFields ++ unitField)
+
+
+{-| Encode a `translatePosition` directive.
+
+This is a static-axis snap request emitted by
+[`Anim.Property.Translate.position`](Anim-Property-Translate#position) via
+the WAAPI engine's `onResize`. Each axis is either `Just newPos` (snap
+this axis to `newPos`) or `Nothing` (leave this axis alone). JS-side
+static-axis validation lives in `js/src/animations.js` -
+`_translatePositionImmediate` only snaps an axis whose running
+animation has equal start/end values.
+
+-}
+encodeTranslatePosition :
+    { animGroupName : AnimGroupName
+    , x : Maybe Float
+    , y : Maybe Float
+    , z : Maybe Float
+    }
+    -> Encode.Value
+encodeTranslatePosition r =
+    Encode.object
+        [ ( "type", Encode.string "translatePosition" )
+        , ( "elementId", Encode.string r.animGroupName )
+        , ( "animGroup", Encode.string r.animGroupName )
+        , ( "x", encodeMaybeFloat r.x )
+        , ( "y", encodeMaybeFloat r.y )
+        , ( "z", encodeMaybeFloat r.z )
+        ]
+
+
+encodeMaybeFloat : Maybe Float -> Encode.Value
+encodeMaybeFloat =
+    Maybe.map Encode.float >> Maybe.withDefault Encode.null
 
 
 encodeProcessedAnimGroupConfig :

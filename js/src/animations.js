@@ -12,6 +12,21 @@ function isFiniteNumber(value) {
     return typeof value === 'number' && Number.isFinite(value);
 }
 
+// Targeted debug logging for the WAAPI resize / translatePosition path.
+// Enable from a browser console with `window.__ELM_MOTION_DEBUG = true`
+// (or `globalThis.__ELM_MOTION_DEBUG = true`). When disabled the helper
+// short-circuits before any string formatting so the cost is one global
+// property read per call site.
+function motionDebug(tag, payload) {
+    try {
+        if (!globalThis.__ELM_MOTION_DEBUG) return;
+        // eslint-disable-next-line no-console
+        console.log('[elm-motion]', tag, payload);
+    } catch (_err) {
+        // Never let debug logging throw into production callers.
+    }
+}
+
 function distance3(a, b) {
     const dx = a.x - b.x;
     const dy = a.y - b.y;
@@ -154,6 +169,37 @@ function sanitizeResizeDuration(candidateDuration, oldDuration) {
     }
 
     return candidateDuration;
+}
+
+/**
+ * Detect a resize cmd whose geometry exactly matches what the WAAPI
+ * animation is already running. Used to short-circuit the cancel+recreate
+ * path when Elm fires a resize purely because `currentTimeMs` advanced
+ * (Progress event tick during a continuous drag) - if start/end/duration
+ * for the resized slot are unchanged, recreating the animation would
+ * needlessly seek the playhead and visually appear to speed the
+ * animation up frame-by-frame during the drag.
+ *
+ * Comparison is strict (`===`) on the numbers Elm shipped: Elm's own
+ * `noChange` guard already filters out near-equal geometry via its
+ * epsilon, so any cmd that reaches JS with start/end/duration matching
+ * the resolved slot byte-for-byte is the pure `currentTimeMs`-only case
+ * we want to skip.
+ */
+function isResizeGeometryUnchanged(commandData, slot, oldDuration) {
+    if (!slot) {
+        return false;
+    }
+    const payloadDuration = sanitizeResizeDuration(Number(commandData.duration), oldDuration);
+    const hasBaseline = commandData.hasAnimationBaseline !== false;
+    const newDuration = hasBaseline ? payloadDuration : oldDuration;
+    return Number(commandData.startX) === Number(slot.startX)
+        && Number(commandData.startY) === Number(slot.startY)
+        && Number(commandData.startZ) === Number(slot.startZ)
+        && Number(commandData.endX) === Number(slot.endX)
+        && Number(commandData.endY) === Number(slot.endY)
+        && Number(commandData.endZ) === Number(slot.endZ)
+        && newDuration === Number(slot.duration);
 }
 
 const TRANSFORM_STATE_KEYS = {
@@ -743,8 +789,17 @@ export function resizeTransformAnimation(commandData) {
  * Per-frame resize coalescing. Keyed by `${animGroup}:${property || 'translate'}`
  * so commands targeting different properties of the same element do not
  * stomp each other. Only the latest payload per key per frame is applied.
+ *
+ * `pendingPositions` queues `translatePosition` snaps for the same
+ * coalescing tick. They flush AFTER `pendingResizes` so that a resize
+ * handler firing in the same tick cannot overwrite a static-axis snap
+ * that the position directive established. Elm's `applyGroupResize`
+ * emits the translate-bounds cmd before the translate-position cmd, so
+ * preserving that ordering across the JS wire requires position to win
+ * the last write.
  */
 const pendingResizes = new Map();
+const pendingPositions = new Map();
 let pendingResizeFrame = null;
 
 function scheduleResize(commandData) {
@@ -757,7 +812,22 @@ function scheduleResize(commandData) {
     }
     const key = `${animGroup}:${commandData.property || 'translate'}`;
     pendingResizes.set(key, commandData);
+    armResizeFrame();
+}
 
+function schedulePosition(commandData) {
+    const animGroup = commandData.elementId || commandData.animGroup;
+    if (!animGroup) {
+        _translatePositionAnimationImmediate(commandData);
+        return;
+    }
+    // Position snaps are translate-only, so a single key per group is
+    // sufficient — the latest payload wins per frame.
+    pendingPositions.set(animGroup, commandData);
+    armResizeFrame();
+}
+
+function armResizeFrame() {
     const raf = typeof globalThis !== 'undefined' && typeof globalThis.requestAnimationFrame === 'function'
         ? globalThis.requestAnimationFrame
         : null;
@@ -776,20 +846,36 @@ function scheduleResize(commandData) {
 }
 
 /**
- * Drain the coalesced resize queue immediately. Exported so tests and
- * shutdown paths can force a flush without waiting for a rAF tick.
+ * Drain the coalesced resize + position queues immediately. Exported so
+ * tests and shutdown paths can force a flush without waiting for a rAF
+ * tick. Resize entries flush first so that any same-frame position
+ * snap gets the final word on the static-axis baseline.
  */
 export function flushPendingResizes() {
-    if (pendingResizes.size === 0) {
+    if (pendingResizes.size === 0 && pendingPositions.size === 0) {
         return;
     }
-    const batch = Array.from(pendingResizes.values());
+    const resizeBatch = Array.from(pendingResizes.values());
+    const positionBatch = Array.from(pendingPositions.values());
     pendingResizes.clear();
-    for (const payload of batch) {
+    pendingPositions.clear();
+    for (const payload of resizeBatch) {
         try {
             _resizeTransformAnimationImmediate(payload);
         } catch (err) {
             reportError(`resize flush failed: ${err && err.message ? err.message : err}`, {
+                source: 'animation',
+                severity: 'error',
+                code: 'COMMAND_FAILED',
+                engine: 'WAAPI'
+            });
+        }
+    }
+    for (const payload of positionBatch) {
+        try {
+            _translatePositionAnimationImmediate(payload);
+        } catch (err) {
+            reportError(`translatePosition flush failed: ${err && err.message ? err.message : err}`, {
                 source: 'animation',
                 severity: 'error',
                 code: 'COMMAND_FAILED',
@@ -849,6 +935,35 @@ export function _resizeTransformAnimationImmediate(commandData) {
 
     const animation = existing.animation;
     if (!animation || !animation.effect) {
+        return;
+    }
+
+    motionDebug('resize.enter', {
+        animGroup,
+        property: propertyKey,
+        payloadStart: { x: commandData.startX, y: commandData.startY, z: commandData.startZ },
+        payloadEnd: { x: commandData.endX, y: commandData.endY, z: commandData.endZ },
+        payloadCurrent: { x: commandData.currentX, y: commandData.currentY, z: commandData.currentZ },
+        payloadDuration: commandData.duration,
+        payloadCurrentTimeMs: commandData.currentTimeMs,
+        hasBaseline: commandData.hasAnimationBaseline,
+        slotStart: { x: resolved[propertyKey].startX, y: resolved[propertyKey].startY, z: resolved[propertyKey].startZ },
+        slotEnd: { x: resolved[propertyKey].endX, y: resolved[propertyKey].endY, z: resolved[propertyKey].endZ },
+        slotDuration: resolved[propertyKey].duration,
+        liveCurrentTime: animation.currentTime,
+        liveTimingDuration: animation.effect.getTiming().duration,
+        livePlayState: animation.playState
+    });
+
+    // Fast path: when start/end/duration of the resized slot are identical
+    // to what JS already has, the resize cmd is purely advisory (Elm fired
+    // because `currentTimeMs` drifted as Progress events advanced — the
+    // engine's geometry is unchanged). Skipping the cancel+recreate avoids
+    // a per-rAF restart that the user perceives as the animation speeding
+    // up during a continuous window drag, while leaving the running WAAPI
+    // animation to keep ticking on its own undisturbed clock.
+    if (isResizeGeometryUnchanged(commandData, resolved[propertyKey], Number(animation.effect.getTiming().duration) || 0)) {
+        motionDebug('resize.fastPathSkip', { animGroup, property: propertyKey });
         return;
     }
 
@@ -1188,6 +1303,15 @@ export function _resizeTransformAnimationImmediate(commandData) {
         }
     }
 
+    motionDebug('resize.recreated', {
+        animGroup,
+        oldDuration,
+        newDuration,
+        newCurrentTime,
+        newLiveCurrentTime: newAnimation.currentTime,
+        wasPaused
+    });
+
     if (wasPaused) {
         try { newAnimation.pause(); } catch (_pauseErr) { /* non-fatal */ }
     }
@@ -1201,6 +1325,174 @@ export function _resizeTransformAnimationImmediate(commandData) {
         newVersion,
         transformEntry.resolvedValues
     );
+}
+
+/**
+ * Snap one or more translate axes of a group to a fixed pixel position.
+ *
+ * Triggered by Elm `Anim.Property.Translate.position` via the WAAPI
+ * engine's `onResize`. Each axis in `commandData` is either a number
+ * (snap this axis to that pixel value) or `null` (leave this axis
+ * alone). The handler updates `lastKnownTransforms` and writes the
+ * resulting inline `transform`, and — if a transform animation is
+ * running — rebuilds its keyframes so the snapped axis tracks the
+ * new constant value across the timeline.
+ *
+ * Per-axis static check: when a transform animation is running, an
+ * axis is only snapped if its current `resolved.translate.startX`
+ * equals `endX` (i.e. it is not animating). Animating axes are left
+ * alone so an in-flight motion is never visibly hijacked by a window
+ * resize. When no transform animation is running, axes snap
+ * unconditionally — the directive is the only source of truth.
+ *
+ * @param {object} commandData - Decoded `translatePosition` port command payload.
+ *   - `elementId` / `animGroup`: target animation group.
+ *   - `x`, `y`, `z`: pixel position per axis, or `null` to skip.
+ */
+export function translatePositionAnimation(commandData) {
+    schedulePosition(commandData);
+}
+
+/**
+ * Synchronous translatePosition worker. Direct callers (tests,
+ * `flushPendingResizes`) use this to bypass the per-frame coalescing
+ * layer.
+ */
+export function _translatePositionAnimationImmediate(commandData) {
+    const animGroup = commandData.elementId || commandData.animGroup;
+    if (!animGroup) {
+        reportError('translatePosition command missing elementId/animGroup', {
+            source: 'animation',
+            severity: 'warning',
+            code: 'COMMAND_INVALID',
+            engine: 'WAAPI'
+        });
+        return;
+    }
+
+    const element = findAnimTarget(animGroup);
+    if (!element) {
+        reportError(`Element with data-anim-target="${animGroup}" not found`, {
+            source: 'animation',
+            severity: 'warning',
+            code: 'TARGET_NOT_FOUND',
+            engine: 'WAAPI',
+            elementId: animGroup
+        });
+        return;
+    }
+
+    const px = typeof commandData.x === 'number' && isFinite(commandData.x) ? commandData.x : null;
+    const py = typeof commandData.y === 'number' && isFinite(commandData.y) ? commandData.y : null;
+    const pz = typeof commandData.z === 'number' && isFinite(commandData.z) ? commandData.z : null;
+    if (px === null && py === null && pz === null) {
+        return;
+    }
+
+    const elementAnims = activeAnimations.get(animGroup);
+    const transformEntry = elementAnims ? elementAnims.get('transform') : null;
+    const resolved = transformEntry ? transformEntry.resolvedValues : null;
+    const t = resolved ? resolved.translate : null;
+
+    const current = getTransformState(animGroup, element);
+    const updated = { ...current };
+    let didSnapAny = false;
+
+    function trySnap(axis, pos) {
+        if (pos === null) return;
+        if (t) {
+            const sk = 'start' + axis.toUpperCase();
+            const ek = 'end' + axis.toUpperCase();
+            if (Number(t[sk]) !== Number(t[ek])) {
+                // Axis is animating — leave it alone.
+                return;
+            }
+            t[sk] = pos;
+            t[ek] = pos;
+        }
+        updated[axis] = pos;
+        didSnapAny = true;
+    }
+
+    trySnap('x', px);
+    trySnap('y', py);
+    trySnap('z', pz);
+
+    motionDebug('position.enter', {
+        animGroup,
+        payloadPosition: { x: px, y: py, z: pz },
+        slotTranslate: t
+            ? { startX: t.startX, startY: t.startY, startZ: t.startZ, endX: t.endX, endY: t.endY, endZ: t.endZ }
+            : null,
+        liveCurrentTime: transformEntry && transformEntry.animation ? transformEntry.animation.currentTime : null,
+        liveTimingDuration: transformEntry && transformEntry.animation && transformEntry.animation.effect
+            ? transformEntry.animation.effect.getTiming().duration
+            : null,
+        didSnapAny
+    });
+
+    if (!didSnapAny) {
+        return;
+    }
+
+    // Persist updated transform state. `persistResizedTransform` writes
+    // both `lastKnownTransforms` and the inline `transform`, ensuring
+    // the snapped values survive across animation cleanup and are
+    // visible immediately when no animation is currently running.
+    persistResizedTransform(animGroup, element, 'translate', {
+        x: updated.x, y: updated.y, z: updated.z
+    });
+
+    // If a transform animation is running, rebuild its keyframes so the
+    // snapped axes hold their new value across every frame. WAAPI's
+    // `setKeyframes` preserves `currentTime` / iteration / direction, so
+    // co-running axes (rotate, scale, skew, and any animating translate
+    // axis) keep their visual continuity — only the snapped, previously
+    // static axes change, and they were constant across all frames before
+    // and after, so no flicker is possible.
+    if (transformEntry && transformEntry.animation && transformEntry.animation.effect && resolved) {
+        const maxDuration = Math.max(
+            Number(resolved.translate?.duration) || 0,
+            Number(resolved.scale?.duration) || 0,
+            Number(resolved.rotate?.duration) || 0,
+            Number(resolved.skew?.duration) || 0
+        );
+        const order = getElementOrder(element);
+        const forceGroups = computeForceGroups(resolved);
+        const KEYFRAME_COUNT = 30;
+        const keyframes = [];
+        for (let index = 0; index < KEYFRAME_COUNT; index++) {
+            const globalProgress = index / (KEYFRAME_COUNT - 1);
+            const interpTranslate = interpolateSubProperty(resolved.translate, globalProgress, maxDuration);
+            const interpScale = interpolateSubProperty(resolved.scale, globalProgress, maxDuration);
+            const interpRotate = interpolateSubProperty(resolved.rotate, globalProgress, maxDuration);
+            const interpSkew = interpolateSubProperty(resolved.skew, globalProgress, maxDuration);
+            keyframes.push({
+                transform: buildTransformString(
+                    interpTranslate.x, interpTranslate.y, interpTranslate.z,
+                    interpScale.x, interpScale.y, interpScale.z,
+                    interpRotate.x, interpRotate.y, interpRotate.z,
+                    interpSkew.x, interpSkew.y, order, forceGroups
+                )
+            });
+        }
+        try {
+            transformEntry.animation.effect.setKeyframes(keyframes);
+            motionDebug('position.setKeyframes', {
+                animGroup,
+                liveCurrentTimeAfter: transformEntry.animation.currentTime,
+                liveTimingDurationAfter: transformEntry.animation.effect.getTiming().duration
+            });
+        } catch (err) {
+            reportError(`setKeyframes failed during translatePosition: ${err && err.message ? err.message : err}`, {
+                source: 'animation',
+                severity: 'warning',
+                code: 'TRANSLATE_POSITION_SET_KEYFRAMES_FAILED',
+                engine: 'WAAPI',
+                elementId: animGroup
+            });
+        }
+    }
 }
 
 function resizePerspectiveOriginAnimation(commandData, animGroup, element) {

@@ -21,6 +21,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Removed
 
+- **Resize policy API collapsed to proportional-only.** Removed `Anim.Resize.Policy`, `Anim.Resize.policy`, `Anim.Resize.clamp`, `Anim.Resize.retarget`, `Anim.Resize.proportional`, `Anim.Resize.withTiming`, `Anim.Resize.SolveFromCurrent`, `Anim.Resize.PreserveProgress`, and the per-property `resizePolicy` helpers on every property module. Resize now always remaps proportionally: endpoints adopt the new bounds, the current value keeps its relative position, and normalized progress is preserved so timing stays in phase. The internal `authoredStart` / `authoredEnd` fields and clamp/retarget code paths were removed accordingly.
 - **`BounceInCustom`, `BounceOutCustom`, `BounceInOutCustom`** — Custom bounce variants. Use `Motion.Spring` for tunable overshoot, or the standard `BounceIn` / `BounceOut` / `BounceInOut` for the algebraic curve.
 - **`BounceInAdvanced`, `BounceOutAdvanced`, `BounceInOutAdvanced`** — same rationale.
 - **`ElasticInCustom`, `ElasticOutCustom`, `ElasticInOutCustom`** — Custom elastic variants. Use `Motion.Spring` for tunable oscillation.

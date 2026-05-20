@@ -7,7 +7,6 @@ import Anim.Property.PerspectiveOrigin as PerspectiveOrigin
 import Anim.Property.Rotate as Rotate
 import Anim.Property.Scale as Scale
 import Anim.Property.Translate as Translate
-import Anim.Resize as Resize
 import Browser exposing (Document)
 import Browser.Dom as Dom
 import Browser.Events
@@ -272,14 +271,11 @@ init flags =
                     -- Static no-op scale so that `Scale.bounds` has
                     -- runtime state to remap when the container resizes.
                     >> Scale.init cubeGroupName 1
-                    >> Scale.resizePolicy cubeGroupName Resize.proportional
                     >> Scale.init vanishingPointDot.groupName 1
-                    >> Scale.resizePolicy vanishingPointDot.groupName Resize.proportional
                     -- Seed the dot at the top-left corner (0, 0) so that
                     -- `Translate.bounds` has runtime state to remap
-                    -- with retarget policy when the container resizes.
+                    -- when the container resizes.
                     >> Translate.initXY vanishingPointDot.groupName 0 0
-                    >> Translate.resizePolicy vanishingPointDot.groupName Resize.retarget
 
                 -- Position each face in 3D space along the axis it faces
                 -- Front/Back faces move on Z (forward/backward)
@@ -370,6 +366,40 @@ inFlightPerspectiveStep nextStep =
         -- in-flight = MoveToTopLeft: (0,H) -> (0,0)
         MoveToTopRight ->
             YAxisLeg
+
+
+{-| Snap-target for the static axis of the in-flight leg.
+
+The dot's track is the perimeter of the inner area, so for each leg one
+axis animates and the other sits pinned to an edge. `Translate.bounds`
+remaps the moving axis; this helper provides the matching pixel target
+for the static axis, fed to `Translate.position` so the engine can
+relocate `start = end = current` together (a current-only nudge would
+be overwritten by the next Sub interpolation frame).
+
+The value passed in is `model.perspectiveStep`, which is already the
+_next_ step at the time the resize is observed, so the cases match the
+in-flight leg one-for-one with `inFlightPerspectiveStep`.
+
+-}
+staticAxisSnap : PerspectiveStep -> { width : Float, height : Float } -> { x : Maybe Float, y : Maybe Float, z : Maybe Float }
+staticAxisSnap nextStep area =
+    case nextStep of
+        -- in-flight = MoveToTopRight (X-leg): y pinned to 0
+        MoveToBottomRight ->
+            { x = Nothing, y = Just 0, z = Nothing }
+
+        -- in-flight = MoveToBottomRight (Y-leg): x pinned to W
+        MoveToBottomLeft ->
+            { x = Just area.width, y = Nothing, z = Nothing }
+
+        -- in-flight = MoveToBottomLeft (X-leg): y pinned to H
+        MoveToTopLeft ->
+            { x = Nothing, y = Just area.height, z = Nothing }
+
+        -- in-flight = MoveToTopLeft (Y-leg): x pinned to 0
+        MoveToTopRight ->
+            { x = Just 0, y = Nothing, z = Nothing }
 
 
 perspectiveAnimation : { width : Float, height : Float } -> PerspectiveStep -> AnimBuilder mode -> AnimBuilder mode
@@ -502,16 +532,13 @@ update msg model =
                             }
 
                 animState =
-                    -- `Translate.bounds` uses `retarget` policy (set at init)
-                    -- so the dot keeps its current pixel position while the new corner
-                    -- becomes the leg's endpoint - `proportional` would
-                    -- remap the dot to a new spot on the track and look
-                    -- like the leg restarted from a different position.
                     Sub.onResize model.animState <|
                         Scale.bounds cubeGroupName scaleBounds
                             >> Scale.bounds vanishingPointDot.groupName scaleBounds
                             >> Translate.bounds vanishingPointDot.groupName
                                 translateBounds
+                            >> Translate.position vanishingPointDot.groupName
+                                (staticAxisSnap model.perspectiveStep newAreaSize)
             in
             ( { model
                 | animState = animState

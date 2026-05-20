@@ -7,7 +7,6 @@ import Anim.Property.PerspectiveOrigin as PerspectiveOrigin
 import Anim.Property.Rotate as Rotate
 import Anim.Property.Scale as Scale
 import Anim.Property.Translate as Translate
-import Anim.Resize as Resize
 import Browser exposing (Document)
 import Browser.Dom as Dom
 import Browser.Events
@@ -77,10 +76,6 @@ init flags =
                   -- It will travel around the corners in sync with the dot animation:
                   -- (0,0) -> (100,0) -> (100,100) -> (0,100) -> (0,0)
                   PerspectiveOrigin.initPx perspectiveContainer.groupName 0 0
-                    -- Keep perspective-origin on the same proportional behavior
-                    -- so vanishing point and dot stay in sync on resize.
-                    >> PerspectiveOrigin.resizePolicy perspectiveContainer.groupName
-                        (Resize.withTiming Resize.SolveFromCurrent Resize.retarget)
                 , Translate.initXY vanishingPointDot.groupName 0 0
 
                 -- Bring the cube forward on the Z axis
@@ -88,13 +83,10 @@ init flags =
                 -- z=0 clipping plane.
                 , Translate.initZ cubeGroupName 300
                     >> Scale.init cubeGroupName 1
-                    >> Scale.resizePolicy cubeGroupName Resize.proportional
                     -- Seed the dot at the top-left corner (0, 0) so that
                     -- `Translate.bounds` has runtime state to remap
-                    -- with proportional policy when the container resizes.
+                    -- when the container resizes.
                     >> Translate.initXY vanishingPointDot.groupName 0 0
-                    >> Translate.resizePolicy vanishingPointDot.groupName
-                        (Resize.withTiming Resize.SolveFromCurrent Resize.retarget)
 
                 -- Position each face in 3D space along the axis it faces
                 -- Front/Back faces move on Z (forward/backward)
@@ -332,6 +324,66 @@ nextPerspectiveStep step =
             MoveToTopRight
 
 
+{-| Which axis is moving for the leg currently in flight. Mirrors the
+helper of the same name in the `Sub` Perspective3D example - the
+in-flight leg drives both `Translate.bounds` (moving axis only) and
+`Translate.position` (static axis snap).
+-}
+type LegAxis
+    = XAxisLeg
+    | YAxisLeg
+
+
+inFlightPerspectiveStep : PerspectiveStep -> LegAxis
+inFlightPerspectiveStep step =
+    case step of
+        -- in-flight = MoveToTopRight: (0,0) -> (W,0)
+        MoveToTopRight ->
+            XAxisLeg
+
+        -- in-flight = MoveToBottomRight: (W,0) -> (W,H)
+        MoveToBottomRight ->
+            YAxisLeg
+
+        -- in-flight = MoveToBottomLeft: (W,H) -> (0,H)
+        MoveToBottomLeft ->
+            XAxisLeg
+
+        -- in-flight = MoveToTopLeft: (0,H) -> (0,0)
+        MoveToTopLeft ->
+            YAxisLeg
+
+
+{-| Snap-target for the static axis of the in-flight leg.
+
+The dot's track is the perimeter of the inner area, so for each leg one
+axis animates and the other sits pinned to an edge. `Translate.bounds`
+remaps the moving axis; this helper provides the matching pixel target
+for the static axis, fed to `Translate.position` so the engine can
+relocate `start = end = current` together (a current-only nudge would
+be overwritten by the next interpolation frame).
+
+-}
+staticAxisSnap : PerspectiveStep -> { width : Float, height : Float } -> { x : Maybe Float, y : Maybe Float, z : Maybe Float }
+staticAxisSnap step area =
+    case step of
+        -- in-flight = MoveToTopRight (X-leg): y pinned to 0
+        MoveToTopRight ->
+            { x = Nothing, y = Just 0, z = Nothing }
+
+        -- in-flight = MoveToBottomRight (Y-leg): x pinned to W
+        MoveToBottomRight ->
+            { x = Just area.width, y = Nothing, z = Nothing }
+
+        -- in-flight = MoveToBottomLeft (X-leg): y pinned to H
+        MoveToBottomLeft ->
+            { x = Nothing, y = Just area.height, z = Nothing }
+
+        -- in-flight = MoveToTopLeft (Y-leg): x pinned to 0
+        MoveToTopLeft ->
+            { x = Just 0, y = Nothing, z = Nothing }
+
+
 perspectiveAnimation : { width : Float, height : Float } -> PerspectiveStep -> AnimBuilder mode -> AnimBuilder mode
 perspectiveAnimation areaSize step =
     case step of
@@ -526,29 +578,51 @@ update msg model =
                         }
 
                     translateBounds =
+                        -- Only constrain the axis that is actually moving for
+                        -- the in-flight leg. Bounding the static axis would
+                        -- re-clamp its endpoint into the new bounds and pull
+                        -- the dot off the corner it currently sits on - and
+                        -- (more importantly during a drag) each resize event
+                        -- would mutate the static axis bounds and force
+                        -- another cancel+recreate of the running animation.
+                        case inFlightPerspectiveStep model.perspectiveStep of
+                            XAxisLeg ->
+                                { x = Just { min = 0, max = newAreaSize.width }
+                                , y = Nothing
+                                , z = Nothing
+                                }
+
+                            YAxisLeg ->
+                                { x = Nothing
+                                , y = Just { min = 0, max = newAreaSize.height }
+                                , z = Nothing
+                                }
+
+                    perspectiveOriginBounds =
+                        -- The perspective origin pin remains a bounds-based
+                        -- pin on the static axis - perspective origin has no
+                        -- `position` directive, and unlike a translate this
+                        -- axis travels its endpoint regardless, so a no-op
+                        -- {min,max} pin is safe here.
                         case model.perspectiveStep of
-                            -- Top edge: x moves, y stays pinned to 0
                             MoveToTopRight ->
                                 { x = Just { min = 0, max = newAreaSize.width }
                                 , y = Just { min = 0, max = 0 }
                                 , z = Nothing
                                 }
 
-                            -- Right edge: y moves, x stays pinned to max width
                             MoveToBottomRight ->
                                 { x = Just { min = newAreaSize.width, max = newAreaSize.width }
                                 , y = Just { min = 0, max = newAreaSize.height }
                                 , z = Nothing
                                 }
 
-                            -- Bottom edge: x moves, y stays pinned to max height
                             MoveToBottomLeft ->
                                 { x = Just { min = 0, max = newAreaSize.width }
                                 , y = Just { min = newAreaSize.height, max = newAreaSize.height }
                                 , z = Nothing
                                 }
 
-                            -- Left edge: y moves, x stays pinned to 0
                             MoveToTopLeft ->
                                 { x = Just { min = 0, max = 0 }
                                 , y = Just { min = 0, max = newAreaSize.height }
@@ -558,8 +632,9 @@ update msg model =
                     ( animState, cmd ) =
                         -- `Scale.bounds` remaps the cube scale snapshot
                         -- proportionally to the new container (policy set at init).
-                        -- `Translate.bounds` uses proportional policy (set at init)
-                        -- so the dot remaps smoothly within the resized area.
+                        -- `Translate.bounds` remaps the moving axis only -
+                        -- `Translate.position` snaps the static axis to its
+                        -- new pixel edge without a cancel+recreate cycle.
                         -- `PerspectiveOrigin.bounds` uses the same resize bounds so
                         -- the camera vanishing point follows the exact same track.
                         -- Group-wide `Resize.bounds` is avoided here because
@@ -568,7 +643,9 @@ update msg model =
                         WAAPI.onResize model.animState <|
                             Scale.bounds cubeGroupName scaleBounds
                                 >> Translate.bounds vanishingPointDot.groupName translateBounds
-                                >> PerspectiveOrigin.bounds perspectiveContainer.groupName translateBounds
+                                >> Translate.position vanishingPointDot.groupName
+                                    (staticAxisSnap model.perspectiveStep newAreaSize)
+                                >> PerspectiveOrigin.bounds perspectiveContainer.groupName perspectiveOriginBounds
                 in
                 ( { model
                     | animState = animState

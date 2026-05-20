@@ -429,8 +429,6 @@ interpolateEasedProgressSuite =
                 \_ ->
                     { start = 0
                     , end = 100
-                    , authoredStart = 0
-                    , authoredEnd = 100
                     , easingFunction = identity
                     , elapsedMs = 0
                     , delayMs = 0
@@ -499,8 +497,6 @@ makePropertyAnimation :
 makePropertyAnimation config =
     { start = config.start
     , end = config.end
-    , authoredStart = config.start
-    , authoredEnd = config.end
     , easingFunction = config.easingFunction
     , elapsedMs = config.elapsedMs
     , delayMs = config.delayMs

@@ -3,7 +3,6 @@ port module Animation.WAAPI.ControllingAnimations.Main exposing (main)
 import Anim.Builder exposing (AnimBuilder)
 import Anim.Engine.WAAPI as WAAPI
 import Anim.Property.Translate as Translate
-import Anim.Resize as Resize
 import Browser
 import Browser.Dom as Dom
 import Browser.Events
@@ -153,8 +152,7 @@ update msg model =
             let
                 ( newAnimState, animCmd ) =
                     WAAPI.animate model.animState <|
-                        Translate.resizePolicy animGroup Resize.proportional
-                            >> dropBall (bottomY model.canvasH)
+                        dropBall (bottomY model.canvasH)
             in
             ( { model | animPlayState = Started, animState = newAnimState }
             , animCmd

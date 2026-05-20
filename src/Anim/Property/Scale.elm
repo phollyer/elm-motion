@@ -8,7 +8,7 @@ module Anim.Property.Scale exposing
     , easing
     , spring
     , clampX, clampY, clampZ, unclampX, unclampY, unclampZ
-    , resizePolicy, bounds
+    , bounds
     )
 
 {-| Scale elements along the X, Y, and Z axes.
@@ -94,7 +94,7 @@ the pipeline. See [clampX](#clampX) for behaviour and example.
 
 ## Resize
 
-@docs resizePolicy, bounds
+@docs bounds
 
 -}
 
@@ -788,29 +788,9 @@ Compose into the builder passed to an engine's `onResize`:
 You can resize multiple anim groups in one call by composing more entries.
 
 Leave an axis as `Nothing` to ignore it. Bounds are scale multipliers,
-not pixels. Set the matching policy first with [`resizePolicy`](#resizePolicy).
+not pixels.
 
 -}
 bounds : AnimGroupName -> Resize.Bounds -> Resize.Builder -> Resize.Builder
 bounds =
     ResizeBuilder.setScale
-
-
-{-| Set the scale resize policy for an anim group.
-
-Call this once at init time. Later, when `Scale.bounds` is used, the engine
-applies these rules to the in-flight scale animation.
-
-    WAAPI.init motionCmd
-        motionMsg
-        [ Scale.init "cube" 1
-            >> Scale.resizePolicy "cube" Resize.proportional
-        ]
-
-If you do not set a policy, scale uses
-[`Resize.proportional`](Anim-Resize#proportional).
-
--}
-resizePolicy : AnimGroupName -> Resize.Policy -> AnimBuilder mode -> AnimBuilder mode
-resizePolicy groupName policy =
-    Builder.setPropertyResizePolicy groupName "scale" policy

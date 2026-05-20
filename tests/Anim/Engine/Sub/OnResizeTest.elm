@@ -1,11 +1,9 @@
 module Anim.Engine.Sub.OnResizeTest exposing (suite)
 
 {-| Tests for `onResize`, which mutates an in-flight translate
-animation to match a new bounding range. Two strategies:
-
-  - `Proportional` preserves normalized progress within the old/new range.
-  - `Clamp` keeps the current value but re-clamps it (and the target) into
-    the new range.
+animation to match a new bounding range. Resize is always proportional:
+endpoints adopt the new bounds, the current value is proportionally
+remapped, and the normalised timing cursor is preserved.
 
 Animations are stepped via `Sub.update` with `Internal.AnimationFrame` and
 queried via `Sub.getTranslateCurrent` / `getTranslateEnd`.
@@ -106,21 +104,16 @@ within tolerance expected actual =
             )
 
 
-{-| Test-local shim that adapts the pre-policy `onResize` shape (policy +
-2D bounds) to the builder-based API. Keeps the rest of the suite readable.
+{-| Test-local shim that adapts a 2D-bounds resize call to the builder-based
+`Sub.onResize` API. Keeps the rest of the suite readable.
 -}
 onResize :
     Sub.AnimGroupName
-    -> Resize.Policy
     -> { x : Maybe Resize.AxisBounds, y : Maybe Resize.AxisBounds }
     -> Sub.AnimState
     -> Sub.AnimState
-onResize name policy bounds animState =
-    let
-        stateWithPolicy =
-            Sub.animate animState (Translate.resizePolicy name policy)
-    in
-    Sub.onResize stateWithPolicy <|
+onResize name bounds animState =
+    Sub.onResize animState <|
         Translate.bounds name
             { x = bounds.x, y = bounds.y, z = Nothing }
 
@@ -139,7 +132,6 @@ suite =
 
                         after =
                             onResize groupName
-                                Resize.proportional
                                 { x = Nothing, y = Nothing }
                                 before
                     in
@@ -155,7 +147,6 @@ suite =
 
                         after =
                             onResize "doesNotExist"
-                                Resize.clamp
                                 { x = Just { min = 0, max = 100 }
                                 , y = Nothing
                                 }
@@ -164,82 +155,7 @@ suite =
                     currentX after
                         |> within 0.001 (currentX state)
             ]
-        , describe "Clamp strategy"
-            [ test "current value is clamped into new bounds when out of range" <|
-                \_ ->
-                    let
-                        -- Move 0 -> 500, step halfway -> current ~250
-                        state =
-                            initialState
-                                |> (\s -> Sub.animate s (moveX 500))
-                                |> step 500
-
-                        resized =
-                            onResize groupName
-                                Resize.clamp
-                                { x = Just { min = 0, max = 100 }
-                                , y = Nothing
-                                }
-                                state
-                    in
-                    currentX resized
-                        |> within 0.001 100
-            , test "current value left alone when already inside new bounds" <|
-                \_ ->
-                    let
-                        state =
-                            initialState
-                                |> (\s -> Sub.animate s (moveX 500))
-                                |> step 200
-
-                        before =
-                            currentX state
-
-                        resized =
-                            onResize groupName
-                                Resize.clamp
-                                { x = Just { min = 0, max = 400 }
-                                , y = Nothing
-                                }
-                                state
-                    in
-                    currentX resized
-                        |> within 0.001 before
-            , test "runtime target lands at the clamped boundary after time elapses" <|
-                \_ ->
-                    let
-                        state =
-                            initialState
-                                |> (\s -> Sub.animate s (moveX 500))
-                                |> step 100
-                                |> onResize groupName
-                                    Resize.clamp
-                                    { x = Just { min = 0, max = 300 }
-                                    , y = Nothing
-                                    }
-
-                        finished =
-                            List.foldl (\_ s -> step 50 s) state (List.range 1 200)
-                    in
-                    currentX finished
-                        |> within 0.5 300
-            , test "getTranslateEnd reflects the clamped target immediately" <|
-                \_ ->
-                    let
-                        resized =
-                            initialState
-                                |> (\s -> Sub.animate s (moveX 500))
-                                |> step 100
-                                |> onResize groupName
-                                    Resize.clamp
-                                    { x = Just { min = 0, max = 300 }
-                                    , y = Nothing
-                                    }
-                    in
-                    endX resized
-                        |> within 0.001 300
-            ]
-        , describe "Proportional strategy"
+        , describe "Proportional remap"
             [ test "halfway through 0->500 becomes halfway through 0->300" <|
                 \_ ->
                     let
@@ -248,10 +164,8 @@ suite =
                                 |> (\s -> Sub.animate s (moveX 500))
                                 |> step 500
 
-                        -- current is ~250 (halfway)
                         resized =
                             onResize groupName
-                                Resize.proportional
                                 { x = Just { min = 0, max = 300 }
                                 , y = Nothing
                                 }
@@ -267,7 +181,6 @@ suite =
                                 |> (\s -> Sub.animate s (moveX 500))
                                 |> step 250
                                 |> onResize groupName
-                                    Resize.proportional
                                     { x = Just { min = 0, max = 300 }
                                     , y = Nothing
                                     }
@@ -285,7 +198,6 @@ suite =
                                 |> (\s -> Sub.animate s (moveX 500))
                                 |> step 250
                                 |> onResize groupName
-                                    Resize.proportional
                                     { x = Just { min = 0, max = 300 }
                                     , y = Nothing
                                     }
@@ -300,35 +212,30 @@ suite =
                                 |> (\s -> Sub.animate s (moveX 500))
                                 |> step 500
                                 |> onResize groupName
-                                    Resize.proportional
                                     { x = Just { min = 0, max = 300 }
                                     , y = Nothing
                                     }
 
                         finished =
-                            -- Step generously past any reasonable remaining duration.
                             List.foldl (\_ s -> step 50 s) state (List.range 1 200)
                     in
                     currentX finished
                         |> within 0.5 300
             , test "completed one-shot tracks the new endpoint across successive resizes (regression)" <|
-                -- Reproduces the ControllingAnimations bug: animate to the floor,
-                -- finish, resize repeatedly. A completed one-shot is "settled at
-                -- the endpoint" - the right semantic is to snap `current` to the
-                -- new endpoint and preserve the full leg, not collapse `start`
-                -- to `current` (which degenerates the Proportional formula on
+                -- A completed one-shot is "settled at the endpoint" - the
+                -- right semantic is to snap `current` to the new endpoint
+                -- and preserve the full leg, not collapse `start` to
+                -- `current` (which degenerates the Proportional formula on
                 -- the next resize and teleports the box back to `b.min`).
                 \_ ->
                     let
                         finished =
                             initialState
                                 |> (\s -> Sub.animate s (moveX 500))
-                                -- Run well past the 1000ms duration to settle at 500.
                                 |> (\s -> List.foldl (\_ acc -> step 50 acc) s (List.range 1 60))
 
                         afterResize1 =
                             onResize groupName
-                                Resize.proportional
                                 { x = Just { min = 0, max = 300 }
                                 , y = Nothing
                                 }
@@ -336,7 +243,6 @@ suite =
 
                         afterResize2 =
                             onResize groupName
-                                Resize.proportional
                                 { x = Just { min = 0, max = 350 }
                                 , y = Nothing
                                 }
@@ -345,16 +251,13 @@ suite =
                     Expect.all
                         [ \_ -> currentX afterResize1 |> within 0.5 300
                         , \_ -> endX afterResize1 |> within 0.001 300
-                        , -- Tracks the new endpoint, doesn't warp to b.min.
-                          \_ -> currentX afterResize2 |> within 0.5 350
+                        , \_ -> currentX afterResize2 |> within 0.5 350
                         , \_ -> endX afterResize2 |> within 0.001 350
                         ]
                         ()
             ]
         , describe "paused one-shot"
             [ test "preserves the visual position across a resize" <|
-                -- Pause mid-flight, resize the bounds (same range), and the
-                -- proportional position along the leg must be unchanged.
                 \_ ->
                     let
                         paused =
@@ -368,7 +271,6 @@ suite =
 
                         resized =
                             onResize groupName
-                                Resize.proportional
                                 { x = Just { min = 0, max = 500 }
                                 , y = Nothing
                                 }
@@ -377,9 +279,6 @@ suite =
                     currentX resized
                         |> within 0.001 before
             , test "does not creep across many sub-pixel resizes (regression)" <|
-                -- The bug: when paused, repeatedly resizing by sub-pixel
-                -- amounts caused `current` to drift toward `end`. Reproduces
-                -- the ControllingAnimations 560px-clamp wobble.
                 \_ ->
                     let
                         paused =
@@ -391,12 +290,10 @@ suite =
                         before =
                             currentX paused
 
-                        -- Apply 20 identical resizes; current must not drift.
                         resized =
                             List.foldl
                                 (\_ s ->
                                     onResize groupName
-                                        Resize.proportional
                                         { x = Just { min = 0, max = 500 }
                                         , y = Nothing
                                         }
@@ -417,18 +314,15 @@ suite =
                                 |> Sub.pause groupName
 
                         beforeRatio =
-                            -- progress along old leg (0..500)
                             currentX paused / 500
 
                         resized =
                             onResize groupName
-                                Resize.proportional
                                 { x = Just { min = 0, max = 1000 }
                                 , y = Nothing
                                 }
                                 paused
                     in
-                    -- Same ratio along the new leg (0..1000).
                     currentX resized
                         |> within 0.5 (beforeRatio * 1000)
             , test "resume after resize completes at the new endpoint" <|
@@ -440,7 +334,6 @@ suite =
                                 |> step 400
                                 |> Sub.pause groupName
                                 |> onResize groupName
-                                    Resize.proportional
                                     { x = Just { min = 0, max = 1000 }
                                     , y = Nothing
                                     }
@@ -453,10 +346,6 @@ suite =
                         ]
                         ()
             , test "preserves eased visual position with non-linear easing (regression)" <|
-                -- The previous implementation derived elapsedMs by *linearly*
-                -- inverting the leg progress, then the engine re-applied the
-                -- easing curve - producing a mismatched current that drifted
-                -- across resizes for any non-linear easing.
                 \_ ->
                     let
                         easedMove : Sub.AnimBuilder mode -> Sub.AnimBuilder mode
@@ -476,12 +365,10 @@ suite =
                         before =
                             currentX paused
 
-                        -- 10 identical resizes; eased current must not drift.
                         resized =
                             List.foldl
                                 (\_ s ->
                                     onResize groupName
-                                        Resize.proportional
                                         { x = Just { min = 0, max = 500 }
                                         , y = Nothing
                                         }
@@ -507,7 +394,6 @@ suite =
 
                         resized =
                             onResize groupName
-                                Resize.clamp
                                 { x = Nothing
                                 , y = Just { min = 0, max = 50 }
                                 }
@@ -541,7 +427,6 @@ suite =
 
                         resized =
                             onResize groupName
-                                Resize.clamp
                                 { x = Just { min = 0, max = 100 }
                                 , y = Nothing
                                 }
@@ -569,7 +454,6 @@ suite =
                 [ test "after resize, the box reaches both new extremes" <|
                     \_ ->
                         let
-                            -- Mid-forward leg, ~halfway through 0->500.
                             state =
                                 initialState
                                     |> (\s -> Sub.animate s (pingPong 500))
@@ -577,7 +461,6 @@ suite =
 
                             resized =
                                 onResize groupName
-                                    Resize.proportional
                                     { x = Just { min = 0, max = 1000 }
                                     , y = Nothing
                                     }
@@ -591,7 +474,7 @@ suite =
                             , \_ -> minSeen |> within 5 0
                             ]
                             ()
-                , test "after resize, leg duration scales with the new range" <|
+                , test "after resize, leg endpoint scales with the new range" <|
                     \_ ->
                         let
                             state =
@@ -599,87 +482,16 @@ suite =
                                     |> (\s -> Sub.animate s (pingPong 500))
                                     |> step 500
                                     |> onResize groupName
-                                        Resize.proportional
                                         { x = Just { min = 0, max = 1000 }
                                         , y = Nothing
                                         }
                         in
-                        -- Old leg = 1000ms over 500px = 500px/sec. New leg should
-                        -- preserve speed: 1000px / 500px/sec = 2000ms total.
                         Sub.getTranslateRange groupName state
                             |> Maybe.map .end
                             |> Maybe.map .x
                             |> Maybe.withDefault -1
                             |> within 0.001 1000
-                , test "Clamp treats bounds as a clip box (keeps configured leg)" <|
-                    \_ ->
-                        let
-                            state =
-                                initialState
-                                    |> (\s -> Sub.animate s (pingPong 500))
-                                    |> step 500
-
-                            beforeCurrent =
-                                currentX state
-
-                            resized =
-                                onResize groupName
-                                    Resize.clamp
-                                    { x = Just { min = 0, max = 1000 }
-                                    , y = Nothing
-                                    }
-                                    state
-
-                            currentPreserved =
-                                currentX resized
-
-                            ( minSeen, maxSeen ) =
-                                trackExtrema 400 20 resized
-                        in
-                        Expect.all
-                            [ \_ -> currentPreserved |> within 0.5 beforeCurrent
-                            , \_ -> maxSeen |> within 5 500
-                            , \_ -> minSeen |> within 5 0
-                            ]
-                            ()
-                , test "Retarget keeps current value and preserves full range on next leg" <|
-                    \_ ->
-                        let
-                            state =
-                                initialState
-                                    |> (\s -> Sub.animate s (pingPong 500))
-                                    |> step 500
-
-                            beforeCurrent =
-                                currentX state
-
-                            resized =
-                                onResize groupName
-                                    Resize.retarget
-                                    { x = Just { min = 0, max = 1000 }
-                                    , y = Nothing
-                                    }
-                                    state
-
-                            currentPreserved =
-                                currentX resized
-
-                            ( minSeen, maxSeen ) =
-                                trackExtrema 400 20 resized
-                        in
-                        Expect.all
-                            [ \_ -> currentPreserved |> within 0.5 beforeCurrent
-                            , \_ -> maxSeen |> within 5 1000
-                            , \_ -> minSeen |> within 5 0
-                            ]
-                            ()
-                , test "Proportional preserves eased visual position with non-linear easing (regression)" <|
-                    -- The previous implementation derived elapsedMs by
-                    -- *linearly* inverting the leg progress; the engine then
-                    -- re-applied the easing curve, producing a mismatched
-                    -- current that drifted across resizes for any non-linear
-                    -- easing. Temporal-ratio preservation fixes this for
-                    -- the Proportional strategy.
+                , test "preserves eased visual position with non-linear easing (regression)" <|
                     \_ ->
                         let
                             easedPingPong : Sub.AnimBuilder mode -> Sub.AnimBuilder mode
@@ -700,14 +512,10 @@ suite =
                             before =
                                 currentX running
 
-                            -- 10 identical Proportional resizes; the eased
-                            -- current must not drift between them (no
-                            -- step 0 between resizes -> no time passes).
                             resized =
                                 List.foldl
                                     (\_ s ->
                                         onResize groupName
-                                            Resize.proportional
                                             { x = Just { min = 0, max = 500 }
                                             , y = Nothing
                                             }
@@ -720,13 +528,13 @@ suite =
                             |> within 0.001 before
                 ]
             ]
-        , describe "group-wide default via Resize.Builder.onResize"
-            [ test "translate with proportional policy keeps proportional scaling" <|
+        , describe "group-wide bounds via Translate.bounds"
+            [ test "applies proportional remap when only the group default is set" <|
                 \_ ->
                     let
                         state =
                             initialState
-                                |> (\s -> Sub.animate s (moveX 500 >> Translate.resizePolicy groupName Resize.proportional))
+                                |> (\s -> Sub.animate s (moveX 500))
                                 |> step 500
 
                         bounds =
@@ -741,176 +549,140 @@ suite =
                     in
                     currentX resized
                         |> within 0.001 50
-            , test "translate with clamp policy clamps to bounds" <|
+            ]
+        , describe "Translate.position - static-axis snap"
+            [ test "snaps a static axis to the requested pixel value" <|
+                \_ ->
+                    -- The Y axis has never animated (init: (0,0)), so its
+                    -- start == end == current == 0. `position` should
+                    -- relocate all three to 250.
+                    let
+                        state =
+                            initialState
+                                |> (\s -> Sub.animate s (moveX 500))
+                                |> step 250
+
+                        resized =
+                            Sub.onResize state <|
+                                Translate.position groupName
+                                    { x = Nothing
+                                    , y = Just 250
+                                    , z = Nothing
+                                    }
+
+                        actualY =
+                            Sub.getTranslateCurrent groupName resized
+                                |> Maybe.map .y
+                                |> Maybe.withDefault -1
+                    in
+                    actualY |> within 0.001 250
+            , test "snap persists across subsequent interpolation frames" <|
+                \_ ->
+                    -- Sub recomputes current = interpolate(start, end, t)
+                    -- on every frame. A snap that didn't also set start
+                    -- and end would be clobbered on the next frame.
+                    let
+                        state =
+                            initialState
+                                |> (\s -> Sub.animate s (moveX 500))
+                                |> step 250
+
+                        resized =
+                            Sub.onResize state <|
+                                Translate.position groupName
+                                    { x = Nothing
+                                    , y = Just 250
+                                    , z = Nothing
+                                    }
+
+                        after =
+                            resized
+                                |> step 50
+                                |> step 50
+                                |> step 50
+
+                        actualY =
+                            Sub.getTranslateCurrent groupName after
+                                |> Maybe.map .y
+                                |> Maybe.withDefault -1
+                    in
+                    actualY |> within 0.001 250
+            , test "leaves an animating axis untouched (silent no-op)" <|
+                \_ ->
+                    -- X is animating from 0 -> 500. `position` on X
+                    -- must be a no-op; the next interpolation frame
+                    -- would otherwise overwrite a current-only nudge.
+                    let
+                        state =
+                            initialState
+                                |> (\s -> Sub.animate s (moveX 500))
+                                |> step 250
+
+                        before =
+                            currentX state
+
+                        resized =
+                            Sub.onResize state <|
+                                Translate.position groupName
+                                    { x = Just 9999
+                                    , y = Nothing
+                                    , z = Nothing
+                                    }
+                    in
+                    currentX resized |> within 0.001 before
+            , test "Nothing axes are left alone" <|
                 \_ ->
                     let
                         state =
                             initialState
-                                |> (\s -> Sub.animate s (moveX 500 >> Translate.resizePolicy groupName Resize.clamp))
-                                |> step 500
-
-                        bounds =
-                            { x = Just { min = 0, max = 100 }
-                            , y = Nothing
-                            , z = Nothing
-                            }
+                                |> (\s -> Sub.animate s (moveX 500))
+                                |> step 250
 
                         resized =
                             Sub.onResize state <|
-                                Translate.bounds groupName bounds
-                    in
-                    currentX resized
-                        |> within 0.001 100
-            ]
-        , describe "Clamp strategy is symmetric (Pinned remembers authored extremes)"
-            [ test "widening bounds after a shrink restores the authored end" <|
-                \_ ->
-                    let
-                        -- Authored: 0 -> 500. Shrink to [0,200] -> end clamped to 200.
-                        -- Then widen to [0,500] -> end should restore to authored 500.
-                        afterShrink =
-                            initialState
-                                |> (\s -> Sub.animate s (moveX 500))
-                                |> step 100
-                                |> onResize groupName
-                                    Resize.clamp
-                                    { x = Just { min = 0, max = 200 }
+                                Translate.position groupName
+                                    { x = Nothing
                                     , y = Nothing
-                                    }
-
-                        afterWiden =
-                            afterShrink
-                                |> onResize groupName
-                                    Resize.clamp
-                                    { x = Just { min = 0, max = 500 }
-                                    , y = Nothing
+                                    , z = Nothing
                                     }
                     in
-                    Expect.all
-                        [ \_ -> endX afterShrink |> within 0.001 200
-                        , \_ -> endX afterWiden |> within 0.001 500
-                        ]
-                        ()
-            , test "widening past authored end does not exceed authored end" <|
+                    currentX resized |> within 0.001 (currentX state)
+            , test "composes with Translate.bounds on the moving axis" <|
                 \_ ->
+                    -- Mirrors the Perspective3D example: X is animating
+                    -- and gets `bounds`-remapped; Y is static at 0 and
+                    -- gets snapped to the new edge by `position`.
                     let
-                        -- Authored: 0 -> 500. Shrink, then widen to 800. End must stay at 500.
-                        resized =
-                            initialState
-                                |> (\s -> Sub.animate s (moveX 500))
-                                |> step 100
-                                |> onResize groupName
-                                    Resize.clamp
-                                    { x = Just { min = 0, max = 200 }
-                                    , y = Nothing
-                                    }
-                                |> onResize groupName
-                                    Resize.clamp
-                                    { x = Just { min = 0, max = 800 }
-                                    , y = Nothing
-                                    }
-                    in
-                    endX resized
-                        |> within 0.001 500
-            , test "repeated shrink/widen cycles converge back to authored end each time" <|
-                \_ ->
-                    let
-                        cycle s =
-                            s
-                                |> onResize groupName
-                                    Resize.clamp
-                                    { x = Just { min = 0, max = 150 }
-                                    , y = Nothing
-                                    }
-                                |> onResize groupName
-                                    Resize.clamp
-                                    { x = Just { min = 0, max = 500 }
-                                    , y = Nothing
-                                    }
-
-                        afterCycles =
-                            List.foldl (\_ s -> cycle s)
-                                (initialState
-                                    |> (\s -> Sub.animate s (moveX 500))
-                                    |> step 50
-                                )
-                                (List.range 1 5)
-                    in
-                    endX afterCycles
-                        |> within 0.001 500
-            ]
-        , describe "Policy swap mid-animation auto-applies cached bounds"
-            [ test "swapping policy while starting a new animation re-applies the most recent bounds" <|
-                \_ ->
-                    let
-                        -- Run a resize event so the engine caches bounds 0..200
-                        -- under Proportional. (Initial animation just gives the
-                        -- engine something to mutate; we discard its state by
-                        -- starting a fresh animation in the next step.)
-                        stateAfterResize =
+                        state =
                             initialState
                                 |> (\s -> Sub.animate s (moveX 500))
                                 |> step 250
-                                |> onResize groupName
-                                    Resize.proportional
-                                    { x = Just { min = 0, max = 200 }
-                                    , y = Nothing
-                                    }
 
-                        -- Start a new animation that would reach 1000 under
-                        -- the authored bounds, but swap policy to Clamp. The
-                        -- cached 0..200 bounds should be auto-applied with
-                        -- the new policy, clamping endX to 200 without any
-                        -- further `onResize` call.
-                        afterPolicySwap =
-                            Sub.animate stateAfterResize
-                                (Translate.resizePolicy groupName Resize.clamp
-                                    >> moveX 1000
-                                )
-                    in
-                    endX afterPolicySwap
-                        |> within 0.001 200
-            , test "policy swap before any resize is a silent no-op (animation runs as authored)" <|
-                \_ ->
-                    let
-                        -- No `onResize` has fired, so `lastResize` is empty.
-                        -- A policy swap paired with a new animation should
-                        -- leave the authored end untouched.
-                        afterPolicySwap =
-                            Sub.animate initialState
-                                (Translate.resizePolicy groupName Resize.clamp
-                                    >> moveX 500
-                                )
-                    in
-                    endX afterPolicySwap
-                        |> within 0.001 500
-            , test "policy swap retargets to the most recent of several resize events" <|
-                \_ ->
-                    let
-                        -- Two resize events; the second one (0..300) is the
-                        -- most recent and should win in the cache.
-                        stateAfterResizes =
-                            initialState
-                                |> (\s -> Sub.animate s (moveX 500))
-                                |> step 100
-                                |> onResize groupName
-                                    Resize.proportional
-                                    { x = Just { min = 0, max = 100 }
+                        resized =
+                            Sub.onResize state <|
+                                Translate.bounds groupName
+                                    { x = Just { min = 0, max = 1000 }
                                     , y = Nothing
+                                    , z = Nothing
                                     }
-                                |> onResize groupName
-                                    Resize.proportional
-                                    { x = Just { min = 0, max = 300 }
-                                    , y = Nothing
-                                    }
+                                    >> Translate.position groupName
+                                        { x = Nothing
+                                        , y = Just 800
+                                        , z = Nothing
+                                        }
 
-                        afterPolicySwap =
-                            Sub.animate stateAfterResizes
-                                (Translate.resizePolicy groupName Resize.clamp
-                                    >> moveX 1000
-                                )
+                        afterY =
+                            Sub.getTranslateCurrent groupName resized
+                                |> Maybe.map .y
+                                |> Maybe.withDefault -1
+
+                        afterEndX =
+                            endX resized
                     in
-                    endX afterPolicySwap
-                        |> within 0.001 300
+                    Expect.all
+                        [ \_ -> afterY |> within 0.001 800
+                        , \_ -> afterEndX |> within 0.001 1000
+                        ]
+                        ()
             ]
         ]
