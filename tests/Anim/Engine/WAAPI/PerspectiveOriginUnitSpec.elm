@@ -84,7 +84,7 @@ decodePerspectiveOriginUnit animGroupName json =
                 |> Decode.andThen
                     (\ty ->
                         if ty == "perspectiveOrigin" then
-                            Decode.field "unit" Decode.string
+                            Decode.field "unitX" Decode.string
 
                         else
                             Decode.fail "not perspectiveOrigin"

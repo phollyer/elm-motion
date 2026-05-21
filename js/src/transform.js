@@ -8,7 +8,13 @@ import { lastKnownTransforms, elementTransformOrders } from './state.js';
  * Used as a fallback when no prior transform state is known.
  */
 export function getDefaultTransformState() {
-    return { x: 0, y: 0, z: 0, scaleX: 1, scaleY: 1, scaleZ: 1, rotateX: 0, rotateY: 0, rotateZ: 0, skewX: 0, skewY: 0, translateUnit: 'px' };
+    return {
+        x: 0, y: 0, z: 0,
+        scaleX: 1, scaleY: 1, scaleZ: 1,
+        rotateX: 0, rotateY: 0, rotateZ: 0,
+        skewX: 0, skewY: 0,
+        translateUnitX: 'px', translateUnitY: 'px', translateUnitZ: 'px'
+    };
 }
 
 /**
@@ -33,7 +39,9 @@ export function normalizeTransformState(state) {
         rotateZ: num(source.rotateZ, defaults.rotateZ),
         skewX: num(source.skewX, defaults.skewX),
         skewY: num(source.skewY, defaults.skewY),
-        translateUnit: typeof source.translateUnit === 'string' ? source.translateUnit : defaults.translateUnit
+        translateUnitX: typeof source.translateUnitX === 'string' ? source.translateUnitX : defaults.translateUnitX,
+        translateUnitY: typeof source.translateUnitY === 'string' ? source.translateUnitY : defaults.translateUnitY,
+        translateUnitZ: typeof source.translateUnitZ === 'string' ? source.translateUnitZ : defaults.translateUnitZ
     };
 }
 
@@ -72,7 +80,7 @@ export function getElementOrder(element) {
  * interpolation, which decomposes rotations into a matrix and silently drops
  * any rotation that lands on an identity matrix at either endpoint.
  */
-export function buildTransformString(x, y, z, scaleX, scaleY, scaleZ, rotateX, rotateY, rotateZ, skewX, skewY, order, forceGroups, translateUnit) {
+export function buildTransformString(x, y, z, scaleX, scaleY, scaleZ, rotateX, rotateY, rotateZ, skewX, skewY, order, forceGroups, translateUnitX, translateUnitY, translateUnitZ) {
     const asNumber = (value, fallback) => Number.isFinite(value) ? value : fallback;
     const tx = asNumber(x, 0);
     const ty = asNumber(y, 0);
@@ -85,7 +93,10 @@ export function buildTransformString(x, y, z, scaleX, scaleY, scaleZ, rotateX, r
     const rz = asNumber(rotateZ, 0);
     const kx = asNumber(skewX, 0);
     const ky = asNumber(skewY, 0);
-    const tUnit = typeof translateUnit === 'string' && translateUnit.length > 0 ? translateUnit : 'px';
+    const asUnit = u => (typeof u === 'string' && u.length > 0 ? u : 'px');
+    const tUx = asUnit(translateUnitX);
+    const tUy = asUnit(translateUnitY);
+    const tUz = asUnit(translateUnitZ);
 
     const transformOrder = order || DEFAULT_TRANSFORM_ORDER;
     const force = forceGroups instanceof Set
@@ -98,9 +109,9 @@ export function buildTransformString(x, y, z, scaleX, scaleY, scaleZ, rotateX, r
         switch (group) {
             case 'translate':
                 if (isForced('translate')) {
-                    parts.push(`translate3d(${tx}${tUnit}, ${ty}${tUnit}, ${tz}${tUnit})`);
+                    parts.push(`translate3d(${tx}${tUx}, ${ty}${tUy}, ${tz}${tUz})`);
                 } else if (tx !== 0 || ty !== 0 || tz !== 0) {
-                    parts.push(`translate3d(${tx}${tUnit}, ${ty}${tUnit}, ${tz}${tUnit})`);
+                    parts.push(`translate3d(${tx}${tUx}, ${ty}${tUy}, ${tz}${tUz})`);
                 }
                 break;
             case 'rotate':
@@ -168,13 +179,13 @@ export function parseTransformString(transformStr) {
         scaleX: 1, scaleY: 1, scaleZ: 1,
         rotateX: 0, rotateY: 0, rotateZ: 0,
         skewX: 0, skewY: 0,
-        translateUnit: 'px'
+        translateUnitX: 'px', translateUnitY: 'px', translateUnitZ: 'px'
     };
 
-    // Length units supported on translate values.
-    const UNIT_PATTERN = '(?:px|%|vw|vh|rem|em)';
+    // Length units supported on translate values. Mirrors `Anim.Internal.Unit`.
+    const UNIT_PATTERN = '(?:px|%|vw|vh|dvw|dvh|svw|svh|lvw|lvh|rem|em|cqi|cqb|cqw|cqh|cqmin|cqmax)';
 
-    // translate3d(X<unit>, Y<unit>, Z<unit>) — units must match per CSS spec for our emitter.
+    // translate3d(X<unit>, Y<unit>, Z<unit>) — capture each axis's unit independently.
     const translate3dRe = new RegExp(
         `translate3d\\(\\s*([-\\d.]+)(${UNIT_PATTERN})\\s*,\\s*([-\\d.]+)(${UNIT_PATTERN})\\s*,\\s*([-\\d.]+)(${UNIT_PATTERN})\\s*\\)`
     );
@@ -183,7 +194,9 @@ export function parseTransformString(transformStr) {
         result.x = parseFloat(translate3d[1]);
         result.y = parseFloat(translate3d[3]);
         result.z = parseFloat(translate3d[5]);
-        result.translateUnit = translate3d[2];
+        result.translateUnitX = translate3d[2];
+        result.translateUnitY = translate3d[4];
+        result.translateUnitZ = translate3d[6];
     }
 
     // translateX(X<unit>), translateY(Y<unit>), translateZ(Z<unit>)
@@ -191,9 +204,9 @@ export function parseTransformString(transformStr) {
     const translateX = transformStr.match(translateAxisRe('X'));
     const translateY = transformStr.match(translateAxisRe('Y'));
     const translateZ = transformStr.match(translateAxisRe('Z'));
-    if (translateX) { result.x = parseFloat(translateX[1]); result.translateUnit = translateX[2]; }
-    if (translateY) { result.y = parseFloat(translateY[1]); result.translateUnit = translateY[2]; }
-    if (translateZ) { result.z = parseFloat(translateZ[1]); result.translateUnit = translateZ[2]; }
+    if (translateX) { result.x = parseFloat(translateX[1]); result.translateUnitX = translateX[2]; }
+    if (translateY) { result.y = parseFloat(translateY[1]); result.translateUnitY = translateY[2]; }
+    if (translateZ) { result.z = parseFloat(translateZ[1]); result.translateUnitZ = translateZ[2]; }
 
     // rotateX(Xdeg), rotateY(Ydeg), rotateZ(Zdeg)
     const rotateX = transformStr.match(/rotateX\(\s*([-\d.]+)deg\s*\)/);
@@ -407,11 +420,15 @@ export function computeTransformFromResolved(resolved, globalProgress, maxDurati
     const s = interpolateSubProperty(resolved.scale, globalProgress, maxDuration);
     const r = interpolateSubProperty(resolved.rotate, globalProgress, maxDuration);
     const k = interpolateSubProperty(resolved.skew, globalProgress, maxDuration);
+    const tr = resolved.translate || {};
+    const pickUnit = u => (typeof u === 'string' && u.length > 0 ? u : 'px');
     return {
         x: t.x, y: t.y, z: t.z,
         scaleX: s.x, scaleY: s.y, scaleZ: s.z,
         rotateX: r.x, rotateY: r.y, rotateZ: r.z,
         skewX: k.x, skewY: k.y,
-        translateUnit: (resolved.translate && typeof resolved.translate.unit === 'string') ? resolved.translate.unit : 'px'
+        translateUnitX: pickUnit(tr.unitX),
+        translateUnitY: pickUnit(tr.unitY),
+        translateUnitZ: pickUnit(tr.unitZ)
     };
 }

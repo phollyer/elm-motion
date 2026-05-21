@@ -10,6 +10,9 @@ module Anim.Engine.ViewTimeline exposing
     , iterations, alternate
     , easing
     , length
+    , lengthX
+    , lengthY
+    , lengthZ
     , spring
     , discreteEntry, discreteExit
     , transformOrder
@@ -476,6 +479,30 @@ Note: this is unrelated to the [Range Unit](#Unit) used by `rangeStart` and
 length : LengthUnit.Unit -> TimelineBuilder -> TimelineBuilder
 length =
     Internal.length
+
+
+{-| Set a per-axis default length [Unit](Anim-Unit#Unit) for the X axis.
+Applies to `Translate.x`, `Size.width`, and `PerspectiveOrigin.x`.
+-}
+lengthX : LengthUnit.Unit -> TimelineBuilder -> TimelineBuilder
+lengthX =
+    Internal.lengthX
+
+
+{-| Set a per-axis default length [Unit](Anim-Unit#Unit) for the Y axis.
+Applies to `Translate.y`, `Size.height`, and `PerspectiveOrigin.y`.
+-}
+lengthY : LengthUnit.Unit -> TimelineBuilder -> TimelineBuilder
+lengthY =
+    Internal.lengthY
+
+
+{-| Set a per-axis default length [Unit](Anim-Unit#Unit) for the Z axis.
+Applies to `Translate.z`.
+-}
+lengthZ : LengthUnit.Unit -> TimelineBuilder -> TimelineBuilder
+lengthZ =
+    Internal.lengthZ
 
 
 

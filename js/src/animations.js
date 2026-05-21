@@ -162,7 +162,7 @@ function isPerspectiveOriginGeometryUnchanged(commandData, slot, oldDuration) {
         return false;
     }
     const incomingUnit = typeof commandData.unit === 'string' ? commandData.unit : '%';
-    if (incomingUnit !== slot.unit) {
+    if (incomingUnit !== slot.unitX || incomingUnit !== slot.unitY) {
         return false;
     }
     const payloadDuration = sanitizeResizeDuration(Number(commandData.duration), oldDuration);
@@ -316,7 +316,9 @@ function buildDefaultResolvedTransform(currentTransform) {
             startX: currentTransform.x, startY: currentTransform.y, startZ: currentTransform.z,
             endX: currentTransform.x, endY: currentTransform.y, endZ: currentTransform.z,
             easing: null, easingKeyframes: null, duration: 0,
-            unit: currentTransform.translateUnit || 'px'
+            unitX: currentTransform.translateUnitX || 'px',
+            unitY: currentTransform.translateUnitY || 'px',
+            unitZ: currentTransform.translateUnitZ || 'px'
         },
         scale: {
             startX: currentTransform.scaleX, startY: currentTransform.scaleY, startZ: currentTransform.scaleZ,
@@ -345,8 +347,16 @@ function assignResolvedTransformProperty(target, property, currentTransform, axe
     target.easing = property.easing;
     target.easingKeyframes = property.easingKeyframes;
     target.duration = property.duration;
-    if (property.type === 'translate' && typeof property.unit === 'string' && property.unit.length > 0) {
-        target.unit = property.unit;
+    if (property.type === 'translate') {
+        if (typeof property.unitX === 'string' && property.unitX.length > 0) {
+            target.unitX = property.unitX;
+        }
+        if (typeof property.unitY === 'string' && property.unitY.length > 0) {
+            target.unitY = property.unitY;
+        }
+        if (typeof property.unitZ === 'string' && property.unitZ.length > 0) {
+            target.unitZ = property.unitZ;
+        }
     }
 }
 
@@ -621,18 +631,20 @@ function createMergedTransformAnimation(animGroup, element, transformProperties,
     const forceGroups = computeForceGroups(resolved);
 
     if (allSameEasing && allSameDuration) {
-        const translateUnit = resolved.translate.unit || 'px';
+        const tUx = resolved.translate.unitX || 'px';
+        const tUy = resolved.translate.unitY || 'px';
+        const tUz = resolved.translate.unitZ || 'px';
         const startTransform = buildTransformString(
             resolved.translate.startX, resolved.translate.startY, resolved.translate.startZ,
             resolved.scale.startX, resolved.scale.startY, resolved.scale.startZ,
             resolved.rotate.startX, resolved.rotate.startY, resolved.rotate.startZ,
-            resolved.skew.startX, resolved.skew.startY, order, forceGroups, translateUnit
+            resolved.skew.startX, resolved.skew.startY, order, forceGroups, tUx, tUy, tUz
         );
         const endTransform = buildTransformString(
             resolved.translate.endX, resolved.translate.endY, resolved.translate.endZ,
             resolved.scale.endX, resolved.scale.endY, resolved.scale.endZ,
             resolved.rotate.endX, resolved.rotate.endY, resolved.rotate.endZ,
-            resolved.skew.endX, resolved.skew.endY, order, forceGroups, translateUnit
+            resolved.skew.endX, resolved.skew.endY, order, forceGroups, tUx, tUy, tUz
         );
 
         const easing = activeProps[0].easing;
@@ -668,7 +680,10 @@ function createMergedTransformAnimation(animGroup, element, transformProperties,
                 interpTranslate.x, interpTranslate.y, interpTranslate.z,
                 interpScale.x, interpScale.y, interpScale.z,
                 interpRotate.x, interpRotate.y, interpRotate.z,
-                interpSkew.x, interpSkew.y, order, forceGroups, resolved.translate.unit || 'px'
+                interpSkew.x, interpSkew.y, order, forceGroups,
+                resolved.translate.unitX || 'px',
+                resolved.translate.unitY || 'px',
+                resolved.translate.unitZ || 'px'
             )
         });
     }
@@ -718,7 +733,10 @@ function persistResizedTransform(animGroup, element, propertyKey, currentResized
         updated.x, updated.y, updated.z,
         updated.scaleX, updated.scaleY, updated.scaleZ,
         updated.rotateX, updated.rotateY, updated.rotateZ,
-        updated.skewX, updated.skewY, order, undefined, updated.translateUnit || 'px'
+        updated.skewX, updated.skewY, order, undefined,
+        updated.translateUnitX || 'px',
+        updated.translateUnitY || 'px',
+        updated.translateUnitZ || 'px'
     );
     element.style.transform = transformString;
 }
@@ -1155,7 +1173,10 @@ export function _resizeTransformAnimationImmediate(commandData) {
                 interpTranslate.x, interpTranslate.y, interpTranslate.z,
                 interpScale.x, interpScale.y, interpScale.z,
                 interpRotate.x, interpRotate.y, interpRotate.z,
-                interpSkew.x, interpSkew.y, order, forceGroups, resolved.translate.unit || 'px'
+                interpSkew.x, interpSkew.y, order, forceGroups,
+                resolved.translate.unitX || 'px',
+                resolved.translate.unitY || 'px',
+                resolved.translate.unitZ || 'px'
             )
         });
     }
@@ -1490,7 +1511,10 @@ export function _translatePositionAnimationImmediate(commandData) {
                     interpTranslate.x, interpTranslate.y, interpTranslate.z,
                     interpScale.x, interpScale.y, interpScale.z,
                     interpRotate.x, interpRotate.y, interpRotate.z,
-                    interpSkew.x, interpSkew.y, order, forceGroups, resolved.translate.unit || 'px'
+                    interpSkew.x, interpSkew.y, order, forceGroups,
+                    resolved.translate.unitX || 'px',
+                    resolved.translate.unitY || 'px',
+                    resolved.translate.unitZ || 'px'
                 )
             });
         }
@@ -1630,15 +1654,16 @@ export function _perspectiveOriginPositionAnimationImmediate(commandData) {
             resolved.startY = py;
             resolved.endY = py;
         }
-        resolved.unit = unit;
+        resolved.unitX = unit;
+        resolved.unitY = unit;
     }
 
     // Update inline style + cache so the snap survives outside the
     // animation lifetime.
-    const cached = lastKnownPerspectiveOrigins.get(animGroup) || { x: 50, y: 50, unit: unit };
+    const cached = lastKnownPerspectiveOrigins.get(animGroup) || { x: 50, y: 50, unitX: unit, unitY: unit };
     const newX = snapX ? px : cached.x;
     const newY = snapY ? py : cached.y;
-    lastKnownPerspectiveOrigins.set(animGroup, { x: newX, y: newY, unit: unit });
+    lastKnownPerspectiveOrigins.set(animGroup, { x: newX, y: newY, unitX: unit, unitY: unit });
     element.style.perspectiveOrigin = `${newX}${unit} ${newY}${unit}`;
 
     // Rebuild keyframes in place on the running animation so the snapped
@@ -1709,7 +1734,8 @@ function resizePerspectiveOriginAnimation(commandData, animGroup, element) {
                 startY: entry.resolvedNonTransform.startY,
                 endX: entry.resolvedNonTransform.endX,
                 endY: entry.resolvedNonTransform.endY,
-                unit: entry.resolvedNonTransform.unit
+                unitX: entry.resolvedNonTransform.unitX,
+                unitY: entry.resolvedNonTransform.unitY
             }
             : null
     });
@@ -1778,7 +1804,8 @@ function resizePerspectiveOriginAnimation(commandData, animGroup, element) {
         startY: Number(commandData.startY),
         endX: Number(commandData.endX),
         endY: Number(commandData.endY),
-        unit: unit
+        unitX: unit,
+        unitY: unit
     };
 
     const keyframeData = buildPropertyKeyframes(resolved, entry.easingKeyframes, 'linear');
@@ -1886,7 +1913,8 @@ function resizePerspectiveOriginAnimation(commandData, animGroup, element) {
             startY: resolved.startY,
             endX: resolved.endX,
             endY: resolved.endY,
-            unit: resolved.unit
+            unitX: resolved.unitX,
+            unitY: resolved.unitY
         },
         effectivePosition: effectiveCurrentPosition
     });

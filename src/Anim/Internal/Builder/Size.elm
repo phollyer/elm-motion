@@ -12,6 +12,8 @@ module Anim.Internal.Builder.Size exposing
     , fromHW
     , fromW
     , length
+    , lengthHeight
+    , lengthWidth
     , speed
     , spring
     , to
@@ -273,6 +275,16 @@ spring s (SizeBuilder config builder) =
 length : Unit -> SizeBuilder mode -> SizeBuilder mode
 length unit (SizeBuilder config builder) =
     SizeBuilder (PropertyBuilder.length unit config) builder
+
+
+lengthWidth : Unit -> SizeBuilder mode -> SizeBuilder mode
+lengthWidth unit (SizeBuilder config builder) =
+    SizeBuilder (PropertyBuilder.lengthX unit config) builder
+
+
+lengthHeight : Unit -> SizeBuilder mode -> SizeBuilder mode
+lengthHeight unit (SizeBuilder config builder) =
+    SizeBuilder (PropertyBuilder.lengthY unit config) builder
 
 
 

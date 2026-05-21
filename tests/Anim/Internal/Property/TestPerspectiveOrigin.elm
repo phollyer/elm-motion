@@ -161,41 +161,41 @@ cssOutput =
         [ test "percent values produce '25% 75%'" <|
             \_ ->
                 PerspectiveOrigin.fromRecord { x = 25, y = 75 }
-                    |> PerspectiveOrigin.toCssString Unit.Percent
+                    |> PerspectiveOrigin.toCssString { x = Unit.Percent, y = Unit.Percent, z = Unit.Percent }
                     |> Expect.equal "25% 75%"
         , test "px values produce '200px 150px'" <|
             \_ ->
                 PerspectiveOrigin.fromRecord { x = 200, y = 150 }
-                    |> PerspectiveOrigin.toCssString Unit.Px
+                    |> PerspectiveOrigin.toCssString { x = Unit.Px, y = Unit.Px, z = Unit.Px }
                     |> Expect.equal "200px 150px"
         , test "default produces '50% 50%'" <|
             \_ ->
                 PerspectiveOrigin.default
-                    |> PerspectiveOrigin.toCssString Unit.Percent
+                    |> PerspectiveOrigin.toCssString { x = Unit.Percent, y = Unit.Percent, z = Unit.Percent }
                     |> Expect.equal "50% 50%"
         , test "integer percent values omit decimal" <|
             \_ ->
                 PerspectiveOrigin.fromRecord { x = 100, y = 0 }
-                    |> PerspectiveOrigin.toCssString Unit.Percent
+                    |> PerspectiveOrigin.toCssString { x = Unit.Percent, y = Unit.Percent, z = Unit.Percent }
                     |> Expect.equal "100% 0%"
         , test "toCssString renders Vw unit suffix" <|
             \_ ->
                 PerspectiveOrigin.fromRecord { x = 25, y = 75 }
-                    |> PerspectiveOrigin.toCssString Unit.Vw
+                    |> PerspectiveOrigin.toCssString { x = Unit.Vw, y = Unit.Vw, z = Unit.Vw }
                     |> Expect.equal "25vw 75vw"
         , test "toCssString renders Vh unit suffix" <|
             \_ ->
                 PerspectiveOrigin.fromRecord { x = 25, y = 75 }
-                    |> PerspectiveOrigin.toCssString Unit.Vh
+                    |> PerspectiveOrigin.toCssString { x = Unit.Vh, y = Unit.Vh, z = Unit.Vh }
                     |> Expect.equal "25vh 75vh"
         , test "toCssString renders Rem unit suffix" <|
             \_ ->
                 PerspectiveOrigin.fromRecord { x = 25, y = 75 }
-                    |> PerspectiveOrigin.toCssString Unit.Rem
+                    |> PerspectiveOrigin.toCssString { x = Unit.Rem, y = Unit.Rem, z = Unit.Rem }
                     |> Expect.equal "25rem 75rem"
         , test "toCssString renders Em unit suffix" <|
             \_ ->
                 PerspectiveOrigin.fromRecord { x = 25, y = 75 }
-                    |> PerspectiveOrigin.toCssString Unit.Em
+                    |> PerspectiveOrigin.toCssString { x = Unit.Em, y = Unit.Em, z = Unit.Em }
                     |> Expect.equal "25em 75em"
         ]

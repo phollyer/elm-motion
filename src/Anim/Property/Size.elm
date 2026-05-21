@@ -8,6 +8,7 @@ module Anim.Property.Size exposing
     , easing
     , spring
     , length
+    , lengthWidth, lengthHeight
     , clampWidth, clampHeight, unclampWidth, unclampHeight
     )
 
@@ -508,6 +509,24 @@ size targeted at `Sub` reports an error and falls back to `Px`.
 length : Unit -> Builder mode -> Builder mode
 length =
     SB.length
+
+
+{-| Set the length [Unit](Anim-Unit#Unit) used to render the `width` value for
+this property. Overrides any unit set by [`length`](#length) or by the
+engine's `length`/`lengthWidth` setter for the width axis.
+-}
+lengthWidth : Unit -> Builder mode -> Builder mode
+lengthWidth =
+    SB.lengthWidth
+
+
+{-| Set the length [Unit](Anim-Unit#Unit) used to render the `height` value
+for this property. Overrides any unit set by [`length`](#length) or by the
+engine's `length`/`lengthHeight` setter for the height axis.
+-}
+lengthHeight : Unit -> Builder mode -> Builder mode
+lengthHeight =
+    SB.lengthHeight
 
 
 

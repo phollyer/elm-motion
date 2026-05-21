@@ -11,6 +11,9 @@ module Anim.Internal.Engine.ScrollTimeline exposing
     , horizontal
     , iterations
     , length
+    , lengthX
+    , lengthY
+    , lengthZ
     , spring
     , subscriptions
     , transformOrder
@@ -216,6 +219,21 @@ easing =
 length : Unit -> TimelineBuilder -> TimelineBuilder
 length =
     Builder.length
+
+
+lengthX : Unit -> TimelineBuilder -> TimelineBuilder
+lengthX =
+    Builder.lengthX
+
+
+lengthY : Unit -> TimelineBuilder -> TimelineBuilder
+lengthY =
+    Builder.lengthY
+
+
+lengthZ : Unit -> TimelineBuilder -> TimelineBuilder
+lengthZ =
+    Builder.lengthZ
 
 
 

@@ -1,6 +1,7 @@
 module Anim.Internal.Engine.Sub.TestGenerator exposing (suite)
 
 import Anim.Extra.TransformOrder exposing (TransformProperty(..))
+import Anim.Internal.Unit as InternalUnit
 import Anim.Internal.Builder as Builder
 import Anim.Internal.Engine.Sub.AnimGroup as SubAnimGroup
 import Anim.Internal.Engine.Sub.Generator as SubGenerator
@@ -21,7 +22,7 @@ translateConfig =
         , easing = Nothing
         , spring = Nothing
         , delay = Nothing
-        , length = Nothing
+        , length = InternalUnit.emptyLengthAxes
         }
 
 

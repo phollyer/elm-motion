@@ -17,7 +17,6 @@ module Anim.Internal.Property.Size exposing
     )
 
 import Anim.Internal.Unit as InternalUnit
-import Anim.Unit exposing (Unit)
 import Shared.TimeSpec as TimeSpec exposing (TimeSpec)
 
 
@@ -78,26 +77,28 @@ toRecord (Size dimensions) =
 -- ============================================================
 
 
-toCssString : Unit -> Size -> String
-toCssString unit size =
+toCssString : InternalUnit.ResolvedLengthAxes -> Size -> String
+toCssString axes size =
     let
-        suffix =
-            InternalUnit.toCssSuffix unit
-
         ( width, height ) =
             toTuple size
     in
-    "width: " ++ String.fromFloat width ++ suffix ++ "; height: " ++ String.fromFloat height ++ suffix
+    "width: "
+        ++ String.fromFloat width
+        ++ InternalUnit.toCssSuffix axes.x
+        ++ "; height: "
+        ++ String.fromFloat height
+        ++ InternalUnit.toCssSuffix axes.y
 
 
-widthToCssString : Unit -> Size -> String
-widthToCssString unit (Size dimensions) =
-    String.fromFloat dimensions.w ++ InternalUnit.toCssSuffix unit
+widthToCssString : InternalUnit.ResolvedLengthAxes -> Size -> String
+widthToCssString axes (Size dimensions) =
+    String.fromFloat dimensions.w ++ InternalUnit.toCssSuffix axes.x
 
 
-heightToCssString : Unit -> Size -> String
-heightToCssString unit (Size dimensions) =
-    String.fromFloat dimensions.h ++ InternalUnit.toCssSuffix unit
+heightToCssString : InternalUnit.ResolvedLengthAxes -> Size -> String
+heightToCssString axes (Size dimensions) =
+    String.fromFloat dimensions.h ++ InternalUnit.toCssSuffix axes.y
 
 
 

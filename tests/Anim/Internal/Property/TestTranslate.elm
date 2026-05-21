@@ -171,46 +171,46 @@ cssOutput =
         [ test "toCssString produces translate3d" <|
             \_ ->
                 Translate.fromTriple ( 10, 20, 0 )
-                    |> Translate.toCssString Unit.Px
+                    |> Translate.toCssString { x = Unit.Px, y = Unit.Px, z = Unit.Px }
                     |> Expect.equal "translate3d(10px, 20px, 0px)"
         , test "toCssPropertyValue produces space-separated values" <|
             \_ ->
                 Translate.fromTriple ( 10, 20, 0 )
-                    |> Translate.toCssPropertyValue Unit.Px
+                    |> Translate.toCssPropertyValue { x = Unit.Px, y = Unit.Px, z = Unit.Px }
                     |> Expect.equal "10px 20px 0px"
         , test "default produces zero translate3d" <|
             \_ ->
                 Translate.default
-                    |> Translate.toCssString Unit.Px
+                    |> Translate.toCssString { x = Unit.Px, y = Unit.Px, z = Unit.Px }
                     |> Expect.equal "translate3d(0px, 0px, 0px)"
         , test "toCssString renders Percent unit suffix" <|
             \_ ->
                 Translate.fromTriple ( 10, 20, 0 )
-                    |> Translate.toCssString Unit.Percent
+                    |> Translate.toCssString { x = Unit.Percent, y = Unit.Percent, z = Unit.Percent }
                     |> Expect.equal "translate3d(10%, 20%, 0%)"
         , test "toCssString renders Vw unit suffix" <|
             \_ ->
                 Translate.fromTriple ( 10, 20, 0 )
-                    |> Translate.toCssString Unit.Vw
+                    |> Translate.toCssString { x = Unit.Vw, y = Unit.Vw, z = Unit.Vw }
                     |> Expect.equal "translate3d(10vw, 20vw, 0vw)"
         , test "toCssString renders Vh unit suffix" <|
             \_ ->
                 Translate.fromTriple ( 10, 20, 0 )
-                    |> Translate.toCssString Unit.Vh
+                    |> Translate.toCssString { x = Unit.Vh, y = Unit.Vh, z = Unit.Vh }
                     |> Expect.equal "translate3d(10vh, 20vh, 0vh)"
         , test "toCssString renders Rem unit suffix" <|
             \_ ->
                 Translate.fromTriple ( 10, 20, 0 )
-                    |> Translate.toCssString Unit.Rem
+                    |> Translate.toCssString { x = Unit.Rem, y = Unit.Rem, z = Unit.Rem }
                     |> Expect.equal "translate3d(10rem, 20rem, 0rem)"
         , test "toCssString renders Em unit suffix" <|
             \_ ->
                 Translate.fromTriple ( 10, 20, 0 )
-                    |> Translate.toCssString Unit.Em
+                    |> Translate.toCssString { x = Unit.Em, y = Unit.Em, z = Unit.Em }
                     |> Expect.equal "translate3d(10em, 20em, 0em)"
         , test "toCssPropertyValue renders Vw unit suffix" <|
             \_ ->
                 Translate.fromTriple ( 10, 20, 0 )
-                    |> Translate.toCssPropertyValue Unit.Vw
+                    |> Translate.toCssPropertyValue { x = Unit.Vw, y = Unit.Vw, z = Unit.Vw }
                     |> Expect.equal "10vw 20vw 0vw"
         ]

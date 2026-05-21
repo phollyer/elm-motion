@@ -15,7 +15,7 @@ describe('getDefaultTransformState', () => {
             scaleX: 1, scaleY: 1, scaleZ: 1,
             rotateX: 0, rotateY: 0, rotateZ: 0,
             skewX: 0, skewY: 0,
-            translateUnit: 'px'
+            translateUnitX: 'px', translateUnitY: 'px', translateUnitZ: 'px'
         });
     });
 
@@ -41,7 +41,7 @@ describe('normalizeTransformState', () => {
             scaleX: 2, scaleY: 3, scaleZ: 4,
             rotateX: 45, rotateY: 90, rotateZ: 180,
             skewX: 5, skewY: 6,
-            translateUnit: 'px'
+            translateUnitX: 'px', translateUnitY: 'px', translateUnitZ: 'px'
         };
         expect(normalizeTransformState(input)).toEqual(input);
     });
@@ -145,25 +145,35 @@ describe('buildTransformString', () => {
         });
 
         it('renders translate3d in vh when translateUnit="vh"', () => {
-            const value = buildTransformString(0, 62, 0, 1, 1, 1, 0, 0, 0, 0, 0, undefined, undefined, 'vh');
+            const value = buildTransformString(0, 62, 0, 1, 1, 1, 0, 0, 0, 0, 0, undefined, undefined, 'vh', 'vh', 'vh');
             expect(value).toBe('translate3d(0vh, 62vh, 0vh)');
         });
 
         it('supports every length unit the Elm side accepts', () => {
             ['px', '%', 'vw', 'vh', 'rem', 'em'].forEach(unit => {
-                const value = buildTransformString(0, 10, 0, 1, 1, 1, 0, 0, 0, 0, 0, undefined, undefined, unit);
+                const value = buildTransformString(0, 10, 0, 1, 1, 1, 0, 0, 0, 0, 0, undefined, undefined, unit, unit, unit);
                 expect(value).toBe(`translate3d(0${unit}, 10${unit}, 0${unit})`);
             });
         });
 
         it('falls back to px when translateUnit is empty string', () => {
-            const value = buildTransformString(0, 5, 0, 1, 1, 1, 0, 0, 0, 0, 0, undefined, undefined, '');
+            const value = buildTransformString(0, 5, 0, 1, 1, 1, 0, 0, 0, 0, 0, undefined, undefined, '', '', '');
             expect(value).toContain('translate3d(0px, 5px, 0px)');
         });
 
         it('applies the unit even when translate is force-emitted at identity', () => {
-            const value = buildTransformString(0, 0, 0, 1, 1, 1, 0, 0, 90, 0, 0, undefined, new Set(['translate']), 'vh');
+            const value = buildTransformString(0, 0, 0, 1, 1, 1, 0, 0, 90, 0, 0, undefined, new Set(['translate']), 'vh', 'vh', 'vh');
             expect(value).toContain('translate3d(0vh, 0vh, 0vh)');
+        });
+
+        it('renders independent units per axis (mixed-unit translate3d)', () => {
+            const value = buildTransformString(10, 20, 30, 1, 1, 1, 0, 0, 0, 0, 0, undefined, undefined, 'vw', '%', 'rem');
+            expect(value).toContain('translate3d(10vw, 20%, 30rem)');
+        });
+
+        it('axis units default to px independently when only one axis unit is provided', () => {
+            const value = buildTransformString(10, 20, 30, 1, 1, 1, 0, 0, 0, 0, 0, undefined, undefined, undefined, 'vh', undefined);
+            expect(value).toContain('translate3d(10px, 20vh, 30px)');
         });
     });
 

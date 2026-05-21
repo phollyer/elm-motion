@@ -1,6 +1,7 @@
 module Anim.Internal.Engine.Transition.TestGenerator exposing (suite)
 
 import Anim.Internal.Builder as Builder
+import Anim.Internal.Unit as InternalUnit
 import Anim.Internal.Engine.CSS.Styles as Styles
 import Anim.Internal.Engine.Transition.AnimGroup as TransitionAnimGroup
 import Anim.Internal.Engine.Transition.Generator as Generator
@@ -21,7 +22,7 @@ translateConfig =
         , easing = Nothing
         , spring = Nothing
         , delay = Nothing
-        , length = Nothing
+        , length = InternalUnit.emptyLengthAxes
         }
 
 

@@ -13,6 +13,7 @@ easing curve.
 -}
 
 import Anim.Internal.Builder as Builder
+import Anim.Internal.Unit as InternalUnit
 import Anim.Internal.Engine.Keyframe.AnimGroup as KeyframeAnimGroup
 import Anim.Internal.Engine.Keyframe.Animation as Animation
 import Anim.Internal.Engine.Keyframe.Generator as Generator
@@ -40,7 +41,7 @@ springTranslateConfig spring =
         , easing = Nothing
         , spring = Just spring
         , delay = Nothing
-        , length = Nothing
+        , length = InternalUnit.emptyLengthAxes
         }
 
 
@@ -54,7 +55,7 @@ easingTranslateConfig easing =
         , easing = Just easing
         , spring = Nothing
         , delay = Nothing
-        , length = Nothing
+        , length = InternalUnit.emptyLengthAxes
         }
 
 

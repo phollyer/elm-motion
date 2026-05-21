@@ -14,6 +14,9 @@ module Anim.Engine.Keyframe exposing
     , delay, duration, speed
     , easing
     , length
+    , lengthX
+    , lengthY
+    , lengthZ
     , spring
     , stop, reset, restart, pause, resume
     , discreteEntry, discreteExit
@@ -808,6 +811,32 @@ engine-level default. If neither is set, properties render in `Px`.
 length : Unit -> Builder.AnimBuilder mode -> Builder.AnimBuilder mode
 length =
     CSS.length
+
+
+{-| Set a per-axis default length [Unit](Anim-Unit#Unit) for the X axis. Used
+by `Translate.x`, `Size.width`, and `PerspectiveOrigin.x`. Per-property
+per-axis setters (e.g. `Translate.lengthX`) take precedence over this.
+-}
+lengthX : Unit -> Builder.AnimBuilder mode -> Builder.AnimBuilder mode
+lengthX =
+    CSS.lengthX
+
+
+{-| Set a per-axis default length [Unit](Anim-Unit#Unit) for the Y axis. Used
+by `Translate.y`, `Size.height`, and `PerspectiveOrigin.y`. Per-property
+per-axis setters (e.g. `Translate.lengthY`) take precedence over this.
+-}
+lengthY : Unit -> Builder.AnimBuilder mode -> Builder.AnimBuilder mode
+lengthY =
+    CSS.lengthY
+
+
+{-| Set a per-axis default length [Unit](Anim-Unit#Unit) for the Z axis. Used
+by `Translate.z`. Per-property `Translate.lengthZ` takes precedence.
+-}
+lengthZ : Unit -> Builder.AnimBuilder mode -> Builder.AnimBuilder mode
+lengthZ =
+    CSS.lengthZ
 
 
 

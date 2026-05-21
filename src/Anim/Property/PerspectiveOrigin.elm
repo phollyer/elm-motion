@@ -3,6 +3,7 @@ module Anim.Property.PerspectiveOrigin exposing
     , initPx, initPercent
     , for, build
     , length
+    , lengthX, lengthY
     , from, fromXY, fromX, fromY
     , to, toXY, toX, toY
     , delay, duration, speed
@@ -427,6 +428,24 @@ perspective-origin targeted at `Sub` reports an error and falls back to `Px`.
 length : Unit.Unit -> Builder mode -> Builder mode
 length =
     PB.length
+
+
+{-| Set the length [Unit](Anim-Unit#Unit) used to render the X-axis
+perspective-origin value. Overrides any unit set by [`length`](#length) or by
+the engine's `length`/`lengthX` setter for the X axis.
+-}
+lengthX : Unit.Unit -> Builder mode -> Builder mode
+lengthX =
+    PB.lengthX
+
+
+{-| Set the length [Unit](Anim-Unit#Unit) used to render the Y-axis
+perspective-origin value. Overrides any unit set by [`length`](#length) or by
+the engine's `length`/`lengthY` setter for the Y axis.
+-}
+lengthY : Unit.Unit -> Builder mode -> Builder mode
+lengthY =
+    PB.lengthY
 
 
 

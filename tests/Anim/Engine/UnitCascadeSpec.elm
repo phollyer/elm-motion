@@ -71,7 +71,7 @@ firstTranslateLength builder =
                         (\p ->
                             case p of
                                 Builder.ProcessedTranslateConfig cfg ->
-                                    Just cfg.length
+                                    Just cfg.length.x
 
                                 _ ->
                                     Nothing
@@ -90,7 +90,7 @@ firstSizeLength builder =
                         (\p ->
                             case p of
                                 Builder.ProcessedSizeConfig cfg ->
-                                    Just cfg.length
+                                    Just cfg.length.x
 
                                 _ ->
                                     Nothing
@@ -109,7 +109,7 @@ firstPerspectiveOriginLength builder =
                         (\p ->
                             case p of
                                 Builder.ProcessedPerspectiveOriginConfig cfg ->
-                                    Just cfg.length
+                                    Just cfg.length.x
 
                                 _ ->
                                     Nothing
@@ -281,7 +281,7 @@ engineDefaults =
                             |> Maybe.withDefault Unit.Px
                 in
                 InternalTranslate.fromTriple ( 10, 20, 0 )
-                    |> InternalTranslate.toCssString unit
+                    |> InternalTranslate.toCssString { x = unit, y = unit, z = unit }
                     |> Expect.equal "translate3d(10vw, 20vw, 0vw)"
         , test "Size renders Percent suffix when WAAPI.length Percent is set" <|
             \_ ->
@@ -294,7 +294,7 @@ engineDefaults =
                             |> Maybe.withDefault Unit.Px
                 in
                 InternalSize.fromTuple ( 100, 200 )
-                    |> InternalSize.toCssString unit
+                    |> InternalSize.toCssString { x = unit, y = unit, z = unit }
                     |> Expect.equal "width: 100%; height: 200%"
         , test "PerspectiveOrigin renders Px suffix when WAAPI.length Px is set" <|
             \_ ->
@@ -307,6 +307,6 @@ engineDefaults =
                             |> Maybe.withDefault Unit.Percent
                 in
                 InternalPerspectiveOrigin.fromRecord { x = 200, y = 150 }
-                    |> InternalPerspectiveOrigin.toCssString unit
+                    |> InternalPerspectiveOrigin.toCssString { x = unit, y = unit, z = unit }
                     |> Expect.equal "200px 150px"
         ]

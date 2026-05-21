@@ -73,6 +73,9 @@ module Anim.Internal.Builder exposing
     , isPropertyRunning
     , iterations
     , length
+    , lengthX
+    , lengthY
+    , lengthZ
     , loopForever
     , mergeBaselines
     , normalizeTransformOrder
@@ -184,7 +187,7 @@ type alias DefaultsConfig =
     , globalEasing : Maybe Easing
     , globalSpring : Maybe Spring
     , globalDelay : Maybe Int
-    , globalLength : Maybe Unit
+    , globalLength : InternalUnit.LengthAxes
     , globalTransformOrder : Maybe (List TransformProperty)
     }
 
@@ -238,7 +241,7 @@ type alias AnimationConfig targetProperty =
     , easing : Maybe Easing
     , spring : Maybe Spring
     , delay : Maybe Int
-    , length : Maybe Unit
+    , length : InternalUnit.LengthAxes
     }
 
 
@@ -263,7 +266,7 @@ type alias ProcessedAnimationConfig targetProperty =
     , timing : TimeSpec
     , easing : Easing
     , spring : Maybe Spring
-    , length : Unit
+    , length : InternalUnit.ResolvedLengthAxes
     , delay : Int
     }
 
@@ -274,7 +277,7 @@ type alias ProcessedAnimationData =
     , globalEasing : Maybe Easing
     , globalSpring : Maybe Spring
     , globalDelay : Maybe Int
-    , globalLength : Maybe Unit
+    , globalLength : InternalUnit.LengthAxes
     , iterations : Iterations
     , animationDirection : AnimationDirection
     }
@@ -394,7 +397,7 @@ initDefaults =
     , globalEasing = Nothing
     , globalSpring = Nothing
     , globalDelay = Nothing
-    , globalLength = Nothing
+    , globalLength = InternalUnit.emptyLengthAxes
     , globalTransformOrder = Nothing
     }
 
@@ -521,7 +524,37 @@ length unit (AnimBuilder data) =
             data.defaults
     in
     AnimBuilder
-        { data | defaults = { defs | globalLength = Just unit } }
+        { data | defaults = { defs | globalLength = InternalUnit.setAllLengthAxes unit defs.globalLength } }
+
+
+lengthX : Unit -> AnimBuilder mode -> AnimBuilder mode
+lengthX unit (AnimBuilder data) =
+    let
+        defs =
+            data.defaults
+    in
+    AnimBuilder
+        { data | defaults = { defs | globalLength = InternalUnit.setLengthX unit defs.globalLength } }
+
+
+lengthY : Unit -> AnimBuilder mode -> AnimBuilder mode
+lengthY unit (AnimBuilder data) =
+    let
+        defs =
+            data.defaults
+    in
+    AnimBuilder
+        { data | defaults = { defs | globalLength = InternalUnit.setLengthY unit defs.globalLength } }
+
+
+lengthZ : Unit -> AnimBuilder mode -> AnimBuilder mode
+lengthZ unit (AnimBuilder data) =
+    let
+        defs =
+            data.defaults
+    in
+    AnimBuilder
+        { data | defaults = { defs | globalLength = InternalUnit.setLengthZ unit defs.globalLength } }
 
 
 transformOrder : List TransformProperty -> AnimBuilder mode -> AnimBuilder mode
@@ -1518,7 +1551,7 @@ processStandardAnimation { config, globalData, defaultStart, defaultLength, dist
         , timing = resolvedTiming
         , easing = resolveEasingWithDefault config.easing globalData.globalEasing EaseInOut
         , spring = resolvedSpring
-        , length = resolveLengthWithDefault config.length globalData.globalLength defaultLength
+        , length = InternalUnit.resolveLengthAxes config.length globalData.globalLength defaultLength
         , delay = resolveDelayWithDefault config.delay globalData.globalDelay 0
         }
 
@@ -1550,11 +1583,6 @@ resolveEasingWithDefault =
 
 resolveDelayWithDefault : Maybe Int -> Maybe Int -> Int -> Int
 resolveDelayWithDefault =
-    resolveMaybeWithDefault
-
-
-resolveLengthWithDefault : Maybe Unit -> Maybe Unit -> Unit -> Unit
-resolveLengthWithDefault =
     resolveMaybeWithDefault
 
 
@@ -1616,7 +1644,7 @@ collectPropertyTransform : PropertyConfig -> TransformParts -> TransformParts
 collectPropertyTransform property acc =
     case property of
         TranslateConfig config ->
-            { acc | translate = Translate.toCssString (Maybe.withDefault InternalUnit.default config.length) config.end }
+            { acc | translate = Translate.toCssString (InternalUnit.resolveLengthAxes config.length InternalUnit.emptyLengthAxes InternalUnit.default) config.end }
 
         RotateConfig config ->
             { acc | rotate = Rotate.toCssString config.end }

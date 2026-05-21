@@ -65,6 +65,9 @@ module Anim.Internal.Engine.WAAPI exposing
     , isRunning
     , iterations
     , length
+    , lengthX
+    , lengthY
+    , lengthZ
     , loopForever
     , onResize
     , pause
@@ -2065,7 +2068,7 @@ attributes animGroupName (AnimState state data) =
                             Nothing
                         , if isElmOwned "perspectiveOrigin" then
                             PropertyBaselines.getPerspectiveOrigin snapshot
-                                |> Maybe.map (\po -> Html.Attributes.style "perspective-origin" (PerspectiveOrigin.toCssString Percent po))
+                                |> Maybe.map (\po -> Html.Attributes.style "perspective-origin" (PerspectiveOrigin.toCssString { x = Percent, y = Percent, z = Percent } po))
 
                           else
                             Nothing
@@ -2076,8 +2079,8 @@ attributes animGroupName (AnimState state data) =
                         PropertyBaselines.getSize snapshot
                             |> Maybe.map
                                 (\s ->
-                                    [ Html.Attributes.style "width" (Size.widthToCssString InternalUnit.default s)
-                                    , Html.Attributes.style "height" (Size.heightToCssString InternalUnit.default s)
+                                    [ Html.Attributes.style "width" (Size.widthToCssString { x = InternalUnit.default, y = InternalUnit.default, z = InternalUnit.default } s)
+                                    , Html.Attributes.style "height" (Size.heightToCssString { x = InternalUnit.default, y = InternalUnit.default, z = InternalUnit.default } s)
                                     ]
                                 )
                             |> Maybe.withDefault []
@@ -2119,7 +2122,7 @@ attributes animGroupName (AnimState state data) =
                         snapshot
                         (findCurrentTranslate animGroupName state.builder
                             |> Maybe.map .length
-                            |> Maybe.withDefault InternalUnit.default
+                            |> Maybe.withDefault { x = InternalUnit.default, y = InternalUnit.default, z = InternalUnit.default }
                         )
             in
             dataAttr
@@ -2132,7 +2135,7 @@ attributes animGroupName (AnimState state data) =
                 ++ discreteExitStyles animGroup
 
 
-buildTransformStyles : List TransformProperty -> PropertyBaselines -> Unit -> List (Html.Attribute msg)
+buildTransformStyles : List TransformProperty -> PropertyBaselines -> InternalUnit.ResolvedLengthAxes -> List (Html.Attribute msg)
 buildTransformStyles order snapshot translateLength =
     let
         translatePart =
@@ -2270,6 +2273,21 @@ easing =
 length : Unit -> Builder.AnimBuilder mode -> Builder.AnimBuilder mode
 length =
     Builder.length
+
+
+lengthX : Unit -> Builder.AnimBuilder mode -> Builder.AnimBuilder mode
+lengthX =
+    Builder.lengthX
+
+
+lengthY : Unit -> Builder.AnimBuilder mode -> Builder.AnimBuilder mode
+lengthY =
+    Builder.lengthY
+
+
+lengthZ : Unit -> Builder.AnimBuilder mode -> Builder.AnimBuilder mode
+lengthZ =
+    Builder.lengthZ
 
 
 

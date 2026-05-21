@@ -10,6 +10,9 @@ module Anim.Engine.ScrollTimeline exposing
     , iterations, alternate
     , easing
     , length
+    , lengthX
+    , lengthY
+    , lengthZ
     , spring
     , discreteEntry, discreteExit
     , transformOrder
@@ -385,6 +388,30 @@ engine-level default. If neither is set, properties render in `Px`.
 length : Unit -> TimelineBuilder -> TimelineBuilder
 length =
     Internal.length
+
+
+{-| Set a per-axis default length [Unit](Anim-Unit#Unit) for the X axis.
+Applies to `Translate.x`, `Size.width`, and `PerspectiveOrigin.x`.
+-}
+lengthX : Unit -> TimelineBuilder -> TimelineBuilder
+lengthX =
+    Internal.lengthX
+
+
+{-| Set a per-axis default length [Unit](Anim-Unit#Unit) for the Y axis.
+Applies to `Translate.y`, `Size.height`, and `PerspectiveOrigin.y`.
+-}
+lengthY : Unit -> TimelineBuilder -> TimelineBuilder
+lengthY =
+    Internal.lengthY
+
+
+{-| Set a per-axis default length [Unit](Anim-Unit#Unit) for the Z axis.
+Applies to `Translate.z`.
+-}
+lengthZ : Unit -> TimelineBuilder -> TimelineBuilder
+lengthZ =
+    Internal.lengthZ
 
 
 

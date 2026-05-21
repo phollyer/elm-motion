@@ -14,7 +14,6 @@ module Anim.Internal.Property.PerspectiveOrigin exposing
     )
 
 import Anim.Internal.Unit as InternalUnit
-import Anim.Unit exposing (Unit)
 import Shared.TimeSpec as TimeSpec exposing (TimeSpec)
 
 
@@ -70,13 +69,13 @@ getY (PerspectiveOrigin { y }) =
 -- ============================================================
 
 
-toCssString : Unit -> PerspectiveOrigin -> String
-toCssString unit (PerspectiveOrigin { x, y }) =
-    let
-        suffix =
-            InternalUnit.toCssSuffix unit
-    in
-    String.fromFloat x ++ suffix ++ " " ++ String.fromFloat y ++ suffix
+toCssString : InternalUnit.ResolvedLengthAxes -> PerspectiveOrigin -> String
+toCssString axes (PerspectiveOrigin { x, y }) =
+    String.fromFloat x
+        ++ InternalUnit.toCssSuffix axes.x
+        ++ " "
+        ++ String.fromFloat y
+        ++ InternalUnit.toCssSuffix axes.y
 
 
 

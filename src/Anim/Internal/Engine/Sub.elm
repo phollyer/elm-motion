@@ -1179,7 +1179,7 @@ collectCurrentTransform : Animation -> Builder.TransformParts -> Builder.Transfo
 collectCurrentTransform anim acc =
     case anim of
         Translate a ->
-            { acc | translate = Translate.toCssString InternalUnit.default (interpolateEasedProgress interpolateTranslate a) }
+            { acc | translate = Translate.toCssString { x = InternalUnit.default, y = InternalUnit.default, z = InternalUnit.default } (interpolateEasedProgress interpolateTranslate a) }
 
         Rotate a ->
             { acc | rotate = Rotate.toCssString (interpolateEasedProgress interpolateRotate a) }
@@ -1247,7 +1247,7 @@ getNonTransformStyleAttribute anim =
             [ Html.Attributes.style "opacity" (String.fromFloat (Opacity.toFloat (interpolateEasedProgress interpolateOpacity a))) ]
 
         PerspectiveOrigin a ->
-            [ Html.Attributes.style "perspective-origin" (PerspectiveOrigin.toCssString Percent (interpolateEasedProgress interpolatePerspectiveOrigin a)) ]
+            [ Html.Attributes.style "perspective-origin" (PerspectiveOrigin.toCssString { x = Percent, y = Percent, z = Percent } (interpolateEasedProgress interpolatePerspectiveOrigin a)) ]
 
         Rotate _ ->
             []

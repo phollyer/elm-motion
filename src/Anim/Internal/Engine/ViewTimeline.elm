@@ -11,6 +11,9 @@ module Anim.Internal.Engine.ViewTimeline exposing
     , horizontal
     , iterations
     , length
+    , lengthX
+    , lengthY
+    , lengthZ
     , rangeEnd
     , rangeStart
     , spring
@@ -232,6 +235,21 @@ easing =
 length : Unit -> TimelineBuilder -> TimelineBuilder
 length =
     Builder.length
+
+
+lengthX : Unit -> TimelineBuilder -> TimelineBuilder
+lengthX =
+    Builder.lengthX
+
+
+lengthY : Unit -> TimelineBuilder -> TimelineBuilder
+lengthY =
+    Builder.lengthY
+
+
+lengthZ : Unit -> TimelineBuilder -> TimelineBuilder
+lengthZ =
+    Builder.lengthZ
 
 
 

@@ -601,9 +601,6 @@ encodeProcessedPropertyConfig maybeVersions property =
 
                 ( endX, endY ) =
                     PerspectiveOrigin.toTuple config.end
-
-                unitStr =
-                    InternalUnit.toCssSuffix config.length
             in
             Encode.object
                 (( "type", Encode.string "perspectiveOrigin" )
@@ -612,7 +609,8 @@ encodeProcessedPropertyConfig maybeVersions property =
                        , ( "startY", Encode.float startY )
                        , ( "endX", Encode.float endX )
                        , ( "endY", Encode.float endY )
-                       , ( "unit", Encode.string unitStr )
+                       , ( "unitX", Encode.string (InternalUnit.toCssSuffix config.length.x) )
+                       , ( "unitY", Encode.string (InternalUnit.toCssSuffix config.length.y) )
                        , ( "duration", Encode.int config.duration )
                        ]
                     ++ encodeEasingWithKeyframes config.duration config.easing config.spring
@@ -706,9 +704,6 @@ encodeProcessedPropertyConfig maybeVersions property =
 
                 ( endWidth, endHeight ) =
                     Size.toTuple config.end
-
-                unitStr =
-                    InternalUnit.toCssSuffix config.length
             in
             Encode.object
                 (( "type", Encode.string "size" )
@@ -717,7 +712,8 @@ encodeProcessedPropertyConfig maybeVersions property =
                        , ( "startHeight", Encode.float startHeight )
                        , ( "endWidth", Encode.float endWidth )
                        , ( "endHeight", Encode.float endHeight )
-                       , ( "unit", Encode.string unitStr )
+                       , ( "unitWidth", Encode.string (InternalUnit.toCssSuffix config.length.x) )
+                       , ( "unitHeight", Encode.string (InternalUnit.toCssSuffix config.length.y) )
                        , ( "duration", Encode.int config.duration )
                        ]
                     ++ encodeEasingWithKeyframes config.duration config.easing config.spring
@@ -727,9 +723,6 @@ encodeProcessedPropertyConfig maybeVersions property =
             let
                 ( endX, endY, endZ ) =
                     Translate.toTriple config.end
-
-                unitStr =
-                    InternalUnit.toCssSuffix config.length
             in
             Encode.object
                 (( "type", Encode.string "translate" )
@@ -738,7 +731,9 @@ encodeProcessedPropertyConfig maybeVersions property =
                     ++ [ ( "endX", Encode.float endX )
                        , ( "endY", Encode.float endY )
                        , ( "endZ", Encode.float endZ )
-                       , ( "unit", Encode.string unitStr )
+                       , ( "unitX", Encode.string (InternalUnit.toCssSuffix config.length.x) )
+                       , ( "unitY", Encode.string (InternalUnit.toCssSuffix config.length.y) )
+                       , ( "unitZ", Encode.string (InternalUnit.toCssSuffix config.length.z) )
                        , ( "duration", Encode.int config.duration )
                        ]
                     ++ encodeEasingWithKeyframes config.duration config.easing config.spring

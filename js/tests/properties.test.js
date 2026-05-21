@@ -96,11 +96,37 @@ describe('buildSimplePropertyKeyframes', () => {
             type: 'perspectiveOrigin',
             startX: 0, startY: 0,
             endX: 100, endY: 100,
-            unit: '%'
+            unitX: '%', unitY: '%'
         });
         expect(k).toEqual([
             { perspectiveOrigin: '0% 0%' },
             { perspectiveOrigin: '100% 100%' }
+        ]);
+    });
+
+    it('builds perspectiveOrigin keyframes with mixed per-axis units', () => {
+        const k = buildSimplePropertyKeyframes({
+            type: 'perspectiveOrigin',
+            startX: 0, startY: 0,
+            endX: 100, endY: 50,
+            unitX: '%', unitY: 'px'
+        });
+        expect(k).toEqual([
+            { perspectiveOrigin: '0% 0px' },
+            { perspectiveOrigin: '100% 50px' }
+        ]);
+    });
+
+    it('builds size keyframes with mixed per-axis units', () => {
+        const k = buildSimplePropertyKeyframes({
+            type: 'size',
+            startWidth: 0, startHeight: 0,
+            endWidth: 50, endHeight: 100,
+            unitWidth: '%', unitHeight: 'px'
+        });
+        expect(k).toEqual([
+            { width: '0%', height: '0px' },
+            { width: '50%', height: '100px' }
         ]);
     });
 
@@ -161,7 +187,7 @@ describe('buildComplexPropertyKeyframes', () => {
 
     it('emits per-keyframe perspectiveOrigin values', () => {
         const k = buildComplexPropertyKeyframes(
-            { type: 'perspectiveOrigin', startX: 0, startY: 0, endX: 100, endY: 100, unit: '%' },
+            { type: 'perspectiveOrigin', startX: 0, startY: 0, endX: 100, endY: 100, unitX: '%', unitY: '%' },
             [0, 0.5, 1]
         );
         expect(k).toEqual([
@@ -217,7 +243,7 @@ describe('resolveScrollDrivenTransformValues', () => {
         scaleX: 1, scaleY: 1, scaleZ: 1,
         rotateX: 0, rotateY: 0, rotateZ: 0,
         skewX: 0, skewY: 0,
-        translateUnit: 'px'
+        translateUnitX: 'px', translateUnitY: 'px', translateUnitZ: 'px'
     };
 
     it('returns the current transform as both start and end when given no properties', () => {

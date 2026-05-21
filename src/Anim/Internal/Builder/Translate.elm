@@ -26,6 +26,9 @@ module Anim.Internal.Builder.Translate exposing
     , fromYZ
     , fromZ
     , length
+    , lengthX
+    , lengthY
+    , lengthZ
     , speed
     , spring
     , to
@@ -493,6 +496,21 @@ spring s (TranslateBuilder config builder) =
 length : Unit -> TranslateBuilder mode -> TranslateBuilder mode
 length unit (TranslateBuilder config builder) =
     TranslateBuilder (PropertyBuilder.length unit config) builder
+
+
+lengthX : Unit -> TranslateBuilder mode -> TranslateBuilder mode
+lengthX unit (TranslateBuilder config builder) =
+    TranslateBuilder (PropertyBuilder.lengthX unit config) builder
+
+
+lengthY : Unit -> TranslateBuilder mode -> TranslateBuilder mode
+lengthY unit (TranslateBuilder config builder) =
+    TranslateBuilder (PropertyBuilder.lengthY unit config) builder
+
+
+lengthZ : Unit -> TranslateBuilder mode -> TranslateBuilder mode
+lengthZ unit (TranslateBuilder config builder) =
+    TranslateBuilder (PropertyBuilder.lengthZ unit config) builder
 
 
 

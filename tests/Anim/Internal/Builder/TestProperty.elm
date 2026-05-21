@@ -8,6 +8,7 @@ import Anim.Internal.Property.PerspectiveOrigin as InternalPerspectiveOrigin
 import Anim.Internal.Property.Rotate as InternalRotate
 import Anim.Internal.Property.Scale as InternalScale
 import Anim.Internal.Property.Size as InternalSize
+import Anim.Internal.Unit as InternalUnit
 import Anim.Internal.Property.Skew as InternalSkew
 import Anim.Internal.Property.Translate as InternalTranslate
 import Anim.Property.Custom as Custom
@@ -153,7 +154,7 @@ upsertTests =
                 , easing = Nothing
                 , spring = Nothing
                 , delay = Nothing
-                , length = Nothing
+                , length = InternalUnit.emptyLengthAxes
                 }
 
         opacityConfig =
@@ -165,7 +166,7 @@ upsertTests =
                 , easing = Nothing
                 , spring = Nothing
                 , delay = Nothing
-                , length = Nothing
+                , length = InternalUnit.emptyLengthAxes
                 }
 
         replacementTranslateConfig =
@@ -177,7 +178,7 @@ upsertTests =
                 , easing = Nothing
                 , spring = Nothing
                 , delay = Nothing
-                , length = Nothing
+                , length = InternalUnit.emptyLengthAxes
                 }
 
         getProperties builder =
@@ -1514,7 +1515,7 @@ perspectiveOriginClampTests =
 
         endUnit builder =
             firstPerspectiveOriginConfig builder
-                |> Maybe.andThen .length
+                |> Maybe.andThen (.length >> .x)
     in
     describe "PerspectiveOrigin clamps"
         [ test "clampX clamps explicit toX above max" <|

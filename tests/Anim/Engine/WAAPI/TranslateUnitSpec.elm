@@ -87,7 +87,7 @@ decodeTranslateUnit animGroupName json =
                 |> Decode.andThen
                     (\ty ->
                         if ty == "translate" then
-                            Decode.field "unit" Decode.string
+                            Decode.field "unitY" Decode.string
 
                         else
                             Decode.fail "not translate"

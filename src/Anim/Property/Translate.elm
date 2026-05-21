@@ -10,6 +10,7 @@ module Anim.Property.Translate exposing
     , easing
     , spring
     , length
+    , lengthX, lengthY, lengthZ
     , clampX, clampY, clampZ, unclampX, unclampY, unclampZ
     , bounds
     , position
@@ -759,6 +760,33 @@ translate targeted at `Sub` reports an error and falls back to `Px`.
 length : Unit -> Builder mode -> Builder mode
 length =
     TB.length
+
+
+{-| Set the length [Unit](Anim-Unit#Unit) used to render the X-axis translate
+value for this property. Overrides any unit set by [`length`](#length) or by
+the engine's `length`/`lengthX` setter for the X axis.
+-}
+lengthX : Unit -> Builder mode -> Builder mode
+lengthX =
+    TB.lengthX
+
+
+{-| Set the length [Unit](Anim-Unit#Unit) used to render the Y-axis translate
+value for this property. Overrides any unit set by [`length`](#length) or by
+the engine's `length`/`lengthY` setter for the Y axis.
+-}
+lengthY : Unit -> Builder mode -> Builder mode
+lengthY =
+    TB.lengthY
+
+
+{-| Set the length [Unit](Anim-Unit#Unit) used to render the Z-axis translate
+value for this property. Overrides any unit set by [`length`](#length) or by
+the engine's `length`/`lengthZ` setter for the Z axis.
+-}
+lengthZ : Unit -> Builder mode -> Builder mode
+lengthZ =
+    TB.lengthZ
 
 
 

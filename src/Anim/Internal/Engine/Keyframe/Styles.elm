@@ -119,7 +119,7 @@ baselineTransformParts maybeTargetValues processedProps =
                         _ ->
                             False
             in
-            { translate = baseline isTranslate (PropertyBaselines.getTranslate targets) (Translate.toCssString InternalUnit.default)
+            { translate = baseline isTranslate (PropertyBaselines.getTranslate targets) (Translate.toCssString { x = InternalUnit.default, y = InternalUnit.default, z = InternalUnit.default })
             , rotate = baseline isRotate (PropertyBaselines.getRotate targets) Rotate.toCssString
             , skew = baseline isSkew (PropertyBaselines.getSkew targets) Skew.toCssString
             , scale = baseline isScale (PropertyBaselines.getScale targets) Scale.toCssString

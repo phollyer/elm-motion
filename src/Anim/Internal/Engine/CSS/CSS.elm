@@ -50,6 +50,9 @@ module Anim.Internal.Engine.CSS.CSS exposing
     , isRunning
     , iterations
     , length
+    , lengthX
+    , lengthY
+    , lengthZ
     , loopForever
     , onEvent
     , onEventStopPropagation
@@ -367,6 +370,21 @@ easing =
 length : Unit -> Builder.AnimBuilder mode -> Builder.AnimBuilder mode
 length =
     Builder.length
+
+
+lengthX : Unit -> Builder.AnimBuilder mode -> Builder.AnimBuilder mode
+lengthX =
+    Builder.lengthX
+
+
+lengthY : Unit -> Builder.AnimBuilder mode -> Builder.AnimBuilder mode
+lengthY =
+    Builder.lengthY
+
+
+lengthZ : Unit -> Builder.AnimBuilder mode -> Builder.AnimBuilder mode
+lengthZ =
+    Builder.lengthZ
 
 
 

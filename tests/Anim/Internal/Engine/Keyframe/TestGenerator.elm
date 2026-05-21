@@ -1,6 +1,7 @@
 module Anim.Internal.Engine.Keyframe.TestGenerator exposing (suite)
 
 import Anim.Internal.Builder as Builder
+import Anim.Internal.Unit as InternalUnit
 import Anim.Internal.Engine.Keyframe.AnimGroup as KeyframeAnimGroup
 import Anim.Internal.Engine.Keyframe.Animation as Animation
 import Anim.Internal.Engine.Keyframe.Generator as Generator
@@ -21,7 +22,7 @@ translateConfig =
         , easing = Nothing
         , spring = Nothing
         , delay = Nothing
-        , length = Nothing
+        , length = InternalUnit.emptyLengthAxes
         }
 
 
@@ -162,7 +163,7 @@ interpolationTests =
                             , easing = Nothing
                             , spring = Nothing
                             , delay = Nothing
-                            , length = Nothing
+                            , length = InternalUnit.emptyLengthAxes
                             }
                 in
                 Generator.init Nothing Builder.Once Builder.Normal Generator.emptyDiscreteConfig "noOp" [ noOpTranslate ]

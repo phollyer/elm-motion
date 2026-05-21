@@ -61,26 +61,29 @@ function parsePerspectiveOriginParts(computedStyle) {
     };
 }
 
-function getPerspectiveOriginFallback(animGroup, computedStyle, unit) {
+function getPerspectiveOriginFallback(animGroup, computedStyle, unitX, unitY) {
     const cached = lastKnownPerspectiveOrigins.get(animGroup);
-    if (cached && cached.unit === unit) {
+    if (cached && cached.unitX === unitX && cached.unitY === unitY) {
         return { x: cached.x, y: cached.y };
     }
     return parsePerspectiveOriginParts(computedStyle);
 }
 
 function resolvePerspectiveOriginValues(animGroup, computedStyle, property) {
-    const fallback = getPerspectiveOriginFallback(animGroup, computedStyle, property.unit);
+    const unitX = property.unitX || '%';
+    const unitY = property.unitY || '%';
+    const fallback = getPerspectiveOriginFallback(animGroup, computedStyle, unitX, unitY);
     const resolved = {
         type: 'perspectiveOrigin',
         startX: property.startX ?? fallback.x,
         startY: property.startY ?? fallback.y,
         endX: property.endX,
         endY: property.endY,
-        unit: property.unit
+        unitX: unitX,
+        unitY: unitY
     };
 
-    lastKnownPerspectiveOrigins.set(animGroup, { x: property.endX, y: property.endY, unit: property.unit });
+    lastKnownPerspectiveOrigins.set(animGroup, { x: property.endX, y: property.endY, unitX: unitX, unitY: unitY });
     return resolved;
 }
 
@@ -100,7 +103,8 @@ const NON_TRANSFORM_RESOLVERS = {
             startHeight: property.startHeight != null ? property.startHeight : parseFloat(computedStyle.height),
             endWidth: property.endWidth,
             endHeight: property.endHeight,
-            unit: property.unit || 'px'
+            unitWidth: property.unitWidth || 'px',
+            unitHeight: property.unitHeight || 'px'
         };
     },
     customProperty(_animGroup, computedStyle, property) {
@@ -182,7 +186,8 @@ const PROPERTY_CONFIG_BUILDERS = {
         const startHeight = property.startHeight != null ? property.startHeight : parseFloat(computedStyle.height);
         config.from = `${startWidth},${startHeight}`;
         config.to = `${property.endWidth},${property.endHeight}`;
-        config.unit = property.unit || 'px';
+        config.unitWidth = property.unitWidth || 'px';
+        config.unitHeight = property.unitHeight || 'px';
     },
     customProperty(_animGroup, _element, computedStyle, property, config) {
         const computedValue = parseFloat(computedStyle.getPropertyValue(property.cssProperty)) || 0;
@@ -198,8 +203,10 @@ const PROPERTY_CONFIG_BUILDERS = {
         config.to = property.endColor;
     },
     perspectiveOrigin(_animGroup, _element, _computedStyle, property, config) {
-        config.from = `${property.startX}${property.unit} ${property.startY}${property.unit}`;
-        config.to = `${property.endX}${property.unit} ${property.endY}${property.unit}`;
+        const uX = property.unitX || '%';
+        const uY = property.unitY || '%';
+        config.from = `${property.startX}${uX} ${property.startY}${uY}`;
+        config.to = `${property.endX}${uX} ${property.endY}${uY}`;
     }
 };
 
@@ -249,10 +256,11 @@ const SIMPLE_KEYFRAME_BUILDERS = {
         ];
     },
     size(resolved) {
-        const unit = resolved.unit || 'px';
+        const uW = resolved.unitWidth || 'px';
+        const uH = resolved.unitHeight || 'px';
         return [
-            { width: resolved.startWidth + unit, height: resolved.startHeight + unit },
-            { width: resolved.endWidth + unit, height: resolved.endHeight + unit }
+            { width: resolved.startWidth + uW, height: resolved.startHeight + uH },
+            { width: resolved.endWidth + uW, height: resolved.endHeight + uH }
         ];
     },
     customProperty(resolved) {
@@ -268,9 +276,11 @@ const SIMPLE_KEYFRAME_BUILDERS = {
         ];
     },
     perspectiveOrigin(resolved) {
+        const uX = resolved.unitX || '%';
+        const uY = resolved.unitY || '%';
         return [
-            { perspectiveOrigin: resolved.startX + resolved.unit + ' ' + resolved.startY + resolved.unit },
-            { perspectiveOrigin: resolved.endX + resolved.unit + ' ' + resolved.endY + resolved.unit }
+            { perspectiveOrigin: resolved.startX + uX + ' ' + resolved.startY + uY },
+            { perspectiveOrigin: resolved.endX + uX + ' ' + resolved.endY + uY }
         ];
     }
 };
@@ -282,9 +292,11 @@ const COMPLEX_KEYFRAME_BUILDERS = {
         }));
     },
     size(resolved, easingKeyframes) {
+        const uW = resolved.unitWidth || 'px';
+        const uH = resolved.unitHeight || 'px';
         return easingKeyframes.map(p => ({
-            width: (resolved.startWidth + (resolved.endWidth - resolved.startWidth) * p) + 'px',
-            height: (resolved.startHeight + (resolved.endHeight - resolved.startHeight) * p) + 'px'
+            width: (resolved.startWidth + (resolved.endWidth - resolved.startWidth) * p) + uW,
+            height: (resolved.startHeight + (resolved.endHeight - resolved.startHeight) * p) + uH
         }));
     },
     customProperty(resolved, easingKeyframes) {
@@ -298,9 +310,11 @@ const COMPLEX_KEYFRAME_BUILDERS = {
         }));
     },
     perspectiveOrigin(resolved, easingKeyframes) {
+        const uX = resolved.unitX || '%';
+        const uY = resolved.unitY || '%';
         return easingKeyframes.map(p => ({
-            perspectiveOrigin: (resolved.startX + (resolved.endX - resolved.startX) * p) + resolved.unit
-                + ' ' + (resolved.startY + (resolved.endY - resolved.startY) * p) + resolved.unit
+            perspectiveOrigin: (resolved.startX + (resolved.endX - resolved.startX) * p) + uX
+                + ' ' + (resolved.startY + (resolved.endY - resolved.startY) * p) + uY
         }));
     }
 };
@@ -402,16 +416,28 @@ export function resolveScrollDrivenTransformValues(transformProperties, currentT
         scaleX: currentTransform.scaleX, scaleY: currentTransform.scaleY, scaleZ: currentTransform.scaleZ,
         rotateX: currentTransform.rotateX, rotateY: currentTransform.rotateY, rotateZ: currentTransform.rotateZ,
         skewX: currentTransform.skewX, skewY: currentTransform.skewY,
-        translateUnit: currentTransform.translateUnit || 'px'
+        translateUnitX: currentTransform.translateUnitX || 'px',
+        translateUnitY: currentTransform.translateUnitY || 'px',
+        translateUnitZ: currentTransform.translateUnitZ || 'px'
     };
     const start = Object.assign({}, base);
     const end = Object.assign({}, base);
 
     transformProperties.forEach(function (property) {
         resolveScrollTransformProperty(property, start, end, currentTransform);
-        if (property.type === 'translate' && typeof property.unit === 'string' && property.unit.length > 0) {
-            start.translateUnit = property.unit;
-            end.translateUnit = property.unit;
+        if (property.type === 'translate') {
+            if (typeof property.unitX === 'string' && property.unitX.length > 0) {
+                start.translateUnitX = property.unitX;
+                end.translateUnitX = property.unitX;
+            }
+            if (typeof property.unitY === 'string' && property.unitY.length > 0) {
+                start.translateUnitY = property.unitY;
+                end.translateUnitY = property.unitY;
+            }
+            if (typeof property.unitZ === 'string' && property.unitZ.length > 0) {
+                start.translateUnitZ = property.unitZ;
+                end.translateUnitZ = property.unitZ;
+            }
         }
     });
 

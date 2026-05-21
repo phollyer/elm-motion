@@ -62,7 +62,9 @@ function applyDirectTransformStyles(animGroup, element, props) {
         rotateZ = 0,
         skewX = 0,
         skewY = 0,
-        translateUnit = 'px'
+        translateUnitX = 'px',
+        translateUnitY = 'px',
+        translateUnitZ = 'px'
     } = props;
 
     element.style.transform = buildTransformString(
@@ -79,7 +81,9 @@ function applyDirectTransformStyles(animGroup, element, props) {
         skewY,
         order,
         undefined,
-        translateUnit
+        translateUnitX,
+        translateUnitY,
+        translateUnitZ
     );
 }
 
@@ -91,9 +95,10 @@ function applyDirectStyleUpdates(style, props) {
     });
 
     if (props.width !== undefined && props.height !== undefined) {
-        const unit = props.unit || 'px';
-        style.width = `${props.width}${unit}`;
-        style.height = `${props.height}${unit}`;
+        const uW = props.unitWidth || 'px';
+        const uH = props.unitHeight || 'px';
+        style.width = `${props.width}${uW}`;
+        style.height = `${props.height}${uH}`;
     }
 }
 

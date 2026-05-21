@@ -36,6 +36,9 @@ module Anim.Internal.Builder.Property exposing
     , getTranslateRange
     , getTranslateStart
     , length
+    , lengthX
+    , lengthY
+    , lengthZ
     , speed
     , spring
     , upsert
@@ -51,6 +54,7 @@ import Anim.Internal.Property.Scale as Scale
 import Anim.Internal.Property.Size as Size
 import Anim.Internal.Property.Skew as Skew
 import Anim.Internal.Property.Translate as Translate
+import Anim.Internal.Unit as InternalUnit
 import Anim.Unit exposing (Unit)
 import Motion.Easing exposing (Easing)
 import Motion.Internal.Spring exposing (Spring)
@@ -69,7 +73,7 @@ type alias Config a =
     , easing : Maybe Easing
     , spring : Maybe Spring
     , delay : Maybe Int
-    , length : Maybe Unit
+    , length : InternalUnit.LengthAxes
     , timing : Maybe TimeSpec
     , distance : Float
     }
@@ -82,7 +86,7 @@ defaultConfig defaultEnd =
     , distance = 0
     , timing = Nothing
     , delay = Nothing
-    , length = Nothing
+    , length = InternalUnit.emptyLengthAxes
     , easing = Nothing
     , spring = Nothing
     }
@@ -516,10 +520,34 @@ spring spring_ config =
 
 length :
     Unit
-    -> { config | length : Maybe Unit }
-    -> { config | length : Maybe Unit }
+    -> { config | length : InternalUnit.LengthAxes }
+    -> { config | length : InternalUnit.LengthAxes }
 length unit config =
-    { config | length = Just unit }
+    { config | length = InternalUnit.setAllLengthAxes unit config.length }
+
+
+lengthX :
+    Unit
+    -> { config | length : InternalUnit.LengthAxes }
+    -> { config | length : InternalUnit.LengthAxes }
+lengthX unit config =
+    { config | length = InternalUnit.setLengthX unit config.length }
+
+
+lengthY :
+    Unit
+    -> { config | length : InternalUnit.LengthAxes }
+    -> { config | length : InternalUnit.LengthAxes }
+lengthY unit config =
+    { config | length = InternalUnit.setLengthY unit config.length }
+
+
+lengthZ :
+    Unit
+    -> { config | length : InternalUnit.LengthAxes }
+    -> { config | length : InternalUnit.LengthAxes }
+lengthZ unit config =
+    { config | length = InternalUnit.setLengthZ unit config.length }
 
 
 

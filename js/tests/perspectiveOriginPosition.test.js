@@ -34,7 +34,8 @@ function defaultResolved({
         startY: startY,
         endX: endX,
         endY: endY,
-        unit: unit
+        unitX: unit,
+        unitY: unit
     };
 }
 
@@ -93,7 +94,8 @@ describe('perspectiveOriginPositionAnimation', () => {
 
         const cached = lastKnownPerspectiveOrigins.get('camera');
         expect(cached.x).toBe(480);
-        expect(cached.unit).toBe('px');
+        expect(cached.unitX).toBe('px');
+        expect(cached.unitY).toBe('px');
         expect(element.style.perspectiveOrigin).toContain('480px');
     });
 

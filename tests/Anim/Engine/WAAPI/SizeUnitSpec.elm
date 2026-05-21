@@ -83,7 +83,7 @@ decodeSizeUnit animGroupName json =
                 |> Decode.andThen
                     (\ty ->
                         if ty == "size" then
-                            Decode.field "unit" Decode.string
+                            Decode.field "unitWidth" Decode.string
 
                         else
                             Decode.fail "not size"
