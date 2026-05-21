@@ -13,14 +13,22 @@ module Anim.Internal.Engine.Sub.Interpolation exposing
     , interpolateTuple
     )
 
+{-| Sub-engine interpolation. The generic primitives live in
+`Anim.Internal.Engine.Shared.Interpolation` and are re-exported here so
+existing Sub-engine call sites keep working unchanged. Anything that
+depends on Sub's `PropertyAnimation` record (`calculateProgress`,
+`interpolateEasedProgress`) stays in this module.
+-}
+
+import Anim.Internal.Engine.Shared.Interpolation as Shared
 import Anim.Internal.Engine.Sub.Animation exposing (PropertyAnimation)
-import Anim.Internal.Property.Opacity as Opacity exposing (Opacity)
-import Anim.Internal.Property.PerspectiveOrigin as PerspectiveOrigin exposing (PerspectiveOrigin)
-import Anim.Internal.Property.Rotate as Rotate exposing (Rotate)
-import Anim.Internal.Property.Scale as Scale exposing (Scale)
-import Anim.Internal.Property.Size as Size exposing (Size)
-import Anim.Internal.Property.Skew as Skew exposing (Skew)
-import Anim.Internal.Property.Translate as Translate exposing (Translate)
+import Anim.Internal.Property.Opacity exposing (Opacity)
+import Anim.Internal.Property.PerspectiveOrigin exposing (PerspectiveOrigin)
+import Anim.Internal.Property.Rotate exposing (Rotate)
+import Anim.Internal.Property.Scale exposing (Scale)
+import Anim.Internal.Property.Size exposing (Size)
+import Anim.Internal.Property.Skew exposing (Skew)
+import Anim.Internal.Property.Translate exposing (Translate)
 
 
 
@@ -46,12 +54,6 @@ calculateProgress timing =
             min 1.0 (animationElapsedMs / timing.totalDurationMs)
 
 
-
--- ============================================================
--- CORE INTERPOLATION
--- ============================================================
-
-
 interpolateEasedProgress : (Float -> a -> a -> a) -> PropertyAnimation a -> a
 interpolateEasedProgress interpolate anim =
     let
@@ -61,71 +63,57 @@ interpolateEasedProgress interpolate anim =
     interpolate easedProgress anim.start anim.end
 
 
+
+-- ============================================================
+-- RE-EXPORTS FROM SHARED
+-- ============================================================
+
+
 interpolateFloat : Float -> Float -> Float -> Float
-interpolateFloat t start end =
-    start + (end - start) * t
+interpolateFloat =
+    Shared.interpolateFloat
 
 
 interpolateTriple : (a -> ( Float, Float, Float )) -> (( Float, Float, Float ) -> a) -> Float -> a -> a -> a
-interpolateTriple toTriple fromTriple t start end =
-    let
-        ( s1, s2, s3 ) =
-            toTriple start
-
-        ( e1, e2, e3 ) =
-            toTriple end
-    in
-    fromTriple ( interpolateFloat t s1 e1, interpolateFloat t s2 e2, interpolateFloat t s3 e3 )
+interpolateTriple =
+    Shared.interpolateTriple
 
 
 interpolateTuple : (a -> ( Float, Float )) -> (( Float, Float ) -> a) -> Float -> a -> a -> a
-interpolateTuple toTuple fromTuple t start end =
-    let
-        ( s1, s2 ) =
-            toTuple start
-
-        ( e1, e2 ) =
-            toTuple end
-    in
-    fromTuple ( interpolateFloat t s1 e1, interpolateFloat t s2 e2 )
-
-
-
--- ============================================================
--- PROPERTY INTERPOLATION
--- ============================================================
+interpolateTuple =
+    Shared.interpolateTuple
 
 
 interpolateOpacity : Float -> Opacity -> Opacity -> Opacity
-interpolateOpacity t start end =
-    Opacity.fromFloat (interpolateFloat t (Opacity.toFloat start) (Opacity.toFloat end))
+interpolateOpacity =
+    Shared.interpolateOpacity
 
 
 interpolateRotate : Float -> Rotate -> Rotate -> Rotate
 interpolateRotate =
-    interpolateTriple Rotate.toTriple Rotate.fromTriple
+    Shared.interpolateRotate
 
 
 interpolateScale : Float -> Scale -> Scale -> Scale
 interpolateScale =
-    interpolateTriple Scale.toTriple Scale.fromTriple
+    Shared.interpolateScale
 
 
 interpolateSize : Float -> Size -> Size -> Size
 interpolateSize =
-    interpolateTuple Size.toTuple Size.fromTuple
+    Shared.interpolateSize
 
 
 interpolatePerspectiveOrigin : Float -> PerspectiveOrigin -> PerspectiveOrigin -> PerspectiveOrigin
 interpolatePerspectiveOrigin =
-    PerspectiveOrigin.interpolate
+    Shared.interpolatePerspectiveOrigin
 
 
 interpolateSkew : Float -> Skew -> Skew -> Skew
 interpolateSkew =
-    interpolateTuple Skew.toTuple Skew.fromTuple
+    Shared.interpolateSkew
 
 
 interpolateTranslate : Float -> Translate -> Translate -> Translate
 interpolateTranslate =
-    interpolateTriple Translate.toTriple Translate.fromTriple
+    Shared.interpolateTranslate
