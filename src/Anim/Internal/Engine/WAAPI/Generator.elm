@@ -168,7 +168,13 @@ propertyBounds properties =
                     { start = maybeSet PropertyBaselines.setOpacity config.start start, end = PropertyBaselines.setOpacity config.end end }
 
                 Builder.ProcessedPerspectiveOriginConfig config ->
-                    { start = maybeSet PropertyBaselines.setPerspectiveOrigin config.start start, end = PropertyBaselines.setPerspectiveOrigin config.end end }
+                    { start =
+                        maybeSet PropertyBaselines.setPerspectiveOrigin config.start start
+                            |> PropertyBaselines.setPerspectiveOriginUnits config.cssUnit
+                    , end =
+                        PropertyBaselines.setPerspectiveOrigin config.end end
+                            |> PropertyBaselines.setPerspectiveOriginUnits config.cssUnit
+                    }
 
                 Builder.ProcessedRotateConfig config ->
                     { start = maybeSet PropertyBaselines.setRotate config.start start, end = PropertyBaselines.setRotate config.end end }
@@ -177,13 +183,25 @@ propertyBounds properties =
                     { start = maybeSet PropertyBaselines.setScale config.start start, end = PropertyBaselines.setScale config.end end }
 
                 Builder.ProcessedSizeConfig config ->
-                    { start = maybeSet PropertyBaselines.setSize config.start start, end = PropertyBaselines.setSize config.end end }
+                    { start =
+                        maybeSet PropertyBaselines.setSize config.start start
+                            |> PropertyBaselines.setSizeUnits config.cssUnit
+                    , end =
+                        PropertyBaselines.setSize config.end end
+                            |> PropertyBaselines.setSizeUnits config.cssUnit
+                    }
 
                 Builder.ProcessedSkewConfig config ->
                     { start = maybeSet PropertyBaselines.setSkew config.start start, end = PropertyBaselines.setSkew config.end end }
 
                 Builder.ProcessedTranslateConfig config ->
-                    { start = maybeSet PropertyBaselines.setTranslate config.start start, end = PropertyBaselines.setTranslate config.end end }
+                    { start =
+                        maybeSet PropertyBaselines.setTranslate config.start start
+                            |> PropertyBaselines.setTranslateUnits config.cssUnit
+                    , end =
+                        PropertyBaselines.setTranslate config.end end
+                            |> PropertyBaselines.setTranslateUnits config.cssUnit
+                    }
     in
     List.foldl setBounds { start = PropertyBaselines.empty, end = PropertyBaselines.empty } properties
 
@@ -215,6 +233,7 @@ endBounds properties =
 
                 Builder.ProcessedPerspectiveOriginConfig config ->
                     PropertyBaselines.setPerspectiveOrigin config.end end
+                        |> PropertyBaselines.setPerspectiveOriginUnits config.cssUnit
 
                 Builder.ProcessedRotateConfig config ->
                     PropertyBaselines.setRotate config.end end
@@ -224,11 +243,13 @@ endBounds properties =
 
                 Builder.ProcessedSizeConfig config ->
                     PropertyBaselines.setSize config.end end
+                        |> PropertyBaselines.setSizeUnits config.cssUnit
 
                 Builder.ProcessedSkewConfig config ->
                     PropertyBaselines.setSkew config.end end
 
                 Builder.ProcessedTranslateConfig config ->
                     PropertyBaselines.setTranslate config.end end
+                        |> PropertyBaselines.setTranslateUnits config.cssUnit
     in
     List.foldl setBounds PropertyBaselines.empty properties

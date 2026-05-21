@@ -14,7 +14,7 @@ groupName =
 
 animatedState : Transition.AnimState
 animatedState =
-    Transition.init [ PerspectiveOrigin.initPercent groupName 50 50 ]
+    Transition.init [ PerspectiveOrigin.initXY groupName 50 50 ]
         |> (\state ->
                 Transition.animate state <|
                     PerspectiveOrigin.for groupName

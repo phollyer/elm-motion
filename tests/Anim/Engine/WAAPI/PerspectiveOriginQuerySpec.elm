@@ -42,7 +42,7 @@ animate config state =
 
 animatedState : WAAPI.AnimState Msg
 animatedState =
-    initWith [ PerspectiveOrigin.initPercent groupName 50 50 ]
+    initWith [ PerspectiveOrigin.initXY groupName 50 50 ]
         |> animate
             (PerspectiveOrigin.for groupName
                 >> PerspectiveOrigin.cssUnit Unit.Percent
@@ -77,7 +77,7 @@ suite =
                     ()
         , test "current reads from the latest snapshot" <|
             \_ ->
-                initWith [ PerspectiveOrigin.initPercent groupName 40 60 ]
+                initWith [ PerspectiveOrigin.initXY groupName 40 60 ]
                     |> WAAPI.getPerspectiveOriginCurrent groupName
                     |> Expect.equal (Just { x = 40, y = 60 })
         , test "current is Nothing for unknown group" <|

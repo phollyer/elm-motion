@@ -242,7 +242,7 @@ init flags =
                 [ -- Initialize the perspective origin at the top-left corner (0%, 0%)
                   -- It will travel around the corners in sync with the dot animation:
                   -- (0,0) -> (100,0) -> (100,100) -> (0,100) -> (0,0)
-                  PerspectiveOrigin.initPercent perspectiveContainer.groupName 0 0
+                  PerspectiveOrigin.initXY perspectiveContainer.groupName 0 0
 
                 -- Bring the cube forward on the Z axis
                 -- so that it doesn't get clipped by the

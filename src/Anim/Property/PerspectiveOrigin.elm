@@ -1,6 +1,7 @@
 module Anim.Property.PerspectiveOrigin exposing
     ( Builder, AnimGroupName
-    , initPx, initPercent
+    , initXY, initX, initY
+    , initUnit, initUnitX, initUnitY
     , for, build
     , cssUnit, cssUnitX, cssUnitY
     , from, fromXY, fromX, fromY
@@ -52,7 +53,33 @@ will use the current end value as the start, ensuring a smooth transition betwee
 
 # Initialize
 
-@docs initPx, initPercent
+The default unit for `perspective-origin` is `Percent`. Use
+[`initUnit`](#initUnit) (or [`initUnitX`](#initUnitX) /
+[`initUnitY`](#initUnitY)) to switch the unit used by subsequent `init*`
+calls.
+
+@docs initXY, initX, initY
+
+
+## Initial Unit
+
+Set the length [Unit](Anim-Unit#Unit) used by subsequent `init*` calls.
+Order matters - `initUnit*` only affects `init*` calls that follow it in
+the pipeline. Defaults to `Percent`.
+
+    import Anim.Unit exposing (Unit(..))
+
+    init _ =
+        ( { animState =
+                Engine.init
+                    [ PerspectiveOrigin.initUnit Px
+                        >> PerspectiveOrigin.initXY "vp" 200 150
+                    ]
+          }
+        , Cmd.none
+        )
+
+@docs initUnit, initUnitX, initUnitY
 
 
 # Build
@@ -120,7 +147,7 @@ new bounds during `onResize`.
 
 -}
 
-import Anim.Internal.Builder exposing (AnimBuilder)
+import Anim.Internal.Builder as IB exposing (AnimBuilder)
 import Anim.Internal.Builder.PerspectiveOrigin as PB
 import Anim.Internal.Resize.Builder as ResizeBuilder
 import Anim.Resize as Resize
@@ -153,48 +180,96 @@ type alias Builder mode =
 -- ============================================================
 
 
-{-| Set the initial perspective origin using pixel values.
+{-| Set the initial perspective origin on both axes. Uses whichever
+[Unit](Anim-Unit#Unit) was most recently selected by [`initUnit`](#initUnit) /
+[`initUnitX`](#initUnitX) / [`initUnitY`](#initUnitY) upstream in the pipeline
+(defaults to `Percent`).
 
     import Anim.Engine.* as Engine
     import Anim.Property.PerspectiveOrigin as PerspectiveOrigin
 
     init : () -> ( Model, Cmd Msg )
     init _ =
-        ( { animState = Engine.init [ PerspectiveOrigin.initPx "animGroupName" 200 150 ] }
+        ( { animState = Engine.init [ PerspectiveOrigin.initXY "animGroupName" 50 50 ] }
         , Cmd.none
         )
 
 -}
-initPx : AnimGroupName -> Float -> Float -> AnimBuilder mode -> AnimBuilder mode
-initPx animationKey x y animBuilder =
+initXY : AnimGroupName -> Float -> Float -> AnimBuilder mode -> AnimBuilder mode
+initXY animationKey x y animBuilder =
     animBuilder
         |> for animationKey
-        |> PB.cssUnit Unit.Px
+        |> PB.applyInitCssUnit
         |> fromXY x y
         |> toXY x y
         |> build
 
 
-{-| Set the initial perspective origin using percentage values.
-
-    import Anim.Engine.* as Engine
-    import Anim.Property.PerspectiveOrigin as PerspectiveOrigin
-
-    init : () -> ( Model, Cmd Msg )
-    init _ =
-        ( { animState = Engine.init [ PerspectiveOrigin.initPercent "animGroupName" 50 50 ] }
-        , Cmd.none
-        )
-
+{-| Set the initial X-axis perspective origin. Uses whichever
+[Unit](Anim-Unit#Unit) was most recently selected by [`initUnit`](#initUnit) /
+[`initUnitX`](#initUnitX) upstream in the pipeline (defaults to `Percent`).
 -}
-initPercent : AnimGroupName -> Float -> Float -> AnimBuilder mode -> AnimBuilder mode
-initPercent animationKey x y animBuilder =
+initX : AnimGroupName -> Float -> AnimBuilder mode -> AnimBuilder mode
+initX animationKey x animBuilder =
     animBuilder
         |> for animationKey
-        |> PB.cssUnit Unit.Percent
-        |> fromXY x y
-        |> toXY x y
+        |> PB.applyInitCssUnit
+        |> fromX x
+        |> toX x
         |> build
+
+
+{-| Set the initial Y-axis perspective origin. Uses whichever
+[Unit](Anim-Unit#Unit) was most recently selected by [`initUnit`](#initUnit) /
+[`initUnitY`](#initUnitY) upstream in the pipeline (defaults to `Percent`).
+-}
+initY : AnimGroupName -> Float -> AnimBuilder mode -> AnimBuilder mode
+initY animationKey y animBuilder =
+    animBuilder
+        |> for animationKey
+        |> PB.applyInitCssUnit
+        |> fromY y
+        |> toY y
+        |> build
+
+
+{-| Set the length [Unit](Anim-Unit#Unit) used by every subsequent `init*` call
+for `PerspectiveOrigin` values. Defaults to `Percent`.
+
+Order matters - only `init*` calls downstream of this setter in the pipeline
+are affected; calls upstream keep their previously selected unit (or `Percent`).
+Later per-axis setters ([`initUnitX`](#initUnitX), [`initUnitY`](#initUnitY))
+override this setting on the relevant axis.
+
+    import Anim.Unit exposing (Unit(..))
+
+    Engine.init
+        [ PerspectiveOrigin.initUnit Px
+            >> PerspectiveOrigin.initXY "vp" 200 150
+        ]
+
+-}
+initUnit : Unit.Unit -> AnimBuilder mode -> AnimBuilder mode
+initUnit =
+    IB.setPerspectiveOriginInitCssUnit
+
+
+{-| Set the X-axis unit used by every subsequent `init*` call for
+`PerspectiveOrigin` values. Overrides any unit set by [`initUnit`](#initUnit)
+on the X axis.
+-}
+initUnitX : Unit.Unit -> AnimBuilder mode -> AnimBuilder mode
+initUnitX =
+    IB.setPerspectiveOriginInitCssUnitX
+
+
+{-| Set the Y-axis unit used by every subsequent `init*` call for
+`PerspectiveOrigin` values. Overrides any unit set by [`initUnit`](#initUnit)
+on the Y axis.
+-}
+initUnitY : Unit.Unit -> AnimBuilder mode -> AnimBuilder mode
+initUnitY =
+    IB.setPerspectiveOriginInitCssUnitY
 
 
 

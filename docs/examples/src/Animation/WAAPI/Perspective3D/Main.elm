@@ -76,7 +76,8 @@ init flags =
                 [ -- Initialize the perspective origin at the top-left corner (0%, 0%)
                   -- It will travel around the corners in sync with the dot animation:
                   -- (0,0) -> (100,0) -> (100,100) -> (0,100) -> (0,0)
-                  PerspectiveOrigin.initPx perspectiveContainer.groupName 0 0
+                  PerspectiveOrigin.initUnit Px
+                    >> PerspectiveOrigin.initXY perspectiveContainer.groupName 0 0
                 , Translate.initXY vanishingPointDot.groupName 0 0
 
                 -- Bring the cube forward on the Z axis

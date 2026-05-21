@@ -116,9 +116,9 @@ initOnlyTests =
                         [ Query.has [ Selector.style "width" "120px" ]
                         , Query.has [ Selector.style "height" "120px" ]
                         ]
-        , test "PerspectiveOrigin.initPercent emits perspective-origin" <|
+        , test "PerspectiveOrigin.initXY emits perspective-origin" <|
             \_ ->
-                initWith [ PerspectiveOrigin.initPercent "el" 50 75 ]
+                initWith [ PerspectiveOrigin.initXY "el" 50 75 ]
                     |> query
                     |> Query.has [ Selector.style "perspective-origin" "50% 75%" ]
         ]

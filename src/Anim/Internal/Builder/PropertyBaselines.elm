@@ -7,21 +7,27 @@ module Anim.Internal.Builder.PropertyBaselines exposing
     , getCustomProperty
     , getOpacity
     , getPerspectiveOrigin
+    , getPerspectiveOriginUnits
     , getRotate
     , getScale
     , getSize
+    , getSizeUnits
     , getSkew
     , getTranslate
+    , getTranslateUnits
     , merge
     , setCustomColorProperty
     , setCustomProperty
     , setOpacity
     , setPerspectiveOrigin
+    , setPerspectiveOriginUnits
     , setRotate
     , setScale
     , setSize
+    , setSizeUnits
     , setSkew
     , setTranslate
+    , setTranslateUnits
     , updateCustomColorProperties
     , updateCustomProperties
     )
@@ -34,6 +40,7 @@ import Anim.Internal.Property.Scale exposing (Scale)
 import Anim.Internal.Property.Size exposing (Size)
 import Anim.Internal.Property.Skew exposing (Skew)
 import Anim.Internal.Property.Translate exposing (Translate)
+import Anim.Internal.Unit as InternalUnit
 import Dict exposing (Dict)
 
 
@@ -52,11 +59,14 @@ type PropertyValue
     | CustomColorPropertyValue Color
     | OpacityValue Opacity
     | PerspectiveOriginValue PerspectiveOrigin
+    | PerspectiveOriginUnitsValue InternalUnit.ResolvedCssUnitAxes
     | RotateValue Rotate
     | ScaleValue Scale
     | SizeValue Size
+    | SizeUnitsValue InternalUnit.ResolvedCssUnitAxes
     | SkewValue Skew
     | TranslateValue Translate
+    | TranslateUnitsValue InternalUnit.ResolvedCssUnitAxes
 
 
 
@@ -292,6 +302,48 @@ getTranslate (PropertyBaselines dict) =
             )
 
 
+getTranslateUnits : PropertyBaselines -> Maybe InternalUnit.ResolvedCssUnitAxes
+getTranslateUnits (PropertyBaselines dict) =
+    Dict.get "translateUnits" dict
+        |> Maybe.andThen
+            (\v ->
+                case v of
+                    TranslateUnitsValue u ->
+                        Just u
+
+                    _ ->
+                        Nothing
+            )
+
+
+getSizeUnits : PropertyBaselines -> Maybe InternalUnit.ResolvedCssUnitAxes
+getSizeUnits (PropertyBaselines dict) =
+    Dict.get "sizeUnits" dict
+        |> Maybe.andThen
+            (\v ->
+                case v of
+                    SizeUnitsValue u ->
+                        Just u
+
+                    _ ->
+                        Nothing
+            )
+
+
+getPerspectiveOriginUnits : PropertyBaselines -> Maybe InternalUnit.ResolvedCssUnitAxes
+getPerspectiveOriginUnits (PropertyBaselines dict) =
+    Dict.get "perspectiveOriginUnits" dict
+        |> Maybe.andThen
+            (\v ->
+                case v of
+                    PerspectiveOriginUnitsValue u ->
+                        Just u
+
+                    _ ->
+                        Nothing
+            )
+
+
 getUnit : String -> PropertyBaselines -> Maybe String
 getUnit cssPropertyName (PropertyBaselines dict) =
     Dict.get ("custom:" ++ cssPropertyName) dict
@@ -355,3 +407,18 @@ setSkew value (PropertyBaselines dict) =
 setTranslate : Translate -> PropertyBaselines -> PropertyBaselines
 setTranslate value (PropertyBaselines dict) =
     PropertyBaselines (Dict.insert "translate" (TranslateValue value) dict)
+
+
+setTranslateUnits : InternalUnit.ResolvedCssUnitAxes -> PropertyBaselines -> PropertyBaselines
+setTranslateUnits units (PropertyBaselines dict) =
+    PropertyBaselines (Dict.insert "translateUnits" (TranslateUnitsValue units) dict)
+
+
+setSizeUnits : InternalUnit.ResolvedCssUnitAxes -> PropertyBaselines -> PropertyBaselines
+setSizeUnits units (PropertyBaselines dict) =
+    PropertyBaselines (Dict.insert "sizeUnits" (SizeUnitsValue units) dict)
+
+
+setPerspectiveOriginUnits : InternalUnit.ResolvedCssUnitAxes -> PropertyBaselines -> PropertyBaselines
+setPerspectiveOriginUnits units (PropertyBaselines dict) =
+    PropertyBaselines (Dict.insert "perspectiveOriginUnits" (PerspectiveOriginUnitsValue units) dict)

@@ -6,21 +6,20 @@ import Anim.Extra.View3D as View3D
 import Anim.Property.Scale as Scale
 import Anim.Property.Size as Size
 import Anim.Property.Translate as Translate
+import Anim.Unit exposing (Unit(..))
 import Browser
-import Browser.Events
 import Html exposing (Html, div, text)
 import Html.Attributes exposing (class, style)
 import Html.Events.Extra.Pointer as Pointer
-import Json.Decode as Decode exposing (Decoder)
 import Json.Encode as Encode
-import Motion.Easing as Easing exposing (Easing(..))
+import Motion.Easing exposing (Easing(..))
 
 
 
 -- MAIN
 
 
-main : Program Decode.Value Model Msg
+main : Program () Model Msg
 main =
     Browser.element
         { init = init
@@ -60,22 +59,30 @@ zButton =
     "zButton"
 
 
-{-| Pick a base button size from the current viewport. The min axis drives
-the scale so the buttons stay legible in landscape phones too.
+{-| Base resting size expressed in `cqmin` so each button scales with the
+shorter axis of `.example-stage` (the stage itself declares
+`container-type: size`). The hover state grows the box by ~15% on each
+axis - container-relative units mean the demo stays naturally responsive
+without any `onResize` plumbing in Elm.
 -}
-baseSize : Int -> Int -> { height : Float, width : Float }
-baseSize windowWidth windowHeight =
-    let
-        ref =
-            toFloat (min windowWidth windowHeight)
+baseWidth : Float
+baseWidth =
+    51
 
-        width =
-            clamp 130 200 (ref * 0.35)
 
-        height =
-            clamp 40 60 (width * 0.3)
-    in
-    { height = height, width = width }
+baseHeight : Float
+baseHeight =
+    15.8
+
+
+hoverWidth : Float
+hoverWidth =
+    65.5
+
+
+hoverHeight : Float
+hoverHeight =
+    20
 
 
 
@@ -83,47 +90,17 @@ baseSize windowWidth windowHeight =
 
 
 type alias Model =
-    { animState : WAAPI.AnimState Msg
-    , windowWidth : Int
-    , windowHeight : Int
-    }
+    { animState : WAAPI.AnimState Msg }
 
 
-type alias Flags =
-    { width : Int
-    , height : Int
-    }
-
-
-flagsDecoder : Decoder Flags
-flagsDecoder =
-    Decode.field "window"
-        (Decode.map2 Flags
-            (Decode.field "width" Decode.int)
-            (Decode.field "height" Decode.int)
-        )
-
-
-init : Decode.Value -> ( Model, Cmd Msg )
-init rawFlags =
-    let
-        flags =
-            Decode.decodeValue flagsDecoder rawFlags
-                |> Result.withDefault { width = 1024, height = 768 }
-
-        size =
-            baseSize flags.width flags.height
-
-        animState =
+init : () -> ( Model, Cmd Msg )
+init _ =
+    ( { animState =
             WAAPI.init motionCmd motionMsg <|
-                [ Size.initHW sizeButton size.height size.width
-                , Size.initHW scaleButton size.height size.width
-                , Size.initHW zButton size.height size.width
+                [ Size.initUnit Cqmin >> Size.initHW sizeButton baseHeight baseWidth
+                , Size.initUnit Cqmin >> Size.initHW scaleButton baseHeight baseWidth
+                , Size.initUnit Cqmin >> Size.initHW zButton baseHeight baseWidth
                 ]
-    in
-    ( { animState = animState
-      , windowWidth = flags.width
-      , windowHeight = flags.height
       }
     , Cmd.none
     )
@@ -171,40 +148,24 @@ scaleDown =
         >> Scale.build
 
 
-growSize : { height : Float, width : Float } -> AnimBuilder mode -> AnimBuilder mode
-growSize size =
+growSize : AnimBuilder mode -> AnimBuilder mode
+growSize =
     Size.for sizeButton
-        >> Size.toHW (size.height + 6) (size.width + 20)
+        >> Size.cssUnit Cqmin
+        >> Size.toHW hoverHeight hoverWidth
         >> Size.duration hoverDuration
         >> Size.easing hoverEasing
         >> Size.build
 
 
-shrinkSize : { height : Float, width : Float } -> AnimBuilder mode -> AnimBuilder mode
-shrinkSize size =
+shrinkSize : AnimBuilder mode -> AnimBuilder mode
+shrinkSize =
     Size.for sizeButton
-        >> Size.toHW size.height size.width
+        >> Size.cssUnit Cqmin
+        >> Size.toHW baseHeight baseWidth
         >> Size.duration hoverDuration
         >> Size.easing unhoverEasing
         >> Size.build
-
-
-{-| Fast settle animation used after a viewport change so all three buttons
-pick up the new resting size without snapping.
--}
-resizeSettle : { height : Float, width : Float } -> AnimBuilder mode -> AnimBuilder mode
-resizeSettle size =
-    let
-        toBase id_ =
-            Size.for id_
-                >> Size.toHW size.height size.width
-                >> Size.duration 1
-                >> Size.easing Linear
-                >> Size.build
-    in
-    toBase sizeButton
-        >> toBase scaleButton
-        >> toBase zButton
 
 
 liftUp : AnimBuilder mode -> AnimBuilder mode
@@ -239,7 +200,6 @@ type Msg
     | SizeUnhover
     | ZHover
     | ZUnhover
-    | WindowResized Int Int
 
 
 
@@ -277,16 +237,16 @@ update msg model =
         SizeHover ->
             let
                 ( animState, cmd ) =
-                    WAAPI.animate model.animState
-                        (growSize (baseSize model.windowWidth model.windowHeight))
+                    WAAPI.animate model.animState growSize
+                        |> Debug.log "growSize animState"
             in
             ( { model | animState = animState }, cmd )
 
         SizeUnhover ->
             let
                 ( animState, cmd ) =
-                    WAAPI.animate model.animState
-                        (shrinkSize (baseSize model.windowWidth model.windowHeight))
+                    WAAPI.animate model.animState shrinkSize
+                        |> Debug.log "shrinkSize animState"
             in
             ( { model | animState = animState }, cmd )
 
@@ -304,20 +264,6 @@ update msg model =
             in
             ( { model | animState = animState }, cmd )
 
-        WindowResized w h ->
-            let
-                ( animState, cmd ) =
-                    WAAPI.animate model.animState
-                        (resizeSettle (baseSize w h))
-            in
-            ( { model
-                | animState = animState
-                , windowWidth = w
-                , windowHeight = h
-              }
-            , cmd
-            )
-
 
 
 ---8<-- [start:subscriptions]
@@ -325,10 +271,7 @@ update msg model =
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
-    Sub.batch
-        [ WAAPI.subscriptions GotWaapiMsg model.animState
-        , Browser.Events.onResize WindowResized
-        ]
+    WAAPI.subscriptions GotWaapiMsg model.animState
 
 
 
@@ -339,8 +282,15 @@ subscriptions model =
 
 view : Model -> Html Msg
 view model =
+    let
+        _ =
+            Debug.log "Size button size" <|
+                WAAPI.getSizeCurrent sizeButton model.animState
+    in
     div
-        [ class "example-stage" ]
+        [ class "example-stage"
+        , style "container-type" "size"
+        ]
         [ div [ class "example-badge example-badge--responsive" ] [ text "RESPONSIVE" ]
         , div
             [ style "padding" "7px"
@@ -376,8 +326,9 @@ button label hoverMsg unhoverMsg groupName animState =
                , style "justify-content" "center"
                , style "background-color" "#3b82f6"
                , style "color" "white"
-               , style "font-size" "16px"
+               , style "font-size" "clamp(13px, 10cqmin, 16px)"
                , style "font-weight" "600"
+               , style "padding" "0 clamp(8px, 2.2cqmin, 16px)"
                , style "border-radius" "8px"
                , style "cursor" "pointer"
                , style "touch-action" "manipulation"

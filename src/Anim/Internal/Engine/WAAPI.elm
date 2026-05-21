@@ -2068,7 +2068,17 @@ attributes animGroupName (AnimState state data) =
                             Nothing
                         , if isElmOwned "perspectiveOrigin" then
                             PropertyBaselines.getPerspectiveOrigin snapshot
-                                |> Maybe.map (\po -> Html.Attributes.style "perspective-origin" (PerspectiveOrigin.toCssString { x = Percent, y = Percent, z = Percent } po))
+                                |> Maybe.map
+                                    (\po ->
+                                        Html.Attributes.style "perspective-origin"
+                                            (PerspectiveOrigin.toCssString
+                                                (PropertyBaselines.getPerspectiveOriginUnits snapshot
+                                                    |> Maybe.withDefault
+                                                        { x = Percent, y = Percent, z = Percent }
+                                                )
+                                                po
+                                            )
+                                    )
 
                           else
                             Nothing
@@ -2079,8 +2089,14 @@ attributes animGroupName (AnimState state data) =
                         PropertyBaselines.getSize snapshot
                             |> Maybe.map
                                 (\s ->
-                                    [ Html.Attributes.style "width" (Size.widthToCssString { x = InternalUnit.default, y = InternalUnit.default, z = InternalUnit.default } s)
-                                    , Html.Attributes.style "height" (Size.heightToCssString { x = InternalUnit.default, y = InternalUnit.default, z = InternalUnit.default } s)
+                                    let
+                                        sizeUnits =
+                                            PropertyBaselines.getSizeUnits snapshot
+                                                |> Maybe.withDefault
+                                                    { x = InternalUnit.default, y = InternalUnit.default, z = InternalUnit.default }
+                                    in
+                                    [ Html.Attributes.style "width" (Size.widthToCssString sizeUnits s)
+                                    , Html.Attributes.style "height" (Size.heightToCssString sizeUnits s)
                                     ]
                                 )
                             |> Maybe.withDefault []
@@ -2120,9 +2136,12 @@ attributes animGroupName (AnimState state data) =
                     buildTransformStyles
                         (AnimGroup.getTransformOrder animGroup)
                         snapshot
-                        (findCurrentTranslate animGroupName state.builder
-                            |> Maybe.map .cssUnit
-                            |> Maybe.withDefault { x = InternalUnit.default, y = InternalUnit.default, z = InternalUnit.default }
+                        (PropertyBaselines.getTranslateUnits snapshot
+                            |> Maybe.withDefault
+                                (findCurrentTranslate animGroupName state.builder
+                                    |> Maybe.map .cssUnit
+                                    |> Maybe.withDefault { x = InternalUnit.default, y = InternalUnit.default, z = InternalUnit.default }
+                                )
                         )
             in
             dataAttr

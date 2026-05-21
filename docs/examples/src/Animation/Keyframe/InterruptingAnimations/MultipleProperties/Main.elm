@@ -1,18 +1,16 @@
-module Animation.Keyframe.InterruptingAnimations.MultipleProperties.Main exposing (..)
+module Animation.Keyframe.InterruptingAnimations.MultipleProperties.Main exposing (main)
 
 import Anim.Builder exposing (AnimBuilder)
 import Anim.Engine.Keyframe as Keyframe
 import Anim.Extra.Color as Color exposing (Color)
 import Anim.Property.CustomColor as BgColor
 import Anim.Property.Translate as Translate
+import Anim.Unit exposing (Unit(..))
 import Browser
-import Browser.Dom as Dom
-import Browser.Events
 import Html exposing (Html, div, text)
-import Html.Attributes exposing (class, id, style)
+import Html.Attributes exposing (class, style)
 import Html.Events exposing (onClick)
-import Motion.Easing as Easing exposing (Easing(..))
-import Task
+import Motion.Easing exposing (Easing(..))
 
 
 
@@ -25,7 +23,7 @@ main =
         { init = init
         , update = update
         , view = view
-        , subscriptions = subscriptions
+        , subscriptions = \_ -> Sub.none
         }
 
 
@@ -34,11 +32,50 @@ main =
 
 
 type alias Model =
-    { animState : Keyframe.AnimState
-    , canvasW : Float
-    , canvasH : Float
-    , xPos : XPos
-    }
+    { animState : Keyframe.AnimState }
+
+
+animGroupName : String
+animGroupName =
+    "movingBox"
+
+
+{-| Box width expressed as a percentage of the canvas. The box width is
+`boxPct cqw`, height is `boxPct cqh`, and `Translate.toX` targets are
+in `cqw` units, so the left, center and right anchors all scale with the
+canvas. The box is vertically centered via CSS (`top: <centerYCqh>cqh`)
+so no Y animation is needed - one less moving part and zero Elm-side
+resize plumbing.
+-}
+boxPct : Float
+boxPct =
+    12
+
+
+centerXCqw : Float
+centerXCqw =
+    (100 - boxPct) / 2
+
+
+centerYCqh : Float
+centerYCqh =
+    (100 - boxPct) / 2
+
+
+init : () -> ( Model, Cmd Msg )
+init _ =
+    ( { animState =
+            Keyframe.init
+                [ Translate.initX animGroupName centerXCqw
+                , BgColor.init animGroupName BgColor.BackgroundColor <| Color.rgb 118 118 118
+                ]
+      }
+    , Cmd.none
+    )
+
+
+
+-- POSITION HELPERS
 
 
 type XPos
@@ -47,61 +84,17 @@ type XPos
     | XRight
 
 
-animGroupName : String
-animGroupName =
-    "movingBox"
-
-
-canvasId : String
-canvasId =
-    "anim-canvas"
-
-
-boxWidth : Float
-boxWidth =
-    100
-
-
-init : () -> ( Model, Cmd Msg )
-init _ =
-    ( { animState =
-            Keyframe.init
-                [ Translate.initXY animGroupName 0 0
-                , BgColor.init animGroupName BgColor.BackgroundColor <| Color.rgb 118 118 118
-                ]
-      , canvasW = 0
-      , canvasH = 0
-      , xPos = XCenter
-      }
-    , measureCanvas
-    )
-
-
-measureCanvas : Cmd Msg
-measureCanvas =
-    Task.attempt GotCanvas (Dom.getElement canvasId)
-
-
-
--- POSITION HELPERS
-
-
-targetX : XPos -> Float -> Float
-targetX pos w =
+targetX : XPos -> Float
+targetX pos =
     case pos of
         XLeft ->
             0
 
         XCenter ->
-            (w - boxWidth) / 2
+            centerXCqw
 
         XRight ->
-            w - boxWidth
-
-
-targetY : Float -> Float
-targetY h =
-    (h - boxWidth) / 2
+            100 - boxPct
 
 
 
@@ -135,16 +128,10 @@ color4 =
 moveBoxX : Float -> AnimBuilder mode -> AnimBuilder mode
 moveBoxX x =
     Translate.for animGroupName
+        >> Translate.cssUnit Cqw
         >> Translate.toX x
         >> Translate.speed 100
         >> Translate.easing BounceOut
-        >> Translate.build
-
-
-snapBoxXY : Float -> Float -> AnimBuilder mode -> AnimBuilder mode
-snapBoxXY x y =
-    Translate.for animGroupName
-        >> Translate.toXY x y
         >> Translate.build
 
 
@@ -166,8 +153,6 @@ type Msg
     | MoveLeft
     | MoveRight
     | ChangeColor Color
-    | Resize
-    | GotCanvas (Result Dom.Error Dom.Element)
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -184,20 +169,18 @@ update msg model =
 
         MoveLeft ->
             ( { model
-                | xPos = XLeft
-                , animState =
+                | animState =
                     Keyframe.animate model.animState <|
-                        moveBoxX (targetX XLeft model.canvasW)
+                        moveBoxX (targetX XLeft)
               }
             , Cmd.none
             )
 
         MoveRight ->
             ( { model
-                | xPos = XRight
-                , animState =
+                | animState =
                     Keyframe.animate model.animState <|
-                        moveBoxX (targetX XRight model.canvasW)
+                        moveBoxX (targetX XRight)
               }
             , Cmd.none
             )
@@ -210,39 +193,6 @@ update msg model =
               }
             , Cmd.none
             )
-
-        Resize ->
-            ( model, measureCanvas )
-
-        GotCanvas (Ok element) ->
-            let
-                w =
-                    element.element.width
-
-                h =
-                    element.element.height
-            in
-            ( { model
-                | canvasW = w
-                , canvasH = h
-                , animState =
-                    Keyframe.animate model.animState <|
-                        snapBoxXY (targetX model.xPos w) (targetY h)
-              }
-            , Cmd.none
-            )
-
-        GotCanvas (Err _) ->
-            ( model, Cmd.none )
-
-
-
--- SUBSCRIPTIONS
-
-
-subscriptions : Model -> Sub Msg
-subscriptions _ =
-    Browser.Events.onResize (\_ _ -> Resize)
 
 
 
@@ -269,8 +219,7 @@ view model =
                 [ text label ]
     in
     div [ class "example-stage" ]
-        [ div [ class "example-badge example-badge--static" ] [ text "Static" ]
-        , Keyframe.styleNode model.animState
+        [ div [ class "example-badge example-badge--responsive" ] [ text "RESPONSIVE" ]
         , div [ class "example-controls" ]
             [ posButton "#333" "Move Left" MoveLeft
             , posButton "#333" "Move Right" MoveRight
@@ -281,14 +230,17 @@ view model =
             , colorButton color3 "Color 3"
             , colorButton color4 "Color 4"
             ]
-        , div [ id canvasId, class "example-canvas--fluid" ]
+        , div
+            [ class "example-canvas--fluid"
+            , style "container-type" "size"
+            ]
             [ div
                 (Keyframe.attributes animGroupName model.animState
                     ++ Keyframe.events GotAnimationUpdate
-                    ++ [ style "width" (String.fromFloat boxWidth ++ "px")
-                       , style "height" (String.fromFloat boxWidth ++ "px")
+                    ++ [ style "width" (String.fromFloat boxPct ++ "cqw")
+                       , style "height" (String.fromFloat boxPct ++ "cqh")
                        , style "position" "absolute"
-                       , style "top" "0"
+                       , style "top" (String.fromFloat centerYCqh ++ "cqh")
                        , style "left" "0"
                        , style "border-radius" "8px"
                        ]

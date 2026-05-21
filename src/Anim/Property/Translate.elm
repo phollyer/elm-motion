@@ -1,6 +1,7 @@
 module Anim.Property.Translate exposing
     ( Builder, AnimGroupName
     , initXYZ, initXY, initXZ, initX, initYZ, initY, initZ
+    , initUnit, initUnitX, initUnitY, initUnitZ
     , for, build
     , continueFor
     , fromXYZ, fromXY, fromXZ, fromX, fromYZ, fromY, fromZ
@@ -47,6 +48,30 @@ will use the current end value as the start, ensuring a smooth transition betwee
 # Initialize
 
 @docs initXYZ, initXY, initXZ, initX, initYZ, initY, initZ
+
+
+## Initial Unit
+
+Set the length [Unit](Anim-Unit#Unit) used by subsequent `init*` calls.
+Order matters - `initUnit*` only affects `init*` calls that follow it in
+the pipeline. Defaults to `Px`.
+
+    import Anim.Unit exposing (Unit(..))
+
+    init _ =
+        ( { animState =
+                Engine.init
+                    [ Translate.initUnit Cqw
+                        >> Translate.initX "box" 50
+                    , Translate.initUnitX Cqw
+                        >> Translate.initUnitY Cqh
+                        >> Translate.initXY "ball" 40 20
+                    ]
+          }
+        , Cmd.none
+        )
+
+@docs initUnit, initUnitX, initUnitY, initUnitZ
 
 
 # Build
@@ -152,7 +177,7 @@ landscape to portrait pulls a now-off-canvas element back into view.
 
 -}
 
-import Anim.Internal.Builder exposing (AnimBuilder)
+import Anim.Internal.Builder as SB exposing (AnimBuilder)
 import Anim.Internal.Builder.Translate as TB
 import Anim.Internal.Resize.Builder as ResizeBuilder
 import Anim.Resize as Resize
@@ -246,6 +271,9 @@ continueFor =
 initXYZ : AnimGroupName -> Float -> Float -> Float -> AnimBuilder mode -> AnimBuilder mode
 initXYZ animationKey x y z =
     TB.for animationKey
+        >> TB.applyInitCssUnitX
+        >> TB.applyInitCssUnitY
+        >> TB.applyInitCssUnitZ
         >> fromXYZ x y z
         >> TB.toXYZ x y z
         >> TB.build
@@ -267,6 +295,8 @@ initXY : AnimGroupName -> Float -> Float -> AnimBuilder mode -> AnimBuilder mode
 initXY animationKey x y animBuilder =
     animBuilder
         |> TB.for animationKey
+        |> TB.applyInitCssUnitX
+        |> TB.applyInitCssUnitY
         |> fromXY x y
         |> TB.toXY x y
         |> TB.build
@@ -288,6 +318,8 @@ initXZ : AnimGroupName -> Float -> Float -> AnimBuilder mode -> AnimBuilder mode
 initXZ animationKey x z animBuilder =
     animBuilder
         |> TB.for animationKey
+        |> TB.applyInitCssUnitX
+        |> TB.applyInitCssUnitZ
         |> fromXZ x z
         |> TB.toXZ x z
         |> TB.build
@@ -309,6 +341,7 @@ initX : AnimGroupName -> Float -> AnimBuilder mode -> AnimBuilder mode
 initX animationKey x animBuilder =
     animBuilder
         |> TB.for animationKey
+        |> TB.applyInitCssUnitX
         |> fromX x
         |> TB.toX x
         |> TB.build
@@ -330,6 +363,8 @@ initYZ : AnimGroupName -> Float -> Float -> AnimBuilder mode -> AnimBuilder mode
 initYZ animationKey y z animBuilder =
     animBuilder
         |> TB.for animationKey
+        |> TB.applyInitCssUnitY
+        |> TB.applyInitCssUnitZ
         |> fromYZ y z
         |> TB.toYZ y z
         |> TB.build
@@ -351,6 +386,7 @@ initY : AnimGroupName -> Float -> AnimBuilder mode -> AnimBuilder mode
 initY animationKey y animBuilder =
     animBuilder
         |> TB.for animationKey
+        |> TB.applyInitCssUnitY
         |> fromY y
         |> TB.toY y
         |> TB.build
@@ -372,9 +408,55 @@ initZ : AnimGroupName -> Float -> AnimBuilder mode -> AnimBuilder mode
 initZ animationKey z animBuilder =
     animBuilder
         |> TB.for animationKey
+        |> TB.applyInitCssUnitZ
         |> fromZ z
         |> TB.toZ z
         |> TB.build
+
+
+{-| Set the length [Unit](Anim-Unit#Unit) used by every subsequent `init*` call
+for `Translate` values. Defaults to `Px`.
+
+Order matters - only `init*` calls downstream of this setter in the pipeline
+are affected; calls upstream keep their previously selected unit (or `Px`).
+Later per-axis setters ([`initUnitX`](#initUnitX), [`initUnitY`](#initUnitY),
+[`initUnitZ`](#initUnitZ)) override this setting on the relevant axis.
+
+    import Anim.Unit exposing (Unit(..))
+
+    Engine.init
+        [ Translate.initUnit Cqw
+            >> Translate.initX "box" 50
+        ]
+
+-}
+initUnit : Unit -> AnimBuilder mode -> AnimBuilder mode
+initUnit =
+    SB.setTranslateInitCssUnit
+
+
+{-| Set the X-axis unit used by every subsequent `init*` call for `Translate`
+values. Overrides any unit set by [`initUnit`](#initUnit) on the X axis.
+-}
+initUnitX : Unit -> AnimBuilder mode -> AnimBuilder mode
+initUnitX =
+    SB.setTranslateInitCssUnitX
+
+
+{-| Set the Y-axis unit used by every subsequent `init*` call for `Translate`
+values. Overrides any unit set by [`initUnit`](#initUnit) on the Y axis.
+-}
+initUnitY : Unit -> AnimBuilder mode -> AnimBuilder mode
+initUnitY =
+    SB.setTranslateInitCssUnitY
+
+
+{-| Set the Z-axis unit used by every subsequent `init*` call for `Translate`
+values. Overrides any unit set by [`initUnit`](#initUnit) on the Z axis.
+-}
+initUnitZ : Unit -> AnimBuilder mode -> AnimBuilder mode
+initUnitZ =
+    SB.setTranslateInitCssUnitZ
 
 
 

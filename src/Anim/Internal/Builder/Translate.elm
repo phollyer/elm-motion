@@ -1,5 +1,8 @@
 module Anim.Internal.Builder.Translate exposing
     ( TranslateBuilder
+    , applyInitCssUnitX
+    , applyInitCssUnitY
+    , applyInitCssUnitZ
     , build
     , by
     , byX
@@ -511,6 +514,53 @@ cssUnitY unit (TranslateBuilder config builder) =
 cssUnitZ : Unit -> TranslateBuilder mode -> TranslateBuilder mode
 cssUnitZ unit (TranslateBuilder config builder) =
     TranslateBuilder (PropertyBuilder.cssUnitZ unit config) builder
+
+
+{-| Seed the per-property `cssUnit` axes on the config from the AnimBuilder's
+stored init-time unit defaults. Called at the start of every public `init*`
+helper so values supplied during initialization are rendered with whatever
+`initUnit*` was active at that point in the pipeline.
+-}
+applyInitCssUnitX : TranslateBuilder mode -> TranslateBuilder mode
+applyInitCssUnitX (TranslateBuilder config builder) =
+    let
+        initUnits =
+            Builder.getTranslateInitCssUnit builder
+
+        cssUnit_ =
+            config.cssUnit
+    in
+    TranslateBuilder
+        { config | cssUnit = { cssUnit_ | x = initUnits.x } }
+        builder
+
+
+applyInitCssUnitY : TranslateBuilder mode -> TranslateBuilder mode
+applyInitCssUnitY (TranslateBuilder config builder) =
+    let
+        initUnits =
+            Builder.getTranslateInitCssUnit builder
+
+        cssUnit_ =
+            config.cssUnit
+    in
+    TranslateBuilder
+        { config | cssUnit = { cssUnit_ | y = initUnits.y } }
+        builder
+
+
+applyInitCssUnitZ : TranslateBuilder mode -> TranslateBuilder mode
+applyInitCssUnitZ (TranslateBuilder config builder) =
+    let
+        initUnits =
+            Builder.getTranslateInitCssUnit builder
+
+        cssUnit_ =
+            config.cssUnit
+    in
+    TranslateBuilder
+        { config | cssUnit = { cssUnit_ | z = initUnits.z } }
+        builder
 
 
 

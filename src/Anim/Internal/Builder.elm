@@ -60,13 +60,16 @@ module Anim.Internal.Builder exposing
     , getEasingWithDefault
     , getFrozenAxes
     , getIterations
+    , getPerspectiveOriginInitCssUnit
     , getRuntimeBaseline
     , getScrollAxis
     , getScrollSource
+    , getSizeInitCssUnit
     , getSpring
     , getTimeSpec
     , getTimeSpecWithDefault
     , getTransformOrder
+    , getTranslateInitCssUnit
     , getViewRangeEnd
     , getViewRangeStart
     , init
@@ -85,8 +88,18 @@ module Anim.Internal.Builder exposing
     , processedTimings
     , setAnimTarget
     , setClamp
+    , setPerspectiveOriginInitCssUnit
+    , setPerspectiveOriginInitCssUnitX
+    , setPerspectiveOriginInitCssUnitY
     , setScrollAxis
     , setScrollSource
+    , setSizeInitCssUnit
+    , setSizeInitCssUnitHeight
+    , setSizeInitCssUnitWidth
+    , setTranslateInitCssUnit
+    , setTranslateInitCssUnitX
+    , setTranslateInitCssUnitY
+    , setTranslateInitCssUnitZ
     , setViewRangeEnd
     , setViewRangeStart
     , speed
@@ -189,6 +202,9 @@ type alias DefaultsConfig =
     , globalDelay : Maybe Int
     , globalCssUnit : InternalUnit.CssUnitAxes
     , globalTransformOrder : Maybe (List TransformProperty)
+    , translateInitCssUnit : InternalUnit.CssUnitAxes
+    , sizeInitCssUnit : InternalUnit.CssUnitAxes
+    , perspectiveOriginInitCssUnit : InternalUnit.CssUnitAxes
     }
 
 
@@ -399,6 +415,9 @@ initDefaults =
     , globalDelay = Nothing
     , globalCssUnit = InternalUnit.emptyCssUnitAxes
     , globalTransformOrder = Nothing
+    , translateInitCssUnit = InternalUnit.emptyCssUnitAxes
+    , sizeInitCssUnit = InternalUnit.emptyCssUnitAxes
+    , perspectiveOriginInitCssUnit = InternalUnit.emptyCssUnitAxes
     }
 
 
@@ -555,6 +574,128 @@ cssUnitZ unit (AnimBuilder data) =
     in
     AnimBuilder
         { data | defaults = { defs | globalCssUnit = InternalUnit.setCssUnitZ unit defs.globalCssUnit } }
+
+
+
+-- Per-property init-time CSS unit defaults. Set by the public
+-- `Translate.initUnit*` / `Size.initUnit*` / `PerspectiveOrigin.initUnit*`
+-- families; consumed by the corresponding `init*` value helpers when they
+-- create the AnimationConfig.
+
+
+setTranslateInitCssUnit : Unit -> AnimBuilder mode -> AnimBuilder mode
+setTranslateInitCssUnit unit (AnimBuilder data) =
+    let
+        defs =
+            data.defaults
+    in
+    AnimBuilder
+        { data | defaults = { defs | translateInitCssUnit = InternalUnit.setAllCssUnitAxes unit defs.translateInitCssUnit } }
+
+
+setTranslateInitCssUnitX : Unit -> AnimBuilder mode -> AnimBuilder mode
+setTranslateInitCssUnitX unit (AnimBuilder data) =
+    let
+        defs =
+            data.defaults
+    in
+    AnimBuilder
+        { data | defaults = { defs | translateInitCssUnit = InternalUnit.setCssUnitX unit defs.translateInitCssUnit } }
+
+
+setTranslateInitCssUnitY : Unit -> AnimBuilder mode -> AnimBuilder mode
+setTranslateInitCssUnitY unit (AnimBuilder data) =
+    let
+        defs =
+            data.defaults
+    in
+    AnimBuilder
+        { data | defaults = { defs | translateInitCssUnit = InternalUnit.setCssUnitY unit defs.translateInitCssUnit } }
+
+
+setTranslateInitCssUnitZ : Unit -> AnimBuilder mode -> AnimBuilder mode
+setTranslateInitCssUnitZ unit (AnimBuilder data) =
+    let
+        defs =
+            data.defaults
+    in
+    AnimBuilder
+        { data | defaults = { defs | translateInitCssUnit = InternalUnit.setCssUnitZ unit defs.translateInitCssUnit } }
+
+
+getTranslateInitCssUnit : AnimBuilder mode -> InternalUnit.CssUnitAxes
+getTranslateInitCssUnit (AnimBuilder data) =
+    data.defaults.translateInitCssUnit
+
+
+setSizeInitCssUnit : Unit -> AnimBuilder mode -> AnimBuilder mode
+setSizeInitCssUnit unit (AnimBuilder data) =
+    let
+        defs =
+            data.defaults
+    in
+    AnimBuilder
+        { data | defaults = { defs | sizeInitCssUnit = InternalUnit.setAllCssUnitAxes unit defs.sizeInitCssUnit } }
+
+
+setSizeInitCssUnitWidth : Unit -> AnimBuilder mode -> AnimBuilder mode
+setSizeInitCssUnitWidth unit (AnimBuilder data) =
+    let
+        defs =
+            data.defaults
+    in
+    AnimBuilder
+        { data | defaults = { defs | sizeInitCssUnit = InternalUnit.setCssUnitX unit defs.sizeInitCssUnit } }
+
+
+setSizeInitCssUnitHeight : Unit -> AnimBuilder mode -> AnimBuilder mode
+setSizeInitCssUnitHeight unit (AnimBuilder data) =
+    let
+        defs =
+            data.defaults
+    in
+    AnimBuilder
+        { data | defaults = { defs | sizeInitCssUnit = InternalUnit.setCssUnitY unit defs.sizeInitCssUnit } }
+
+
+getSizeInitCssUnit : AnimBuilder mode -> InternalUnit.CssUnitAxes
+getSizeInitCssUnit (AnimBuilder data) =
+    data.defaults.sizeInitCssUnit
+
+
+setPerspectiveOriginInitCssUnit : Unit -> AnimBuilder mode -> AnimBuilder mode
+setPerspectiveOriginInitCssUnit unit (AnimBuilder data) =
+    let
+        defs =
+            data.defaults
+    in
+    AnimBuilder
+        { data | defaults = { defs | perspectiveOriginInitCssUnit = InternalUnit.setAllCssUnitAxes unit defs.perspectiveOriginInitCssUnit } }
+
+
+setPerspectiveOriginInitCssUnitX : Unit -> AnimBuilder mode -> AnimBuilder mode
+setPerspectiveOriginInitCssUnitX unit (AnimBuilder data) =
+    let
+        defs =
+            data.defaults
+    in
+    AnimBuilder
+        { data | defaults = { defs | perspectiveOriginInitCssUnit = InternalUnit.setCssUnitX unit defs.perspectiveOriginInitCssUnit } }
+
+
+setPerspectiveOriginInitCssUnitY : Unit -> AnimBuilder mode -> AnimBuilder mode
+setPerspectiveOriginInitCssUnitY unit (AnimBuilder data) =
+    let
+        defs =
+            data.defaults
+    in
+    AnimBuilder
+        { data | defaults = { defs | perspectiveOriginInitCssUnit = InternalUnit.setCssUnitY unit defs.perspectiveOriginInitCssUnit } }
+
+
+getPerspectiveOriginInitCssUnit : AnimBuilder mode -> InternalUnit.CssUnitAxes
+getPerspectiveOriginInitCssUnit (AnimBuilder data) =
+    data.defaults.perspectiveOriginInitCssUnit
 
 
 transformOrder : List TransformProperty -> AnimBuilder mode -> AnimBuilder mode
@@ -1096,11 +1237,11 @@ clearAnimData (AnimBuilder data) =
 
 
 mergeBaselines : AnimBuilder mode -> AnimBuilder mode
-mergeBaselines (AnimBuilder ({ state, animation } as data)) =
+mergeBaselines (AnimBuilder ({ state, animation, defaults } as data)) =
     let
         newBaselines =
             animation.animGroups
-                |> AnimGroups.map (\_ config -> extractBaselinesFromConfig config)
+                |> AnimGroups.map (\_ config -> extractBaselinesFromConfig defaults.globalCssUnit config)
 
         mergeBoth key new old =
             AnimGroups.insert key (PropertyBaselines.merge old new)
@@ -1148,16 +1289,19 @@ updateBaselines key f (AnimBuilder data) =
         }
 
 
-extractBaselinesFromConfig : AnimGroupConfig -> PropertyBaselines
-extractBaselinesFromConfig elementConfig =
-    List.foldl extractPropertyBaseline PropertyBaselines.empty elementConfig.properties
+extractBaselinesFromConfig : InternalUnit.CssUnitAxes -> AnimGroupConfig -> PropertyBaselines
+extractBaselinesFromConfig globalCssUnit elementConfig =
+    List.foldl (extractPropertyBaseline globalCssUnit) PropertyBaselines.empty elementConfig.properties
 
 
-extractPropertyBaseline : PropertyConfig -> PropertyBaselines -> PropertyBaselines
-extractPropertyBaseline propConfig baselines =
+extractPropertyBaseline : InternalUnit.CssUnitAxes -> PropertyConfig -> PropertyBaselines -> PropertyBaselines
+extractPropertyBaseline globalCssUnit propConfig baselines =
     case propConfig of
         TranslateConfig cfg ->
-            PropertyBaselines.setTranslate cfg.end baselines
+            baselines
+                |> PropertyBaselines.setTranslate cfg.end
+                |> PropertyBaselines.setTranslateUnits
+                    (InternalUnit.resolveCssUnitAxes cfg.cssUnit globalCssUnit InternalUnit.default)
 
         RotateConfig cfg ->
             PropertyBaselines.setRotate cfg.end baselines
@@ -1172,10 +1316,16 @@ extractPropertyBaseline propConfig baselines =
             PropertyBaselines.setOpacity cfg.end baselines
 
         PerspectiveOriginConfig cfg ->
-            PropertyBaselines.setPerspectiveOrigin cfg.end baselines
+            baselines
+                |> PropertyBaselines.setPerspectiveOrigin cfg.end
+                |> PropertyBaselines.setPerspectiveOriginUnits
+                    (InternalUnit.resolveCssUnitAxes cfg.cssUnit globalCssUnit Percent)
 
         SizeConfig cfg ->
-            PropertyBaselines.setSize cfg.end baselines
+            baselines
+                |> PropertyBaselines.setSize cfg.end
+                |> PropertyBaselines.setSizeUnits
+                    (InternalUnit.resolveCssUnitAxes cfg.cssUnit globalCssUnit InternalUnit.default)
 
         CustomPropertyConfig cssName unit cfg ->
             PropertyBaselines.setCustomProperty cssName cfg.end unit baselines

@@ -1,5 +1,6 @@
 module Anim.Internal.Builder.PerspectiveOrigin exposing
     ( PerspectiveOriginBuilder
+    , applyInitCssUnit
     , build
     , clampX
     , clampY
@@ -287,6 +288,18 @@ cssUnitX unit (PerspectiveOriginBuilder config builder) =
 cssUnitY : Unit -> PerspectiveOriginBuilder mode -> PerspectiveOriginBuilder mode
 cssUnitY unit (PerspectiveOriginBuilder config builder) =
     PerspectiveOriginBuilder (PropertyBuilder.cssUnitY unit config) builder
+
+
+{-| Seed the per-property `cssUnit` axes on the config from the AnimBuilder's
+stored init-time unit defaults. Called at the start of every public `init*`
+helper so values supplied during initialization are rendered with whatever
+`initUnit*` was active at that point in the pipeline.
+-}
+applyInitCssUnit : PerspectiveOriginBuilder mode -> PerspectiveOriginBuilder mode
+applyInitCssUnit (PerspectiveOriginBuilder config builder) =
+    PerspectiveOriginBuilder
+        { config | cssUnit = Builder.getPerspectiveOriginInitCssUnit builder }
+        builder
 
 
 
