@@ -120,7 +120,7 @@ duration =
 -- ============================================================
 
 
-toCssString : InternalUnit.ResolvedLengthAxes -> Translate -> String
+toCssString : InternalUnit.ResolvedCssUnitAxes -> Translate -> String
 toCssString axes (Translate coords) =
     "translate3d("
         ++ String.fromFloat coords.x
@@ -134,7 +134,7 @@ toCssString axes (Translate coords) =
         ++ ")"
 
 
-toCssPropertyValue : InternalUnit.ResolvedLengthAxes -> Translate -> String
+toCssPropertyValue : InternalUnit.ResolvedCssUnitAxes -> Translate -> String
 toCssPropertyValue axes (Translate coords) =
     String.fromFloat coords.x
         ++ InternalUnit.toCssSuffix axes.x

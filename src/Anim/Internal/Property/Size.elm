@@ -77,7 +77,7 @@ toRecord (Size dimensions) =
 -- ============================================================
 
 
-toCssString : InternalUnit.ResolvedLengthAxes -> Size -> String
+toCssString : InternalUnit.ResolvedCssUnitAxes -> Size -> String
 toCssString axes size =
     let
         ( width, height ) =
@@ -91,12 +91,12 @@ toCssString axes size =
         ++ InternalUnit.toCssSuffix axes.y
 
 
-widthToCssString : InternalUnit.ResolvedLengthAxes -> Size -> String
+widthToCssString : InternalUnit.ResolvedCssUnitAxes -> Size -> String
 widthToCssString axes (Size dimensions) =
     String.fromFloat dimensions.w ++ InternalUnit.toCssSuffix axes.x
 
 
-heightToCssString : InternalUnit.ResolvedLengthAxes -> Size -> String
+heightToCssString : InternalUnit.ResolvedCssUnitAxes -> Size -> String
 heightToCssString axes (Size dimensions) =
     String.fromFloat dimensions.h ++ InternalUnit.toCssSuffix axes.y
 

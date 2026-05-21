@@ -27,6 +27,10 @@ module Anim.Internal.Builder exposing
     , alternate
     , clearAnimData
     , clearClamp
+    , cssUnit
+    , cssUnitX
+    , cssUnitY
+    , cssUnitZ
     , delay
     , discreteEntry
     , discreteExit
@@ -72,10 +76,6 @@ module Anim.Internal.Builder exposing
     , injectRunningProperties
     , isPropertyRunning
     , iterations
-    , length
-    , lengthX
-    , lengthY
-    , lengthZ
     , loopForever
     , mergeBaselines
     , normalizeTransformOrder
@@ -187,7 +187,7 @@ type alias DefaultsConfig =
     , globalEasing : Maybe Easing
     , globalSpring : Maybe Spring
     , globalDelay : Maybe Int
-    , globalLength : InternalUnit.LengthAxes
+    , globalCssUnit : InternalUnit.CssUnitAxes
     , globalTransformOrder : Maybe (List TransformProperty)
     }
 
@@ -241,7 +241,7 @@ type alias AnimationConfig targetProperty =
     , easing : Maybe Easing
     , spring : Maybe Spring
     , delay : Maybe Int
-    , length : InternalUnit.LengthAxes
+    , cssUnit : InternalUnit.CssUnitAxes
     }
 
 
@@ -266,7 +266,7 @@ type alias ProcessedAnimationConfig targetProperty =
     , timing : TimeSpec
     , easing : Easing
     , spring : Maybe Spring
-    , length : InternalUnit.ResolvedLengthAxes
+    , cssUnit : InternalUnit.ResolvedCssUnitAxes
     , delay : Int
     }
 
@@ -277,7 +277,7 @@ type alias ProcessedAnimationData =
     , globalEasing : Maybe Easing
     , globalSpring : Maybe Spring
     , globalDelay : Maybe Int
-    , globalLength : InternalUnit.LengthAxes
+    , globalCssUnit : InternalUnit.CssUnitAxes
     , iterations : Iterations
     , animationDirection : AnimationDirection
     }
@@ -397,7 +397,7 @@ initDefaults =
     , globalEasing = Nothing
     , globalSpring = Nothing
     , globalDelay = Nothing
-    , globalLength = InternalUnit.emptyLengthAxes
+    , globalCssUnit = InternalUnit.emptyCssUnitAxes
     , globalTransformOrder = Nothing
     }
 
@@ -517,44 +517,44 @@ delay ms (AnimBuilder data) =
         }
 
 
-length : Unit -> AnimBuilder mode -> AnimBuilder mode
-length unit (AnimBuilder data) =
+cssUnit : Unit -> AnimBuilder mode -> AnimBuilder mode
+cssUnit unit (AnimBuilder data) =
     let
         defs =
             data.defaults
     in
     AnimBuilder
-        { data | defaults = { defs | globalLength = InternalUnit.setAllLengthAxes unit defs.globalLength } }
+        { data | defaults = { defs | globalCssUnit = InternalUnit.setAllCssUnitAxes unit defs.globalCssUnit } }
 
 
-lengthX : Unit -> AnimBuilder mode -> AnimBuilder mode
-lengthX unit (AnimBuilder data) =
+cssUnitX : Unit -> AnimBuilder mode -> AnimBuilder mode
+cssUnitX unit (AnimBuilder data) =
     let
         defs =
             data.defaults
     in
     AnimBuilder
-        { data | defaults = { defs | globalLength = InternalUnit.setLengthX unit defs.globalLength } }
+        { data | defaults = { defs | globalCssUnit = InternalUnit.setCssUnitX unit defs.globalCssUnit } }
 
 
-lengthY : Unit -> AnimBuilder mode -> AnimBuilder mode
-lengthY unit (AnimBuilder data) =
+cssUnitY : Unit -> AnimBuilder mode -> AnimBuilder mode
+cssUnitY unit (AnimBuilder data) =
     let
         defs =
             data.defaults
     in
     AnimBuilder
-        { data | defaults = { defs | globalLength = InternalUnit.setLengthY unit defs.globalLength } }
+        { data | defaults = { defs | globalCssUnit = InternalUnit.setCssUnitY unit defs.globalCssUnit } }
 
 
-lengthZ : Unit -> AnimBuilder mode -> AnimBuilder mode
-lengthZ unit (AnimBuilder data) =
+cssUnitZ : Unit -> AnimBuilder mode -> AnimBuilder mode
+cssUnitZ unit (AnimBuilder data) =
     let
         defs =
             data.defaults
     in
     AnimBuilder
-        { data | defaults = { defs | globalLength = InternalUnit.setLengthZ unit defs.globalLength } }
+        { data | defaults = { defs | globalCssUnit = InternalUnit.setCssUnitZ unit defs.globalCssUnit } }
 
 
 transformOrder : List TransformProperty -> AnimBuilder mode -> AnimBuilder mode
@@ -1348,7 +1348,7 @@ process (AnimBuilder data) =
     , globalEasing = data.defaults.globalEasing
     , globalSpring = data.defaults.globalSpring
     , globalDelay = data.defaults.globalDelay
-    , globalLength = data.defaults.globalLength
+    , globalCssUnit = data.defaults.globalCssUnit
     , iterations = data.playback.iterations
     , animationDirection = data.playback.animationDirection
     , groups =
@@ -1382,7 +1382,7 @@ processProperty globalData property =
                     { config = config
                     , globalData = globalData
                     , defaultStart = 0
-                    , defaultLength = InternalUnit.default
+                    , defaultCssUnit = InternalUnit.default
                     , distanceFn = \a b -> abs (b - a)
                     , durationFn = TimeSpec.duration
                     , speedFn = TimeSpec.speed
@@ -1395,7 +1395,7 @@ processProperty globalData property =
                     { config = config
                     , globalData = globalData
                     , defaultStart = Color.transparent
-                    , defaultLength = InternalUnit.default
+                    , defaultCssUnit = InternalUnit.default
                     , distanceFn = Color.distance
                     , durationFn = Color.duration
                     , speedFn = Color.speed
@@ -1408,7 +1408,7 @@ processProperty globalData property =
                     { config = config
                     , globalData = globalData
                     , defaultStart = Opacity.fromFloat 1.0
-                    , defaultLength = InternalUnit.default
+                    , defaultCssUnit = InternalUnit.default
                     , distanceFn = Opacity.distance
                     , durationFn = Opacity.duration
                     , speedFn = Opacity.speed
@@ -1421,7 +1421,7 @@ processProperty globalData property =
                     { config = config
                     , globalData = globalData
                     , defaultStart = PerspectiveOrigin.default
-                    , defaultLength = Percent
+                    , defaultCssUnit = Percent
                     , distanceFn = PerspectiveOrigin.distance
                     , durationFn = PerspectiveOrigin.duration
                     , speedFn = PerspectiveOrigin.speed
@@ -1434,7 +1434,7 @@ processProperty globalData property =
                     { config = config
                     , globalData = globalData
                     , defaultStart = Rotate.default
-                    , defaultLength = InternalUnit.default
+                    , defaultCssUnit = InternalUnit.default
                     , distanceFn = Rotate.distance
                     , durationFn = Rotate.duration
                     , speedFn = Rotate.speed
@@ -1447,7 +1447,7 @@ processProperty globalData property =
                     { config = config
                     , globalData = globalData
                     , defaultStart = Scale.default
-                    , defaultLength = InternalUnit.default
+                    , defaultCssUnit = InternalUnit.default
                     , distanceFn = Scale.distance
                     , durationFn = Scale.duration
                     , speedFn = Scale.speed
@@ -1460,7 +1460,7 @@ processProperty globalData property =
                     { config = config
                     , globalData = globalData
                     , defaultStart = Size.default
-                    , defaultLength = InternalUnit.default
+                    , defaultCssUnit = InternalUnit.default
                     , distanceFn = Size.distance
                     , durationFn = Size.duration
                     , speedFn = Size.speed
@@ -1473,7 +1473,7 @@ processProperty globalData property =
                     { config = config
                     , globalData = globalData
                     , defaultStart = Skew.default
-                    , defaultLength = InternalUnit.default
+                    , defaultCssUnit = InternalUnit.default
                     , distanceFn = Skew.distance
                     , durationFn = Skew.duration
                     , speedFn = Skew.speed
@@ -1486,7 +1486,7 @@ processProperty globalData property =
                     { config = config
                     , globalData = globalData
                     , defaultStart = Translate.default
-                    , defaultLength = InternalUnit.default
+                    , defaultCssUnit = InternalUnit.default
                     , distanceFn = Translate.distance
                     , durationFn = Translate.duration
                     , speedFn = Translate.speed
@@ -1498,14 +1498,14 @@ processStandardAnimation :
     { config : AnimationConfig a
     , globalData : DefaultsConfig
     , defaultStart : a
-    , defaultLength : Unit
+    , defaultCssUnit : Unit
     , distanceFn : a -> a -> Float
     , durationFn : Float -> TimeSpec -> Float
     , speedFn : Float -> Float -> TimeSpec -> Float
     , wrapper : ProcessedAnimationConfig a -> ProcessedPropertyConfig
     }
     -> ProcessedPropertyConfig
-processStandardAnimation { config, globalData, defaultStart, defaultLength, distanceFn, durationFn, speedFn, wrapper } =
+processStandardAnimation { config, globalData, defaultStart, defaultCssUnit, distanceFn, durationFn, speedFn, wrapper } =
     let
         start =
             Maybe.withDefault defaultStart config.start
@@ -1551,7 +1551,7 @@ processStandardAnimation { config, globalData, defaultStart, defaultLength, dist
         , timing = resolvedTiming
         , easing = resolveEasingWithDefault config.easing globalData.globalEasing EaseInOut
         , spring = resolvedSpring
-        , length = InternalUnit.resolveLengthAxes config.length globalData.globalLength defaultLength
+        , cssUnit = InternalUnit.resolveCssUnitAxes config.cssUnit globalData.globalCssUnit defaultCssUnit
         , delay = resolveDelayWithDefault config.delay globalData.globalDelay 0
         }
 
@@ -1625,7 +1625,7 @@ collectProcessedTransform : ProcessedPropertyConfig -> TransformParts -> Transfo
 collectProcessedTransform property acc =
     case property of
         ProcessedTranslateConfig config ->
-            { acc | translate = Translate.toCssString config.length config.end }
+            { acc | translate = Translate.toCssString config.cssUnit config.end }
 
         ProcessedRotateConfig config ->
             { acc | rotate = Rotate.toCssString config.end }
@@ -1644,7 +1644,7 @@ collectPropertyTransform : PropertyConfig -> TransformParts -> TransformParts
 collectPropertyTransform property acc =
     case property of
         TranslateConfig config ->
-            { acc | translate = Translate.toCssString (InternalUnit.resolveLengthAxes config.length InternalUnit.emptyLengthAxes InternalUnit.default) config.end }
+            { acc | translate = Translate.toCssString (InternalUnit.resolveCssUnitAxes config.cssUnit InternalUnit.emptyCssUnitAxes InternalUnit.default) config.end }
 
         RotateConfig config ->
             { acc | rotate = Rotate.toCssString config.end }

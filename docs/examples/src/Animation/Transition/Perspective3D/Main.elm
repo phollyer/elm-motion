@@ -360,7 +360,7 @@ perspectiveAnimation areaSize step =
 movePerspectiveOrigin : Float -> Float -> Int -> { width : Float, height : Float } -> AnimBuilder mode -> AnimBuilder mode
 movePerspectiveOrigin x y ms areaSize =
     PerspectiveOrigin.for perspectiveContainer.groupName
-        >> PerspectiveOrigin.length Percent
+        >> PerspectiveOrigin.cssUnit Percent
         >> PerspectiveOrigin.toXY x y
         >> PerspectiveOrigin.duration ms
         >> PerspectiveOrigin.easing Linear

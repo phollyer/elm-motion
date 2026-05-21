@@ -1,4 +1,7 @@
-module Anim.Unit exposing (Unit(..), toCssSuffix)
+module Anim.Unit exposing
+    ( Unit(..)
+    , toCssSuffix
+    )
 
 {-| Length unit selector for length-bearing properties
 ([Translate](Anim.Property.Translate), [Size](Anim.Property.Size),
@@ -12,9 +15,9 @@ resize automatically without needing [Resize.bounds](Anim.Resize#bounds) plumbin
 
 The Engines reach for the unit in this order, taking the first one set:
 
-1.  Property-level (`Translate.length`, `Size.length`, `PerspectiveOrigin.length`)
-2.  Engine-level (`WAAPI.length`, `Transition.length`, `Keyframe.length`,
-    `ScrollTimeline.length`, `ViewTimeline.length`)
+1.  Property-level (`Translate.cssUnit`, `Size.cssUnit`, `PerspectiveOrigin.cssUnit`)
+2.  Engine-level (`WAAPI.cssUnit`, `Transition.cssUnit`, `Keyframe.cssUnit`,
+    `ScrollTimeline.cssUnit`, `ViewTimeline.cssUnit`)
 3.  `Px` (built-in default)
 
 The `Sub` Engine currently only supports `Px`. Setting a non-`Px` unit on a

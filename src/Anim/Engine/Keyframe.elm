@@ -10,13 +10,10 @@ module Anim.Engine.Keyframe exposing
     , attributes
     , styleNode, styleNodeFor, maybeString
     , events, eventsStopPropagation
+    , cssUnit, cssUnitX, cssUnitY, cssUnitZ
     , iterations, loopForever, alternate
     , delay, duration, speed
     , easing
-    , length
-    , lengthX
-    , lengthY
-    , lengthZ
     , spring
     , stop, reset, restart, pause, resume
     , discreteEntry, discreteExit
@@ -56,8 +53,8 @@ For Engine comparisons, shared features, examples and code, see the
 
 This Engine uses the browser's Document timeline, along with the Transition, Sub, and WAAPI Engines.
 
-Use the `TimelineBuilder` to configure animations that run on the Document timeline only. If any Engines
-are used that don't run on the Document timeline (e.g., Scroll or View), you'll get a type error.
+Use the `TimelineBuilder` to confine animations to the Document timeline. If a non-Document timeline
+Engine tries to consume anything built with a `TimelineBuilder`, you'll get a type error.
 
 @docs TimelineBuilder
 
@@ -120,6 +117,11 @@ and include a `<style>` node with the generated keyframes.
 📖 See [Events](https://phollyer.github.io/elm-motion/animation/engines/keyframes/#events) in the docs.
 
 
+# Unit
+
+@docs cssUnit, cssUnitX, cssUnitY, cssUnitZ
+
+
 # Playback
 
 @docs iterations, loopForever, alternate
@@ -137,11 +139,6 @@ and include a `<style>` node with the generated keyframes.
 @docs easing
 
 📖 See [Easing](https://phollyer.github.io/elm-motion/animation/concepts/easing/) in the docs.
-
-
-# Unit
-
-@docs length
 
 
 # Spring
@@ -260,6 +257,15 @@ type alias AnimState =
 
 
 {-| Type alias for the base [AnimBuilder](Anim.Builder#AnimBuilder) type.
+
+Use this as the base type for builders that are shared across multiple engines,
+or that you want to be able to use with any engine:
+
+    f : AnimBuilder mode -> AnimBuilder mode
+
+Use the [TimelineBuilder](#TimelineBuilder) or the [EngineBuilder](#EngineBuilder)
+when you want to tighten the type restrictions and restrict builders to specific engines or timelines.
+
 -}
 type alias AnimBuilder mode =
     CSS.AnimBuilder mode
@@ -277,11 +283,12 @@ type alias AnimGroupName =
 {-| Type alias for the internal `TimelineBuilder` type.
 
 This generic timeline builder works with any engine that uses the same timeline,
-but will result in a type error if used with an Engine that does not.
+but will result in a type error if consumed by an Engine that does not:
 
     f : Keyframe.TimelineBuilder engine -> Keyframe.TimelineBuilder engine
 
-Here's an engine-specific timeline builder for the Keyframe Engine. It will result in a type error if used with any other engine.
+Here's an engine-specific timeline builder for the Keyframe Engine. It will result
+in a type error if consumed by any other engine:
 
     f : Keyframe.TimelineBuilder ForKeyframeEngine -> Keyframe.TimelineBuilder ForKeyframeEngine
 
@@ -790,53 +797,52 @@ easing =
 -- ============================================================
 
 
-{-| Set the default length [Unit](Anim-Unit#Unit) for all length-bearing
-properties in this builder.
+{-| Set the default length [Unit](Anim-Unit#Unit) for all properties
+in this builder.
 
-Applies to `Translate`, `Size`, and `PerspectiveOrigin`. Per-property
-[`length`](Anim-Property-Translate#length) calls take precedence over this
-engine-level default. If neither is set, properties render in `Px`.
+Applies to any property that accepts a length unit and doesn't have
+its own unit defined.
 
     import Anim.Engine.Keyframe as Keyframe
     import Anim.Property.Translate as Translate
     import Anim.Unit as Unit
 
     Keyframe.animate model.animState <|
-        Keyframe.length Unit.Percent
+        Keyframe.cssUnit Unit.Percent
             >> Translate.for "box"
             >> Translate.toX 50
             >> Translate.build
 
 -}
-length : Unit -> Builder.AnimBuilder mode -> Builder.AnimBuilder mode
-length =
-    CSS.length
+cssUnit : Unit -> Builder.AnimBuilder mode -> Builder.AnimBuilder mode
+cssUnit =
+    CSS.cssUnit
 
 
 {-| Set a per-axis default length [Unit](Anim-Unit#Unit) for the X axis. Used
 by `Translate.x`, `Size.width`, and `PerspectiveOrigin.x`. Per-property
-per-axis setters (e.g. `Translate.lengthX`) take precedence over this.
+per-axis setters (e.g. `Translate.cssUnitX`) take precedence over this.
 -}
-lengthX : Unit -> Builder.AnimBuilder mode -> Builder.AnimBuilder mode
-lengthX =
-    CSS.lengthX
+cssUnitX : Unit -> Builder.AnimBuilder mode -> Builder.AnimBuilder mode
+cssUnitX =
+    CSS.cssUnitX
 
 
 {-| Set a per-axis default length [Unit](Anim-Unit#Unit) for the Y axis. Used
 by `Translate.y`, `Size.height`, and `PerspectiveOrigin.y`. Per-property
-per-axis setters (e.g. `Translate.lengthY`) take precedence over this.
+per-axis setters (e.g. `Translate.cssUnitY`) take precedence over this.
 -}
-lengthY : Unit -> Builder.AnimBuilder mode -> Builder.AnimBuilder mode
-lengthY =
-    CSS.lengthY
+cssUnitY : Unit -> Builder.AnimBuilder mode -> Builder.AnimBuilder mode
+cssUnitY =
+    CSS.cssUnitY
 
 
 {-| Set a per-axis default length [Unit](Anim-Unit#Unit) for the Z axis. Used
-by `Translate.z`. Per-property `Translate.lengthZ` takes precedence.
+by `Translate.z`. Per-property `Translate.cssUnitZ` takes precedence.
 -}
-lengthZ : Unit -> Builder.AnimBuilder mode -> Builder.AnimBuilder mode
-lengthZ =
-    CSS.lengthZ
+cssUnitZ : Unit -> Builder.AnimBuilder mode -> Builder.AnimBuilder mode
+cssUnitZ =
+    CSS.cssUnitZ
 
 
 

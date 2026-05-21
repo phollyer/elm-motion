@@ -45,7 +45,7 @@ animatedState =
     initWith [ PerspectiveOrigin.initPercent groupName 50 50 ]
         |> animate
             (PerspectiveOrigin.for groupName
-                >> PerspectiveOrigin.length Unit.Percent
+                >> PerspectiveOrigin.cssUnit Unit.Percent
                 >> PerspectiveOrigin.toXY 90 10
                 >> PerspectiveOrigin.duration 1000
                 >> PerspectiveOrigin.easing Linear

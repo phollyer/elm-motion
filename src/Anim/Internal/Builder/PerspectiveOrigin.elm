@@ -3,6 +3,9 @@ module Anim.Internal.Builder.PerspectiveOrigin exposing
     , build
     , clampX
     , clampY
+    , cssUnit
+    , cssUnitX
+    , cssUnitY
     , delay
     , duration
     , easing
@@ -11,9 +14,6 @@ module Anim.Internal.Builder.PerspectiveOrigin exposing
     , fromX
     , fromXY
     , fromY
-    , length
-    , lengthX
-    , lengthY
     , speed
     , spring
     , to
@@ -274,19 +274,19 @@ spring s (PerspectiveOriginBuilder config builder) =
 -- ============================================================
 
 
-length : Unit -> PerspectiveOriginBuilder mode -> PerspectiveOriginBuilder mode
-length unit (PerspectiveOriginBuilder config builder) =
-    PerspectiveOriginBuilder (PropertyBuilder.length unit config) builder
+cssUnit : Unit -> PerspectiveOriginBuilder mode -> PerspectiveOriginBuilder mode
+cssUnit unit (PerspectiveOriginBuilder config builder) =
+    PerspectiveOriginBuilder (PropertyBuilder.cssUnit unit config) builder
 
 
-lengthX : Unit -> PerspectiveOriginBuilder mode -> PerspectiveOriginBuilder mode
-lengthX unit (PerspectiveOriginBuilder config builder) =
-    PerspectiveOriginBuilder (PropertyBuilder.lengthX unit config) builder
+cssUnitX : Unit -> PerspectiveOriginBuilder mode -> PerspectiveOriginBuilder mode
+cssUnitX unit (PerspectiveOriginBuilder config builder) =
+    PerspectiveOriginBuilder (PropertyBuilder.cssUnitX unit config) builder
 
 
-lengthY : Unit -> PerspectiveOriginBuilder mode -> PerspectiveOriginBuilder mode
-lengthY unit (PerspectiveOriginBuilder config builder) =
-    PerspectiveOriginBuilder (PropertyBuilder.lengthY unit config) builder
+cssUnitY : Unit -> PerspectiveOriginBuilder mode -> PerspectiveOriginBuilder mode
+cssUnitY unit (PerspectiveOriginBuilder config builder) =
+    PerspectiveOriginBuilder (PropertyBuilder.cssUnitY unit config) builder
 
 
 

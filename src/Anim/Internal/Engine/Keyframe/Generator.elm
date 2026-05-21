@@ -245,7 +245,7 @@ generateTransformParts maybeTargetValues totalTime properties =
         (\p acc ->
             case p of
                 Builder.ProcessedTranslateConfig cfg ->
-                    { acc | translate = generateTransformPart totalTime Translate.default Translate.interpolate (Translate.toCssString cfg.length) cfg }
+                    { acc | translate = generateTransformPart totalTime Translate.default Translate.interpolate (Translate.toCssString cfg.cssUnit) cfg }
 
                 Builder.ProcessedRotateConfig cfg ->
                     { acc | rotate = generateTransformPart totalTime Rotate.default Rotate.interpolate Rotate.toCssString cfg }
@@ -320,11 +320,11 @@ generateNonTransformStyles totalTime =
                     [ part "opacity" Opacity.default Opacity.interpolate Opacity.toCssString cfg ]
 
                 Builder.ProcessedPerspectiveOriginConfig cfg ->
-                    [ part "perspective-origin" PerspectiveOrigin.default PerspectiveOrigin.interpolate (PerspectiveOrigin.toCssString cfg.length) cfg ]
+                    [ part "perspective-origin" PerspectiveOrigin.default PerspectiveOrigin.interpolate (PerspectiveOrigin.toCssString cfg.cssUnit) cfg ]
 
                 Builder.ProcessedSizeConfig cfg ->
-                    [ part "width" Size.default Size.interpolate (Size.widthToCssString cfg.length) cfg
-                    , part "height" Size.default Size.interpolate (Size.heightToCssString cfg.length) cfg
+                    [ part "width" Size.default Size.interpolate (Size.widthToCssString cfg.cssUnit) cfg
+                    , part "height" Size.default Size.interpolate (Size.heightToCssString cfg.cssUnit) cfg
                     ]
 
                 Builder.ProcessedRotateConfig _ ->
@@ -437,7 +437,7 @@ generateHash maybeOrder discrete animGroupName maxDuration maxDelay processedPro
                     s "opacity-" Opacity.toCssString cfg
 
                 Builder.ProcessedPerspectiveOriginConfig cfg ->
-                    s "perspOrigin-" (PerspectiveOrigin.toCssString cfg.length) cfg
+                    s "perspOrigin-" (PerspectiveOrigin.toCssString cfg.cssUnit) cfg
 
                 Builder.ProcessedRotateConfig cfg ->
                     s "rot-" Rotate.toCssString cfg
@@ -446,13 +446,13 @@ generateHash maybeOrder discrete animGroupName maxDuration maxDelay processedPro
                     s "scale-" Scale.toCssString cfg
 
                 Builder.ProcessedSizeConfig cfg ->
-                    s "size-" (Size.toCssString cfg.length) cfg
+                    s "size-" (Size.toCssString cfg.cssUnit) cfg
 
                 Builder.ProcessedSkewConfig cfg ->
                     s "skew-" Skew.toCssString cfg
 
                 Builder.ProcessedTranslateConfig cfg ->
-                    s "pos-" (Translate.toCssString cfg.length) cfg
+                    s "pos-" (Translate.toCssString cfg.cssUnit) cfg
 
         hashConfig =
             processedProps

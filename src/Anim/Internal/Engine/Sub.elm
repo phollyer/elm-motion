@@ -102,9 +102,9 @@ import Anim.Internal.Property.Scale as Scale exposing (Scale)
 import Anim.Internal.Property.Size as Size exposing (Size)
 import Anim.Internal.Property.Skew as Skew exposing (Skew)
 import Anim.Internal.Property.Translate as Translate exposing (Translate)
+import Anim.Internal.Resize.Builder as ResizeBuilder exposing (Bounds)
 import Anim.Internal.Unit as InternalUnit
 import Anim.Unit exposing (Unit(..))
-import Anim.Internal.Resize.Builder as ResizeBuilder exposing (Bounds)
 import Browser.Events
 import Dict
 import Html

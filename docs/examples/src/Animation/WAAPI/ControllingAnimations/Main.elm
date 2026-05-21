@@ -90,7 +90,7 @@ init _ =
 dropBall : AnimBuilder mode -> AnimBuilder mode
 dropBall =
     Translate.for animGroup
-        >> Translate.length Cqh
+        >> Translate.cssUnit Cqh
         >> Translate.fromY 0
         >> Translate.toY (100 - ballSize)
         >> Translate.speed 75

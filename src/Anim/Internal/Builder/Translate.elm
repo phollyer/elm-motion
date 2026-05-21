@@ -12,6 +12,10 @@ module Anim.Internal.Builder.Translate exposing
     , clampX
     , clampY
     , clampZ
+    , cssUnit
+    , cssUnitX
+    , cssUnitY
+    , cssUnitZ
     , delay
     , duration
     , easing
@@ -25,10 +29,6 @@ module Anim.Internal.Builder.Translate exposing
     , fromY
     , fromYZ
     , fromZ
-    , length
-    , lengthX
-    , lengthY
-    , lengthZ
     , speed
     , spring
     , to
@@ -493,24 +493,24 @@ spring s (TranslateBuilder config builder) =
     TranslateBuilder (PropertyBuilder.spring s config) builder
 
 
-length : Unit -> TranslateBuilder mode -> TranslateBuilder mode
-length unit (TranslateBuilder config builder) =
-    TranslateBuilder (PropertyBuilder.length unit config) builder
+cssUnit : Unit -> TranslateBuilder mode -> TranslateBuilder mode
+cssUnit unit (TranslateBuilder config builder) =
+    TranslateBuilder (PropertyBuilder.cssUnit unit config) builder
 
 
-lengthX : Unit -> TranslateBuilder mode -> TranslateBuilder mode
-lengthX unit (TranslateBuilder config builder) =
-    TranslateBuilder (PropertyBuilder.lengthX unit config) builder
+cssUnitX : Unit -> TranslateBuilder mode -> TranslateBuilder mode
+cssUnitX unit (TranslateBuilder config builder) =
+    TranslateBuilder (PropertyBuilder.cssUnitX unit config) builder
 
 
-lengthY : Unit -> TranslateBuilder mode -> TranslateBuilder mode
-lengthY unit (TranslateBuilder config builder) =
-    TranslateBuilder (PropertyBuilder.lengthY unit config) builder
+cssUnitY : Unit -> TranslateBuilder mode -> TranslateBuilder mode
+cssUnitY unit (TranslateBuilder config builder) =
+    TranslateBuilder (PropertyBuilder.cssUnitY unit config) builder
 
 
-lengthZ : Unit -> TranslateBuilder mode -> TranslateBuilder mode
-lengthZ unit (TranslateBuilder config builder) =
-    TranslateBuilder (PropertyBuilder.lengthZ unit config) builder
+cssUnitZ : Unit -> TranslateBuilder mode -> TranslateBuilder mode
+cssUnitZ unit (TranslateBuilder config builder) =
+    TranslateBuilder (PropertyBuilder.cssUnitZ unit config) builder
 
 
 

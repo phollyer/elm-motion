@@ -7,8 +7,7 @@ module Anim.Property.Size exposing
     , delay, duration, speed
     , easing
     , spring
-    , length
-    , lengthWidth, lengthHeight
+    , cssUnit, cssUnitWidth, cssUnitHeight
     , clampWidth, clampHeight, unclampWidth, unclampHeight
     )
 
@@ -87,7 +86,7 @@ for details.
 
 ## Unit
 
-@docs length
+@docs cssUnit, cssUnitWidth, cssUnitHeight
 
 
 ## Bounds
@@ -496,37 +495,37 @@ animation follows resize automatically.
     myAnimation =
         Size.for "animGroupName"
             >> Size.toHW 50 80
-            >> Size.length Unit.Percent
+            >> Size.cssUnit Unit.Percent
             >> Size.build
 
-This setting takes precedence over any [length](Anim-Engine-WAAPI#length) set
+This setting takes precedence over any [length](Anim-Engine-WAAPI#cssUnit) set
 on the engine.
 
 The `Sub` engine currently only supports `Px`; setting a non-`Px` unit on a
 size targeted at `Sub` reports an error and falls back to `Px`.
 
 -}
-length : Unit -> Builder mode -> Builder mode
-length =
-    SB.length
+cssUnit : Unit -> Builder mode -> Builder mode
+cssUnit =
+    SB.cssUnit
 
 
 {-| Set the length [Unit](Anim-Unit#Unit) used to render the `width` value for
-this property. Overrides any unit set by [`length`](#length) or by the
-engine's `length`/`lengthWidth` setter for the width axis.
+this property. Overrides any unit set by [`cssUnit`](#cssUnit) or by the
+engine's `cssUnit`/`cssUnitWidth` setter for the width axis.
 -}
-lengthWidth : Unit -> Builder mode -> Builder mode
-lengthWidth =
-    SB.lengthWidth
+cssUnitWidth : Unit -> Builder mode -> Builder mode
+cssUnitWidth =
+    SB.cssUnitWidth
 
 
 {-| Set the length [Unit](Anim-Unit#Unit) used to render the `height` value
-for this property. Overrides any unit set by [`length`](#length) or by the
-engine's `length`/`lengthHeight` setter for the height axis.
+for this property. Overrides any unit set by [`cssUnit`](#cssUnit) or by the
+engine's `cssUnit`/`cssUnitHeight` setter for the height axis.
 -}
-lengthHeight : Unit -> Builder mode -> Builder mode
-lengthHeight =
-    SB.lengthHeight
+cssUnitHeight : Unit -> Builder mode -> Builder mode
+cssUnitHeight =
+    SB.cssUnitHeight
 
 
 

@@ -8,9 +8,9 @@ import Anim.Internal.Property.PerspectiveOrigin as InternalPerspectiveOrigin
 import Anim.Internal.Property.Rotate as InternalRotate
 import Anim.Internal.Property.Scale as InternalScale
 import Anim.Internal.Property.Size as InternalSize
-import Anim.Internal.Unit as InternalUnit
 import Anim.Internal.Property.Skew as InternalSkew
 import Anim.Internal.Property.Translate as InternalTranslate
+import Anim.Internal.Unit as InternalUnit
 import Anim.Property.Custom as Custom
 import Anim.Property.CustomColor as CustomColor exposing (ColorProperty(..))
 import Anim.Property.Opacity as Opacity
@@ -154,7 +154,7 @@ upsertTests =
                 , easing = Nothing
                 , spring = Nothing
                 , delay = Nothing
-                , length = InternalUnit.emptyLengthAxes
+                , cssUnit = InternalUnit.emptyCssUnitAxes
                 }
 
         opacityConfig =
@@ -166,7 +166,7 @@ upsertTests =
                 , easing = Nothing
                 , spring = Nothing
                 , delay = Nothing
-                , length = InternalUnit.emptyLengthAxes
+                , cssUnit = InternalUnit.emptyCssUnitAxes
                 }
 
         replacementTranslateConfig =
@@ -178,7 +178,7 @@ upsertTests =
                 , easing = Nothing
                 , spring = Nothing
                 , delay = Nothing
-                , length = InternalUnit.emptyLengthAxes
+                , cssUnit = InternalUnit.emptyCssUnitAxes
                 }
 
         getProperties builder =
@@ -1515,7 +1515,7 @@ perspectiveOriginClampTests =
 
         endUnit builder =
             firstPerspectiveOriginConfig builder
-                |> Maybe.andThen (.length >> .x)
+                |> Maybe.andThen (.cssUnit >> .x)
     in
     describe "PerspectiveOrigin clamps"
         [ test "clampX clamps explicit toX above max" <|
@@ -1552,7 +1552,7 @@ perspectiveOriginClampTests =
             \_ ->
                 animBuilder
                     |> (PerspectiveOrigin.for "test"
-                            >> PerspectiveOrigin.length Unit.Px
+                            >> PerspectiveOrigin.cssUnit Unit.Px
                             >> PerspectiveOrigin.clampX 0 100
                             >> PerspectiveOrigin.toX 500
                             >> PerspectiveOrigin.build

@@ -9,6 +9,10 @@ module Anim.Internal.Engine.CSS.CSS exposing
     , animate
     , anyRunning
     , attributes
+    , cssUnit
+    , cssUnitX
+    , cssUnitY
+    , cssUnitZ
     , delay
     , discreteEntry
     , discreteExit
@@ -49,10 +53,6 @@ module Anim.Internal.Engine.CSS.CSS exposing
     , isPaused
     , isRunning
     , iterations
-    , length
-    , lengthX
-    , lengthY
-    , lengthZ
     , loopForever
     , onEvent
     , onEventStopPropagation
@@ -367,24 +367,24 @@ easing =
 -- ============================================================
 
 
-length : Unit -> Builder.AnimBuilder mode -> Builder.AnimBuilder mode
-length =
-    Builder.length
+cssUnit : Unit -> Builder.AnimBuilder mode -> Builder.AnimBuilder mode
+cssUnit =
+    Builder.cssUnit
 
 
-lengthX : Unit -> Builder.AnimBuilder mode -> Builder.AnimBuilder mode
-lengthX =
-    Builder.lengthX
+cssUnitX : Unit -> Builder.AnimBuilder mode -> Builder.AnimBuilder mode
+cssUnitX =
+    Builder.cssUnitX
 
 
-lengthY : Unit -> Builder.AnimBuilder mode -> Builder.AnimBuilder mode
-lengthY =
-    Builder.lengthY
+cssUnitY : Unit -> Builder.AnimBuilder mode -> Builder.AnimBuilder mode
+cssUnitY =
+    Builder.cssUnitY
 
 
-lengthZ : Unit -> Builder.AnimBuilder mode -> Builder.AnimBuilder mode
-lengthZ =
-    Builder.lengthZ
+cssUnitZ : Unit -> Builder.AnimBuilder mode -> Builder.AnimBuilder mode
+cssUnitZ =
+    Builder.cssUnitZ
 
 
 

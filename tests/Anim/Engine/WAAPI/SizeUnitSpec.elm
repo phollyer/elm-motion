@@ -1,7 +1,7 @@
 module Anim.Engine.WAAPI.SizeUnitSpec exposing (suite)
 
 {-| Verifies that the WAAPI size encoder emits a `unit` field reflecting the
-length unit configured via `Size.length`. The JS companion uses this field to
+cssUnit unit configured via `Size.cssUnit`. The JS companion uses this field to
 build `width`/`height` keyframes with the matching CSS unit.
 -}
 
@@ -60,7 +60,7 @@ unitTest description maybeUnit expected =
                                     identity
 
                                 Just unit ->
-                                    Size.length unit
+                                    Size.cssUnit unit
                            )
                         >> Size.build
 

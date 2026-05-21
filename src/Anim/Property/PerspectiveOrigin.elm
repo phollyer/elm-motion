@@ -2,8 +2,7 @@ module Anim.Property.PerspectiveOrigin exposing
     ( Builder, AnimGroupName
     , initPx, initPercent
     , for, build
-    , length
-    , lengthX, lengthY
+    , cssUnit, cssUnitX, cssUnitY
     , from, fromXY, fromX, fromY
     , to, toXY, toX, toY
     , delay, duration, speed
@@ -16,7 +15,7 @@ module Anim.Property.PerspectiveOrigin exposing
 {-| Animate the CSS `perspective-origin` property, which controls the vanishing point
 for 3D transforms applied to a parent element.
 
-**Default unit**: `%`. Use [`length`](#length) to switch to other CSS length units.
+**Default unit**: `%`. Use [`cssUnit`](#cssUnit) to switch to other CSS length units.
 
 **Default value**: `50% 50%` (center of the element)
 
@@ -36,7 +35,7 @@ for 3D transforms applied to a parent element.
     myAnimation : AnimBuilder mode -> AnimBuilder mode
     myAnimation =
         PerspectiveOrigin.for "animGroupName"
-            >> PerspectiveOrigin.length Unit.Px
+            >> PerspectiveOrigin.cssUnit Unit.Px
             >> PerspectiveOrigin.to 200
             >> PerspectiveOrigin.duration 500
             >> PerspectiveOrigin.easing EaseInOut
@@ -66,11 +65,11 @@ will use the current end value as the start, ensuring a smooth transition betwee
 
 ## Unit
 
-Use [`length`](#length) to select the CSS length unit (`Px`, `Percent`, `Vw`,
+Use [`cssUnit`](#cssUnit) to select the CSS length unit (`Px`, `Percent`, `Vw`,
 `Vh`, `Rem`, `Em`) for all `from`, `to`, `toX`, and `toY` calls. Defaults to
 percentages.
 
-@docs length
+@docs cssUnit, cssUnitX, cssUnitY
 
 
 ## Start Value
@@ -170,7 +169,7 @@ initPx : AnimGroupName -> Float -> Float -> AnimBuilder mode -> AnimBuilder mode
 initPx animationKey x y animBuilder =
     animBuilder
         |> for animationKey
-        |> PB.length Unit.Px
+        |> PB.cssUnit Unit.Px
         |> fromXY x y
         |> toXY x y
         |> build
@@ -192,7 +191,7 @@ initPercent : AnimGroupName -> Float -> Float -> AnimBuilder mode -> AnimBuilder
 initPercent animationKey x y animBuilder =
     animBuilder
         |> for animationKey
-        |> PB.length Unit.Percent
+        |> PB.cssUnit Unit.Percent
         |> fromXY x y
         |> toXY x y
         |> build
@@ -414,10 +413,10 @@ layout, so the animation follows resize automatically.
     myAnimation =
         PerspectiveOrigin.for "animGroupName"
             >> PerspectiveOrigin.toXY 25 75
-            >> PerspectiveOrigin.length Unit.Percent
+            >> PerspectiveOrigin.cssUnit Unit.Percent
             >> PerspectiveOrigin.build
 
-This setting takes precedence over any [length](Anim-Engine-WAAPI#length) set
+This setting takes precedence over any [length](Anim-Engine-WAAPI#cssUnit) set
 on the engine, and over the legacy [`px`](#px) / [`percent`](#percent)
 switchers (which only choose between pixels and percentages).
 
@@ -425,27 +424,27 @@ The `Sub` engine currently only supports `Px`; setting a non-`Px` unit on a
 perspective-origin targeted at `Sub` reports an error and falls back to `Px`.
 
 -}
-length : Unit.Unit -> Builder mode -> Builder mode
-length =
-    PB.length
+cssUnit : Unit.Unit -> Builder mode -> Builder mode
+cssUnit =
+    PB.cssUnit
 
 
 {-| Set the length [Unit](Anim-Unit#Unit) used to render the X-axis
-perspective-origin value. Overrides any unit set by [`length`](#length) or by
-the engine's `length`/`lengthX` setter for the X axis.
+perspective-origin value. Overrides any unit set by [`cssUnit`](#cssUnit) or by
+the engine's `cssUnit`/`cssUnitX` setter for the X axis.
 -}
-lengthX : Unit.Unit -> Builder mode -> Builder mode
-lengthX =
-    PB.lengthX
+cssUnitX : Unit.Unit -> Builder mode -> Builder mode
+cssUnitX =
+    PB.cssUnitX
 
 
 {-| Set the length [Unit](Anim-Unit#Unit) used to render the Y-axis
-perspective-origin value. Overrides any unit set by [`length`](#length) or by
-the engine's `length`/`lengthY` setter for the Y axis.
+perspective-origin value. Overrides any unit set by [`cssUnit`](#cssUnit) or by
+the engine's `cssUnit`/`cssUnitY` setter for the Y axis.
 -}
-lengthY : Unit.Unit -> Builder mode -> Builder mode
-lengthY =
-    PB.lengthY
+cssUnitY : Unit.Unit -> Builder mode -> Builder mode
+cssUnitY =
+    PB.cssUnitY
 
 
 

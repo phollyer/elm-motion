@@ -415,7 +415,7 @@ perspectiveAnimation areaSize step =
 movePerspectiveOrigin : Float -> (PerspectiveOrigin.Builder mode -> PerspectiveOrigin.Builder mode) -> AnimBuilder mode -> AnimBuilder mode
 movePerspectiveOrigin speed moveTo =
     PerspectiveOrigin.for perspectiveContainer.groupName
-        >> PerspectiveOrigin.length Px
+        >> PerspectiveOrigin.cssUnit Px
         >> moveTo
         >> PerspectiveOrigin.speed speed
         >> PerspectiveOrigin.easing Linear

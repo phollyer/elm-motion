@@ -18,8 +18,8 @@ consider whether a relative [`Anim.Unit`](Anim-Unit) (`Percent`, `Vw`, `Vh`,
 you:
 
   - **CSS Transition, Keyframe, WAAPI, ScrollTimeline, ViewTimeline** —
-    rendered values follow the unit. Setting `Translate.length Unit.Vw` (or
-    the engine-level [`length`](Anim-Engine-WAAPI#length)) makes the browser
+    rendered values follow the unit. Setting `Translate.cssUnit Unit.Vw` (or
+    the engine-level [`cssUnit`](Anim-Engine-WAAPI#cssUnit)) makes the browser
     re-evaluate values against the current viewport on every frame; no
     `onResize` plumbing is needed.
   - **Sub** — currently `Px`-only. Non-`Px` units fall back to `Px` silently.

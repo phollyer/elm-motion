@@ -69,7 +69,7 @@ getY (PerspectiveOrigin { y }) =
 -- ============================================================
 
 
-toCssString : InternalUnit.ResolvedLengthAxes -> PerspectiveOrigin -> String
+toCssString : InternalUnit.ResolvedCssUnitAxes -> PerspectiveOrigin -> String
 toCssString axes (PerspectiveOrigin { x, y }) =
     String.fromFloat x
         ++ InternalUnit.toCssSuffix axes.x

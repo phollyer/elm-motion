@@ -5,15 +5,15 @@ module Anim.Internal.Engine.ScrollTimeline exposing
     , alternate
     , animate
     , attributes
+    , cssUnit
+    , cssUnitX
+    , cssUnitY
+    , cssUnitZ
     , discreteEntry
     , discreteExit
     , easing
     , horizontal
     , iterations
-    , length
-    , lengthX
-    , lengthY
-    , lengthZ
     , spring
     , subscriptions
     , transformOrder
@@ -216,24 +216,24 @@ easing =
 -- ============================================================
 
 
-length : Unit -> TimelineBuilder -> TimelineBuilder
-length =
-    Builder.length
+cssUnit : Unit -> TimelineBuilder -> TimelineBuilder
+cssUnit =
+    Builder.cssUnit
 
 
-lengthX : Unit -> TimelineBuilder -> TimelineBuilder
-lengthX =
-    Builder.lengthX
+cssUnitX : Unit -> TimelineBuilder -> TimelineBuilder
+cssUnitX =
+    Builder.cssUnitX
 
 
-lengthY : Unit -> TimelineBuilder -> TimelineBuilder
-lengthY =
-    Builder.lengthY
+cssUnitY : Unit -> TimelineBuilder -> TimelineBuilder
+cssUnitY =
+    Builder.cssUnitY
 
 
-lengthZ : Unit -> TimelineBuilder -> TimelineBuilder
-lengthZ =
-    Builder.lengthZ
+cssUnitZ : Unit -> TimelineBuilder -> TimelineBuilder
+cssUnitZ =
+    Builder.cssUnitZ
 
 
 

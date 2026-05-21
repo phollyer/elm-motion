@@ -9,10 +9,7 @@ module Anim.Engine.ViewTimeline exposing
     , Unit(..), Range(..), rangeStart, rangeEnd
     , iterations, alternate
     , easing
-    , length
-    , lengthX
-    , lengthY
-    , lengthZ
+    , cssUnit, cssUnitX, cssUnitY, cssUnitZ
     , spring
     , discreteEntry, discreteExit
     , transformOrder
@@ -99,7 +96,7 @@ For Engine comparisons, shared features, examples and code, see the
 
 # Length Unit
 
-@docs length
+@docs cssUnit, cssUnitX, cssUnitY, cssUnitZ
 
 
 # Spring
@@ -469,40 +466,40 @@ easing =
 properties in this timeline.
 
 Applies to `Translate`, `Size`, and `PerspectiveOrigin`. Per-property
-[`length`](Anim-Property-Translate#length) calls take precedence over this
+[`cssUnit`](Anim-Property-Translate#cssUnit) calls take precedence over this
 engine-level default. If neither is set, properties render in `Px`.
 
 Note: this is unrelated to the [Range Unit](#Unit) used by `rangeStart` and
 `rangeEnd`.
 
 -}
-length : LengthUnit.Unit -> TimelineBuilder -> TimelineBuilder
-length =
-    Internal.length
+cssUnit : LengthUnit.Unit -> TimelineBuilder -> TimelineBuilder
+cssUnit =
+    Internal.cssUnit
 
 
 {-| Set a per-axis default length [Unit](Anim-Unit#Unit) for the X axis.
 Applies to `Translate.x`, `Size.width`, and `PerspectiveOrigin.x`.
 -}
-lengthX : LengthUnit.Unit -> TimelineBuilder -> TimelineBuilder
-lengthX =
-    Internal.lengthX
+cssUnitX : LengthUnit.Unit -> TimelineBuilder -> TimelineBuilder
+cssUnitX =
+    Internal.cssUnitX
 
 
 {-| Set a per-axis default length [Unit](Anim-Unit#Unit) for the Y axis.
 Applies to `Translate.y`, `Size.height`, and `PerspectiveOrigin.y`.
 -}
-lengthY : LengthUnit.Unit -> TimelineBuilder -> TimelineBuilder
-lengthY =
-    Internal.lengthY
+cssUnitY : LengthUnit.Unit -> TimelineBuilder -> TimelineBuilder
+cssUnitY =
+    Internal.cssUnitY
 
 
 {-| Set a per-axis default length [Unit](Anim-Unit#Unit) for the Z axis.
 Applies to `Translate.z`.
 -}
-lengthZ : LengthUnit.Unit -> TimelineBuilder -> TimelineBuilder
-lengthZ =
-    Internal.lengthZ
+cssUnitZ : LengthUnit.Unit -> TimelineBuilder -> TimelineBuilder
+cssUnitZ =
+    Internal.cssUnitZ
 
 
 

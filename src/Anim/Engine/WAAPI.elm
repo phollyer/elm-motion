@@ -13,10 +13,7 @@ module Anim.Engine.WAAPI exposing
     , iterations, loopForever, alternate
     , delay, duration, speed
     , easing
-    , length
-    , lengthX
-    , lengthY
-    , lengthZ
+    , cssUnit, cssUnitX, cssUnitY, cssUnitZ
     , spring
     , stop, reset, restart, pause, resume
     , discreteEntry, discreteExit
@@ -149,7 +146,7 @@ This ensures the element displays the correct property values before, during, an
 
 # Unit
 
-@docs length
+@docs cssUnit, cssUnitX, cssUnitY, cssUnitZ
 
 
 # Spring
@@ -836,7 +833,7 @@ easing =
 properties in this builder.
 
 Applies to `Translate`, `Size`, and `PerspectiveOrigin`. Per-property
-[`length`](Anim-Property-Translate#length) calls take precedence over this
+[`cssUnit`](Anim-Property-Translate#cssUnit) calls take precedence over this
 engine-level default. If neither is set, properties render in `Px`.
 
     import Anim.Engine.WAAPI as WAAPI
@@ -844,41 +841,41 @@ engine-level default. If neither is set, properties render in `Px`.
     import Anim.Unit as Unit
 
     WAAPI.animate model.animState <|
-        WAAPI.length Unit.Percent
+        WAAPI.cssUnit Unit.Percent
             >> Translate.for "box"
             >> Translate.toX 50
             >> Translate.build
 
 -}
-length : Unit -> Builder.AnimBuilder mode -> Builder.AnimBuilder mode
-length =
-    Internal.length
+cssUnit : Unit -> Builder.AnimBuilder mode -> Builder.AnimBuilder mode
+cssUnit =
+    Internal.cssUnit
 
 
 {-| Set a per-axis default length [Unit](Anim-Unit#Unit) for the X axis. Used
 by `Translate.x`, `Size.width`, and `PerspectiveOrigin.x`. Per-property
-per-axis setters (e.g. `Translate.lengthX`) take precedence over this.
+per-axis setters (e.g. `Translate.cssUnitX`) take precedence over this.
 -}
-lengthX : Unit -> Builder.AnimBuilder mode -> Builder.AnimBuilder mode
-lengthX =
-    Internal.lengthX
+cssUnitX : Unit -> Builder.AnimBuilder mode -> Builder.AnimBuilder mode
+cssUnitX =
+    Internal.cssUnitX
 
 
 {-| Set a per-axis default length [Unit](Anim-Unit#Unit) for the Y axis. Used
 by `Translate.y`, `Size.height`, and `PerspectiveOrigin.y`. Per-property
-per-axis setters (e.g. `Translate.lengthY`) take precedence over this.
+per-axis setters (e.g. `Translate.cssUnitY`) take precedence over this.
 -}
-lengthY : Unit -> Builder.AnimBuilder mode -> Builder.AnimBuilder mode
-lengthY =
-    Internal.lengthY
+cssUnitY : Unit -> Builder.AnimBuilder mode -> Builder.AnimBuilder mode
+cssUnitY =
+    Internal.cssUnitY
 
 
 {-| Set a per-axis default length [Unit](Anim-Unit#Unit) for the Z axis. Used
-by `Translate.z`. Per-property `Translate.lengthZ` takes precedence.
+by `Translate.z`. Per-property `Translate.cssUnitZ` takes precedence.
 -}
-lengthZ : Unit -> Builder.AnimBuilder mode -> Builder.AnimBuilder mode
-lengthZ =
-    Internal.lengthZ
+cssUnitZ : Unit -> Builder.AnimBuilder mode -> Builder.AnimBuilder mode
+cssUnitZ =
+    Internal.cssUnitZ
 
 
 

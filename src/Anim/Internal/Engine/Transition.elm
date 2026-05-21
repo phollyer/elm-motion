@@ -216,7 +216,7 @@ propertyToStartingStylePart prop =
 
         Builder.ProcessedPerspectiveOriginConfig config ->
             config.start
-                |> Maybe.map (\start -> CssDeclaration ("perspective-origin: " ++ PerspectiveOrigin.toCssString config.length start ++ ";"))
+                |> Maybe.map (\start -> CssDeclaration ("perspective-origin: " ++ PerspectiveOrigin.toCssString config.cssUnit start ++ ";"))
 
         Builder.ProcessedRotateConfig config ->
             config.start
@@ -230,7 +230,7 @@ propertyToStartingStylePart prop =
             config.start
                 |> Maybe.map
                     (\start ->
-                        CssDeclaration (Size.toCssString config.length start ++ ";")
+                        CssDeclaration (Size.toCssString config.cssUnit start ++ ";")
                     )
 
         Builder.ProcessedSkewConfig config ->
@@ -239,7 +239,7 @@ propertyToStartingStylePart prop =
 
         Builder.ProcessedTranslateConfig config ->
             config.start
-                |> Maybe.map (Translate.toCssString config.length >> TransformPart)
+                |> Maybe.map (Translate.toCssString config.cssUnit >> TransformPart)
 
 
 extractStartingStyles : List Builder.ProcessedPropertyConfig -> List String

@@ -1,6 +1,10 @@
 module Anim.Internal.Builder.Property exposing
     ( InheritedTiming
     , applyFrozenAxes
+    , cssUnit
+    , cssUnitX
+    , cssUnitY
+    , cssUnitZ
     , defaultConfig
     , delay
     , duration
@@ -35,10 +39,6 @@ module Anim.Internal.Builder.Property exposing
     , getTranslateEnd
     , getTranslateRange
     , getTranslateStart
-    , length
-    , lengthX
-    , lengthY
-    , lengthZ
     , speed
     , spring
     , upsert
@@ -73,7 +73,7 @@ type alias Config a =
     , easing : Maybe Easing
     , spring : Maybe Spring
     , delay : Maybe Int
-    , length : InternalUnit.LengthAxes
+    , cssUnit : InternalUnit.CssUnitAxes
     , timing : Maybe TimeSpec
     , distance : Float
     }
@@ -86,7 +86,7 @@ defaultConfig defaultEnd =
     , distance = 0
     , timing = Nothing
     , delay = Nothing
-    , length = InternalUnit.emptyLengthAxes
+    , cssUnit = InternalUnit.emptyCssUnitAxes
     , easing = Nothing
     , spring = Nothing
     }
@@ -518,36 +518,36 @@ spring spring_ config =
     { config | spring = Just spring_, easing = Nothing }
 
 
-length :
+cssUnit :
     Unit
-    -> { config | length : InternalUnit.LengthAxes }
-    -> { config | length : InternalUnit.LengthAxes }
-length unit config =
-    { config | length = InternalUnit.setAllLengthAxes unit config.length }
+    -> { config | cssUnit : InternalUnit.CssUnitAxes }
+    -> { config | cssUnit : InternalUnit.CssUnitAxes }
+cssUnit unit config =
+    { config | cssUnit = InternalUnit.setAllCssUnitAxes unit config.cssUnit }
 
 
-lengthX :
+cssUnitX :
     Unit
-    -> { config | length : InternalUnit.LengthAxes }
-    -> { config | length : InternalUnit.LengthAxes }
-lengthX unit config =
-    { config | length = InternalUnit.setLengthX unit config.length }
+    -> { config | cssUnit : InternalUnit.CssUnitAxes }
+    -> { config | cssUnit : InternalUnit.CssUnitAxes }
+cssUnitX unit config =
+    { config | cssUnit = InternalUnit.setCssUnitX unit config.cssUnit }
 
 
-lengthY :
+cssUnitY :
     Unit
-    -> { config | length : InternalUnit.LengthAxes }
-    -> { config | length : InternalUnit.LengthAxes }
-lengthY unit config =
-    { config | length = InternalUnit.setLengthY unit config.length }
+    -> { config | cssUnit : InternalUnit.CssUnitAxes }
+    -> { config | cssUnit : InternalUnit.CssUnitAxes }
+cssUnitY unit config =
+    { config | cssUnit = InternalUnit.setCssUnitY unit config.cssUnit }
 
 
-lengthZ :
+cssUnitZ :
     Unit
-    -> { config | length : InternalUnit.LengthAxes }
-    -> { config | length : InternalUnit.LengthAxes }
-lengthZ unit config =
-    { config | length = InternalUnit.setLengthZ unit config.length }
+    -> { config | cssUnit : InternalUnit.CssUnitAxes }
+    -> { config | cssUnit : InternalUnit.CssUnitAxes }
+cssUnitZ unit config =
+    { config | cssUnit = InternalUnit.setCssUnitZ unit config.cssUnit }
 
 
 

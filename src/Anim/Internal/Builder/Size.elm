@@ -3,6 +3,9 @@ module Anim.Internal.Builder.Size exposing
     , build
     , clampHeight
     , clampWidth
+    , cssUnit
+    , cssUnitHeight
+    , cssUnitWidth
     , delay
     , duration
     , easing
@@ -11,9 +14,6 @@ module Anim.Internal.Builder.Size exposing
     , fromH
     , fromHW
     , fromW
-    , length
-    , lengthHeight
-    , lengthWidth
     , speed
     , spring
     , to
@@ -272,19 +272,19 @@ spring s (SizeBuilder config builder) =
     SizeBuilder (PropertyBuilder.spring s config) builder
 
 
-length : Unit -> SizeBuilder mode -> SizeBuilder mode
-length unit (SizeBuilder config builder) =
-    SizeBuilder (PropertyBuilder.length unit config) builder
+cssUnit : Unit -> SizeBuilder mode -> SizeBuilder mode
+cssUnit unit (SizeBuilder config builder) =
+    SizeBuilder (PropertyBuilder.cssUnit unit config) builder
 
 
-lengthWidth : Unit -> SizeBuilder mode -> SizeBuilder mode
-lengthWidth unit (SizeBuilder config builder) =
-    SizeBuilder (PropertyBuilder.lengthX unit config) builder
+cssUnitWidth : Unit -> SizeBuilder mode -> SizeBuilder mode
+cssUnitWidth unit (SizeBuilder config builder) =
+    SizeBuilder (PropertyBuilder.cssUnitX unit config) builder
 
 
-lengthHeight : Unit -> SizeBuilder mode -> SizeBuilder mode
-lengthHeight unit (SizeBuilder config builder) =
-    SizeBuilder (PropertyBuilder.lengthY unit config) builder
+cssUnitHeight : Unit -> SizeBuilder mode -> SizeBuilder mode
+cssUnitHeight unit (SizeBuilder config builder) =
+    SizeBuilder (PropertyBuilder.cssUnitY unit config) builder
 
 
 

@@ -1,13 +1,13 @@
 module Anim.Internal.Unit exposing
-    ( LengthAxes
-    , ResolvedLengthAxes
+    ( CssUnitAxes
+    , ResolvedCssUnitAxes
     , default
-    , emptyLengthAxes
-    , resolveLengthAxes
-    , setAllLengthAxes
-    , setLengthX
-    , setLengthY
-    , setLengthZ
+    , emptyCssUnitAxes
+    , resolveCssUnitAxes
+    , setAllCssUnitAxes
+    , setCssUnitX
+    , setCssUnitY
+    , setCssUnitZ
     , toCssSuffix
     )
 
@@ -16,8 +16,8 @@ public `Anim.Unit` module; this module exists so internal callers can keep
 their `import Anim.Internal.Unit as InternalUnit` aliases without coupling
 to the public API surface.
 
-`LengthAxes` is the unresolved per-axis unit override carried through the
-builder pipeline. `ResolvedLengthAxes` is the resolved record stored on a
+`CssUnitAxes` is the unresolved per-axis unit override carried through the
+builder pipeline. `ResolvedCssUnitAxes` is the resolved record stored on a
 `ProcessedAnimationConfig` after defaults and global overrides are merged.
 
 -}
@@ -35,50 +35,50 @@ toCssSuffix =
     Unit.toCssSuffix
 
 
-type alias LengthAxes =
+type alias CssUnitAxes =
     { x : Maybe Unit
     , y : Maybe Unit
     , z : Maybe Unit
     }
 
 
-type alias ResolvedLengthAxes =
+type alias ResolvedCssUnitAxes =
     { x : Unit
     , y : Unit
     , z : Unit
     }
 
 
-emptyLengthAxes : LengthAxes
-emptyLengthAxes =
+emptyCssUnitAxes : CssUnitAxes
+emptyCssUnitAxes =
     { x = Nothing, y = Nothing, z = Nothing }
 
 
-setAllLengthAxes : Unit -> LengthAxes -> LengthAxes
-setAllLengthAxes unit _ =
+setAllCssUnitAxes : Unit -> CssUnitAxes -> CssUnitAxes
+setAllCssUnitAxes unit _ =
     { x = Just unit, y = Just unit, z = Just unit }
 
 
-setLengthX : Unit -> LengthAxes -> LengthAxes
-setLengthX unit axes =
+setCssUnitX : Unit -> CssUnitAxes -> CssUnitAxes
+setCssUnitX unit axes =
     { axes | x = Just unit }
 
 
-setLengthY : Unit -> LengthAxes -> LengthAxes
-setLengthY unit axes =
+setCssUnitY : Unit -> CssUnitAxes -> CssUnitAxes
+setCssUnitY unit axes =
     { axes | y = Just unit }
 
 
-setLengthZ : Unit -> LengthAxes -> LengthAxes
-setLengthZ unit axes =
+setCssUnitZ : Unit -> CssUnitAxes -> CssUnitAxes
+setCssUnitZ unit axes =
     { axes | z = Just unit }
 
 
 {-| Merge per-axis local overrides over global overrides, falling back to
 the property's scalar default if neither is set on a given axis.
 -}
-resolveLengthAxes : LengthAxes -> LengthAxes -> Unit -> ResolvedLengthAxes
-resolveLengthAxes local global default_ =
+resolveCssUnitAxes : CssUnitAxes -> CssUnitAxes -> Unit -> ResolvedCssUnitAxes
+resolveCssUnitAxes local global default_ =
     { x = pickAxis local.x global.x default_
     , y = pickAxis local.y global.y default_
     , z = pickAxis local.z global.z default_

@@ -1,11 +1,11 @@
 module Anim.Internal.Engine.Keyframe.TestGenerator exposing (suite)
 
 import Anim.Internal.Builder as Builder
-import Anim.Internal.Unit as InternalUnit
 import Anim.Internal.Engine.Keyframe.AnimGroup as KeyframeAnimGroup
 import Anim.Internal.Engine.Keyframe.Animation as Animation
 import Anim.Internal.Engine.Keyframe.Generator as Generator
 import Anim.Internal.Property.Translate as Translate
+import Anim.Internal.Unit as InternalUnit
 import Dict
 import Expect
 import Shared.TimeSpec exposing (TimeSpec(..))
@@ -22,7 +22,7 @@ translateConfig =
         , easing = Nothing
         , spring = Nothing
         , delay = Nothing
-        , length = InternalUnit.emptyLengthAxes
+        , cssUnit = InternalUnit.emptyCssUnitAxes
         }
 
 
@@ -163,7 +163,7 @@ interpolationTests =
                             , easing = Nothing
                             , spring = Nothing
                             , delay = Nothing
-                            , length = InternalUnit.emptyLengthAxes
+                            , cssUnit = InternalUnit.emptyCssUnitAxes
                             }
                 in
                 Generator.init Nothing Builder.Once Builder.Normal Generator.emptyDiscreteConfig "noOp" [ noOpTranslate ]

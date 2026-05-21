@@ -4,10 +4,10 @@ module Anim.Engine.UnitCascadeSpec exposing (suite)
 
 Verifies the resolution order documented in `Anim.Unit`:
 
-1.  Property-level (`Translate.length`, `Size.length`,
-    `PerspectiveOrigin.length`)
-2.  Engine-level (`WAAPI.length`, `Transition.length`, `Keyframe.length`,
-    `ScrollTimeline.length`, `ViewTimeline.length`)
+1.  Property-level (`Translate.cssUnit`, `Size.cssUnit`,
+    `PerspectiveOrigin.cssUnit`)
+2.  Engine-level (`WAAPI.cssUnit`, `Transition.cssUnit`, `Keyframe.cssUnit`,
+    `ScrollTimeline.cssUnit`, `ViewTimeline.cssUnit`)
 3.  `Px` (built-in default) — except for `PerspectiveOrigin` which keeps
     its historical `Percent` default.
 
@@ -71,7 +71,7 @@ firstTranslateLength builder =
                         (\p ->
                             case p of
                                 Builder.ProcessedTranslateConfig cfg ->
-                                    Just cfg.length.x
+                                    Just cfg.cssUnit.x
 
                                 _ ->
                                     Nothing
@@ -90,7 +90,7 @@ firstSizeLength builder =
                         (\p ->
                             case p of
                                 Builder.ProcessedSizeConfig cfg ->
-                                    Just cfg.length.x
+                                    Just cfg.cssUnit.x
 
                                 _ ->
                                     Nothing
@@ -109,7 +109,7 @@ firstPerspectiveOriginLength builder =
                         (\p ->
                             case p of
                                 Builder.ProcessedPerspectiveOriginConfig cfg ->
-                                    Just cfg.length.x
+                                    Just cfg.cssUnit.x
 
                                 _ ->
                                     Nothing
@@ -147,40 +147,40 @@ animatePerspectiveOrigin =
 
 translateCascade : Test
 translateCascade =
-    describe "Translate.length cascade"
+    describe "Translate.cssUnit cascade"
         [ test "defaults to Px when nothing is set" <|
             \_ ->
                 initBuilder
                     |> animateTranslate
                     |> firstTranslateLength
                     |> Expect.equal (Just Unit.Px)
-        , test "engine-level WAAPI.length flows through to processed config" <|
+        , test "engine-level WAAPI.cssUnit flows through to processed config" <|
             \_ ->
                 initBuilder
-                    |> WAAPI.length Unit.Vw
+                    |> WAAPI.cssUnit Unit.Vw
                     |> animateTranslate
                     |> firstTranslateLength
                     |> Expect.equal (Just Unit.Vw)
-        , test "engine-level Transition.length flows through" <|
+        , test "engine-level Transition.cssUnit flows through" <|
             \_ ->
                 initBuilder
-                    |> Transition.length Unit.Percent
+                    |> Transition.cssUnit Unit.Percent
                     |> animateTranslate
                     |> firstTranslateLength
                     |> Expect.equal (Just Unit.Percent)
-        , test "engine-level Keyframe.length flows through" <|
+        , test "engine-level Keyframe.cssUnit flows through" <|
             \_ ->
                 initBuilder
-                    |> Keyframe.length Unit.Rem
+                    |> Keyframe.cssUnit Unit.Rem
                     |> animateTranslate
                     |> firstTranslateLength
                     |> Expect.equal (Just Unit.Rem)
-        , test "property-level Translate.length overrides engine default" <|
+        , test "property-level Translate.cssUnit overrides engine default" <|
             \_ ->
                 initBuilder
-                    |> WAAPI.length Unit.Vw
+                    |> WAAPI.cssUnit Unit.Vw
                     |> (Translate.for "box"
-                            >> Translate.length Unit.Em
+                            >> Translate.cssUnit Unit.Em
                             >> Translate.toX 100
                             >> Translate.build
                        )
@@ -197,26 +197,26 @@ translateCascade =
 
 sizeCascade : Test
 sizeCascade =
-    describe "Size.length cascade"
+    describe "Size.cssUnit cascade"
         [ test "defaults to Px when nothing is set" <|
             \_ ->
                 initBuilder
                     |> animateSize
                     |> firstSizeLength
                     |> Expect.equal (Just Unit.Px)
-        , test "engine-level WAAPI.length flows through" <|
+        , test "engine-level WAAPI.cssUnit flows through" <|
             \_ ->
                 initBuilder
-                    |> WAAPI.length Unit.Vh
+                    |> WAAPI.cssUnit Unit.Vh
                     |> animateSize
                     |> firstSizeLength
                     |> Expect.equal (Just Unit.Vh)
-        , test "property-level Size.length overrides engine default" <|
+        , test "property-level Size.cssUnit overrides engine default" <|
             \_ ->
                 initBuilder
-                    |> WAAPI.length Unit.Vh
+                    |> WAAPI.cssUnit Unit.Vh
                     |> (Size.for "box"
-                            >> Size.length Unit.Percent
+                            >> Size.cssUnit Unit.Percent
                             >> Size.toW 200
                             >> Size.build
                        )
@@ -233,26 +233,26 @@ sizeCascade =
 
 perspectiveOriginCascade : Test
 perspectiveOriginCascade =
-    describe "PerspectiveOrigin.length cascade"
+    describe "PerspectiveOrigin.cssUnit cascade"
         [ test "defaults to Percent when nothing is set" <|
             \_ ->
                 initBuilder
                     |> animatePerspectiveOrigin
                     |> firstPerspectiveOriginLength
                     |> Expect.equal (Just Unit.Percent)
-        , test "engine-level WAAPI.length flows through" <|
+        , test "engine-level WAAPI.cssUnit flows through" <|
             \_ ->
                 initBuilder
-                    |> WAAPI.length Unit.Px
+                    |> WAAPI.cssUnit Unit.Px
                     |> animatePerspectiveOrigin
                     |> firstPerspectiveOriginLength
                     |> Expect.equal (Just Unit.Px)
-        , test "property-level PerspectiveOrigin.length overrides engine default" <|
+        , test "property-level PerspectiveOrigin.cssUnit overrides engine default" <|
             \_ ->
                 initBuilder
-                    |> WAAPI.length Unit.Px
+                    |> WAAPI.cssUnit Unit.Px
                     |> (PerspectiveOrigin.for "scene"
-                            >> PerspectiveOrigin.length Unit.Vw
+                            >> PerspectiveOrigin.cssUnit Unit.Vw
                             >> PerspectiveOrigin.toX 25
                             >> PerspectiveOrigin.build
                        )
@@ -270,12 +270,12 @@ perspectiveOriginCascade =
 engineDefaults : Test
 engineDefaults =
     describe "engine-level defaults render through toCssString"
-        [ test "Translate renders Vw suffix when WAAPI.length Vw is set" <|
+        [ test "Translate renders Vw suffix when WAAPI.cssUnit Vw is set" <|
             \_ ->
                 let
                     unit =
                         initBuilder
-                            |> WAAPI.length Unit.Vw
+                            |> WAAPI.cssUnit Unit.Vw
                             |> animateTranslate
                             |> firstTranslateLength
                             |> Maybe.withDefault Unit.Px
@@ -283,12 +283,12 @@ engineDefaults =
                 InternalTranslate.fromTriple ( 10, 20, 0 )
                     |> InternalTranslate.toCssString { x = unit, y = unit, z = unit }
                     |> Expect.equal "translate3d(10vw, 20vw, 0vw)"
-        , test "Size renders Percent suffix when WAAPI.length Percent is set" <|
+        , test "Size renders Percent suffix when WAAPI.cssUnit Percent is set" <|
             \_ ->
                 let
                     unit =
                         initBuilder
-                            |> WAAPI.length Unit.Percent
+                            |> WAAPI.cssUnit Unit.Percent
                             |> animateSize
                             |> firstSizeLength
                             |> Maybe.withDefault Unit.Px
@@ -296,12 +296,12 @@ engineDefaults =
                 InternalSize.fromTuple ( 100, 200 )
                     |> InternalSize.toCssString { x = unit, y = unit, z = unit }
                     |> Expect.equal "width: 100%; height: 200%"
-        , test "PerspectiveOrigin renders Px suffix when WAAPI.length Px is set" <|
+        , test "PerspectiveOrigin renders Px suffix when WAAPI.cssUnit Px is set" <|
             \_ ->
                 let
                     unit =
                         initBuilder
-                            |> WAAPI.length Unit.Px
+                            |> WAAPI.cssUnit Unit.Px
                             |> animatePerspectiveOrigin
                             |> firstPerspectiveOriginLength
                             |> Maybe.withDefault Unit.Percent

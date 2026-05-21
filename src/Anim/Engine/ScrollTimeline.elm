@@ -9,10 +9,7 @@ module Anim.Engine.ScrollTimeline exposing
     , horizontal
     , iterations, alternate
     , easing
-    , length
-    , lengthX
-    , lengthY
-    , lengthZ
+    , cssUnit, cssUnitX, cssUnitY, cssUnitZ
     , spring
     , discreteEntry, discreteExit
     , transformOrder
@@ -96,7 +93,7 @@ For Engine comparisons, shared features, examples and code, see the
 
 # Unit
 
-@docs length
+@docs cssUnit, cssUnitX, cssUnitY, cssUnitZ
 
 
 # Spring
@@ -381,37 +378,37 @@ easing =
 properties in this timeline.
 
 Applies to `Translate`, `Size`, and `PerspectiveOrigin`. Per-property
-[`length`](Anim-Property-Translate#length) calls take precedence over this
+[`cssUnit`](Anim-Property-Translate#cssUnit) calls take precedence over this
 engine-level default. If neither is set, properties render in `Px`.
 
 -}
-length : Unit -> TimelineBuilder -> TimelineBuilder
-length =
-    Internal.length
+cssUnit : Unit -> TimelineBuilder -> TimelineBuilder
+cssUnit =
+    Internal.cssUnit
 
 
 {-| Set a per-axis default length [Unit](Anim-Unit#Unit) for the X axis.
 Applies to `Translate.x`, `Size.width`, and `PerspectiveOrigin.x`.
 -}
-lengthX : Unit -> TimelineBuilder -> TimelineBuilder
-lengthX =
-    Internal.lengthX
+cssUnitX : Unit -> TimelineBuilder -> TimelineBuilder
+cssUnitX =
+    Internal.cssUnitX
 
 
 {-| Set a per-axis default length [Unit](Anim-Unit#Unit) for the Y axis.
 Applies to `Translate.y`, `Size.height`, and `PerspectiveOrigin.y`.
 -}
-lengthY : Unit -> TimelineBuilder -> TimelineBuilder
-lengthY =
-    Internal.lengthY
+cssUnitY : Unit -> TimelineBuilder -> TimelineBuilder
+cssUnitY =
+    Internal.cssUnitY
 
 
 {-| Set a per-axis default length [Unit](Anim-Unit#Unit) for the Z axis.
 Applies to `Translate.z`.
 -}
-lengthZ : Unit -> TimelineBuilder -> TimelineBuilder
-lengthZ =
-    Internal.lengthZ
+cssUnitZ : Unit -> TimelineBuilder -> TimelineBuilder
+cssUnitZ =
+    Internal.cssUnitZ
 
 
 

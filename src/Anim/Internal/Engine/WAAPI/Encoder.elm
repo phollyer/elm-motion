@@ -609,8 +609,8 @@ encodeProcessedPropertyConfig maybeVersions property =
                        , ( "startY", Encode.float startY )
                        , ( "endX", Encode.float endX )
                        , ( "endY", Encode.float endY )
-                       , ( "unitX", Encode.string (InternalUnit.toCssSuffix config.length.x) )
-                       , ( "unitY", Encode.string (InternalUnit.toCssSuffix config.length.y) )
+                       , ( "unitX", Encode.string (InternalUnit.toCssSuffix config.cssUnit.x) )
+                       , ( "unitY", Encode.string (InternalUnit.toCssSuffix config.cssUnit.y) )
                        , ( "duration", Encode.int config.duration )
                        ]
                     ++ encodeEasingWithKeyframes config.duration config.easing config.spring
@@ -712,8 +712,8 @@ encodeProcessedPropertyConfig maybeVersions property =
                        , ( "startHeight", Encode.float startHeight )
                        , ( "endWidth", Encode.float endWidth )
                        , ( "endHeight", Encode.float endHeight )
-                       , ( "unitWidth", Encode.string (InternalUnit.toCssSuffix config.length.x) )
-                       , ( "unitHeight", Encode.string (InternalUnit.toCssSuffix config.length.y) )
+                       , ( "unitWidth", Encode.string (InternalUnit.toCssSuffix config.cssUnit.x) )
+                       , ( "unitHeight", Encode.string (InternalUnit.toCssSuffix config.cssUnit.y) )
                        , ( "duration", Encode.int config.duration )
                        ]
                     ++ encodeEasingWithKeyframes config.duration config.easing config.spring
@@ -731,9 +731,9 @@ encodeProcessedPropertyConfig maybeVersions property =
                     ++ [ ( "endX", Encode.float endX )
                        , ( "endY", Encode.float endY )
                        , ( "endZ", Encode.float endZ )
-                       , ( "unitX", Encode.string (InternalUnit.toCssSuffix config.length.x) )
-                       , ( "unitY", Encode.string (InternalUnit.toCssSuffix config.length.y) )
-                       , ( "unitZ", Encode.string (InternalUnit.toCssSuffix config.length.z) )
+                       , ( "unitX", Encode.string (InternalUnit.toCssSuffix config.cssUnit.x) )
+                       , ( "unitY", Encode.string (InternalUnit.toCssSuffix config.cssUnit.y) )
+                       , ( "unitZ", Encode.string (InternalUnit.toCssSuffix config.cssUnit.z) )
                        , ( "duration", Encode.int config.duration )
                        ]
                     ++ encodeEasingWithKeyframes config.duration config.easing config.spring

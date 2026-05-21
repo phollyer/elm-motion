@@ -11,6 +11,10 @@ module Anim.Internal.Engine.WAAPI exposing
     , animate
     , anyRunning
     , attributes
+    , cssUnit
+    , cssUnitX
+    , cssUnitY
+    , cssUnitZ
     , currentTimeForResize
     , delay
     , discreteEntry
@@ -64,10 +68,6 @@ module Anim.Internal.Engine.WAAPI exposing
     , isComplete
     , isRunning
     , iterations
-    , length
-    , lengthX
-    , lengthY
-    , lengthZ
     , loopForever
     , onResize
     , pause
@@ -2121,7 +2121,7 @@ attributes animGroupName (AnimState state data) =
                         (AnimGroup.getTransformOrder animGroup)
                         snapshot
                         (findCurrentTranslate animGroupName state.builder
-                            |> Maybe.map .length
+                            |> Maybe.map .cssUnit
                             |> Maybe.withDefault { x = InternalUnit.default, y = InternalUnit.default, z = InternalUnit.default }
                         )
             in
@@ -2135,7 +2135,7 @@ attributes animGroupName (AnimState state data) =
                 ++ discreteExitStyles animGroup
 
 
-buildTransformStyles : List TransformProperty -> PropertyBaselines -> InternalUnit.ResolvedLengthAxes -> List (Html.Attribute msg)
+buildTransformStyles : List TransformProperty -> PropertyBaselines -> InternalUnit.ResolvedCssUnitAxes -> List (Html.Attribute msg)
 buildTransformStyles order snapshot translateLength =
     let
         translatePart =
@@ -2270,24 +2270,24 @@ easing =
 -- ============================================================
 
 
-length : Unit -> Builder.AnimBuilder mode -> Builder.AnimBuilder mode
-length =
-    Builder.length
+cssUnit : Unit -> Builder.AnimBuilder mode -> Builder.AnimBuilder mode
+cssUnit =
+    Builder.cssUnit
 
 
-lengthX : Unit -> Builder.AnimBuilder mode -> Builder.AnimBuilder mode
-lengthX =
-    Builder.lengthX
+cssUnitX : Unit -> Builder.AnimBuilder mode -> Builder.AnimBuilder mode
+cssUnitX =
+    Builder.cssUnitX
 
 
-lengthY : Unit -> Builder.AnimBuilder mode -> Builder.AnimBuilder mode
-lengthY =
-    Builder.lengthY
+cssUnitY : Unit -> Builder.AnimBuilder mode -> Builder.AnimBuilder mode
+cssUnitY =
+    Builder.cssUnitY
 
 
-lengthZ : Unit -> Builder.AnimBuilder mode -> Builder.AnimBuilder mode
-lengthZ =
-    Builder.lengthZ
+cssUnitZ : Unit -> Builder.AnimBuilder mode -> Builder.AnimBuilder mode
+cssUnitZ =
+    Builder.cssUnitZ
 
 
 
