@@ -77,7 +77,7 @@ baseHeight =
 
 hoverWidth : Float
 hoverWidth =
-    65.5
+    60
 
 
 hoverHeight : Float
@@ -238,7 +238,6 @@ update msg model =
             let
                 ( animState, cmd ) =
                     WAAPI.animate model.animState growSize
-                        |> Debug.log "growSize animState"
             in
             ( { model | animState = animState }, cmd )
 
@@ -246,7 +245,6 @@ update msg model =
             let
                 ( animState, cmd ) =
                     WAAPI.animate model.animState shrinkSize
-                        |> Debug.log "shrinkSize animState"
             in
             ( { model | animState = animState }, cmd )
 
@@ -282,11 +280,6 @@ subscriptions model =
 
 view : Model -> Html Msg
 view model =
-    let
-        _ =
-            Debug.log "Size button size" <|
-                WAAPI.getSizeCurrent sizeButton model.animState
-    in
     div
         [ class "example-stage"
         , style "container-type" "size"

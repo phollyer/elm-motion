@@ -65,7 +65,7 @@ baseHeight =
 
 hoverWidth : Float
 hoverWidth =
-    65.5
+    60
 
 
 hoverHeight : Float
