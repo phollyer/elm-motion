@@ -7,6 +7,7 @@ import Anim.Property.PerspectiveOrigin as PerspectiveOrigin
 import Anim.Property.Rotate as Rotate
 import Anim.Property.Scale as Scale
 import Anim.Property.Translate as Translate
+import Anim.Unit exposing (Unit(..))
 import Browser exposing (Document)
 import Browser.Dom as Dom
 import Browser.Events
@@ -404,7 +405,7 @@ perspectiveAnimation areaSize step =
 movePerspectiveOrigin : Float -> (PerspectiveOrigin.Builder mode -> PerspectiveOrigin.Builder mode) -> AnimBuilder mode -> AnimBuilder mode
 movePerspectiveOrigin speed moveTo =
     PerspectiveOrigin.for perspectiveContainer.groupName
-        >> PerspectiveOrigin.px
+        >> PerspectiveOrigin.length Px
         >> moveTo
         >> PerspectiveOrigin.speed speed
         >> PerspectiveOrigin.easing Linear
