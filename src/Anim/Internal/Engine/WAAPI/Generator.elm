@@ -81,6 +81,7 @@ generateAnimation iterations animationDirection globalTransformOrder discreteEnt
                         ( propType
                         , { version = newVersion
                           , status = NotStarted
+                          , config = property
                           }
                         )
                     )

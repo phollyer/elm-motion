@@ -68,6 +68,7 @@ type AnimGroup
 type alias PropertyState =
     { version : Int
     , status : AnimationStatus
+    , config : Builder.ProcessedPropertyConfig
     }
 
 
@@ -335,21 +336,33 @@ addPropertyStates (AnimGroup newGroup) (AnimGroup existingGroup) =
         }
 
 
-bumpPropertyVersions : List String -> AnimGroup -> AnimGroup
-bumpPropertyVersions props (AnimGroup group) =
+{-| Bump version and reset status for each property whose name appears in
+`updates`, also refreshing its stored `config` (so a restart or reset
+with different easing/duration takes effect). Properties not listed in
+`updates` are left untouched.
+-}
+bumpPropertyVersions : List ( String, Builder.ProcessedPropertyConfig ) -> AnimGroup -> AnimGroup
+bumpPropertyVersions updates (AnimGroup group) =
+    let
+        updateLookup : Dict String Builder.ProcessedPropertyConfig
+        updateLookup =
+            Dict.fromList updates
+    in
     AnimGroup
         { group
             | propertyStates =
                 AnimGroups.map
                     (\propType propAnim ->
-                        if List.member propType props then
-                            { propAnim
-                                | version = propAnim.version + 1
-                                , status = NotStarted
-                            }
+                        case Dict.get propType updateLookup of
+                            Just newConfig ->
+                                { propAnim
+                                    | version = propAnim.version + 1
+                                    , status = NotStarted
+                                    , config = newConfig
+                                }
 
-                        else
-                            propAnim
+                            Nothing ->
+                                propAnim
                     )
                     group.propertyStates
         }

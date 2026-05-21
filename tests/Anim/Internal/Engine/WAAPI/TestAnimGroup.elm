@@ -1,10 +1,45 @@
 module Anim.Internal.Engine.WAAPI.TestAnimGroup exposing (suite)
 
 import Anim.Extra.TransformOrder exposing (TransformProperty(..))
+import Anim.Internal.Builder as Builder
 import Anim.Internal.Engine.Shared.AnimGroups as AnimGroups
-import Anim.Internal.Engine.WAAPI.AnimGroup as AnimGroup exposing (AnimationStatus(..))
+import Anim.Internal.Engine.WAAPI.AnimGroup as AnimGroup exposing (AnimationStatus(..), PropertyState)
+import Anim.Internal.Property.Opacity as Opacity
+import Anim.Internal.Unit as InternalUnit
+import Easing
 import Expect
+import Motion.Easing exposing (Easing(..))
+import Shared.TimeSpec exposing (TimeSpec(..))
 import Test exposing (..)
+
+
+{-| Test stand-in for `Builder.ProcessedPropertyConfig`. Any variant is
+fine for the AnimGroup tests since they only exercise version, status,
+and `propertyStates` membership — never `config`.
+-}
+dummyConfig : Builder.ProcessedPropertyConfig
+dummyConfig =
+    Builder.ProcessedOpacityConfig
+        { start = Nothing
+        , end = Opacity.fromFloat 1
+        , duration = 0
+        , speed = 1
+        , distance = 0
+        , timing = Duration 0
+        , easing = Linear
+        , spring = Nothing
+        , cssUnit =
+            { x = InternalUnit.default
+            , y = InternalUnit.default
+            , z = InternalUnit.default
+            }
+        , delay = 0
+        }
+
+
+mkPS : Int -> AnimationStatus -> PropertyState
+mkPS version status =
+    { version = version, status = status, config = dummyConfig }
 
 
 suite : Test
@@ -55,7 +90,7 @@ isRunningTests =
                 AnimGroup.init
                     |> AnimGroup.setPropertyStates
                         (AnimGroups.fromList
-                            [ ( "translate", { version = 0, status = Running } )
+                            [ ( "translate", mkPS 0 Running )
                             ]
                         )
                     |> AnimGroup.isRunning
@@ -65,8 +100,8 @@ isRunningTests =
                 AnimGroup.init
                     |> AnimGroup.setPropertyStates
                         (AnimGroups.fromList
-                            [ ( "translate", { version = 0, status = Complete } )
-                            , ( "opacity", { version = 0, status = Complete } )
+                            [ ( "translate", mkPS 0 Complete )
+                            , ( "opacity", mkPS 0 Complete )
                             ]
                         )
                     |> AnimGroup.isRunning
@@ -76,8 +111,8 @@ isRunningTests =
                 AnimGroup.init
                     |> AnimGroup.setPropertyStates
                         (AnimGroups.fromList
-                            [ ( "translate", { version = 0, status = Complete } )
-                            , ( "opacity", { version = 0, status = Running } )
+                            [ ( "translate", mkPS 0 Complete )
+                            , ( "opacity", mkPS 0 Running )
                             ]
                         )
                     |> AnimGroup.isRunning
@@ -87,7 +122,7 @@ isRunningTests =
                 AnimGroup.init
                     |> AnimGroup.setPropertyStates
                         (AnimGroups.fromList
-                            [ ( "translate", { version = 0, status = NotStarted } )
+                            [ ( "translate", mkPS 0 NotStarted )
                             ]
                         )
                     |> AnimGroup.isRunning
@@ -103,8 +138,8 @@ isCompleteTests =
                 AnimGroup.init
                     |> AnimGroup.setPropertyStates
                         (AnimGroups.fromList
-                            [ ( "translate", { version = 0, status = Complete } )
-                            , ( "opacity", { version = 0, status = Complete } )
+                            [ ( "translate", mkPS 0 Complete )
+                            , ( "opacity", mkPS 0 Complete )
                             ]
                         )
                     |> AnimGroup.isComplete
@@ -114,8 +149,8 @@ isCompleteTests =
                 AnimGroup.init
                     |> AnimGroup.setPropertyStates
                         (AnimGroups.fromList
-                            [ ( "translate", { version = 0, status = Running } )
-                            , ( "opacity", { version = 0, status = Complete } )
+                            [ ( "translate", mkPS 0 Running )
+                            , ( "opacity", mkPS 0 Complete )
                             ]
                         )
                     |> AnimGroup.isComplete
@@ -125,7 +160,7 @@ isCompleteTests =
                 AnimGroup.init
                     |> AnimGroup.setPropertyStates
                         (AnimGroups.fromList
-                            [ ( "translate", { version = 0, status = Paused } )
+                            [ ( "translate", mkPS 0 Paused )
                             ]
                         )
                     |> AnimGroup.isComplete
@@ -135,7 +170,7 @@ isCompleteTests =
                 AnimGroup.init
                     |> AnimGroup.setPropertyStates
                         (AnimGroups.fromList
-                            [ ( "translate", { version = 0, status = NotStarted } )
+                            [ ( "translate", mkPS 0 NotStarted )
                             ]
                         )
                     |> AnimGroup.isComplete
@@ -151,7 +186,7 @@ setStatusTests =
                 AnimGroup.init
                     |> AnimGroup.setPropertyStates
                         (AnimGroups.fromList
-                            [ ( "translate", { version = 0, status = NotStarted } )
+                            [ ( "translate", mkPS 0 NotStarted )
                             ]
                         )
                     |> AnimGroup.setStatus Running
@@ -162,8 +197,8 @@ setStatusTests =
                 AnimGroup.init
                     |> AnimGroup.setPropertyStates
                         (AnimGroups.fromList
-                            [ ( "translate", { version = 0, status = Running } )
-                            , ( "opacity", { version = 0, status = Running } )
+                            [ ( "translate", mkPS 0 Running )
+                            , ( "opacity", mkPS 0 Running )
                             ]
                         )
                     |> AnimGroup.setStatus Complete
@@ -174,8 +209,8 @@ setStatusTests =
                 AnimGroup.init
                     |> AnimGroup.setPropertyStates
                         (AnimGroups.fromList
-                            [ ( "translate", { version = 0, status = NotStarted } )
-                            , ( "opacity", { version = 0, status = NotStarted } )
+                            [ ( "translate", mkPS 0 NotStarted )
+                            , ( "opacity", mkPS 0 NotStarted )
                             ]
                         )
                     |> AnimGroup.setStatus Running
@@ -200,10 +235,10 @@ bumpVersionsTests =
                 AnimGroup.init
                     |> AnimGroup.setPropertyStates
                         (AnimGroups.fromList
-                            [ ( "translate", { version = 1, status = Running } )
+                            [ ( "translate", mkPS 1 Running )
                             ]
                         )
-                    |> AnimGroup.bumpPropertyVersions [ "translate" ]
+                    |> AnimGroup.bumpPropertyVersions [ ( "translate", dummyConfig ) ]
                     |> AnimGroup.getPropertyStates
                     |> AnimGroups.get "translate"
                     |> Maybe.map .version
@@ -213,10 +248,10 @@ bumpVersionsTests =
                 AnimGroup.init
                     |> AnimGroup.setPropertyStates
                         (AnimGroups.fromList
-                            [ ( "translate", { version = 0, status = Running } )
+                            [ ( "translate", mkPS 0 Running )
                             ]
                         )
-                    |> AnimGroup.bumpPropertyVersions [ "translate" ]
+                    |> AnimGroup.bumpPropertyVersions [ ( "translate", dummyConfig ) ]
                     |> AnimGroup.getPropertyStates
                     |> AnimGroups.get "translate"
                     |> Maybe.map .status
@@ -226,11 +261,11 @@ bumpVersionsTests =
                 AnimGroup.init
                     |> AnimGroup.setPropertyStates
                         (AnimGroups.fromList
-                            [ ( "translate", { version = 0, status = Running } )
-                            , ( "opacity", { version = 0, status = Complete } )
+                            [ ( "translate", mkPS 0 Running )
+                            , ( "opacity", mkPS 0 Complete )
                             ]
                         )
-                    |> AnimGroup.bumpPropertyVersions [ "translate" ]
+                    |> AnimGroup.bumpPropertyVersions [ ( "translate", dummyConfig ) ]
                     |> AnimGroup.getPropertyStates
                     |> AnimGroups.get "opacity"
                     |> Maybe.map .status
@@ -240,10 +275,10 @@ bumpVersionsTests =
                 AnimGroup.init
                     |> AnimGroup.setPropertyStates
                         (AnimGroups.fromList
-                            [ ( "translate", { version = 2, status = Complete } )
+                            [ ( "translate", mkPS 2 Complete )
                             ]
                         )
-                    |> AnimGroup.bumpPropertyVersions [ "nonexistent" ]
+                    |> AnimGroup.bumpPropertyVersions [ ( "nonexistent", dummyConfig ) ]
                     |> AnimGroup.getPropertyStates
                     |> AnimGroups.get "translate"
                     |> Maybe.map .version
@@ -253,7 +288,7 @@ bumpVersionsTests =
                 AnimGroup.init
                     |> AnimGroup.setPropertyStates
                         (AnimGroups.fromList
-                            [ ( "translate", { version = 3, status = Running } )
+                            [ ( "translate", mkPS 3 Running )
                             ]
                         )
                     |> AnimGroup.bumpPropertyVersions []

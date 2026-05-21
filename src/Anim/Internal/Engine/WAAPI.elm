@@ -2382,10 +2382,6 @@ resetSingleKey animGroupName (AnimState state animGroups) =
                 startStates =
                     states.start
 
-                -- Get properties that were in the original animation
-                animatedPropertyTypes =
-                    List.map Generator.propertyTypeString properties
-
                 resetBuilder =
                     Builder.init []
                         |> Builder.duration 0
@@ -2395,14 +2391,19 @@ resetSingleKey animGroupName (AnimState state animGroups) =
 
                 processedData =
                     Builder.process resetBuilder
+
+                propertyConfigs : List ( String, Builder.ProcessedPropertyConfig )
+                propertyConfigs =
+                    properties
+                        |> List.map (\p -> ( Generator.propertyTypeString p, p ))
             in
             case AnimGroups.get animGroupName animGroups of
                 Nothing ->
                     -- No tracking entry, create one with property versions
                     let
                         newProperties =
-                            animatedPropertyTypes
-                                |> List.map (\propType -> ( propType, { version = 1, status = AnimGroup.NotStarted } ))
+                            propertyConfigs
+                                |> List.map (\( propType, config ) -> ( propType, { version = 1, status = AnimGroup.NotStarted, config = config } ))
                                 |> AnimGroups.fromList
 
                         newAnimGroup =
@@ -2428,7 +2429,7 @@ resetSingleKey animGroupName (AnimState state animGroups) =
                     let
                         updatedPropertyStates =
                             animGroup
-                                |> AnimGroup.bumpPropertyVersions animatedPropertyTypes
+                                |> AnimGroup.bumpPropertyVersions propertyConfigs
                                 |> AnimGroup.getPropertyStates
 
                         resetAnimGroup =
@@ -2466,10 +2467,6 @@ restartSingleKey resolvedKey (AnimState state animGroups) =
         Just processedData ->
             -- Get properties that are being restarted
             let
-                restartedPropertyTypes =
-                    processedData.properties
-                        |> List.map Generator.propertyTypeString
-
                 startStates =
                     (Generator.propertyBounds processedData.properties).start
             in
@@ -2478,8 +2475,8 @@ restartSingleKey resolvedKey (AnimState state animGroups) =
                     -- No tracking entry exists, create one with property versions
                     let
                         newProperties =
-                            restartedPropertyTypes
-                                |> List.map (\propType -> ( propType, { version = 1, status = AnimGroup.NotStarted } ))
+                            processedData.properties
+                                |> List.map (\p -> ( Generator.propertyTypeString p, { version = 1, status = AnimGroup.NotStarted, config = p } ))
                                 |> AnimGroups.fromList
 
                         newAnimGroup =
@@ -2537,10 +2534,13 @@ restartSingleKey resolvedKey (AnimState state animGroups) =
                             (Generator.propertyBounds rebasedProcessedData.properties).start
 
                         updatedProperties =
-                            restartedPropertyTypes
+                            rebasedProcessedData.properties
                                 |> List.foldl
-                                    (\propType acc ->
+                                    (\property acc ->
                                         let
+                                            propType =
+                                                Generator.propertyTypeString property
+
                                             newVersion =
                                                 animGroup
                                                     |> AnimGroup.getPropertyStates
@@ -2550,7 +2550,7 @@ restartSingleKey resolvedKey (AnimState state animGroups) =
                                                     |> Maybe.withDefault 1
                                         in
                                         AnimGroups.insert propType
-                                            { version = newVersion, status = AnimGroup.NotStarted }
+                                            { version = newVersion, status = AnimGroup.NotStarted, config = property }
                                             acc
                                     )
                                     (AnimGroup.getPropertyStates animGroup)
