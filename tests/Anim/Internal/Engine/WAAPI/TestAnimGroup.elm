@@ -6,7 +6,6 @@ import Anim.Internal.Engine.Shared.AnimGroups as AnimGroups
 import Anim.Internal.Engine.WAAPI.AnimGroup as AnimGroup exposing (AnimationStatus(..), PropertyState)
 import Anim.Internal.Property.Opacity as Opacity
 import Anim.Internal.Unit as InternalUnit
-import Easing
 import Expect
 import Motion.Easing exposing (Easing(..))
 import Shared.TimeSpec exposing (TimeSpec(..))

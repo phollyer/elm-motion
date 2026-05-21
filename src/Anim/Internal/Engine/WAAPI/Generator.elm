@@ -156,6 +156,7 @@ drift.
 If the snapshot also has no value for the property, `start` is left as
 `Nothing` — `ProgressApply` falls back to property-specific identity values
 in that case.
+
 -}
 resolveStartFromSnapshot : PropertyBaselines -> Builder.ProcessedPropertyConfig -> Builder.ProcessedPropertyConfig
 resolveStartFromSnapshot snapshot property =
