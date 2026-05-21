@@ -15,22 +15,10 @@
 <body>
     <div id="elm"></div>
     <script>
-        function startElmWhenReady() {
-            const width = Math.floor(window.innerWidth || 0);
-            const height = Math.floor(window.innerHeight || 0);
-
-            if (width <= 0) {
-                requestAnimationFrame(startElmWhenReady);
-                return;
-            }
-            var app = Elm.Animation.WAAPI.Animate3D.Main.init({
-                node: document.getElementById('elm'),
-                flags: { window: { width: window.innerWidth, height: window.innerHeight } }
-            });
-            ElmMotion.init(app.ports);
-        }
-
-        startElmWhenReady();
+        var app = Elm.Animation.WAAPI.Animate3D.Main.init({
+            node: document.getElementById('elm')
+        });
+        ElmMotion.init(app.ports);
     </script>
 </body>
 
