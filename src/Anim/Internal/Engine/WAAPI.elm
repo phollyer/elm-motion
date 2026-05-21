@@ -99,6 +99,7 @@ import Anim.Internal.Engine.Shared.AnimGroups as AnimGroups exposing (AnimGroups
 import Anim.Internal.Engine.WAAPI.AnimGroup as AnimGroup exposing (AnimGroup, AnimationStatus, PropertyState, ResizeAxisState)
 import Anim.Internal.Engine.WAAPI.Encoder exposing (..)
 import Anim.Internal.Engine.WAAPI.Generator as Generator
+import Anim.Internal.Engine.WAAPI.ProgressApply as ProgressApply
 import Anim.Internal.Extra.Color as Color exposing (Color(..))
 import Anim.Internal.Property.Custom as CustomProperty
 import Anim.Internal.Property.CustomColor as CustomColorProperty
@@ -1882,6 +1883,7 @@ updateAnimGroup animUpdate animGroup =
         |> AnimGroup.setSnapshot
             (animGroup
                 |> AnimGroup.getPropertySnapshot
+                |> ProgressApply.applyPropertyProgress animUpdate.propertyProgress (AnimGroup.getPropertyStates animGroup)
                 |> buildProp .opacity PropertyBaselines.setOpacity Opacity.fromFloat
                 |> buildProp .perspectiveOrigin PropertyBaselines.setPerspectiveOrigin perspectiveOriginFromRecord
                 |> buildProp .rotate PropertyBaselines.setRotate Rotate.fromRecord
@@ -3155,6 +3157,7 @@ type alias AnimationUpdate =
     , customColorProperties : Dict.Dict String String
     , isAnimating : Bool
     , propertyVersions : AnimGroups Int -- Maps property type to version number
+    , propertyProgress : Dict.Dict String Float -- Per-property raw progress for Elm-side interpolation
     }
 
 
@@ -3173,6 +3176,7 @@ animationUpdateDecoder =
         |> andMap (Decode.oneOf [ Decode.field "customColorProperties" (Decode.dict Decode.string), Decode.succeed Dict.empty ])
         |> andMap (Decode.field "isAnimating" Decode.bool)
         |> andMap propertyVersionDecoder
+        |> andMap (Decode.oneOf [ Decode.field "propertyProgress" (Decode.dict Decode.float), Decode.succeed Dict.empty ])
 
 
 perspectiveOriginFromRecord : { x : Float, y : Float, unit : String } -> PerspectiveOrigin.PerspectiveOrigin
