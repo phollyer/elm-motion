@@ -104,7 +104,7 @@ dropBall toBottomY =
     Translate.for animGroup
         >> Translate.fromY topY
         >> Translate.toY toBottomY
-        >> Translate.speed 200
+        >> Translate.speed 400
         >> Translate.easing BounceOut
         >> Translate.build
 

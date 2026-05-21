@@ -102,6 +102,8 @@ import Anim.Internal.Property.Scale as Scale exposing (Scale)
 import Anim.Internal.Property.Size as Size exposing (Size)
 import Anim.Internal.Property.Skew as Skew exposing (Skew)
 import Anim.Internal.Property.Translate as Translate exposing (Translate)
+import Anim.Internal.Unit as InternalUnit
+import Anim.Unit exposing (Unit(..))
 import Anim.Internal.Resize.Builder as ResizeBuilder exposing (Bounds)
 import Browser.Events
 import Dict
@@ -720,13 +722,10 @@ positionPerspectiveOrigin pos cfg =
 
         ry =
             ResizeBuilder.applyAxisPosition pos.y oldStart.y oldEnd.y oldStart.y
-
-        unit =
-            PerspectiveOrigin.getUnit cfg.end
     in
     { cfg
-        | start = PerspectiveOrigin.fromRecord unit { x = rx.start, y = ry.start }
-        , end = PerspectiveOrigin.fromRecord unit { x = rx.end, y = ry.end }
+        | start = PerspectiveOrigin.fromRecord { x = rx.start, y = ry.start }
+        , end = PerspectiveOrigin.fromRecord { x = rx.end, y = ry.end }
     }
 
 
@@ -796,14 +795,11 @@ resizePerspectiveOrigin previousBounds bounds isLooping isPaused cfg =
         ry =
             applyAxisLeg previousBounds.y bounds.y oldStart.y oldEnd.y
 
-        unit =
-            PerspectiveOrigin.getUnit cfg.end
-
         newStart =
-            PerspectiveOrigin.fromRecord unit { x = rx.start, y = ry.start }
+            PerspectiveOrigin.fromRecord { x = rx.start, y = ry.start }
 
         newEnd =
-            PerspectiveOrigin.fromRecord unit { x = rx.end, y = ry.end }
+            PerspectiveOrigin.fromRecord { x = rx.end, y = ry.end }
 
         oldDistance =
             PerspectiveOrigin.distance cfg.start cfg.end
@@ -1183,7 +1179,7 @@ collectCurrentTransform : Animation -> Builder.TransformParts -> Builder.Transfo
 collectCurrentTransform anim acc =
     case anim of
         Translate a ->
-            { acc | translate = Translate.toCssString (interpolateEasedProgress interpolateTranslate a) }
+            { acc | translate = Translate.toCssString InternalUnit.default (interpolateEasedProgress interpolateTranslate a) }
 
         Rotate a ->
             { acc | rotate = Rotate.toCssString (interpolateEasedProgress interpolateRotate a) }
@@ -1251,7 +1247,7 @@ getNonTransformStyleAttribute anim =
             [ Html.Attributes.style "opacity" (String.fromFloat (Opacity.toFloat (interpolateEasedProgress interpolateOpacity a))) ]
 
         PerspectiveOrigin a ->
-            [ Html.Attributes.style "perspective-origin" (PerspectiveOrigin.toCssString (interpolateEasedProgress interpolatePerspectiveOrigin a)) ]
+            [ Html.Attributes.style "perspective-origin" (PerspectiveOrigin.toCssString Percent (interpolateEasedProgress interpolatePerspectiveOrigin a)) ]
 
         Rotate _ ->
             []

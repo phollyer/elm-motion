@@ -64,6 +64,7 @@ module Anim.Internal.Engine.WAAPI exposing
     , isComplete
     , isRunning
     , iterations
+    , length
     , loopForever
     , onResize
     , pause
@@ -106,7 +107,9 @@ import Anim.Internal.Property.Size as Size
 import Anim.Internal.Property.Skew as Skew
 import Anim.Internal.Property.Translate as Translate
 import Anim.Internal.Resize.Builder as ResizeBuilder
+import Anim.Internal.Unit as InternalUnit
 import Anim.Resize exposing (Bounds)
+import Anim.Unit exposing (Unit(..))
 import Dict
 import Html
 import Html.Attributes
@@ -557,9 +560,7 @@ applyPerspectiveOriginPositionResize animGroupName pos ((AnimState state animGro
                         PropertyBaselines.getPerspectiveOrigin snapshot
 
                     unit =
-                        currentPO
-                            |> Maybe.map PerspectiveOrigin.getUnit
-                            |> Maybe.withDefault PerspectiveOrigin.PercentUnit
+                        Percent
 
                     current =
                         currentPO
@@ -569,7 +570,7 @@ applyPerspectiveOriginPositionResize animGroupName pos ((AnimState state animGro
                     -- Snapshot follows the live current value for axes not
                     -- being snapped, so `current` is the right default here.
                     newSnapshotPO =
-                        PerspectiveOrigin.fromRecord unit
+                        PerspectiveOrigin.fromRecord
                             { x = Maybe.withDefault current.x pos.x
                             , y = Maybe.withDefault current.y pos.y
                             }
@@ -585,7 +586,7 @@ applyPerspectiveOriginPositionResize animGroupName pos ((AnimState state animGro
                             |> Maybe.withDefault current
 
                     newBaselinePO =
-                        PerspectiveOrigin.fromRecord unit
+                        PerspectiveOrigin.fromRecord
                             { x = Maybe.withDefault existingBaselinePO.x pos.x
                             , y = Maybe.withDefault existingBaselinePO.y pos.y
                             }
@@ -602,10 +603,10 @@ applyPerspectiveOriginPositionResize animGroupName pos ((AnimState state animGro
 
                     unitStr =
                         case unit of
-                            PerspectiveOrigin.PercentUnit ->
+                            Percent ->
                                 "%"
 
-                            PerspectiveOrigin.PxUnit ->
+                            _ ->
                                 "px"
                 in
                 ( AnimState { state | builder = updatedBuilder } updatedAnimGroups
@@ -1509,7 +1510,7 @@ computePerspectiveOriginResizePayload animGroupName previousBounds bounds (AnimS
                                     }
 
                                 unit =
-                                    PerspectiveOrigin.getUnit currentPerspectiveOrigin
+                                    Percent
 
                                 liveOldStart2d =
                                     oldStart
@@ -1519,10 +1520,10 @@ computePerspectiveOriginResizePayload animGroupName previousBounds bounds (AnimS
 
                                 newDurationMs =
                                     scalePerspectiveOriginDurationForResize
-                                        { oldStart = PerspectiveOrigin.fromRecord unit liveOldStart2d
-                                        , oldEnd = PerspectiveOrigin.fromRecord unit liveOldEnd2d
-                                        , newStart = PerspectiveOrigin.fromRecord unit newStart2d
-                                        , newEnd = PerspectiveOrigin.fromRecord unit newEnd2d
+                                        { oldStart = PerspectiveOrigin.fromRecord liveOldStart2d
+                                        , oldEnd = PerspectiveOrigin.fromRecord liveOldEnd2d
+                                        , newStart = PerspectiveOrigin.fromRecord newStart2d
+                                        , newEnd = PerspectiveOrigin.fromRecord newEnd2d
                                         , oldDurationMs = baseline.durationMs
                                         }
 
@@ -1549,10 +1550,10 @@ computePerspectiveOriginResizePayload animGroupName previousBounds bounds (AnimS
 
                                 unitStr =
                                     case unit of
-                                        PerspectiveOrigin.PercentUnit ->
+                                        Percent ->
                                             "%"
 
-                                        PerspectiveOrigin.PxUnit ->
+                                        _ ->
                                             "px"
                             in
                             if noChange then
@@ -1573,9 +1574,9 @@ computePerspectiveOriginResizePayload animGroupName previousBounds bounds (AnimS
                                         }
                                     , newSnapshot =
                                         PropertyBaselines.setPerspectiveOrigin
-                                            (PerspectiveOrigin.fromRecord unit newCurrent2d)
+                                            (PerspectiveOrigin.fromRecord newCurrent2d)
                                             snapshot
-                                    , newBaseline = PerspectiveOrigin.fromRecord unit newEnd2d
+                                    , newBaseline = PerspectiveOrigin.fromRecord newEnd2d
                                     , proportion = axisProportion
                                     }
                         )
@@ -1626,14 +1627,10 @@ rebasePerspectiveOriginConfig :
 rebasePerspectiveOriginConfig cached config =
     case config of
         Builder.ProcessedPerspectiveOriginConfig cfg ->
-            let
-                unit =
-                    PerspectiveOrigin.getUnit cfg.end
-            in
             Builder.ProcessedPerspectiveOriginConfig
                 { cfg
-                    | start = Just (PerspectiveOrigin.fromRecord unit { x = cached.start.x, y = cached.start.y })
-                    , end = PerspectiveOrigin.fromRecord unit { x = cached.end.x, y = cached.end.y }
+                    | start = Just (PerspectiveOrigin.fromRecord { x = cached.start.x, y = cached.start.y })
+                    , end = PerspectiveOrigin.fromRecord { x = cached.end.x, y = cached.end.y }
                     , duration = round cached.durationMs
                 }
 
@@ -2031,7 +2028,7 @@ avoiding a flash of unstyled content before JavaScript processes the port comman
 
 -}
 attributes : AnimGroupName -> AnimState msg -> List (Html.Attribute msg)
-attributes animGroupName (AnimState _ data) =
+attributes animGroupName (AnimState state data) =
     let
         dataAttr =
             Html.Attributes.attribute "data-anim-target" animGroupName
@@ -2068,7 +2065,7 @@ attributes animGroupName (AnimState _ data) =
                             Nothing
                         , if isElmOwned "perspectiveOrigin" then
                             PropertyBaselines.getPerspectiveOrigin snapshot
-                                |> Maybe.map (\po -> Html.Attributes.style "perspective-origin" (PerspectiveOrigin.toCssString po))
+                                |> Maybe.map (\po -> Html.Attributes.style "perspective-origin" (PerspectiveOrigin.toCssString Percent po))
 
                           else
                             Nothing
@@ -2079,8 +2076,8 @@ attributes animGroupName (AnimState _ data) =
                         PropertyBaselines.getSize snapshot
                             |> Maybe.map
                                 (\s ->
-                                    [ Html.Attributes.style "width" (Size.widthToCssString s)
-                                    , Html.Attributes.style "height" (Size.heightToCssString s)
+                                    [ Html.Attributes.style "width" (Size.widthToCssString InternalUnit.default s)
+                                    , Html.Attributes.style "height" (Size.heightToCssString InternalUnit.default s)
                                     ]
                                 )
                             |> Maybe.withDefault []
@@ -2117,7 +2114,13 @@ attributes animGroupName (AnimState _ data) =
                 -- so re-emitting from the snapshot never produces a
                 -- visible snap.
                 transformStyles =
-                    buildTransformStyles (AnimGroup.getTransformOrder animGroup) snapshot
+                    buildTransformStyles
+                        (AnimGroup.getTransformOrder animGroup)
+                        snapshot
+                        (findCurrentTranslate animGroupName state.builder
+                            |> Maybe.map .length
+                            |> Maybe.withDefault InternalUnit.default
+                        )
             in
             dataAttr
                 :: transformStyles
@@ -2129,12 +2132,12 @@ attributes animGroupName (AnimState _ data) =
                 ++ discreteExitStyles animGroup
 
 
-buildTransformStyles : List TransformProperty -> PropertyBaselines -> List (Html.Attribute msg)
-buildTransformStyles order snapshot =
+buildTransformStyles : List TransformProperty -> PropertyBaselines -> Unit -> List (Html.Attribute msg)
+buildTransformStyles order snapshot translateLength =
     let
         translatePart =
             PropertyBaselines.getTranslate snapshot
-                |> Maybe.map Translate.toCssString
+                |> Maybe.map (Translate.toCssString translateLength)
                 |> Maybe.withDefault ""
 
         rotatePart =
@@ -2256,6 +2259,17 @@ speed =
 easing : Easing -> Builder.AnimBuilder mode -> Builder.AnimBuilder mode
 easing =
     Builder.easing
+
+
+
+-- ============================================================
+-- UNIT
+-- ============================================================
+
+
+length : Unit -> Builder.AnimBuilder mode -> Builder.AnimBuilder mode
+length =
+    Builder.length
 
 
 
@@ -3125,16 +3139,8 @@ animationUpdateDecoder =
 
 
 perspectiveOriginFromRecord : { x : Float, y : Float, unit : String } -> PerspectiveOrigin.PerspectiveOrigin
-perspectiveOriginFromRecord { x, y, unit } =
-    let
-        normalizedUnit =
-            String.toLower unit
-    in
-    if normalizedUnit == "percent" || normalizedUnit == "%" then
-        PerspectiveOrigin.fromRecord PerspectiveOrigin.PercentUnit { x = x, y = y }
-
-    else
-        PerspectiveOrigin.fromRecord PerspectiveOrigin.PxUnit { x = x, y = y }
+perspectiveOriginFromRecord { x, y } =
+    PerspectiveOrigin.fromRecord { x = x, y = y }
 
 
 propertyVersionDecoder : Decoder (AnimGroups Int)

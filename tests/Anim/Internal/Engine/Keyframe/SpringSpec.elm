@@ -40,6 +40,7 @@ springTranslateConfig spring =
         , easing = Nothing
         , spring = Just spring
         , delay = Nothing
+        , length = Nothing
         }
 
 
@@ -53,6 +54,7 @@ easingTranslateConfig easing =
         , easing = Just easing
         , spring = Nothing
         , delay = Nothing
+        , length = Nothing
         }
 
 

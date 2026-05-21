@@ -2,7 +2,7 @@ module Anim.Property.PerspectiveOrigin exposing
     ( Builder, AnimGroupName
     , initPx, initPercent
     , for, build
-    , px, percent
+    , length
     , from, fromXY, fromX, fromY
     , to, toXY, toX, toY
     , delay, duration, speed
@@ -15,7 +15,7 @@ module Anim.Property.PerspectiveOrigin exposing
 {-| Animate the CSS `perspective-origin` property, which controls the vanishing point
 for 3D transforms applied to a parent element.
 
-**Default unit**: `%`. Use [`px`](#px) to switch to pixel values.
+**Default unit**: `%`. Use [`length`](#length) to switch to other CSS length units.
 
 **Default value**: `50% 50%` (center of the element)
 
@@ -35,7 +35,7 @@ for 3D transforms applied to a parent element.
     myAnimation : AnimBuilder mode -> AnimBuilder mode
     myAnimation =
         PerspectiveOrigin.for "animGroupName"
-            >> PerspectiveOrigin.px
+            >> PerspectiveOrigin.length Unit.Px
             >> PerspectiveOrigin.to 200
             >> PerspectiveOrigin.duration 500
             >> PerspectiveOrigin.easing EaseInOut
@@ -65,10 +65,11 @@ will use the current end value as the start, ensuring a smooth transition betwee
 
 ## Unit
 
-Call `px` or `percent` once at the start of the pipeline to set the unit for all
-`from`, `to`, `toX`, and `toY` calls. Defaults to pixels.
+Use [`length`](#length) to select the CSS length unit (`Px`, `Percent`, `Vw`,
+`Vh`, `Rem`, `Em`) for all `from`, `to`, `toX`, and `toY` calls. Defaults to
+percentages.
 
-@docs px, percent
+@docs length
 
 
 ## Start Value
@@ -123,6 +124,7 @@ import Anim.Internal.Builder exposing (AnimBuilder)
 import Anim.Internal.Builder.PerspectiveOrigin as PB
 import Anim.Internal.Resize.Builder as ResizeBuilder
 import Anim.Resize as Resize
+import Anim.Unit as Unit
 import Motion.Easing exposing (Easing)
 import Motion.Spring exposing (Spring)
 
@@ -167,6 +169,7 @@ initPx : AnimGroupName -> Float -> Float -> AnimBuilder mode -> AnimBuilder mode
 initPx animationKey x y animBuilder =
     animBuilder
         |> for animationKey
+        |> PB.length Unit.Px
         |> fromXY x y
         |> toXY x y
         |> build
@@ -188,7 +191,7 @@ initPercent : AnimGroupName -> Float -> Float -> AnimBuilder mode -> AnimBuilder
 initPercent animationKey x y animBuilder =
     animBuilder
         |> for animationKey
-        |> percent
+        |> PB.length Unit.Percent
         |> fromXY x y
         |> toXY x y
         |> build
@@ -229,44 +232,6 @@ so you can continue configuring other property animations or execute the animati
 build : Builder mode -> AnimBuilder mode
 build =
     PB.build
-
-
-
--- ============================================================
--- UNIT
--- ============================================================
-
-
-{-| Use pixel values for all `from`, `to`, `toX`, and `toY` calls.
-
-    myAnimation : AnimBuilder mode -> AnimBuilder mode
-    myAnimation =
-        PerspectiveOrigin.for "animGroupName"
-            >> PerspectiveOrigin.px
-            >> PerspectiveOrigin.to 200
-            >> PerspectiveOrigin.duration 500
-            >> PerspectiveOrigin.build
-
--}
-px : Builder mode -> Builder mode
-px =
-    PB.px
-
-
-{-| Use percentage values (0 - 100) for all `from`, `to`, `toX`, and `toY` calls. This is the default.
-
-    myAnimation : AnimBuilder mode -> AnimBuilder mode
-    myAnimation =
-        PerspectiveOrigin.for "animGroupName"
-            >> PerspectiveOrigin.percent
-            >> PerspectiveOrigin.to 25
-            >> PerspectiveOrigin.duration 500
-            >> PerspectiveOrigin.build
-
--}
-percent : Builder mode -> Builder mode
-percent =
-    PB.percent
 
 
 
@@ -434,6 +399,34 @@ spring =
 delay : Int -> Builder mode -> Builder mode
 delay =
     PB.delay
+
+
+{-| Set the length [Unit](Anim-Unit#Unit) used to render this property's values.
+
+Defaults to `Px`. Setting a relative unit (`Percent`, `Vw`, `Vh`, `Rem`, `Em`)
+makes the browser re-evaluate the rendered perspective origin against current
+layout, so the animation follows resize automatically.
+
+    import Anim.Unit as Unit
+
+    myAnimation : AnimBuilder mode -> AnimBuilder mode
+    myAnimation =
+        PerspectiveOrigin.for "animGroupName"
+            >> PerspectiveOrigin.toXY 25 75
+            >> PerspectiveOrigin.length Unit.Percent
+            >> PerspectiveOrigin.build
+
+This setting takes precedence over any [length](Anim-Engine-WAAPI#length) set
+on the engine, and over the legacy [`px`](#px) / [`percent`](#percent)
+switchers (which only choose between pixels and percentages).
+
+The `Sub` engine currently only supports `Px`; setting a non-`Px` unit on a
+perspective-origin targeted at `Sub` reports an error and falls back to `Px`.
+
+-}
+length : Unit.Unit -> Builder mode -> Builder mode
+length =
+    PB.length
 
 
 

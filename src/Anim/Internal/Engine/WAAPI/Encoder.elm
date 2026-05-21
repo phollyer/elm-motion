@@ -24,6 +24,7 @@ import Anim.Internal.Property.Scale as Scale
 import Anim.Internal.Property.Size as Size
 import Anim.Internal.Property.Skew as Skew
 import Anim.Internal.Property.Translate as Translate
+import Anim.Internal.Unit as InternalUnit
 import Dict
 import Json.Encode as Encode
 import Motion.Easing as Easing exposing (Easing(..))
@@ -602,12 +603,7 @@ encodeProcessedPropertyConfig maybeVersions property =
                     PerspectiveOrigin.toTuple config.end
 
                 unitStr =
-                    case PerspectiveOrigin.getUnit config.end of
-                        PerspectiveOrigin.PercentUnit ->
-                            "%"
-
-                        PerspectiveOrigin.PxUnit ->
-                            "px"
+                    InternalUnit.toCssSuffix config.length
             in
             Encode.object
                 (( "type", Encode.string "perspectiveOrigin" )
@@ -727,6 +723,9 @@ encodeProcessedPropertyConfig maybeVersions property =
             let
                 ( endX, endY, endZ ) =
                     Translate.toTriple config.end
+
+                unitStr =
+                    InternalUnit.toCssSuffix config.length
             in
             Encode.object
                 (( "type", Encode.string "translate" )
@@ -735,6 +734,7 @@ encodeProcessedPropertyConfig maybeVersions property =
                     ++ [ ( "endX", Encode.float endX )
                        , ( "endY", Encode.float endY )
                        , ( "endZ", Encode.float endZ )
+                       , ( "unit", Encode.string unitStr )
                        , ( "duration", Encode.int config.duration )
                        ]
                     ++ encodeEasingWithKeyframes config.duration config.easing config.spring

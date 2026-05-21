@@ -13,6 +13,7 @@ module Anim.Engine.WAAPI exposing
     , iterations, loopForever, alternate
     , delay, duration, speed
     , easing
+    , length
     , spring
     , stop, reset, restart, pause, resume
     , discreteEntry, discreteExit
@@ -143,6 +144,11 @@ This ensures the element displays the correct property values before, during, an
 📖 See [Easing](https://phollyer.github.io/elm-motion/animation/concepts/easing/) in the docs.
 
 
+# Unit
+
+@docs length
+
+
 # Spring
 
 @docs spring
@@ -249,6 +255,7 @@ import Anim.Extra.TransformOrder exposing (TransformProperty)
 import Anim.Internal.Builder as Builder
 import Anim.Internal.Engine.WAAPI as Internal
 import Anim.Resize as Resize
+import Anim.Unit exposing (Unit)
 import Html
 import Json.Decode as Decode
 import Json.Encode as Encode
@@ -810,6 +817,35 @@ don't define their own easing.
 easing : Easing -> Builder.AnimBuilder mode -> Builder.AnimBuilder mode
 easing =
     Internal.easing
+
+
+
+-- ============================================================
+-- UNIT
+-- ============================================================
+
+
+{-| Set the default length [Unit](Anim-Unit#Unit) for all length-bearing
+properties in this builder.
+
+Applies to `Translate`, `Size`, and `PerspectiveOrigin`. Per-property
+[`length`](Anim-Property-Translate#length) calls take precedence over this
+engine-level default. If neither is set, properties render in `Px`.
+
+    import Anim.Engine.WAAPI as WAAPI
+    import Anim.Property.Translate as Translate
+    import Anim.Unit as Unit
+
+    WAAPI.animate model.animState <|
+        WAAPI.length Unit.Percent
+            >> Translate.for "box"
+            >> Translate.toX 50
+            >> Translate.build
+
+-}
+length : Unit -> Builder.AnimBuilder mode -> Builder.AnimBuilder mode
+length =
+    Internal.length
 
 
 

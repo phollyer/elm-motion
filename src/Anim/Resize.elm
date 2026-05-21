@@ -1,23 +1,33 @@
 module Anim.Resize exposing
     ( Builder
     , AxisBounds, Bounds, bounds
-    , Position
     )
 
-{-| This module provides resize builders to feed new bounds into an Engine
-when a window resize occurs.
+{-| This module provides a way to set new bounds for
+an animation when a resize event occurs. Use the [bounds](#bounds) function
+in conjunction with an Engine's `onResize` function and the Engine will apply
+the new bounds on the next animation frame.
 
-The Engines and their animations know nothing about the outside world, or your layout intentions,
-so they can't automatically respond to layout changes. Standard CSS media queries or JavaScript
-can't help here because the world of the animation is controlled by the Engine. Therefore, this module
-provides a way to feed new [Bounds](#bounds) into the Engine when a resize event occurs.
 
-Resize is always proportional - endpoints adopt the new bounds, the current value is
-proportionally remapped from the old range into the new range, and the normalised
-timing cursor is preserved across the resize.
+# When to use `Resize.bounds`
 
-Use with the [WAAPI](Anim.Engine.WAAPI) or [Sub](Anim.Engine.Sub) Engines
-to make animations responsive to layout changes.
+`Resize.bounds` is the explicit, pixel-keyed escape hatch for animations whose
+endpoints are computed from layout dimensions in `Px`. Before reaching for it,
+consider whether a relative [`Anim.Unit`](Anim-Unit) (`Percent`, `Vw`, `Vh`,
+`Rem`, `Em`) on the animated property would let the browser handle resize for
+you:
+
+  - **CSS Transition, Keyframe, WAAPI, ScrollTimeline, ViewTimeline** —
+    rendered values follow the unit. Setting `Translate.length Unit.Vw` (or
+    the engine-level [`length`](Anim-Engine-WAAPI#length)) makes the browser
+    re-evaluate values against the current viewport on every frame; no
+    `onResize` plumbing is needed.
+  - **Sub** — currently `Px`-only. Non-`Px` units fall back to `Px` silently.
+    `Resize.bounds` plus `Sub.onResize` is the supported path for keeping a
+    Sub animation aligned with new layout.
+  - **WAAPI** — supports both. Use relative units when endpoints scale with
+    layout, and `Resize.bounds` when endpoints are derived from `Px`
+    measurements (e.g. `containerWidth - boxWidth`).
 
 After a resize event, pass the new bounds to the engine:
 
@@ -48,11 +58,6 @@ The animation will respect the new bounds on the next animation frame after resi
 # Bounds
 
 @docs AxisBounds, Bounds, bounds
-
-
-# Position
-
-@docs Position
 
 -}
 
@@ -86,27 +91,6 @@ type alias Bounds =
     { x : Maybe AxisBounds
     , y : Maybe AxisBounds
     , z : Maybe AxisBounds
-    }
-
-
-{-| Per-axis one-shot position snap for a static axis on resize.
-
-A static axis is one whose `start` equals its `end` (the axis is not
-animating). Setting an axis to `Just newPos` snaps that axis to the new
-position. Setting an axis to `Nothing` leaves it untouched. Snapping is
-ignored on an animating axis (`start /= end`) - use [`Bounds`](#Bounds)
-to retarget animating axes instead.
-
-    { x = Just newAreaSize.width
-    , y = Nothing
-    , z = Nothing
-    }
-
--}
-type alias Position =
-    { x : Maybe Float
-    , y : Maybe Float
-    , z : Maybe Float
     }
 
 

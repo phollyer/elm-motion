@@ -25,6 +25,7 @@ module Anim.Internal.Builder.Translate exposing
     , fromY
     , fromYZ
     , fromZ
+    , length
     , speed
     , spring
     , to
@@ -44,6 +45,7 @@ import Anim.Internal.Builder as Builder exposing (AnimBuilder)
 import Anim.Internal.Builder.Property as PropertyBuilder
 import Anim.Internal.Builder.PropertyBaselines as PropertyBaselines
 import Anim.Internal.Property.Translate as Translate exposing (Translate)
+import Anim.Unit exposing (Unit)
 import Motion.Easing exposing (Easing(..))
 import Motion.Spring exposing (Spring)
 import Shared.TimeSpec exposing (TimeSpec(..))
@@ -486,6 +488,11 @@ easing easing_ (TranslateBuilder config builder) =
 spring : Spring -> TranslateBuilder mode -> TranslateBuilder mode
 spring s (TranslateBuilder config builder) =
     TranslateBuilder (PropertyBuilder.spring s config) builder
+
+
+length : Unit -> TranslateBuilder mode -> TranslateBuilder mode
+length unit (TranslateBuilder config builder) =
+    TranslateBuilder (PropertyBuilder.length unit config) builder
 
 
 

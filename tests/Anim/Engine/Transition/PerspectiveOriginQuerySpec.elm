@@ -2,6 +2,7 @@ module Anim.Engine.Transition.PerspectiveOriginQuerySpec exposing (suite)
 
 import Anim.Engine.Transition as Transition
 import Anim.Property.PerspectiveOrigin as PerspectiveOrigin
+import Anim.Unit as Unit
 import Expect
 import Test exposing (Test, describe, test)
 
@@ -17,7 +18,7 @@ animatedState =
         |> (\state ->
                 Transition.animate state <|
                     PerspectiveOrigin.for groupName
-                        >> PerspectiveOrigin.percent
+                        >> PerspectiveOrigin.length Unit.Percent
                         >> PerspectiveOrigin.toXY 90 10
                         >> PerspectiveOrigin.duration 1000
                         >> PerspectiveOrigin.build

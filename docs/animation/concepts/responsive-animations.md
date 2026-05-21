@@ -1,8 +1,13 @@
 # Responsive Animations
 
-When layout changes mid-animation, the [Sub](../engines/sub.md) and [WAAPI](../engines/waapi.md) engines can keep animations in sync with the new geometry through the [`Anim.Resize`](https://package.elm-lang.org/packages/phollyer/elm-animate/latest/Anim-Resize) API. Feed new [`Bounds`](https://package.elm-lang.org/packages/phollyer/elm-animate/latest/Anim-Resize#Bounds) into the engine on each resize event and the in-flight animation is remapped proportionally into the new range — endpoints adopt the new bounds, the current value keeps its relative position, and normalized progress is preserved so timing stays in phase.
+There are two ways to keep animations in sync with layout changes:
 
-The [Transition](../engines/transition.md) and [Keyframe](../engines/keyframes.md) engines don't currently observe resize events. See [Transition and Keyframe Engines](#transition-and-keyframe-engines) below.
+1. **Relative length units** — render with `Percent`, `Vw`, `Vh`, `Rem`, or `Em` via [`Anim.Unit`](https://package.elm-lang.org/packages/phollyer/elm-animate/latest/Anim-Unit) and the browser re-evaluates values against the current layout on every frame. No resize plumbing needed. Supported on the [Transition](../engines/transition.md), [Keyframe](../engines/keyframes.md), [WAAPI](../engines/waapi.md), [ScrollTimeline](../engines/scrolltimeline.md), and [ViewTimeline](../engines/viewtimeline.md) engines.
+2. **`Anim.Resize.bounds`** — explicit pixel-keyed bounds fed into the engine on each resize event. Use this when endpoints are computed from layout measurements in `Px` (e.g. `containerWidth - boxWidth`). Supported on the [Sub](../engines/sub.md) and [WAAPI](../engines/waapi.md) engines.
+
+When layout changes mid-animation, the Sub and WAAPI engines can keep animations in sync through the [`Anim.Resize`](https://package.elm-lang.org/packages/phollyer/elm-animate/latest/Anim-Resize) API. Feed new [`Bounds`](https://package.elm-lang.org/packages/phollyer/elm-animate/latest/Anim-Resize#Bounds) into the engine on each resize event and the in-flight animation is remapped proportionally into the new range — endpoints adopt the new bounds, the current value keeps its relative position, and normalized progress is preserved so timing stays in phase.
+
+The [Transition](../engines/transition.md) and [Keyframe](../engines/keyframes.md) engines don't currently observe resize events directly; use relative length units for resize-aware animation on those engines. See [Transition and Keyframe Engines](#transition-and-keyframe-engines) below.
 
 ---
 

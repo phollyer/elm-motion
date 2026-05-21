@@ -41,6 +41,17 @@ For Engine comparisons, shared features, examples and code, see the
 [Engine Overview](https://phollyer.github.io/elm-motion/animation/engines/overview/) section in the docs.
 
 
+# Length Units
+
+The Sub Engine renders length-bearing properties (`Translate`, `Size`,
+`PerspectiveOrigin`) in `Px` only. Setting a non-`Px`
+[`Anim.Unit`](Anim-Unit) on a property targeted at Sub - via
+`Translate.length`, `Size.length`, or `PerspectiveOrigin.length` - is silently
+dropped and `Px` is rendered. To keep Sub animations responsive across resize
+events, use [`Anim.Resize.bounds`](Anim-Resize#bounds) with [`onResize`](#onResize).
+Relative-unit support on Sub is planned for a future release.
+
+
 # Types
 
 @docs AnimState, AnimGroupName

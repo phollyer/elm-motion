@@ -315,7 +315,8 @@ function buildDefaultResolvedTransform(currentTransform) {
         translate: {
             startX: currentTransform.x, startY: currentTransform.y, startZ: currentTransform.z,
             endX: currentTransform.x, endY: currentTransform.y, endZ: currentTransform.z,
-            easing: null, easingKeyframes: null, duration: 0
+            easing: null, easingKeyframes: null, duration: 0,
+            unit: currentTransform.translateUnit || 'px'
         },
         scale: {
             startX: currentTransform.scaleX, startY: currentTransform.scaleY, startZ: currentTransform.scaleZ,
@@ -344,6 +345,9 @@ function assignResolvedTransformProperty(target, property, currentTransform, axe
     target.easing = property.easing;
     target.easingKeyframes = property.easingKeyframes;
     target.duration = property.duration;
+    if (property.type === 'translate' && typeof property.unit === 'string' && property.unit.length > 0) {
+        target.unit = property.unit;
+    }
 }
 
 function carryForwardMissingTransformProperties(animGroup, element, existingTransform, mergedTransformProperties) {
@@ -617,17 +621,18 @@ function createMergedTransformAnimation(animGroup, element, transformProperties,
     const forceGroups = computeForceGroups(resolved);
 
     if (allSameEasing && allSameDuration) {
+        const translateUnit = resolved.translate.unit || 'px';
         const startTransform = buildTransformString(
             resolved.translate.startX, resolved.translate.startY, resolved.translate.startZ,
             resolved.scale.startX, resolved.scale.startY, resolved.scale.startZ,
             resolved.rotate.startX, resolved.rotate.startY, resolved.rotate.startZ,
-            resolved.skew.startX, resolved.skew.startY, order, forceGroups
+            resolved.skew.startX, resolved.skew.startY, order, forceGroups, translateUnit
         );
         const endTransform = buildTransformString(
             resolved.translate.endX, resolved.translate.endY, resolved.translate.endZ,
             resolved.scale.endX, resolved.scale.endY, resolved.scale.endZ,
             resolved.rotate.endX, resolved.rotate.endY, resolved.rotate.endZ,
-            resolved.skew.endX, resolved.skew.endY, order, forceGroups
+            resolved.skew.endX, resolved.skew.endY, order, forceGroups, translateUnit
         );
 
         const easing = activeProps[0].easing;
@@ -663,7 +668,7 @@ function createMergedTransformAnimation(animGroup, element, transformProperties,
                 interpTranslate.x, interpTranslate.y, interpTranslate.z,
                 interpScale.x, interpScale.y, interpScale.z,
                 interpRotate.x, interpRotate.y, interpRotate.z,
-                interpSkew.x, interpSkew.y, order, forceGroups
+                interpSkew.x, interpSkew.y, order, forceGroups, resolved.translate.unit || 'px'
             )
         });
     }
@@ -713,7 +718,7 @@ function persistResizedTransform(animGroup, element, propertyKey, currentResized
         updated.x, updated.y, updated.z,
         updated.scaleX, updated.scaleY, updated.scaleZ,
         updated.rotateX, updated.rotateY, updated.rotateZ,
-        updated.skewX, updated.skewY, order
+        updated.skewX, updated.skewY, order, undefined, updated.translateUnit || 'px'
     );
     element.style.transform = transformString;
 }
@@ -1150,7 +1155,7 @@ export function _resizeTransformAnimationImmediate(commandData) {
                 interpTranslate.x, interpTranslate.y, interpTranslate.z,
                 interpScale.x, interpScale.y, interpScale.z,
                 interpRotate.x, interpRotate.y, interpRotate.z,
-                interpSkew.x, interpSkew.y, order, forceGroups
+                interpSkew.x, interpSkew.y, order, forceGroups, resolved.translate.unit || 'px'
             )
         });
     }
@@ -1485,7 +1490,7 @@ export function _translatePositionAnimationImmediate(commandData) {
                     interpTranslate.x, interpTranslate.y, interpTranslate.z,
                     interpScale.x, interpScale.y, interpScale.z,
                     interpRotate.x, interpRotate.y, interpRotate.z,
-                    interpSkew.x, interpSkew.y, order, forceGroups
+                    interpSkew.x, interpSkew.y, order, forceGroups, resolved.translate.unit || 'px'
                 )
             });
         }

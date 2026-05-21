@@ -13,6 +13,7 @@ module Anim.Engine.Keyframe exposing
     , iterations, loopForever, alternate
     , delay, duration, speed
     , easing
+    , length
     , spring
     , stop, reset, restart, pause, resume
     , discreteEntry, discreteExit
@@ -135,6 +136,11 @@ and include a `<style>` node with the generated keyframes.
 📖 See [Easing](https://phollyer.github.io/elm-motion/animation/concepts/easing/) in the docs.
 
 
+# Unit
+
+@docs length
+
+
 # Spring
 
 @docs spring
@@ -226,6 +232,7 @@ import Anim.Internal.Builder as Builder
 import Anim.Internal.Engine.CSS.CSS as CSS
 import Anim.Internal.Engine.Keyframe as Internal
 import Anim.Internal.Engine.Keyframe.AnimGroup as AnimGroup
+import Anim.Unit exposing (Unit)
 import Html
 import Motion.Easing exposing (Easing)
 import Motion.Spring exposing (Spring)
@@ -768,6 +775,35 @@ don't define their own easing.
 easing : Easing -> Builder.AnimBuilder mode -> Builder.AnimBuilder mode
 easing =
     CSS.easing
+
+
+
+-- ============================================================
+-- UNIT
+-- ============================================================
+
+
+{-| Set the default length [Unit](Anim-Unit#Unit) for all length-bearing
+properties in this builder.
+
+Applies to `Translate`, `Size`, and `PerspectiveOrigin`. Per-property
+[`length`](Anim-Property-Translate#length) calls take precedence over this
+engine-level default. If neither is set, properties render in `Px`.
+
+    import Anim.Engine.Keyframe as Keyframe
+    import Anim.Property.Translate as Translate
+    import Anim.Unit as Unit
+
+    Keyframe.animate model.animState <|
+        Keyframe.length Unit.Percent
+            >> Translate.for "box"
+            >> Translate.toX 50
+            >> Translate.build
+
+-}
+length : Unit -> Builder.AnimBuilder mode -> Builder.AnimBuilder mode
+length =
+    CSS.length
 
 
 

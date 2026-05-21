@@ -3,15 +3,12 @@ module Animation.Transition.ControllingAnimations.Main exposing (main)
 import Anim.Builder exposing (AnimBuilder)
 import Anim.Engine.Transition as Transition
 import Anim.Property.Translate as Translate
+import Anim.Unit exposing (Unit(..))
 import Browser
-import Browser.Dom as Dom
-import Browser.Events
 import Html exposing (Html, button, div, text)
-import Html.Attributes exposing (class, id, style)
+import Html.Attributes exposing (class, style)
 import Html.Events exposing (onClick)
-import Motion.Easing as Easing exposing (Easing(..))
-import Process
-import Task
+import Motion.Easing exposing (Easing(..))
 
 
 
@@ -21,10 +18,10 @@ import Task
 main : Program () Model Msg
 main =
     Browser.element
-        { init = init
+        { init = \_ -> init
         , view = view
         , update = update
-        , subscriptions = subscriptions
+        , subscriptions = \_ -> Sub.none
         }
 
 
@@ -33,15 +30,21 @@ main =
 
 
 type alias Model =
-    { animState : Transition.AnimState
-    , canvasH : Float
-    , animPlayState : AnimPlayState
-    }
+    { animState : Transition.AnimState }
 
 
-type AnimPlayState
-    = NotStarted
-    | Started
+
+-- INIT
+
+
+init : ( Model, Cmd Msg )
+init =
+    ( { animState =
+            Transition.init
+                [ Translate.initY animGroup 0 ]
+      }
+    , Cmd.none
+    )
 
 
 animGroup : String
@@ -49,62 +52,34 @@ animGroup =
     "bouncingBall"
 
 
-canvasId : String
-canvasId =
-    "anim-canvas"
-
-
+{-| Ball size as a percentage of the canvas height (in `cqh` units). The
+canvas declares `container-type: size`, so `cqh` resolves against the
+canvas itself - the animation, ball size and travel distance all scale
+with the canvas regardless of viewport size or surrounding chrome. No
+Elm-side resize plumbing required; the browser re-evaluates `cqh` against
+current layout on every frame.
+-}
 ballSize : Float
 ballSize =
-    50
+    12
 
 
-topY : Float
-topY =
-    25
-
-
-
--- INIT
-
-
-init : () -> ( Model, Cmd Msg )
-init _ =
-    ( { animState =
-            Transition.init
-                [ Translate.initY animGroup topY ]
-      , canvasH = 0
-      , animPlayState = NotStarted
-      }
-    , Process.sleep 100
-        |> Task.perform (\_ -> OnResize)
-    )
-
-
-measureCanvas : Cmd Msg
-measureCanvas =
-    Task.attempt GotCanvas (Dom.getElement canvasId)
-
-
-
--- POSITION HELPERS
-
-
-bottomY : Float -> Float
-bottomY h =
-    h - ballSize
+ballSizeCqh : String
+ballSizeCqh =
+    String.fromFloat ballSize ++ "cqh"
 
 
 
 -- ANIMATION
 
 
-dropBall : Float -> AnimBuilder mode -> AnimBuilder mode
-dropBall toBottomY =
+dropBall : AnimBuilder mode -> AnimBuilder mode
+dropBall =
     Translate.for animGroup
-        >> Translate.fromY topY
-        >> Translate.toY toBottomY
-        >> Translate.speed 200
+        >> Translate.length Cqh
+        >> Translate.fromY 0
+        >> Translate.toY (100 - ballSize)
+        >> Translate.speed 100
         >> Translate.easing BounceOut
         >> Translate.build
 
@@ -117,8 +92,6 @@ type Msg
     = Animate
     | Stop
     | Reset
-    | OnResize
-    | GotCanvas (Result Dom.Error Dom.Element)
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -126,10 +99,8 @@ update msg model =
     case msg of
         Animate ->
             ( { model
-                | animPlayState = Started
-                , animState =
-                    Transition.animate model.animState <|
-                        dropBall (bottomY model.canvasH)
+                | animState =
+                    Transition.animate model.animState dropBall
               }
             , Cmd.none
             )
@@ -147,50 +118,16 @@ update msg model =
             , Cmd.none
             )
 
-        ---8<-- [end:reset]
-        OnResize ->
-            ( model, measureCanvas )
-
-        GotCanvas (Ok element) ->
-            ( handleResize { model | canvasH = element.element.height }
-            , Cmd.none
-            )
-
-        GotCanvas (Err _) ->
-            ( model, Cmd.none )
 
 
-handleResize : Model -> Model
-handleResize model =
-    case model.animPlayState of
-        NotStarted ->
-            model
-
-        Started ->
-            { model
-                | animState =
-                    Transition.retarget model.animState <|
-                        dropBall (bottomY model.canvasH)
-            }
-
-
-
--- SUBSCRIPTIONS
-
-
-subscriptions : Model -> Sub Msg
-subscriptions _ =
-    Browser.Events.onResize (\_ _ -> OnResize)
-
-
-
+---8<-- [end:reset]
 -- VIEW
 
 
 view : Model -> Html Msg
 view model =
     div [ class "example-stage" ]
-        [ div [ class "example-badge example-badge--static" ] [ text "Static" ]
+        [ div [ class "example-badge example-badge--responsive" ] [ text "RESPONSIVE" ]
         , div [ class "example-controls" ]
             [ button [ onClick Animate, class "ui-action-button primary" ] [ text "🏀 Animate" ]
             , button [ onClick Stop, class "ui-action-button warning" ] [ text "⏹️ Stop" ]
@@ -203,20 +140,18 @@ view model =
 animationArea : Transition.AnimState -> Html msg
 animationArea animState =
     div
-        [ id canvasId
-        , class "example-canvas--fluid"
+        [ class "example-canvas--fluid"
         , style "border-bottom" "2px solid #333"
+        , style "container-type" "size"
         ]
         [ div
             (Transition.attributes animGroup animState
                 ++ [ style "position" "absolute"
-                   , style "top" "0"
-                   , style "left" "calc(50% - 25px)"
-                   , style "width" "50px"
-                   , style "height" "50px"
-                   , style "font-size" "50px"
-                   , style "line-height" "50px"
-                   , style "text-align" "center"
+                   , style "left" ("calc(50% - " ++ String.fromFloat (ballSize / 2) ++ "cqh)")
+                   , style "width" ballSizeCqh
+                   , style "height" ballSizeCqh
+                   , style "font-size" ballSizeCqh
+                   , style "line-height" ballSizeCqh
                    ]
             )
             [ text "🏀" ]

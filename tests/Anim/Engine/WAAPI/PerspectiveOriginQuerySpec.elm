@@ -2,6 +2,7 @@ module Anim.Engine.WAAPI.PerspectiveOriginQuerySpec exposing (suite)
 
 import Anim.Engine.WAAPI as WAAPI
 import Anim.Property.PerspectiveOrigin as PerspectiveOrigin
+import Anim.Unit as Unit
 import Expect
 import Json.Decode as Decode
 import Json.Encode as Encode
@@ -44,7 +45,7 @@ animatedState =
     initWith [ PerspectiveOrigin.initPercent groupName 50 50 ]
         |> animate
             (PerspectiveOrigin.for groupName
-                >> PerspectiveOrigin.percent
+                >> PerspectiveOrigin.length Unit.Percent
                 >> PerspectiveOrigin.toXY 90 10
                 >> PerspectiveOrigin.duration 1000
                 >> PerspectiveOrigin.easing Linear

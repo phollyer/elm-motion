@@ -11,6 +11,7 @@ module Anim.Internal.Builder.Size exposing
     , fromH
     , fromHW
     , fromW
+    , length
     , speed
     , spring
     , to
@@ -25,6 +26,7 @@ import Anim.Internal.Builder as Builder exposing (AnimBuilder)
 import Anim.Internal.Builder.Property as PropertyBuilder
 import Anim.Internal.Builder.PropertyBaselines as PropertyBaselines
 import Anim.Internal.Property.Size as Size exposing (Size)
+import Anim.Unit exposing (Unit)
 import Motion.Easing exposing (Easing)
 import Motion.Spring exposing (Spring)
 import Shared.TimeSpec exposing (TimeSpec(..))
@@ -266,6 +268,11 @@ easing easingFunction (SizeBuilder config builder) =
 spring : Spring -> SizeBuilder mode -> SizeBuilder mode
 spring s (SizeBuilder config builder) =
     SizeBuilder (PropertyBuilder.spring s config) builder
+
+
+length : Unit -> SizeBuilder mode -> SizeBuilder mode
+length unit (SizeBuilder config builder) =
+    SizeBuilder (PropertyBuilder.length unit config) builder
 
 
 

@@ -21,6 +21,7 @@ translateConfig =
         , easing = Nothing
         , spring = Nothing
         , delay = Nothing
+        , length = Nothing
         }
 
 
@@ -161,6 +162,7 @@ interpolationTests =
                             , easing = Nothing
                             , spring = Nothing
                             , delay = Nothing
+                            , length = Nothing
                             }
                 in
                 Generator.init Nothing Builder.Once Builder.Normal Generator.emptyDiscreteConfig "noOp" [ noOpTranslate ]

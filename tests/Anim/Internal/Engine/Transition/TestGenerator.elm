@@ -21,6 +21,7 @@ translateConfig =
         , easing = Nothing
         , spring = Nothing
         , delay = Nothing
+        , length = Nothing
         }
 
 

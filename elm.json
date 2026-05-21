@@ -25,6 +25,7 @@
         "Anim.Property.Size",
         "Anim.Property.Translate",
         "Anim.Resize",
+        "Anim.Unit",
         "Motion.Spring",
         "Motion.Easing",
         "Scroll.Builder",

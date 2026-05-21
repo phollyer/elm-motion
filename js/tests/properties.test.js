@@ -216,7 +216,8 @@ describe('resolveScrollDrivenTransformValues', () => {
         x: 0, y: 0, z: 0,
         scaleX: 1, scaleY: 1, scaleZ: 1,
         rotateX: 0, rotateY: 0, rotateZ: 0,
-        skewX: 0, skewY: 0
+        skewX: 0, skewY: 0,
+        translateUnit: 'px'
     };
 
     it('returns the current transform as both start and end when given no properties', () => {

@@ -9,6 +9,7 @@ module Anim.Engine.ScrollTimeline exposing
     , horizontal
     , iterations, alternate
     , easing
+    , length
     , spring
     , discreteEntry, discreteExit
     , transformOrder
@@ -90,6 +91,11 @@ For Engine comparisons, shared features, examples and code, see the
 📖 See [Easing](https://phollyer.github.io/elm-motion/animation/concepts/easing/) in the docs.
 
 
+# Unit
+
+@docs length
+
+
 # Spring
 
 @docs spring
@@ -108,6 +114,7 @@ For Engine comparisons, shared features, examples and code, see the
 
 import Anim.Extra.TransformOrder exposing (TransformProperty)
 import Anim.Internal.Engine.ScrollTimeline as Internal
+import Anim.Unit exposing (Unit)
 import Html
 import Json.Decode as Decode
 import Json.Encode as Encode
@@ -359,6 +366,25 @@ alternate =
 easing : Easing -> TimelineBuilder -> TimelineBuilder
 easing =
     Internal.easing
+
+
+
+-- ============================================================
+-- UNIT
+-- ============================================================
+
+
+{-| Set the default length [Unit](Anim-Unit#Unit) for all length-bearing
+properties in this timeline.
+
+Applies to `Translate`, `Size`, and `PerspectiveOrigin`. Per-property
+[`length`](Anim-Property-Translate#length) calls take precedence over this
+engine-level default. If neither is set, properties render in `Px`.
+
+-}
+length : Unit -> TimelineBuilder -> TimelineBuilder
+length =
+    Internal.length
 
 
 

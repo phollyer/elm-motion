@@ -90,15 +90,11 @@ extractNonTransformStyles =
                     [ ( "opacity", Opacity.toCssString config.end ) ]
 
                 Builder.ProcessedPerspectiveOriginConfig config ->
-                    [ ( "perspective-origin", PerspectiveOrigin.toCssString config.end ) ]
+                    [ ( "perspective-origin", PerspectiveOrigin.toCssString config.length config.end ) ]
 
                 Builder.ProcessedSizeConfig config ->
-                    let
-                        ( w, h ) =
-                            Size.toTuple config.end
-                    in
-                    [ ( "width", String.fromFloat w ++ "px" )
-                    , ( "height", String.fromFloat h ++ "px" )
+                    [ ( "width", Size.widthToCssString config.length config.end )
+                    , ( "height", Size.heightToCssString config.length config.end )
                     ]
         )
 

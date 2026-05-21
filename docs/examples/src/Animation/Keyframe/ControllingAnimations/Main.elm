@@ -3,14 +3,12 @@ module Animation.Keyframe.ControllingAnimations.Main exposing (main)
 import Anim.Builder exposing (AnimBuilder)
 import Anim.Engine.Keyframe as Keyframe
 import Anim.Property.Translate as Translate
+import Anim.Unit exposing (Unit(..))
 import Browser
-import Browser.Dom as Dom
-import Browser.Events
 import Html exposing (Html, button, div, text)
-import Html.Attributes exposing (class, id, style)
+import Html.Attributes exposing (class, style)
 import Html.Events exposing (onClick)
-import Motion.Easing as Easing exposing (Easing(..))
-import Task
+import Motion.Easing exposing (Easing(..))
 
 
 
@@ -32,29 +30,7 @@ main =
 
 
 type alias Model =
-    { animState : Keyframe.AnimState
-    , canvasH : Float
-    }
-
-
-animGroup : String
-animGroup =
-    "bouncingBall"
-
-
-canvasId : String
-canvasId =
-    "anim-canvas"
-
-
-ballSize : Float
-ballSize =
-    50
-
-
-topY : Float
-topY =
-    25
+    { animState : Keyframe.AnimState }
 
 
 
@@ -65,37 +41,45 @@ init : () -> ( Model, Cmd Msg )
 init _ =
     ( { animState =
             Keyframe.init
-                [ Translate.initY animGroup topY ]
-      , canvasH = 0
+                [ Translate.initY animGroup 0 ]
       }
-    , measureCanvas
+    , Cmd.none
     )
 
 
-measureCanvas : Cmd Msg
-measureCanvas =
-    Task.attempt GotCanvas (Dom.getElement canvasId)
+animGroup : String
+animGroup =
+    "bouncingBall"
 
 
+{-| Ball size as a percentage of the canvas height (in `cqh` units). The
+canvas declares `container-type: size`, so `cqh` resolves against the
+canvas itself - the animation, ball size and travel distance all scale
+with the canvas regardless of viewport size or surrounding chrome. No
+Elm-side resize plumbing required; the browser re-evaluates `cqh` against
+current layout on every frame.
+-}
+ballSize : Float
+ballSize =
+    12
 
--- POSITION HELPERS
 
-
-bottomY : Float -> Float
-bottomY h =
-    h - ballSize
+ballSizeCqh : String
+ballSizeCqh =
+    String.fromFloat ballSize ++ "cqh"
 
 
 
 -- ANIMATION
 
 
-dropBall : Float -> AnimBuilder mode -> AnimBuilder mode
-dropBall toBottomY =
+dropBall : AnimBuilder mode -> AnimBuilder mode
+dropBall =
     Translate.for animGroup
-        >> Translate.fromY topY
-        >> Translate.toY toBottomY
-        >> Translate.speed 200
+        >> Translate.length Cqh
+        >> Translate.fromY 0
+        >> Translate.toY (100 - ballSize)
+        >> Translate.speed 100
         >> Translate.easing BounceOut
         >> Translate.build
 
@@ -111,8 +95,6 @@ type Msg
     | Resume
     | Reset
     | Restart
-    | OnResize
-    | GotCanvas (Result Dom.Error Dom.Element)
     | GotAnimMsg Keyframe.AnimMsg
 
 
@@ -122,8 +104,7 @@ update msg model =
         Animate ->
             ( { model
                 | animState =
-                    Keyframe.animate model.animState <|
-                        dropBall (bottomY model.canvasH)
+                    Keyframe.animate model.animState dropBall
               }
             , Cmd.none
             )
@@ -169,33 +150,6 @@ update msg model =
             ( { model | animState = newState }, restartCmd )
 
         ---8<-- [end:restart]
-        OnResize ->
-            ( model, measureCanvas )
-
-        GotCanvas (Ok element) ->
-            let
-                newCanvasH =
-                    element.element.height
-
-                isFirstMeasurement =
-                    model.canvasH == 0
-            in
-            ( { model
-                | canvasH = newCanvasH
-                , animState =
-                    if isFirstMeasurement then
-                        model.animState
-
-                    else
-                        Keyframe.retarget model.animState <|
-                            dropBall (bottomY newCanvasH)
-              }
-            , Cmd.none
-            )
-
-        GotCanvas (Err _) ->
-            ( model, Cmd.none )
-
         GotAnimMsg _ ->
             ( model, Cmd.none )
 
@@ -206,7 +160,7 @@ update msg model =
 
 subscriptions : Model -> Sub Msg
 subscriptions _ =
-    Browser.Events.onResize (\_ _ -> OnResize)
+    Sub.none
 
 
 
@@ -233,20 +187,18 @@ view model =
 animationArea : Keyframe.AnimState -> Html msg
 animationArea animState =
     div
-        [ id canvasId
-        , class "example-canvas--fluid"
+        [ class "example-canvas--fluid"
         , style "border-bottom" "2px solid #333"
+        , style "container-type" "size"
         ]
         [ div
             (Keyframe.attributes animGroup animState
                 ++ [ style "position" "absolute"
-                   , style "top" "0"
-                   , style "left" "calc(50% - 25px)"
-                   , style "width" "50px"
-                   , style "height" "50px"
-                   , style "font-size" "50px"
-                   , style "line-height" "50px"
-                   , style "text-align" "center"
+                   , style "left" ("calc(50% - " ++ String.fromFloat (ballSize / 2) ++ "cqh)")
+                   , style "width" ballSizeCqh
+                   , style "height" ballSizeCqh
+                   , style "font-size" ballSizeCqh
+                   , style "line-height" ballSizeCqh
                    ]
             )
             [ text "🏀" ]

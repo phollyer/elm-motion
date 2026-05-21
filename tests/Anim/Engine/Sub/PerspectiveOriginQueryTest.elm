@@ -3,6 +3,7 @@ module Anim.Engine.Sub.PerspectiveOriginQueryTest exposing (suite)
 import Anim.Engine.Sub as Sub
 import Anim.Internal.Engine.Sub as Internal
 import Anim.Property.PerspectiveOrigin as PerspectiveOrigin
+import Anim.Unit as Unit
 import Expect
 import Motion.Easing exposing (Easing(..))
 import Test exposing (Test, describe, test)
@@ -22,7 +23,7 @@ animatedState : Sub.AnimState
 animatedState =
     Sub.animate baseState <|
         PerspectiveOrigin.for groupName
-            >> PerspectiveOrigin.percent
+            >> PerspectiveOrigin.length Unit.Percent
             >> PerspectiveOrigin.toXY 90 10
             >> PerspectiveOrigin.duration 1000
             >> PerspectiveOrigin.easing Linear

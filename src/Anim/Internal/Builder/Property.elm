@@ -35,6 +35,7 @@ module Anim.Internal.Builder.Property exposing
     , getTranslateEnd
     , getTranslateRange
     , getTranslateStart
+    , length
     , speed
     , spring
     , upsert
@@ -50,6 +51,7 @@ import Anim.Internal.Property.Scale as Scale
 import Anim.Internal.Property.Size as Size
 import Anim.Internal.Property.Skew as Skew
 import Anim.Internal.Property.Translate as Translate
+import Anim.Unit exposing (Unit)
 import Motion.Easing exposing (Easing)
 import Motion.Internal.Spring exposing (Spring)
 import Shared.TimeSpec exposing (TimeSpec(..))
@@ -67,6 +69,7 @@ type alias Config a =
     , easing : Maybe Easing
     , spring : Maybe Spring
     , delay : Maybe Int
+    , length : Maybe Unit
     , timing : Maybe TimeSpec
     , distance : Float
     }
@@ -79,6 +82,7 @@ defaultConfig defaultEnd =
     , distance = 0
     , timing = Nothing
     , delay = Nothing
+    , length = Nothing
     , easing = Nothing
     , spring = Nothing
     }
@@ -508,6 +512,14 @@ spring :
     -> { config | easing : Maybe Easing, spring : Maybe Spring }
 spring spring_ config =
     { config | spring = Just spring_, easing = Nothing }
+
+
+length :
+    Unit
+    -> { config | length : Maybe Unit }
+    -> { config | length : Maybe Unit }
+length unit config =
+    { config | length = Just unit }
 
 
 

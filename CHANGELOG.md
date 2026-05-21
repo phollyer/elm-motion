@@ -10,6 +10,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- **`Anim.Unit`** — shared length-unit selector (`Px`, `Percent`, `Vw`, `Vh`, `Rem`, `Em`) for length-bearing transform properties (`Translate`, `Size`, `PerspectiveOrigin`). On CSS Transition, Keyframe, WAAPI, ScrollTimeline, and ViewTimeline engines the unit is rendered verbatim, so relative units (`Percent`, `Vw`, `Vh`, `Rem`, `Em`) let the browser re-evaluate values against current layout on every frame — animations follow resize automatically without `Resize.bounds` plumbing. Default remains `Px`.
+- Per-property `length : Unit -> Builder -> Builder` setter on `Anim.Property.Translate`, `Anim.Property.Size`, and `Anim.Property.PerspectiveOrigin`.
+- Engine-level `length : Unit -> Builder -> Builder` setter on `Anim.Engine.Transition`, `Anim.Engine.Keyframe`, `Anim.Engine.WAAPI`, `Anim.Engine.ScrollTimeline`, and `Anim.Engine.ViewTimeline`. Resolution order: property override → engine default → `Px`.
 - **`Motion.Spring`** — physics-based spring primitive with presets (`gentle`, `wobbly`, `stiff`, `slow`, `noWobble`) and a `custom` builder. Springs derive their settle time from physics rather than a user-specified duration, and produce natural overshoot and oscillation.
 - Per-property `spring` setter on every property module (`Opacity`, `Translate`, `Rotate`, `Scale`, `Skew`, `Size`, `PerspectiveOrigin`, `Custom`, `CustomColor`).
 - Engine-level `spring` setter on every animation engine (`Transition`, `Keyframe`, `Sub`, `WAAPI`, `ScrollTimeline`, `ViewTimeline`). Spring and easing are mutually exclusive — setting one clears the other.
@@ -21,6 +24,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Removed
 
+- **`Anim.Property.PerspectiveOrigin.px` and `Anim.Property.PerspectiveOrigin.percent`** — the bespoke unit selectors on `PerspectiveOrigin` are replaced by the shared `Anim.Property.PerspectiveOrigin.length : Anim.Unit.Unit -> Builder -> Builder` cascade. Callers using `PerspectiveOrigin.percent` should switch to `PerspectiveOrigin.length Anim.Unit.Percent` (or set it engine-wide via `WAAPI.length`, etc.). The internal `PerspectiveOrigin` variant no longer carries its own `Unit` type.
 - **Resize policy API collapsed to proportional-only.** Removed `Anim.Resize.Policy`, `Anim.Resize.policy`, `Anim.Resize.clamp`, `Anim.Resize.retarget`, `Anim.Resize.proportional`, `Anim.Resize.withTiming`, `Anim.Resize.SolveFromCurrent`, `Anim.Resize.PreserveProgress`, and the per-property `resizePolicy` helpers on every property module. Resize now always remaps proportionally: endpoints adopt the new bounds, the current value keeps its relative position, and normalized progress is preserved so timing stays in phase. The internal `authoredStart` / `authoredEnd` fields and clamp/retarget code paths were removed accordingly.
 - **`BounceInCustom`, `BounceOutCustom`, `BounceInOutCustom`** — Custom bounce variants. Use `Motion.Spring` for tunable overshoot, or the standard `BounceIn` / `BounceOut` / `BounceInOut` for the algebraic curve.
 - **`BounceInAdvanced`, `BounceOutAdvanced`, `BounceInOutAdvanced`** — same rationale.

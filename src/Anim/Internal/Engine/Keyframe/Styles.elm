@@ -12,6 +12,7 @@ import Anim.Internal.Property.Rotate as Rotate
 import Anim.Internal.Property.Scale as Scale
 import Anim.Internal.Property.Skew as Skew
 import Anim.Internal.Property.Translate as Translate
+import Anim.Internal.Unit as InternalUnit
 
 
 
@@ -118,7 +119,7 @@ baselineTransformParts maybeTargetValues processedProps =
                         _ ->
                             False
             in
-            { translate = baseline isTranslate (PropertyBaselines.getTranslate targets) Translate.toCssString
+            { translate = baseline isTranslate (PropertyBaselines.getTranslate targets) (Translate.toCssString InternalUnit.default)
             , rotate = baseline isRotate (PropertyBaselines.getRotate targets) Rotate.toCssString
             , skew = baseline isSkew (PropertyBaselines.getSkew targets) Skew.toCssString
             , scale = baseline isScale (PropertyBaselines.getScale targets) Scale.toCssString

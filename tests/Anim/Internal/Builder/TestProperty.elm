@@ -19,6 +19,7 @@ import Anim.Property.Scale as Scale
 import Anim.Property.Size as Size
 import Anim.Property.Skew as Skew
 import Anim.Property.Translate as Translate
+import Anim.Unit as Unit
 import Dict
 import Expect
 import Motion.Easing exposing (Easing(..))
@@ -152,6 +153,7 @@ upsertTests =
                 , easing = Nothing
                 , spring = Nothing
                 , delay = Nothing
+                , length = Nothing
                 }
 
         opacityConfig =
@@ -163,6 +165,7 @@ upsertTests =
                 , easing = Nothing
                 , spring = Nothing
                 , delay = Nothing
+                , length = Nothing
                 }
 
         replacementTranslateConfig =
@@ -174,6 +177,7 @@ upsertTests =
                 , easing = Nothing
                 , spring = Nothing
                 , delay = Nothing
+                , length = Nothing
                 }
 
         getProperties builder =
@@ -1510,7 +1514,7 @@ perspectiveOriginClampTests =
 
         endUnit builder =
             firstPerspectiveOriginConfig builder
-                |> Maybe.map (.end >> InternalPerspectiveOrigin.getUnit)
+                |> Maybe.andThen .length
     in
     describe "PerspectiveOrigin clamps"
         [ test "clampX clamps explicit toX above max" <|
@@ -1547,13 +1551,13 @@ perspectiveOriginClampTests =
             \_ ->
                 animBuilder
                     |> (PerspectiveOrigin.for "test"
-                            >> PerspectiveOrigin.px
+                            >> PerspectiveOrigin.length Unit.Px
                             >> PerspectiveOrigin.clampX 0 100
                             >> PerspectiveOrigin.toX 500
                             >> PerspectiveOrigin.build
                        )
                     |> endUnit
-                    |> Expect.equal (Just InternalPerspectiveOrigin.PxUnit)
+                    |> Expect.equal (Just Unit.Px)
         , test "unclampX removes only X axis clamp" <|
             \_ ->
                 animBuilder

@@ -9,6 +9,7 @@ module Anim.Property.Translate exposing
     , delay, duration, speed
     , easing
     , spring
+    , length
     , clampX, clampY, clampZ, unclampX, unclampY, unclampZ
     , bounds
     , position
@@ -123,6 +124,11 @@ so relative movements are based on the start and end values of the current/previ
 @docs spring
 
 
+## Unit
+
+@docs length
+
+
 ## Bounds
 
 Declare a per-axis range that every translate value on this animGroup must
@@ -150,6 +156,7 @@ import Anim.Internal.Builder exposing (AnimBuilder)
 import Anim.Internal.Builder.Translate as TB
 import Anim.Internal.Resize.Builder as ResizeBuilder
 import Anim.Resize as Resize
+import Anim.Unit exposing (Unit)
 import Motion.Easing exposing (Easing)
 import Motion.Spring exposing (Spring)
 
@@ -724,6 +731,34 @@ spring =
 delay : Int -> Builder mode -> Builder mode
 delay =
     TB.delay
+
+
+{-| Set the length [Unit](Anim-Unit#Unit) used to render translate values for
+this property.
+
+Defaults to `Px`. Setting a relative unit (`Percent`, `Vw`, `Vh`, `Rem`, `Em`)
+makes the browser re-evaluate the rendered translation against current layout,
+so the animation follows resize automatically.
+
+    import Anim.Unit as Unit
+
+    myAnimation : AnimBuilder mode -> AnimBuilder mode
+    myAnimation =
+        Translate.for "animGroupName"
+            >> Translate.toX 50
+            >> Translate.length Unit.Percent
+            >> Translate.build
+
+This setting takes precedence over any [length](Anim-Engine-WAAPI#length) set
+on the engine.
+
+The `Sub` engine currently only supports `Px`; setting a non-`Px` unit on a
+translate targeted at `Sub` reports an error and falls back to `Px`.
+
+-}
+length : Unit -> Builder mode -> Builder mode
+length =
+    TB.length
 
 
 

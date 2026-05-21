@@ -232,7 +232,7 @@ function applyScrollDrivenAnimation(animGroup, element, elementConfig, timeline,
                         sv.rotateZ + (ev.rotateZ - sv.rotateZ) * p,
                         sv.skewX + (ev.skewX - sv.skewX) * p,
                         sv.skewY + (ev.skewY - sv.skewY) * p,
-                        order, forceGroups
+                        order, forceGroups, ev.translateUnit || sv.translateUnit || 'px'
                     )
                 };
             });
@@ -242,13 +242,13 @@ function applyScrollDrivenAnimation(animGroup, element, elementConfig, timeline,
                 sv.x, sv.y, sv.z,
                 sv.scaleX, sv.scaleY, sv.scaleZ,
                 sv.rotateX, sv.rotateY, sv.rotateZ,
-                sv.skewX, sv.skewY, order, forceGroups
+                sv.skewX, sv.skewY, order, forceGroups, sv.translateUnit || 'px'
             );
             const endTransform = buildTransformString(
                 ev.x, ev.y, ev.z,
                 ev.scaleX, ev.scaleY, ev.scaleZ,
                 ev.rotateX, ev.rotateY, ev.rotateZ,
-                ev.skewX, ev.skewY, order, forceGroups
+                ev.skewX, ev.skewY, order, forceGroups, ev.translateUnit || 'px'
             );
             transformKeyframes = [{ transform: startTransform }, { transform: endTransform }];
             if (firstTransform.easing) {

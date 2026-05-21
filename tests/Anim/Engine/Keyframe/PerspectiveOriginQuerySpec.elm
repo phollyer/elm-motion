@@ -2,6 +2,7 @@ module Anim.Engine.Keyframe.PerspectiveOriginQuerySpec exposing (suite)
 
 import Anim.Engine.Keyframe as Keyframe
 import Anim.Property.PerspectiveOrigin as PerspectiveOrigin
+import Anim.Unit as Unit
 import Expect
 import Motion.Easing exposing (Easing(..))
 import Test exposing (Test, describe, test)
@@ -18,7 +19,7 @@ animatedState =
         |> (\state ->
                 Keyframe.animate state <|
                     PerspectiveOrigin.for groupName
-                        >> PerspectiveOrigin.percent
+                        >> PerspectiveOrigin.length Unit.Percent
                         >> PerspectiveOrigin.toXY 90 10
                         >> PerspectiveOrigin.duration 1000
                         >> PerspectiveOrigin.easing Linear

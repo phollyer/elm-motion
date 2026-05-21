@@ -156,7 +156,8 @@ function getResolvedEndTransformState(resolvedTransformValues) {
         rotateY: resolvedTransformValues.rotate.endY,
         rotateZ: resolvedTransformValues.rotate.endZ,
         skewX: resolvedTransformValues.skew.endX,
-        skewY: resolvedTransformValues.skew.endY
+        skewY: resolvedTransformValues.skew.endY,
+        translateUnit: (resolvedTransformValues.translate && typeof resolvedTransformValues.translate.unit === 'string') ? resolvedTransformValues.translate.unit : 'px'
     };
 }
 

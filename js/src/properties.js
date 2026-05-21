@@ -398,13 +398,18 @@ export function resolveScrollDrivenTransformValues(transformProperties, currentT
         x: currentTransform.x, y: currentTransform.y, z: currentTransform.z,
         scaleX: currentTransform.scaleX, scaleY: currentTransform.scaleY, scaleZ: currentTransform.scaleZ,
         rotateX: currentTransform.rotateX, rotateY: currentTransform.rotateY, rotateZ: currentTransform.rotateZ,
-        skewX: currentTransform.skewX, skewY: currentTransform.skewY
+        skewX: currentTransform.skewX, skewY: currentTransform.skewY,
+        translateUnit: currentTransform.translateUnit || 'px'
     };
     const start = Object.assign({}, base);
     const end = Object.assign({}, base);
 
     transformProperties.forEach(function (property) {
         resolveScrollTransformProperty(property, start, end, currentTransform);
+        if (property.type === 'translate' && typeof property.unit === 'string' && property.unit.length > 0) {
+            start.translateUnit = property.unit;
+            end.translateUnit = property.unit;
+        }
     });
 
     return { start, end };

@@ -61,7 +61,8 @@ function applyDirectTransformStyles(animGroup, element, props) {
         rotateY = 0,
         rotateZ = 0,
         skewX = 0,
-        skewY = 0
+        skewY = 0,
+        translateUnit = 'px'
     } = props;
 
     element.style.transform = buildTransformString(
@@ -76,7 +77,9 @@ function applyDirectTransformStyles(animGroup, element, props) {
         rotateZ,
         skewX,
         skewY,
-        order
+        order,
+        undefined,
+        translateUnit
     );
 }
 
