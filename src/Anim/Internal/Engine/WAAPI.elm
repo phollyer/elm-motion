@@ -563,8 +563,18 @@ applyPerspectiveOriginPositionResize animGroupName pos ((AnimState state animGro
                     currentPO =
                         PropertyBaselines.getPerspectiveOrigin snapshot
 
+                    -- Pull the actual stored unit from the snapshot - the
+                    -- baseline was tagged with the resolved unit by
+                    -- `Generator.propertyBounds` when the animation was
+                    -- created. Hard-coding `Percent` here would emit a `%`
+                    -- suffix on a payload whose X/Y are in `px` (or any
+                    -- other unit), producing perspective-origin values
+                    -- like `400% 300%` that send the rendered cube off
+                    -- screen during a drag-resize.
                     unit =
-                        Percent
+                        PropertyBaselines.getPerspectiveOriginUnits snapshot
+                            |> Maybe.map .x
+                            |> Maybe.withDefault InternalUnit.default
 
                     current =
                         currentPO
@@ -606,12 +616,7 @@ applyPerspectiveOriginPositionResize animGroupName pos ((AnimState state animGro
                                 (PropertyBaselines.setPerspectiveOrigin newBaselinePO)
 
                     unitStr =
-                        case unit of
-                            Percent ->
-                                "%"
-
-                            _ ->
-                                "px"
+                        InternalUnit.toCssSuffix unit
                 in
                 ( AnimState { state | builder = updatedBuilder } updatedAnimGroups
                 , state.commandPort
@@ -1514,7 +1519,14 @@ computePerspectiveOriginResizePayload animGroupName previousBounds bounds (AnimS
                                     }
 
                                 unit =
-                                    Percent
+                                    -- Use the unit stored on the snapshot
+                                    -- by `Generator.propertyBounds` when
+                                    -- the animation was created, so a
+                                    -- resize emits matching `px`/`%`/etc.
+                                    -- suffixes on the keyframes JS rebuilds.
+                                    PropertyBaselines.getPerspectiveOriginUnits snapshot
+                                        |> Maybe.map .x
+                                        |> Maybe.withDefault InternalUnit.default
 
                                 liveOldStart2d =
                                     oldStart
@@ -1553,12 +1565,7 @@ computePerspectiveOriginResizePayload animGroupName previousBounds bounds (AnimS
                                         && maybeFloatNearlyEqual currentTimeMs oldCurrentTimeMs
 
                                 unitStr =
-                                    case unit of
-                                        Percent ->
-                                            "%"
-
-                                        _ ->
-                                            "px"
+                                    InternalUnit.toCssSuffix unit
                             in
                             if noChange then
                                 Nothing
