@@ -695,10 +695,11 @@ don't define their own delay.
 
     import Anim.Engine.Keyframe as Keyframe
     import Anim.Property.Custom as Custom
+    import Anim.Unit exposing (Unit(..))
 
     Keyframe.animate model.animState <|
         Keyframe.delay 500
-            >> Custom.for "box" (Custom.BorderRadius "px")
+            >> Custom.for "box" (Custom.BorderRadius Px)
             >> Custom.to 24
             >> Custom.build
 
@@ -715,10 +716,11 @@ don't define their own duration.
 
     import Anim.Engine.Keyframe as Keyframe
     import Anim.Property.Custom as Custom
+    import Anim.Unit exposing (Unit(..))
 
     Keyframe.animate model.animState <|
         Keyframe.duration 500
-            >> Custom.for "box" (Custom.BorderRadius "px")
+            >> Custom.for "box" (Custom.BorderRadius Px)
             >> Custom.to 24
             >> Custom.build
 
@@ -737,10 +739,11 @@ Consult each property's documentation for details on how speed is interpreted.
 
     import Anim.Engine.Keyframe as Keyframe
     import Anim.Property.Custom as Custom
+    import Anim.Unit exposing (Unit(..))
 
     Keyframe.animate model.animState <|
         Keyframe.speed 100
-            >> Custom.for "box" (Custom.BorderRadius "px")
+            >> Custom.for "box" (Custom.BorderRadius Px)
             >> Custom.to 24
             >> Custom.build
 
@@ -764,10 +767,11 @@ don't define their own easing.
     import Easing exposing (Easing(..))
     import Anim.Engine.Keyframe as Keyframe
     import Anim.Property.Custom as Custom
+    import Anim.Unit exposing (Unit(..))
 
     Keyframe.animate model.animState <|
         Keyframe.easing BounceOut
-            >> Custom.for "box" (Custom.BorderRadius "px")
+            >> Custom.for "box" (Custom.BorderRadius Px)
             >> Custom.to 24
             >> Custom.build
 

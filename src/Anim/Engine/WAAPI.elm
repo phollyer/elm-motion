@@ -737,10 +737,11 @@ don't define their own delay.
 
     import Anim.Engine.WAAPI as WAAPI
     import Anim.Property.Custom as Custom
+    import Anim.Unit exposing (Unit(..))
 
     WAAPI.animate model.animState <|
         WAAPI.delay 500
-            >> Custom.for "box" (Custom.BorderRadius "px")
+            >> Custom.for "box" (Custom.BorderRadius Px)
             >> Custom.to 24
             >> Custom.build
 
@@ -757,10 +758,11 @@ don't define their own duration.
 
     import Anim.Engine.WAAPI as WAAPI
     import Anim.Property.Custom as Custom
+    import Anim.Unit exposing (Unit(..))
 
     WAAPI.animate model.animState <|
         WAAPI.duration 1000
-            >> Custom.for "box" (Custom.BorderRadius "px")
+            >> Custom.for "box" (Custom.BorderRadius Px)
             >> Custom.to 24
             >> Custom.build
 
@@ -779,10 +781,11 @@ Consult each property's documentation for details on how speed is interpreted.
 
     import Anim.Engine.WAAPI as WAAPI
     import Anim.Property.Custom as Custom
+    import Anim.Unit exposing (Unit(..))
 
     WAAPI.animate model.animState <|
         WAAPI.speed 100
-            >> Custom.for "box" (Custom.BorderRadius "px")
+            >> Custom.for "box" (Custom.BorderRadius Px)
             >> Custom.to 24
             >> Custom.build
 
@@ -806,10 +809,11 @@ don't define their own easing.
     import Easing exposing (Easing(..))
     import Anim.Engine.WAAPI as WAAPI
     import Anim.Property.Custom as Custom
+    import Anim.Unit exposing (Unit(..))
 
     WAAPI.animate model.animState <|
         WAAPI.easing BounceOut
-            >> Custom.for "box" (Custom.BorderRadius "px")
+            >> Custom.for "box" (Custom.BorderRadius Px)
             >> Custom.to 24
             >> Custom.build
 

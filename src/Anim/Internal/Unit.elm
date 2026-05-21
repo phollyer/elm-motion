@@ -3,70 +3,20 @@ module Anim.Internal.Unit exposing
     , toCssSuffix
     )
 
-{-| Internal helpers for `Anim.Unit.Unit`.
+{-| Internal re-exports for `Anim.Unit`. The implementation lives in the
+public `Anim.Unit` module; this module exists so internal callers can keep
+their `import Anim.Internal.Unit as InternalUnit` aliases without coupling
+to the public API surface.
 -}
 
-import Anim.Unit exposing (Unit(..))
+import Anim.Unit as Unit exposing (Unit)
 
 
 default : Unit
 default =
-    Px
+    Unit.Px
 
 
 toCssSuffix : Unit -> String
-toCssSuffix unit =
-    case unit of
-        Px ->
-            "px"
-
-        Percent ->
-            "%"
-
-        Vw ->
-            "vw"
-
-        Vh ->
-            "vh"
-
-        Dvw ->
-            "dvw"
-
-        Dvh ->
-            "dvh"
-
-        Svw ->
-            "svw"
-
-        Svh ->
-            "svh"
-
-        Lvw ->
-            "lvw"
-
-        Lvh ->
-            "lvh"
-
-        Rem ->
-            "rem"
-
-        Em ->
-            "em"
-
-        Cqi ->
-            "cqi"
-
-        Cqb ->
-            "cqb"
-
-        Cqw ->
-            "cqw"
-
-        Cqh ->
-            "cqh"
-
-        Cqmin ->
-            "cqmin"
-
-        Cqmax ->
-            "cqmax"
+toCssSuffix =
+    Unit.toCssSuffix

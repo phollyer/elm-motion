@@ -706,6 +706,9 @@ encodeProcessedPropertyConfig maybeVersions property =
 
                 ( endWidth, endHeight ) =
                     Size.toTuple config.end
+
+                unitStr =
+                    InternalUnit.toCssSuffix config.length
             in
             Encode.object
                 (( "type", Encode.string "size" )
@@ -714,6 +717,7 @@ encodeProcessedPropertyConfig maybeVersions property =
                        , ( "startHeight", Encode.float startHeight )
                        , ( "endWidth", Encode.float endWidth )
                        , ( "endHeight", Encode.float endHeight )
+                       , ( "unit", Encode.string unitStr )
                        , ( "duration", Encode.int config.duration )
                        ]
                     ++ encodeEasingWithKeyframes config.duration config.easing config.spring

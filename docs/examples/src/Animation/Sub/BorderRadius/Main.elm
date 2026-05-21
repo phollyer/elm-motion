@@ -3,6 +3,7 @@ module Animation.Sub.BorderRadius.Main exposing (main)
 import Anim.Builder exposing (AnimBuilder)
 import Anim.Engine.Sub as Sub
 import Anim.Property.Custom as Property
+import Anim.Unit exposing (Unit(..))
 import Browser
 import Html exposing (Html, button, div, text)
 import Html.Attributes exposing (class, style)
@@ -36,7 +37,7 @@ init : ( Model, Cmd Msg )
 init =
     ( { animState =
             Sub.init <|
-                [ Property.init animGroup (Property.BorderRadius "px") 0 ]
+                [ Property.init animGroup (Property.BorderRadius Px) 0 ]
       }
     , Cmd.none
     )
@@ -53,7 +54,7 @@ animGroup =
 
 roundCorners : AnimBuilder mode -> AnimBuilder mode
 roundCorners =
-    Property.for animGroup (Property.BorderRadius "px")
+    Property.for animGroup (Property.BorderRadius Px)
         >> Property.to 48
         >> Property.duration 800
         >> Property.easing CubicInOut
@@ -62,7 +63,7 @@ roundCorners =
 
 squareCorners : AnimBuilder mode -> AnimBuilder mode
 squareCorners =
-    Property.for animGroup (Property.BorderRadius "px")
+    Property.for animGroup (Property.BorderRadius Px)
         >> Property.to 0
         >> Property.duration 800
         >> Property.easing CubicInOut

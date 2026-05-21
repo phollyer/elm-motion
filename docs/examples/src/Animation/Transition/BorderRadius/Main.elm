@@ -2,6 +2,7 @@ module Animation.Transition.BorderRadius.Main exposing (main)
 
 import Anim.Engine.Transition as Transition exposing (EngineBuilder)
 import Anim.Property.Custom as Property
+import Anim.Unit exposing (Unit(..))
 import Browser
 import Html exposing (Html, button, div, text)
 import Html.Attributes exposing (class, style)
@@ -35,7 +36,7 @@ init : ( Model, Cmd Msg )
 init =
     ( { animState =
             Transition.init
-                [ Property.init animGroup (Property.BorderRadius "px") 0 ]
+                [ Property.init animGroup (Property.BorderRadius Px) 0 ]
       }
     , Cmd.none
     )
@@ -53,7 +54,7 @@ animGroup =
 
 roundCorners : EngineBuilder -> EngineBuilder
 roundCorners =
-    Property.for animGroup (Property.BorderRadius "px")
+    Property.for animGroup (Property.BorderRadius Px)
         >> Property.to 48
         >> Property.duration 800
         >> Property.easing CubicInOut
@@ -62,7 +63,7 @@ roundCorners =
 
 squareCorners : EngineBuilder -> EngineBuilder
 squareCorners =
-    Property.for animGroup (Property.BorderRadius "px")
+    Property.for animGroup (Property.BorderRadius Px)
         >> Property.to 0
         >> Property.duration 800
         >> Property.easing CubicInOut

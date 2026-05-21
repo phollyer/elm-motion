@@ -91,8 +91,9 @@ function applyDirectStyleUpdates(style, props) {
     });
 
     if (props.width !== undefined && props.height !== undefined) {
-        style.width = `${props.width}px`;
-        style.height = `${props.height}px`;
+        const unit = props.unit || 'px';
+        style.width = `${props.width}${unit}`;
+        style.height = `${props.height}${unit}`;
     }
 }
 

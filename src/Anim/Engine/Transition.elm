@@ -578,10 +578,11 @@ don't define their own delay.
 
     import Anim.Engine.Transition as Transition
     import Anim.Property.Custom as Custom
+    import Anim.Unit exposing (Unit(..))
 
     Transition.animate model.animState <|
         Transition.delay 500
-            >> Custom.for "box" (Custom.BorderRadius "px")
+            >> Custom.for "box" (Custom.BorderRadius Px)
             >> Custom.to 24
             >> Custom.build
 
@@ -598,10 +599,11 @@ don't define their own duration.
 
     import Anim.Engine.Transition as Transition
     import Anim.Property.Custom as Custom
+    import Anim.Unit exposing (Unit(..))
 
     Transition.animate model.animState <|
         Transition.duration 500
-            >> Custom.for "box" (Custom.BorderRadius "px")
+            >> Custom.for "box" (Custom.BorderRadius Px)
             >> Custom.to 24
             >> Custom.build
 
@@ -620,10 +622,11 @@ Consult each property's documentation for details on how speed is interpreted.
 
     import Anim.Engine.Transition as Transition
     import Anim.Property.Custom as Custom
+    import Anim.Unit exposing (Unit(..))
 
     Transition.animate model.animState <|
         Transition.speed 100
-            >> Custom.for "box" (Custom.BorderRadius "px")
+            >> Custom.for "box" (Custom.BorderRadius Px)
             >> Custom.to 24
             >> Custom.build
 
@@ -647,10 +650,11 @@ don't define their own easing.
     import Easing exposing (Easing(..))
     import Anim.Engine.Transition as Transition
     import Anim.Property.Custom as Custom
+    import Anim.Unit exposing (Unit(..))
 
     Transition.animate model.animState <|
         Transition.easing BounceOut
-            >> Custom.for "box" (Custom.BorderRadius "px")
+            >> Custom.for "box" (Custom.BorderRadius Px)
             >> Custom.to 24
             >> Custom.build
 

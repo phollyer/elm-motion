@@ -1,8 +1,9 @@
-module Anim.Unit exposing (Unit(..))
+module Anim.Unit exposing (Unit(..), toCssSuffix)
 
-{-| Length unit selector for length-bearing transform properties
+{-| Length unit selector for length-bearing properties
 ([Translate](Anim.Property.Translate), [Size](Anim.Property.Size),
-[PerspectiveOrigin](Anim.Property.PerspectiveOrigin)).
+[PerspectiveOrigin](Anim.Property.PerspectiveOrigin),
+[Custom](Anim.Property.Custom)).
 
 The default is `Px`, which preserves the original pixel-only behaviour.
 Setting a relative unit on an Engine, group, or property makes the browser
@@ -48,10 +49,15 @@ animation. Support for relative units on `Sub` is planned for a future release.
 
 @docs Unit
 
+
+# Render
+
+@docs toCssSuffix
+
 -}
 
 
-{-| The length unit applied when rendering length-bearing transform values.
+{-| The length unit applied when rendering length-bearing values.
 
 **Absolute**
 
@@ -101,3 +107,73 @@ type Unit
     | Cqh
     | Cqmin
     | Cqmax
+
+
+{-| Render a `Unit` as the matching CSS unit suffix string.
+
+    toCssSuffix Px == "px"
+
+    toCssSuffix Percent == "%"
+
+    toCssSuffix Cqh == "cqh"
+
+Useful when feeding a typed `Unit` into APIs that take a free-form CSS unit
+string, such as the `Custom` escape hatch in [Anim.Property.Custom](Anim.Property.Custom).
+
+-}
+toCssSuffix : Unit -> String
+toCssSuffix unit =
+    case unit of
+        Px ->
+            "px"
+
+        Percent ->
+            "%"
+
+        Vw ->
+            "vw"
+
+        Vh ->
+            "vh"
+
+        Dvw ->
+            "dvw"
+
+        Dvh ->
+            "dvh"
+
+        Svw ->
+            "svw"
+
+        Svh ->
+            "svh"
+
+        Lvw ->
+            "lvw"
+
+        Lvh ->
+            "lvh"
+
+        Rem ->
+            "rem"
+
+        Em ->
+            "em"
+
+        Cqi ->
+            "cqi"
+
+        Cqb ->
+            "cqb"
+
+        Cqw ->
+            "cqw"
+
+        Cqh ->
+            "cqh"
+
+        Cqmin ->
+            "cqmin"
+
+        Cqmax ->
+            "cqmax"

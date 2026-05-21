@@ -686,10 +686,11 @@ don't define their own delay.
 
     import Anim.Engine.Sub as Sub
     import Anim.Property.Custom as Custom
+    import Anim.Unit exposing (Unit(..))
 
     Sub.animate model.animState <|
         Sub.delay 500
-            >> Custom.for "box" (Custom.BorderRadius "px")
+            >> Custom.for "box" (Custom.BorderRadius Px)
             >> Custom.to 24
             >> Custom.build
 
@@ -706,10 +707,11 @@ don't define their own duration.
 
     import Anim.Engine.Sub as Sub
     import Anim.Property.Custom as Custom
+    import Anim.Unit exposing (Unit(..))
 
     Sub.animate model.animState <|
         Sub.duration 1000
-            >> Custom.for "box" (Custom.BorderRadius "px")
+            >> Custom.for "box" (Custom.BorderRadius Px)
             >> Custom.to 24
             >> Custom.build
 
@@ -728,10 +730,11 @@ Consult each property's documentation for details on how speed is interpreted.
 
     import Anim.Engine.Sub as Sub
     import Anim.Property.Custom as Custom
+    import Anim.Unit exposing (Unit(..))
 
     Sub.animate model.animState <|
         Sub.speed 100
-            >> Custom.for "box" (Custom.BorderRadius "px")
+            >> Custom.for "box" (Custom.BorderRadius Px)
             >> Custom.to 24
             >> Custom.build
 
@@ -755,10 +758,11 @@ don't define their own easing.
     import Easing exposing (Easing(..))
     import Anim.Engine.Sub as Sub
     import Anim.Property.Custom as Custom
+    import Anim.Unit exposing (Unit(..))
 
     Sub.animate model.animState <|
         Sub.easing BounceOut
-            >> Custom.for "box" (Custom.BorderRadius "px")
+            >> Custom.for "box" (Custom.BorderRadius Px)
             >> Custom.to 24
             >> Custom.build
 

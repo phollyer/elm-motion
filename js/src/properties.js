@@ -99,7 +99,8 @@ const NON_TRANSFORM_RESOLVERS = {
             startWidth: property.startWidth != null ? property.startWidth : parseFloat(computedStyle.width),
             startHeight: property.startHeight != null ? property.startHeight : parseFloat(computedStyle.height),
             endWidth: property.endWidth,
-            endHeight: property.endHeight
+            endHeight: property.endHeight,
+            unit: property.unit || 'px'
         };
     },
     customProperty(_animGroup, computedStyle, property) {
@@ -181,6 +182,7 @@ const PROPERTY_CONFIG_BUILDERS = {
         const startHeight = property.startHeight != null ? property.startHeight : parseFloat(computedStyle.height);
         config.from = `${startWidth},${startHeight}`;
         config.to = `${property.endWidth},${property.endHeight}`;
+        config.unit = property.unit || 'px';
     },
     customProperty(_animGroup, _element, computedStyle, property, config) {
         const computedValue = parseFloat(computedStyle.getPropertyValue(property.cssProperty)) || 0;
@@ -247,9 +249,10 @@ const SIMPLE_KEYFRAME_BUILDERS = {
         ];
     },
     size(resolved) {
+        const unit = resolved.unit || 'px';
         return [
-            { width: resolved.startWidth + 'px', height: resolved.startHeight + 'px' },
-            { width: resolved.endWidth + 'px', height: resolved.endHeight + 'px' }
+            { width: resolved.startWidth + unit, height: resolved.startHeight + unit },
+            { width: resolved.endWidth + unit, height: resolved.endHeight + unit }
         ];
     },
     customProperty(resolved) {

@@ -1685,7 +1685,7 @@ customClampTests =
         [ test "clamp clamps explicit to above max" <|
             \_ ->
                 animBuilder
-                    |> (Custom.for "test" (Custom.Left "px")
+                    |> (Custom.for "test" (Custom.Left Unit.Px)
                             >> Custom.clamp 0 200
                             >> Custom.to 500
                             >> Custom.build
@@ -1695,7 +1695,7 @@ customClampTests =
         , test "clamp still clamps when declared after to" <|
             \_ ->
                 animBuilder
-                    |> (Custom.for "test" (Custom.Left "px")
+                    |> (Custom.for "test" (Custom.Left Unit.Px)
                             >> Custom.to 500
                             >> Custom.clamp 0 200
                             >> Custom.build
@@ -1705,7 +1705,7 @@ customClampTests =
         , test "clamp with reversed args is normalized" <|
             \_ ->
                 animBuilder
-                    |> (Custom.for "test" (Custom.Left "px")
+                    |> (Custom.for "test" (Custom.Left Unit.Px)
                             >> Custom.clamp 200 0
                             >> Custom.to 500
                             >> Custom.build
@@ -1715,7 +1715,7 @@ customClampTests =
         , test "unclamp removes the clamp" <|
             \_ ->
                 animBuilder
-                    |> (Custom.for "test" (Custom.Left "px")
+                    |> (Custom.for "test" (Custom.Left Unit.Px)
                             >> Custom.clamp 0 200
                             >> Custom.unclamp
                             >> Custom.to 500
@@ -1726,12 +1726,12 @@ customClampTests =
         , test "clamps are keyed by CSS property name" <|
             \_ ->
                 animBuilder
-                    |> (Custom.for "test" (Custom.Left "px")
+                    |> (Custom.for "test" (Custom.Left Unit.Px)
                             >> Custom.clamp 0 200
                             >> Custom.to 500
                             >> Custom.build
                        )
-                    |> (Custom.for "test" (Custom.Top "px")
+                    |> (Custom.for "test" (Custom.Top Unit.Px)
                             >> Custom.to 500
                             >> Custom.build
                        )
@@ -1740,12 +1740,12 @@ customClampTests =
         , test "clamps are scoped to the active animGroup" <|
             \_ ->
                 animBuilder
-                    |> (Custom.for "a" (Custom.Left "px")
+                    |> (Custom.for "a" (Custom.Left Unit.Px)
                             >> Custom.clamp 0 200
                             >> Custom.to 50
                             >> Custom.build
                        )
-                    |> (Custom.for "b" (Custom.Left "px")
+                    |> (Custom.for "b" (Custom.Left Unit.Px)
                             >> Custom.to 500
                             >> Custom.build
                        )
@@ -1754,13 +1754,13 @@ customClampTests =
         , test "clamps persist across animate batches" <|
             \_ ->
                 animBuilder
-                    |> (Custom.for "test" (Custom.Left "px")
+                    |> (Custom.for "test" (Custom.Left Unit.Px)
                             >> Custom.clamp 0 200
                             >> Custom.to 50
                             >> Custom.build
                        )
                     |> finishAnimateBatch
-                    |> (Custom.for "test" (Custom.Left "px")
+                    |> (Custom.for "test" (Custom.Left Unit.Px)
                             >> Custom.to 500
                             >> Custom.build
                        )

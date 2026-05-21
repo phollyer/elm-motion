@@ -21,6 +21,7 @@ import Anim.Property.Scale as Scale
 import Anim.Property.Size as Size
 import Anim.Property.Skew as Skew
 import Anim.Property.Translate as Translate
+import Anim.Unit exposing (Unit(..))
 import Expect
 import Motion.Easing exposing (Easing(..))
 import Motion.Spring as Spring
@@ -216,7 +217,7 @@ propagationTests =
         , test "Custom.spring" <|
             \_ ->
                 initBuilder
-                    |> (Custom.for "el" (BorderRadius "px")
+                    |> (Custom.for "el" (BorderRadius Px)
                             >> Custom.to 16
                             >> Custom.spring Spring.gentle
                             >> Custom.build
@@ -290,7 +291,7 @@ mutualExclusionTests =
         , test "Custom.spring after Custom.easing wins" <|
             \_ ->
                 initBuilder
-                    |> (Custom.for "el" (BorderRadius "px")
+                    |> (Custom.for "el" (BorderRadius Px)
                             >> Custom.to 16
                             >> Custom.easing EaseInOut
                             >> Custom.spring Spring.wobbly
