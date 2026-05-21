@@ -1,5 +1,5 @@
 /* eslint-env browser */
-import { activeAnimations, animationGroups, lastKnownPerspectiveOrigins, portsRef } from './state.js';
+import { activeAnimations, animationGroups, portsRef } from './state.js';
 import { reportError } from './errors.js';
 
 // Whether we have already reported the missing-motionMsg-port warning.
@@ -71,69 +71,6 @@ function getLifecycleProgress(status, animGroup) {
     return getRunningAnimationProgress(animGroup, getGroupMaxDuration(animGroup));
 }
 
-function parsePerspectiveOriginPart(part) {
-    const match = String(part || '').trim().match(/^(-?\d*\.?\d+)(px|%)$/);
-    if (!match) {
-        return null;
-    }
-
-    return { value: parseFloat(match[1]), unit: match[2] };
-}
-
-function convertPerspectiveOriginValue(value, fromUnit, toUnit, size) {
-    if (!fromUnit || fromUnit === toUnit) {
-        return value;
-    }
-
-    if (fromUnit === 'px' && toUnit === '%') {
-        return (value / size) * 100;
-    }
-
-    if (fromUnit === '%' && toUnit === 'px') {
-        return (value / 100) * size;
-    }
-
-    return value;
-}
-
-function buildPerspectiveOriginData(animGroup, element, computedStyle) {
-    const computedOrigin = computedStyle.perspectiveOrigin || '50% 50%';
-    const parts = computedOrigin.trim().split(/\s+/);
-    const parsedX = parsePerspectiveOriginPart(parts[0]);
-    const parsedY = parsePerspectiveOriginPart(parts[1] || parts[0]);
-    const cached = lastKnownPerspectiveOrigins.get(animGroup);
-    const targetUnit = cached?.unit || parsedX?.unit || '%';
-    const parsedUnit = parsedX?.unit || parsedY?.unit;
-    const width = element?.clientWidth || element?.offsetWidth || 1;
-    const height = element?.clientHeight || element?.offsetHeight || 1;
-
-    return {
-        x: convertPerspectiveOriginValue(parsedX?.value ?? cached?.x ?? 50, parsedUnit, targetUnit, width),
-        y: convertPerspectiveOriginValue(parsedY?.value ?? cached?.y ?? 50, parsedUnit, targetUnit, height),
-        unit: targetUnit === '%' ? 'percent' : 'px'
-    };
-}
-
-function collectCustomProperties(propertyVersions, computedStyle) {
-    const customProperties = {};
-    const customColorProperties = {};
-
-    Object.keys(propertyVersions).forEach(key => {
-        if (key.startsWith('custom:')) {
-            const cssName = key.slice(7);
-            customProperties[cssName] = parseFloat(computedStyle.getPropertyValue(cssName)) || 0;
-            return;
-        }
-
-        if (key.startsWith('customColor:')) {
-            const cssName = key.slice(12);
-            customColorProperties[cssName] = computedStyle.getPropertyValue(cssName) || 'rgba(0, 0, 0, 1)';
-        }
-    });
-
-    return { customProperties, customColorProperties };
-}
-
 /**
  * Send iteration event to Elm when an animation crosses an iteration boundary.
  * The iteration count is sent as the progress value so Elm can decode it
@@ -195,41 +132,20 @@ export function sendPropertyUpdate(propertyData) {
 }
 
 /**
- * Build property data containing only the properties that are currently animated.
- * Uses propertyVersions keys to determine which properties to include,
- * so only animated values are sent to Elm (reducing decoder work per frame).
+ * Build the property-update payload sent to Elm during an animation.
  *
- * `computedStyle` may be null when only transform properties are being animated
- * (see `needsComputedStyle`); in that case only the transform branch runs and
- * no style flush is performed.
+ * Phase 4: JS no longer sends absolute interpolated values. The Elm side
+ * (`Anim.Internal.Engine.WAAPI.ProgressApply`) interpolates each property
+ * from its anchored start to its end using the raw progress emitted here,
+ * combined with the easing and config stored in the property's `PropertyState`.
+ *
+ * `propertyProgress` is a plain object keyed by Elm's property-type strings
+ * (`'translate'`, `'rotate'`, `'skew'`, `'scale'`, `'opacity'`, `'size'`,
+ * `'perspectiveOrigin'`, `'custom:<css>'`, `'customColor:<css>'`), with raw
+ * 0..1 per-iteration progress values (no easing applied — Elm applies the
+ * easing curve).
  */
-export function buildAnimatedPropertyData(animGroup, propertyVersions, transformState, element, computedStyle) {
-    const data = {};
-    if ('transform' in propertyVersions) {
-        data.translate = { x: transformState.x, y: transformState.y, z: transformState.z };
-        data.rotate = { x: transformState.rotateX, y: transformState.rotateY, z: transformState.rotateZ };
-        data.skew = { x: transformState.skewX, y: transformState.skewY };
-        data.scale = { x: transformState.scaleX, y: transformState.scaleY, z: transformState.scaleZ };
-    }
-    if (!computedStyle) {
-        return data;
-    }
-    if ('opacity' in propertyVersions) {
-        data.opacity = parseFloat(computedStyle.opacity);
-    }
-    if ('size' in propertyVersions) {
-        data.size = { width: parseFloat(computedStyle.width), height: parseFloat(computedStyle.height) };
-    }
-    if ('perspectiveOrigin' in propertyVersions) {
-        data.perspectiveOrigin = buildPerspectiveOriginData(animGroup, element, computedStyle);
-    }
-    const { customProperties, customColorProperties } = collectCustomProperties(propertyVersions, computedStyle);
-    if (Object.keys(customProperties).length > 0) {
-        data.customProperties = customProperties;
-    }
-    if (Object.keys(customColorProperties).length > 0) {
-        data.customColorProperties = customColorProperties;
-    }
-    return data;
+export function buildAnimatedPropertyData(propertyProgress) {
+    return { propertyProgress };
 }
 

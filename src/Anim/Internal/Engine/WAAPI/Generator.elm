@@ -81,7 +81,7 @@ generateAnimation iterations animationDirection globalTransformOrder discreteEnt
                         ( propType
                         , { version = newVersion
                           , status = NotStarted
-                          , config = property
+                          , config = resolveStartFromSnapshot snapshot property
                           }
                         )
                     )
@@ -145,6 +145,57 @@ propertyTypeString property =
 
         Builder.ProcessedCustomColorPropertyConfig cssName _ ->
             "customColor:" ++ cssName
+
+
+{-| When a property config has `start = Nothing`, resolve it to the value
+currently held in the snapshot. This anchors the per-frame Elm-side
+interpolation to a fixed starting point for the lifetime of the animation,
+so subsequent baseline mutations cannot cause the interpolation start to
+drift.
+
+If the snapshot also has no value for the property, `start` is left as
+`Nothing` — `ProgressApply` falls back to property-specific identity values
+in that case.
+-}
+resolveStartFromSnapshot : PropertyBaselines -> Builder.ProcessedPropertyConfig -> Builder.ProcessedPropertyConfig
+resolveStartFromSnapshot snapshot property =
+    let
+        fill : Maybe a -> Maybe a -> Maybe a
+        fill existing fromSnapshot =
+            case existing of
+                Just _ ->
+                    existing
+
+                Nothing ->
+                    fromSnapshot
+    in
+    case property of
+        Builder.ProcessedTranslateConfig config ->
+            Builder.ProcessedTranslateConfig { config | start = fill config.start (PropertyBaselines.getTranslate snapshot) }
+
+        Builder.ProcessedRotateConfig config ->
+            Builder.ProcessedRotateConfig { config | start = fill config.start (PropertyBaselines.getRotate snapshot) }
+
+        Builder.ProcessedSkewConfig config ->
+            Builder.ProcessedSkewConfig { config | start = fill config.start (PropertyBaselines.getSkew snapshot) }
+
+        Builder.ProcessedScaleConfig config ->
+            Builder.ProcessedScaleConfig { config | start = fill config.start (PropertyBaselines.getScale snapshot) }
+
+        Builder.ProcessedOpacityConfig config ->
+            Builder.ProcessedOpacityConfig { config | start = fill config.start (PropertyBaselines.getOpacity snapshot) }
+
+        Builder.ProcessedPerspectiveOriginConfig config ->
+            Builder.ProcessedPerspectiveOriginConfig { config | start = fill config.start (PropertyBaselines.getPerspectiveOrigin snapshot) }
+
+        Builder.ProcessedSizeConfig config ->
+            Builder.ProcessedSizeConfig { config | start = fill config.start (PropertyBaselines.getSize snapshot) }
+
+        Builder.ProcessedCustomPropertyConfig cssName unit config ->
+            Builder.ProcessedCustomPropertyConfig cssName unit { config | start = fill config.start (PropertyBaselines.getCustomProperty cssName snapshot) }
+
+        Builder.ProcessedCustomColorPropertyConfig cssName config ->
+            Builder.ProcessedCustomColorPropertyConfig cssName { config | start = fill config.start (PropertyBaselines.getCustomColorProperty cssName snapshot) }
 
 
 

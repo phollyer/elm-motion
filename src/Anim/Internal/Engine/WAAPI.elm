@@ -1848,15 +1848,6 @@ handleLifecycleEvent animEvent (AnimState state animGroups) =
 updateAnimGroup : AnimationUpdate -> AnimGroup -> AnimGroup
 updateAnimGroup animUpdate animGroup =
     let
-        buildProp : (AnimationUpdate -> Maybe a) -> (b -> PropertyBaselines -> PropertyBaselines) -> (a -> b) -> PropertyBaselines -> PropertyBaselines
-        buildProp propFn setterFn converterFn b =
-            case propFn animUpdate of
-                Just val ->
-                    setterFn (converterFn val) b
-
-                Nothing ->
-                    b
-
         updateStatus : String -> PropertyState -> PropertyState
         updateStatus propType propAnim =
             case AnimGroups.get propType animUpdate.propertyVersions of
@@ -1884,14 +1875,6 @@ updateAnimGroup animUpdate animGroup =
             (animGroup
                 |> AnimGroup.getPropertySnapshot
                 |> ProgressApply.applyPropertyProgress animUpdate.propertyProgress (AnimGroup.getPropertyStates animGroup)
-                |> buildProp .opacity PropertyBaselines.setOpacity Opacity.fromFloat
-                |> buildProp .perspectiveOrigin PropertyBaselines.setPerspectiveOrigin perspectiveOriginFromRecord
-                |> buildProp .rotate PropertyBaselines.setRotate Rotate.fromRecord
-                |> buildProp .scale PropertyBaselines.setScale Scale.fromRecord
-                |> buildProp .size PropertyBaselines.setSize Size.fromRecord
-                |> buildProp .translate PropertyBaselines.setTranslate Translate.fromRecord
-                |> PropertyBaselines.updateCustomProperties animUpdate.customProperties
-                |> PropertyBaselines.updateCustomColorProperties animUpdate.customColorProperties
             )
 
 
@@ -3147,14 +3130,6 @@ getRuntimeTranslate animGroupName (AnimState _ animGroups) =
 type alias AnimationUpdate =
     { animGroupName : String
     , progress : Float
-    , translate : Maybe { x : Float, y : Float, z : Float }
-    , opacity : Maybe Float
-    , perspectiveOrigin : Maybe { x : Float, y : Float, unit : String }
-    , rotate : Maybe { x : Float, y : Float, z : Float }
-    , scale : Maybe { x : Float, y : Float, z : Float }
-    , size : Maybe { width : Float, height : Float }
-    , customProperties : Dict.Dict String Float
-    , customColorProperties : Dict.Dict String String
     , isAnimating : Bool
     , propertyVersions : AnimGroups Int -- Maps property type to version number
     , propertyProgress : Dict.Dict String Float -- Per-property raw progress for Elm-side interpolation
@@ -3166,22 +3141,9 @@ animationUpdateDecoder =
     Decode.succeed AnimationUpdate
         |> andMap (Decode.oneOf [ Decode.field "animGroup" Decode.string, Decode.field "elementId" Decode.string ])
         |> andMap (Decode.oneOf [ Decode.field "progress" Decode.float, Decode.succeed 0 ])
-        |> andMap (Decode.maybe (Decode.field "translate" (Decode.map3 (\x y z -> { x = x, y = y, z = z }) (Decode.field "x" Decode.float) (Decode.field "y" Decode.float) (Decode.field "z" Decode.float))))
-        |> andMap (Decode.maybe (Decode.field "opacity" Decode.float))
-        |> andMap (Decode.maybe (Decode.field "perspectiveOrigin" (Decode.map3 (\x y unit -> { x = x, y = y, unit = unit }) (Decode.field "x" Decode.float) (Decode.field "y" Decode.float) (Decode.field "unit" Decode.string))))
-        |> andMap (Decode.maybe (Decode.field "rotate" (Decode.map3 (\x y z -> { x = x, y = y, z = z }) (Decode.field "x" Decode.float) (Decode.field "y" Decode.float) (Decode.field "z" Decode.float))))
-        |> andMap (Decode.maybe (Decode.field "scale" (Decode.map3 (\x y z -> { x = x, y = y, z = z }) (Decode.field "x" Decode.float) (Decode.field "y" Decode.float) (Decode.field "z" Decode.float))))
-        |> andMap (Decode.maybe (Decode.field "size" (Decode.map2 (\w h -> { width = w, height = h }) (Decode.field "width" Decode.float) (Decode.field "height" Decode.float))))
-        |> andMap (Decode.oneOf [ Decode.field "customProperties" (Decode.dict Decode.float), Decode.succeed Dict.empty ])
-        |> andMap (Decode.oneOf [ Decode.field "customColorProperties" (Decode.dict Decode.string), Decode.succeed Dict.empty ])
         |> andMap (Decode.field "isAnimating" Decode.bool)
         |> andMap propertyVersionDecoder
         |> andMap (Decode.oneOf [ Decode.field "propertyProgress" (Decode.dict Decode.float), Decode.succeed Dict.empty ])
-
-
-perspectiveOriginFromRecord : { x : Float, y : Float, unit : String } -> PerspectiveOrigin.PerspectiveOrigin
-perspectiveOriginFromRecord { x, y } =
-    PerspectiveOrigin.fromRecord { x = x, y = y }
 
 
 propertyVersionDecoder : Decoder (AnimGroups Int)
