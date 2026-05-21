@@ -8,17 +8,16 @@ module Anim.Internal.Engine.WAAPI.AnimGroup exposing
     , addPropertyStates
     , bumpPropertyVersions
     , emptyProportion
+    , foldResizeStates
     , getAnimationDirection
     , getCurrentIteration
-    , getCurrentPerspectiveOriginState
-    , getCurrentScaleState
-    , getCurrentTranslateState
     , getDiscreteEntry
     , getDiscreteExit
     , getIterations
     , getProgress
     , getPropertySnapshot
     , getPropertyStates
+    , getResizeState
     , getTransformOrder
     , init
     , isComplete
@@ -26,19 +25,16 @@ module Anim.Internal.Engine.WAAPI.AnimGroup exposing
     , isRunning
     , setAnimationDirection
     , setCurrentIteration
-    , setCurrentPerspectiveOriginState
-    , setCurrentScaleState
-    , setCurrentTranslateState
     , setDiscreteEntry
     , setDiscreteExit
     , setIterationCount
     , setProgress
     , setPropertyStates
-    , setScaleProportion
+    , setResizeProportion
+    , setResizeState
     , setSnapshot
     , setStatus
     , setTransformOrder
-    , setTranslateProportion
     )
 
 import Anim.Extra.TransformOrder as TransformProperty exposing (TransformProperty(..))
@@ -62,9 +58,7 @@ type AnimGroup
         , progress : Float -- Current animation progress (0.0 to 1.0)
         , iterations : Builder.Iterations
         , currentIteration : Int -- Latest iteration index reported by WAAPI (0 = first leg)
-        , currentTranslateState : Maybe ResizeAxisState -- Latest resize-updated translate bounds, duration & per-axis proportion snapshot; Nothing on a fresh `animate` call
-        , currentScaleState : Maybe ResizeAxisState -- Latest resize-updated scale bounds, duration & per-axis proportion snapshot; Nothing on a fresh `animate` call
-        , currentPerspectiveOriginState : Maybe ResizeAxisState -- Latest resize-updated perspective-origin bounds & duration (z is unused, always 0); Nothing on a fresh `animate` call
+        , resizeStates : Dict String ResizeAxisState -- Latest resize-updated leg state per property name ("translate", "scale", "perspectiveOrigin", ...). A missing key means no resize has fired yet for that property on this group.
         , animationDirection : Builder.AnimationDirection
         , discreteEntry : Dict String Builder.DiscreteEntryProperty
         , discreteExit : Dict String Builder.DiscreteExitProperty
@@ -91,24 +85,20 @@ type alias AxisProportion =
     { x : Maybe Float, y : Maybe Float, z : Maybe Float }
 
 
-{-| Resize-aware leg state shared by translate and scale. `proportion`
-is the single source of truth for "where on the leg are we" across
-resize round-trips; `start`/`end`/`durationMs` are the resize-rebased
-leg endpoints and timing used to feed WAAPI on the next resize.
+{-| Resize-aware leg state shared by every resize-affected property
+(translate, scale, perspective-origin, and any future addition such as
+size or custom numeric CSS properties). `proportion` is the single
+source of truth for "where on the leg are we" across resize round-trips;
+`start`/`end`/`durationMs` are the resize-rebased leg endpoints and
+timing used to feed WAAPI on the next resize.
 
-`authoredStart`/`authoredEnd` capture the original (pre-resize) leg as
-configured at `animate` time and remain immutable across subsequent
-resizes. Under the `Pinned` range policy they are fed back into
-`applyAxis` so that widening bounds restores the originally-authored
-extremes instead of one-way ratcheting toward the most recently clamped
-values. Adaptive policies ignore them and operate on the live leg.
+For 2D properties (perspective-origin) and 1D properties (custom
+scalars) the unused axes are filled with 0.
 
 -}
 type alias ResizeAxisState =
     { start : Vec3
     , end : Vec3
-    , authoredStart : Vec3
-    , authoredEnd : Vec3
     , durationMs : Float
     , proportion : AxisProportion
     }
@@ -141,9 +131,7 @@ init =
         , progress = 0
         , iterations = Builder.Once
         , currentIteration = 0
-        , currentTranslateState = Nothing
-        , currentScaleState = Nothing
-        , currentPerspectiveOriginState = Nothing
+        , resizeStates = Dict.empty
         , animationDirection = Builder.Normal
         , discreteEntry = Dict.empty
         , discreteExit = Dict.empty
@@ -193,19 +181,13 @@ getCurrentIteration (AnimGroup group) =
     group.currentIteration
 
 
-getCurrentTranslateState : AnimGroup -> Maybe ResizeAxisState
-getCurrentTranslateState (AnimGroup group) =
-    group.currentTranslateState
-
-
-getCurrentScaleState : AnimGroup -> Maybe ResizeAxisState
-getCurrentScaleState (AnimGroup group) =
-    group.currentScaleState
-
-
-getCurrentPerspectiveOriginState : AnimGroup -> Maybe ResizeAxisState
-getCurrentPerspectiveOriginState (AnimGroup group) =
-    group.currentPerspectiveOriginState
+{-| Look up the cached resize-aware leg state for a given property name
+("translate", "scale", "perspectiveOrigin", ...). Returns `Nothing`
+when no resize has fired yet for that property on this group.
+-}
+getResizeState : String -> AnimGroup -> Maybe ResizeAxisState
+getResizeState propName (AnimGroup group) =
+    Dict.get propName group.resizeStates
 
 
 getDiscreteEntry : AnimGroup -> Dict String Builder.DiscreteEntryProperty
@@ -243,6 +225,15 @@ getTransformOrder (AnimGroup group) =
     group.transformOrder
 
 
+{-| Fold over every cached resize-aware leg state on this group. Used by
+the animate-restart flow to dispatch a per-property rebase function (one
+per property name) against the most recent post-resize bounds.
+-}
+foldResizeStates : (String -> ResizeAxisState -> b -> b) -> b -> AnimGroup -> b
+foldResizeStates f acc (AnimGroup group) =
+    Dict.foldl f acc group.resizeStates
+
+
 
 -- ============================================================
 -- SETTERS
@@ -259,50 +250,29 @@ setCurrentIteration currentIteration (AnimGroup group) =
     AnimGroup { group | currentIteration = currentIteration }
 
 
-setCurrentTranslateState : ResizeAxisState -> AnimGroup -> AnimGroup
-setCurrentTranslateState newState (AnimGroup group) =
-    AnimGroup { group | currentTranslateState = Just newState }
-
-
-setCurrentScaleState : ResizeAxisState -> AnimGroup -> AnimGroup
-setCurrentScaleState newState (AnimGroup group) =
-    AnimGroup { group | currentScaleState = Just newState }
-
-
-setCurrentPerspectiveOriginState : ResizeAxisState -> AnimGroup -> AnimGroup
-setCurrentPerspectiveOriginState newState (AnimGroup group) =
-    AnimGroup { group | currentPerspectiveOriginState = Just newState }
-
-
-{-| Update _only_ the per-axis proportion snapshot of the cached
-translate state, leaving `start`/`end`/`durationMs` untouched. A no-op
-if no translate state has been cached yet (animation hasn't reported a
-first frame).
+{-| Store the post-resize leg state for the given property name. Any
+existing entry for that property is overwritten.
 -}
-setTranslateProportion : AxisProportion -> AnimGroup -> AnimGroup
-setTranslateProportion proportion (AnimGroup group) =
-    case group.currentTranslateState of
-        Just state ->
-            AnimGroup
-                { group | currentTranslateState = Just { state | proportion = proportion } }
-
-        Nothing ->
-            AnimGroup group
+setResizeState : String -> ResizeAxisState -> AnimGroup -> AnimGroup
+setResizeState propName newState (AnimGroup group) =
+    AnimGroup
+        { group | resizeStates = Dict.insert propName newState group.resizeStates }
 
 
-{-| Update _only_ the per-axis proportion snapshot of the cached scale
-state, leaving `start`/`end`/`durationMs` untouched. A no-op if no
-scale state has been cached yet.
+{-| Update _only_ the per-axis proportion snapshot of the cached leg
+state for the given property name, leaving `start`/`end`/`durationMs`
+untouched. A no-op if no state has been cached yet for that property
+(animation hasn't reported a first frame or no resize has fired).
 -}
-setScaleProportion : AxisProportion -> AnimGroup -> AnimGroup
-setScaleProportion proportion (AnimGroup group) =
-    case group.currentScaleState of
-        Just state ->
-            AnimGroup
-                { group | currentScaleState = Just { state | proportion = proportion } }
-
-        Nothing ->
-            AnimGroup group
+setResizeProportion : String -> AxisProportion -> AnimGroup -> AnimGroup
+setResizeProportion propName proportion (AnimGroup group) =
+    AnimGroup
+        { group
+            | resizeStates =
+                Dict.update propName
+                    (Maybe.map (\state -> { state | proportion = proportion }))
+                    group.resizeStates
+        }
 
 
 setDiscreteEntry : Dict String Builder.DiscreteEntryProperty -> AnimGroup -> AnimGroup

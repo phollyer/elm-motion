@@ -1,6 +1,6 @@
 /* eslint-env browser */
 import { isTransformProperty, easingFunctions, parseIterations } from './utils.js';
-import { activeAnimations, animationGroups, elementTransformOrders, cleanupAnimGroup, lastKnownTransforms } from './state.js';
+import { activeAnimations, animationGroups, elementTransformOrders, cleanupAnimGroup, lastKnownTransforms, lastKnownPerspectiveOrigins } from './state.js';
 import { getTransformState, getElementOrder, interpolateSubProperty, computeTransformFromResolved, buildTransformString, getDefaultTransformState } from './transform.js';
 import { resolveNonTransformValues, createPropertyAnimation, extractPropertyConfig, buildPropertyKeyframes } from './properties.js';
 import { sendLifecycleEvent } from './ports.js';
@@ -10,6 +10,21 @@ import { reportError } from './errors.js';
 
 function isFiniteNumber(value) {
     return typeof value === 'number' && Number.isFinite(value);
+}
+
+// Targeted debug logging for the WAAPI resize / translatePosition path.
+// Enable from a browser console with `window.__ELM_MOTION_DEBUG = true`
+// (or `globalThis.__ELM_MOTION_DEBUG = true`). When disabled the helper
+// short-circuits before any string formatting so the cost is one global
+// property read per call site.
+function motionDebug(tag, payload) {
+    try {
+        if (!globalThis.__ELM_MOTION_DEBUG) return;
+        // eslint-disable-next-line no-console
+        console.log('[elm-motion]', tag, payload);
+    } catch (_err) {
+        // Never let debug logging throw into production callers.
+    }
 }
 
 function distance3(a, b) {
@@ -23,51 +38,6 @@ function distance2(a, b) {
     const dx = a.x - b.x;
     const dy = a.y - b.y;
     return Math.sqrt(dx * dx + dy * dy);
-}
-
-function isSuspiciousResetToZero(elmCurrentTimeMs, oldCurrentTime, startPoint, currentPoint) {
-    if (!(typeof elmCurrentTimeMs === 'number' && isFinite(elmCurrentTimeMs) && elmCurrentTimeMs === 0)) {
-        return false;
-    }
-
-    if (!isFiniteNumber(oldCurrentTime) || oldCurrentTime <= 0) {
-        return false;
-    }
-
-    if (!startPoint || !currentPoint) {
-        return false;
-    }
-
-    const hasZ = isFiniteNumber(startPoint.z) && isFiniteNumber(currentPoint.z);
-    const distanceFromStart = hasZ
-        ? distance3(startPoint, currentPoint)
-        : distance2(startPoint, currentPoint);
-
-    // Ignore zero-time resets when the target is clearly not at leg start.
-    return distanceFromStart > 0.5;
-}
-
-function isSuspiciousZeroFromContinuity(elmCurrentTimeMs, oldCurrentTime, oldVisualPoint, currentPoint) {
-    if (!(typeof elmCurrentTimeMs === 'number' && isFinite(elmCurrentTimeMs) && elmCurrentTimeMs === 0)) {
-        return false;
-    }
-
-    if (!isFiniteNumber(oldCurrentTime) || oldCurrentTime <= 0) {
-        return false;
-    }
-
-    if (!oldVisualPoint || !currentPoint) {
-        return false;
-    }
-
-    const hasZ = isFiniteNumber(oldVisualPoint.z) && isFiniteNumber(currentPoint.z);
-    const continuityDistance = hasZ
-        ? distance3(oldVisualPoint, currentPoint)
-        : distance2(oldVisualPoint, currentPoint);
-
-    // If resize target is still very close to the pre-resize visual position,
-    // forcing currentTime=0 is almost certainly an unintended restart.
-    return continuityDistance <= 12;
 }
 
 function computeLegProgress(oldCurrentTime, oldDuration, oldDirection, animation) {
@@ -92,18 +62,6 @@ function computeLegProgress(oldCurrentTime, oldDuration, oldDirection, animation
     }
 
     return oldLegProgress;
-}
-
-function scaleCurrentTimeForResize(oldCurrentTime, oldDuration, newDuration) {
-    if (!isFiniteNumber(oldCurrentTime)
-        || !isFiniteNumber(oldDuration)
-        || !isFiniteNumber(newDuration)
-        || oldDuration <= 0
-        || newDuration <= 0) {
-        return null;
-    }
-
-    return (oldCurrentTime / oldDuration) * newDuration;
 }
 
 function axisBoundsChanged(oldStart, oldEnd, newStart, newEnd, epsilon = 0.001) {
@@ -154,6 +112,67 @@ function sanitizeResizeDuration(candidateDuration, oldDuration) {
     }
 
     return candidateDuration;
+}
+
+/**
+ * Detect a resize cmd whose geometry exactly matches what the WAAPI
+ * animation is already running. Used to short-circuit the cancel+recreate
+ * path when Elm fires a resize purely because `currentTimeMs` advanced
+ * (Progress event tick during a continuous drag) - if start/end/duration
+ * for the resized slot are unchanged, recreating the animation would
+ * needlessly seek the playhead and visually appear to speed the
+ * animation up frame-by-frame during the drag.
+ *
+ * Comparison is strict (`===`) on the numbers Elm shipped: Elm's own
+ * `noChange` guard already filters out near-equal geometry via its
+ * epsilon, so any cmd that reaches JS with start/end/duration matching
+ * the resolved slot byte-for-byte is the pure `currentTimeMs`-only case
+ * we want to skip.
+ */
+function isResizeGeometryUnchanged(commandData, slot, oldDuration) {
+    if (!slot) {
+        return false;
+    }
+    const payloadDuration = sanitizeResizeDuration(Number(commandData.duration), oldDuration);
+    const hasBaseline = commandData.hasAnimationBaseline !== false;
+    const newDuration = hasBaseline ? payloadDuration : oldDuration;
+    return Number(commandData.startX) === Number(slot.startX)
+        && Number(commandData.startY) === Number(slot.startY)
+        && Number(commandData.startZ) === Number(slot.startZ)
+        && Number(commandData.endX) === Number(slot.endX)
+        && Number(commandData.endY) === Number(slot.endY)
+        && Number(commandData.endZ) === Number(slot.endZ)
+        && newDuration === Number(slot.duration);
+}
+
+/**
+ * Perspective-origin counterpart of `isResizeGeometryUnchanged`. Same
+ * short-circuit purpose, with two differences from the translate version:
+ *
+ * - Perspective-origin is 2D, so Z is omitted.
+ * - The slot has a `unit` (`%` / `px`); a unit change must invalidate the
+ *   skip even if the numeric start/end are unchanged.
+ *
+ * Duration is read from `oldDuration` (the live WAAPI timing) because
+ * the resolved non-transform slot does not store a `duration` field —
+ * the animation's own effect timing is the source of truth.
+ */
+function isPerspectiveOriginGeometryUnchanged(commandData, slot, oldDuration) {
+    if (!slot) {
+        return false;
+    }
+    const incomingUnit = typeof commandData.unit === 'string' ? commandData.unit : '%';
+    if (incomingUnit !== slot.unitX || incomingUnit !== slot.unitY) {
+        return false;
+    }
+    const payloadDuration = sanitizeResizeDuration(Number(commandData.duration), oldDuration);
+    const hasBaseline = commandData.hasAnimationBaseline !== false;
+    const newDuration = hasBaseline ? payloadDuration : oldDuration;
+    return Number(commandData.startX) === Number(slot.startX)
+        && Number(commandData.startY) === Number(slot.startY)
+        && Number(commandData.endX) === Number(slot.endX)
+        && Number(commandData.endY) === Number(slot.endY)
+        && newDuration === oldDuration;
 }
 
 const TRANSFORM_STATE_KEYS = {
@@ -296,7 +315,10 @@ function buildDefaultResolvedTransform(currentTransform) {
         translate: {
             startX: currentTransform.x, startY: currentTransform.y, startZ: currentTransform.z,
             endX: currentTransform.x, endY: currentTransform.y, endZ: currentTransform.z,
-            easing: null, easingKeyframes: null, duration: 0
+            easing: null, easingKeyframes: null, duration: 0,
+            unitX: currentTransform.translateUnitX || 'px',
+            unitY: currentTransform.translateUnitY || 'px',
+            unitZ: currentTransform.translateUnitZ || 'px'
         },
         scale: {
             startX: currentTransform.scaleX, startY: currentTransform.scaleY, startZ: currentTransform.scaleZ,
@@ -325,6 +347,17 @@ function assignResolvedTransformProperty(target, property, currentTransform, axe
     target.easing = property.easing;
     target.easingKeyframes = property.easingKeyframes;
     target.duration = property.duration;
+    if (property.type === 'translate') {
+        if (typeof property.unitX === 'string' && property.unitX.length > 0) {
+            target.unitX = property.unitX;
+        }
+        if (typeof property.unitY === 'string' && property.unitY.length > 0) {
+            target.unitY = property.unitY;
+        }
+        if (typeof property.unitZ === 'string' && property.unitZ.length > 0) {
+            target.unitZ = property.unitZ;
+        }
+    }
 }
 
 function carryForwardMissingTransformProperties(animGroup, element, existingTransform, mergedTransformProperties) {
@@ -598,17 +631,20 @@ function createMergedTransformAnimation(animGroup, element, transformProperties,
     const forceGroups = computeForceGroups(resolved);
 
     if (allSameEasing && allSameDuration) {
+        const tUx = resolved.translate.unitX || 'px';
+        const tUy = resolved.translate.unitY || 'px';
+        const tUz = resolved.translate.unitZ || 'px';
         const startTransform = buildTransformString(
             resolved.translate.startX, resolved.translate.startY, resolved.translate.startZ,
             resolved.scale.startX, resolved.scale.startY, resolved.scale.startZ,
             resolved.rotate.startX, resolved.rotate.startY, resolved.rotate.startZ,
-            resolved.skew.startX, resolved.skew.startY, order, forceGroups
+            resolved.skew.startX, resolved.skew.startY, order, forceGroups, tUx, tUy, tUz
         );
         const endTransform = buildTransformString(
             resolved.translate.endX, resolved.translate.endY, resolved.translate.endZ,
             resolved.scale.endX, resolved.scale.endY, resolved.scale.endZ,
             resolved.rotate.endX, resolved.rotate.endY, resolved.rotate.endZ,
-            resolved.skew.endX, resolved.skew.endY, order, forceGroups
+            resolved.skew.endX, resolved.skew.endY, order, forceGroups, tUx, tUy, tUz
         );
 
         const easing = activeProps[0].easing;
@@ -644,7 +680,10 @@ function createMergedTransformAnimation(animGroup, element, transformProperties,
                 interpTranslate.x, interpTranslate.y, interpTranslate.z,
                 interpScale.x, interpScale.y, interpScale.z,
                 interpRotate.x, interpRotate.y, interpRotate.z,
-                interpSkew.x, interpSkew.y, order, forceGroups
+                interpSkew.x, interpSkew.y, order, forceGroups,
+                resolved.translate.unitX || 'px',
+                resolved.translate.unitY || 'px',
+                resolved.translate.unitZ || 'px'
             )
         });
     }
@@ -694,7 +733,10 @@ function persistResizedTransform(animGroup, element, propertyKey, currentResized
         updated.x, updated.y, updated.z,
         updated.scaleX, updated.scaleY, updated.scaleZ,
         updated.rotateX, updated.rotateY, updated.rotateZ,
-        updated.skewX, updated.skewY, order
+        updated.skewX, updated.skewY, order, undefined,
+        updated.translateUnitX || 'px',
+        updated.translateUnitY || 'px',
+        updated.translateUnitZ || 'px'
     );
     element.style.transform = transformString;
 }
@@ -743,8 +785,18 @@ export function resizeTransformAnimation(commandData) {
  * Per-frame resize coalescing. Keyed by `${animGroup}:${property || 'translate'}`
  * so commands targeting different properties of the same element do not
  * stomp each other. Only the latest payload per key per frame is applied.
+ *
+ * `pendingPositions` queues `translatePosition` snaps for the same
+ * coalescing tick. They flush AFTER `pendingResizes` so that a resize
+ * handler firing in the same tick cannot overwrite a static-axis snap
+ * that the position directive established. Elm's `applyGroupResize`
+ * emits the translate-bounds cmd before the translate-position cmd, so
+ * preserving that ordering across the JS wire requires position to win
+ * the last write.
  */
 const pendingResizes = new Map();
+const pendingPositions = new Map();
+const pendingPerspectivePositions = new Map();
 let pendingResizeFrame = null;
 
 function scheduleResize(commandData) {
@@ -757,7 +809,32 @@ function scheduleResize(commandData) {
     }
     const key = `${animGroup}:${commandData.property || 'translate'}`;
     pendingResizes.set(key, commandData);
+    armResizeFrame();
+}
 
+function schedulePosition(commandData) {
+    const animGroup = commandData.elementId || commandData.animGroup;
+    if (!animGroup) {
+        _translatePositionAnimationImmediate(commandData);
+        return;
+    }
+    // Position snaps are translate-only, so a single key per group is
+    // sufficient — the latest payload wins per frame.
+    pendingPositions.set(animGroup, commandData);
+    armResizeFrame();
+}
+
+function schedulePerspectiveOriginPosition(commandData) {
+    const animGroup = commandData.elementId || commandData.animGroup;
+    if (!animGroup) {
+        _perspectiveOriginPositionAnimationImmediate(commandData);
+        return;
+    }
+    pendingPerspectivePositions.set(animGroup, commandData);
+    armResizeFrame();
+}
+
+function armResizeFrame() {
     const raf = typeof globalThis !== 'undefined' && typeof globalThis.requestAnimationFrame === 'function'
         ? globalThis.requestAnimationFrame
         : null;
@@ -776,20 +853,101 @@ function scheduleResize(commandData) {
 }
 
 /**
- * Drain the coalesced resize queue immediately. Exported so tests and
- * shutdown paths can force a flush without waiting for a rAF tick.
+ * Drain the coalesced resize + position queues immediately. Exported so
+ * tests and shutdown paths can force a flush without waiting for a rAF
+ * tick. Resize entries flush first so that any same-frame position
+ * snap gets the final word on the static-axis baseline.
  */
 export function flushPendingResizes() {
-    if (pendingResizes.size === 0) {
+    if (pendingResizes.size === 0 && pendingPositions.size === 0 && pendingPerspectivePositions.size === 0) {
         return;
     }
-    const batch = Array.from(pendingResizes.values());
+    const resizeBatch = Array.from(pendingResizes.values());
+    const positionBatch = Array.from(pendingPositions.values());
+    const perspectivePositionBatch = Array.from(pendingPerspectivePositions.values());
     pendingResizes.clear();
-    for (const payload of batch) {
+    pendingPositions.clear();
+    pendingPerspectivePositions.clear();
+    motionDebug('flushPendingResizes', {
+        resizeBatch: resizeBatch.map((p) => ({
+            property: p.property,
+            animGroup: p.elementId || p.animGroup,
+            start: { x: p.startX, y: p.startY, z: p.startZ },
+            end: { x: p.endX, y: p.endY, z: p.endZ },
+            current: { x: p.currentX, y: p.currentY, z: p.currentZ },
+            currentTimeMs: p.currentTimeMs,
+            durationMs: p.duration
+        })),
+        positionBatch: positionBatch.map((p) => ({
+            animGroup: p.elementId || p.animGroup,
+            x: p.x, y: p.y, z: p.z
+        })),
+        perspectivePositionBatch: perspectivePositionBatch.map((p) => ({
+            animGroup: p.elementId || p.animGroup,
+            x: p.x, y: p.y, unit: p.unit
+        }))
+    });
+
+    // Diagnostic: live clock snapshot of every active animation in any
+    // group touched by this flush. Captured BEFORE any rebuild runs so
+    // sibling phase-lock can be inspected per-frame. If two co-emitted
+    // animations are configured identically they should show matching
+    // `liveCurrentTime` / `liveDuration` here on every flush.
+    if (typeof globalThis !== 'undefined' && globalThis.__ELM_MOTION_DEBUG) {
+        const touchedGroups = new Set();
+        for (const p of resizeBatch) touchedGroups.add(p.elementId || p.animGroup);
+        for (const p of positionBatch) touchedGroups.add(p.elementId || p.animGroup);
+        for (const p of perspectivePositionBatch) touchedGroups.add(p.elementId || p.animGroup);
+        const coRunningClocks = [];
+        for (const animGroup of touchedGroups) {
+            const elementAnims = activeAnimations.get(animGroup);
+            if (!elementAnims) continue;
+            for (const [property, entry] of elementAnims) {
+                const anim = entry && entry.animation;
+                if (!anim) continue;
+                const timing = anim.effect ? anim.effect.getTiming() : null;
+                coRunningClocks.push({
+                    animGroup,
+                    property,
+                    liveCurrentTime: anim.currentTime,
+                    liveDuration: timing ? timing.duration : null,
+                    direction: timing ? timing.direction : null,
+                    iterations: timing ? timing.iterations : null,
+                    playState: anim.playState
+                });
+            }
+        }
+        motionDebug('flushPendingResizes.coRunningClocks', { groups: coRunningClocks });
+    }
+    for (const payload of resizeBatch) {
         try {
             _resizeTransformAnimationImmediate(payload);
         } catch (err) {
             reportError(`resize flush failed: ${err && err.message ? err.message : err}`, {
+                source: 'animation',
+                severity: 'error',
+                code: 'COMMAND_FAILED',
+                engine: 'WAAPI'
+            });
+        }
+    }
+    for (const payload of positionBatch) {
+        try {
+            _translatePositionAnimationImmediate(payload);
+        } catch (err) {
+            reportError(`translatePosition flush failed: ${err && err.message ? err.message : err}`, {
+                source: 'animation',
+                severity: 'error',
+                code: 'COMMAND_FAILED',
+                engine: 'WAAPI'
+            });
+        }
+    }
+    for (const payload of perspectivePositionBatch) {
+        try {
+            _perspectiveOriginPositionAnimationImmediate(payload);
+        } catch (err) {
+            reportError(`perspectiveOriginPosition flush failed: ${err && err.message ? err.message : err}`, {
                 source: 'animation',
                 severity: 'error',
                 code: 'COMMAND_FAILED',
@@ -849,6 +1007,35 @@ export function _resizeTransformAnimationImmediate(commandData) {
 
     const animation = existing.animation;
     if (!animation || !animation.effect) {
+        return;
+    }
+
+    motionDebug('resize.enter', {
+        animGroup,
+        property: propertyKey,
+        payloadStart: { x: commandData.startX, y: commandData.startY, z: commandData.startZ },
+        payloadEnd: { x: commandData.endX, y: commandData.endY, z: commandData.endZ },
+        payloadCurrent: { x: commandData.currentX, y: commandData.currentY, z: commandData.currentZ },
+        payloadDuration: commandData.duration,
+        payloadCurrentTimeMs: commandData.currentTimeMs,
+        hasBaseline: commandData.hasAnimationBaseline,
+        slotStart: { x: resolved[propertyKey].startX, y: resolved[propertyKey].startY, z: resolved[propertyKey].startZ },
+        slotEnd: { x: resolved[propertyKey].endX, y: resolved[propertyKey].endY, z: resolved[propertyKey].endZ },
+        slotDuration: resolved[propertyKey].duration,
+        liveCurrentTime: animation.currentTime,
+        liveTimingDuration: animation.effect.getTiming().duration,
+        livePlayState: animation.playState
+    });
+
+    // Fast path: when start/end/duration of the resized slot are identical
+    // to what JS already has, the resize cmd is purely advisory (Elm fired
+    // because `currentTimeMs` drifted as Progress events advanced — the
+    // engine's geometry is unchanged). Skipping the cancel+recreate avoids
+    // a per-rAF restart that the user perceives as the animation speeding
+    // up during a continuous window drag, while leaving the running WAAPI
+    // animation to keep ticking on its own undisturbed clock.
+    if (isResizeGeometryUnchanged(commandData, resolved[propertyKey], Number(animation.effect.getTiming().duration) || 0)) {
+        motionDebug('resize.fastPathSkip', { animGroup, property: propertyKey });
         return;
     }
 
@@ -986,7 +1173,10 @@ export function _resizeTransformAnimationImmediate(commandData) {
                 interpTranslate.x, interpTranslate.y, interpTranslate.z,
                 interpScale.x, interpScale.y, interpScale.z,
                 interpRotate.x, interpRotate.y, interpRotate.z,
-                interpSkew.x, interpSkew.y, order, forceGroups
+                interpSkew.x, interpSkew.y, order, forceGroups,
+                resolved.translate.unitX || 'px',
+                resolved.translate.unitY || 'px',
+                resolved.translate.unitZ || 'px'
             )
         });
     }
@@ -1029,89 +1219,53 @@ export function _resizeTransformAnimationImmediate(commandData) {
     //   For a 1D translate (the common resize case) this is exact for
     //   Linear easing and approximate for non-linear, matching Clamp's
     //   "preserve current value" promise.
+    //
+    // Elm is the source of truth: when `currentTimeMs` is present, JS
+    // must apply it as-is. Any second-guessing here masks Elm-side bugs.
+    // `commandData.legRedefined === true` makes the intent explicit —
+    // Elm has rebased `start` to the current visual position and the
+    // authoritative seek is `0` on the redefined leg.
     let newCurrentTime = null;
-    const elmCurrentTimeMs = commandData.currentTimeMs;
-    let useElmCurrentTime = false;
-    let suspiciousZeroReset = false;
     if (hasElmCurrentTime) {
-        const suspiciousResetFromStart = isSuspiciousResetToZero(
-            elmCurrentTimeMs,
-            oldCurrentTime,
-            {
-                x: Number(commandData.startX),
-                y: Number(commandData.startY),
-                z: Number(commandData.startZ)
-            },
-            targetPosition
-        );
-        const suspiciousResetFromContinuity = isSuspiciousZeroFromContinuity(
-            elmCurrentTimeMs,
-            oldCurrentTime,
-            oldVisualPosition,
-            targetPosition
-        );
-        const suspiciousReset = suspiciousResetFromStart || suspiciousResetFromContinuity;
-        suspiciousZeroReset = suspiciousReset;
+        newCurrentTime = commandData.currentTimeMs;
+    } else if (targetPosition !== null && newDuration > 0 && oldDuration > 0) {
+        const newStartX = Number(commandData.startX);
+        const newEndX = Number(commandData.endX);
+        const newStartY = Number(commandData.startY);
+        const newEndY = Number(commandData.endY);
+        const newStartZ = Number(commandData.startZ);
+        const newEndZ = Number(commandData.endZ);
 
-        if (!suspiciousReset) {
-            useElmCurrentTime = true;
-            newCurrentTime = elmCurrentTimeMs;
+        const spans = {
+            x: newEndX - newStartX,
+            y: newEndY - newStartY,
+            z: newEndZ - newStartZ
+        };
+
+        const chosenAxis = chooseDominantAxis(spans);
+        let pWanted = 0;
+        if (chosenAxis === 'x') {
+            pWanted = (targetPosition.x - newStartX) / spans.x;
+        } else if (chosenAxis === 'y') {
+            pWanted = (targetPosition.y - newStartY) / spans.y;
+        } else if (chosenAxis === 'z') {
+            pWanted = (targetPosition.z - newStartZ) / spans.z;
         }
+        if (pWanted < 0) pWanted = 0;
+        if (pWanted > 1) pWanted = 1;
 
-    }
-
-    if (!useElmCurrentTime && targetPosition !== null && newDuration > 0 && oldDuration > 0) {
-        if (suspiciousZeroReset) {
-            const scaledCurrentTime = scaleCurrentTimeForResize(oldCurrentTime, oldDuration, newDuration);
-            if (scaledCurrentTime !== null) {
-                newCurrentTime = scaledCurrentTime;
-            }
-        }
-
-        if (newCurrentTime !== null && suspiciousZeroReset) {
-            // Prefer proportional time preservation for suspicious reset payloads.
-            // This keeps timeline continuity even when Elm start/end bounds are
-            // rebuilt around the current point during live resizing.
-        } else {
-            const newStartX = Number(commandData.startX);
-            const newEndX = Number(commandData.endX);
-            const newStartY = Number(commandData.startY);
-            const newEndY = Number(commandData.endY);
-            const newStartZ = Number(commandData.startZ);
-            const newEndZ = Number(commandData.endZ);
-
-            const spans = {
-                x: newEndX - newStartX,
-                y: newEndY - newStartY,
-                z: newEndZ - newStartZ
-            };
-
-            const chosenAxis = chooseDominantAxis(spans);
-            let pWanted = 0;
-            if (chosenAxis === 'x') {
-                pWanted = (targetPosition.x - newStartX) / spans.x;
-            } else if (chosenAxis === 'y') {
-                pWanted = (targetPosition.y - newStartY) / spans.y;
-            } else if (chosenAxis === 'z') {
-                pWanted = (targetPosition.z - newStartZ) / spans.z;
-            }
-            if (pWanted < 0) pWanted = 0;
-            if (pWanted > 1) pWanted = 1;
-
-            const oldIter = Math.floor(oldCurrentTime / oldDuration);
-            let pWithinIter = pWanted;
-            if (oldDirection === 'alternate' || oldDirection === 'alternate-reverse') {
-                const startsReversed = oldDirection === 'alternate-reverse';
-                const isReverseLeg = (oldIter % 2 === 1) !== startsReversed;
-                if (isReverseLeg) {
-                    pWithinIter = 1 - pWanted;
-                }
-            } else if (oldDirection === 'reverse') {
+        const oldIter = Math.floor(oldCurrentTime / oldDuration);
+        let pWithinIter = pWanted;
+        if (oldDirection === 'alternate' || oldDirection === 'alternate-reverse') {
+            const startsReversed = oldDirection === 'alternate-reverse';
+            const isReverseLeg = (oldIter % 2 === 1) !== startsReversed;
+            if (isReverseLeg) {
                 pWithinIter = 1 - pWanted;
             }
-            newCurrentTime = (oldIter + pWithinIter) * newDuration;
-
+        } else if (oldDirection === 'reverse') {
+            pWithinIter = 1 - pWanted;
         }
+        newCurrentTime = (oldIter + pWithinIter) * newDuration;
     }
 
     // Cancel + recreate (not in-place mutate). The in-place approach
@@ -1188,6 +1342,15 @@ export function _resizeTransformAnimationImmediate(commandData) {
         }
     }
 
+    motionDebug('resize.recreated', {
+        animGroup,
+        oldDuration,
+        newDuration,
+        newCurrentTime,
+        newLiveCurrentTime: newAnimation.currentTime,
+        wasPaused
+    });
+
     if (wasPaused) {
         try { newAnimation.pause(); } catch (_pauseErr) { /* non-fatal */ }
     }
@@ -1203,15 +1366,345 @@ export function _resizeTransformAnimationImmediate(commandData) {
     );
 }
 
+/**
+ * Snap one or more translate axes of a group to a fixed pixel position.
+ *
+ * Triggered by Elm `Anim.Property.Translate.position` via the WAAPI
+ * engine's `onResize`. Each axis in `commandData` is either a number
+ * (snap this axis to that pixel value) or `null` (leave this axis
+ * alone). The handler updates `lastKnownTransforms` and writes the
+ * resulting inline `transform`, and — if a transform animation is
+ * running — rebuilds its keyframes so the snapped axis tracks the
+ * new constant value across the timeline.
+ *
+ * Per-axis static check: when a transform animation is running, an
+ * axis is only snapped if its current `resolved.translate.startX`
+ * equals `endX` (i.e. it is not animating). Animating axes are left
+ * alone so an in-flight motion is never visibly hijacked by a window
+ * resize. When no transform animation is running, axes snap
+ * unconditionally — the directive is the only source of truth.
+ *
+ * @param {object} commandData - Decoded `translatePosition` port command payload.
+ *   - `elementId` / `animGroup`: target animation group.
+ *   - `x`, `y`, `z`: pixel position per axis, or `null` to skip.
+ */
+export function translatePositionAnimation(commandData) {
+    schedulePosition(commandData);
+}
+
+/**
+ * Synchronous translatePosition worker. Direct callers (tests,
+ * `flushPendingResizes`) use this to bypass the per-frame coalescing
+ * layer.
+ */
+export function _translatePositionAnimationImmediate(commandData) {
+    const animGroup = commandData.elementId || commandData.animGroup;
+    if (!animGroup) {
+        reportError('translatePosition command missing elementId/animGroup', {
+            source: 'animation',
+            severity: 'warning',
+            code: 'COMMAND_INVALID',
+            engine: 'WAAPI'
+        });
+        return;
+    }
+
+    const element = findAnimTarget(animGroup);
+    if (!element) {
+        reportError(`Element with data-anim-target="${animGroup}" not found`, {
+            source: 'animation',
+            severity: 'warning',
+            code: 'TARGET_NOT_FOUND',
+            engine: 'WAAPI',
+            elementId: animGroup
+        });
+        return;
+    }
+
+    const px = typeof commandData.x === 'number' && isFinite(commandData.x) ? commandData.x : null;
+    const py = typeof commandData.y === 'number' && isFinite(commandData.y) ? commandData.y : null;
+    const pz = typeof commandData.z === 'number' && isFinite(commandData.z) ? commandData.z : null;
+    if (px === null && py === null && pz === null) {
+        return;
+    }
+
+    const elementAnims = activeAnimations.get(animGroup);
+    const transformEntry = elementAnims ? elementAnims.get('transform') : null;
+    const resolved = transformEntry ? transformEntry.resolvedValues : null;
+    const t = resolved ? resolved.translate : null;
+
+    const current = getTransformState(animGroup, element);
+    const updated = { ...current };
+    let didSnapAny = false;
+
+    function trySnap(axis, pos) {
+        if (pos === null) return;
+        if (t) {
+            const sk = 'start' + axis.toUpperCase();
+            const ek = 'end' + axis.toUpperCase();
+            if (Number(t[sk]) !== Number(t[ek])) {
+                // Axis is animating — leave it alone.
+                return;
+            }
+            t[sk] = pos;
+            t[ek] = pos;
+        }
+        updated[axis] = pos;
+        didSnapAny = true;
+    }
+
+    trySnap('x', px);
+    trySnap('y', py);
+    trySnap('z', pz);
+
+    motionDebug('position.enter', {
+        animGroup,
+        payloadPosition: { x: px, y: py, z: pz },
+        slotTranslate: t
+            ? { startX: t.startX, startY: t.startY, startZ: t.startZ, endX: t.endX, endY: t.endY, endZ: t.endZ }
+            : null,
+        liveCurrentTime: transformEntry && transformEntry.animation ? transformEntry.animation.currentTime : null,
+        liveTimingDuration: transformEntry && transformEntry.animation && transformEntry.animation.effect
+            ? transformEntry.animation.effect.getTiming().duration
+            : null,
+        didSnapAny
+    });
+
+    if (!didSnapAny) {
+        return;
+    }
+
+    // Persist updated transform state. `persistResizedTransform` writes
+    // both `lastKnownTransforms` and the inline `transform`, ensuring
+    // the snapped values survive across animation cleanup and are
+    // visible immediately when no animation is currently running.
+    persistResizedTransform(animGroup, element, 'translate', {
+        x: updated.x, y: updated.y, z: updated.z
+    });
+
+    // If a transform animation is running, rebuild its keyframes so the
+    // snapped axes hold their new value across every frame. WAAPI's
+    // `setKeyframes` preserves `currentTime` / iteration / direction, so
+    // co-running axes (rotate, scale, skew, and any animating translate
+    // axis) keep their visual continuity — only the snapped, previously
+    // static axes change, and they were constant across all frames before
+    // and after, so no flicker is possible.
+    if (transformEntry && transformEntry.animation && transformEntry.animation.effect && resolved) {
+        const maxDuration = Math.max(
+            Number(resolved.translate?.duration) || 0,
+            Number(resolved.scale?.duration) || 0,
+            Number(resolved.rotate?.duration) || 0,
+            Number(resolved.skew?.duration) || 0
+        );
+        const order = getElementOrder(element);
+        const forceGroups = computeForceGroups(resolved);
+        const KEYFRAME_COUNT = 30;
+        const keyframes = [];
+        for (let index = 0; index < KEYFRAME_COUNT; index++) {
+            const globalProgress = index / (KEYFRAME_COUNT - 1);
+            const interpTranslate = interpolateSubProperty(resolved.translate, globalProgress, maxDuration);
+            const interpScale = interpolateSubProperty(resolved.scale, globalProgress, maxDuration);
+            const interpRotate = interpolateSubProperty(resolved.rotate, globalProgress, maxDuration);
+            const interpSkew = interpolateSubProperty(resolved.skew, globalProgress, maxDuration);
+            keyframes.push({
+                transform: buildTransformString(
+                    interpTranslate.x, interpTranslate.y, interpTranslate.z,
+                    interpScale.x, interpScale.y, interpScale.z,
+                    interpRotate.x, interpRotate.y, interpRotate.z,
+                    interpSkew.x, interpSkew.y, order, forceGroups,
+                    resolved.translate.unitX || 'px',
+                    resolved.translate.unitY || 'px',
+                    resolved.translate.unitZ || 'px'
+                )
+            });
+        }
+        try {
+            transformEntry.animation.effect.setKeyframes(keyframes);
+            motionDebug('position.setKeyframes', {
+                animGroup,
+                liveCurrentTimeAfter: transformEntry.animation.currentTime,
+                liveTimingDurationAfter: transformEntry.animation.effect.getTiming().duration
+            });
+        } catch (err) {
+            reportError(`setKeyframes failed during translatePosition: ${err && err.message ? err.message : err}`, {
+                source: 'animation',
+                severity: 'warning',
+                code: 'TRANSLATE_POSITION_SET_KEYFRAMES_FAILED',
+                engine: 'WAAPI',
+                elementId: animGroup
+            });
+        }
+    }
+}
+
+/**
+ * Public entry for `perspectiveOriginPosition` port commands. Coalesces
+ * snaps via `requestAnimationFrame` so per-axis updates emitted during
+ * a drag-resize collapse to at most one per displayed frame.
+ *
+ * The directive is a per-axis one-shot snap: each axis is either `null`
+ * (leave alone) or a numeric position to snap the static axis to. An
+ * axis is snapped only when the running perspective-origin animation has
+ * `startAxis === endAxis` (i.e. it is not animating). Animating axes are
+ * left alone so an in-flight animation is never visibly hijacked. When
+ * no perspective-origin animation is running, the inline style is
+ * updated unconditionally for the snapped axes.
+ *
+ * @param {object} commandData - Decoded `perspectiveOriginPosition` payload.
+ *   - `elementId` / `animGroup`: target animation group.
+ *   - `x`, `y`: position per axis (in the unit reported by `unit`), or `null`.
+ *   - `unit`: `'%'` or `'px'`.
+ */
+export function perspectiveOriginPositionAnimation(commandData) {
+    schedulePerspectiveOriginPosition(commandData);
+}
+
+/**
+ * Synchronous perspectiveOriginPosition worker. Direct callers (tests,
+ * `flushPendingResizes`) use this to bypass the per-frame coalescing
+ * layer.
+ *
+ * Static axes are snapped via in-place `setKeyframes` so the live
+ * `currentTime` / iteration / direction are preserved — no cancel, no
+ * seek, no drift relative to co-running animations in the same anim
+ * group.
+ */
+export function _perspectiveOriginPositionAnimationImmediate(commandData) {
+    const animGroup = commandData.elementId || commandData.animGroup;
+    if (!animGroup) {
+        reportError('perspectiveOriginPosition command missing elementId/animGroup', {
+            source: 'animation',
+            severity: 'warning',
+            code: 'COMMAND_INVALID',
+            engine: 'WAAPI'
+        });
+        return;
+    }
+
+    const element = findAnimTarget(animGroup);
+    if (!element) {
+        reportError(`Element with data-anim-target="${animGroup}" not found`, {
+            source: 'animation',
+            severity: 'warning',
+            code: 'TARGET_NOT_FOUND',
+            engine: 'WAAPI',
+            elementId: animGroup
+        });
+        return;
+    }
+
+    const px = typeof commandData.x === 'number' && isFinite(commandData.x) ? commandData.x : null;
+    const py = typeof commandData.y === 'number' && isFinite(commandData.y) ? commandData.y : null;
+    const unit = typeof commandData.unit === 'string' ? commandData.unit : '%';
+
+    const elementAnims = activeAnimations.get(animGroup);
+    const entry = elementAnims ? elementAnims.get('perspectiveOrigin') : null;
+    const resolved = entry ? entry.resolvedNonTransform : null;
+
+    let snapX = px !== null;
+    let snapY = py !== null;
+    let skipReasonX = null;
+    let skipReasonY = null;
+    if (px === null) skipReasonX = 'payloadNull';
+    if (py === null) skipReasonY = 'payloadNull';
+    if (resolved) {
+        if (snapX && Number(resolved.startX) !== Number(resolved.endX)) {
+            // X axis is animating — leave it alone.
+            snapX = false;
+            skipReasonX = 'axisAnimating';
+        }
+        if (snapY && Number(resolved.startY) !== Number(resolved.endY)) {
+            snapY = false;
+            skipReasonY = 'axisAnimating';
+        }
+    }
+
+    motionDebug('perspectiveOriginPosition.enter', {
+        animGroup,
+        payloadPosition: { x: px, y: py, unit },
+        slot: resolved
+            ? { startX: resolved.startX, startY: resolved.startY, endX: resolved.endX, endY: resolved.endY }
+            : null,
+        liveCurrentTime: entry && entry.animation ? entry.animation.currentTime : null,
+        liveTimingDuration: entry && entry.animation && entry.animation.effect
+            ? entry.animation.effect.getTiming().duration
+            : null,
+        snapX,
+        snapY,
+        skipReasonX,
+        skipReasonY
+    });
+
+    if (px === null && py === null) {
+        return;
+    }
+
+    if (!snapX && !snapY) {
+        return;
+    }
+
+    // Update the resolved slot so any subsequent resize / animate sees
+    // the snapped baseline.
+    if (resolved) {
+        if (snapX) {
+            resolved.startX = px;
+            resolved.endX = px;
+        }
+        if (snapY) {
+            resolved.startY = py;
+            resolved.endY = py;
+        }
+        resolved.unitX = unit;
+        resolved.unitY = unit;
+    }
+
+    // Update inline style + cache so the snap survives outside the
+    // animation lifetime.
+    const cached = lastKnownPerspectiveOrigins.get(animGroup) || { x: 50, y: 50, unitX: unit, unitY: unit };
+    const newX = snapX ? px : cached.x;
+    const newY = snapY ? py : cached.y;
+    lastKnownPerspectiveOrigins.set(animGroup, { x: newX, y: newY, unitX: unit, unitY: unit });
+    element.style.perspectiveOrigin = `${newX}${unit} ${newY}${unit}`;
+
+    // Rebuild keyframes in place on the running animation so the snapped
+    // axes hold their new value across every frame. WAAPI preserves
+    // `currentTime` / iteration / direction across `setKeyframes`, so any
+    // co-running animation (translate / scale / etc.) in this anim group
+    // stays in lockstep with the perspective-origin compositor clock.
+    if (entry && entry.animation && entry.animation.effect && resolved) {
+        const keyframeData = buildPropertyKeyframes(resolved, entry.easingKeyframes, 'linear');
+        if (keyframeData && keyframeData.keyframes) {
+            try {
+                entry.animation.effect.setKeyframes(keyframeData.keyframes);
+                motionDebug('perspectiveOriginPosition.setKeyframes', {
+                    animGroup,
+                    liveCurrentTimeAfter: entry.animation.currentTime,
+                    liveTimingDurationAfter: entry.animation.effect.getTiming().duration
+                });
+            } catch (err) {
+                reportError(`setKeyframes failed during perspectiveOriginPosition: ${err && err.message ? err.message : err}`, {
+                    source: 'animation',
+                    severity: 'warning',
+                    code: 'PERSPECTIVE_ORIGIN_POSITION_SET_KEYFRAMES_FAILED',
+                    engine: 'WAAPI',
+                    elementId: animGroup
+                });
+            }
+        }
+    }
+}
+
 function resizePerspectiveOriginAnimation(commandData, animGroup, element) {
     const elementAnims = activeAnimations.get(animGroup);
     if (!elementAnims || !elementAnims.has('perspectiveOrigin')) {
+        motionDebug('perspectiveOriginBounds.skipNoEntry', { animGroup });
         return;
     }
 
     const entry = elementAnims.get('perspectiveOrigin');
     const animation = entry.animation;
     if (!animation || !animation.effect) {
+        motionDebug('perspectiveOriginBounds.skipNoAnimation', { animGroup });
         return;
     }
 
@@ -1219,10 +1712,54 @@ function resizePerspectiveOriginAnimation(commandData, animGroup, element) {
     const oldDuration = Number(oldTiming.duration) || 0;
     const oldCurrentTime = Number(animation.currentTime) || 0;
     const oldDirection = oldTiming.direction || 'normal';
+    motionDebug('perspectiveOriginBounds.enter', {
+        animGroup,
+        incoming: {
+            start: { x: commandData.startX, y: commandData.startY },
+            end: { x: commandData.endX, y: commandData.endY },
+            current: { x: commandData.currentX, y: commandData.currentY },
+            currentTimeMs: commandData.currentTimeMs,
+            durationMs: commandData.duration,
+            unit: commandData.unit
+        },
+        live: {
+            currentTime: oldCurrentTime,
+            duration: oldDuration,
+            direction: oldDirection,
+            playState: animation.playState
+        },
+        previousResolved: entry.resolvedNonTransform
+            ? {
+                startX: entry.resolvedNonTransform.startX,
+                startY: entry.resolvedNonTransform.startY,
+                endX: entry.resolvedNonTransform.endX,
+                endY: entry.resolvedNonTransform.endY,
+                unitX: entry.resolvedNonTransform.unitX,
+                unitY: entry.resolvedNonTransform.unitY
+            }
+            : null
+    });
+
+    // Fast-path skip: when start/end/duration/unit of the perspective-origin
+    // slot are identical to what JS already has, the resize cmd is purely
+    // advisory (Elm fired because `currentTimeMs` advanced via Progress
+    // ticks during a continuous drag). Mirrors the translate handler's
+    // `isResizeGeometryUnchanged` early-return at the top of
+    // `_resizeTransformAnimationImmediate` — without it, the perspective
+    // animation gets cancel+recreate+seek-to-stale-`commandData.currentTimeMs`
+    // every flush while its sibling translate just `setKeyframes` and
+    // keeps ticking, so perspective falls 8-16 ms behind translate per
+    // flush and the dot finishes the leg before the perspective container
+    // catches up.
+    const previousResolved = entry.resolvedNonTransform || null;
+    if (isPerspectiveOriginGeometryUnchanged(commandData, previousResolved, oldDuration)) {
+        motionDebug('perspectiveOriginBounds.fastPathSkip', { animGroup });
+        return;
+    }
+
     const oldLegProgress = computeLegProgress(oldCurrentTime, oldDuration, oldDirection, animation);
 
     const unit = typeof commandData.unit === 'string' ? commandData.unit : '%';
-    const previousResolved = entry.resolvedNonTransform || null;
     const oldVisual =
         oldLegProgress !== null
             && previousResolved
@@ -1267,7 +1804,8 @@ function resizePerspectiveOriginAnimation(commandData, animGroup, element) {
         startY: Number(commandData.startY),
         endX: Number(commandData.endX),
         endY: Number(commandData.endY),
-        unit: unit
+        unitX: unit,
+        unitY: unit
     };
 
     const keyframeData = buildPropertyKeyframes(resolved, entry.easingKeyframes, 'linear');
@@ -1281,82 +1819,39 @@ function resizePerspectiveOriginAnimation(commandData, animGroup, element) {
     const wasPaused = animation.playState === 'paused';
 
     let newCurrentTime = null;
-    const elmCurrentTimeMs = commandData.currentTimeMs;
-    let useElmCurrentTime = false;
-    let suspiciousZeroReset = false;
     if (hasElmCurrentTime) {
-        const suspiciousResetFromStart = isSuspiciousResetToZero(
-            elmCurrentTimeMs,
-            oldCurrentTime,
-            {
-                x: Number(commandData.startX),
-                y: Number(commandData.startY)
-            },
-            {
-                x: Number(commandData.currentX),
-                y: Number(commandData.currentY)
-            }
-        );
-        const suspiciousResetFromContinuity = isSuspiciousZeroFromContinuity(
-            elmCurrentTimeMs,
-            oldCurrentTime,
-            oldVisual,
-            effectiveCurrentPosition
-        );
-        const suspiciousReset = suspiciousResetFromStart || suspiciousResetFromContinuity;
-        suspiciousZeroReset = suspiciousReset;
+        // Elm is the source of truth for the seek target; apply unconditionally.
+        newCurrentTime = commandData.currentTimeMs;
+    } else if (oldDuration > 0 && newDuration > 0) {
+        const oldIter = Math.floor(oldCurrentTime / oldDuration);
+        const startsReversed = oldDirection === 'alternate-reverse';
+        const isAlternate = oldDirection === 'alternate' || oldDirection === 'alternate-reverse';
+        const isReverseLeg = isAlternate ? ((oldIter % 2 === 1) !== startsReversed) : oldDirection === 'reverse';
 
-        if (!suspiciousReset) {
-            useElmCurrentTime = true;
-            newCurrentTime = elmCurrentTimeMs;
+        const xStart = Number(commandData.startX);
+        const xEnd = Number(commandData.endX);
+        const yStart = Number(commandData.startY);
+        const yEnd = Number(commandData.endY);
+
+        const spans = {
+            x: xEnd - xStart,
+            y: yEnd - yStart,
+            z: 0
+        };
+
+        const chosenAxis = chooseDominantAxis(spans);
+
+        let pWanted = 0;
+        if (chosenAxis === 'x') {
+            pWanted = (effectiveCurrentPosition.x - xStart) / spans.x;
+        } else if (chosenAxis === 'y') {
+            pWanted = (effectiveCurrentPosition.y - yStart) / spans.y;
         }
+        if (pWanted < 0) pWanted = 0;
+        if (pWanted > 1) pWanted = 1;
 
-    }
-
-    if (!useElmCurrentTime && oldDuration > 0 && newDuration > 0) {
-        if (suspiciousZeroReset) {
-            const scaledCurrentTime = scaleCurrentTimeForResize(oldCurrentTime, oldDuration, newDuration);
-            if (scaledCurrentTime !== null) {
-                newCurrentTime = scaledCurrentTime;
-            }
-        }
-
-        if (newCurrentTime !== null && suspiciousZeroReset) {
-            // Prefer proportional time preservation for suspicious reset payloads.
-            // This keeps timeline continuity even when Elm start/end bounds are
-            // rebuilt around the current point during live resizing.
-        } else {
-            const oldIter = Math.floor(oldCurrentTime / oldDuration);
-            const startsReversed = oldDirection === 'alternate-reverse';
-            const isAlternate = oldDirection === 'alternate' || oldDirection === 'alternate-reverse';
-            const isReverseLeg = isAlternate ? ((oldIter % 2 === 1) !== startsReversed) : oldDirection === 'reverse';
-
-            const xStart = Number(commandData.startX);
-            const xEnd = Number(commandData.endX);
-            const yStart = Number(commandData.startY);
-            const yEnd = Number(commandData.endY);
-
-            const spans = {
-                x: xEnd - xStart,
-                y: yEnd - yStart,
-                z: 0
-            };
-
-            const chosenAxis = chooseDominantAxis(spans);
-
-            let pWanted = 0;
-            if (chosenAxis === 'x') {
-                pWanted = (effectiveCurrentPosition.x - xStart) / spans.x;
-            } else if (chosenAxis === 'y') {
-                pWanted = (effectiveCurrentPosition.y - yStart) / spans.y;
-            }
-            if (pWanted < 0) pWanted = 0;
-            if (pWanted > 1) pWanted = 1;
-
-            const pWithinIter = isReverseLeg ? 1 - pWanted : pWanted;
-            newCurrentTime = (oldIter + pWithinIter) * newDuration;
-
-        }
+        const pWithinIter = isReverseLeg ? 1 - pWanted : pWanted;
+        newCurrentTime = (oldIter + pWithinIter) * newDuration;
     }
 
     const oldVersion = entry.version;
@@ -1408,6 +1903,21 @@ function resizePerspectiveOriginAnimation(commandData, animGroup, element) {
         newVersion,
         null
     );
+    motionDebug('perspectiveOriginBounds.recreated', {
+        animGroup,
+        seekedTo: newCurrentTime,
+        liveCurrentTimeAfter: newAnimation.currentTime,
+        liveDurationAfter: newDuration,
+        resolvedAfter: {
+            startX: resolved.startX,
+            startY: resolved.startY,
+            endX: resolved.endX,
+            endY: resolved.endY,
+            unitX: resolved.unitX,
+            unitY: resolved.unitY
+        },
+        effectivePosition: effectiveCurrentPosition
+    });
 }
 
 export function processAnimationData(animationData) {

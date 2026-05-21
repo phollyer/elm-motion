@@ -2,20 +2,20 @@ module Anim.Property.PerspectiveOrigin exposing
     ( Builder, AnimGroupName
     , initPx, initPercent
     , for, build
-    , px, percent
+    , cssUnit, cssUnitX, cssUnitY
     , from, fromXY, fromX, fromY
     , to, toXY, toX, toY
     , delay, duration, speed
     , easing
     , spring
     , clampX, clampY, unclampX, unclampY
-    , resizePolicy, bounds
+    , bounds, position
     )
 
 {-| Animate the CSS `perspective-origin` property, which controls the vanishing point
 for 3D transforms applied to a parent element.
 
-**Default unit**: `%`. Use [`px`](#px) to switch to pixel values.
+**Default unit**: `%`. Use [`cssUnit`](#cssUnit) to switch to other CSS length units.
 
 **Default value**: `50% 50%` (center of the element)
 
@@ -35,7 +35,7 @@ for 3D transforms applied to a parent element.
     myAnimation : AnimBuilder mode -> AnimBuilder mode
     myAnimation =
         PerspectiveOrigin.for "animGroupName"
-            >> PerspectiveOrigin.px
+            >> PerspectiveOrigin.cssUnit Unit.Px
             >> PerspectiveOrigin.to 200
             >> PerspectiveOrigin.duration 500
             >> PerspectiveOrigin.easing EaseInOut
@@ -65,10 +65,11 @@ will use the current end value as the start, ensuring a smooth transition betwee
 
 ## Unit
 
-Call `px` or `percent` once at the start of the pipeline to set the unit for all
-`from`, `to`, `toX`, and `toY` calls. Defaults to pixels.
+Use [`cssUnit`](#cssUnit) to select the CSS length unit (`Px`, `Percent`, `Vw`,
+`Vh`, `Rem`, `Em`) for all `from`, `to`, `toX`, and `toY` calls. Defaults to
+percentages.
 
-@docs px, percent
+@docs cssUnit, cssUnitX, cssUnitY
 
 
 ## Start Value
@@ -115,14 +116,15 @@ the pipeline. See [clampX](#clampX) for behaviour.
 Set how perspective-origin responds to viewport/container resize and provide
 new bounds during `onResize`.
 
-@docs resizePolicy, bounds
+@docs bounds, position
 
 -}
 
-import Anim.Internal.Builder as Builder exposing (AnimBuilder)
+import Anim.Internal.Builder exposing (AnimBuilder)
 import Anim.Internal.Builder.PerspectiveOrigin as PB
 import Anim.Internal.Resize.Builder as ResizeBuilder
 import Anim.Resize as Resize
+import Anim.Unit as Unit
 import Motion.Easing exposing (Easing)
 import Motion.Spring exposing (Spring)
 
@@ -167,6 +169,7 @@ initPx : AnimGroupName -> Float -> Float -> AnimBuilder mode -> AnimBuilder mode
 initPx animationKey x y animBuilder =
     animBuilder
         |> for animationKey
+        |> PB.cssUnit Unit.Px
         |> fromXY x y
         |> toXY x y
         |> build
@@ -188,7 +191,7 @@ initPercent : AnimGroupName -> Float -> Float -> AnimBuilder mode -> AnimBuilder
 initPercent animationKey x y animBuilder =
     animBuilder
         |> for animationKey
-        |> percent
+        |> PB.cssUnit Unit.Percent
         |> fromXY x y
         |> toXY x y
         |> build
@@ -229,44 +232,6 @@ so you can continue configuring other property animations or execute the animati
 build : Builder mode -> AnimBuilder mode
 build =
     PB.build
-
-
-
--- ============================================================
--- UNIT
--- ============================================================
-
-
-{-| Use pixel values for all `from`, `to`, `toX`, and `toY` calls.
-
-    myAnimation : AnimBuilder mode -> AnimBuilder mode
-    myAnimation =
-        PerspectiveOrigin.for "animGroupName"
-            >> PerspectiveOrigin.px
-            >> PerspectiveOrigin.to 200
-            >> PerspectiveOrigin.duration 500
-            >> PerspectiveOrigin.build
-
--}
-px : Builder mode -> Builder mode
-px =
-    PB.px
-
-
-{-| Use percentage values (0 - 100) for all `from`, `to`, `toX`, and `toY` calls. This is the default.
-
-    myAnimation : AnimBuilder mode -> AnimBuilder mode
-    myAnimation =
-        PerspectiveOrigin.for "animGroupName"
-            >> PerspectiveOrigin.percent
-            >> PerspectiveOrigin.to 25
-            >> PerspectiveOrigin.duration 500
-            >> PerspectiveOrigin.build
-
--}
-percent : Builder mode -> Builder mode
-percent =
-    PB.percent
 
 
 
@@ -436,6 +401,52 @@ delay =
     PB.delay
 
 
+{-| Set the length [Unit](Anim-Unit#Unit) used to render this property's values.
+
+Defaults to `Px`. Setting a relative unit (`Percent`, `Vw`, `Vh`, `Rem`, `Em`)
+makes the browser re-evaluate the rendered perspective origin against current
+layout, so the animation follows resize automatically.
+
+    import Anim.Unit as Unit
+
+    myAnimation : AnimBuilder mode -> AnimBuilder mode
+    myAnimation =
+        PerspectiveOrigin.for "animGroupName"
+            >> PerspectiveOrigin.toXY 25 75
+            >> PerspectiveOrigin.cssUnit Unit.Percent
+            >> PerspectiveOrigin.build
+
+This setting takes precedence over any [length](Anim-Engine-WAAPI#cssUnit) set
+on the engine, and over the legacy [`px`](#px) / [`percent`](#percent)
+switchers (which only choose between pixels and percentages).
+
+The `Sub` engine currently only supports `Px`; setting a non-`Px` unit on a
+perspective-origin targeted at `Sub` reports an error and falls back to `Px`.
+
+-}
+cssUnit : Unit.Unit -> Builder mode -> Builder mode
+cssUnit =
+    PB.cssUnit
+
+
+{-| Set the length [Unit](Anim-Unit#Unit) used to render the X-axis
+perspective-origin value. Overrides any unit set by [`cssUnit`](#cssUnit) or by
+the engine's `cssUnit`/`cssUnitX` setter for the X axis.
+-}
+cssUnitX : Unit.Unit -> Builder mode -> Builder mode
+cssUnitX =
+    PB.cssUnitX
+
+
+{-| Set the length [Unit](Anim-Unit#Unit) used to render the Y-axis
+perspective-origin value. Overrides any unit set by [`cssUnit`](#cssUnit) or by
+the engine's `cssUnit`/`cssUnitY` setter for the Y axis.
+-}
+cssUnitY : Unit.Unit -> Builder mode -> Builder mode
+cssUnitY =
+    PB.cssUnitY
+
+
 
 -- ============================================================
 -- BOUNDS
@@ -491,29 +502,48 @@ unclampY =
 -- ============================================================
 
 
-{-| Set the perspective-origin resize policy for an anim group.
-
-Call this once at init time. Later, when `PerspectiveOrigin.bounds` is used,
-the engine applies these rules to in-flight perspective-origin animation.
-
-If you do not set a policy, perspective-origin uses
-[`Resize.proportional`](Anim-Resize#proportional).
-
--}
-resizePolicy : AnimGroupName -> Resize.Policy -> AnimBuilder mode -> AnimBuilder mode
-resizePolicy groupName policy =
-    Builder.setPropertyResizePolicy groupName "perspectiveOrigin" policy
-
-
 {-| Perspective-origin's contribution to a resize bounds directive for the
 named anim group.
 
 Pass this to `WAAPI.onResize` or `Sub.onResize`.
 
 Leave an axis as `Nothing` to ignore it. `z` is ignored for this property.
-Set the matching policy first with [`resizePolicy`](#resizePolicy).
 
 -}
 bounds : AnimGroupName -> Resize.Bounds -> Resize.Builder -> Resize.Builder
 bounds =
     ResizeBuilder.setPerspectiveOrigin
+
+
+{-| One-shot position snap for an anim group's perspective-origin during resize.
+
+Use `position` when an axis is **not** animating (`start == end`) but its
+correct screen position depends on layout - for example, a perspective
+camera that sits at the right edge of an area needs `x = newWidth` after
+a portrait → landscape resize.
+
+    WAAPI.onResize model.animState <|
+        PerspectiveOrigin.bounds "camera"
+            { x = Nothing
+            , y = Just { min = 0, max = newHeight }
+            , z = Nothing
+            }
+            >> PerspectiveOrigin.position "camera"
+                { x = Just newWidth
+                , y = Nothing
+                }
+
+Each axis is `Just newPos` to snap that axis, or `Nothing` to leave it
+untouched. On a static axis the snap sets `start`, `end`, and `current`
+to `newPos`. On an animating axis (`start /= end`) the snap is ignored,
+because the next interpolation frame would overwrite a current-only
+change. Use [`bounds`](#bounds) (with its proportional remap) to retarget
+animating axes.
+
+Z is ignored for this property.
+
+-}
+position : AnimGroupName -> { x : Maybe Float, y : Maybe Float } -> Resize.Builder -> Resize.Builder
+position name pos =
+    ResizeBuilder.setPerspectiveOriginPosition name
+        { x = pos.x, y = pos.y, z = Nothing }

@@ -9,8 +9,10 @@ module Anim.Property.Translate exposing
     , delay, duration, speed
     , easing
     , spring
+    , cssUnit, cssUnitX, cssUnitY, cssUnitZ
     , clampX, clampY, clampZ, unclampX, unclampY, unclampZ
-    , resizePolicy, bounds
+    , bounds
+    , position
     )
 
 {-| Move elements along the X, Y, and Z axes.
@@ -122,6 +124,11 @@ so relative movements are based on the start and end values of the current/previ
 @docs spring
 
 
+## Unit
+
+@docs cssUnit, cssUnitX, cssUnitY, cssUnitZ
+
+
 ## Bounds
 
 Declare a per-axis range that every translate value on this animGroup must
@@ -140,14 +147,16 @@ landscape to portrait pulls a now-off-canvas element back into view.
 
 ## Resize
 
-@docs resizePolicy, bounds
+@docs bounds
+@docs position
 
 -}
 
-import Anim.Internal.Builder as Builder exposing (AnimBuilder)
+import Anim.Internal.Builder exposing (AnimBuilder)
 import Anim.Internal.Builder.Translate as TB
 import Anim.Internal.Resize.Builder as ResizeBuilder
 import Anim.Resize as Resize
+import Anim.Unit exposing (Unit)
 import Motion.Easing exposing (Easing)
 import Motion.Spring exposing (Spring)
 
@@ -724,6 +733,61 @@ delay =
     TB.delay
 
 
+{-| Set the length [Unit](Anim-Unit#Unit) used to render translate values for
+this property.
+
+Defaults to `Px`. Setting a relative unit (`Percent`, `Vw`, `Vh`, `Rem`, `Em`)
+makes the browser re-evaluate the rendered translation against current layout,
+so the animation follows resize automatically.
+
+    import Anim.Unit as Unit
+
+    myAnimation : AnimBuilder mode -> AnimBuilder mode
+    myAnimation =
+        Translate.for "animGroupName"
+            >> Translate.toX 50
+            >> Translate.cssUnit Unit.Percent
+            >> Translate.build
+
+This setting takes precedence over any [length](Anim-Engine-WAAPI#cssUnit) set
+on the engine.
+
+The `Sub` engine currently only supports `Px`; setting a non-`Px` unit on a
+translate targeted at `Sub` reports an error and falls back to `Px`.
+
+-}
+cssUnit : Unit -> Builder mode -> Builder mode
+cssUnit =
+    TB.cssUnit
+
+
+{-| Set the length [Unit](Anim-Unit#Unit) used to render the X-axis translate
+value for this property. Overrides any unit set by [`cssUnit`](#cssUnit) or by
+the engine's `cssUnit`/`cssUnitX` setter for the X axis.
+-}
+cssUnitX : Unit -> Builder mode -> Builder mode
+cssUnitX =
+    TB.cssUnitX
+
+
+{-| Set the length [Unit](Anim-Unit#Unit) used to render the Y-axis translate
+value for this property. Overrides any unit set by [`cssUnit`](#cssUnit) or by
+the engine's `cssUnit`/`cssUnitY` setter for the Y axis.
+-}
+cssUnitY : Unit -> Builder mode -> Builder mode
+cssUnitY =
+    TB.cssUnitY
+
+
+{-| Set the length [Unit](Anim-Unit#Unit) used to render the Z-axis translate
+value for this property. Overrides any unit set by [`cssUnit`](#cssUnit) or by
+the engine's `cssUnit`/`cssUnitZ` setter for the Z axis.
+-}
+cssUnitZ : Unit -> Builder mode -> Builder mode
+cssUnitZ =
+    TB.cssUnitZ
+
+
 
 -- ============================================================
 -- BY
@@ -940,26 +1004,6 @@ unclampZ =
 -- ============================================================
 
 
-{-| Set the translate resize policy for an anim group.
-
-Call this once at init time. Later, when `Translate.bounds` is used, the
-engine applies these rules to the in-flight translate animation.
-
-    WAAPI.init motionCmd
-        motionMsg
-        [ Translate.initX "box" 0
-            >> Translate.resizePolicy "box" Resize.retarget
-        ]
-
-If you do not set a policy, translate uses
-[`Resize.proportional`](Anim-Resize#proportional).
-
--}
-resizePolicy : AnimGroupName -> Resize.Policy -> AnimBuilder mode -> AnimBuilder mode
-resizePolicy groupName policy =
-    Builder.setPropertyResizePolicy groupName "translate" policy
-
-
 {-| Apply new translate bounds for an anim group during resize.
 
 Pass this to `WAAPI.onResize` or `Sub.onResize`:
@@ -977,10 +1021,37 @@ You can resize multiple anim groups in one call:
         Translate.bounds "box" boxBounds
             >> Translate.bounds "card" cardBounds
 
-Leave an axis as `Nothing` to ignore it. Set the matching policy first with
-[`resizePolicy`](#resizePolicy).
+Leave an axis as `Nothing` to ignore it.
 
 -}
 bounds : AnimGroupName -> Resize.Bounds -> Resize.Builder -> Resize.Builder
 bounds =
     ResizeBuilder.setTranslate
+
+
+{-| One-shot position snap for an anim group's translate property during resize.
+
+Use `position` when an axis is **not** animating (`start == end`) but its
+correct screen position depends on layout - for example, a dot that sits
+on the right edge of an area needs `x = newWidth` after a portrait →
+landscape resize.
+
+    Sub.onResize model.animState <|
+        Translate.bounds "dot" newBounds
+            >> Translate.position "dot"
+                { x = Just newAreaSize.width
+                , y = Nothing
+                , z = Nothing
+                }
+
+Each axis is `Just newPos` to snap that axis, or `Nothing` to leave it
+untouched. On a static axis the snap sets `start`, `end`, and `current`
+to `newPos`. On an animating axis (`start /= end`) the snap is ignored,
+because the next interpolation frame would overwrite a current-only
+change. Use [`bounds`](#bounds) (with its proportional remap) to
+retarget animating axes.
+
+-}
+position : AnimGroupName -> { x : Maybe Float, y : Maybe Float, z : Maybe Float } -> Resize.Builder -> Resize.Builder
+position =
+    ResizeBuilder.setTranslatePosition

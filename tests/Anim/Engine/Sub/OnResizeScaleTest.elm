@@ -3,15 +3,13 @@ module Anim.Engine.Sub.OnResizeScaleTest exposing (suite)
 {-| Tests for the scale path of `Sub.onResize`. The math reuses the same
 property-agnostic `Resize.applyAxis` helper as Translate, so this suite
 focuses on verifying the wiring (group-wide default, per-property entry,
-group-wide default override, and the strategy semantics for a settled
-one-shot scale).
+multi-axis, and the proportional remap semantics on settled scale).
 -}
 
 import Anim.Engine.Sub as Sub
 import Anim.Internal.Engine.Sub as Internal
 import Anim.Property.Scale as Scale
 import Anim.Property.Translate as Translate
-import Anim.Resize as Resize
 import Expect
 import Motion.Easing exposing (Easing(..))
 import Test exposing (Test, describe, test)
@@ -37,45 +35,6 @@ scaleX target =
         >> Scale.duration 1000
         >> Scale.easing Linear
         >> Scale.build
-
-
-{-| Initial state with clamp policy set at init time.
--}
-initialStateWithScaleClamp : Sub.AnimState
-initialStateWithScaleClamp =
-    Sub.init
-        [ Translate.initXY groupName 0 0
-        , Scale.initX groupName 1
-            >> Scale.resizePolicy groupName Resize.clamp
-        ]
-
-
-{-| Initial state with proportional policy set at init time.
--}
-initialStateWithScaleProportional : Sub.AnimState
-initialStateWithScaleProportional =
-    Sub.init
-        [ Translate.initXY groupName 0 0
-        , Scale.initX groupName 1
-            >> Scale.resizePolicy groupName Resize.proportional
-        ]
-
-
-{-| Set scale policy + apply resize bounds in one call (for tests).
--}
-scaleOnResize :
-    Sub.AnimGroupName
-    -> Resize.Policy
-    -> Resize.Bounds
-    -> Sub.AnimState
-    -> Sub.AnimState
-scaleOnResize name policy bounds animState =
-    let
-        stateWithPolicy =
-            Sub.animate animState (Scale.resizePolicy name policy)
-    in
-    Sub.onResize stateWithPolicy <|
-        Scale.bounds name bounds
 
 
 step : Float -> Sub.AnimState -> Sub.AnimState
@@ -126,29 +85,7 @@ within tolerance expected actual =
 suite : Test
 suite =
     describe "Anim.Engine.Sub.onResize - scale"
-        [ test "Clamp re-clamps a settled one-shot scale into the new range" <|
-            \_ ->
-                let
-                    state =
-                        initialState
-                            |> (\s -> Sub.animate s (scaleX 5))
-                            |> runPast 1500
-
-                    bounds =
-                        { x = Just { min = 1, max = 2 }
-                        , y = Nothing
-                        , z = Nothing
-                        }
-
-                    resized =
-                        scaleOnResize groupName Resize.clamp bounds state
-                in
-                Expect.all
-                    [ \st -> currentX st |> within 0.001 2
-                    , \st -> endX st |> within 0.001 2
-                    ]
-                    resized
-        , test "Proportional remaps a settled one-shot scale into the new range" <|
+        [ test "Proportional remaps a mid-flight one-shot scale into the new range" <|
             \_ ->
                 let
                     state =
@@ -164,7 +101,8 @@ suite =
                         }
 
                     resized =
-                        scaleOnResize groupName Resize.proportional bounds state
+                        Sub.onResize state <|
+                            Scale.bounds groupName bounds
                 in
                 -- Old leg [1..4], current=2.5, ratio=(2.5-1)/3=0.5; new leg
                 -- [0..8] -> 0 + 0.5 * 8 = 4.
@@ -181,35 +119,12 @@ suite =
                         currentX state
 
                     resized =
-                        scaleOnResize groupName
-                            Resize.proportional
-                            { x = Nothing, y = Nothing, z = Nothing }
-                            state
+                        Sub.onResize state <|
+                            Scale.bounds groupName
+                                { x = Nothing, y = Nothing, z = Nothing }
                 in
                 currentX resized |> within 0.001 before
-        , test "group-wide default is used when no per-property entry" <|
-            \_ ->
-                let
-                    state =
-                        initialState
-                            |> (\s -> Sub.animate s (scaleX 5))
-                            |> runPast 1500
-
-                    stateWithGroupPolicy =
-                        Sub.animate state (Resize.policy groupName Resize.clamp)
-
-                    bounds =
-                        { x = Just { min = 1, max = 2 }
-                        , y = Nothing
-                        , z = Nothing
-                        }
-
-                    resized =
-                        Sub.onResize stateWithGroupPolicy <|
-                            Scale.bounds groupName bounds
-                in
-                currentX resized |> within 0.001 2
-        , test "per-property policy overrides group-wide default" <|
+        , test "settled one-shot adopts the new endpoint" <|
             \_ ->
                 let
                     state =
@@ -223,47 +138,15 @@ suite =
                         , z = Nothing
                         }
 
-                    stateWithPolicies =
-                        Sub.animate state
-                            (Resize.policy groupName Resize.proportional
-                                >> Scale.resizePolicy groupName Resize.clamp
-                            )
-
                     resized =
-                        Sub.onResize stateWithPolicies <|
+                        Sub.onResize state <|
                             Scale.bounds groupName bounds
                 in
-                currentX resized |> within 0.001 2
-        , test "per-property Scale.bounds with policy override" <|
-            \_ ->
-                let
-                    state =
-                        initialState
-                            |> (\s -> Sub.animate s (scaleX 5))
-                            |> runPast 1500
-
-                    defaultBounds =
-                        { x = Just { min = 1, max = 2 }
-                        , y = Nothing
-                        , z = Nothing
-                        }
-
-                    scaleBounds =
-                        { x = Just { min = 1, max = 3 }
-                        , y = Nothing
-                        , z = Nothing
-                        }
-
-                    -- Set both group and per-property policies
-                    stateWithPolicies =
-                        Sub.animate state (Scale.resizePolicy groupName Resize.clamp)
-
-                    resized =
-                        Sub.onResize stateWithPolicies <|
-                            Resize.bounds groupName defaultBounds
-                                >> Scale.bounds groupName scaleBounds
-                in
-                currentX resized |> within 0.001 3
+                Expect.all
+                    [ \st -> currentX st |> within 0.001 2
+                    , \st -> endX st |> within 0.001 2
+                    ]
+                    resized
         , test "Translate and Scale resize independently in the same call" <|
             \_ ->
                 let
@@ -297,12 +180,8 @@ suite =
                         , z = Nothing
                         }
 
-                    -- Set both translate and scale policies
-                    stateWithPolicies =
-                        Sub.animate state (Translate.resizePolicy groupName Resize.clamp >> Scale.resizePolicy groupName Resize.clamp)
-
                     resized =
-                        Sub.onResize stateWithPolicies <|
+                        Sub.onResize state <|
                             Translate.bounds groupName translateBounds
                                 >> Scale.bounds groupName scaleBounds
 
@@ -355,12 +234,8 @@ suite =
                         , z = Nothing
                         }
 
-                    -- Set policies before applying resize bounds
-                    stateWithPolicies =
-                        Sub.animate state (Scale.resizePolicy groupName Resize.clamp >> Scale.resizePolicy secondGroup Resize.clamp)
-
                     resized =
-                        Sub.onResize stateWithPolicies <|
+                        Sub.onResize state <|
                             Scale.bounds groupName boxBounds
                                 >> Scale.bounds secondGroup cardBounds
 
@@ -379,68 +254,4 @@ suite =
                     , \_ -> cardX |> within 0.001 3
                     ]
                     ()
-        , test "policy set at init time is used during onResize" <|
-            \_ ->
-                let
-                    state =
-                        initialStateWithScaleClamp
-                            |> (\s -> Sub.animate s (scaleX 5))
-                            |> runPast 1500
-
-                    bounds =
-                        { x = Just { min = 1, max = 2 }
-                        , y = Nothing
-                        , z = Nothing
-                        }
-
-                    resized =
-                        Sub.onResize state <|
-                            Scale.bounds groupName bounds
-                in
-                -- Policy was set at init, so clamp should be applied
-                Expect.all
-                    [ \st -> currentX st |> within 0.001 2
-                    , \st -> endX st |> within 0.001 2
-                    ]
-                    resized
-        , test "proportional policy set at init remaps proportionally" <|
-            \_ ->
-                let
-                    state =
-                        initialStateWithScaleProportional
-                            |> (\s -> Sub.animate s (scaleX 4))
-                            |> step 500
-
-                    bounds =
-                        { x = Just { min = 0, max = 8 }
-                        , y = Nothing
-                        , z = Nothing
-                        }
-
-                    resized =
-                        Sub.onResize state <|
-                            Scale.bounds groupName bounds
-                in
-                -- Old leg [1..4], current=2.5, ratio=0.5; new leg [0..8] -> 4
-                currentX resized |> within 0.001 4
-        , test "group-wide policy set at init is used when no per-property entry" <|
-            \_ ->
-                let
-                    state =
-                        initialStateWithScaleClamp
-                            |> (\s -> Sub.animate s (scaleX 5))
-                            |> runPast 1500
-
-                    bounds =
-                        { x = Just { min = 1, max = 2 }
-                        , y = Nothing
-                        , z = Nothing
-                        }
-
-                    resized =
-                        Sub.onResize state <|
-                            Scale.bounds groupName bounds
-                in
-                -- Per-property policy was set at init to clamp
-                currentX resized |> within 0.001 2
         ]

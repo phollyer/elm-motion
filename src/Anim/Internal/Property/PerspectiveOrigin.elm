@@ -1,11 +1,9 @@
 module Anim.Internal.Property.PerspectiveOrigin exposing
     ( PerspectiveOrigin
-    , Unit(..)
     , default
     , distance
     , duration
     , fromRecord
-    , getUnit
     , getX
     , getY
     , interpolate
@@ -15,6 +13,7 @@ module Anim.Internal.Property.PerspectiveOrigin exposing
     , toTuple
     )
 
+import Anim.Internal.Unit as InternalUnit
 import Shared.TimeSpec as TimeSpec exposing (TimeSpec)
 
 
@@ -25,18 +24,12 @@ import Shared.TimeSpec as TimeSpec exposing (TimeSpec)
 
 
 type PerspectiveOrigin
-    = Percent { x : Float, y : Float }
-    | Px { x : Float, y : Float }
-
-
-type Unit
-    = PercentUnit
-    | PxUnit
+    = PerspectiveOrigin { x : Float, y : Float }
 
 
 default : PerspectiveOrigin
 default =
-    Percent { x = 50, y = 50 }
+    PerspectiveOrigin { x = 50, y = 50 }
 
 
 
@@ -45,64 +38,29 @@ default =
 -- ============================================================
 
 
-fromRecord : Unit -> { x : Float, y : Float } -> PerspectiveOrigin
-fromRecord unit rec =
-    case unit of
-        PercentUnit ->
-            Percent rec
-
-        PxUnit ->
-            Px rec
+fromRecord : { x : Float, y : Float } -> PerspectiveOrigin
+fromRecord =
+    PerspectiveOrigin
 
 
 toRecord : PerspectiveOrigin -> { x : Float, y : Float }
-toRecord origin =
-    case origin of
-        Percent rec ->
-            rec
-
-        Px rec ->
-            rec
+toRecord (PerspectiveOrigin rec) =
+    rec
 
 
 toTuple : PerspectiveOrigin -> ( Float, Float )
-toTuple origin =
-    case origin of
-        Percent { x, y } ->
-            ( x, y )
-
-        Px { x, y } ->
-            ( x, y )
+toTuple (PerspectiveOrigin { x, y }) =
+    ( x, y )
 
 
 getX : PerspectiveOrigin -> Float
-getX origin =
-    case origin of
-        Percent { x } ->
-            x
-
-        Px { x } ->
-            x
+getX (PerspectiveOrigin { x }) =
+    x
 
 
 getY : PerspectiveOrigin -> Float
-getY origin =
-    case origin of
-        Percent { y } ->
-            y
-
-        Px { y } ->
-            y
-
-
-getUnit : PerspectiveOrigin -> Unit
-getUnit origin =
-    case origin of
-        Percent _ ->
-            PercentUnit
-
-        Px _ ->
-            PxUnit
+getY (PerspectiveOrigin { y }) =
+    y
 
 
 
@@ -111,14 +69,13 @@ getUnit origin =
 -- ============================================================
 
 
-toCssString : PerspectiveOrigin -> String
-toCssString origin =
-    case origin of
-        Percent { x, y } ->
-            String.fromFloat x ++ "% " ++ String.fromFloat y ++ "%"
-
-        Px { x, y } ->
-            String.fromFloat x ++ "px " ++ String.fromFloat y ++ "px"
+toCssString : InternalUnit.ResolvedCssUnitAxes -> PerspectiveOrigin -> String
+toCssString axes (PerspectiveOrigin { x, y }) =
+    String.fromFloat x
+        ++ InternalUnit.toCssSuffix axes.x
+        ++ " "
+        ++ String.fromFloat y
+        ++ InternalUnit.toCssSuffix axes.y
 
 
 
@@ -163,16 +120,8 @@ interpolate t start end =
 
         ( ex, ey ) =
             toTuple end
-
-        ix =
-            sx + (ex - sx) * t
-
-        iy =
-            sy + (ey - sy) * t
     in
-    case end of
-        Percent _ ->
-            Percent { x = ix, y = iy }
-
-        Px _ ->
-            Px { x = ix, y = iy }
+    PerspectiveOrigin
+        { x = sx + (ex - sx) * t
+        , y = sy + (ey - sy) * t
+        }

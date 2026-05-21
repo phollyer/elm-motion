@@ -11,6 +11,10 @@ module Anim.Internal.Engine.WAAPI exposing
     , animate
     , anyRunning
     , attributes
+    , cssUnit
+    , cssUnitX
+    , cssUnitY
+    , cssUnitZ
     , currentTimeForResize
     , delay
     , discreteEntry
@@ -106,7 +110,9 @@ import Anim.Internal.Property.Size as Size
 import Anim.Internal.Property.Skew as Skew
 import Anim.Internal.Property.Translate as Translate
 import Anim.Internal.Resize.Builder as ResizeBuilder
+import Anim.Internal.Unit as InternalUnit
 import Anim.Resize exposing (Bounds)
+import Anim.Unit exposing (Unit(..))
 import Dict
 import Html
 import Html.Attributes
@@ -264,17 +270,8 @@ animate (AnimState state animGroups) build =
         animateCmd =
             state.commandPort <|
                 encode processedAnimGroups processed
-
-        -- Re-apply cached resize bounds against any group that was just
-        -- (re)configured. This makes a mid-animation policy swap take effect
-        -- immediately against the most recent known bounds. If `onResize`
-        -- has never fired, `lastResize` is empty and this is a no-op.
-        ( finalState, resizeCmds ) =
-            List.foldl (applyGroupResize state.lastResize)
-                ( nextState, [] )
-                (AnimGroups.names processed.groups)
     in
-    ( finalState, Cmd.batch (animateCmd :: List.reverse resizeCmds) )
+    ( nextState, animateCmd )
 
 
 setSnapshot : AnimGroups AnimGroup -> AnimGroups { propertySnapshot : PropertyBaselines }
@@ -283,14 +280,8 @@ setSnapshot anims =
 
 
 {-| Like [animate](#animate), but inherits in-flight timing for any property
-the engine currently reports as `Running` (per-property). Use when you want a
-new build to "continue" a property mid-flight instead of starting fresh — for
-example when a window resize fires repeatedly and you only want smooth
-retargeting while the box is in motion.
-
-`continueFor` reads the running set populated here; idle properties fall back
-to `for`-style snap behaviour.
-
+the engine currently reports as `Running`; idle properties fall back to
+`for`-style snap behaviour.
 -}
 retarget : AnimState msg -> (EngineBuilder -> EngineBuilder) -> ( AnimState msg, Cmd msg )
 retarget ((AnimState _ animGroups) as animState) build =
@@ -331,34 +322,27 @@ extractRunningProperties =
 -- ============================================================
 
 
-{-| Adjust the in-flight properties of every anim group named in the
-builder to new bounding ranges, using the directives composed in a
+{-| Adjust the in-flight properties of every anim group named in the builder
+to new bounding ranges, using the directives composed in a
 [`Anim.Resize.Builder`](Anim-Resize#Builder).
-
-Compatible with the Sub engine's `onResize`. For each property with a
-directive, sends an appropriate `resize` command on the WAAPI port; the
-JS side updates the running Web Animation in place (replacing keyframes,
-updating timing, and setting `currentTime`) so the element continues
-moving smoothly without restarting.
-
-Groups with no in-flight directive-targeted property emit no command.
-Multiple groups in a single call have their commands batched.
-
 -}
 onResize : AnimState msg -> (ResizeBuilder.Builder -> ResizeBuilder.Builder) -> ( AnimState msg, Cmd msg )
-onResize ((AnimState state animGroups) as animState) buildResize =
+onResize (AnimState state animGroups) buildResize =
     let
         builder =
             ResizeBuilder.build buildResize
 
+        previousBuilder =
+            state.lastResize
+
         merged =
-            ResizeBuilder.merge state.lastResize builder
+            ResizeBuilder.merge previousBuilder builder
 
         animStateWithCache =
             AnimState { state | lastResize = merged } animGroups
 
         ( finalState, accCmds ) =
-            List.foldl (applyGroupResize builder)
+            List.foldl (applyGroupResize previousBuilder builder)
                 ( animStateWithCache, [] )
                 (ResizeBuilder.groups builder)
     in
@@ -367,26 +351,40 @@ onResize ((AnimState state animGroups) as animState) buildResize =
 
 applyGroupResize :
     ResizeBuilder.Builder
+    -> ResizeBuilder.Builder
     -> AnimGroupName
     -> ( AnimState msg, List (Cmd msg) )
     -> ( AnimState msg, List (Cmd msg) )
-applyGroupResize builder animGroupName ( animState, accCmds ) =
+applyGroupResize previousBuilder builder animGroupName ( animState, accCmds ) =
     let
+        prevBoundsFor lookup =
+            lookup animGroupName previousBuilder
+                |> Maybe.map .bounds
+                |> Maybe.withDefault emptyBounds
+
         ( afterTranslate, translateCmd ) =
             case ResizeBuilder.getTranslate animGroupName builder of
                 Nothing ->
                     ( animState, Cmd.none )
 
                 Just { bounds } ->
-                    applyTranslateResize animGroupName bounds animState
+                    applyTranslateResize animGroupName (prevBoundsFor ResizeBuilder.getTranslate) bounds animState
+
+        ( afterTranslatePosition, translatePositionCmd ) =
+            case ResizeBuilder.getTranslatePosition animGroupName builder of
+                Nothing ->
+                    ( afterTranslate, Cmd.none )
+
+                Just pos ->
+                    applyTranslatePositionResize animGroupName pos afterTranslate
 
         ( afterScale, scaleCmd ) =
             case ResizeBuilder.getScale animGroupName builder of
                 Nothing ->
-                    ( afterTranslate, Cmd.none )
+                    ( afterTranslatePosition, Cmd.none )
 
                 Just { bounds } ->
-                    applyScaleResize animGroupName bounds afterTranslate
+                    applyScaleResize animGroupName (prevBoundsFor ResizeBuilder.getScale) bounds afterTranslatePosition
 
         ( afterPerspectiveOrigin, perspectiveOriginCmd ) =
             case ResizeBuilder.getPerspectiveOrigin animGroupName builder of
@@ -394,18 +392,31 @@ applyGroupResize builder animGroupName ( animState, accCmds ) =
                     ( afterScale, Cmd.none )
 
                 Just { bounds } ->
-                    applyPerspectiveOriginResize animGroupName bounds afterScale
+                    applyPerspectiveOriginResize animGroupName (prevBoundsFor ResizeBuilder.getPerspectiveOrigin) bounds afterScale
+
+        ( afterPerspectiveOriginPosition, perspectiveOriginPositionCmd ) =
+            case ResizeBuilder.getPerspectiveOriginPosition animGroupName builder of
+                Nothing ->
+                    ( afterPerspectiveOrigin, Cmd.none )
+
+                Just pos ->
+                    applyPerspectiveOriginPositionResize animGroupName pos afterPerspectiveOrigin
     in
-    ( afterPerspectiveOrigin, perspectiveOriginCmd :: scaleCmd :: translateCmd :: accCmds )
+    ( afterPerspectiveOriginPosition, perspectiveOriginPositionCmd :: perspectiveOriginCmd :: scaleCmd :: translatePositionCmd :: translateCmd :: accCmds )
 
 
-applyTranslateResize : AnimGroupName -> Bounds -> AnimState msg -> ( AnimState msg, Cmd msg )
-applyTranslateResize animGroupName bounds ((AnimState state animGroups) as animState) =
+emptyBounds : Bounds
+emptyBounds =
+    { x = Nothing, y = Nothing, z = Nothing }
+
+
+applyTranslateResize : AnimGroupName -> Bounds -> Bounds -> AnimState msg -> ( AnimState msg, Cmd msg )
+applyTranslateResize animGroupName previousBounds bounds ((AnimState state animGroups) as animState) =
     if ResizeBuilder.isEmpty bounds then
         ( animState, Cmd.none )
 
     else
-        case computeResizePayload animGroupName bounds animState of
+        case computeResizePayload animGroupName previousBounds bounds animState of
             Nothing ->
                 ( animState, Cmd.none )
 
@@ -415,11 +426,9 @@ applyTranslateResize animGroupName bounds ((AnimState state animGroups) as animS
                         AnimGroups.update animGroupName
                             (Maybe.map
                                 (AnimGroup.setSnapshot payload.newSnapshot
-                                    >> AnimGroup.setCurrentTranslateState
+                                    >> AnimGroup.setResizeState "translate"
                                         { start = payload.command.start
                                         , end = payload.command.end
-                                        , authoredStart = payload.authoredStart
-                                        , authoredEnd = payload.authoredEnd
                                         , durationMs = payload.command.durationMs
                                         , proportion = payload.proportion
                                         }
@@ -444,8 +453,180 @@ applyTranslateResize animGroupName bounds ((AnimState state animGroups) as animS
                 )
 
 
+{-| Apply a `Translate.position` directive for a group's translate.
+
+For each axis with `Just newPos`, write `newPos` into the snapshot's
+translate baseline and the builder baseline, then ship the directive
+to JS via the `translatePosition` port command. JS validates the
+static-axis precondition (running animation's `startX == endX`) and
+either snaps the live animation's keyframes + persists the inline
+transform, or no-ops the axis silently. Axes set to `Nothing` are
+left alone.
+
+Always returns a port command when any axis is `Just`; JS owns the
+static-vs-animating decision so the Elm side never has to consult
+`AnimGroup.getResizeState` or thread per-axis live state through.
+
+-}
+applyTranslatePositionResize : AnimGroupName -> ResizeBuilder.Position -> AnimState msg -> ( AnimState msg, Cmd msg )
+applyTranslatePositionResize animGroupName pos ((AnimState state animGroups) as animState) =
+    if pos.x == Nothing && pos.y == Nothing && pos.z == Nothing then
+        ( animState, Cmd.none )
+
+    else
+        case AnimGroups.get animGroupName animGroups of
+            Nothing ->
+                ( animState, Cmd.none )
+
+            Just animGroup ->
+                let
+                    snapshot =
+                        AnimGroup.getPropertySnapshot animGroup
+
+                    current =
+                        PropertyBaselines.getTranslate snapshot
+                            |> Maybe.map Translate.toRecord
+                            |> Maybe.withDefault { x = 0, y = 0, z = 0 }
+
+                    -- Snapshot follows the live current value for axes not
+                    -- being snapped, so `current` is the right default here.
+                    newSnapshotT =
+                        Translate.fromRecord
+                            { x = Maybe.withDefault current.x pos.x
+                            , y = Maybe.withDefault current.y pos.y
+                            , z = Maybe.withDefault current.z pos.z
+                            }
+
+                    -- Baseline must follow the existing baseline (the leg's
+                    -- end target, freshly updated by `Translate.bounds`) for
+                    -- axes not being snapped — not the live snapshot, which
+                    -- holds the mid-flight current value.
+                    existingBaselineT =
+                        Builder.getBaseline animGroupName state.builder
+                            |> Maybe.andThen PropertyBaselines.getTranslate
+                            |> Maybe.map Translate.toRecord
+                            |> Maybe.withDefault current
+
+                    newBaselineT =
+                        Translate.fromRecord
+                            { x = Maybe.withDefault existingBaselineT.x pos.x
+                            , y = Maybe.withDefault existingBaselineT.y pos.y
+                            , z = Maybe.withDefault existingBaselineT.z pos.z
+                            }
+
+                    updatedAnimGroups =
+                        AnimGroups.update animGroupName
+                            (Maybe.map (AnimGroup.setSnapshot (PropertyBaselines.setTranslate newSnapshotT snapshot)))
+                            animGroups
+
+                    updatedBuilder =
+                        state.builder
+                            |> Builder.updateBaselines animGroupName
+                                (PropertyBaselines.setTranslate newBaselineT)
+                in
+                ( AnimState { state | builder = updatedBuilder } updatedAnimGroups
+                , state.commandPort
+                    (encodeTranslatePosition
+                        { animGroupName = animGroupName
+                        , x = pos.x
+                        , y = pos.y
+                        , z = pos.z
+                        }
+                    )
+                )
+
+
+{-| Apply a `PerspectiveOrigin.position` directive for a group's
+perspective-origin. Mirror of [`applyTranslatePositionResize`](#applyTranslatePositionResize):
+writes per-axis `Just newPos` into the snapshot's perspective-origin baseline
+and the builder baseline, then ships a `perspectiveOriginPosition` port
+command. JS validates the static-axis precondition and either snaps the
+live perspective-origin animation's keyframes in place (no cancel, no
+seek) or no-ops the axis. Axes set to `Nothing` are left alone.
+-}
+applyPerspectiveOriginPositionResize : AnimGroupName -> ResizeBuilder.Position -> AnimState msg -> ( AnimState msg, Cmd msg )
+applyPerspectiveOriginPositionResize animGroupName pos ((AnimState state animGroups) as animState) =
+    if pos.x == Nothing && pos.y == Nothing then
+        ( animState, Cmd.none )
+
+    else
+        case AnimGroups.get animGroupName animGroups of
+            Nothing ->
+                ( animState, Cmd.none )
+
+            Just animGroup ->
+                let
+                    snapshot =
+                        AnimGroup.getPropertySnapshot animGroup
+
+                    currentPO =
+                        PropertyBaselines.getPerspectiveOrigin snapshot
+
+                    unit =
+                        Percent
+
+                    current =
+                        currentPO
+                            |> Maybe.map PerspectiveOrigin.toRecord
+                            |> Maybe.withDefault { x = 50, y = 50 }
+
+                    -- Snapshot follows the live current value for axes not
+                    -- being snapped, so `current` is the right default here.
+                    newSnapshotPO =
+                        PerspectiveOrigin.fromRecord
+                            { x = Maybe.withDefault current.x pos.x
+                            , y = Maybe.withDefault current.y pos.y
+                            }
+
+                    -- Baseline must follow the existing baseline (the leg's
+                    -- end target, freshly updated by `PerspectiveOrigin.bounds`)
+                    -- for axes not being snapped — not the live snapshot,
+                    -- which holds the mid-flight current value.
+                    existingBaselinePO =
+                        Builder.getBaseline animGroupName state.builder
+                            |> Maybe.andThen PropertyBaselines.getPerspectiveOrigin
+                            |> Maybe.map PerspectiveOrigin.toRecord
+                            |> Maybe.withDefault current
+
+                    newBaselinePO =
+                        PerspectiveOrigin.fromRecord
+                            { x = Maybe.withDefault existingBaselinePO.x pos.x
+                            , y = Maybe.withDefault existingBaselinePO.y pos.y
+                            }
+
+                    updatedAnimGroups =
+                        AnimGroups.update animGroupName
+                            (Maybe.map (AnimGroup.setSnapshot (PropertyBaselines.setPerspectiveOrigin newSnapshotPO snapshot)))
+                            animGroups
+
+                    updatedBuilder =
+                        state.builder
+                            |> Builder.updateBaselines animGroupName
+                                (PropertyBaselines.setPerspectiveOrigin newBaselinePO)
+
+                    unitStr =
+                        case unit of
+                            Percent ->
+                                "%"
+
+                            _ ->
+                                "px"
+                in
+                ( AnimState { state | builder = updatedBuilder } updatedAnimGroups
+                , state.commandPort
+                    (encodePerspectiveOriginPosition
+                        { animGroupName = animGroupName
+                        , x = pos.x
+                        , y = pos.y
+                        , unit = unitStr
+                        }
+                    )
+                )
+
+
 computeResizePayload :
     AnimGroupName
+    -> Bounds
     -> Bounds
     -> AnimState msg
     ->
@@ -463,10 +644,8 @@ computeResizePayload :
                 }
             , newSnapshot : PropertyBaselines
             , proportion : AnimGroup.AxisProportion
-            , authoredStart : { x : Float, y : Float, z : Float }
-            , authoredEnd : { x : Float, y : Float, z : Float }
             }
-computeResizePayload animGroupName bounds (AnimState state animGroups) =
+computeResizePayload animGroupName previousBounds bounds (AnimState state animGroups) =
     AnimGroups.get animGroupName animGroups
         |> Maybe.andThen
             (\animGroup ->
@@ -496,76 +675,28 @@ computeResizePayload animGroupName bounds (AnimState state animGroups) =
                                             -- to re-render the new transform inline.
                                             { start = Translate.toRecord currentTranslate
                                             , end = Translate.toRecord currentTranslate
-                                            , authoredStart = Translate.toRecord currentTranslate
-                                            , authoredEnd = Translate.toRecord currentTranslate
                                             , durationMs = 0
                                             , proportion = AnimGroup.emptyProportion
                                             }
                             in
                             let
-                                iters =
-                                    AnimGroup.getIterations animGroup
-
-                                isLooping =
-                                    case iters of
-                                        Builder.Once ->
-                                            False
-
-                                        _ ->
-                                            True
-
-                                -- Mirror the Sub engine fix: a one-shot animation that
-                                -- isn't actively progressing (completed or paused) must
-                                -- preserve the *full* new leg (`legStart` -> `legEnd`)
-                                -- rather than collapsing `start` to `current`. Collapsing
-                                -- degenerates the Proportional formula on the next resize
-                                -- (oldRange shrinks, oldCurrent sits at oldStart, the box
-                                -- maps proportionally to `b.min` and teleports back to the
-                                -- top - even on sub-pixel layout wobble). Preserving the
-                                -- full leg also keeps Reset/Restart honest because they
-                                -- re-animate from the original `legStart`.
-                                treatAsSettled =
-                                    (AnimGroup.isComplete animGroup
-                                        || AnimGroup.isPaused animGroup
-                                    )
-                                        && not isLooping
-
-                                effectiveLooping =
-                                    isLooping || treatAsSettled
-
-                                strategy =
-                                    toResizePolicy animGroupName "translate" state.builder
-
-                                -- Pinned treats the authored start/end as the
-                                -- animation's intent (clipping them into bounds
-                                -- each resize), so widening can restore the
-                                -- authored target. Adaptive policies operate on
-                                -- the live, resize-rebased leg.
-                                ( legStart, legEnd ) =
-                                    case strategy.range of
-                                        ResizeBuilder.Pinned ->
-                                            ( baseline.authoredStart, baseline.authoredEnd )
-
-                                        ResizeBuilder.Adaptive ->
-                                            ( baseline.start, baseline.end )
-
                                 oldStart =
-                                    legStart
+                                    baseline.start
 
                                 oldEnd =
-                                    legEnd
+                                    baseline.end
 
                                 oldCurrent =
                                     Translate.toRecord currentTranslate
 
                                 rx =
-                                    ResizeBuilder.applyAxis strategy effectiveLooping bounds.x oldStart.x oldEnd.x oldCurrent.x
+                                    ResizeBuilder.applyAxis previousBounds.x bounds.x oldStart.x oldEnd.x oldCurrent.x
 
                                 ry =
-                                    ResizeBuilder.applyAxis strategy effectiveLooping bounds.y oldStart.y oldEnd.y oldCurrent.y
+                                    ResizeBuilder.applyAxis previousBounds.y bounds.y oldStart.y oldEnd.y oldCurrent.y
 
                                 rz =
-                                    ResizeBuilder.applyAxis strategy effectiveLooping bounds.z oldStart.z oldEnd.z oldCurrent.z
+                                    ResizeBuilder.applyAxis previousBounds.z bounds.z oldStart.z oldEnd.z oldCurrent.z
 
                                 newStart =
                                     { x = rx.start, y = ry.start, z = rz.start }
@@ -594,29 +725,12 @@ computeResizePayload animGroupName bounds (AnimState state animGroups) =
                                     }
 
                                 newCurrent =
-                                    case strategy.current of
-                                        ResizeBuilder.Relative ->
-                                            { x = applyProportionToBounds axisProportion.x bounds.x rx.current
-                                            , y = applyProportionToBounds axisProportion.y bounds.y ry.current
-                                            , z = applyProportionToBounds axisProportion.z bounds.z rz.current
-                                            }
-
-                                        ResizeBuilder.Fixed ->
-                                            -- `applyAxis` already clamped / kept the current
-                                            -- value in the new bounds; just use it.
-                                            { x = rx.current, y = ry.current, z = rz.current }
+                                    { x = applyProportionToBounds axisProportion.x bounds.x rx.current
+                                    , y = applyProportionToBounds axisProportion.y bounds.y ry.current
+                                    , z = applyProportionToBounds axisProportion.z bounds.z rz.current
+                                    }
 
                                 newDurationMs =
-                                    -- Always use the LIVE leg distance ratio
-                                    -- (not Pinned-authored), so Pinned resize
-                                    -- duration scaling is symmetric: a shrink
-                                    -- followed by a widen restores the
-                                    -- previously-scaled duration. Feeding
-                                    -- authored extremes here while
-                                    -- `oldDurationMs` is the already-scaled
-                                    -- baseline duration would double-apply the
-                                    -- previous clip and make the animation
-                                    -- speed up on every widen.
                                     scaleDurationForResize
                                         { oldStart = baseline.start |> Translate.fromRecord
                                         , oldEnd = baseline.end |> Translate.fromRecord
@@ -627,26 +741,16 @@ computeResizePayload animGroupName bounds (AnimState state animGroups) =
 
                                 oldCurrentTimeMs =
                                     currentTimeForResize
-                                        { isLooping = isLooping
-                                        , treatAsSettled = treatAsSettled
-                                        , isComplete = AnimGroup.isComplete animGroup
-                                        , timing = strategy.timing
-                                        , durationMs = baseline.durationMs
+                                        { durationMs = baseline.durationMs
                                         , currentIteration = AnimGroup.getCurrentIteration animGroup
                                         , progress = AnimGroup.getProgress animGroup
-                                        , isCollapsedOneShot = not isLooping && translateRecordsEqual oldStart oldEnd
                                         }
 
                                 currentTimeMs =
                                     currentTimeForResize
-                                        { isLooping = isLooping
-                                        , treatAsSettled = treatAsSettled
-                                        , isComplete = AnimGroup.isComplete animGroup
-                                        , timing = strategy.timing
-                                        , durationMs = newDurationMs
+                                        { durationMs = newDurationMs
                                         , currentIteration = AnimGroup.getCurrentIteration animGroup
                                         , progress = AnimGroup.getProgress animGroup
-                                        , isCollapsedOneShot = not isLooping && translateRecordsEqual newStart newEnd
                                         }
 
                                 noChange =
@@ -677,8 +781,6 @@ computeResizePayload animGroupName bounds (AnimState state animGroups) =
                                             (Translate.fromRecord newCurrent)
                                             snapshot
                                     , proportion = axisProportion
-                                    , authoredStart = baseline.authoredStart
-                                    , authoredEnd = baseline.authoredEnd
                                     }
                         )
             )
@@ -718,18 +820,6 @@ scaleDurationForResize r =
         r.oldDurationMs
 
 
-{-| Per-axis equality on translate records. Used by `computeResizePayload`
-to short-circuit a resize that would result in no visual change (e.g. a
-viewport resize event whose new bounds match the running animation's
-current bounds). Without this guard the library would `cancel()` the
-running WAAPI animation and recreate it, which causes a visible jump on
-alternate-loop animations.
--}
-translateRecordsEqual : { x : Float, y : Float, z : Float } -> { x : Float, y : Float, z : Float } -> Bool
-translateRecordsEqual a b =
-    a.x == b.x && a.y == b.y && a.z == b.z
-
-
 resizeNoopEpsilon : Float
 resizeNoopEpsilon =
     0.001
@@ -766,54 +856,32 @@ perspectiveOriginRecordsNearlyEqual a b =
         && floatNearlyEqual a.y b.y
 
 
+{-| Compute the WAAPI `currentTime` (in ms) to seek to after a resize.
+
+Unified across looping and non-looping animations: the seek is always
+`(currentIteration + progress) * newDur`. Because [`applyAxis`](Anim-Internal-Resize-Builder#applyAxis)
+returns canonical leg geometry (`legStart -> legEnd`) regardless of
+animation kind, and [`scaleDurationForResize`](#scaleDurationForResize)
+preserves px/ms by scaling `newDur` against the full-leg distance, this
+formula lands the dot at exactly `easing(progress)` of the new leg -
+the same proportional visual position it occupied before the resize.
+
+Drag-resize (many resizes in quick succession) and orientation flip
+(one resize) drive identical math: each tick recomputes `newDur` against
+the _cached_ resize baseline (the previous tick's `(start, end)`), so
+successive ticks self-stabilize.
+
+-}
 currentTimeForResize :
-    { isLooping : Bool
-    , treatAsSettled : Bool
-    , isComplete : Bool
-    , timing : ResizeBuilder.TimingPolicy
-    , durationMs : Float
+    { durationMs : Float
     , currentIteration : Int
     , progress : Float
-    , isCollapsedOneShot : Bool
     }
     -> Maybe Float
 currentTimeForResize cfg =
-    if cfg.isCollapsedOneShot then
-        case cfg.timing of
-            ResizeBuilder.PreserveProgress ->
-                if cfg.treatAsSettled || cfg.isComplete then
-                    Just cfg.durationMs
-
-                else
-                    -- Mid-flight one-shot collapse should restart the eased
-                    -- leg from the new start instead of parking at end.
-                    Just 0
-
-            ResizeBuilder.SolveFromCurrent ->
-                -- Let JS solve from the current position even for collapsed
-                -- snapshots under retarget/clamp policies.
-                Nothing
-
-    else
-        case cfg.timing of
-            ResizeBuilder.PreserveProgress ->
-                if cfg.treatAsSettled then
-                    if cfg.isComplete then
-                        Just cfg.durationMs
-
-                    else
-                        Just (cfg.progress * cfg.durationMs)
-
-                else if cfg.isLooping then
-                    Just <|
-                        (toFloat cfg.currentIteration + cfg.progress)
-                            * cfg.durationMs
-
-                else
-                    Just (cfg.progress * cfg.durationMs)
-
-            ResizeBuilder.SolveFromCurrent ->
-                Nothing
+    Just <|
+        (toFloat cfg.currentIteration + cfg.progress)
+            * cfg.durationMs
 
 
 {-| Derive forward-axis position-as-proportion (0 = at `b.min`, 1 = at
@@ -894,7 +962,7 @@ resolveResizeBaseline :
     -> Builder.AnimBuilder mode
     -> Maybe ResizeAxisState
 resolveResizeBaseline animGroupName animGroup builder =
-    case AnimGroup.getCurrentTranslateState animGroup of
+    case AnimGroup.getResizeState "translate" animGroup of
         Just cached ->
             rejectDegenerateBaseline cached
 
@@ -913,8 +981,6 @@ resolveResizeBaseline animGroupName animGroup builder =
                         in
                         { start = startR
                         , end = endR
-                        , authoredStart = startR
-                        , authoredEnd = endR
                         , durationMs = toFloat cfg.duration
                         , proportion = AnimGroup.emptyProportion
                         }
@@ -959,39 +1025,50 @@ rejectDegenerateBaseline baseline =
         Just baseline
 
 
-{-| Rewrite a `ProcessedTranslateConfig` so its `start`/`end`/`duration`
-match the cached, resize-aware translate state captured by the most recent
-`onResize`. Non-translate properties pass through unchanged. Used by
+{-| Dispatch a property name to its `rebaseXConfig` function for the
+animate-restart flow. Returns `Nothing` for properties that have no
+runtime resize-aware state to rebase against. To make a new property
+resize-aware, add a `rebaseXConfig` for it and an arm here.
+-}
+rebaseFor :
+    String
+    ->
+        Maybe
+            (ResizeAxisState
+             -> Builder.ProcessedPropertyConfig
+             -> Builder.ProcessedPropertyConfig
+            )
+rebaseFor propName =
+    case propName of
+        "translate" ->
+            Just rebaseTranslateConfig
+
+        "scale" ->
+            Just rebaseScaleConfig
+
+        "perspectiveOrigin" ->
+            Just rebasePerspectiveOriginConfig
+
+        _ ->
+            Nothing
+
+
+{-| Replace a translate config's `start`/`end`/`duration` with the
+post-resize values cached on the group. Called by the animate flow's
 `restart` so a Restart triggered after a resize re-animates within the
 current bounds rather than the original (pre-resize) ones.
-
-Under the `Pinned` range policy the restart targets the originally-authored
-end (clipped into current bounds at the next resize) so widening always
-restores the authored intent; Adaptive policies restart toward the live,
-resize-rebased end.
-
 -}
 rebaseTranslateConfig :
-    ResizeBuilder.Policy
-    -> ResizeAxisState
+    ResizeAxisState
     -> Builder.ProcessedPropertyConfig
     -> Builder.ProcessedPropertyConfig
-rebaseTranslateConfig policy cached config =
+rebaseTranslateConfig cached config =
     case config of
         Builder.ProcessedTranslateConfig cfg ->
-            let
-                ( legStart, legEnd ) =
-                    case policy.range of
-                        ResizeBuilder.Pinned ->
-                            ( cached.authoredStart, cached.authoredEnd )
-
-                        ResizeBuilder.Adaptive ->
-                            ( cached.start, cached.end )
-            in
             Builder.ProcessedTranslateConfig
                 { cfg
-                    | start = Just (Translate.fromRecord legStart)
-                    , end = Translate.fromRecord legEnd
+                    | start = Just (Translate.fromRecord cached.start)
+                    , end = Translate.fromRecord cached.end
                     , duration = round cached.durationMs
                 }
 
@@ -999,13 +1076,13 @@ rebaseTranslateConfig policy cached config =
             config
 
 
-applyScaleResize : AnimGroupName -> Bounds -> AnimState msg -> ( AnimState msg, Cmd msg )
-applyScaleResize animGroupName bounds ((AnimState state animGroups) as animState) =
+applyScaleResize : AnimGroupName -> Bounds -> Bounds -> AnimState msg -> ( AnimState msg, Cmd msg )
+applyScaleResize animGroupName previousBounds bounds ((AnimState state animGroups) as animState) =
     if ResizeBuilder.isEmpty bounds then
         ( animState, Cmd.none )
 
     else
-        case computeScaleResizePayload animGroupName bounds animState of
+        case computeScaleResizePayload animGroupName previousBounds bounds animState of
             Nothing ->
                 ( animState, Cmd.none )
 
@@ -1015,11 +1092,9 @@ applyScaleResize animGroupName bounds ((AnimState state animGroups) as animState
                         AnimGroups.update animGroupName
                             (Maybe.map
                                 (AnimGroup.setSnapshot payload.newSnapshot
-                                    >> AnimGroup.setCurrentScaleState
+                                    >> AnimGroup.setResizeState "scale"
                                         { start = payload.command.start
                                         , end = payload.command.end
-                                        , authoredStart = payload.authoredStart
-                                        , authoredEnd = payload.authoredEnd
                                         , durationMs = payload.command.durationMs
                                         , proportion = payload.proportion
                                         }
@@ -1045,6 +1120,7 @@ applyScaleResize animGroupName bounds ((AnimState state animGroups) as animState
 computeScaleResizePayload :
     AnimGroupName
     -> Bounds
+    -> Bounds
     -> AnimState msg
     ->
         Maybe
@@ -1061,10 +1137,8 @@ computeScaleResizePayload :
                 }
             , newSnapshot : PropertyBaselines
             , proportion : AnimGroup.AxisProportion
-            , authoredStart : { x : Float, y : Float, z : Float }
-            , authoredEnd : { x : Float, y : Float, z : Float }
             }
-computeScaleResizePayload animGroupName bounds (AnimState state animGroups) =
+computeScaleResizePayload animGroupName previousBounds bounds (AnimState state animGroups) =
     AnimGroups.get animGroupName animGroups
         |> Maybe.andThen
             (\animGroup ->
@@ -1094,63 +1168,28 @@ computeScaleResizePayload animGroupName bounds (AnimState state animGroups) =
                                             -- re-render the new transform inline.
                                             { start = Scale.toRecord currentScale
                                             , end = Scale.toRecord currentScale
-                                            , authoredStart = Scale.toRecord currentScale
-                                            , authoredEnd = Scale.toRecord currentScale
                                             , durationMs = 0
                                             , proportion = AnimGroup.emptyProportion
                                             }
                             in
                             let
-                                iters =
-                                    AnimGroup.getIterations animGroup
-
-                                isLooping =
-                                    case iters of
-                                        Builder.Once ->
-                                            False
-
-                                        _ ->
-                                            True
-
-                                treatAsSettled =
-                                    (AnimGroup.isComplete animGroup
-                                        || AnimGroup.isPaused animGroup
-                                    )
-                                        && not isLooping
-
-                                effectiveLooping =
-                                    isLooping || treatAsSettled
-
-                                strategy =
-                                    toResizePolicy animGroupName "scale" state.builder
-
-                                -- See `computeResizePayload`: Pinned restores
-                                -- authored extremes when bounds widen.
-                                ( legStart, legEnd ) =
-                                    case strategy.range of
-                                        ResizeBuilder.Pinned ->
-                                            ( baseline.authoredStart, baseline.authoredEnd )
-
-                                        ResizeBuilder.Adaptive ->
-                                            ( baseline.start, baseline.end )
-
                                 oldStart =
-                                    legStart
+                                    baseline.start
 
                                 oldEnd =
-                                    legEnd
+                                    baseline.end
 
                                 oldCurrent =
                                     Scale.toRecord currentScale
 
                                 rx =
-                                    ResizeBuilder.applyAxis strategy effectiveLooping bounds.x oldStart.x oldEnd.x oldCurrent.x
+                                    ResizeBuilder.applyAxis previousBounds.x bounds.x oldStart.x oldEnd.x oldCurrent.x
 
                                 ry =
-                                    ResizeBuilder.applyAxis strategy effectiveLooping bounds.y oldStart.y oldEnd.y oldCurrent.y
+                                    ResizeBuilder.applyAxis previousBounds.y bounds.y oldStart.y oldEnd.y oldCurrent.y
 
                                 rz =
-                                    ResizeBuilder.applyAxis strategy effectiveLooping bounds.z oldStart.z oldEnd.z oldCurrent.z
+                                    ResizeBuilder.applyAxis previousBounds.z bounds.z oldStart.z oldEnd.z oldCurrent.z
 
                                 newStart =
                                     { x = rx.start, y = ry.start, z = rz.start }
@@ -1176,21 +1215,12 @@ computeScaleResizePayload animGroupName bounds (AnimState state animGroups) =
                                     }
 
                                 newCurrent =
-                                    case strategy.current of
-                                        ResizeBuilder.Relative ->
-                                            { x = applyProportionToBounds axisProportion.x bounds.x rx.current
-                                            , y = applyProportionToBounds axisProportion.y bounds.y ry.current
-                                            , z = applyProportionToBounds axisProportion.z bounds.z rz.current
-                                            }
-
-                                        ResizeBuilder.Fixed ->
-                                            { x = rx.current, y = ry.current, z = rz.current }
+                                    { x = applyProportionToBounds axisProportion.x bounds.x rx.current
+                                    , y = applyProportionToBounds axisProportion.y bounds.y ry.current
+                                    , z = applyProportionToBounds axisProportion.z bounds.z rz.current
+                                    }
 
                                 newDurationMs =
-                                    -- See translate's `newDurationMs` note: feed
-                                    -- LIVE leg distances so Pinned resize
-                                    -- scaling is symmetric across shrink/widen
-                                    -- cycles.
                                     scaleScaleDurationForResize
                                         { oldStart = baseline.start |> Scale.fromRecord
                                         , oldEnd = baseline.end |> Scale.fromRecord
@@ -1201,26 +1231,16 @@ computeScaleResizePayload animGroupName bounds (AnimState state animGroups) =
 
                                 oldCurrentTimeMs =
                                     currentTimeForResize
-                                        { isLooping = isLooping
-                                        , treatAsSettled = treatAsSettled
-                                        , isComplete = AnimGroup.isComplete animGroup
-                                        , timing = strategy.timing
-                                        , durationMs = baseline.durationMs
+                                        { durationMs = baseline.durationMs
                                         , currentIteration = AnimGroup.getCurrentIteration animGroup
                                         , progress = AnimGroup.getProgress animGroup
-                                        , isCollapsedOneShot = not isLooping && translateRecordsEqual oldStart oldEnd
                                         }
 
                                 currentTimeMs =
                                     currentTimeForResize
-                                        { isLooping = isLooping
-                                        , treatAsSettled = treatAsSettled
-                                        , isComplete = AnimGroup.isComplete animGroup
-                                        , timing = strategy.timing
-                                        , durationMs = newDurationMs
+                                        { durationMs = newDurationMs
                                         , currentIteration = AnimGroup.getCurrentIteration animGroup
                                         , progress = AnimGroup.getProgress animGroup
-                                        , isCollapsedOneShot = not isLooping && translateRecordsEqual newStart newEnd
                                         }
 
                                 noChange =
@@ -1251,16 +1271,9 @@ computeScaleResizePayload animGroupName bounds (AnimState state animGroups) =
                                             (Scale.fromRecord newCurrent)
                                             snapshot
                                     , proportion = axisProportion
-                                    , authoredStart = baseline.authoredStart
-                                    , authoredEnd = baseline.authoredEnd
                                     }
                         )
             )
-
-
-toResizePolicy : AnimGroupName -> String -> EngineBuilder -> ResizeBuilder.Policy
-toResizePolicy groupName propertyKey builder =
-    Builder.getResizePolicy groupName propertyKey builder
 
 
 {-| Scale's mirror of [`scaleDurationForResize`](#scaleDurationForResize).
@@ -1294,7 +1307,7 @@ resolveScaleResizeBaseline :
     -> Builder.AnimBuilder mode
     -> Maybe ResizeAxisState
 resolveScaleResizeBaseline animGroupName animGroup builder =
-    case AnimGroup.getCurrentScaleState animGroup of
+    case AnimGroup.getResizeState "scale" animGroup of
         Just cached ->
             rejectDegenerateBaseline cached
 
@@ -1313,8 +1326,6 @@ resolveScaleResizeBaseline animGroupName animGroup builder =
                         in
                         { start = startR
                         , end = endR
-                        , authoredStart = startR
-                        , authoredEnd = endR
                         , durationMs = toFloat cfg.duration
                         , proportion = AnimGroup.emptyProportion
                         }
@@ -1345,26 +1356,16 @@ findCurrentScale animGroupName builder =
 {-| Scale's mirror of [`rebaseTranslateConfig`](#rebaseTranslateConfig).
 -}
 rebaseScaleConfig :
-    ResizeBuilder.Policy
-    -> ResizeAxisState
+    ResizeAxisState
     -> Builder.ProcessedPropertyConfig
     -> Builder.ProcessedPropertyConfig
-rebaseScaleConfig policy cached config =
+rebaseScaleConfig cached config =
     case config of
         Builder.ProcessedScaleConfig cfg ->
-            let
-                ( legStart, legEnd ) =
-                    case policy.range of
-                        ResizeBuilder.Pinned ->
-                            ( cached.authoredStart, cached.authoredEnd )
-
-                        ResizeBuilder.Adaptive ->
-                            ( cached.start, cached.end )
-            in
             Builder.ProcessedScaleConfig
                 { cfg
-                    | start = Just (Scale.fromRecord legStart)
-                    , end = Scale.fromRecord legEnd
+                    | start = Just (Scale.fromRecord cached.start)
+                    , end = Scale.fromRecord cached.end
                     , duration = round cached.durationMs
                 }
 
@@ -1372,13 +1373,13 @@ rebaseScaleConfig policy cached config =
             config
 
 
-applyPerspectiveOriginResize : AnimGroupName -> Bounds -> AnimState msg -> ( AnimState msg, Cmd msg )
-applyPerspectiveOriginResize animGroupName bounds ((AnimState state animGroups) as animState) =
+applyPerspectiveOriginResize : AnimGroupName -> Bounds -> Bounds -> AnimState msg -> ( AnimState msg, Cmd msg )
+applyPerspectiveOriginResize animGroupName previousBounds bounds ((AnimState state animGroups) as animState) =
     if ResizeBuilder.isEmpty bounds then
         ( animState, Cmd.none )
 
     else
-        case computePerspectiveOriginResizePayload animGroupName bounds animState of
+        case computePerspectiveOriginResizePayload animGroupName previousBounds bounds animState of
             Nothing ->
                 ( animState, Cmd.none )
 
@@ -1388,11 +1389,9 @@ applyPerspectiveOriginResize animGroupName bounds ((AnimState state animGroups) 
                         AnimGroups.update animGroupName
                             (Maybe.map
                                 (AnimGroup.setSnapshot payload.newSnapshot
-                                    >> AnimGroup.setCurrentPerspectiveOriginState
+                                    >> AnimGroup.setResizeState "perspectiveOrigin"
                                         { start = payload.command.start
                                         , end = payload.command.end
-                                        , authoredStart = payload.authoredStart
-                                        , authoredEnd = payload.authoredEnd
                                         , durationMs = payload.command.durationMs
                                         , proportion = payload.proportion
                                         }
@@ -1413,6 +1412,7 @@ applyPerspectiveOriginResize animGroupName bounds ((AnimState state animGroups) 
 computePerspectiveOriginResizePayload :
     AnimGroupName
     -> Bounds
+    -> Bounds
     -> AnimState msg
     ->
         Maybe
@@ -1430,10 +1430,8 @@ computePerspectiveOriginResizePayload :
             , newSnapshot : PropertyBaselines
             , newBaseline : PerspectiveOrigin.PerspectiveOrigin
             , proportion : AnimGroup.AxisProportion
-            , authoredStart : { x : Float, y : Float, z : Float }
-            , authoredEnd : { x : Float, y : Float, z : Float }
             }
-computePerspectiveOriginResizePayload animGroupName bounds (AnimState state animGroups) =
+computePerspectiveOriginResizePayload animGroupName previousBounds bounds (AnimState state animGroups) =
     AnimGroups.get animGroupName animGroups
         |> Maybe.andThen
             (\animGroup ->
@@ -1468,60 +1466,25 @@ computePerspectiveOriginResizePayload animGroupName bounds (AnimState state anim
                                              in
                                              { start = cur3d
                                              , end = cur3d
-                                             , authoredStart = cur3d
-                                             , authoredEnd = cur3d
                                              , durationMs = 0
                                              , proportion = AnimGroup.emptyProportion
                                              }
                                             )
 
-                                iters =
-                                    AnimGroup.getIterations animGroup
-
-                                isLooping =
-                                    case iters of
-                                        Builder.Once ->
-                                            False
-
-                                        _ ->
-                                            True
-
-                                treatAsSettled =
-                                    (AnimGroup.isComplete animGroup
-                                        || AnimGroup.isPaused animGroup
-                                    )
-                                        && not isLooping
-
-                                effectiveLooping =
-                                    isLooping || treatAsSettled
-
-                                strategy =
-                                    toResizePolicy animGroupName "perspectiveOrigin" state.builder
-
-                                -- See `computeResizePayload`: Pinned restores
-                                -- authored extremes when bounds widen.
-                                ( legStart, legEnd ) =
-                                    case strategy.range of
-                                        ResizeBuilder.Pinned ->
-                                            ( baseline.authoredStart, baseline.authoredEnd )
-
-                                        ResizeBuilder.Adaptive ->
-                                            ( baseline.start, baseline.end )
-
                                 oldStart =
-                                    { x = legStart.x, y = legStart.y }
+                                    { x = baseline.start.x, y = baseline.start.y }
 
                                 oldEnd =
-                                    { x = legEnd.x, y = legEnd.y }
+                                    { x = baseline.end.x, y = baseline.end.y }
 
                                 oldCurrent =
                                     PerspectiveOrigin.toRecord currentPerspectiveOrigin
 
                                 rx =
-                                    ResizeBuilder.applyAxis strategy effectiveLooping bounds.x oldStart.x oldEnd.x oldCurrent.x
+                                    ResizeBuilder.applyAxis previousBounds.x bounds.x oldStart.x oldEnd.x oldCurrent.x
 
                                 ry =
-                                    ResizeBuilder.applyAxis strategy effectiveLooping bounds.y oldStart.y oldEnd.y oldCurrent.y
+                                    ResizeBuilder.applyAxis previousBounds.y bounds.y oldStart.y oldEnd.y oldCurrent.y
 
                                 newStart2d =
                                     { x = rx.start, y = ry.start }
@@ -1545,58 +1508,40 @@ computePerspectiveOriginResizePayload animGroupName bounds (AnimState state anim
                                     }
 
                                 newCurrent2d =
-                                    case strategy.current of
-                                        ResizeBuilder.Relative ->
-                                            { x = applyProportionToBounds axisProportion.x bounds.x rx.current
-                                            , y = applyProportionToBounds axisProportion.y bounds.y ry.current
-                                            }
-
-                                        ResizeBuilder.Fixed ->
-                                            { x = rx.current, y = ry.current }
+                                    { x = applyProportionToBounds axisProportion.x bounds.x rx.current
+                                    , y = applyProportionToBounds axisProportion.y bounds.y ry.current
+                                    }
 
                                 unit =
-                                    PerspectiveOrigin.getUnit currentPerspectiveOrigin
+                                    Percent
 
                                 liveOldStart2d =
-                                    { x = baseline.start.x, y = baseline.start.y }
+                                    oldStart
 
                                 liveOldEnd2d =
-                                    { x = baseline.end.x, y = baseline.end.y }
+                                    oldEnd
 
                                 newDurationMs =
-                                    -- Feed LIVE leg distances (not the policy-selected ones)
-                                    -- so Pinned resize scaling is symmetric across shrink/widen
-                                    -- cycles — matches translate/scale.
                                     scalePerspectiveOriginDurationForResize
-                                        { oldStart = PerspectiveOrigin.fromRecord unit liveOldStart2d
-                                        , oldEnd = PerspectiveOrigin.fromRecord unit liveOldEnd2d
-                                        , newStart = PerspectiveOrigin.fromRecord unit newStart2d
-                                        , newEnd = PerspectiveOrigin.fromRecord unit newEnd2d
+                                        { oldStart = PerspectiveOrigin.fromRecord liveOldStart2d
+                                        , oldEnd = PerspectiveOrigin.fromRecord liveOldEnd2d
+                                        , newStart = PerspectiveOrigin.fromRecord newStart2d
+                                        , newEnd = PerspectiveOrigin.fromRecord newEnd2d
                                         , oldDurationMs = baseline.durationMs
                                         }
 
                                 oldCurrentTimeMs =
                                     currentTimeForResize
-                                        { isLooping = isLooping
-                                        , treatAsSettled = treatAsSettled
-                                        , isComplete = AnimGroup.isComplete animGroup
-                                        , timing = strategy.timing
-                                        , durationMs = baseline.durationMs
+                                        { durationMs = baseline.durationMs
                                         , currentIteration = AnimGroup.getCurrentIteration animGroup
                                         , progress = AnimGroup.getProgress animGroup
-                                        , isCollapsedOneShot = not isLooping && perspectiveOriginRecordsEqual liveOldStart2d liveOldEnd2d
                                         }
 
                                 currentTimeMs =
                                     currentTimeForResize
-                                        { isLooping = isLooping
-                                        , treatAsSettled = treatAsSettled
-                                        , isComplete = AnimGroup.isComplete animGroup
-                                        , timing = strategy.timing
-                                        , durationMs = newDurationMs
+                                        { durationMs = newDurationMs
                                         , currentIteration = AnimGroup.getCurrentIteration animGroup
                                         , progress = AnimGroup.getProgress animGroup
-                                        , isCollapsedOneShot = not isLooping && perspectiveOriginRecordsEqual newStart2d newEnd2d
                                         }
 
                                 noChange =
@@ -1608,10 +1553,10 @@ computePerspectiveOriginResizePayload animGroupName bounds (AnimState state anim
 
                                 unitStr =
                                     case unit of
-                                        PerspectiveOrigin.PercentUnit ->
+                                        Percent ->
                                             "%"
 
-                                        PerspectiveOrigin.PxUnit ->
+                                        _ ->
                                             "px"
                             in
                             if noChange then
@@ -1632,12 +1577,10 @@ computePerspectiveOriginResizePayload animGroupName bounds (AnimState state anim
                                         }
                                     , newSnapshot =
                                         PropertyBaselines.setPerspectiveOrigin
-                                            (PerspectiveOrigin.fromRecord unit newCurrent2d)
+                                            (PerspectiveOrigin.fromRecord newCurrent2d)
                                             snapshot
-                                    , newBaseline = PerspectiveOrigin.fromRecord unit newEnd2d
+                                    , newBaseline = PerspectiveOrigin.fromRecord newEnd2d
                                     , proportion = axisProportion
-                                    , authoredStart = baseline.authoredStart
-                                    , authoredEnd = baseline.authoredEnd
                                     }
                         )
             )
@@ -1645,9 +1588,8 @@ computePerspectiveOriginResizePayload animGroupName bounds (AnimState state anim
 
 {-| Like [`resolveScaleResizeBaseline`](#resolveScaleResizeBaseline) for
 perspective origin. Prefers the AnimGroup's cached `currentPerspectiveOriginState`
-so authored bounds (Pinned policy) and live bounds (Adaptive policy)
-persist across multiple resizes; otherwise synthesizes a baseline from
-the most recent `animate` config.
+so resize-rebased bounds persist across multiple resizes; otherwise
+synthesizes a baseline from the most recent `animate` config.
 -}
 resolvePerspectiveOriginResizeBaseline :
     AnimGroupName
@@ -1655,7 +1597,7 @@ resolvePerspectiveOriginResizeBaseline :
     -> Builder.AnimBuilder mode
     -> Maybe ResizeAxisState
 resolvePerspectiveOriginResizeBaseline animGroupName animGroup builder =
-    case AnimGroup.getCurrentPerspectiveOriginState animGroup of
+    case AnimGroup.getResizeState "perspectiveOrigin" animGroup of
         Just cached ->
             rejectDegenerateBaseline cached
 
@@ -1672,8 +1614,6 @@ resolvePerspectiveOriginResizeBaseline animGroupName animGroup builder =
                         in
                         { start = startR
                         , end = endR
-                        , authoredStart = startR
-                        , authoredEnd = endR
                         , durationMs = cfg.durationMs
                         , proportion = AnimGroup.emptyProportion
                         }
@@ -1684,29 +1624,16 @@ resolvePerspectiveOriginResizeBaseline animGroupName animGroup builder =
 {-| Perspective origin's mirror of [`rebaseTranslateConfig`](#rebaseTranslateConfig).
 -}
 rebasePerspectiveOriginConfig :
-    ResizeBuilder.Policy
-    -> ResizeAxisState
+    ResizeAxisState
     -> Builder.ProcessedPropertyConfig
     -> Builder.ProcessedPropertyConfig
-rebasePerspectiveOriginConfig policy cached config =
+rebasePerspectiveOriginConfig cached config =
     case config of
         Builder.ProcessedPerspectiveOriginConfig cfg ->
-            let
-                ( legStart, legEnd ) =
-                    case policy.range of
-                        ResizeBuilder.Pinned ->
-                            ( cached.authoredStart, cached.authoredEnd )
-
-                        ResizeBuilder.Adaptive ->
-                            ( cached.start, cached.end )
-
-                unit =
-                    PerspectiveOrigin.getUnit cfg.end
-            in
             Builder.ProcessedPerspectiveOriginConfig
                 { cfg
-                    | start = Just (PerspectiveOrigin.fromRecord unit { x = legStart.x, y = legStart.y })
-                    , end = PerspectiveOrigin.fromRecord unit { x = legEnd.x, y = legEnd.y }
+                    | start = Just (PerspectiveOrigin.fromRecord { x = cached.start.x, y = cached.start.y })
+                    , end = PerspectiveOrigin.fromRecord { x = cached.end.x, y = cached.end.y }
                     , duration = round cached.durationMs
                 }
 
@@ -1765,11 +1692,6 @@ scalePerspectiveOriginDurationForResize r =
 
     else
         r.oldDurationMs
-
-
-perspectiveOriginRecordsEqual : { x : Float, y : Float } -> { x : Float, y : Float } -> Bool
-perspectiveOriginRecordsEqual a b =
-    a.x == b.x && a.y == b.y
 
 
 
@@ -2109,7 +2031,7 @@ avoiding a flash of unstyled content before JavaScript processes the port comman
 
 -}
 attributes : AnimGroupName -> AnimState msg -> List (Html.Attribute msg)
-attributes animGroupName (AnimState _ data) =
+attributes animGroupName (AnimState state data) =
     let
         dataAttr =
             Html.Attributes.attribute "data-anim-target" animGroupName
@@ -2146,7 +2068,7 @@ attributes animGroupName (AnimState _ data) =
                             Nothing
                         , if isElmOwned "perspectiveOrigin" then
                             PropertyBaselines.getPerspectiveOrigin snapshot
-                                |> Maybe.map (\po -> Html.Attributes.style "perspective-origin" (PerspectiveOrigin.toCssString po))
+                                |> Maybe.map (\po -> Html.Attributes.style "perspective-origin" (PerspectiveOrigin.toCssString { x = Percent, y = Percent, z = Percent } po))
 
                           else
                             Nothing
@@ -2157,8 +2079,8 @@ attributes animGroupName (AnimState _ data) =
                         PropertyBaselines.getSize snapshot
                             |> Maybe.map
                                 (\s ->
-                                    [ Html.Attributes.style "width" (Size.widthToCssString s)
-                                    , Html.Attributes.style "height" (Size.heightToCssString s)
+                                    [ Html.Attributes.style "width" (Size.widthToCssString { x = InternalUnit.default, y = InternalUnit.default, z = InternalUnit.default } s)
+                                    , Html.Attributes.style "height" (Size.heightToCssString { x = InternalUnit.default, y = InternalUnit.default, z = InternalUnit.default } s)
                                     ]
                                 )
                             |> Maybe.withDefault []
@@ -2195,7 +2117,13 @@ attributes animGroupName (AnimState _ data) =
                 -- so re-emitting from the snapshot never produces a
                 -- visible snap.
                 transformStyles =
-                    buildTransformStyles (AnimGroup.getTransformOrder animGroup) snapshot
+                    buildTransformStyles
+                        (AnimGroup.getTransformOrder animGroup)
+                        snapshot
+                        (findCurrentTranslate animGroupName state.builder
+                            |> Maybe.map .cssUnit
+                            |> Maybe.withDefault { x = InternalUnit.default, y = InternalUnit.default, z = InternalUnit.default }
+                        )
             in
             dataAttr
                 :: transformStyles
@@ -2207,12 +2135,12 @@ attributes animGroupName (AnimState _ data) =
                 ++ discreteExitStyles animGroup
 
 
-buildTransformStyles : List TransformProperty -> PropertyBaselines -> List (Html.Attribute msg)
-buildTransformStyles order snapshot =
+buildTransformStyles : List TransformProperty -> PropertyBaselines -> InternalUnit.ResolvedCssUnitAxes -> List (Html.Attribute msg)
+buildTransformStyles order snapshot translateLength =
     let
         translatePart =
             PropertyBaselines.getTranslate snapshot
-                |> Maybe.map Translate.toCssString
+                |> Maybe.map (Translate.toCssString translateLength)
                 |> Maybe.withDefault ""
 
         rotatePart =
@@ -2334,6 +2262,32 @@ speed =
 easing : Easing -> Builder.AnimBuilder mode -> Builder.AnimBuilder mode
 easing =
     Builder.easing
+
+
+
+-- ============================================================
+-- UNIT
+-- ============================================================
+
+
+cssUnit : Unit -> Builder.AnimBuilder mode -> Builder.AnimBuilder mode
+cssUnit =
+    Builder.cssUnit
+
+
+cssUnitX : Unit -> Builder.AnimBuilder mode -> Builder.AnimBuilder mode
+cssUnitX =
+    Builder.cssUnitX
+
+
+cssUnitY : Unit -> Builder.AnimBuilder mode -> Builder.AnimBuilder mode
+cssUnitY =
+    Builder.cssUnitY
+
+
+cssUnitZ : Unit -> Builder.AnimBuilder mode -> Builder.AnimBuilder mode
+cssUnitZ =
+    Builder.cssUnitZ
 
 
 
@@ -2534,65 +2488,31 @@ restartSingleKey resolvedKey (AnimState state animGroups) =
                 Just animGroup ->
                     -- Update existing entry, incrementing versions for restarted properties
                     let
-                        -- A previous resize may have shifted the translate
-                        -- bounds since the original `animate` call. The
-                        -- cached translate state is the resize-aware truth
-                        -- (computed via `Resize.applyAxis` and stored on the
-                        -- group); use it to override the stale `start`/`end`/
-                        -- `duration` baked into `processedData`, otherwise
-                        -- Restart re-animates to the original (pre-resize)
-                        -- target.
-                        cachedTranslate =
-                            AnimGroup.getCurrentTranslateState animGroup
-
-                        cachedScale =
-                            AnimGroup.getCurrentScaleState animGroup
-
-                        cachedPerspectiveOrigin =
-                            AnimGroup.getCurrentPerspectiveOriginState animGroup
-
+                        -- A previous resize may have shifted resize-aware
+                        -- property bounds since the original `animate` call.
+                        -- The cached state per property is the resize-aware
+                        -- truth (computed via `Resize.applyAxis` and stored
+                        -- on the group); use it to override the stale
+                        -- `start`/`end`/`duration` baked into `processedData`,
+                        -- otherwise Restart re-animates to the original
+                        -- (pre-resize) target. Dispatch by property name —
+                        -- adding a new resize-aware property only requires
+                        -- extending `rebaseFor` below.
                         rebasedProcessedData =
-                            let
-                                translatePolicy =
-                                    toResizePolicy resolvedKey "translate" state.builder
-
-                                scalePolicy =
-                                    toResizePolicy resolvedKey "scale" state.builder
-
-                                perspectiveOriginPolicy =
-                                    toResizePolicy resolvedKey "perspectiveOrigin" state.builder
-
-                                afterTranslate =
-                                    case cachedTranslate of
-                                        Just cached ->
-                                            { processedData
+                            AnimGroup.foldResizeStates
+                                (\propName cached acc ->
+                                    case rebaseFor propName of
+                                        Just rebase ->
+                                            { acc
                                                 | properties =
-                                                    List.map (rebaseTranslateConfig translatePolicy cached) processedData.properties
+                                                    List.map (rebase cached) acc.properties
                                             }
 
                                         Nothing ->
-                                            processedData
-
-                                afterScale =
-                                    case cachedScale of
-                                        Just cached ->
-                                            { afterTranslate
-                                                | properties =
-                                                    List.map (rebaseScaleConfig scalePolicy cached) afterTranslate.properties
-                                            }
-
-                                        Nothing ->
-                                            afterTranslate
-                            in
-                            case cachedPerspectiveOrigin of
-                                Just cached ->
-                                    { afterScale
-                                        | properties =
-                                            List.map (rebasePerspectiveOriginConfig perspectiveOriginPolicy cached) afterScale.properties
-                                    }
-
-                                Nothing ->
-                                    afterScale
+                                            acc
+                                )
+                                processedData
+                                animGroup
 
                         rebasedStartStates =
                             (Generator.propertyBounds rebasedProcessedData.properties).start
@@ -2872,8 +2792,20 @@ getPropertyEnd animGroupName cssName =
 
 getPropertyCurrent : AnimGroupName -> String -> AnimState msg -> Maybe Float
 getPropertyCurrent animGroupName cssName (AnimState _ animGroups) =
+    getSnapshotProperty (PropertyBaselines.getCustomProperty cssName) animGroupName animGroups
+
+
+{-| Pull a property value out of a group's current snapshot, if the group
+exists and the snapshot has a value for the requested property.
+-}
+getSnapshotProperty :
+    (PropertyBaselines.PropertyBaselines -> Maybe a)
+    -> AnimGroupName
+    -> AnimGroups.AnimGroups AnimGroup.AnimGroup
+    -> Maybe a
+getSnapshotProperty getter animGroupName animGroups =
     AnimGroups.get animGroupName animGroups
-        |> Maybe.andThen (AnimGroup.getPropertySnapshot >> PropertyBaselines.getCustomProperty cssName)
+        |> Maybe.andThen (AnimGroup.getPropertySnapshot >> getter)
 
 
 getPropertyRange : AnimGroupName -> String -> AnimState msg -> Maybe { start : Maybe Float, end : Float }
@@ -2899,8 +2831,7 @@ getColorPropertyEnd animGroupName cssName =
 
 getColorPropertyCurrent : AnimGroupName -> String -> AnimState msg -> Maybe Color
 getColorPropertyCurrent animGroupName cssName (AnimState _ animGroups) =
-    AnimGroups.get animGroupName animGroups
-        |> Maybe.andThen (AnimGroup.getPropertySnapshot >> PropertyBaselines.getCustomColorProperty cssName)
+    getSnapshotProperty (PropertyBaselines.getCustomColorProperty cssName) animGroupName animGroups
 
 
 getColorPropertyRange : AnimGroupName -> String -> AnimState msg -> Maybe { start : Maybe Color, end : Color }
@@ -2926,8 +2857,7 @@ getOpacityEnd animGroupName =
 
 getOpacityCurrent : AnimGroupName -> AnimState msg -> Maybe Float
 getOpacityCurrent animGroupName (AnimState _ animGroups) =
-    AnimGroups.get animGroupName animGroups
-        |> Maybe.andThen (AnimGroup.getPropertySnapshot >> PropertyBaselines.getOpacity)
+    getSnapshotProperty PropertyBaselines.getOpacity animGroupName animGroups
         |> Maybe.map Opacity.toFloat
 
 
@@ -2954,8 +2884,7 @@ getRotateEnd animGroupName =
 
 getRotateCurrent : AnimGroupName -> AnimState msg -> Maybe { x : Float, y : Float, z : Float }
 getRotateCurrent animGroupName (AnimState _ animGroups) =
-    AnimGroups.get animGroupName animGroups
-        |> Maybe.andThen (AnimGroup.getPropertySnapshot >> PropertyBaselines.getRotate)
+    getSnapshotProperty PropertyBaselines.getRotate animGroupName animGroups
         |> Maybe.map Rotate.toRecord
 
 
@@ -2992,8 +2921,7 @@ getScaleEnd animGroupName state =
 
 getScaleCurrent : AnimGroupName -> AnimState msg -> Maybe { x : Float, y : Float, z : Float }
 getScaleCurrent animGroupName (AnimState _ animGroups) =
-    AnimGroups.get animGroupName animGroups
-        |> Maybe.andThen (AnimGroup.getPropertySnapshot >> PropertyBaselines.getScale)
+    getSnapshotProperty PropertyBaselines.getScale animGroupName animGroups
         |> Maybe.map Scale.toRecord
 
 
@@ -3017,7 +2945,7 @@ so its getters consult the runtime first and fall back to the builder.
 getRuntimeScale : AnimGroupName -> AnimState msg -> Maybe AnimGroup.ResizeAxisState
 getRuntimeScale animGroupName (AnimState _ animGroups) =
     AnimGroups.get animGroupName animGroups
-        |> Maybe.andThen AnimGroup.getCurrentScaleState
+        |> Maybe.andThen (AnimGroup.getResizeState "scale")
 
 
 
@@ -3038,8 +2966,7 @@ getSizeEnd animGroupName =
 
 getSizeCurrent : AnimGroupName -> AnimState msg -> Maybe { width : Float, height : Float }
 getSizeCurrent animGroupName (AnimState _ animGroups) =
-    AnimGroups.get animGroupName animGroups
-        |> Maybe.andThen (AnimGroup.getPropertySnapshot >> PropertyBaselines.getSize)
+    getSnapshotProperty PropertyBaselines.getSize animGroupName animGroups
         |> Maybe.map Size.toRecord
 
 
@@ -3076,8 +3003,7 @@ getPerspectiveOriginEnd animGroupName state =
 
 getPerspectiveOriginCurrent : AnimGroupName -> AnimState msg -> Maybe { x : Float, y : Float }
 getPerspectiveOriginCurrent animGroupName (AnimState _ animGroups) =
-    AnimGroups.get animGroupName animGroups
-        |> Maybe.andThen (AnimGroup.getPropertySnapshot >> PropertyBaselines.getPerspectiveOrigin)
+    getSnapshotProperty PropertyBaselines.getPerspectiveOrigin animGroupName animGroups
         |> Maybe.map PerspectiveOrigin.toRecord
 
 
@@ -3106,7 +3032,7 @@ the builder. The cached state's `z` component is unused and always 0.
 getRuntimePerspectiveOrigin : AnimGroupName -> AnimState msg -> Maybe AnimGroup.ResizeAxisState
 getRuntimePerspectiveOrigin animGroupName (AnimState _ animGroups) =
     AnimGroups.get animGroupName animGroups
-        |> Maybe.andThen AnimGroup.getCurrentPerspectiveOriginState
+        |> Maybe.andThen (AnimGroup.getResizeState "perspectiveOrigin")
 
 
 
@@ -3127,8 +3053,7 @@ getSkewEnd animGroupName =
 
 getSkewCurrent : AnimGroupName -> AnimState msg -> Maybe { x : Float, y : Float }
 getSkewCurrent animGroupName (AnimState _ animGroups) =
-    AnimGroups.get animGroupName animGroups
-        |> Maybe.andThen (AnimGroup.getPropertySnapshot >> PropertyBaselines.getSkew)
+    getSnapshotProperty PropertyBaselines.getSkew animGroupName animGroups
         |> Maybe.map Skew.toRecord
 
 
@@ -3165,8 +3090,7 @@ getTranslateEnd animGroupName state =
 
 getTranslateCurrent : AnimGroupName -> AnimState msg -> Maybe { x : Float, y : Float, z : Float }
 getTranslateCurrent animGroupName (AnimState _ animGroups) =
-    AnimGroups.get animGroupName animGroups
-        |> Maybe.andThen (AnimGroup.getPropertySnapshot >> PropertyBaselines.getTranslate)
+    getSnapshotProperty PropertyBaselines.getTranslate animGroupName animGroups
         |> Maybe.map Translate.toRecord
 
 
@@ -3190,7 +3114,7 @@ so its getters consult the runtime first and fall back to the builder.
 getRuntimeTranslate : AnimGroupName -> AnimState msg -> Maybe AnimGroup.ResizeAxisState
 getRuntimeTranslate animGroupName (AnimState _ animGroups) =
     AnimGroups.get animGroupName animGroups
-        |> Maybe.andThen AnimGroup.getCurrentTranslateState
+        |> Maybe.andThen (AnimGroup.getResizeState "translate")
 
 
 
@@ -3233,16 +3157,8 @@ animationUpdateDecoder =
 
 
 perspectiveOriginFromRecord : { x : Float, y : Float, unit : String } -> PerspectiveOrigin.PerspectiveOrigin
-perspectiveOriginFromRecord { x, y, unit } =
-    let
-        normalizedUnit =
-            String.toLower unit
-    in
-    if normalizedUnit == "percent" || normalizedUnit == "%" then
-        PerspectiveOrigin.fromRecord PerspectiveOrigin.PercentUnit { x = x, y = y }
-
-    else
-        PerspectiveOrigin.fromRecord PerspectiveOrigin.PxUnit { x = x, y = y }
+perspectiveOriginFromRecord { x, y } =
+    PerspectiveOrigin.fromRecord { x = x, y = y }
 
 
 propertyVersionDecoder : Decoder (AnimGroups Int)

@@ -27,6 +27,10 @@ module Anim.Internal.Builder exposing
     , alternate
     , clearAnimData
     , clearClamp
+    , cssUnit
+    , cssUnitX
+    , cssUnitY
+    , cssUnitZ
     , delay
     , discreteEntry
     , discreteExit
@@ -56,7 +60,6 @@ module Anim.Internal.Builder exposing
     , getEasingWithDefault
     , getFrozenAxes
     , getIterations
-    , getResizePolicy
     , getRuntimeBaseline
     , getScrollAxis
     , getScrollSource
@@ -76,13 +79,12 @@ module Anim.Internal.Builder exposing
     , loopForever
     , mergeBaselines
     , normalizeTransformOrder
-    , policy
     , process
     , processProperties
     , processedPropertyType
+    , processedTimings
     , setAnimTarget
     , setClamp
-    , setPropertyResizePolicy
     , setScrollAxis
     , setScrollSource
     , setViewRangeEnd
@@ -107,7 +109,8 @@ import Anim.Internal.Property.Scale as Scale exposing (Scale)
 import Anim.Internal.Property.Size as Size exposing (Size)
 import Anim.Internal.Property.Skew as Skew exposing (Skew)
 import Anim.Internal.Property.Translate as Translate exposing (Translate)
-import Anim.Internal.Resize.Builder as Resize
+import Anim.Internal.Unit as InternalUnit
+import Anim.Unit exposing (Unit(..))
 import Dict exposing (Dict)
 import Motion.Easing exposing (Easing(..))
 import Motion.Internal.Spring as SpringInt exposing (Spring)
@@ -177,13 +180,14 @@ type alias BuilderData =
 -- Defaults Configuration
 
 
-{-| Global timing, easing, delay, and transform order defaults.
+{-| Global timing, easing, delay, length unit, and transform order defaults.
 -}
 type alias DefaultsConfig =
     { globalTiming : Maybe TimeSpec
     , globalEasing : Maybe Easing
     , globalSpring : Maybe Spring
     , globalDelay : Maybe Int
+    , globalCssUnit : InternalUnit.CssUnitAxes
     , globalTransformOrder : Maybe (List TransformProperty)
     }
 
@@ -237,6 +241,7 @@ type alias AnimationConfig targetProperty =
     , easing : Maybe Easing
     , spring : Maybe Spring
     , delay : Maybe Int
+    , cssUnit : InternalUnit.CssUnitAxes
     }
 
 
@@ -261,6 +266,7 @@ type alias ProcessedAnimationConfig targetProperty =
     , timing : TimeSpec
     , easing : Easing
     , spring : Maybe Spring
+    , cssUnit : InternalUnit.ResolvedCssUnitAxes
     , delay : Int
     }
 
@@ -271,19 +277,13 @@ type alias ProcessedAnimationData =
     , globalEasing : Maybe Easing
     , globalSpring : Maybe Spring
     , globalDelay : Maybe Int
+    , globalCssUnit : InternalUnit.CssUnitAxes
     , iterations : Iterations
     , animationDirection : AnimationDirection
     }
 
 
 {-| Persistent state preserved across animate calls.
-
-`runningProperties` is the exception: it is populated only by the
-engine-level `retarget` function and cleared by `clearAnimData` after
-the pipeline runs. It tells per-property `continueFor` resolvers which
-property animations were still running on each animGroup at the moment
-`retarget` was invoked.
-
 -}
 type alias PersistentState =
     { animationHistories : AnimGroups AnimationHistory
@@ -291,21 +291,6 @@ type alias PersistentState =
     , runtimeBaselines : AnimGroups PropertyBaselines
     , runningProperties : Dict AnimGroupName (Set String)
     , propertyClamps : Dict ( AnimGroupName, String, String ) ( Float, Float )
-    , resizePolicies : Dict AnimGroupName GroupResizePolicies
-    }
-
-
-{-| Per-group resize policy storage.
-
-  - `default` - the group-wide fallback policy applied when no per-property
-    entry exists for a given property.
-  - `perProperty` - explicit policies keyed by property name (e.g. "translate",
-    "scale"). Future properties ("opacity", "size", etc.) are added here.
-
--}
-type alias GroupResizePolicies =
-    { default : Maybe Resize.Policy
-    , perProperty : Dict String Resize.Policy
     }
 
 
@@ -412,6 +397,7 @@ initDefaults =
     , globalEasing = Nothing
     , globalSpring = Nothing
     , globalDelay = Nothing
+    , globalCssUnit = InternalUnit.emptyCssUnitAxes
     , globalTransformOrder = Nothing
     }
 
@@ -441,7 +427,6 @@ initState =
     , runtimeBaselines = AnimGroups.init
     , runningProperties = Dict.empty
     , propertyClamps = Dict.empty
-    , resizePolicies = Dict.empty
     }
 
 
@@ -532,6 +517,46 @@ delay ms (AnimBuilder data) =
         }
 
 
+cssUnit : Unit -> AnimBuilder mode -> AnimBuilder mode
+cssUnit unit (AnimBuilder data) =
+    let
+        defs =
+            data.defaults
+    in
+    AnimBuilder
+        { data | defaults = { defs | globalCssUnit = InternalUnit.setAllCssUnitAxes unit defs.globalCssUnit } }
+
+
+cssUnitX : Unit -> AnimBuilder mode -> AnimBuilder mode
+cssUnitX unit (AnimBuilder data) =
+    let
+        defs =
+            data.defaults
+    in
+    AnimBuilder
+        { data | defaults = { defs | globalCssUnit = InternalUnit.setCssUnitX unit defs.globalCssUnit } }
+
+
+cssUnitY : Unit -> AnimBuilder mode -> AnimBuilder mode
+cssUnitY unit (AnimBuilder data) =
+    let
+        defs =
+            data.defaults
+    in
+    AnimBuilder
+        { data | defaults = { defs | globalCssUnit = InternalUnit.setCssUnitY unit defs.globalCssUnit } }
+
+
+cssUnitZ : Unit -> AnimBuilder mode -> AnimBuilder mode
+cssUnitZ unit (AnimBuilder data) =
+    let
+        defs =
+            data.defaults
+    in
+    AnimBuilder
+        { data | defaults = { defs | globalCssUnit = InternalUnit.setCssUnitZ unit defs.globalCssUnit } }
+
+
 transformOrder : List TransformProperty -> AnimBuilder mode -> AnimBuilder mode
 transformOrder order (AnimBuilder data) =
     let
@@ -598,13 +623,6 @@ getCurrentAnimationConfig animGroupName (AnimBuilder data) =
         |> Maybe.map .current
 
 
-{-| Get the full animation history for a group, ordered most-recent-first
-(`current` followed by previous entries). Used by engines that need to find
-the most recent config containing a particular property even when the latest
-animation didn't include that property (for example, a static `Scale.init`
-seeded at startup must remain discoverable to `Scale.bounds` after a
-later Scale-less animation runs).
--}
 getAnimationConfigs : AnimGroupName -> AnimBuilder mode -> List ProcessedAnimGroupConfig
 getAnimationConfigs animGroupName (AnimBuilder data) =
     case AnimGroups.get animGroupName data.state.animationHistories of
@@ -623,14 +641,6 @@ getAnimationConfigs animGroupName (AnimBuilder data) =
 -- ============================================================
 
 
-{-| Set the animation to repeat a specific number of times.
-
-**Note:** This only works with CSS keyframe animations, not CSS transitions.
-
-    CSS.animate model.animState <|
-        (iterations 3 >> bounce)  -- Bounces 3 times
-
--}
 iterations : Int -> AnimBuilder mode -> AnimBuilder mode
 iterations count (AnimBuilder data) =
     let
@@ -640,14 +650,6 @@ iterations count (AnimBuilder data) =
     AnimBuilder { data | playback = { pb | iterations = Times count } }
 
 
-{-| Set the animation to loop forever.
-
-**Note:** This only works with CSS keyframe animations, not CSS transitions.
-
-    CSS.animate model.animState <|
-        (loopForever >> pulse)  -- Pulses continuously
-
--}
 loopForever : AnimBuilder mode -> AnimBuilder mode
 loopForever (AnimBuilder data) =
     let
@@ -657,14 +659,6 @@ loopForever (AnimBuilder data) =
     AnimBuilder { data | playback = { pb | iterations = Infinite } }
 
 
-{-| Set the animation to alternate direction each iteration (ping-pong effect).
-
-Combine with `loopForever` or `iterations` for continuous back-and-forth motion:
-
-    CSS.animate model.animState <|
-        (loopForever >> alternate >> rotate "element")  -- Rotates back and forth forever
-
--}
 alternate : AnimBuilder mode -> AnimBuilder mode
 alternate (AnimBuilder data) =
     let
@@ -674,8 +668,6 @@ alternate (AnimBuilder data) =
     AnimBuilder { data | playback = { pb | animationDirection = Alternate } }
 
 
-{-| Check if discrete transitions are enabled for this animation.
--}
 discreteTransitionsEnabled : AnimBuilder mode -> Bool
 discreteTransitionsEnabled (AnimBuilder data) =
     data.playback.discreteTransitions
@@ -731,29 +723,21 @@ discreteExit propertyName from to (AnimBuilder data) =
         }
 
 
-{-| Get the discrete entry properties for keyframe animations.
--}
 getDiscreteEntryProperties : AnimBuilder mode -> Dict String String
 getDiscreteEntryProperties (AnimBuilder data) =
     data.playback.discreteEntryProperties
 
 
-{-| Get the discrete exit properties for keyframe animations.
--}
 getDiscreteExitProperties : AnimBuilder mode -> Dict String DiscreteExitProperty
 getDiscreteExitProperties (AnimBuilder data) =
     data.playback.discreteExitProperties
 
 
-{-| Get the configured iteration count.
--}
 getIterations : AnimBuilder mode -> Iterations
 getIterations (AnimBuilder data) =
     data.playback.iterations
 
 
-{-| Get the configured animation direction.
--}
 getAnimationDirection : AnimBuilder mode -> AnimationDirection
 getAnimationDirection (AnimBuilder data) =
     data.playback.animationDirection
@@ -774,9 +758,6 @@ type FreezeProperty
     | FreexeSkew
 
 
-{-| Freeze specific axes of the given properties at their current baseline values.
-The axis names (e.g., ["x", "y"]) are added to the frozen set for each property.
--}
 freezeAxes : List String -> List FreezeProperty -> AnimBuilder mode -> AnimBuilder mode
 freezeAxes axes properties (AnimBuilder data) =
     let
@@ -806,8 +787,6 @@ freezeAxes axes properties (AnimBuilder data) =
     AnimBuilder { data | animation = { anim | frozenAxes = newFrozenAxes } }
 
 
-{-| Remove specific axes from the frozen set of the given properties.
--}
 unfreezeAxes : List String -> List FreezeProperty -> AnimBuilder mode -> AnimBuilder mode
 unfreezeAxes axes properties (AnimBuilder data) =
     let
@@ -876,8 +855,7 @@ getAnimGroups (AnimBuilder data) =
     data.animation.animGroups
 
 
-{-| The name of the animGroup the next pipeline step will configure, set
-by `for` / `forContinuing`. `Nothing` before any `for` call.
+{-| Name of the animGroup the next pipeline step will configure, or `Nothing` if not set.
 -}
 getCurrentAnimGroupName : AnimBuilder mode -> Maybe AnimGroupName
 getCurrentAnimGroupName (AnimBuilder data) =
@@ -948,8 +926,6 @@ getTimeSpec (AnimBuilder data) =
     data.defaults.globalTiming
 
 
-{-| Get TimeSpec with default fallback.
--}
 getTimeSpecWithDefault : AnimBuilder mode -> TimeSpec
 getTimeSpecWithDefault (AnimBuilder data) =
     data.defaults.globalTiming |> Maybe.withDefault (Duration 0)
@@ -960,15 +936,11 @@ getEasing (AnimBuilder data) =
     data.defaults.globalEasing
 
 
-{-| Get the global default Spring (if any).
--}
 getSpring : AnimBuilder mode -> Maybe Spring
 getSpring (AnimBuilder data) =
     data.defaults.globalSpring
 
 
-{-| Get Easing with default fallback.
--}
 getEasingWithDefault : AnimBuilder mode -> Easing
 getEasingWithDefault (AnimBuilder data) =
     data.defaults.globalEasing |> Maybe.withDefault QuintOut
@@ -979,8 +951,6 @@ getDelay (AnimBuilder data) =
     data.defaults.globalDelay
 
 
-{-| Get Delay with default fallback.
--}
 getDelayWithDefault : AnimBuilder mode -> Int
 getDelayWithDefault (AnimBuilder data) =
     data.defaults.globalDelay |> Maybe.withDefault 0
@@ -1102,73 +1072,6 @@ orderedRange a b =
 
     else
         ( b, a )
-
-
-{-| Set the group-wide default resize policy for the named anim group.
-
-Used by engines as the fallback when no per-property policy is stored.
-
--}
-policy : AnimGroupName -> Resize.Policy -> AnimBuilder mode -> AnimBuilder mode
-policy groupName policy_ (AnimBuilder data) =
-    let
-        state =
-            data.state
-
-        current =
-            Maybe.withDefault { default = Nothing, perProperty = Dict.empty }
-                (Dict.get groupName state.resizePolicies)
-
-        updated =
-            { current | default = Just policy_ }
-    in
-    AnimBuilder { data | state = { state | resizePolicies = Dict.insert groupName updated state.resizePolicies } }
-
-
-{-| Set a per-property resize policy for the named anim group.
-
-`propertyKey` is a stable string identifier for the property, e.g. `"translate"` or `"scale"`.
-Future properties such as `"opacity"` or `"size"` are added here.
-
--}
-setPropertyResizePolicy : AnimGroupName -> String -> Resize.Policy -> AnimBuilder mode -> AnimBuilder mode
-setPropertyResizePolicy groupName propertyKey policy_ (AnimBuilder data) =
-    let
-        state =
-            data.state
-
-        current =
-            Maybe.withDefault { default = Nothing, perProperty = Dict.empty }
-                (Dict.get groupName state.resizePolicies)
-
-        updated =
-            { current | perProperty = Dict.insert propertyKey policy_ current.perProperty }
-    in
-    AnimBuilder { data | state = { state | resizePolicies = Dict.insert groupName updated state.resizePolicies } }
-
-
-{-| Look up the effective resize policy for a given anim group and property.
-
-Resolution order:
-
-1.  Per-property entry for `propertyKey` in the group
-2.  Group-wide default for the group
-3.  Library default: `Resize.proportionalPolicy`
-
--}
-getResizePolicy : AnimGroupName -> String -> AnimBuilder mode -> Resize.Policy
-getResizePolicy groupName propertyKey (AnimBuilder data) =
-    case Dict.get groupName data.state.resizePolicies of
-        Nothing ->
-            Resize.proportionalPolicy
-
-        Just policies ->
-            case Dict.get propertyKey policies.perProperty of
-                Just p ->
-                    p
-
-                Nothing ->
-                    Maybe.withDefault Resize.proportionalPolicy policies.default
 
 
 clearAnimData : AnimBuilder mode -> AnimBuilder mode
@@ -1395,6 +1298,41 @@ processedPropertyType prop =
             "translate"
 
 
+{-| Extract `duration` and `delay` (in milliseconds) from a
+[`ProcessedPropertyConfig`](#ProcessedPropertyConfig), regardless of which
+property variant it wraps.
+-}
+processedTimings : ProcessedPropertyConfig -> { duration : Int, delay : Int }
+processedTimings prop =
+    case prop of
+        ProcessedCustomPropertyConfig _ _ cfg ->
+            { duration = cfg.duration, delay = cfg.delay }
+
+        ProcessedCustomColorPropertyConfig _ cfg ->
+            { duration = cfg.duration, delay = cfg.delay }
+
+        ProcessedOpacityConfig cfg ->
+            { duration = cfg.duration, delay = cfg.delay }
+
+        ProcessedPerspectiveOriginConfig cfg ->
+            { duration = cfg.duration, delay = cfg.delay }
+
+        ProcessedRotateConfig cfg ->
+            { duration = cfg.duration, delay = cfg.delay }
+
+        ProcessedScaleConfig cfg ->
+            { duration = cfg.duration, delay = cfg.delay }
+
+        ProcessedSizeConfig cfg ->
+            { duration = cfg.duration, delay = cfg.delay }
+
+        ProcessedSkewConfig cfg ->
+            { duration = cfg.duration, delay = cfg.delay }
+
+        ProcessedTranslateConfig cfg ->
+            { duration = cfg.duration, delay = cfg.delay }
+
+
 
 -- ============================================================
 -- PROCESSING
@@ -1410,6 +1348,7 @@ process (AnimBuilder data) =
     , globalEasing = data.defaults.globalEasing
     , globalSpring = data.defaults.globalSpring
     , globalDelay = data.defaults.globalDelay
+    , globalCssUnit = data.defaults.globalCssUnit
     , iterations = data.playback.iterations
     , animationDirection = data.playback.animationDirection
     , groups =
@@ -1443,6 +1382,7 @@ processProperty globalData property =
                     { config = config
                     , globalData = globalData
                     , defaultStart = 0
+                    , defaultCssUnit = InternalUnit.default
                     , distanceFn = \a b -> abs (b - a)
                     , durationFn = TimeSpec.duration
                     , speedFn = TimeSpec.speed
@@ -1455,6 +1395,7 @@ processProperty globalData property =
                     { config = config
                     , globalData = globalData
                     , defaultStart = Color.transparent
+                    , defaultCssUnit = InternalUnit.default
                     , distanceFn = Color.distance
                     , durationFn = Color.duration
                     , speedFn = Color.speed
@@ -1467,6 +1408,7 @@ processProperty globalData property =
                     { config = config
                     , globalData = globalData
                     , defaultStart = Opacity.fromFloat 1.0
+                    , defaultCssUnit = InternalUnit.default
                     , distanceFn = Opacity.distance
                     , durationFn = Opacity.duration
                     , speedFn = Opacity.speed
@@ -1479,6 +1421,7 @@ processProperty globalData property =
                     { config = config
                     , globalData = globalData
                     , defaultStart = PerspectiveOrigin.default
+                    , defaultCssUnit = Percent
                     , distanceFn = PerspectiveOrigin.distance
                     , durationFn = PerspectiveOrigin.duration
                     , speedFn = PerspectiveOrigin.speed
@@ -1491,6 +1434,7 @@ processProperty globalData property =
                     { config = config
                     , globalData = globalData
                     , defaultStart = Rotate.default
+                    , defaultCssUnit = InternalUnit.default
                     , distanceFn = Rotate.distance
                     , durationFn = Rotate.duration
                     , speedFn = Rotate.speed
@@ -1503,6 +1447,7 @@ processProperty globalData property =
                     { config = config
                     , globalData = globalData
                     , defaultStart = Scale.default
+                    , defaultCssUnit = InternalUnit.default
                     , distanceFn = Scale.distance
                     , durationFn = Scale.duration
                     , speedFn = Scale.speed
@@ -1515,6 +1460,7 @@ processProperty globalData property =
                     { config = config
                     , globalData = globalData
                     , defaultStart = Size.default
+                    , defaultCssUnit = InternalUnit.default
                     , distanceFn = Size.distance
                     , durationFn = Size.duration
                     , speedFn = Size.speed
@@ -1527,6 +1473,7 @@ processProperty globalData property =
                     { config = config
                     , globalData = globalData
                     , defaultStart = Skew.default
+                    , defaultCssUnit = InternalUnit.default
                     , distanceFn = Skew.distance
                     , durationFn = Skew.duration
                     , speedFn = Skew.speed
@@ -1539,6 +1486,7 @@ processProperty globalData property =
                     { config = config
                     , globalData = globalData
                     , defaultStart = Translate.default
+                    , defaultCssUnit = InternalUnit.default
                     , distanceFn = Translate.distance
                     , durationFn = Translate.duration
                     , speedFn = Translate.speed
@@ -1550,13 +1498,14 @@ processStandardAnimation :
     { config : AnimationConfig a
     , globalData : DefaultsConfig
     , defaultStart : a
+    , defaultCssUnit : Unit
     , distanceFn : a -> a -> Float
     , durationFn : Float -> TimeSpec -> Float
     , speedFn : Float -> Float -> TimeSpec -> Float
     , wrapper : ProcessedAnimationConfig a -> ProcessedPropertyConfig
     }
     -> ProcessedPropertyConfig
-processStandardAnimation { config, globalData, defaultStart, distanceFn, durationFn, speedFn, wrapper } =
+processStandardAnimation { config, globalData, defaultStart, defaultCssUnit, distanceFn, durationFn, speedFn, wrapper } =
     let
         start =
             Maybe.withDefault defaultStart config.start
@@ -1602,6 +1551,7 @@ processStandardAnimation { config, globalData, defaultStart, distanceFn, duratio
         , timing = resolvedTiming
         , easing = resolveEasingWithDefault config.easing globalData.globalEasing EaseInOut
         , spring = resolvedSpring
+        , cssUnit = InternalUnit.resolveCssUnitAxes config.cssUnit globalData.globalCssUnit defaultCssUnit
         , delay = resolveDelayWithDefault config.delay globalData.globalDelay 0
         }
 
@@ -1652,15 +1602,11 @@ type alias TransformParts =
     }
 
 
-{-| Extract transforms from ProcessedPropertyConfig list in correct order.
--}
 extractTransformsFromProcessed : List ProcessedPropertyConfig -> TransformParts
 extractTransformsFromProcessed properties =
     List.foldl collectProcessedTransform emptyTransformParts properties
 
 
-{-| Extract transforms from PropertyConfig list in correct order.
--}
 extractTransformsFromProperty : List PropertyConfig -> TransformParts
 extractTransformsFromProperty properties =
     List.foldl collectPropertyTransform emptyTransformParts properties
@@ -1675,13 +1621,11 @@ emptyTransformParts =
     }
 
 
-{-| Collect transform from ProcessedPropertyConfig.
--}
 collectProcessedTransform : ProcessedPropertyConfig -> TransformParts -> TransformParts
 collectProcessedTransform property acc =
     case property of
         ProcessedTranslateConfig config ->
-            { acc | translate = Translate.toCssString config.end }
+            { acc | translate = Translate.toCssString config.cssUnit config.end }
 
         ProcessedRotateConfig config ->
             { acc | rotate = Rotate.toCssString config.end }
@@ -1696,13 +1640,11 @@ collectProcessedTransform property acc =
             acc
 
 
-{-| Collect transform from PropertyConfig.
--}
 collectPropertyTransform : PropertyConfig -> TransformParts -> TransformParts
 collectPropertyTransform property acc =
     case property of
         TranslateConfig config ->
-            { acc | translate = Translate.toCssString config.end }
+            { acc | translate = Translate.toCssString (InternalUnit.resolveCssUnitAxes config.cssUnit InternalUnit.emptyCssUnitAxes InternalUnit.default) config.end }
 
         RotateConfig config ->
             { acc | rotate = Rotate.toCssString config.end }

@@ -12,6 +12,10 @@ module Anim.Internal.Builder.Translate exposing
     , clampX
     , clampY
     , clampZ
+    , cssUnit
+    , cssUnitX
+    , cssUnitY
+    , cssUnitZ
     , delay
     , duration
     , easing
@@ -44,6 +48,7 @@ import Anim.Internal.Builder as Builder exposing (AnimBuilder)
 import Anim.Internal.Builder.Property as PropertyBuilder
 import Anim.Internal.Builder.PropertyBaselines as PropertyBaselines
 import Anim.Internal.Property.Translate as Translate exposing (Translate)
+import Anim.Unit exposing (Unit)
 import Motion.Easing exposing (Easing(..))
 import Motion.Spring exposing (Spring)
 import Shared.TimeSpec exposing (TimeSpec(..))
@@ -486,6 +491,26 @@ easing easing_ (TranslateBuilder config builder) =
 spring : Spring -> TranslateBuilder mode -> TranslateBuilder mode
 spring s (TranslateBuilder config builder) =
     TranslateBuilder (PropertyBuilder.spring s config) builder
+
+
+cssUnit : Unit -> TranslateBuilder mode -> TranslateBuilder mode
+cssUnit unit (TranslateBuilder config builder) =
+    TranslateBuilder (PropertyBuilder.cssUnit unit config) builder
+
+
+cssUnitX : Unit -> TranslateBuilder mode -> TranslateBuilder mode
+cssUnitX unit (TranslateBuilder config builder) =
+    TranslateBuilder (PropertyBuilder.cssUnitX unit config) builder
+
+
+cssUnitY : Unit -> TranslateBuilder mode -> TranslateBuilder mode
+cssUnitY unit (TranslateBuilder config builder) =
+    TranslateBuilder (PropertyBuilder.cssUnitY unit config) builder
+
+
+cssUnitZ : Unit -> TranslateBuilder mode -> TranslateBuilder mode
+cssUnitZ unit (TranslateBuilder config builder) =
+    TranslateBuilder (PropertyBuilder.cssUnitZ unit config) builder
 
 
 

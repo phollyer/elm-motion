@@ -6,6 +6,7 @@ import Anim.Extra.View3D as View3D
 import Anim.Property.PerspectiveOrigin as PerspectiveOrigin
 import Anim.Property.Rotate as Rotate
 import Anim.Property.Translate as Translate
+import Anim.Unit exposing (Unit(..))
 import Browser exposing (Document)
 import Browser.Dom as Dom
 import Browser.Events
@@ -334,7 +335,7 @@ perspectiveAnimation areaSize step =
 movePerspectiveOrigin : Float -> Float -> Int -> { width : Float, height : Float } -> AnimBuilder mode -> AnimBuilder mode
 movePerspectiveOrigin x y ms areaSize =
     PerspectiveOrigin.for perspectiveContainer.groupName
-        >> PerspectiveOrigin.percent
+        >> PerspectiveOrigin.cssUnit Percent
         >> PerspectiveOrigin.toXY x y
         >> PerspectiveOrigin.duration ms
         >> PerspectiveOrigin.easing Linear

@@ -232,7 +232,10 @@ function applyScrollDrivenAnimation(animGroup, element, elementConfig, timeline,
                         sv.rotateZ + (ev.rotateZ - sv.rotateZ) * p,
                         sv.skewX + (ev.skewX - sv.skewX) * p,
                         sv.skewY + (ev.skewY - sv.skewY) * p,
-                        order, forceGroups
+                        order, forceGroups,
+                        ev.translateUnitX || sv.translateUnitX || 'px',
+                        ev.translateUnitY || sv.translateUnitY || 'px',
+                        ev.translateUnitZ || sv.translateUnitZ || 'px'
                     )
                 };
             });
@@ -242,13 +245,19 @@ function applyScrollDrivenAnimation(animGroup, element, elementConfig, timeline,
                 sv.x, sv.y, sv.z,
                 sv.scaleX, sv.scaleY, sv.scaleZ,
                 sv.rotateX, sv.rotateY, sv.rotateZ,
-                sv.skewX, sv.skewY, order, forceGroups
+                sv.skewX, sv.skewY, order, forceGroups,
+                sv.translateUnitX || 'px',
+                sv.translateUnitY || 'px',
+                sv.translateUnitZ || 'px'
             );
             const endTransform = buildTransformString(
                 ev.x, ev.y, ev.z,
                 ev.scaleX, ev.scaleY, ev.scaleZ,
                 ev.rotateX, ev.rotateY, ev.rotateZ,
-                ev.skewX, ev.skewY, order, forceGroups
+                ev.skewX, ev.skewY, order, forceGroups,
+                ev.translateUnitX || 'px',
+                ev.translateUnitY || 'px',
+                ev.translateUnitZ || 'px'
             );
             transformKeyframes = [{ transform: startTransform }, { transform: endTransform }];
             if (firstTransform.easing) {

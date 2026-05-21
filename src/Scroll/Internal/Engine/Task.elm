@@ -190,8 +190,6 @@ scrollEach buildAnimation =
 -- ============================================================
 
 
-{-| Build a scroll Config from a ScrollBuilder.
--}
 buildConfig : SB.ScrollBuilder -> Config
 buildConfig scrollBuilder =
     { timing = SB.getTimeSpecWithDefault scrollBuilder

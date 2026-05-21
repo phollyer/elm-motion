@@ -1,6 +1,5 @@
 module Anim.Property.PerspectiveOriginResizeSpec exposing (suite)
 
-import Anim.Internal.Builder as Builder
 import Anim.Internal.Resize.Builder as ResizeBuilder
 import Anim.Property.PerspectiveOrigin as PerspectiveOrigin
 import Anim.Resize as Resize
@@ -11,17 +10,7 @@ import Test exposing (Test, describe, test)
 suite : Test
 suite =
     describe "PerspectiveOrigin resize"
-        [ test "resizePolicy stores per-property policy on the builder" <|
-            \_ ->
-                Builder.init []
-                    |> PerspectiveOrigin.resizePolicy "cube" Resize.retarget
-                    |> Builder.getResizePolicy "cube" "perspectiveOrigin"
-                    |> Expect.equal
-                        { range = ResizeBuilder.Adaptive
-                        , current = ResizeBuilder.Fixed
-                        , timing = ResizeBuilder.SolveFromCurrent
-                        }
-        , test "bounds records per-property perspectiveOrigin bounds" <|
+        [ test "bounds records per-property perspectiveOrigin bounds" <|
             \_ ->
                 let
                     newBounds =

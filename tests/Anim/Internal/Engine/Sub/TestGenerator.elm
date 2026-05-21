@@ -5,6 +5,7 @@ import Anim.Internal.Builder as Builder
 import Anim.Internal.Engine.Sub.AnimGroup as SubAnimGroup
 import Anim.Internal.Engine.Sub.Generator as SubGenerator
 import Anim.Internal.Property.Translate as Translate
+import Anim.Internal.Unit as InternalUnit
 import Dict
 import Expect
 import Shared.TimeSpec exposing (TimeSpec(..))
@@ -21,6 +22,7 @@ translateConfig =
         , easing = Nothing
         , spring = Nothing
         , delay = Nothing
+        , cssUnit = InternalUnit.emptyCssUnitAxes
         }
 
 

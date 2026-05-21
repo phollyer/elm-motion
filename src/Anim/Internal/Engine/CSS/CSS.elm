@@ -9,6 +9,10 @@ module Anim.Internal.Engine.CSS.CSS exposing
     , animate
     , anyRunning
     , attributes
+    , cssUnit
+    , cssUnitX
+    , cssUnitY
+    , cssUnitZ
     , delay
     , discreteEntry
     , discreteExit
@@ -73,6 +77,7 @@ import Anim.Internal.Property.Scale as Scale exposing (Scale)
 import Anim.Internal.Property.Size as Size exposing (Size)
 import Anim.Internal.Property.Skew as Skew exposing (Skew)
 import Anim.Internal.Property.Translate as Translate exposing (Translate)
+import Anim.Unit exposing (Unit)
 import Html
 import Html.Events
 import Json.Decode
@@ -354,6 +359,32 @@ speed =
 easing : Easing -> Builder.AnimBuilder mode -> Builder.AnimBuilder mode
 easing =
     Builder.easing
+
+
+
+-- ============================================================
+-- UNIT
+-- ============================================================
+
+
+cssUnit : Unit -> Builder.AnimBuilder mode -> Builder.AnimBuilder mode
+cssUnit =
+    Builder.cssUnit
+
+
+cssUnitX : Unit -> Builder.AnimBuilder mode -> Builder.AnimBuilder mode
+cssUnitX =
+    Builder.cssUnitX
+
+
+cssUnitY : Unit -> Builder.AnimBuilder mode -> Builder.AnimBuilder mode
+cssUnitY =
+    Builder.cssUnitY
+
+
+cssUnitZ : Unit -> Builder.AnimBuilder mode -> Builder.AnimBuilder mode
+cssUnitZ =
+    Builder.cssUnitZ
 
 
 

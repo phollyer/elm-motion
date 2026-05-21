@@ -3,7 +3,6 @@ module Animation.Sub.ControllingAnimations.Main exposing (main)
 import Anim.Builder exposing (AnimBuilder)
 import Anim.Engine.Sub as Sub
 import Anim.Property.Translate as Translate
-import Anim.Resize as Resize
 import Browser
 import Browser.Dom as Dom
 import Browser.Events
@@ -105,7 +104,7 @@ dropBall toBottomY =
     Translate.for animGroup
         >> Translate.fromY topY
         >> Translate.toY toBottomY
-        >> Translate.speed 200
+        >> Translate.speed 400
         >> Translate.easing BounceOut
         >> Translate.build
 
@@ -143,8 +142,7 @@ update msg model =
                 | animPlayState = Started
                 , animState =
                     Sub.animate model.animState <|
-                        Translate.resizePolicy animGroup Resize.proportional
-                            >> dropBall (bottomY model.canvasH)
+                        dropBall (bottomY model.canvasH)
               }
             , Cmd.none
             )

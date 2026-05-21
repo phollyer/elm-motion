@@ -6,7 +6,6 @@ import Anim.Extra.View3D as View3D
 import Anim.Property.Rotate as Rotate
 import Anim.Property.Scale as Scale
 import Anim.Property.Translate as Translate
-import Anim.Resize as Resize
 import Browser exposing (Document)
 import Browser.Dom as Dom
 import Browser.Events
@@ -82,10 +81,7 @@ init flags =
                   Translate.initZ cubeGroupName 200
                     -- Static no-op scale so that `Scale.bounds` has
                     -- runtime state to remap when the container resizes.
-                    -- Set proportional resize policy here so scale remaps
-                    -- proportionally to container changes.
                     >> Scale.init cubeGroupName 1
-                    >> Scale.resizePolicy cubeGroupName Resize.proportional
 
                 -- Position each face in 3D space along the axis it faces
                 -- Front/Back faces move on Z (forward/backward)

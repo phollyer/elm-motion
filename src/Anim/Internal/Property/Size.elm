@@ -16,6 +16,7 @@ module Anim.Internal.Property.Size exposing
     , widthToCssString
     )
 
+import Anim.Internal.Unit as InternalUnit
 import Shared.TimeSpec as TimeSpec exposing (TimeSpec)
 
 
@@ -76,23 +77,28 @@ toRecord (Size dimensions) =
 -- ============================================================
 
 
-toCssString : Size -> String
-toCssString size =
+toCssString : InternalUnit.ResolvedCssUnitAxes -> Size -> String
+toCssString axes size =
     let
         ( width, height ) =
             toTuple size
     in
-    "width: " ++ String.fromFloat width ++ "px; height: " ++ String.fromFloat height ++ "px"
+    "width: "
+        ++ String.fromFloat width
+        ++ InternalUnit.toCssSuffix axes.x
+        ++ "; height: "
+        ++ String.fromFloat height
+        ++ InternalUnit.toCssSuffix axes.y
 
 
-widthToCssString : Size -> String
-widthToCssString (Size dimensions) =
-    String.fromFloat dimensions.w ++ "px"
+widthToCssString : InternalUnit.ResolvedCssUnitAxes -> Size -> String
+widthToCssString axes (Size dimensions) =
+    String.fromFloat dimensions.w ++ InternalUnit.toCssSuffix axes.x
 
 
-heightToCssString : Size -> String
-heightToCssString (Size dimensions) =
-    String.fromFloat dimensions.h ++ "px"
+heightToCssString : InternalUnit.ResolvedCssUnitAxes -> Size -> String
+heightToCssString axes (Size dimensions) =
+    String.fromFloat dimensions.h ++ InternalUnit.toCssSuffix axes.y
 
 
 

@@ -7,6 +7,7 @@ module Anim.Property.Size exposing
     , delay, duration, speed
     , easing
     , spring
+    , cssUnit, cssUnitWidth, cssUnitHeight
     , clampWidth, clampHeight, unclampWidth, unclampHeight
     )
 
@@ -83,6 +84,11 @@ for details.
 @docs spring
 
 
+## Unit
+
+@docs cssUnit, cssUnitWidth, cssUnitHeight
+
+
 ## Bounds
 
 Declare persistent width/height clamps that constrain every value flowing
@@ -94,6 +100,7 @@ through the pipeline. See [clampWidth](#clampWidth) for behaviour.
 
 import Anim.Internal.Builder exposing (AnimBuilder)
 import Anim.Internal.Builder.Size as SB
+import Anim.Unit exposing (Unit)
 import Motion.Easing exposing (Easing)
 import Motion.Spring exposing (Spring)
 
@@ -473,6 +480,52 @@ and vice versa — they are mutually exclusive.
 spring : Spring -> Builder mode -> Builder mode
 spring =
     SB.spring
+
+
+{-| Set the length [Unit](Anim-Unit#Unit) used to render width and height for
+this property.
+
+Defaults to `Px`. Setting a relative unit (`Percent`, `Vw`, `Vh`, `Rem`, `Em`)
+makes the browser re-evaluate the rendered size against current layout, so the
+animation follows resize automatically.
+
+    import Anim.Unit as Unit
+
+    myAnimation : AnimBuilder mode -> AnimBuilder mode
+    myAnimation =
+        Size.for "animGroupName"
+            >> Size.toHW 50 80
+            >> Size.cssUnit Unit.Percent
+            >> Size.build
+
+This setting takes precedence over any [length](Anim-Engine-WAAPI#cssUnit) set
+on the engine.
+
+The `Sub` engine currently only supports `Px`; setting a non-`Px` unit on a
+size targeted at `Sub` reports an error and falls back to `Px`.
+
+-}
+cssUnit : Unit -> Builder mode -> Builder mode
+cssUnit =
+    SB.cssUnit
+
+
+{-| Set the length [Unit](Anim-Unit#Unit) used to render the `width` value for
+this property. Overrides any unit set by [`cssUnit`](#cssUnit) or by the
+engine's `cssUnit`/`cssUnitWidth` setter for the width axis.
+-}
+cssUnitWidth : Unit -> Builder mode -> Builder mode
+cssUnitWidth =
+    SB.cssUnitWidth
+
+
+{-| Set the length [Unit](Anim-Unit#Unit) used to render the `height` value
+for this property. Overrides any unit set by [`cssUnit`](#cssUnit) or by the
+engine's `cssUnit`/`cssUnitHeight` setter for the height axis.
+-}
+cssUnitHeight : Unit -> Builder mode -> Builder mode
+cssUnitHeight =
+    SB.cssUnitHeight
 
 
 

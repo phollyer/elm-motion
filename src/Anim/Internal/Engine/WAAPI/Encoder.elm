@@ -1,10 +1,12 @@
 module Anim.Internal.Engine.WAAPI.Encoder exposing
     ( encode
     , encodeCommandWithProperties
+    , encodePerspectiveOriginPosition
     , encodeProcessedData
     , encodeResize
     , encodeRestart
     , encodeScroll
+    , encodeTranslatePosition
     , encodeView
     )
 
@@ -22,6 +24,7 @@ import Anim.Internal.Property.Scale as Scale
 import Anim.Internal.Property.Size as Size
 import Anim.Internal.Property.Skew as Skew
 import Anim.Internal.Property.Translate as Translate
+import Anim.Internal.Unit as InternalUnit
 import Dict
 import Json.Encode as Encode
 import Motion.Easing as Easing exposing (Easing(..))
@@ -156,9 +159,7 @@ encodeProcessedData data =
         ]
 
 
-{-| Encode a command with an optional property filter.
-When properties is Nothing, the command affects all properties.
-When properties is Just [...], only those property types are affected.
+{-| Encode a command with an optional property filter (`Nothing` = all properties).
 -}
 encodeCommandWithProperties : String -> String -> Maybe (List String) -> Encode.Value
 encodeCommandWithProperties commandType animGroupName maybeProperties =
@@ -179,9 +180,7 @@ encodeCommandWithProperties commandType animGroupName maybeProperties =
     Encode.object (baseFields ++ propertyField)
 
 
-{-| Encode iterations config for JavaScript.
-Returns a JSON object with type and count fields.
-JavaScript will use this to set the animation iterations.
+{-| Encode iterations config as a JSON object with `type` and `count` fields.
 -}
 encodeIterations : Builder.Iterations -> Encode.Value
 encodeIterations iterations_ =
@@ -205,8 +204,7 @@ encodeIterations iterations_ =
                 ]
 
 
-{-| Encode animation direction for JavaScript.
-Returns a string that matches Web Animations API direction values.
+{-| Encode animation direction as a Web Animations API direction string.
 -}
 encodeAnimationDirection : AnimationDirection -> Encode.Value
 encodeAnimationDirection direction =
@@ -218,18 +216,8 @@ encodeAnimationDirection direction =
             Encode.string "alternate"
 
 
-{-| Encode a `resize` command for the JS side. The JS handler mutates the
-running translate animation in place via `effect.setKeyframes` and
-`effect.updateTiming`, preserving WAAPI's own `currentIteration`,
-direction, and play state.
-
-Elm decides where to seek and ships an explicit `currentTimeMs` when it
-has an authoritative answer (the `Proportional` strategy: temporal-ratio
-preservation for looping legs, `0` for the collapsed one-shot leg). For
-the `Clamp` strategy, `currentTimeMs` is omitted and JS solves for the
-time that places the box at the supplied `current` value via legacy
-linear inversion.
-
+{-| Encode a `resize` command, including the seek position (`currentTimeMs`)
+computed on the Elm side.
 -}
 encodeResize :
     { animGroupName : AnimGroupName
@@ -280,6 +268,53 @@ encodeResize r =
                     []
     in
     Encode.object (baseFields ++ unitField)
+
+
+{-| Encode a `translatePosition` directive: per-axis static-axis snap requests
+(`Just newPos` to snap, `Nothing` to leave alone).
+-}
+encodeTranslatePosition :
+    { animGroupName : AnimGroupName
+    , x : Maybe Float
+    , y : Maybe Float
+    , z : Maybe Float
+    }
+    -> Encode.Value
+encodeTranslatePosition r =
+    Encode.object
+        [ ( "type", Encode.string "translatePosition" )
+        , ( "elementId", Encode.string r.animGroupName )
+        , ( "animGroup", Encode.string r.animGroupName )
+        , ( "x", encodeMaybeFloat r.x )
+        , ( "y", encodeMaybeFloat r.y )
+        , ( "z", encodeMaybeFloat r.z )
+        ]
+
+
+{-| Encode a `perspectiveOriginPosition` port command: per-axis static-axis
+snap requests (`Just newPos` to snap, `Nothing` to leave alone).
+-}
+encodePerspectiveOriginPosition :
+    { animGroupName : AnimGroupName
+    , x : Maybe Float
+    , y : Maybe Float
+    , unit : String
+    }
+    -> Encode.Value
+encodePerspectiveOriginPosition r =
+    Encode.object
+        [ ( "type", Encode.string "perspectiveOriginPosition" )
+        , ( "elementId", Encode.string r.animGroupName )
+        , ( "animGroup", Encode.string r.animGroupName )
+        , ( "x", encodeMaybeFloat r.x )
+        , ( "y", encodeMaybeFloat r.y )
+        , ( "unit", Encode.string r.unit )
+        ]
+
+
+encodeMaybeFloat : Maybe Float -> Encode.Value
+encodeMaybeFloat =
+    Maybe.map Encode.float >> Maybe.withDefault Encode.null
 
 
 encodeProcessedAnimGroupConfig :
@@ -566,14 +601,6 @@ encodeProcessedPropertyConfig maybeVersions property =
 
                 ( endX, endY ) =
                     PerspectiveOrigin.toTuple config.end
-
-                unitStr =
-                    case PerspectiveOrigin.getUnit config.end of
-                        PerspectiveOrigin.PercentUnit ->
-                            "%"
-
-                        PerspectiveOrigin.PxUnit ->
-                            "px"
             in
             Encode.object
                 (( "type", Encode.string "perspectiveOrigin" )
@@ -582,7 +609,8 @@ encodeProcessedPropertyConfig maybeVersions property =
                        , ( "startY", Encode.float startY )
                        , ( "endX", Encode.float endX )
                        , ( "endY", Encode.float endY )
-                       , ( "unit", Encode.string unitStr )
+                       , ( "unitX", Encode.string (InternalUnit.toCssSuffix config.cssUnit.x) )
+                       , ( "unitY", Encode.string (InternalUnit.toCssSuffix config.cssUnit.y) )
                        , ( "duration", Encode.int config.duration )
                        ]
                     ++ encodeEasingWithKeyframes config.duration config.easing config.spring
@@ -684,6 +712,8 @@ encodeProcessedPropertyConfig maybeVersions property =
                        , ( "startHeight", Encode.float startHeight )
                        , ( "endWidth", Encode.float endWidth )
                        , ( "endHeight", Encode.float endHeight )
+                       , ( "unitWidth", Encode.string (InternalUnit.toCssSuffix config.cssUnit.x) )
+                       , ( "unitHeight", Encode.string (InternalUnit.toCssSuffix config.cssUnit.y) )
                        , ( "duration", Encode.int config.duration )
                        ]
                     ++ encodeEasingWithKeyframes config.duration config.easing config.spring
@@ -701,6 +731,9 @@ encodeProcessedPropertyConfig maybeVersions property =
                     ++ [ ( "endX", Encode.float endX )
                        , ( "endY", Encode.float endY )
                        , ( "endZ", Encode.float endZ )
+                       , ( "unitX", Encode.string (InternalUnit.toCssSuffix config.cssUnit.x) )
+                       , ( "unitY", Encode.string (InternalUnit.toCssSuffix config.cssUnit.y) )
+                       , ( "unitZ", Encode.string (InternalUnit.toCssSuffix config.cssUnit.z) )
                        , ( "duration", Encode.int config.duration )
                        ]
                     ++ encodeEasingWithKeyframes config.duration config.easing config.spring

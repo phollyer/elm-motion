@@ -5,6 +5,10 @@ module Anim.Internal.Engine.ScrollTimeline exposing
     , alternate
     , animate
     , attributes
+    , cssUnit
+    , cssUnitX
+    , cssUnitY
+    , cssUnitZ
     , discreteEntry
     , discreteExit
     , easing
@@ -20,6 +24,7 @@ import Anim.Extra.TransformOrder exposing (TransformProperty)
 import Anim.Internal.Builder as Builder
 import Anim.Internal.Engine.WAAPI.Encoder as Encoder
 import Anim.Internal.Engine.WAAPI.Timeline as Timeline
+import Anim.Unit exposing (Unit)
 import Html
 import Html.Attributes
 import Json.Decode as Decode
@@ -203,6 +208,32 @@ alternate builder =
 easing : Easing -> TimelineBuilder -> TimelineBuilder
 easing =
     Builder.easing
+
+
+
+-- ============================================================
+-- UNIT
+-- ============================================================
+
+
+cssUnit : Unit -> TimelineBuilder -> TimelineBuilder
+cssUnit =
+    Builder.cssUnit
+
+
+cssUnitX : Unit -> TimelineBuilder -> TimelineBuilder
+cssUnitX =
+    Builder.cssUnitX
+
+
+cssUnitY : Unit -> TimelineBuilder -> TimelineBuilder
+cssUnitY =
+    Builder.cssUnitY
+
+
+cssUnitZ : Unit -> TimelineBuilder -> TimelineBuilder
+cssUnitZ =
+    Builder.cssUnitZ
 
 
 

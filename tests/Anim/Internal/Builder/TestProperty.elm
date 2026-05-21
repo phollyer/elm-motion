@@ -10,6 +10,7 @@ import Anim.Internal.Property.Scale as InternalScale
 import Anim.Internal.Property.Size as InternalSize
 import Anim.Internal.Property.Skew as InternalSkew
 import Anim.Internal.Property.Translate as InternalTranslate
+import Anim.Internal.Unit as InternalUnit
 import Anim.Property.Custom as Custom
 import Anim.Property.CustomColor as CustomColor exposing (ColorProperty(..))
 import Anim.Property.Opacity as Opacity
@@ -19,6 +20,7 @@ import Anim.Property.Scale as Scale
 import Anim.Property.Size as Size
 import Anim.Property.Skew as Skew
 import Anim.Property.Translate as Translate
+import Anim.Unit as Unit
 import Dict
 import Expect
 import Motion.Easing exposing (Easing(..))
@@ -152,6 +154,7 @@ upsertTests =
                 , easing = Nothing
                 , spring = Nothing
                 , delay = Nothing
+                , cssUnit = InternalUnit.emptyCssUnitAxes
                 }
 
         opacityConfig =
@@ -163,6 +166,7 @@ upsertTests =
                 , easing = Nothing
                 , spring = Nothing
                 , delay = Nothing
+                , cssUnit = InternalUnit.emptyCssUnitAxes
                 }
 
         replacementTranslateConfig =
@@ -174,6 +178,7 @@ upsertTests =
                 , easing = Nothing
                 , spring = Nothing
                 , delay = Nothing
+                , cssUnit = InternalUnit.emptyCssUnitAxes
                 }
 
         getProperties builder =
@@ -1510,7 +1515,7 @@ perspectiveOriginClampTests =
 
         endUnit builder =
             firstPerspectiveOriginConfig builder
-                |> Maybe.map (.end >> InternalPerspectiveOrigin.getUnit)
+                |> Maybe.andThen (.cssUnit >> .x)
     in
     describe "PerspectiveOrigin clamps"
         [ test "clampX clamps explicit toX above max" <|
@@ -1547,13 +1552,13 @@ perspectiveOriginClampTests =
             \_ ->
                 animBuilder
                     |> (PerspectiveOrigin.for "test"
-                            >> PerspectiveOrigin.px
+                            >> PerspectiveOrigin.cssUnit Unit.Px
                             >> PerspectiveOrigin.clampX 0 100
                             >> PerspectiveOrigin.toX 500
                             >> PerspectiveOrigin.build
                        )
                     |> endUnit
-                    |> Expect.equal (Just InternalPerspectiveOrigin.PxUnit)
+                    |> Expect.equal (Just Unit.Px)
         , test "unclampX removes only X axis clamp" <|
             \_ ->
                 animBuilder
@@ -1681,7 +1686,7 @@ customClampTests =
         [ test "clamp clamps explicit to above max" <|
             \_ ->
                 animBuilder
-                    |> (Custom.for "test" (Custom.Left "px")
+                    |> (Custom.for "test" (Custom.Left Unit.Px)
                             >> Custom.clamp 0 200
                             >> Custom.to 500
                             >> Custom.build
@@ -1691,7 +1696,7 @@ customClampTests =
         , test "clamp still clamps when declared after to" <|
             \_ ->
                 animBuilder
-                    |> (Custom.for "test" (Custom.Left "px")
+                    |> (Custom.for "test" (Custom.Left Unit.Px)
                             >> Custom.to 500
                             >> Custom.clamp 0 200
                             >> Custom.build
@@ -1701,7 +1706,7 @@ customClampTests =
         , test "clamp with reversed args is normalized" <|
             \_ ->
                 animBuilder
-                    |> (Custom.for "test" (Custom.Left "px")
+                    |> (Custom.for "test" (Custom.Left Unit.Px)
                             >> Custom.clamp 200 0
                             >> Custom.to 500
                             >> Custom.build
@@ -1711,7 +1716,7 @@ customClampTests =
         , test "unclamp removes the clamp" <|
             \_ ->
                 animBuilder
-                    |> (Custom.for "test" (Custom.Left "px")
+                    |> (Custom.for "test" (Custom.Left Unit.Px)
                             >> Custom.clamp 0 200
                             >> Custom.unclamp
                             >> Custom.to 500
@@ -1722,12 +1727,12 @@ customClampTests =
         , test "clamps are keyed by CSS property name" <|
             \_ ->
                 animBuilder
-                    |> (Custom.for "test" (Custom.Left "px")
+                    |> (Custom.for "test" (Custom.Left Unit.Px)
                             >> Custom.clamp 0 200
                             >> Custom.to 500
                             >> Custom.build
                        )
-                    |> (Custom.for "test" (Custom.Top "px")
+                    |> (Custom.for "test" (Custom.Top Unit.Px)
                             >> Custom.to 500
                             >> Custom.build
                        )
@@ -1736,12 +1741,12 @@ customClampTests =
         , test "clamps are scoped to the active animGroup" <|
             \_ ->
                 animBuilder
-                    |> (Custom.for "a" (Custom.Left "px")
+                    |> (Custom.for "a" (Custom.Left Unit.Px)
                             >> Custom.clamp 0 200
                             >> Custom.to 50
                             >> Custom.build
                        )
-                    |> (Custom.for "b" (Custom.Left "px")
+                    |> (Custom.for "b" (Custom.Left Unit.Px)
                             >> Custom.to 500
                             >> Custom.build
                        )
@@ -1750,13 +1755,13 @@ customClampTests =
         , test "clamps persist across animate batches" <|
             \_ ->
                 animBuilder
-                    |> (Custom.for "test" (Custom.Left "px")
+                    |> (Custom.for "test" (Custom.Left Unit.Px)
                             >> Custom.clamp 0 200
                             >> Custom.to 50
                             >> Custom.build
                        )
                     |> finishAnimateBatch
-                    |> (Custom.for "test" (Custom.Left "px")
+                    |> (Custom.for "test" (Custom.Left Unit.Px)
                             >> Custom.to 500
                             >> Custom.build
                        )

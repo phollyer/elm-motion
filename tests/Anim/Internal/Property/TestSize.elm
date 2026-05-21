@@ -1,6 +1,7 @@
 module Anim.Internal.Property.TestSize exposing (suite)
 
 import Anim.Internal.Property.Size as Size
+import Anim.Unit as Unit
 import Expect
 import Test exposing (..)
 
@@ -165,16 +166,51 @@ cssOutput =
         [ test "toCssString produces width and height" <|
             \_ ->
                 Size.fromTuple ( 100, 200 )
-                    |> Size.toCssString
+                    |> Size.toCssString { x = Unit.Px, y = Unit.Px, z = Unit.Px }
                     |> Expect.equal "width: 100px; height: 200px"
         , test "widthToCssString produces width value" <|
             \_ ->
                 Size.fromTuple ( 100, 200 )
-                    |> Size.widthToCssString
+                    |> Size.widthToCssString { x = Unit.Px, y = Unit.Px, z = Unit.Px }
                     |> Expect.equal "100px"
         , test "heightToCssString produces height value" <|
             \_ ->
                 Size.fromTuple ( 100, 200 )
-                    |> Size.heightToCssString
+                    |> Size.heightToCssString { x = Unit.Px, y = Unit.Px, z = Unit.Px }
                     |> Expect.equal "200px"
+        , test "toCssString renders Percent unit suffix" <|
+            \_ ->
+                Size.fromTuple ( 100, 200 )
+                    |> Size.toCssString { x = Unit.Percent, y = Unit.Percent, z = Unit.Percent }
+                    |> Expect.equal "width: 100%; height: 200%"
+        , test "toCssString renders Vw unit suffix" <|
+            \_ ->
+                Size.fromTuple ( 100, 200 )
+                    |> Size.toCssString { x = Unit.Vw, y = Unit.Vw, z = Unit.Vw }
+                    |> Expect.equal "width: 100vw; height: 200vw"
+        , test "toCssString renders Vh unit suffix" <|
+            \_ ->
+                Size.fromTuple ( 100, 200 )
+                    |> Size.toCssString { x = Unit.Vh, y = Unit.Vh, z = Unit.Vh }
+                    |> Expect.equal "width: 100vh; height: 200vh"
+        , test "toCssString renders Rem unit suffix" <|
+            \_ ->
+                Size.fromTuple ( 100, 200 )
+                    |> Size.toCssString { x = Unit.Rem, y = Unit.Rem, z = Unit.Rem }
+                    |> Expect.equal "width: 100rem; height: 200rem"
+        , test "toCssString renders Em unit suffix" <|
+            \_ ->
+                Size.fromTuple ( 100, 200 )
+                    |> Size.toCssString { x = Unit.Em, y = Unit.Em, z = Unit.Em }
+                    |> Expect.equal "width: 100em; height: 200em"
+        , test "widthToCssString renders Vw unit suffix" <|
+            \_ ->
+                Size.fromTuple ( 100, 200 )
+                    |> Size.widthToCssString { x = Unit.Vw, y = Unit.Vw, z = Unit.Vw }
+                    |> Expect.equal "100vw"
+        , test "heightToCssString renders Vh unit suffix" <|
+            \_ ->
+                Size.fromTuple ( 100, 200 )
+                    |> Size.heightToCssString { x = Unit.Vh, y = Unit.Vh, z = Unit.Vh }
+                    |> Expect.equal "200vh"
         ]

@@ -4,8 +4,8 @@ import Anim.Engine.Keyframe as Keyframe
 import Anim.Property.Rotate as Rotate
 import Anim.Property.Scale as Scale
 import Anim.Property.Translate as Position
-import Motion.Easing as Easing
 import Expect
+import Motion.Easing as Easing
 import Test exposing (..)
 
 

@@ -21,7 +21,7 @@ extractTransformStyles properties =
                 (\prop acc ->
                     case prop of
                         Builder.ProcessedTranslateConfig config ->
-                            { acc | translate = Just ( "translate", Translate.toCssPropertyValue config.end ) }
+                            { acc | translate = Just ( "translate", Translate.toCssPropertyValue config.cssUnit config.end ) }
 
                         Builder.ProcessedRotateConfig config ->
                             { acc | rotate = Rotate.toCssString config.end }

@@ -13,6 +13,7 @@ module Anim.Engine.WAAPI exposing
     , iterations, loopForever, alternate
     , delay, duration, speed
     , easing
+    , cssUnit, cssUnitX, cssUnitY, cssUnitZ
     , spring
     , stop, reset, restart, pause, resume
     , discreteEntry, discreteExit
@@ -143,6 +144,11 @@ This ensures the element displays the correct property values before, during, an
 📖 See [Easing](https://phollyer.github.io/elm-motion/animation/concepts/easing/) in the docs.
 
 
+# Unit
+
+@docs cssUnit, cssUnitX, cssUnitY, cssUnitZ
+
+
 # Spring
 
 @docs spring
@@ -249,6 +255,7 @@ import Anim.Extra.TransformOrder exposing (TransformProperty)
 import Anim.Internal.Builder as Builder
 import Anim.Internal.Engine.WAAPI as Internal
 import Anim.Resize as Resize
+import Anim.Unit exposing (Unit)
 import Html
 import Json.Decode as Decode
 import Json.Encode as Encode
@@ -730,10 +737,11 @@ don't define their own delay.
 
     import Anim.Engine.WAAPI as WAAPI
     import Anim.Property.Custom as Custom
+    import Anim.Unit exposing (Unit(..))
 
     WAAPI.animate model.animState <|
         WAAPI.delay 500
-            >> Custom.for "box" (Custom.BorderRadius "px")
+            >> Custom.for "box" (Custom.BorderRadius Px)
             >> Custom.to 24
             >> Custom.build
 
@@ -750,10 +758,11 @@ don't define their own duration.
 
     import Anim.Engine.WAAPI as WAAPI
     import Anim.Property.Custom as Custom
+    import Anim.Unit exposing (Unit(..))
 
     WAAPI.animate model.animState <|
         WAAPI.duration 1000
-            >> Custom.for "box" (Custom.BorderRadius "px")
+            >> Custom.for "box" (Custom.BorderRadius Px)
             >> Custom.to 24
             >> Custom.build
 
@@ -772,10 +781,11 @@ Consult each property's documentation for details on how speed is interpreted.
 
     import Anim.Engine.WAAPI as WAAPI
     import Anim.Property.Custom as Custom
+    import Anim.Unit exposing (Unit(..))
 
     WAAPI.animate model.animState <|
         WAAPI.speed 100
-            >> Custom.for "box" (Custom.BorderRadius "px")
+            >> Custom.for "box" (Custom.BorderRadius Px)
             >> Custom.to 24
             >> Custom.build
 
@@ -799,10 +809,11 @@ don't define their own easing.
     import Easing exposing (Easing(..))
     import Anim.Engine.WAAPI as WAAPI
     import Anim.Property.Custom as Custom
+    import Anim.Unit exposing (Unit(..))
 
     WAAPI.animate model.animState <|
         WAAPI.easing BounceOut
-            >> Custom.for "box" (Custom.BorderRadius "px")
+            >> Custom.for "box" (Custom.BorderRadius Px)
             >> Custom.to 24
             >> Custom.build
 
@@ -810,6 +821,61 @@ don't define their own easing.
 easing : Easing -> Builder.AnimBuilder mode -> Builder.AnimBuilder mode
 easing =
     Internal.easing
+
+
+
+-- ============================================================
+-- UNIT
+-- ============================================================
+
+
+{-| Set the default length [Unit](Anim-Unit#Unit) for all length-bearing
+properties in this builder.
+
+Applies to `Translate`, `Size`, and `PerspectiveOrigin`. Per-property
+[`cssUnit`](Anim-Property-Translate#cssUnit) calls take precedence over this
+engine-level default. If neither is set, properties render in `Px`.
+
+    import Anim.Engine.WAAPI as WAAPI
+    import Anim.Property.Translate as Translate
+    import Anim.Unit as Unit
+
+    WAAPI.animate model.animState <|
+        WAAPI.cssUnit Unit.Percent
+            >> Translate.for "box"
+            >> Translate.toX 50
+            >> Translate.build
+
+-}
+cssUnit : Unit -> Builder.AnimBuilder mode -> Builder.AnimBuilder mode
+cssUnit =
+    Internal.cssUnit
+
+
+{-| Set a per-axis default length [Unit](Anim-Unit#Unit) for the X axis. Used
+by `Translate.x`, `Size.width`, and `PerspectiveOrigin.x`. Per-property
+per-axis setters (e.g. `Translate.cssUnitX`) take precedence over this.
+-}
+cssUnitX : Unit -> Builder.AnimBuilder mode -> Builder.AnimBuilder mode
+cssUnitX =
+    Internal.cssUnitX
+
+
+{-| Set a per-axis default length [Unit](Anim-Unit#Unit) for the Y axis. Used
+by `Translate.y`, `Size.height`, and `PerspectiveOrigin.y`. Per-property
+per-axis setters (e.g. `Translate.cssUnitY`) take precedence over this.
+-}
+cssUnitY : Unit -> Builder.AnimBuilder mode -> Builder.AnimBuilder mode
+cssUnitY =
+    Internal.cssUnitY
+
+
+{-| Set a per-axis default length [Unit](Anim-Unit#Unit) for the Z axis. Used
+by `Translate.z`. Per-property `Translate.cssUnitZ` takes precedence.
+-}
+cssUnitZ : Unit -> Builder.AnimBuilder mode -> Builder.AnimBuilder mode
+cssUnitZ =
+    Internal.cssUnitZ
 
 
 

@@ -4,12 +4,12 @@ module Anim.Engine.WAAPI.OnResizeSpec exposing (suite)
 
 Two layers are exercised here:
 
-1.  `Anim.Internal.Engine.Shared.Resize.applyAxis` — the per-axis math
-    that drives both the Sub and WAAPI engines.
-2.  `Anim.Internal.Engine.WAAPI.Encoder.encodeResize` — the JSON shape
+1.  `Anim.Internal.Resize.Builder.applyAxis` - the per-axis math
+    that drives both the Sub and WAAPI engines (always proportional).
+2.  `Anim.Internal.Engine.WAAPI.Encoder.encodeResize` - the JSON shape
     sent over the `motionCmd` port to the JS handler.
 
-The full pipeline (state → `WAAPI.onResize` → `Cmd msg`) cannot be
+The full pipeline (state -> `WAAPI.onResize` -> `Cmd msg`) cannot be
 inspected directly because Elm `Cmd`s are opaque; instead the JS handler
 exercises the consumer side via the Vitest suite.
 
@@ -31,6 +31,8 @@ suite =
         , proportionFromProgressTests
         , currentTimeForResizeTests
         , encoderTests
+        , translatePositionEncoderTests
+        , perspectiveOriginPositionEncoderTests
         ]
 
 
@@ -42,169 +44,91 @@ suite =
 
 resizeMathTests : Test
 resizeMathTests =
-    describe "Resize.applyAxis"
+    describe "Resize.applyAxis (proportional)"
         [ test "Nothing bounds leaves axis untouched" <|
             \_ ->
-                ResizeBuilder.applyAxis ResizeBuilder.proportionalPolicy True Nothing 0 200 100
+                ResizeBuilder.applyAxis Nothing Nothing 0 200 100
                     |> Expect.equal { start = 0, end = 200, current = 100 }
-        , test "Proportional looping preserves normalized progress" <|
+        , test "Looping preserves normalized progress" <|
             \_ ->
-                -- old leg [0, 200], current 100 → halfway
-                -- new leg [0, 400], halfway → 200
+                -- old leg [0, 200], current 100 -> halfway
+                -- new leg [0, 400], halfway -> 200
                 ResizeBuilder.applyAxis
-                    ResizeBuilder.proportionalPolicy
-                    True
+                    Nothing
                     (Just { min = 0, max = 400 })
                     0
                     200
                     100
                     |> Expect.equal { start = 0, end = 400, current = 200 }
-        , test "Proportional reverse leg keeps direction" <|
+        , test "Reverse leg keeps direction" <|
             \_ ->
-                -- old leg [200, 0] (reverse), current 50 → 75% to end
-                -- new leg [400, 0] reverse → 75% → 100
+                -- old leg [200, 0] (reverse), current 50 -> 75% to end
+                -- new leg [400, 0] reverse -> 75% -> 100
                 ResizeBuilder.applyAxis
-                    ResizeBuilder.proportionalPolicy
-                    True
+                    Nothing
                     (Just { min = 0, max = 400 })
                     200
                     0
                     50
                     |> Expect.equal { start = 400, end = 0, current = 100 }
-        , test "Clamp looping preserves configured start/end and clips current" <|
-            -- Pure constraint: bounds are a clip box, not a track. The
-            -- configured leg (0 -> 200) stays put because both endpoints
-            -- are already inside the new bounds; the current value is
-            -- also clipped (here it is already inside so unchanged).
+        , test "One-shot remaps to canonical leg geometry" <|
             \_ ->
+                -- Unified: same canonical (start, end, current) output
+                -- regardless of animation kind. The previous "chop to
+                -- (newCurrent, legEnd)" branch has been removed; one-shots
+                -- now use the same proportional remap as looping.
                 ResizeBuilder.applyAxis
-                    ResizeBuilder.clampPolicy
-                    True
-                    (Just { min = 0, max = 400 })
-                    0
-                    200
-                    150
-                    |> Expect.equal { start = 0, end = 200, current = 150 }
-        , test "Clamp clamps current outside new bounds" <|
-            \_ ->
-                ResizeBuilder.applyAxis
-                    ResizeBuilder.clampPolicy
-                    True
-                    (Just { min = 0, max = 100 })
-                    0
-                    200
-                    150
-                    |> Expect.equal { start = 0, end = 100, current = 100 }
-        , test "Clamp one-shot behaves identically to looping (uniform clip)" <|
-            \_ ->
-                ResizeBuilder.applyAxis
-                    ResizeBuilder.clampPolicy
-                    False
-                    (Just { min = 0, max = 400 })
-                    0
-                    200
-                    150
-                    |> Expect.equal { start = 0, end = 200, current = 150 }
-        , test "Retarget looping rewrites leg to new bounds and clamps current" <|
-            -- Bounds drive the track: the leg always spans the new
-            -- extremes, current stays on its pixel (clamped).
-            \_ ->
-                ResizeBuilder.applyAxis
-                    ResizeBuilder.retargetPolicy
-                    True
-                    (Just { min = 0, max = 400 })
-                    0
-                    200
-                    150
-                    |> Expect.equal { start = 0, end = 400, current = 150 }
-        , test "Retarget reverse leg keeps direction" <|
-            \_ ->
-                ResizeBuilder.applyAxis
-                    ResizeBuilder.retargetPolicy
-                    True
-                    (Just { min = 0, max = 400 })
-                    200
-                    0
-                    50
-                    |> Expect.equal { start = 400, end = 0, current = 50 }
-        , test "Retarget one-shot keeps full leg and preserves current" <|
-            -- Mid-flight one-shot + SolveFromCurrent keeps full bounds so
-            -- runtime can solve in-flight progress from current.
-            \_ ->
-                ResizeBuilder.applyAxis
-                    ResizeBuilder.retargetPolicy
-                    False
-                    (Just { min = 0, max = 800 })
-                    0
-                    400
-                    200
-                    |> Expect.equal { start = 0, end = 800, current = 200 }
-        , test "Retarget one-shot clamps current past new bound but keeps full leg" <|
-            -- When current is out of bounds it is clamped, while the leg
-            -- remains non-degenerate for SolveFromCurrent time solving.
-            \_ ->
-                ResizeBuilder.applyAxis
-                    ResizeBuilder.retargetPolicy
-                    False
-                    (Just { min = 0, max = 400 })
-                    0
-                    800
-                    600
-                    |> Expect.equal { start = 0, end = 400, current = 400 }
-        , test "Proportional one-shot collapses to remaining leg" <|
-            \_ ->
-                -- not looping → start becomes current; end becomes new max
-                ResizeBuilder.applyAxis
-                    ResizeBuilder.proportionalPolicy
-                    False
+                    Nothing
                     (Just { min = 0, max = 400 })
                     0
                     200
                     100
-                    |> Expect.equal { start = 200, end = 400, current = 200 }
-        , test "Proportional with zero old range preserves current (clamped into new bounds)" <|
+                    |> Expect.equal { start = 0, end = 400, current = 200 }
+        , test "Zero old range preserves current (clamped into new bounds)" <|
             -- When start == end the leg has collapsed (e.g. a previous resize
             -- on a finished one-shot animation, or an init-only property
             -- whose synthesized baseline has start == end == current).
             -- There is no proportional position left to preserve, so collapse
-            -- the leg to `current` clamped into the new bounds. Returning a
-            -- non-degenerate `{ start = b.min, end = b.max }` would
-            -- fabricate motion across the whole track and the WAAPI bridge
-            -- would bake that into the running keyframes.
+            -- the leg to `current` clamped into the new bounds.
             \_ ->
                 ResizeBuilder.applyAxis
-                    ResizeBuilder.proportionalPolicy
-                    True
+                    Nothing
                     (Just { min = 50, max = 250 })
                     100
                     100
                     100
                     |> Expect.equal { start = 100, end = 100, current = 100 }
-        , test "Proportional with zero old range clamps an out-of-range current into new bounds" <|
+        , test "Zero old range clamps an out-of-range current into new bounds" <|
             \_ ->
                 ResizeBuilder.applyAxis
-                    ResizeBuilder.proportionalPolicy
-                    False
+                    Nothing
                     (Just { min = 0, max = 100 })
                     300
                     300
                     300
                     |> Expect.equal { start = 100, end = 100, current = 100 }
-        , test "Clamp with zero old range collapses to clamped current (no fabricated leg)" <|
-            -- Mirror of the Proportional zero-range guard: the Clamp branch
-            -- must also avoid expanding a degenerate input to the full
-            -- bounds, otherwise an init-only property (e.g. an unspecified
-            -- Scale defaulting to (1,1,1)) would gain a `0 -> trackWidth`
-            -- ramp on the next group resize.
+        , test "Successive resizes remap current against previous bounds, not the chopped leg" <|
+            -- Regression for the bounds-reference bug: after a resize
+            -- the next resize must use the *previous viewport bounds* as
+            -- the reference range, not the (now shrunken) leg endpoints.
+            -- Without `previousBounds`, the second resize would interpret
+            -- the small remaining leg as the full viewport range and snap
+            -- the box near `b.min`.
             \_ ->
-                ResizeBuilder.applyAxis
-                    ResizeBuilder.clampPolicy
-                    True
-                    (Just { min = 0, max = 800 })
-                    1
-                    1
-                    1
-                    |> Expect.equal { start = 1, end = 1, current = 1 }
+                let
+                    result =
+                        ResizeBuilder.applyAxis
+                            (Just { min = 0, max = 290 })
+                            (Just { min = 0, max = 580 })
+                            247
+                            290
+                            248
+                in
+                Expect.all
+                    [ \r -> r.current |> Expect.within (Expect.Absolute 1.0) 496
+                    , \r -> r.end |> Expect.equal 580
+                    ]
+                    result
         ]
 
 
@@ -244,8 +168,7 @@ proportionFromProgressTests =
         , test "round-trip from progress + new bounds is exact" <|
             -- Bug 4 regression: a paused mid-flight animation that is
             -- resized N times must land on the same absolute position the
-            -- proportion predicts, with no compounding error from
-            -- (oldCurrent - oldMin) / oldRange.
+            -- proportion predicts, with no compounding error.
             \_ ->
                 let
                     progress =
@@ -254,8 +177,6 @@ proportionFromProgressTests =
                     p =
                         WAAPI.proportionFromProgress Builder.Alternate 0 progress 0 200
 
-                    -- Simulate 10 portrait↔landscape resizes alternating
-                    -- bounds [0,400] and [0,200].
                     boundsCycle =
                         List.repeat 10 ( { min = 0, max = 400 }, { min = 0, max = 200 } )
 
@@ -286,84 +207,43 @@ proportionFromProgressTests =
 currentTimeForResizeTests : Test
 currentTimeForResizeTests =
     describe "WAAPI.currentTimeForResize"
-        [ test "collapsed one-shot preserve-progress restarts at leg start when still in-flight" <|
+        [ test "first iteration: progress * duration" <|
             \_ ->
                 WAAPI.currentTimeForResize
-                    { isLooping = False
-                    , treatAsSettled = False
-                    , isComplete = False
-                    , timing = ResizeBuilder.PreserveProgress
-                    , durationMs = 640
+                    { durationMs = 640
                     , currentIteration = 0
                     , progress = 0.2
-                    , isCollapsedOneShot = True
                     }
-                    |> Expect.equal (Just 0)
-        , test "collapsed settled one-shot preserve-progress seeks to duration" <|
+                    |> Expect.equal (Just 128)
+        , test "looping preserves iteration offset" <|
             \_ ->
+                -- iter 2 + progress 0.25 of a 1000ms leg = 2250ms
                 WAAPI.currentTimeForResize
-                    { isLooping = False
-                    , treatAsSettled = True
-                    , isComplete = False
-                    , timing = ResizeBuilder.PreserveProgress
-                    , durationMs = 640
-                    , currentIteration = 0
-                    , progress = 0.2
-                    , isCollapsedOneShot = True
-                    }
-                    |> Expect.equal (Just 640)
-        , test "collapsed one-shot solve-from-current leaves currentTime unresolved" <|
-            \_ ->
-                WAAPI.currentTimeForResize
-                    { isLooping = False
-                    , treatAsSettled = False
-                    , isComplete = False
-                    , timing = ResizeBuilder.SolveFromCurrent
-                    , durationMs = 640
-                    , currentIteration = 0
-                    , progress = 0.2
-                    , isCollapsedOneShot = True
-                    }
-                    |> Expect.equal Nothing
-        , test "looping preserve-progress keeps iteration offset" <|
-            \_ ->
-                WAAPI.currentTimeForResize
-                    { isLooping = True
-                    , treatAsSettled = False
-                    , isComplete = False
-                    , timing = ResizeBuilder.PreserveProgress
-                    , durationMs = 1000
+                    { durationMs = 1000
                     , currentIteration = 2
                     , progress = 0.25
-                    , isCollapsedOneShot = False
                     }
                     |> Expect.equal (Just 2250)
-        , test "paused settled one-shot preserve-progress uses in-leg progress" <|
+        , test "mid-leg in-flight non-looping uses (iter + progress) * dur" <|
             \_ ->
+                -- Unified formula: no special-casing for non-looping.
+                -- Combined with canonical applyAxis geometry and
+                -- scaleDurationForResize, this lands the dot at exactly
+                -- easing(0.13) of the new leg.
                 WAAPI.currentTimeForResize
-                    { isLooping = False
-                    , treatAsSettled = True
-                    , isComplete = False
-                    , timing = ResizeBuilder.PreserveProgress
-                    , durationMs = 900
+                    { durationMs = 3049
                     , currentIteration = 0
-                    , progress = 0.5
-                    , isCollapsedOneShot = False
+                    , progress = 0.13
                     }
-                    |> Expect.equal (Just 450)
-        , test "solve-from-current leaves currentTime unresolved" <|
+                    |> Expect.equal (Just (0.13 * 3049))
+        , test "completed one-shot: iteration 1 with progress 0 lands at end of leg 1" <|
             \_ ->
                 WAAPI.currentTimeForResize
-                    { isLooping = True
-                    , treatAsSettled = False
-                    , isComplete = False
-                    , timing = ResizeBuilder.SolveFromCurrent
-                    , durationMs = 500
-                    , currentIteration = 3
-                    , progress = 0.5
-                    , isCollapsedOneShot = False
+                    { durationMs = 900
+                    , currentIteration = 1
+                    , progress = 0
                     }
-                    |> Expect.equal Nothing
+                    |> Expect.equal (Just 900)
         ]
 
 
@@ -480,5 +360,122 @@ encoderTests =
                             ++ ",\"hasAnimationBaseline\":true"
                             ++ ",\"currentTimeMs\":250"
                             ++ ",\"unit\":\"px\"}"
+                        )
+        ]
+
+
+
+-- ============================================================
+-- TRANSLATE POSITION ENCODER
+-- ============================================================
+
+
+translatePositionEncoderTests : Test
+translatePositionEncoderTests =
+    describe "Encoder.encodeTranslatePosition"
+        [ test "emits all axes when every axis has a value" <|
+            \_ ->
+                Encoder.encodeTranslatePosition
+                    { animGroupName = "box"
+                    , x = Just 100
+                    , y = Just 200
+                    , z = Just 0
+                    }
+                    |> Encode.encode 0
+                    |> Expect.equal
+                        ("{\"type\":\"translatePosition\""
+                            ++ ",\"elementId\":\"box\""
+                            ++ ",\"animGroup\":\"box\""
+                            ++ ",\"x\":100,\"y\":200,\"z\":0}"
+                        )
+        , test "emits null for axes left untouched" <|
+            \_ ->
+                Encoder.encodeTranslatePosition
+                    { animGroupName = "el"
+                    , x = Nothing
+                    , y = Just 250
+                    , z = Nothing
+                    }
+                    |> Encode.encode 0
+                    |> Expect.equal
+                        ("{\"type\":\"translatePosition\""
+                            ++ ",\"elementId\":\"el\""
+                            ++ ",\"animGroup\":\"el\""
+                            ++ ",\"x\":null,\"y\":250,\"z\":null}"
+                        )
+        , test "emits null for every axis when all are Nothing" <|
+            \_ ->
+                Encoder.encodeTranslatePosition
+                    { animGroupName = "empty"
+                    , x = Nothing
+                    , y = Nothing
+                    , z = Nothing
+                    }
+                    |> Encode.encode 0
+                    |> Expect.equal
+                        ("{\"type\":\"translatePosition\""
+                            ++ ",\"elementId\":\"empty\""
+                            ++ ",\"animGroup\":\"empty\""
+                            ++ ",\"x\":null,\"y\":null,\"z\":null}"
+                        )
+        ]
+
+
+
+-- ============================================================
+-- PERSPECTIVE ORIGIN POSITION ENCODER
+-- ============================================================
+
+
+perspectiveOriginPositionEncoderTests : Test
+perspectiveOriginPositionEncoderTests =
+    describe "Encoder.encodePerspectiveOriginPosition"
+        [ test "emits both axes plus unit when every axis has a value" <|
+            \_ ->
+                Encoder.encodePerspectiveOriginPosition
+                    { animGroupName = "camera"
+                    , x = Just 75
+                    , y = Just 25
+                    , unit = "%"
+                    }
+                    |> Encode.encode 0
+                    |> Expect.equal
+                        ("{\"type\":\"perspectiveOriginPosition\""
+                            ++ ",\"elementId\":\"camera\""
+                            ++ ",\"animGroup\":\"camera\""
+                            ++ ",\"x\":75,\"y\":25"
+                            ++ ",\"unit\":\"%\"}"
+                        )
+        , test "emits null for the axis left untouched and preserves px unit" <|
+            \_ ->
+                Encoder.encodePerspectiveOriginPosition
+                    { animGroupName = "camera"
+                    , x = Just 480
+                    , y = Nothing
+                    , unit = "px"
+                    }
+                    |> Encode.encode 0
+                    |> Expect.equal
+                        ("{\"type\":\"perspectiveOriginPosition\""
+                            ++ ",\"elementId\":\"camera\""
+                            ++ ",\"animGroup\":\"camera\""
+                            ++ ",\"x\":480,\"y\":null"
+                            ++ ",\"unit\":\"px\"}"
+                        )
+        , test "emits null for every axis when both are Nothing" <|
+            \_ ->
+                Encoder.encodePerspectiveOriginPosition
+                    { animGroupName = "empty"
+                    , x = Nothing
+                    , y = Nothing
+                    , unit = "%"
+                    }
+                    |> Encode.encode 0
+                    |> Expect.equal
+                        ("{\"type\":\"perspectiveOriginPosition\""
+                            ++ ",\"elementId\":\"empty\""
+                            ++ ",\"animGroup\":\"empty\""
+                            ++ ",\"x\":null,\"y\":null"
+                            ++ ",\"unit\":\"%\"}"
                         )
         ]

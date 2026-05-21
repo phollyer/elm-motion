@@ -3,6 +3,9 @@ module Anim.Internal.Builder.PerspectiveOrigin exposing
     , build
     , clampX
     , clampY
+    , cssUnit
+    , cssUnitX
+    , cssUnitY
     , delay
     , duration
     , easing
@@ -11,8 +14,6 @@ module Anim.Internal.Builder.PerspectiveOrigin exposing
     , fromX
     , fromXY
     , fromY
-    , percent
-    , px
     , speed
     , spring
     , to
@@ -26,7 +27,8 @@ module Anim.Internal.Builder.PerspectiveOrigin exposing
 import Anim.Internal.Builder as Builder exposing (AnimBuilder)
 import Anim.Internal.Builder.Property as PropertyBuilder
 import Anim.Internal.Builder.PropertyBaselines as PropertyBaselines
-import Anim.Internal.Property.PerspectiveOrigin as PerspectiveOrigin exposing (PerspectiveOrigin, Unit(..))
+import Anim.Internal.Property.PerspectiveOrigin as PerspectiveOrigin exposing (PerspectiveOrigin)
+import Anim.Unit exposing (Unit)
 import Motion.Easing exposing (Easing)
 import Motion.Spring exposing (Spring)
 
@@ -38,7 +40,7 @@ import Motion.Spring exposing (Spring)
 
 
 type PerspectiveOriginBuilder mode
-    = PerspectiveOriginBuilder Unit (Builder.AnimationConfig PerspectiveOrigin) (AnimBuilder mode)
+    = PerspectiveOriginBuilder (Builder.AnimationConfig PerspectiveOrigin) (AnimBuilder mode)
 
 
 type alias PerspectiveOriginConfig =
@@ -75,12 +77,12 @@ for animGroupName builder =
         config =
             PropertyBuilder.for animGroupName "perspectiveOrigin" PropertyBaselines.getPerspectiveOrigin extractExisting defaultConfig builder
     in
-    PerspectiveOriginBuilder PercentUnit config <|
+    PerspectiveOriginBuilder config <|
         Builder.for animGroupName builder
 
 
 build : PerspectiveOriginBuilder mode -> AnimBuilder mode
-build (PerspectiveOriginBuilder _ config builder) =
+build (PerspectiveOriginBuilder config builder) =
     PropertyBuilder.upsert (Builder.PerspectiveOriginConfig (applyClamps builder config)) builder
 
 
@@ -108,7 +110,7 @@ applyClamps builder config =
                             r =
                                 PerspectiveOrigin.toRecord value
                         in
-                        PerspectiveOrigin.fromRecord (PerspectiveOrigin.getUnit value)
+                        PerspectiveOrigin.fromRecord
                             { x = clampAxis cx r.x
                             , y = clampAxis cy r.y
                             }
@@ -141,61 +143,41 @@ clampAxis range v =
 
 
 -- ============================================================
--- UNIT
--- ============================================================
-
-
-{-| Set all values in this animation to pixels (default).
--}
-px : PerspectiveOriginBuilder mode -> PerspectiveOriginBuilder mode
-px (PerspectiveOriginBuilder _ config builder) =
-    PerspectiveOriginBuilder PxUnit config builder
-
-
-{-| Set all values in this animation to percentages.
--}
-percent : PerspectiveOriginBuilder mode -> PerspectiveOriginBuilder mode
-percent (PerspectiveOriginBuilder _ config builder) =
-    PerspectiveOriginBuilder PercentUnit config builder
-
-
-
--- ============================================================
 -- FROM
 -- ============================================================
 
 
 from : PerspectiveOrigin -> PerspectiveOriginBuilder mode -> PerspectiveOriginBuilder mode
-from perspectiveOrigin (PerspectiveOriginBuilder unit config builder) =
-    PerspectiveOriginBuilder unit
+from perspectiveOrigin (PerspectiveOriginBuilder config builder) =
+    PerspectiveOriginBuilder
         { config | start = Just perspectiveOrigin }
         builder
 
 
 fromXY : Float -> Float -> PerspectiveOriginBuilder mode -> PerspectiveOriginBuilder mode
-fromXY x y (PerspectiveOriginBuilder unit config builder) =
-    from (PerspectiveOrigin.fromRecord unit { x = x, y = y }) <|
-        PerspectiveOriginBuilder unit config builder
+fromXY x y (PerspectiveOriginBuilder config builder) =
+    from (PerspectiveOrigin.fromRecord { x = x, y = y }) <|
+        PerspectiveOriginBuilder config builder
 
 
 fromX : Float -> PerspectiveOriginBuilder mode -> PerspectiveOriginBuilder mode
-fromX x (PerspectiveOriginBuilder unit config builder) =
+fromX x (PerspectiveOriginBuilder config builder) =
     let
         y =
             PropertyBuilder.getFloat PerspectiveOrigin.getY default config.start
     in
     fromXY x y <|
-        PerspectiveOriginBuilder unit config builder
+        PerspectiveOriginBuilder config builder
 
 
 fromY : Float -> PerspectiveOriginBuilder mode -> PerspectiveOriginBuilder mode
-fromY y (PerspectiveOriginBuilder unit config builder) =
+fromY y (PerspectiveOriginBuilder config builder) =
     let
         x =
             PropertyBuilder.getFloat PerspectiveOrigin.getX default config.start
     in
     fromXY x y <|
-        PerspectiveOriginBuilder unit config builder
+        PerspectiveOriginBuilder config builder
 
 
 
@@ -205,12 +187,12 @@ fromY y (PerspectiveOriginBuilder unit config builder) =
 
 
 to : PerspectiveOrigin -> PerspectiveOriginBuilder mode -> PerspectiveOriginBuilder mode
-to perspectiveOrigin (PerspectiveOriginBuilder unit config builder) =
+to perspectiveOrigin (PerspectiveOriginBuilder config builder) =
     let
         start =
             Maybe.withDefault PerspectiveOrigin.default config.start
     in
-    PerspectiveOriginBuilder unit
+    PerspectiveOriginBuilder
         { config
             | start = Just start
             , end = perspectiveOrigin
@@ -220,27 +202,27 @@ to perspectiveOrigin (PerspectiveOriginBuilder unit config builder) =
 
 
 toXY : Float -> Float -> PerspectiveOriginBuilder mode -> PerspectiveOriginBuilder mode
-toXY x y (PerspectiveOriginBuilder unit config builder) =
-    to (PerspectiveOrigin.fromRecord unit { x = x, y = y }) <|
-        PerspectiveOriginBuilder unit config builder
+toXY x y (PerspectiveOriginBuilder config builder) =
+    to (PerspectiveOrigin.fromRecord { x = x, y = y }) <|
+        PerspectiveOriginBuilder config builder
 
 
 toX : Float -> PerspectiveOriginBuilder mode -> PerspectiveOriginBuilder mode
-toX x (PerspectiveOriginBuilder unit config builder) =
+toX x (PerspectiveOriginBuilder config builder) =
     let
         y =
             PerspectiveOrigin.getY config.end
     in
-    toXY x y (PerspectiveOriginBuilder unit config builder)
+    toXY x y (PerspectiveOriginBuilder config builder)
 
 
 toY : Float -> PerspectiveOriginBuilder mode -> PerspectiveOriginBuilder mode
-toY y (PerspectiveOriginBuilder unit config builder) =
+toY y (PerspectiveOriginBuilder config builder) =
     let
         x =
             PerspectiveOrigin.getX config.end
     in
-    toXY x y (PerspectiveOriginBuilder unit config builder)
+    toXY x y (PerspectiveOriginBuilder config builder)
 
 
 
@@ -250,18 +232,18 @@ toY y (PerspectiveOriginBuilder unit config builder) =
 
 
 delay : Int -> PerspectiveOriginBuilder mode -> PerspectiveOriginBuilder mode
-delay delay_ (PerspectiveOriginBuilder unit config builder) =
-    PerspectiveOriginBuilder unit (PropertyBuilder.delay delay_ config) builder
+delay delay_ (PerspectiveOriginBuilder config builder) =
+    PerspectiveOriginBuilder (PropertyBuilder.delay delay_ config) builder
 
 
 duration : Int -> PerspectiveOriginBuilder mode -> PerspectiveOriginBuilder mode
-duration ms (PerspectiveOriginBuilder unit config builder) =
-    PerspectiveOriginBuilder unit (PropertyBuilder.duration ms config) builder
+duration ms (PerspectiveOriginBuilder config builder) =
+    PerspectiveOriginBuilder (PropertyBuilder.duration ms config) builder
 
 
 speed : Float -> PerspectiveOriginBuilder mode -> PerspectiveOriginBuilder mode
-speed value (PerspectiveOriginBuilder unit config builder) =
-    PerspectiveOriginBuilder unit (PropertyBuilder.speed value config) builder
+speed value (PerspectiveOriginBuilder config builder) =
+    PerspectiveOriginBuilder (PropertyBuilder.speed value config) builder
 
 
 
@@ -271,8 +253,8 @@ speed value (PerspectiveOriginBuilder unit config builder) =
 
 
 easing : Easing -> PerspectiveOriginBuilder mode -> PerspectiveOriginBuilder mode
-easing easing_ (PerspectiveOriginBuilder unit config builder) =
-    PerspectiveOriginBuilder unit (PropertyBuilder.easing easing_ config) builder
+easing easing_ (PerspectiveOriginBuilder config builder) =
+    PerspectiveOriginBuilder (PropertyBuilder.easing easing_ config) builder
 
 
 
@@ -282,8 +264,29 @@ easing easing_ (PerspectiveOriginBuilder unit config builder) =
 
 
 spring : Spring -> PerspectiveOriginBuilder mode -> PerspectiveOriginBuilder mode
-spring s (PerspectiveOriginBuilder unit config builder) =
-    PerspectiveOriginBuilder unit (PropertyBuilder.spring s config) builder
+spring s (PerspectiveOriginBuilder config builder) =
+    PerspectiveOriginBuilder (PropertyBuilder.spring s config) builder
+
+
+
+-- ============================================================
+-- UNIT
+-- ============================================================
+
+
+cssUnit : Unit -> PerspectiveOriginBuilder mode -> PerspectiveOriginBuilder mode
+cssUnit unit (PerspectiveOriginBuilder config builder) =
+    PerspectiveOriginBuilder (PropertyBuilder.cssUnit unit config) builder
+
+
+cssUnitX : Unit -> PerspectiveOriginBuilder mode -> PerspectiveOriginBuilder mode
+cssUnitX unit (PerspectiveOriginBuilder config builder) =
+    PerspectiveOriginBuilder (PropertyBuilder.cssUnitX unit config) builder
+
+
+cssUnitY : Unit -> PerspectiveOriginBuilder mode -> PerspectiveOriginBuilder mode
+cssUnitY unit (PerspectiveOriginBuilder config builder) =
+    PerspectiveOriginBuilder (PropertyBuilder.cssUnitY unit config) builder
 
 
 
@@ -313,10 +316,10 @@ unclampY =
 
 
 updateBuilderClamp : (String -> AnimBuilder mode -> AnimBuilder mode) -> PerspectiveOriginBuilder mode -> PerspectiveOriginBuilder mode
-updateBuilderClamp f (PerspectiveOriginBuilder unit config builder) =
+updateBuilderClamp f (PerspectiveOriginBuilder config builder) =
     case Builder.getCurrentAnimGroupName builder of
         Just animGroupName ->
-            PerspectiveOriginBuilder unit config (f animGroupName builder)
+            PerspectiveOriginBuilder config (f animGroupName builder)
 
         Nothing ->
-            PerspectiveOriginBuilder unit config builder
+            PerspectiveOriginBuilder config builder

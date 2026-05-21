@@ -1,5 +1,5 @@
 module Anim.Property.Custom exposing
-    ( Builder, AnimGroupName, CssUnit, Property(..)
+    ( Builder, AnimGroupName, Property(..)
     , init
     , for, build
     , from
@@ -14,20 +14,33 @@ module Anim.Property.Custom exposing
 property modules (Translate, Rotate, Scale etc.).
 
     import Anim.Property.Custom as Property
+    import Anim.Unit exposing (Unit(..))
     import Easing exposing (Easing(..))
 
     myAnimation : AnimBuilder mode -> AnimBuilder mode
     myAnimation =
-        Property.for "box" (BorderRadius "px")
+        Property.for "box" (BorderRadius Px)
             >> Property.to 16
             >> Property.duration 300
             >> Property.easing EaseInOut
             >> Property.build
 
+Length-typed constructors (`BorderRadius`, `Padding`, `Margin*`, `FontSize`,
+`Top`/`Left`/`Right`/`Bottom`, etc.) take a typed [`Unit`](Anim.Unit#Unit), so
+they share the same CSS-unit vocabulary as the first-class transform
+properties (including the container-query and dynamic-viewport units).
+
+The escape hatch [`Custom`](#Property) and the awkward `LineHeight` /
+`TabSize` constructors keep a free-form `String` unit, since they target
+properties that may be unitless or use units outside the [`Unit`](Anim.Unit#Unit)
+vocabulary (`ch`, `ex`, `lh`, `deg`, `s`, `fr`, ...). Use
+[`Anim.Unit.toCssSuffix`](Anim.Unit#toCssSuffix) when you want to feed a
+typed `Unit` into one of those.
+
 
 # Types
 
-@docs Builder, AnimGroupName, CssUnit, Property
+@docs Builder, AnimGroupName, Property
 
 
 # Initialize
@@ -86,6 +99,7 @@ for behaviour.
 
 import Anim.Internal.Builder exposing (AnimBuilder)
 import Anim.Internal.Property.Custom as Internal
+import Anim.Unit as Unit exposing (Unit)
 import Motion.Easing exposing (Easing)
 import Motion.Spring exposing (Spring)
 
@@ -108,74 +122,71 @@ type alias Builder mode =
     Internal.Builder mode
 
 
-{-| Type alias for CSS units.
-
-Can be any valid CSS unit, such as `"px"`, `"em"`, `"%"` etc.
-
-    Property.for "box" (BorderRadius "px") --- uses pixels
-
-    Property.for "box" (BorderRadius "%") --- uses percentage
-
--}
-type alias CssUnit =
-    String
-
-
 {-| A typed set of common numeric CSS properties with a custom escape hatch.
 
-Use the escape hatch `Custom` to animate any numeric CSS property not currently supported out of the box.
+Length-typed constructors take a [`Unit`](Anim.Unit#Unit). The escape hatch
+`Custom`, plus `LineHeight` and `TabSize`, take a free-form `String` unit
+(use `""` for unitless values, or [`Anim.Unit.toCssSuffix`](Anim.Unit#toCssSuffix)
+to bridge a typed `Unit`).
 
-    Property.for "box" (Custom "property-name" "unit")
+    import Anim.Property.Custom as Property
+    import Anim.Unit exposing (Unit(..))
+
+    Property.for "box" (Property.Custom "property-name" "unit")
         >> Property.to 32
+        >> Property.build
+
+    Property.for "label" (Property.LineHeight "") --- unitless
+        >> Property.to 1.4
         >> Property.build
 
 -}
 type Property
     = -- Standard CSS
-      BorderBottomLeftRadius CssUnit
-    | BorderBottomRightRadius CssUnit
-    | BorderBottomWidth CssUnit
-    | BorderLeftWidth CssUnit
-    | BorderRadius CssUnit
-    | BorderRightWidth CssUnit
-    | BorderTopLeftRadius CssUnit
-    | BorderTopRightRadius CssUnit
-    | BorderTopWidth CssUnit
-    | BorderWidth CssUnit
-    | Bottom CssUnit
-    | ColumnGap CssUnit
-    | ColumnWidth CssUnit
-    | FontSize CssUnit
-    | Gap CssUnit
-    | Inset CssUnit
-    | Left CssUnit
-    | LetterSpacing CssUnit
-    | LineHeight CssUnit
-    | Margin CssUnit
-    | MarginBottom CssUnit
-    | MarginLeft CssUnit
-    | MarginRight CssUnit
-    | MarginTop CssUnit
-    | MaxHeight CssUnit
-    | MaxWidth CssUnit
-    | MinHeight CssUnit
-    | MinWidth CssUnit
-    | OutlineOffset CssUnit
-    | OutlineWidth CssUnit
-    | Padding CssUnit
-    | PaddingBottom CssUnit
-    | PaddingLeft CssUnit
-    | PaddingRight CssUnit
-    | PaddingTop CssUnit
-    | Perspective CssUnit
-    | Right CssUnit
-    | RowGap CssUnit
-    | TabSize CssUnit
-    | TextIndent CssUnit
-    | Top CssUnit
-    | WordSpacing CssUnit
+      BorderBottomLeftRadius Unit
+    | BorderBottomRightRadius Unit
+    | BorderBottomWidth Unit
+    | BorderLeftWidth Unit
+    | BorderRadius Unit
+    | BorderRightWidth Unit
+    | BorderTopLeftRadius Unit
+    | BorderTopRightRadius Unit
+    | BorderTopWidth Unit
+    | BorderWidth Unit
+    | Bottom Unit
+    | ColumnGap Unit
+    | ColumnWidth Unit
+    | FontSize Unit
+    | Gap Unit
+    | Inset Unit
+    | Left Unit
+    | LetterSpacing Unit
+    | LineHeight String
+    | Margin Unit
+    | MarginBottom Unit
+    | MarginLeft Unit
+    | MarginRight Unit
+    | MarginTop Unit
+    | MaxHeight Unit
+    | MaxWidth Unit
+    | MinHeight Unit
+    | MinWidth Unit
+    | OutlineOffset Unit
+    | OutlineWidth Unit
+    | Padding Unit
+    | PaddingBottom Unit
+    | PaddingLeft Unit
+    | PaddingRight Unit
+    | PaddingTop Unit
+    | Perspective Unit
+    | Right Unit
+    | RowGap Unit
+    | TabSize String
+    | TextIndent Unit
+    | Top Unit
+    | WordSpacing Unit
       -- Flex
-    | FlexBasis CssUnit
+    | FlexBasis Unit
     | FlexGrow
     | FlexShrink
       -- SVG
@@ -187,7 +198,7 @@ type Property
     | StrokeDashOffset
     | StrokeWidth
       -- Escape hatch
-    | Custom String CssUnit
+    | Custom String String
 
 
 toCssArgs : Property -> ( String, String )
@@ -195,134 +206,134 @@ toCssArgs cssProperty =
     case cssProperty of
         -- Standard CSS
         BorderBottomLeftRadius unit ->
-            ( "border-bottom-left-radius", unit )
+            ( "border-bottom-left-radius", Unit.toCssSuffix unit )
 
         BorderBottomRightRadius unit ->
-            ( "border-bottom-right-radius", unit )
+            ( "border-bottom-right-radius", Unit.toCssSuffix unit )
 
         BorderBottomWidth unit ->
-            ( "border-bottom-width", unit )
+            ( "border-bottom-width", Unit.toCssSuffix unit )
 
         BorderLeftWidth unit ->
-            ( "border-left-width", unit )
+            ( "border-left-width", Unit.toCssSuffix unit )
 
         BorderRadius unit ->
-            ( "border-radius", unit )
+            ( "border-radius", Unit.toCssSuffix unit )
 
         BorderRightWidth unit ->
-            ( "border-right-width", unit )
+            ( "border-right-width", Unit.toCssSuffix unit )
 
         BorderTopLeftRadius unit ->
-            ( "border-top-left-radius", unit )
+            ( "border-top-left-radius", Unit.toCssSuffix unit )
 
         BorderTopRightRadius unit ->
-            ( "border-top-right-radius", unit )
+            ( "border-top-right-radius", Unit.toCssSuffix unit )
 
         BorderTopWidth unit ->
-            ( "border-top-width", unit )
+            ( "border-top-width", Unit.toCssSuffix unit )
 
         BorderWidth unit ->
-            ( "border-width", unit )
+            ( "border-width", Unit.toCssSuffix unit )
 
         Bottom unit ->
-            ( "bottom", unit )
+            ( "bottom", Unit.toCssSuffix unit )
 
         ColumnGap unit ->
-            ( "column-gap", unit )
+            ( "column-gap", Unit.toCssSuffix unit )
 
         ColumnWidth unit ->
-            ( "column-width", unit )
+            ( "column-width", Unit.toCssSuffix unit )
 
         FontSize unit ->
-            ( "font-size", unit )
+            ( "font-size", Unit.toCssSuffix unit )
 
         Gap unit ->
-            ( "gap", unit )
+            ( "gap", Unit.toCssSuffix unit )
 
         Inset unit ->
-            ( "inset", unit )
+            ( "inset", Unit.toCssSuffix unit )
 
         Left unit ->
-            ( "left", unit )
+            ( "left", Unit.toCssSuffix unit )
 
         LetterSpacing unit ->
-            ( "letter-spacing", unit )
+            ( "letter-spacing", Unit.toCssSuffix unit )
 
         LineHeight unit ->
             ( "line-height", unit )
 
         Margin unit ->
-            ( "margin", unit )
+            ( "margin", Unit.toCssSuffix unit )
 
         MarginBottom unit ->
-            ( "margin-bottom", unit )
+            ( "margin-bottom", Unit.toCssSuffix unit )
 
         MarginLeft unit ->
-            ( "margin-left", unit )
+            ( "margin-left", Unit.toCssSuffix unit )
 
         MarginRight unit ->
-            ( "margin-right", unit )
+            ( "margin-right", Unit.toCssSuffix unit )
 
         MarginTop unit ->
-            ( "margin-top", unit )
+            ( "margin-top", Unit.toCssSuffix unit )
 
         MaxHeight unit ->
-            ( "max-height", unit )
+            ( "max-height", Unit.toCssSuffix unit )
 
         MaxWidth unit ->
-            ( "max-width", unit )
+            ( "max-width", Unit.toCssSuffix unit )
 
         MinHeight unit ->
-            ( "min-height", unit )
+            ( "min-height", Unit.toCssSuffix unit )
 
         MinWidth unit ->
-            ( "min-width", unit )
+            ( "min-width", Unit.toCssSuffix unit )
 
         OutlineOffset unit ->
-            ( "outline-offset", unit )
+            ( "outline-offset", Unit.toCssSuffix unit )
 
         OutlineWidth unit ->
-            ( "outline-width", unit )
+            ( "outline-width", Unit.toCssSuffix unit )
 
         Padding unit ->
-            ( "padding", unit )
+            ( "padding", Unit.toCssSuffix unit )
 
         PaddingBottom unit ->
-            ( "padding-bottom", unit )
+            ( "padding-bottom", Unit.toCssSuffix unit )
 
         PaddingLeft unit ->
-            ( "padding-left", unit )
+            ( "padding-left", Unit.toCssSuffix unit )
 
         PaddingRight unit ->
-            ( "padding-right", unit )
+            ( "padding-right", Unit.toCssSuffix unit )
 
         PaddingTop unit ->
-            ( "padding-top", unit )
+            ( "padding-top", Unit.toCssSuffix unit )
 
         Perspective unit ->
-            ( "perspective", unit )
+            ( "perspective", Unit.toCssSuffix unit )
 
         Right unit ->
-            ( "right", unit )
+            ( "right", Unit.toCssSuffix unit )
 
         RowGap unit ->
-            ( "row-gap", unit )
+            ( "row-gap", Unit.toCssSuffix unit )
 
         TabSize unit ->
             ( "tab-size", unit )
 
         TextIndent unit ->
-            ( "text-indent", unit )
+            ( "text-indent", Unit.toCssSuffix unit )
 
         Top unit ->
-            ( "top", unit )
+            ( "top", Unit.toCssSuffix unit )
 
         WordSpacing unit ->
-            ( "word-spacing", unit )
+            ( "word-spacing", Unit.toCssSuffix unit )
 
         -- Flex
         FlexBasis unit ->
-            ( "flex-basis", unit )
+            ( "flex-basis", Unit.toCssSuffix unit )
 
         FlexGrow ->
             ( "flex-grow", "" )
@@ -369,12 +380,13 @@ Use this to initialize the property in your Engine's `init` function.
 
     import Anim.Engine.* as Engine
     import Anim.Property.Custom as Property
+    import Anim.Unit exposing (Unit(..))
 
     init : () -> ( Model, Cmd Msg )
     init _ =
         ( { animState =
                 Engine.init
-                    [ Property.init "box" (BorderRadius "px") 0 ]
+                    [ Property.init "box" (BorderRadius Px) 0 ]
           }
         , Cmd.none
         )
@@ -403,9 +415,11 @@ init animGroupName cssProperty value animBuilder =
 
 The first argument is the animation group name, the second is the CSS property.
 
+    import Anim.Unit exposing (Unit(..))
+
     myAnimation : AnimBuilder mode -> AnimBuilder mode
     myAnimation =
-        Property.for "box" (BorderRadius "px")
+        Property.for "box" (BorderRadius Px)
             >> Property.to 16
             >> Property.build
 
@@ -508,11 +522,12 @@ Setting `spring` clears any previously-set `easing` on this property,
 and vice versa — they are mutually exclusive.
 
     import Anim.Property.Custom as Property
+    import Anim.Unit exposing (Unit(..))
     import Motion.Spring as Spring
 
     myAnimation : AnimBuilder mode -> AnimBuilder mode
     myAnimation =
-        Property.for "box" (BorderRadius "px")
+        Property.for "box" (BorderRadius Px)
             >> Property.to 16
             >> Property.spring Spring.wobbly
 

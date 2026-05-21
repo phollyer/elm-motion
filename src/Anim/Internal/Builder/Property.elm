@@ -1,6 +1,10 @@
 module Anim.Internal.Builder.Property exposing
     ( InheritedTiming
     , applyFrozenAxes
+    , cssUnit
+    , cssUnitX
+    , cssUnitY
+    , cssUnitZ
     , defaultConfig
     , delay
     , duration
@@ -50,6 +54,8 @@ import Anim.Internal.Property.Scale as Scale
 import Anim.Internal.Property.Size as Size
 import Anim.Internal.Property.Skew as Skew
 import Anim.Internal.Property.Translate as Translate
+import Anim.Internal.Unit as InternalUnit
+import Anim.Unit exposing (Unit)
 import Motion.Easing exposing (Easing)
 import Motion.Internal.Spring exposing (Spring)
 import Shared.TimeSpec exposing (TimeSpec(..))
@@ -67,6 +73,7 @@ type alias Config a =
     , easing : Maybe Easing
     , spring : Maybe Spring
     , delay : Maybe Int
+    , cssUnit : InternalUnit.CssUnitAxes
     , timing : Maybe TimeSpec
     , distance : Float
     }
@@ -79,6 +86,7 @@ defaultConfig defaultEnd =
     , distance = 0
     , timing = Nothing
     , delay = Nothing
+    , cssUnit = InternalUnit.emptyCssUnitAxes
     , easing = Nothing
     , spring = Nothing
     }
@@ -103,28 +111,8 @@ for animGroupName propertyTypeTag extractBaseline extractExisting =
 
 
 {-| Like [for](#for), but inherits `easing`, `spring`, `delay`, and `timing`
-from the previous animation's config when re-targeting an already-configured
-property.
-
-The previous values are looked up in two places, in order:
-
-1.  The in-progress builder's current animation group config (when multiple
-    `for*` calls are chained inside one `animate` batch).
-2.  The most recent processed animation in the group's history (the typical
-    case across `animate` calls).
-
-Inheritance from history (case 2) only applies when the engine reports the
-property as currently running, via `Builder.injectRunningProperties`. This is
-how engine-level `retarget` opts in to mid-flight continuation - plain
-`animate` does not inject the running set, so `forContinuing` degrades to
-[for](#for) semantics outside `retarget`.
-
-Any of the four inherited fields can still be overridden by setting them
-explicitly after the `forContinuing` call.
-
-If no previous animation exists for the group, `forContinuing` behaves
-identically to [for](#for).
-
+from the previous animation's config; falls back to [for](#for) if there is
+no previous config.
 -}
 forContinuing :
     AnimGroupName
@@ -528,6 +516,38 @@ spring :
     -> { config | easing : Maybe Easing, spring : Maybe Spring }
 spring spring_ config =
     { config | spring = Just spring_, easing = Nothing }
+
+
+cssUnit :
+    Unit
+    -> { config | cssUnit : InternalUnit.CssUnitAxes }
+    -> { config | cssUnit : InternalUnit.CssUnitAxes }
+cssUnit unit config =
+    { config | cssUnit = InternalUnit.setAllCssUnitAxes unit config.cssUnit }
+
+
+cssUnitX :
+    Unit
+    -> { config | cssUnit : InternalUnit.CssUnitAxes }
+    -> { config | cssUnit : InternalUnit.CssUnitAxes }
+cssUnitX unit config =
+    { config | cssUnit = InternalUnit.setCssUnitX unit config.cssUnit }
+
+
+cssUnitY :
+    Unit
+    -> { config | cssUnit : InternalUnit.CssUnitAxes }
+    -> { config | cssUnit : InternalUnit.CssUnitAxes }
+cssUnitY unit config =
+    { config | cssUnit = InternalUnit.setCssUnitY unit config.cssUnit }
+
+
+cssUnitZ :
+    Unit
+    -> { config | cssUnit : InternalUnit.CssUnitAxes }
+    -> { config | cssUnit : InternalUnit.CssUnitAxes }
+cssUnitZ unit config =
+    { config | cssUnit = InternalUnit.setCssUnitZ unit config.cssUnit }
 
 
 

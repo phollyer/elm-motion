@@ -5,6 +5,7 @@ import Anim.Internal.Engine.CSS.Styles as Styles
 import Anim.Internal.Engine.Transition.AnimGroup as TransitionAnimGroup
 import Anim.Internal.Engine.Transition.Generator as Generator
 import Anim.Internal.Property.Translate as Translate
+import Anim.Internal.Unit as InternalUnit
 import Dict
 import Expect
 import Shared.TimeSpec exposing (TimeSpec(..))
@@ -21,6 +22,7 @@ translateConfig =
         , easing = Nothing
         , spring = Nothing
         , delay = Nothing
+        , cssUnit = InternalUnit.emptyCssUnitAxes
         }
 
 

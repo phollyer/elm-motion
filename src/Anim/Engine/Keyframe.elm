@@ -10,6 +10,7 @@ module Anim.Engine.Keyframe exposing
     , attributes
     , styleNode, styleNodeFor, maybeString
     , events, eventsStopPropagation
+    , cssUnit, cssUnitX, cssUnitY, cssUnitZ
     , iterations, loopForever, alternate
     , delay, duration, speed
     , easing
@@ -52,8 +53,8 @@ For Engine comparisons, shared features, examples and code, see the
 
 This Engine uses the browser's Document timeline, along with the Transition, Sub, and WAAPI Engines.
 
-Use the `TimelineBuilder` to configure animations that run on the Document timeline only. If any Engines
-are used that don't run on the Document timeline (e.g., Scroll or View), you'll get a type error.
+Use the `TimelineBuilder` to confine animations to the Document timeline. If a non-Document timeline
+Engine tries to consume anything built with a `TimelineBuilder`, you'll get a type error.
 
 @docs TimelineBuilder
 
@@ -114,6 +115,11 @@ and include a `<style>` node with the generated keyframes.
 @docs events, eventsStopPropagation
 
 📖 See [Events](https://phollyer.github.io/elm-motion/animation/engines/keyframes/#events) in the docs.
+
+
+# Unit
+
+@docs cssUnit, cssUnitX, cssUnitY, cssUnitZ
 
 
 # Playback
@@ -226,6 +232,7 @@ import Anim.Internal.Builder as Builder
 import Anim.Internal.Engine.CSS.CSS as CSS
 import Anim.Internal.Engine.Keyframe as Internal
 import Anim.Internal.Engine.Keyframe.AnimGroup as AnimGroup
+import Anim.Unit exposing (Unit)
 import Html
 import Motion.Easing exposing (Easing)
 import Motion.Spring exposing (Spring)
@@ -250,6 +257,15 @@ type alias AnimState =
 
 
 {-| Type alias for the base [AnimBuilder](Anim.Builder#AnimBuilder) type.
+
+Use this as the base type for builders that are shared across multiple engines,
+or that you want to be able to use with any engine:
+
+    f : AnimBuilder mode -> AnimBuilder mode
+
+Use the [TimelineBuilder](#TimelineBuilder) or the [EngineBuilder](#EngineBuilder)
+when you want to tighten the type restrictions and restrict builders to specific engines or timelines.
+
 -}
 type alias AnimBuilder mode =
     CSS.AnimBuilder mode
@@ -267,11 +283,12 @@ type alias AnimGroupName =
 {-| Type alias for the internal `TimelineBuilder` type.
 
 This generic timeline builder works with any engine that uses the same timeline,
-but will result in a type error if used with an Engine that does not.
+but will result in a type error if consumed by an Engine that does not:
 
     f : Keyframe.TimelineBuilder engine -> Keyframe.TimelineBuilder engine
 
-Here's an engine-specific timeline builder for the Keyframe Engine. It will result in a type error if used with any other engine.
+Here's an engine-specific timeline builder for the Keyframe Engine. It will result
+in a type error if consumed by any other engine:
 
     f : Keyframe.TimelineBuilder ForKeyframeEngine -> Keyframe.TimelineBuilder ForKeyframeEngine
 
@@ -688,10 +705,11 @@ don't define their own delay.
 
     import Anim.Engine.Keyframe as Keyframe
     import Anim.Property.Custom as Custom
+    import Anim.Unit exposing (Unit(..))
 
     Keyframe.animate model.animState <|
         Keyframe.delay 500
-            >> Custom.for "box" (Custom.BorderRadius "px")
+            >> Custom.for "box" (Custom.BorderRadius Px)
             >> Custom.to 24
             >> Custom.build
 
@@ -708,10 +726,11 @@ don't define their own duration.
 
     import Anim.Engine.Keyframe as Keyframe
     import Anim.Property.Custom as Custom
+    import Anim.Unit exposing (Unit(..))
 
     Keyframe.animate model.animState <|
         Keyframe.duration 500
-            >> Custom.for "box" (Custom.BorderRadius "px")
+            >> Custom.for "box" (Custom.BorderRadius Px)
             >> Custom.to 24
             >> Custom.build
 
@@ -730,10 +749,11 @@ Consult each property's documentation for details on how speed is interpreted.
 
     import Anim.Engine.Keyframe as Keyframe
     import Anim.Property.Custom as Custom
+    import Anim.Unit exposing (Unit(..))
 
     Keyframe.animate model.animState <|
         Keyframe.speed 100
-            >> Custom.for "box" (Custom.BorderRadius "px")
+            >> Custom.for "box" (Custom.BorderRadius Px)
             >> Custom.to 24
             >> Custom.build
 
@@ -757,10 +777,11 @@ don't define their own easing.
     import Easing exposing (Easing(..))
     import Anim.Engine.Keyframe as Keyframe
     import Anim.Property.Custom as Custom
+    import Anim.Unit exposing (Unit(..))
 
     Keyframe.animate model.animState <|
         Keyframe.easing BounceOut
-            >> Custom.for "box" (Custom.BorderRadius "px")
+            >> Custom.for "box" (Custom.BorderRadius Px)
             >> Custom.to 24
             >> Custom.build
 
@@ -768,6 +789,60 @@ don't define their own easing.
 easing : Easing -> Builder.AnimBuilder mode -> Builder.AnimBuilder mode
 easing =
     CSS.easing
+
+
+
+-- ============================================================
+-- UNIT
+-- ============================================================
+
+
+{-| Set the default length [Unit](Anim-Unit#Unit) for all properties
+in this builder.
+
+Applies to any property that accepts a length unit and doesn't have
+its own unit defined.
+
+    import Anim.Engine.Keyframe as Keyframe
+    import Anim.Property.Translate as Translate
+    import Anim.Unit as Unit
+
+    Keyframe.animate model.animState <|
+        Keyframe.cssUnit Unit.Percent
+            >> Translate.for "box"
+            >> Translate.toX 50
+            >> Translate.build
+
+-}
+cssUnit : Unit -> Builder.AnimBuilder mode -> Builder.AnimBuilder mode
+cssUnit =
+    CSS.cssUnit
+
+
+{-| Set a per-axis default length [Unit](Anim-Unit#Unit) for the X axis. Used
+by `Translate.x`, `Size.width`, and `PerspectiveOrigin.x`. Per-property
+per-axis setters (e.g. `Translate.cssUnitX`) take precedence over this.
+-}
+cssUnitX : Unit -> Builder.AnimBuilder mode -> Builder.AnimBuilder mode
+cssUnitX =
+    CSS.cssUnitX
+
+
+{-| Set a per-axis default length [Unit](Anim-Unit#Unit) for the Y axis. Used
+by `Translate.y`, `Size.height`, and `PerspectiveOrigin.y`. Per-property
+per-axis setters (e.g. `Translate.cssUnitY`) take precedence over this.
+-}
+cssUnitY : Unit -> Builder.AnimBuilder mode -> Builder.AnimBuilder mode
+cssUnitY =
+    CSS.cssUnitY
+
+
+{-| Set a per-axis default length [Unit](Anim-Unit#Unit) for the Z axis. Used
+by `Translate.z`. Per-property `Translate.cssUnitZ` takes precedence.
+-}
+cssUnitZ : Unit -> Builder.AnimBuilder mode -> Builder.AnimBuilder mode
+cssUnitZ =
+    CSS.cssUnitZ
 
 
 

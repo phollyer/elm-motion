@@ -245,7 +245,7 @@ generateTransformParts maybeTargetValues totalTime properties =
         (\p acc ->
             case p of
                 Builder.ProcessedTranslateConfig cfg ->
-                    { acc | translate = generateTransformPart totalTime Translate.default Translate.interpolate Translate.toCssString cfg }
+                    { acc | translate = generateTransformPart totalTime Translate.default Translate.interpolate (Translate.toCssString cfg.cssUnit) cfg }
 
                 Builder.ProcessedRotateConfig cfg ->
                     { acc | rotate = generateTransformPart totalTime Rotate.default Rotate.interpolate Rotate.toCssString cfg }
@@ -302,44 +302,43 @@ generateTransformPart totalTime default interpolate toCssString cfg =
 
 generateNonTransformStyles : Float -> List Builder.ProcessedPropertyConfig -> List ( String, String )
 generateNonTransformStyles totalTime =
-    List.concat
-        << List.filterMap
-            (\p ->
-                case p of
-                    Builder.ProcessedCustomPropertyConfig cssName unit cfg ->
-                        Just
-                            [ ( cssName, generateTransformPart totalTime 0 interpolateFloat (\v -> String.fromFloat v ++ unit) cfg ) ]
+    let
+        part : String -> a -> (Float -> a -> a -> a) -> (a -> String) -> Builder.ProcessedAnimationConfig a -> ( String, String )
+        part cssName default interpolate toCssString cfg =
+            ( cssName, generateTransformPart totalTime default interpolate toCssString cfg )
+    in
+    List.concatMap
+        (\p ->
+            case p of
+                Builder.ProcessedCustomPropertyConfig cssName unit cfg ->
+                    [ part cssName 0 interpolateFloat (\v -> String.fromFloat v ++ unit) cfg ]
 
-                    Builder.ProcessedCustomColorPropertyConfig cssName cfg ->
-                        Just
-                            [ ( cssName, generateTransformPart totalTime (Color.fromRGB { r = 0, g = 0, b = 0 }) Color.interpolate Color.toCssString cfg ) ]
+                Builder.ProcessedCustomColorPropertyConfig cssName cfg ->
+                    [ part cssName (Color.fromRGB { r = 0, g = 0, b = 0 }) Color.interpolate Color.toCssString cfg ]
 
-                    Builder.ProcessedOpacityConfig cfg ->
-                        Just
-                            [ ( "opacity", generateTransformPart totalTime Opacity.default Opacity.interpolate Opacity.toCssString cfg ) ]
+                Builder.ProcessedOpacityConfig cfg ->
+                    [ part "opacity" Opacity.default Opacity.interpolate Opacity.toCssString cfg ]
 
-                    Builder.ProcessedPerspectiveOriginConfig cfg ->
-                        Just
-                            [ ( "perspective-origin", generateTransformPart totalTime PerspectiveOrigin.default PerspectiveOrigin.interpolate PerspectiveOrigin.toCssString cfg ) ]
+                Builder.ProcessedPerspectiveOriginConfig cfg ->
+                    [ part "perspective-origin" PerspectiveOrigin.default PerspectiveOrigin.interpolate (PerspectiveOrigin.toCssString cfg.cssUnit) cfg ]
 
-                    Builder.ProcessedRotateConfig _ ->
-                        Nothing
+                Builder.ProcessedSizeConfig cfg ->
+                    [ part "width" Size.default Size.interpolate (Size.widthToCssString cfg.cssUnit) cfg
+                    , part "height" Size.default Size.interpolate (Size.heightToCssString cfg.cssUnit) cfg
+                    ]
 
-                    Builder.ProcessedScaleConfig _ ->
-                        Nothing
+                Builder.ProcessedRotateConfig _ ->
+                    []
 
-                    Builder.ProcessedSizeConfig cfg ->
-                        Just
-                            [ ( "width", generateTransformPart totalTime Size.default Size.interpolate Size.widthToCssString cfg )
-                            , ( "height", generateTransformPart totalTime Size.default Size.interpolate Size.heightToCssString cfg )
-                            ]
+                Builder.ProcessedScaleConfig _ ->
+                    []
 
-                    Builder.ProcessedSkewConfig _ ->
-                        Nothing
+                Builder.ProcessedSkewConfig _ ->
+                    []
 
-                    Builder.ProcessedTranslateConfig _ ->
-                        Nothing
-            )
+                Builder.ProcessedTranslateConfig _ ->
+                    []
+        )
 
 
 interpolateFloat : Float -> Float -> Float -> Float
@@ -438,7 +437,7 @@ generateHash maybeOrder discrete animGroupName maxDuration maxDelay processedPro
                     s "opacity-" Opacity.toCssString cfg
 
                 Builder.ProcessedPerspectiveOriginConfig cfg ->
-                    s "perspOrigin-" PerspectiveOrigin.toCssString cfg
+                    s "perspOrigin-" (PerspectiveOrigin.toCssString cfg.cssUnit) cfg
 
                 Builder.ProcessedRotateConfig cfg ->
                     s "rot-" Rotate.toCssString cfg
@@ -447,13 +446,13 @@ generateHash maybeOrder discrete animGroupName maxDuration maxDelay processedPro
                     s "scale-" Scale.toCssString cfg
 
                 Builder.ProcessedSizeConfig cfg ->
-                    s "size-" Size.toCssString cfg
+                    s "size-" (Size.toCssString cfg.cssUnit) cfg
 
                 Builder.ProcessedSkewConfig cfg ->
                     s "skew-" Skew.toCssString cfg
 
                 Builder.ProcessedTranslateConfig cfg ->
-                    s "pos-" Translate.toCssString cfg
+                    s "pos-" (Translate.toCssString cfg.cssUnit) cfg
 
         hashConfig =
             processedProps
@@ -533,35 +532,6 @@ generateName maybeSuffix maybeOrder discrete animGroupName properties =
 getMaxTimings : List Builder.ProcessedPropertyConfig -> ( Int, Int )
 getMaxTimings processedProps =
     processedProps
-        |> List.map
-            (\p ->
-                case p of
-                    Builder.ProcessedCustomPropertyConfig _ _ cfg ->
-                        ( cfg.duration, cfg.delay )
-
-                    Builder.ProcessedCustomColorPropertyConfig _ cfg ->
-                        ( cfg.duration, cfg.delay )
-
-                    Builder.ProcessedOpacityConfig cfg ->
-                        ( cfg.duration, cfg.delay )
-
-                    Builder.ProcessedPerspectiveOriginConfig cfg ->
-                        ( cfg.duration, cfg.delay )
-
-                    Builder.ProcessedRotateConfig cfg ->
-                        ( cfg.duration, cfg.delay )
-
-                    Builder.ProcessedScaleConfig cfg ->
-                        ( cfg.duration, cfg.delay )
-
-                    Builder.ProcessedSizeConfig cfg ->
-                        ( cfg.duration, cfg.delay )
-
-                    Builder.ProcessedSkewConfig cfg ->
-                        ( cfg.duration, cfg.delay )
-
-                    Builder.ProcessedTranslateConfig cfg ->
-                        ( cfg.duration, cfg.delay )
-            )
+        |> List.map (Builder.processedTimings >> (\t -> ( t.duration, t.delay )))
         |> List.maximum
         |> Maybe.withDefault ( 0, 0 )

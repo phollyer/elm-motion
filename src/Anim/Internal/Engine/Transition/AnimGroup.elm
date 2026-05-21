@@ -122,8 +122,6 @@ setStyles styles (AnimGroup animGroup) =
     AnimGroup { animGroup | styles = styles }
 
 
-{-| Replace the set of Builder property keys associated with this group.
--}
 setPropertyKeys : Set String -> AnimGroup -> AnimGroup
 setPropertyKeys keys (AnimGroup animGroup) =
     AnimGroup { animGroup | propertyKeys = keys }

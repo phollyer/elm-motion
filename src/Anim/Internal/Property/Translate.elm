@@ -17,6 +17,7 @@ module Anim.Internal.Property.Translate exposing
     )
 
 import Anim.Internal.Property.Shared.Axis3 as Axis
+import Anim.Internal.Unit as InternalUnit
 import Shared.TimeSpec as TimeSpec exposing (TimeSpec)
 
 
@@ -35,8 +36,6 @@ default =
     Translate { x = 0, y = 0, z = 0 }
 
 
-{-| Support interface for generic 3D coordinate operations
--}
 support : Axis.Axis3Support Translate
 support =
     { zero = default
@@ -121,11 +120,27 @@ duration =
 -- ============================================================
 
 
-toCssString : Translate -> String
-toCssString (Translate coords) =
-    "translate3d(" ++ String.fromFloat coords.x ++ "px, " ++ String.fromFloat coords.y ++ "px, " ++ String.fromFloat coords.z ++ "px)"
+toCssString : InternalUnit.ResolvedCssUnitAxes -> Translate -> String
+toCssString axes (Translate coords) =
+    "translate3d("
+        ++ String.fromFloat coords.x
+        ++ InternalUnit.toCssSuffix axes.x
+        ++ ", "
+        ++ String.fromFloat coords.y
+        ++ InternalUnit.toCssSuffix axes.y
+        ++ ", "
+        ++ String.fromFloat coords.z
+        ++ InternalUnit.toCssSuffix axes.z
+        ++ ")"
 
 
-toCssPropertyValue : Translate -> String
-toCssPropertyValue (Translate coords) =
-    String.fromFloat coords.x ++ "px " ++ String.fromFloat coords.y ++ "px " ++ String.fromFloat coords.z ++ "px"
+toCssPropertyValue : InternalUnit.ResolvedCssUnitAxes -> Translate -> String
+toCssPropertyValue axes (Translate coords) =
+    String.fromFloat coords.x
+        ++ InternalUnit.toCssSuffix axes.x
+        ++ " "
+        ++ String.fromFloat coords.y
+        ++ InternalUnit.toCssSuffix axes.y
+        ++ " "
+        ++ String.fromFloat coords.z
+        ++ InternalUnit.toCssSuffix axes.z

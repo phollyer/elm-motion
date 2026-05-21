@@ -9,6 +9,7 @@ module Anim.Engine.ViewTimeline exposing
     , Unit(..), Range(..), rangeStart, rangeEnd
     , iterations, alternate
     , easing
+    , cssUnit, cssUnitX, cssUnitY, cssUnitZ
     , spring
     , discreteEntry, discreteExit
     , transformOrder
@@ -93,6 +94,11 @@ For Engine comparisons, shared features, examples and code, see the
 📖 See [Easing](https://phollyer.github.io/elm-motion/animation/concepts/easing/) in the docs.
 
 
+# Length Unit
+
+@docs cssUnit, cssUnitX, cssUnitY, cssUnitZ
+
+
 # Spring
 
 @docs spring
@@ -111,6 +117,7 @@ For Engine comparisons, shared features, examples and code, see the
 
 import Anim.Extra.TransformOrder exposing (TransformProperty)
 import Anim.Internal.Engine.ViewTimeline as Internal
+import Anim.Unit as LengthUnit
 import Html
 import Json.Decode as Decode
 import Json.Encode as Encode
@@ -447,6 +454,52 @@ alternate =
 easing : Easing -> TimelineBuilder -> TimelineBuilder
 easing =
     Internal.easing
+
+
+
+-- ============================================================
+-- LENGTH UNIT
+-- ============================================================
+
+
+{-| Set the default length [Unit](Anim-Unit#Unit) for all length-bearing
+properties in this timeline.
+
+Applies to `Translate`, `Size`, and `PerspectiveOrigin`. Per-property
+[`cssUnit`](Anim-Property-Translate#cssUnit) calls take precedence over this
+engine-level default. If neither is set, properties render in `Px`.
+
+Note: this is unrelated to the [Range Unit](#Unit) used by `rangeStart` and
+`rangeEnd`.
+
+-}
+cssUnit : LengthUnit.Unit -> TimelineBuilder -> TimelineBuilder
+cssUnit =
+    Internal.cssUnit
+
+
+{-| Set a per-axis default length [Unit](Anim-Unit#Unit) for the X axis.
+Applies to `Translate.x`, `Size.width`, and `PerspectiveOrigin.x`.
+-}
+cssUnitX : LengthUnit.Unit -> TimelineBuilder -> TimelineBuilder
+cssUnitX =
+    Internal.cssUnitX
+
+
+{-| Set a per-axis default length [Unit](Anim-Unit#Unit) for the Y axis.
+Applies to `Translate.y`, `Size.height`, and `PerspectiveOrigin.y`.
+-}
+cssUnitY : LengthUnit.Unit -> TimelineBuilder -> TimelineBuilder
+cssUnitY =
+    Internal.cssUnitY
+
+
+{-| Set a per-axis default length [Unit](Anim-Unit#Unit) for the Z axis.
+Applies to `Translate.z`.
+-}
+cssUnitZ : LengthUnit.Unit -> TimelineBuilder -> TimelineBuilder
+cssUnitZ =
+    Internal.cssUnitZ
 
 
 

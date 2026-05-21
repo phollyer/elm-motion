@@ -3,17 +3,13 @@ port module Animation.WAAPI.ControllingAnimations.Main exposing (main)
 import Anim.Builder exposing (AnimBuilder)
 import Anim.Engine.WAAPI as WAAPI
 import Anim.Property.Translate as Translate
-import Anim.Resize as Resize
+import Anim.Unit exposing (Unit(..))
 import Browser
-import Browser.Dom as Dom
-import Browser.Events
 import Html exposing (Html, button, div, text)
-import Html.Attributes exposing (class, id, style)
+import Html.Attributes exposing (class, style)
 import Html.Events exposing (onClick)
 import Json.Encode as Encode
-import Motion.Easing as Easing exposing (Easing(..))
-import Process
-import Task
+import Motion.Easing exposing (Easing(..))
 
 
 
@@ -46,14 +42,7 @@ main =
 
 type alias Model =
     { animState : WAAPI.AnimState Msg
-    , canvasH : Float
-    , animPlayState : AnimPlayState
     }
-
-
-type AnimPlayState
-    = NotStarted
-    | Started
 
 
 animGroup : String
@@ -61,19 +50,21 @@ animGroup =
     "bouncingBall"
 
 
-canvasId : String
-canvasId =
-    "anim-canvas"
-
-
+{-| Ball size as a percentage of the canvas height (in `cqh` units). The
+canvas declares `container-type: size`, so `cqh` resolves against the
+canvas itself - the animation, ball size and travel distance all scale
+with the canvas regardless of viewport size or surrounding chrome. No
+Elm-side resize plumbing required; the browser re-evaluates `cqh` against
+current layout on every frame.
+-}
 ballSize : Float
 ballSize =
-    50
+    12
 
 
-topY : Float
-topY =
-    25
+ballSizeCqh : String
+ballSizeCqh =
+    String.fromFloat ballSize ++ "cqh"
 
 
 
@@ -82,41 +73,27 @@ topY =
 
 init : () -> ( Model, Cmd Msg )
 init _ =
-    ( { animState =
+    let
+        animState =
             WAAPI.init motionCmd motionMsg <|
-                [ Translate.initY animGroup topY ]
-      , canvasH = 0
-      , animPlayState = NotStarted
-      }
-    , Process.sleep 100
-        |> Task.perform (\_ -> OnResize)
+                [ Translate.initY animGroup 0 ]
+    in
+    ( { animState = animState }
+    , Cmd.none
     )
-
-
-measureCanvas : Cmd Msg
-measureCanvas =
-    Task.attempt GotCanvas (Dom.getElement canvasId)
-
-
-
--- POSITION HELPERS
-
-
-bottomY : Float -> Float
-bottomY h =
-    h - ballSize
 
 
 
 -- ANIMATION
 
 
-dropBall : Float -> AnimBuilder mode -> AnimBuilder mode
-dropBall toBottomY =
+dropBall : AnimBuilder mode -> AnimBuilder mode
+dropBall =
     Translate.for animGroup
-        >> Translate.fromY topY
-        >> Translate.toY toBottomY
-        >> Translate.speed 200
+        >> Translate.cssUnit Cqh
+        >> Translate.fromY 0
+        >> Translate.toY (100 - ballSize)
+        >> Translate.speed 75
         >> Translate.easing BounceOut
         >> Translate.build
 
@@ -132,8 +109,6 @@ type Msg
     | Resume
     | Reset
     | Restart
-    | OnResize
-    | GotCanvas (Result Dom.Error Dom.Element)
     | GotWaapiMsg WAAPI.AnimMsg
 
 
@@ -152,11 +127,9 @@ update msg model =
         Animate ->
             let
                 ( newAnimState, animCmd ) =
-                    WAAPI.animate model.animState <|
-                        Translate.resizePolicy animGroup Resize.proportional
-                            >> dropBall (bottomY model.canvasH)
+                    WAAPI.animate model.animState dropBall
             in
-            ( { model | animPlayState = Started, animState = newAnimState }
+            ( { model | animState = newAnimState }
             , animCmd
             )
 
@@ -214,48 +187,15 @@ update msg model =
             , restartCmd
             )
 
-        ---8<-- [end:restart]
-        OnResize ->
-            ( model, measureCanvas )
-
-        GotCanvas (Ok element) ->
-            handleResize { model | canvasH = element.element.height }
-
-        GotCanvas (Err _) ->
-            ( model, Cmd.none )
 
 
-handleResize : Model -> ( Model, Cmd Msg )
-handleResize model =
-    case model.animPlayState of
-        NotStarted ->
-            ( model, Cmd.none )
-
-        Started ->
-            let
-                bounds =
-                    { x = Nothing
-                    , y = Just { min = topY, max = bottomY model.canvasH }
-                    , z = Nothing
-                    }
-
-                ( newAnimState, cmd ) =
-                    WAAPI.onResize model.animState <|
-                        Translate.bounds animGroup bounds
-            in
-            ( { model | animState = newAnimState }, cmd )
-
-
-
+---8<-- [end:restart]
 -- SUBSCRIPTIONS
 
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
-    Sub.batch
-        [ WAAPI.subscriptions GotWaapiMsg model.animState
-        , Browser.Events.onResize (\_ _ -> OnResize)
-        ]
+    WAAPI.subscriptions GotWaapiMsg model.animState
 
 
 
@@ -281,20 +221,18 @@ view model =
 animationArea : WAAPI.AnimState msg -> Html msg
 animationArea animState =
     div
-        [ id canvasId
-        , class "example-canvas--fluid"
+        [ class "example-canvas--fluid"
         , style "border-bottom" "2px solid #333"
+        , style "container-type" "size"
         ]
         [ div
             (WAAPI.attributes animGroup animState
                 ++ [ style "position" "absolute"
-                   , style "top" "0"
-                   , style "left" "calc(50% - 25px)"
-                   , style "width" "50px"
-                   , style "height" "50px"
-                   , style "font-size" "50px"
-                   , style "line-height" "50px"
-                   , style "text-align" "center"
+                   , style "left" ("calc(50% - " ++ String.fromFloat (ballSize / 2) ++ "cqh)")
+                   , style "width" ballSizeCqh
+                   , style "height" ballSizeCqh
+                   , style "font-size" ballSizeCqh
+                   , style "line-height" ballSizeCqh
                    ]
             )
             [ text "🏀" ]

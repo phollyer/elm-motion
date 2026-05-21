@@ -2,7 +2,6 @@ module Animation.Sub.ResponsiveAnimations.Responsive.Main exposing (..)
 
 import Anim.Engine.Sub as Sub exposing (AnimGroupName)
 import Anim.Property.Translate as Translate
-import Anim.Resize as Resize
 import Browser
 import Browser.Dom as Dom
 import Browser.Events
@@ -66,24 +65,14 @@ widthPctToFloat pct =
             100
 
 
-topBoxAnim : String
-topBoxAnim =
-    "topBoxAnim"
-
-
-middleBoxAnim : String
-middleBoxAnim =
-    "middleBoxAnim"
-
-
-bottomBoxAnim : String
-bottomBoxAnim =
-    "bottomBoxAnim"
+boxAnim : String
+boxAnim =
+    "boxAnim"
 
 
 allGroups : List AnimGroupName
 allGroups =
-    [ topBoxAnim, middleBoxAnim, bottomBoxAnim ]
+    [ boxAnim ]
 
 
 rowState : AnimGroupName -> Model -> AnimPlayState
@@ -97,25 +86,9 @@ setRowState group state model =
     { model | rowStates = Dict.insert group state model.rowStates }
 
 
-policyFor : AnimGroupName -> Resize.Policy
-policyFor group =
-    if group == topBoxAnim then
-        Resize.proportional
-
-    else if group == middleBoxAnim then
-        Resize.clamp
-
-    else
-        Resize.retarget
-
-
-{-| One id is enough — both rows share the same inner width because they
-sit in the same fixed-width stage. Whichever row we measure tells us the
-runway available to both boxes.
--}
 trackId : String
 trackId =
-    "retarget-track"
+    "proportional-track"
 
 
 boxSize : Float
@@ -132,9 +105,7 @@ init : () -> ( Model, Cmd Msg )
 init _ =
     ( { animState =
             Sub.init
-                [ Translate.initX bottomBoxAnim 0
-                , Translate.initX middleBoxAnim 0
-                , Translate.initX topBoxAnim 0
+                [ Translate.initX boxAnim 0
                 ]
       , widthPct = Normal
       , trackPx = 0
@@ -239,10 +210,7 @@ startRow group model =
         NotStarted ->
             { model
                 | animState =
-                    Sub.animate model.animState
-                        (Translate.resizePolicy group (policyFor group)
-                            >> animate group target
-                        )
+                    Sub.animate model.animState (animate group target)
             }
                 |> setRowState group Playing
 
@@ -262,15 +230,9 @@ stopRow group model =
 ---8<-- [end:policy-init]
 
 
-{-| The two rows demonstrate the two `Sub.onResize` strategies.
-
-  - The top row uses `Proportional` - the box's progress along the
-    track is preserved, so the rhythm of the animation continues to feel
-    natural even as the track changes width.
-      - The bottom row uses `Retarget` - the box keeps its current pixel
-        position, but the leg endpoint follows the new bounds so the
-        animation remains edge-to-edge as the track grows or shrinks.
-
+{-| The row demonstrates `Sub.onResize` with proportional remapping:
+the box's progress along the track is preserved, so the rhythm of the
+animation continues to feel natural even as the track changes width.
 -}
 
 
@@ -366,9 +328,7 @@ view model =
                 [ style "width" (String.fromFloat (widthPctToFloat model.widthPct) ++ "%")
                 , style "align-self" "flex-start"
                 ]
-                [ trackRow "Proportional" trackId topBoxAnim proportionalColor model
-                , trackRow "Clamp" "" middleBoxAnim clampColor model
-                , trackRow "Retarget" "" bottomBoxAnim retargetColor model
+                [ trackRow "Proportional" trackId boxAnim proportionalColor model
                 ]
             ]
         ]
@@ -454,13 +414,3 @@ rowStateLabel state =
 proportionalColor : String
 proportionalColor =
     "#28a745"
-
-
-clampColor : String
-clampColor =
-    "#fd7e14"
-
-
-retargetColor : String
-retargetColor =
-    "#dc3545"

@@ -89,8 +89,6 @@ distance support coord1 coord2 =
     max dx (max dy dz)
 
 
-{-| Linear interpolation between coordinates
--}
 interpolate : Axis3Support a -> Float -> a -> a -> a
 interpolate support t start end =
     let

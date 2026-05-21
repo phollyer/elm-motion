@@ -114,8 +114,6 @@ toAnimation isComplete propertyConfig =
             in
             { start = resolvedStart
             , end = config.end
-            , authoredStart = resolvedStart
-            , authoredEnd = config.end
             , easingFunction = easingFn
             , delayMs = toFloat config.delay
             , isComplete = isComplete
