@@ -136,10 +136,35 @@ export function stopAnimation(animGroup, properties) {
 export function resetAnimation(animGroup, properties) {
     const elementAnims = activeAnimations.get(animGroup);
     if (!elementAnims) return;
-    const { affected, total } = forEachAffectedAnimation(animGroup, properties, animData => animData.animation.cancel());
-    if (!properties || affected === total) {
+
+    // Snapshot targets BEFORE mutating the Map, then drop tracking entries
+    // BEFORE calling `animation.cancel()`. The cancel listener in
+    // animationEvents.js checks `isActiveEntry()` and short-circuits when the
+    // entry is gone, so it will not emit a `propertyUpdate` carrying the
+    // animation's last progress. Elm has already snapped the visible state
+    // back to the start values - we must not let a trailing progress event
+    // overwrite that snapshot.
+    const filter = properties ? new Set(properties) : null;
+    const targets = [];
+    elementAnims.forEach((animData, propertyType) => {
+        if (!filter || filter.has(propertyType)) {
+            targets.push({ propertyType, animation: animData.animation });
+        }
+    });
+
+    const affectedAll = !properties || targets.length === elementAnims.size;
+    if (affectedAll) {
         cleanupAnimGroup(animGroup);
+    } else {
+        for (const { propertyType } of targets) {
+            elementAnims.delete(propertyType);
+        }
     }
+
+    for (const { animation } of targets) {
+        animation.cancel();
+    }
+
     sendLifecycleEvent('reset', animGroup);
 }
 

@@ -101,8 +101,6 @@ import Anim.Internal.Engine.WAAPI.Encoder exposing (..)
 import Anim.Internal.Engine.WAAPI.Generator as Generator
 import Anim.Internal.Engine.WAAPI.ProgressApply as ProgressApply
 import Anim.Internal.Extra.Color as Color exposing (Color(..))
-import Anim.Internal.Property.Custom as CustomProperty
-import Anim.Internal.Property.CustomColor as CustomColorProperty
 import Anim.Internal.Property.Opacity as Opacity
 import Anim.Internal.Property.PerspectiveOrigin as PerspectiveOrigin
 import Anim.Internal.Property.Rotate as Rotate
@@ -2367,81 +2365,67 @@ resetSingleKey animGroupName (AnimState state animGroups) =
 
         Just { properties } ->
             let
-                -- Extract start and end states from the animation history
-                states =
-                    Generator.propertyBounds properties
-
                 startStates =
-                    states.start
-
-                resetBuilder =
-                    Builder.init []
-                        |> Builder.duration 0
-                        |> Builder.easing Linear
-                        |> Builder.for animGroupName
-                        |> resetProperties animGroupName properties startStates
-
-                processedData =
-                    Builder.process resetBuilder
+                    (Generator.propertyBounds properties).start
 
                 propertyConfigs : List ( String, Builder.ProcessedPropertyConfig )
                 propertyConfigs =
-                    properties
-                        |> List.map (\p -> ( Generator.propertyTypeString p, p ))
+                    List.map (\p -> ( Generator.propertyTypeString p, p )) properties
+
+                resetCmd =
+                    state.commandPort <|
+                        encodeCommandWithProperties "reset" animGroupName Nothing
             in
             case AnimGroups.get animGroupName animGroups of
                 Nothing ->
-                    -- No tracking entry, create one with property versions
                     let
-                        newProperties =
+                        newPropertyStates =
                             propertyConfigs
-                                |> List.map (\( propType, config ) -> ( propType, { version = 1, status = AnimGroup.NotStarted, config = config } ))
+                                |> List.map
+                                    (\( propType, config ) ->
+                                        ( propType
+                                        , { version = 1
+                                          , status = AnimGroup.NotStarted
+                                          , config = config
+                                          }
+                                        )
+                                    )
                                 |> AnimGroups.fromList
 
                         newAnimGroup =
                             AnimGroup.init
                                 |> AnimGroup.setSnapshot startStates
-                                |> AnimGroup.setPropertyStates newProperties
-
-                        updatedElementAnimations =
-                            AnimGroups.insert animGroupName newAnimGroup animGroups
-
-                        updatedAnimState =
-                            AnimState
-                                { state | subscriptionsActive = False }
-                                updatedElementAnimations
+                                |> AnimGroup.setPropertyStates newPropertyStates
                     in
-                    ( updatedAnimState
-                    , state.commandPort <|
-                        encode updatedElementAnimations processedData
+                    ( AnimState
+                        { state | subscriptionsActive = False }
+                        (AnimGroups.insert animGroupName newAnimGroup animGroups)
+                    , resetCmd
                     )
 
                 Just animGroup ->
-                    -- Existing tracking entry, increment versions for reset properties
                     let
-                        updatedPropertyStates =
-                            animGroup
-                                |> AnimGroup.bumpPropertyVersions propertyConfigs
-                                |> AnimGroup.getPropertyStates
-
+                        -- Bump versions so any in-flight `propertyUpdate` from
+                        -- the now-cancelled animation is rejected as stale.
+                        -- Config is refreshed only to satisfy `bumpPropertyVersions`;
+                        -- no animation will be run against it after a reset.
                         resetAnimGroup =
                             animGroup
+                                |> AnimGroup.bumpPropertyVersions propertyConfigs
                                 |> AnimGroup.setSnapshot startStates
-                                |> AnimGroup.setPropertyStates updatedPropertyStates
                                 |> AnimGroup.setProgress 0
 
-                        updatedAnimGroup =
+                        updatedAnimGroups =
                             AnimGroups.insert animGroupName resetAnimGroup animGroups
                     in
                     ( AnimState
                         { state
                             | subscriptionsActive =
-                                AnimGroups.groups updatedAnimGroup
+                                AnimGroups.groups updatedAnimGroups
                                     |> List.any AnimGroup.isRunning
                         }
-                        updatedAnimGroup
-                    , state.commandPort <|
-                        encode updatedAnimGroup processedData
+                        updatedAnimGroups
+                    , resetCmd
                     )
 
 
@@ -2577,78 +2561,6 @@ resume animGroup (AnimState state animGroups) =
     , state.commandPort <|
         encodeCommandWithProperties "resume" animGroup Nothing
     )
-
-
-resetProperties : String -> List Builder.ProcessedPropertyConfig -> PropertyBaselines -> EngineBuilder -> EngineBuilder
-resetProperties animGroupName properties startStates =
-    let
-        -- Use the actual stored start states to reset each property that was animated
-        buildFromStartState : (PropertyBaselines -> Maybe a) -> (a -> EngineBuilder -> EngineBuilder) -> EngineBuilder -> EngineBuilder
-        buildFromStartState accessor builderFn animBuilder =
-            case accessor startStates of
-                Just start ->
-                    builderFn start animBuilder
-
-                Nothing ->
-                    animBuilder
-
-        opacityBuilder start =
-            Opacity.for animGroupName
-                >> Opacity.to start
-                >> Opacity.build
-
-        rotateBuilder start =
-            Rotate.for animGroupName
-                >> Rotate.to start
-                >> Rotate.build
-
-        scaleBuilder start =
-            Scale.for animGroupName
-                >> Scale.to start
-                >> Scale.build
-
-        sizeBuilder start =
-            Size.for animGroupName
-                >> Size.to start
-                >> Size.build
-
-        translateBuilder start =
-            Translate.for animGroupName
-                >> Translate.to start
-                >> Translate.build
-
-        buildCustomFromStartState : Builder.ProcessedPropertyConfig -> (EngineBuilder -> EngineBuilder)
-        buildCustomFromStartState propertyConfig =
-            case propertyConfig of
-                Builder.ProcessedCustomPropertyConfig cssName unit _ ->
-                    case PropertyBaselines.getCustomProperty cssName startStates of
-                        Just start ->
-                            CustomProperty.for animGroupName cssName unit
-                                >> CustomProperty.to start
-                                >> CustomProperty.build
-
-                        Nothing ->
-                            identity
-
-                Builder.ProcessedCustomColorPropertyConfig cssName _ ->
-                    case PropertyBaselines.getCustomColorProperty cssName startStates of
-                        Just start ->
-                            CustomColorProperty.for animGroupName cssName
-                                >> CustomColorProperty.to start
-                                >> CustomColorProperty.build
-
-                        Nothing ->
-                            identity
-
-                _ ->
-                    identity
-    in
-    buildFromStartState PropertyBaselines.getOpacity opacityBuilder
-        >> buildFromStartState PropertyBaselines.getRotate rotateBuilder
-        >> buildFromStartState PropertyBaselines.getScale scaleBuilder
-        >> buildFromStartState PropertyBaselines.getSize sizeBuilder
-        >> buildFromStartState PropertyBaselines.getTranslate translateBuilder
-        >> List.foldl (>>) identity (List.map buildCustomFromStartState properties)
 
 
 
