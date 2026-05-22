@@ -236,30 +236,48 @@ type alias Model =
     { animState : Transition.AnimState
     , perspectiveStep : PerspectiveStep
     , scale : Float
+    , dotAreaSize : { width : Float, height : Float }
     }
 
 
 {-| Width of the perspective container's border (must match the inline
-`border` style applied to `viewAnimationArea`). The scale wrapper sits
-inside the padding box, so we subtract `2 * borderWidth` from the measured
-bounding box before computing the scale ratio to keep the dot tracing the
-visible inner edge of the border on all four sides.
+`border` style applied to `viewAnimationArea`). The dot is absolutely
+positioned relative to the padding box, so animating its anchor all the
+way to `element.width` / `element.height` would place it `2 * borderWidth`
+past the inner edge of the border. Subtracting `2 * borderWidth` from the
+measured area keeps the dot tracing the visible border on all four sides.
 -}
 containerBorderWidth : Float
 containerBorderWidth =
     1
 
 
-{-| Compute the uniform scale ratio that maps the fixed `referenceContainerSize`
-reference space to the measured perspective container's inner area.
+{-| Measured inner area of the perspective container (its padding-box
+rectangle minus the border on every side). The vanishing-point dot
+uses this directly so it traces the actual outline of the container
+on every viewport shape - including non-square (portrait / landscape)
+layouts where the container's `aspect-ratio: 1 / 1` is overridden by
+flex constraints.
+-}
+innerArea : { a | width : Float, height : Float } -> { width : Float, height : Float }
+innerArea element =
+    { width = max 0 (element.width - 2 * containerBorderWidth)
+    , height = max 0 (element.height - 2 * containerBorderWidth)
+    }
+
+
+{-| Compute the uniform Scale ratio that maps the fixed
+`referenceContainerSize` reference space to the perspective container's
+inner area. Uses the smaller dimension so the cube always fits inside
+the container regardless of its aspect ratio.
 -}
 scaleForElement : { a | width : Float, height : Float } -> Float
 scaleForElement element =
     let
         inner =
-            max 0 (min element.width element.height - 2 * containerBorderWidth)
+            innerArea element
     in
-    inner / referenceContainerSize
+    min inner.width inner.height / referenceContainerSize
 
 
 
@@ -314,6 +332,10 @@ init _ =
     ( { animState = initialAnimState
       , perspectiveStep = MoveToTopRight
       , scale = 1
+      , dotAreaSize =
+            { width = referenceContainerSize
+            , height = referenceContainerSize
+            }
       }
     , Process.sleep 100
         |> Task.andThen (\_ -> Dom.getElement perspectiveContainer.id)
@@ -342,20 +364,20 @@ nextPerspectiveStep step =
             MoveToTopRight
 
 
-perspectiveAnimation : PerspectiveStep -> AnimBuilder mode -> AnimBuilder mode
-perspectiveAnimation step =
+perspectiveAnimation : { width : Float, height : Float } -> PerspectiveStep -> AnimBuilder mode -> AnimBuilder mode
+perspectiveAnimation areaSize step =
     case step of
         MoveToTopRight ->
-            movePerspectiveOrigin 100 0 perspectiveStepDuration
+            movePerspectiveOrigin 100 0 perspectiveStepDuration areaSize
 
         MoveToBottomRight ->
-            movePerspectiveOrigin 100 100 perspectiveStepDuration
+            movePerspectiveOrigin 100 100 perspectiveStepDuration areaSize
 
         MoveToBottomLeft ->
-            movePerspectiveOrigin 0 100 perspectiveStepDuration
+            movePerspectiveOrigin 0 100 perspectiveStepDuration areaSize
 
         MoveToTopLeft ->
-            movePerspectiveOrigin 0 0 perspectiveStepDuration
+            movePerspectiveOrigin 0 0 perspectiveStepDuration areaSize
 
 
 
@@ -365,8 +387,8 @@ perspectiveAnimation step =
 -- container in sync with the cube animation
 
 
-movePerspectiveOrigin : Float -> Float -> Int -> AnimBuilder mode -> AnimBuilder mode
-movePerspectiveOrigin x y ms =
+movePerspectiveOrigin : Float -> Float -> Int -> { width : Float, height : Float } -> AnimBuilder mode -> AnimBuilder mode
+movePerspectiveOrigin x y ms areaSize =
     PerspectiveOrigin.for perspectiveContainer.groupName
         >> PerspectiveOrigin.cssUnit Percent
         >> PerspectiveOrigin.toXY x y
@@ -374,8 +396,8 @@ movePerspectiveOrigin x y ms =
         >> PerspectiveOrigin.easing Linear
         >> PerspectiveOrigin.build
         >> Translate.for vanishingPointDot.groupName
-        >> Translate.toX (x / 100 * referenceContainerSize)
-        >> Translate.toY (y / 100 * referenceContainerSize)
+        >> Translate.toX (x / 100 * areaSize.width)
+        >> Translate.toY (y / 100 * areaSize.height)
         >> Translate.duration ms
         >> Translate.easing Linear
         >> Translate.build
@@ -433,7 +455,7 @@ update msg model =
             ( { model
                 | animState =
                     Transition.animate model.animState <|
-                        perspectiveAnimation model.perspectiveStep
+                        perspectiveAnimation model.dotAreaSize model.perspectiveStep
                 , perspectiveStep =
                     nextPerspectiveStep model.perspectiveStep
               }
@@ -456,9 +478,13 @@ update msg model =
             let
                 newScale =
                     scaleForElement element
+
+                newDotAreaSize =
+                    innerArea element
             in
             ( { model
                 | scale = newScale
+                , dotAreaSize = newDotAreaSize
                 , animState =
                     Transition.retarget model.animState (scaleWrapperSnap newScale)
               }
@@ -472,15 +498,21 @@ update msg model =
         GotStageElement (Ok { element }) ->
             -- Transition engine cannot remap in-flight CSS transitions on
             -- resize, but firing a fresh `Transition.animate` on the
-            -- dedicated scale wrapper group smoothly interpolates the whole
-            -- reference-coordinate scene (cube + dot) to the new ratio
-            -- without disturbing the in-flight perspective step.
+            -- dedicated scale wrapper group smoothly interpolates the cube
+            -- to the new ratio. The dot's next perspective step picks up
+            -- the new `dotAreaSize` automatically (the currently in-flight
+            -- step finishes at its old target - that brief lag self-
+            -- corrects within the 3s step).
             let
                 newScale =
                     scaleForElement element
+
+                newDotAreaSize =
+                    innerArea element
             in
             ( { model
                 | scale = newScale
+                , dotAreaSize = newDotAreaSize
                 , animState =
                     Transition.animate model.animState <|
                         scaleWrapperTo newScale
@@ -513,7 +545,7 @@ perspectiveStepEnded model =
     { model
         | animState =
             Transition.animate model.animState <|
-                perspectiveAnimation model.perspectiveStep
+                perspectiveAnimation model.dotAreaSize model.perspectiveStep
         , perspectiveStep =
             nextPerspectiveStep model.perspectiveStep
     }
@@ -572,13 +604,19 @@ viewAnimationArea model =
                , style "border" "1px solid #4f4f7f18"
                ]
         )
-        [ viewScaleWrapper model ]
+        [ viewVanishingPoint model.animState
+        , viewScaleWrapper model
+        ]
 
 
 {-| Wrapper sized to the fixed reference container space. A single
-uniform Scale animation on this element makes the whole scene (dot +
-cube) track the perspective container's actual size, so every child
-can be authored in fixed reference-coordinate pixels.
+uniform Scale animation on this element makes the cube track the
+perspective container's actual size, so every face can be authored in
+fixed reference-coordinate pixels. The vanishing-point dot is **not**
+inside this wrapper - the dot needs to trace the actual outline of
+the perspective container (which can be non-square in landscape /
+portrait layouts), so it lives directly in the perspective container
+and its translate uses the measured `dotAreaSize` instead.
 -}
 viewScaleWrapper : Model -> Html Msg
 viewScaleWrapper model =
@@ -587,15 +625,15 @@ viewScaleWrapper model =
             ++ [ id "scale-wrapper"
                , View3D.transformStyle View3D.Preserve3D
                , style "position" "absolute"
-               , style "top" (String.fromFloat containerBorderWidth ++ "px")
-               , style "left" (String.fromFloat containerBorderWidth ++ "px")
+               , style "left" "50%"
+               , style "top" "50%"
                , style "width" (String.fromFloat referenceContainerSize ++ "px")
                , style "height" (String.fromFloat referenceContainerSize ++ "px")
-               , style "transform-origin" "0 0"
+               , style "margin-left" (String.fromFloat (-referenceContainerSize / 2) ++ "px")
+               , style "margin-top" (String.fromFloat (-referenceContainerSize / 2) ++ "px")
                ]
         )
-        [ viewVanishingPoint model.animState
-        , div
+        [ div
             [ View3D.transformStyle View3D.Preserve3D
             , style "position" "absolute"
             , style "left" "50%"
