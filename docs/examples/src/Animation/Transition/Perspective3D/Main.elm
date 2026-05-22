@@ -50,11 +50,40 @@ perspectiveContainer =
     }
 
 
-vanishingPointDot : { id : String, groupName : String }
-vanishingPointDot =
-    { id = "vanishing-point-dot"
-    , groupName = "vanishingPointDotAnim"
-    }
+
+-- Vanishing-point dot configuration
+--
+-- The dot's position is split across two nested anchor divs, each carrying
+-- its own `Transition` group:
+--
+--   * `dotXGroupName` writes the outer anchor's CSS `translate` X.
+--   * `dotYGroupName` writes the inner anchor's CSS `translate` Y.
+--
+-- This eliminates the single-`translate(x, y)` diagonal interpolation that
+-- happens when a viewport resize retargets a corner-to-corner tween mid-
+-- flight: with X and Y on separate elements, retargeting one axis cannot
+-- pull the other off its current edge. Each perspective step animates only
+-- the moving axis; the parked axis stays where the previous step left it.
+
+
+dotXGroupName : String
+dotXGroupName =
+    "dotXAnim"
+
+
+dotYGroupName : String
+dotYGroupName =
+    "dotYAnim"
+
+
+dotXAnchorId : String
+dotXAnchorId =
+    "dot-x-anchor"
+
+
+dotYAnchorId : String
+dotYAnchorId =
+    "dot-y-anchor"
 
 
 
@@ -300,6 +329,12 @@ init _ =
                 -- via `Transition.retarget`.
                 , Scale.initXYZ scaleGroupName 1 1 1
 
+                -- Vanishing-point dot anchor translates. Each axis lives on a
+                -- separate group / DOM element so each writes a distinct CSS
+                -- `translate` property and they don't fight each other.
+                , Translate.initX dotXGroupName 0
+                , Translate.initY dotYGroupName 0
+
                 -- Bring the cube forward on the Z axis so that it doesn't
                 -- get clipped by the z=0 clipping plane when we expand the
                 -- sides and rotate.
@@ -365,39 +400,58 @@ nextPerspectiveStep step =
 
 
 perspectiveAnimation : { width : Float, height : Float } -> PerspectiveStep -> AnimBuilder mode -> AnimBuilder mode
-perspectiveAnimation areaSize step =
+perspectiveAnimation area step =
     case step of
         MoveToTopRight ->
-            movePerspectiveOrigin 100 0 perspectiveStepDuration areaSize
+            perspectiveOriginTo 100 0 perspectiveStepDuration
+                >> dotXTo area.width perspectiveStepDuration
 
         MoveToBottomRight ->
-            movePerspectiveOrigin 100 100 perspectiveStepDuration areaSize
+            perspectiveOriginTo 100 100 perspectiveStepDuration
+                >> dotYTo area.height perspectiveStepDuration
 
         MoveToBottomLeft ->
-            movePerspectiveOrigin 0 100 perspectiveStepDuration areaSize
+            perspectiveOriginTo 0 100 perspectiveStepDuration
+                >> dotXTo 0 perspectiveStepDuration
 
         MoveToTopLeft ->
-            movePerspectiveOrigin 0 0 perspectiveStepDuration areaSize
+            perspectiveOriginTo 0 0 perspectiveStepDuration
+                >> dotYTo 0 perspectiveStepDuration
 
 
 
 -- ANIMATIONS
 --
--- PERSPECTIVE ORIGIN - animates the vanishing point around the corners of the
--- container in sync with the cube animation
+-- Each perspective step animates one axis of the dot's position (along the
+-- edge of the perspective container) plus the cube's perspective-origin
+-- (toward the corresponding corner). The dot's other axis stays parked at
+-- the edge value the previous step left it at - it isn't re-issued every
+-- step.
 
 
-movePerspectiveOrigin : Float -> Float -> Int -> { width : Float, height : Float } -> AnimBuilder mode -> AnimBuilder mode
-movePerspectiveOrigin x y ms areaSize =
+perspectiveOriginTo : Float -> Float -> Int -> AnimBuilder mode -> AnimBuilder mode
+perspectiveOriginTo x y ms =
     PerspectiveOrigin.for perspectiveContainer.groupName
         >> PerspectiveOrigin.cssUnit Percent
         >> PerspectiveOrigin.toXY x y
         >> PerspectiveOrigin.duration ms
         >> PerspectiveOrigin.easing Linear
         >> PerspectiveOrigin.build
-        >> Translate.for vanishingPointDot.groupName
-        >> Translate.toX (x / 100 * areaSize.width)
-        >> Translate.toY (y / 100 * areaSize.height)
+
+
+dotXTo : Float -> Int -> AnimBuilder mode -> AnimBuilder mode
+dotXTo value ms =
+    Translate.for dotXGroupName
+        >> Translate.toX value
+        >> Translate.duration ms
+        >> Translate.easing Linear
+        >> Translate.build
+
+
+dotYTo : Float -> Int -> AnimBuilder mode -> AnimBuilder mode
+dotYTo value ms =
+    Translate.for dotYGroupName
+        >> Translate.toY value
         >> Translate.duration ms
         >> Translate.easing Linear
         >> Translate.build
@@ -439,6 +493,7 @@ scaleWrapperSnap ratio =
 type Msg
     = NoOp
     | TriggerAnimation
+    | ReTriggerAfterResize
     | GotTransitionsMsg Transition.AnimMsg
     | InitStageElement (Result Dom.Error Dom.Element)
     | GotStageElement (Result Dom.Error Dom.Element)
@@ -452,12 +507,24 @@ update msg model =
             ( model, Cmd.none )
 
         TriggerAnimation ->
+            -- `model.perspectiveStep` is the step we are about to animate -
+            -- it is NOT advanced here, so a mid-flight resize handler can
+            -- read this field to know which axis is currently the moving
+            -- one. Advancement happens in `perspectiveStepEnded` when the
+            -- moving axis fires its `Ended` event.
             ( { model
                 | animState =
                     Transition.animate model.animState <|
                         perspectiveAnimation model.dotAreaSize model.perspectiveStep
-                , perspectiveStep =
-                    nextPerspectiveStep model.perspectiveStep
+              }
+            , Cmd.none
+            )
+
+        ReTriggerAfterResize ->
+            ( { model
+                | animState =
+                    Transition.animate model.animState <|
+                        perspectiveAnimation model.dotAreaSize model.perspectiveStep
               }
             , Cmd.none
             )
@@ -496,19 +563,70 @@ update msg model =
             ( model, Cmd.none )
 
         GotStageElement (Ok { element }) ->
-            -- Transition engine cannot remap in-flight CSS transitions on
-            -- resize, but firing a fresh `Transition.animate` on the
-            -- dedicated scale wrapper group smoothly interpolates the cube
-            -- to the new ratio. The dot's next perspective step picks up
-            -- the new `dotAreaSize` automatically (the currently in-flight
-            -- step finishes at its old target - that brief lag self-
-            -- corrects within the 3s step).
+            -- Resize handler. The dot's X and Y axes live on separate
+            -- groups / DOM elements, so we can retarget each independently:
+            --
+            --   * Scale wrapper: smooth 200ms tween to the new ratio.
+            --   * Parked dot axis: quick 200ms tween to its new edge value
+            --     (perpendicular to the dot's motion). This is the axis
+            --     that doesn't change during the current step. Updating it
+            --     can't introduce a diagonal because the moving axis lives
+            --     on a different CSS `translate` property entirely.
+            --   * Moving dot axis: full-duration re-issue toward the new
+            --     corner endpoint. CSS continues smoothly from the current
+            --     rendered position along the same straight edge.
+            --   * Perspective-origin: re-issued at full duration so the
+            --     cube's vanishing point stays in sync with the dot.
             let
                 newScale =
                     scaleForElement element
 
                 newDotAreaSize =
                     innerArea element
+
+                parkedAxisUpdate =
+                    case model.perspectiveStep of
+                        MoveToTopRight ->
+                            -- Y parked at 0; doesn't change with viewport.
+                            identity
+
+                        MoveToBottomRight ->
+                            dotXTo newDotAreaSize.width 200
+
+                        MoveToBottomLeft ->
+                            dotYTo newDotAreaSize.height 200
+
+                        MoveToTopLeft ->
+                            -- X parked at 0; doesn't change with viewport.
+                            identity
+
+                movingAxisUpdate =
+                    case model.perspectiveStep of
+                        MoveToTopRight ->
+                            dotXTo newDotAreaSize.width perspectiveStepDuration
+
+                        MoveToBottomRight ->
+                            dotYTo newDotAreaSize.height perspectiveStepDuration
+
+                        MoveToBottomLeft ->
+                            dotXTo 0 perspectiveStepDuration
+
+                        MoveToTopLeft ->
+                            dotYTo 0 perspectiveStepDuration
+
+                perspectiveOriginUpdate =
+                    case model.perspectiveStep of
+                        MoveToTopRight ->
+                            perspectiveOriginTo 100 0 perspectiveStepDuration
+
+                        MoveToBottomRight ->
+                            perspectiveOriginTo 100 100 perspectiveStepDuration
+
+                        MoveToBottomLeft ->
+                            perspectiveOriginTo 0 100 perspectiveStepDuration
+
+                        MoveToTopLeft ->
+                            perspectiveOriginTo 0 0 perspectiveStepDuration
             in
             ( { model
                 | scale = newScale
@@ -516,6 +634,9 @@ update msg model =
                 , animState =
                     Transition.animate model.animState <|
                         scaleWrapperTo newScale
+                            >> parkedAxisUpdate
+                            >> movingAxisUpdate
+                            >> perspectiveOriginUpdate
               }
             , Cmd.none
             )
@@ -533,21 +654,48 @@ update msg model =
 handleEvent : Transition.AnimEvent -> Model -> Model
 handleEvent animEvent model =
     case animEvent of
-        Transition.Ended _ _ "vanishingPointDotAnim" ->
-            perspectiveStepEnded model
+        Transition.Ended _ _ groupName ->
+            if groupName == movingDotGroup model.perspectiveStep then
+                perspectiveStepEnded model
+
+            else
+                model
 
         _ ->
             model
 
 
+{-| Which of the two dot anchor groups is the "moving" axis for the given
+step. Used both for selecting which `Ended` event advances the step and
+for the resize handler's parked-vs-moving decomposition.
+-}
+movingDotGroup : PerspectiveStep -> String
+movingDotGroup step =
+    case step of
+        MoveToTopRight ->
+            dotXGroupName
+
+        MoveToBottomRight ->
+            dotYGroupName
+
+        MoveToBottomLeft ->
+            dotXGroupName
+
+        MoveToTopLeft ->
+            dotYGroupName
+
+
 perspectiveStepEnded : Model -> Model
 perspectiveStepEnded model =
+    let
+        nextStep =
+            nextPerspectiveStep model.perspectiveStep
+    in
     { model
         | animState =
             Transition.animate model.animState <|
-                perspectiveAnimation model.dotAreaSize model.perspectiveStep
-        , perspectiveStep =
-            nextPerspectiveStep model.perspectiveStep
+                perspectiveAnimation model.dotAreaSize nextStep
+        , perspectiveStep = nextStep
     }
 
 
@@ -613,10 +761,10 @@ viewAnimationArea model =
 uniform Scale animation on this element makes the cube track the
 perspective container's actual size, so every face can be authored in
 fixed reference-coordinate pixels. The vanishing-point dot is **not**
-inside this wrapper - the dot needs to trace the actual outline of
-the perspective container (which can be non-square in landscape /
-portrait layouts), so it lives directly in the perspective container
-and its translate uses the measured `dotAreaSize` instead.
+inside this wrapper - it lives directly in the perspective container
+via two nested per-axis anchor divs, so it can trace the actual
+non-square outline regardless of viewport aspect ratio. See
+`viewVanishingPoint` for the dot's split-axis structure.
 -}
 viewScaleWrapper : Model -> Html Msg
 viewScaleWrapper model =
@@ -644,11 +792,20 @@ viewScaleWrapper model =
         ]
 
 
+{-| Render the vanishing-point dot using **two nested anchor divs**, one
+for each axis. The outer anchor carries the `dotXGroupName` translate
+(X only); the inner carries `dotYGroupName` (Y only). Because each
+axis writes to a distinct CSS `translate` property on a distinct DOM
+element, retargeting one axis on resize cannot interpolate the other
+along a diagonal - the moving axis simply continues along its edge
+while the parked axis snaps perpendicular over a short tween.
+-}
 viewVanishingPoint : Transition.AnimState -> Html Msg
 viewVanishingPoint animState =
     div
-        (Transition.attributes vanishingPointDot.groupName animState
-            ++ [ style "position" "absolute"
+        (Transition.attributes dotXGroupName animState
+            ++ [ id dotXAnchorId
+               , style "position" "absolute"
                , style "top" "0"
                , style "left" "0"
                , style "width" "0"
@@ -658,34 +815,45 @@ viewVanishingPoint animState =
                ]
         )
         [ div
-            [ style "position" "absolute"
-            , style "width" "1px"
-            , style "height" "40px"
-            , style "top" "-20px"
-            , style "left" "-0.5px"
-            , style "background" "rgba(80, 80, 80, 0.4)"
+            (Transition.attributes dotYGroupName animState
+                ++ [ id dotYAnchorId
+                   , style "position" "absolute"
+                   , style "width" "0"
+                   , style "height" "0"
+                   , style "overflow" "visible"
+                   , style "pointer-events" "none"
+                   ]
+            )
+            [ div
+                [ style "position" "absolute"
+                , style "width" "1px"
+                , style "height" "40px"
+                , style "top" "-20px"
+                , style "left" "-0.5px"
+                , style "background" "rgba(80, 80, 80, 0.4)"
+                ]
+                []
+            , div
+                [ style "position" "absolute"
+                , style "height" "1px"
+                , style "width" "40px"
+                , style "left" "-20px"
+                , style "top" "-0.5px"
+                , style "background" "rgba(80, 80, 80, 0.4)"
+                ]
+                []
+            , div
+                [ style "position" "absolute"
+                , style "width" "10px"
+                , style "height" "10px"
+                , style "border-radius" "50%"
+                , style "background" "rgba(40, 40, 40, 0.8)"
+                , style "border" "2px solid rgba(255, 255, 255, 0.9)"
+                , style "box-shadow" "0 0 6px rgba(0, 0, 0, 0.4)"
+                , style "transform" "translate(-50%, -50%)"
+                ]
+                []
             ]
-            []
-        , div
-            [ style "position" "absolute"
-            , style "height" "1px"
-            , style "width" "40px"
-            , style "left" "-20px"
-            , style "top" "-0.5px"
-            , style "background" "rgba(80, 80, 80, 0.4)"
-            ]
-            []
-        , div
-            [ style "position" "absolute"
-            , style "width" "10px"
-            , style "height" "10px"
-            , style "border-radius" "50%"
-            , style "background" "rgba(40, 40, 40, 0.8)"
-            , style "border" "2px solid rgba(255, 255, 255, 0.9)"
-            , style "box-shadow" "0 0 6px rgba(0, 0, 0, 0.4)"
-            , style "transform" "translate(-50%, -50%)"
-            ]
-            []
         ]
 
 
