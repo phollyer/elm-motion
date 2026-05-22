@@ -4,9 +4,11 @@ import Anim.Builder exposing (AnimBuilder)
 import Anim.Engine.Transition as Transition
 import Anim.Extra.View3D as View3D
 import Anim.Property.Rotate as Rotate
+import Anim.Property.Scale as Scale
 import Anim.Property.Translate as Translate
-import Anim.Unit exposing (Unit(..))
 import Browser exposing (Document)
+import Browser.Dom
+import Browser.Events
 import Html exposing (Html, div, text)
 import Html.Attributes exposing (id, style)
 import Motion.Easing as Easing exposing (Easing(..))
@@ -35,6 +37,7 @@ main =
 type alias Model =
     { animState : Transition.AnimState
     , state : State
+    , scale : Float
     }
 
 
@@ -47,37 +50,37 @@ init _ =
     let
         initialAnimState =
             Transition.init <|
-                [ -- Bring the cube forward on the Z axis
-                  -- so that it doesn't get clipped by the
-                  -- z=0 clipping plane when we expand the
-                  -- sides and rotate. This is a fixed 3D depth
-                  -- offset, unrelated to layout, so it stays
-                  -- in pixels.
-                  Translate.initUnit Px >> Translate.initZ cubeGroupName 200
+                [ -- Uniform scale applied to a wrapper around the cube. The
+                  -- whole 3D scene (cube + faces + offsets) is authored in
+                  -- fixed pixels against `referenceStageSize`, and this
+                  -- single scale factor resizes everything proportionally
+                  -- when the viewport changes. Sidesteps the CSS-transition
+                  -- + container-query-unit freeze that would otherwise lock
+                  -- face depths to their starting pixel resolution.
+                  Scale.initXYZ scaleGroupName 1 1 1
+
+                -- Bring the cube forward on the Z axis so that it doesn't
+                -- get clipped by the z=0 clipping plane when we expand the
+                -- sides and rotate. Scales with the rest of the scene via
+                -- the wrapper above.
+                , Translate.initZ cubeGroupName 200
 
                 -- Position each face in 3D space along the axis it faces.
-                -- Face offsets use `Cqmin` so the cube scales proportionally
-                -- with the stage's smaller dimension on resize.
                 -- Front/Back faces move on Z (forward/backward)
                 -- Left/Right faces move on X (sideways)
                 -- Top/Bottom faces move on Y (up/down)
-                , Translate.initUnit Cqmin >> Translate.initZ frontFace.groupName depth
-                , Translate.initUnit Cqmin
-                    >> Translate.initZ backFace.groupName (depth * -1)
+                , Translate.initZ frontFace.groupName depth
+                , Translate.initZ backFace.groupName (depth * -1)
                     -- Rotate each face into position to build the cube
                     -- Front face is not rotated due to facing forward by default
                     >> Rotate.initY backFace.groupName 180
-                , Translate.initUnit Cqmin
-                    >> Translate.initX rightFace.groupName depth
+                , Translate.initX rightFace.groupName depth
                     >> Rotate.initY rightFace.groupName 90
-                , Translate.initUnit Cqmin
-                    >> Translate.initX leftFace.groupName (-1 * depth)
+                , Translate.initX leftFace.groupName (-1 * depth)
                     >> Rotate.initY leftFace.groupName -90
-                , Translate.initUnit Cqmin
-                    >> Translate.initY topFace.groupName (-1 * depth)
+                , Translate.initY topFace.groupName (-1 * depth)
                     >> Rotate.initX topFace.groupName 90
-                , Translate.initUnit Cqmin
-                    >> Translate.initY bottomFace.groupName depth
+                , Translate.initY bottomFace.groupName depth
                     >> Rotate.initX bottomFace.groupName -90
 
                 -- The text labels all start on the same plane as their faces
@@ -87,9 +90,10 @@ init _ =
     in
     ( { animState = initialAnimState
       , state = Opening
+      , scale = 1
       }
-    , Process.sleep 0
-        |> Task.perform (always TriggerAnimation)
+    , Browser.Dom.getViewport
+        |> Task.perform GotInitialViewport
     )
 
 
@@ -113,19 +117,31 @@ cubeGroupName =
     "cubeAnim"
 
 
-{-| Cube edge length expressed in `Cqmin` (% of the stage's smaller
-dimension). The stage applies `container-type: size`, so the cube
-resizes automatically with the viewport without any Elm-side
-measurement.
+{-| Animation group for the wrapper element that carries the uniform
+`Scale` used for responsive resizing. Kept separate from `cubeGroupName`
+(which owns the cube's `Rotate`) so the two animations never share a
+CSS `transition` declaration and can run independently.
+-}
+scaleGroupName : String
+scaleGroupName =
+    "cubeScaleAnim"
+
+
+{-| Reference stage edge length the cube's pixel geometry is authored
+against. Actual rendered scale is `currentStageSize / referenceStageSize`.
+-}
+referenceStageSize : Float
+referenceStageSize =
+    500
+
+
+{-| Cube edge length in pixels at scale = 1. The wrapping `Scale`
+animation resizes everything proportionally on viewport changes, so
+this (and every other dimension below) stays a fixed pixel value.
 -}
 cubeSize : Float
 cubeSize =
-    18
-
-
-cubeSizeCss : String
-cubeSizeCss =
-    String.fromFloat cubeSize ++ "cqmin"
+    90
 
 
 {-| Distance each face sits in front of / behind the cube centre.
@@ -344,15 +360,15 @@ moveFace : FaceConfig -> (Translate.Builder mode -> Translate.Builder mode) -> A
 moveFace config moveToBuilder =
     sharedTiming
         >> Translate.for config.groupName
-        >> Translate.cssUnit Cqmin
         >> moveToBuilder
         >> Translate.build
 
 
 
--- Each face moves along the axis it faces by a `moveAmount` (expressed in
--- `Cqmin`, so it scales with the stage) when the cube expands, and moves
--- back to its original position when the cube closes.
+-- Each face moves along the axis it faces by a `moveAmount` (in pixels,
+-- against the reference stage size) when the cube expands, and moves back
+-- to its original position when the cube closes. The wrapping `Scale`
+-- group resizes all faces uniformly on viewport changes.
 --
 -- Front/Back faces move on Z (forward/backward)
 -- Left/Right faces move on X (sideways)
@@ -361,7 +377,7 @@ moveFace config moveToBuilder =
 
 moveAmount : Float
 moveAmount =
-    10
+    50
 
 
 moveFrontFaceOut : Float -> AnimBuilder mode -> AnimBuilder mode
@@ -445,14 +461,13 @@ moveBottomFaceIn toY =
 
 textMoveAmount : Float
 textMoveAmount =
-    4
+    20
 
 
 moveText : TextConfig -> Float -> Float -> AnimBuilder mode -> AnimBuilder mode
 moveText config toZ toRotate =
     sharedTiming
         >> Translate.for config.groupName
-        >> Translate.cssUnit Cqmin
         >> Translate.toZ toZ
         >> Translate.build
         >> Rotate.for config.groupName
@@ -489,6 +504,8 @@ type Msg
     = NoOp
     | GotTransitionsMsg Transition.AnimMsg
     | TriggerAnimation
+    | GotInitialViewport Browser.Dom.Viewport
+    | WindowResized Int Int
 
 
 
@@ -519,6 +536,61 @@ update msg model =
             ( handleEvent animEvent { model | animState = animState }
             , Cmd.none
             )
+
+        GotInitialViewport viewport ->
+            let
+                newScale =
+                    scaleForViewport viewport.viewport.width viewport.viewport.height
+            in
+            ( { model
+                | scale = newScale
+                , animState =
+                    -- Snap the wrapper to the correct scale before the
+                    -- opening animation runs, so the cube starts at the
+                    -- right rendered size with no visible pop.
+                    Transition.retarget model.animState (scaleTo newScale)
+              }
+            , Process.sleep 0
+                |> Task.perform (always TriggerAnimation)
+            )
+
+        WindowResized width height ->
+            let
+                newScale =
+                    scaleForViewport (toFloat width) (toFloat height)
+            in
+            ( { model
+                | scale = newScale
+                , animState =
+                    -- Smoothly chase the new size. Short duration so a
+                    -- continuous resize drag tracks the window. Runs on
+                    -- the dedicated `scaleGroupName` element, so the
+                    -- per-face open/close animations are not disturbed.
+                    Transition.animate model.animState <|
+                        (Scale.for scaleGroupName
+                            >> Scale.toXYZ newScale newScale newScale
+                            >> Scale.duration 150
+                            >> Scale.easing Linear
+                            >> Scale.build
+                        )
+              }
+            , Cmd.none
+            )
+
+
+scaleTo : Float -> AnimBuilder mode -> AnimBuilder mode
+scaleTo s =
+    Scale.for scaleGroupName
+        >> Scale.toXYZ s s s
+        >> Scale.build
+
+
+{-| Mirrors the stage's CSS `min(90vw, 90vh)` sizing, then divides by
+the authoring reference to produce the scale factor for the wrapper.
+-}
+scaleForViewport : Float -> Float -> Float
+scaleForViewport vw vh =
+    Basics.min (vw * 0.9) (vh * 0.9) / referenceStageSize
 
 
 handleEvent : Transition.AnimEvent -> Model -> Model
@@ -579,7 +651,7 @@ stateChanged state model =
 
 subscriptions : Model -> Sub Msg
 subscriptions _ =
-    Sub.none
+    Browser.Events.onResize WindowResized
 
 
 
@@ -596,7 +668,6 @@ view model =
             , id "example-stage"
             , style "width" "min(90vw, 90vh)"
             , style "height" "min(90vw, 90vh)"
-            , style "container-type" "size"
             ]
             [ div [ Html.Attributes.class "example-badge example-badge--responsive" ] [ text "RESPONSIVE" ]
             , viewAnimationArea model
@@ -633,31 +704,53 @@ viewAnimationArea model =
 ---8<-- [start:render]
 
 
+cubeSizeCss : String
+cubeSizeCss =
+    String.fromFloat cubeSize ++ "px"
+
+
 viewCube : Model -> Html Msg
 viewCube model =
     let
+        scaleAttrs =
+            Transition.attributes scaleGroupName model.animState
+
         cubeAttrs =
             Transition.attributes cubeGroupName model.animState
 
         cubeEvents =
             Transition.events GotTransitionsMsg
     in
+    -- Wrapper applies the responsive uniform `Scale`. Sits inside the
+    -- perspective container so perspective stays fixed in px, but outside
+    -- the cube so its rotation animation doesn't share a `transition`
+    -- declaration with the scale animation.
     div
-        (cubeAttrs
-            ++ cubeEvents
+        (scaleAttrs
             ++ [ View3D.transformStyle View3D.Preserve3D
-               , id "cube"
+               , id "cube-scale-wrapper"
                , style "width" cubeSizeCss
                , style "height" cubeSizeCss
                , style "position" "relative"
                ]
         )
-        [ viewFace model.animState frontFace
-        , viewFace model.animState backFace
-        , viewFace model.animState rightFace
-        , viewFace model.animState leftFace
-        , viewFace model.animState topFace
-        , viewFace model.animState bottomFace
+        [ div
+            (cubeAttrs
+                ++ cubeEvents
+                ++ [ View3D.transformStyle View3D.Preserve3D
+                   , id "cube"
+                   , style "width" cubeSizeCss
+                   , style "height" cubeSizeCss
+                   , style "position" "relative"
+                   ]
+            )
+            [ viewFace model.animState frontFace
+            , viewFace model.animState backFace
+            , viewFace model.animState rightFace
+            , viewFace model.animState leftFace
+            , viewFace model.animState topFace
+            , viewFace model.animState bottomFace
+            ]
         ]
 
 
