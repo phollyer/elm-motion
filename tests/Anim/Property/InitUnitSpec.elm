@@ -27,26 +27,22 @@ import Test.Html.Query as Query
 import Test.Html.Selector as Selector
 
 
-type Msg
-    = NoOp
-
-
-fakeCommandPort : Encode.Value -> Cmd Msg
+fakeCommandPort : Encode.Value -> Cmd msg
 fakeCommandPort _ =
     Cmd.none
 
 
-fakeSubscriptionPort : (Decode.Value -> Msg) -> Sub Msg
+fakeSubscriptionPort : (Decode.Value -> msg) -> Sub msg
 fakeSubscriptionPort _ =
     Sub.none
 
 
-initWith : List (WAAPI.EngineBuilder -> WAAPI.EngineBuilder) -> WAAPI.AnimState Msg
+initWith : List (WAAPI.EngineBuilder -> WAAPI.EngineBuilder) -> WAAPI.AnimState msg
 initWith =
     WAAPI.init fakeCommandPort fakeSubscriptionPort
 
 
-query : WAAPI.AnimState Msg -> Query.Single Msg
+query : WAAPI.AnimState msg -> Query.Single msg
 query state =
     Html.div (WAAPI.attributes "el" state) []
         |> Query.fromHtml

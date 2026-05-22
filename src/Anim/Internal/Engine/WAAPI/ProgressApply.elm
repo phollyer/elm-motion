@@ -17,7 +17,7 @@ import Anim.Internal.Builder.PropertyBaselines as PropertyBaselines exposing (Pr
 import Anim.Internal.Engine.Shared.AnimGroups as AnimGroups exposing (AnimGroups)
 import Anim.Internal.Engine.Shared.Interpolation as Interpolation
 import Anim.Internal.Engine.WAAPI.AnimGroup exposing (PropertyState)
-import Anim.Internal.Extra.Color as Color exposing (Color)
+import Anim.Internal.Extra.Color as Color
 import Anim.Internal.Property.Opacity as Opacity
 import Anim.Internal.Property.PerspectiveOrigin as PerspectiveOrigin
 import Anim.Internal.Property.Rotate as Rotate

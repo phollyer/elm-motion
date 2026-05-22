@@ -1,7 +1,7 @@
 module Anim.Internal.Engine.WAAPI.TestGenerator exposing (suite)
 
 import Anim.Internal.Builder as Builder
-import Anim.Internal.Builder.PropertyBaselines as PropertyBaselines exposing (PropertyBaselines)
+import Anim.Internal.Builder.PropertyBaselines as PropertyBaselines
 import Anim.Internal.Engine.WAAPI.Generator as Generator
 import Anim.Internal.Extra.Color as Color
 import Anim.Internal.Property.Opacity as Opacity
