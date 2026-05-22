@@ -22,7 +22,7 @@ import Task
 -- MAIN
 
 
-main : Program { window : { width : Int, height : Int } } Model Msg
+main : Program () Model Msg
 main =
     Browser.document
         { init = init
@@ -66,11 +66,45 @@ cubeGroupName =
     "cubeAnim"
 
 
-type alias CubeConfig =
-    { id : String
-    , groupName : String
-    , size : Int
-    }
+cubeId : String
+cubeId =
+    "cube"
+
+
+
+-- Scale wrapper configuration
+--
+-- The cube and the vanishing-point dot are authored in a fixed reference
+-- coordinate space (`referenceContainerSize` square). A single Scale group
+-- is applied to a wrapper element that contains both of them, so resizing
+-- the viewport becomes a single uniform Scale animation - no per-element
+-- translate recomputation required. Mirrors the strategy used by
+-- `Animation.Transition.Animate3D.Main`.
+
+
+scaleGroupName : String
+scaleGroupName =
+    "scaleWrapperAnim"
+
+
+referenceContainerSize : Float
+referenceContainerSize =
+    800
+
+
+referenceCubeSize : Float
+referenceCubeSize =
+    200
+
+
+referenceCubeDepth : Float
+referenceCubeDepth =
+    referenceCubeSize / 2
+
+
+referenceCubeZ : Float
+referenceCubeZ =
+    300
 
 
 
@@ -201,62 +235,40 @@ type PerspectiveStep
 type alias Model =
     { animState : Transition.AnimState
     , perspectiveStep : PerspectiveStep
-    , initialAnimAreaSize : { width : Float, height : Float }
-    , currentAnimAreaSize : { width : Float, height : Float }
-    , cube : CubeConfig
+    , scale : Float
     }
 
 
-{-| Square animation area sized off the smaller viewport axis so it
-always fits the page in either orientation. Mirrors the responsive
-strategy used by `Animation.WAAPI.Animate3D.Main`.
--}
-animAreaSize : Float -> Float -> { width : Float, height : Float }
-animAreaSize windowWidth windowHeight =
-    if windowWidth < windowHeight then
-        { width = windowWidth, height = windowWidth }
-
-    else
-        { width = windowHeight, height = windowHeight }
-
-
 {-| Width of the perspective container's border (must match the inline
-`border` style applied to `viewAnimationArea`). The dot is absolutely
-positioned relative to the padding box, so animating its anchor all the
-way to `element.width` / `element.height` would place it `2 * borderWidth`
-past the inner edge of the border. Subtracting `2 * borderWidth` from the
-measured area keeps the dot tracing the visible border on all four sides.
+`border` style applied to `viewAnimationArea`). The scale wrapper sits
+inside the padding box, so we subtract `2 * borderWidth` from the measured
+bounding box before computing the scale ratio to keep the dot tracing the
+visible inner edge of the border on all four sides.
 -}
 containerBorderWidth : Float
 containerBorderWidth =
     1
 
 
-toInnerArea : { width : Float, height : Float } -> { width : Float, height : Float }
-toInnerArea { width, height } =
-    { width = max 0 (width - 2 * containerBorderWidth)
-    , height = max 0 (height - 2 * containerBorderWidth)
-    }
+{-| Compute the uniform scale ratio that maps the fixed `referenceContainerSize`
+reference space to the measured perspective container's inner area.
+-}
+scaleForElement : { a | width : Float, height : Float } -> Float
+scaleForElement element =
+    let
+        inner =
+            max 0 (min element.width element.height - 2 * containerBorderWidth)
+    in
+    inner / referenceContainerSize
 
 
 
 -- INIT
 
 
-init : { window : { width : Int, height : Int } } -> ( Model, Cmd Msg )
-init flags =
+init : () -> ( Model, Cmd Msg )
+init _ =
     let
-        initialAreaSize =
-            animAreaSize
-                (toFloat flags.window.width)
-                (toFloat flags.window.height)
-
-        cubeSize =
-            min (toFloat flags.window.width) (toFloat flags.window.height) * 0.8 / 4
-
-        depth =
-            cubeSize / 2
-
         initialAnimState =
             Transition.init
                 [ -- Initialize the perspective origin at the top-left corner (0%, 0%)
@@ -264,25 +276,27 @@ init flags =
                   -- (0,0) -> (100,0) -> (100,100) -> (0,100) -> (0,0)
                   PerspectiveOrigin.initXY perspectiveContainer.groupName 0 0
 
-                -- Bring the cube forward on the Z axis
-                -- so that it doesn't get clipped by the
-                -- z=0 clipping plane when we expand the
-                -- sides and rotate
-                , Translate.initZ cubeGroupName 300
-                    -- Static no-op scale so subsequent `Scale.to*` calls
-                    -- on resize have a baseline to transition from.
-                    >> Scale.init cubeGroupName 1
+                -- Uniform scale wrapper around the whole reference-coordinate
+                -- scene. Starts at 1 (matching the reference size) and is
+                -- snapped to the correct ratio on the first viewport measure
+                -- via `Transition.retarget`.
+                , Scale.initXYZ scaleGroupName 1 1 1
+
+                -- Bring the cube forward on the Z axis so that it doesn't
+                -- get clipped by the z=0 clipping plane when we expand the
+                -- sides and rotate.
+                , Translate.initZ cubeGroupName referenceCubeZ
 
                 -- Position each face in 3D space along the axis it faces
                 -- Front/Back faces move on Z (forward/backward)
                 -- Left/Right faces move on X (sideways)
                 -- Top/Bottom faces move on Y (up/down)
-                , Translate.initZ frontFace.groupName depth
-                , Translate.initZ backFace.groupName (depth * -1)
-                , Translate.initX rightFace.groupName depth
-                , Translate.initX leftFace.groupName (-1 * depth)
-                , Translate.initY topFace.groupName (-1 * depth)
-                , Translate.initY bottomFace.groupName depth
+                , Translate.initZ frontFace.groupName referenceCubeDepth
+                , Translate.initZ backFace.groupName (referenceCubeDepth * -1)
+                , Translate.initX rightFace.groupName referenceCubeDepth
+                , Translate.initX leftFace.groupName (-1 * referenceCubeDepth)
+                , Translate.initY topFace.groupName (-1 * referenceCubeDepth)
+                , Translate.initY bottomFace.groupName referenceCubeDepth
 
                 -- Rotate each face into position to build the cube
                 -- Front face is not rotated due to facing forward by default
@@ -299,13 +313,7 @@ init flags =
     in
     ( { animState = initialAnimState
       , perspectiveStep = MoveToTopRight
-      , initialAnimAreaSize = initialAreaSize
-      , currentAnimAreaSize = initialAreaSize
-      , cube =
-            { id = "cube"
-            , groupName = cubeGroupName
-            , size = round cubeSize
-            }
+      , scale = 1
       }
     , Process.sleep 100
         |> Task.andThen (\_ -> Dom.getElement perspectiveContainer.id)
@@ -334,20 +342,20 @@ nextPerspectiveStep step =
             MoveToTopRight
 
 
-perspectiveAnimation : { width : Float, height : Float } -> PerspectiveStep -> AnimBuilder mode -> AnimBuilder mode
-perspectiveAnimation areaSize step =
+perspectiveAnimation : PerspectiveStep -> AnimBuilder mode -> AnimBuilder mode
+perspectiveAnimation step =
     case step of
         MoveToTopRight ->
-            movePerspectiveOrigin 100 0 perspectiveStepDuration areaSize
+            movePerspectiveOrigin 100 0 perspectiveStepDuration
 
         MoveToBottomRight ->
-            movePerspectiveOrigin 100 100 perspectiveStepDuration areaSize
+            movePerspectiveOrigin 100 100 perspectiveStepDuration
 
         MoveToBottomLeft ->
-            movePerspectiveOrigin 0 100 perspectiveStepDuration areaSize
+            movePerspectiveOrigin 0 100 perspectiveStepDuration
 
         MoveToTopLeft ->
-            movePerspectiveOrigin 0 0 perspectiveStepDuration areaSize
+            movePerspectiveOrigin 0 0 perspectiveStepDuration
 
 
 
@@ -357,8 +365,8 @@ perspectiveAnimation areaSize step =
 -- container in sync with the cube animation
 
 
-movePerspectiveOrigin : Float -> Float -> Int -> { width : Float, height : Float } -> AnimBuilder mode -> AnimBuilder mode
-movePerspectiveOrigin x y ms areaSize =
+movePerspectiveOrigin : Float -> Float -> Int -> AnimBuilder mode -> AnimBuilder mode
+movePerspectiveOrigin x y ms =
     PerspectiveOrigin.for perspectiveContainer.groupName
         >> PerspectiveOrigin.cssUnit Percent
         >> PerspectiveOrigin.toXY x y
@@ -366,25 +374,39 @@ movePerspectiveOrigin x y ms areaSize =
         >> PerspectiveOrigin.easing Linear
         >> PerspectiveOrigin.build
         >> Translate.for vanishingPointDot.groupName
-        >> Translate.toX (x / 100 * areaSize.width)
-        >> Translate.toY (y / 100 * areaSize.height)
+        >> Translate.toX (x / 100 * referenceContainerSize)
+        >> Translate.toY (y / 100 * referenceContainerSize)
         >> Translate.duration ms
         >> Translate.easing Linear
         >> Translate.build
 
 
-{-| Scale a group uniformly on x/y/z to the given ratio.
-Used on resize to make the cube and dot grow/shrink with the
-container, mirroring the responsive strategy of `WAAPI.Animate3D`.
+{-| Animate the wrapper Scale to the given uniform ratio. Used on
+resize to grow/shrink the whole reference-coordinate scene (cube +
+dot) so the visible 3D scene tracks the container size. Mirrors the
+responsive strategy of `Animation.Transition.Animate3D.Main`.
 -}
-scaleGroupTo : String -> Float -> AnimBuilder mode -> AnimBuilder mode
-scaleGroupTo groupName ratio =
-    Scale.for groupName
+scaleWrapperTo : Float -> AnimBuilder mode -> AnimBuilder mode
+scaleWrapperTo ratio =
+    Scale.for scaleGroupName
         >> Scale.toX ratio
         >> Scale.toY ratio
         >> Scale.toZ ratio
         >> Scale.duration 200
         >> Scale.easing Linear
+        >> Scale.build
+
+
+{-| Snap the wrapper Scale to the given uniform ratio (no duration).
+Used at boot via `Transition.retarget` so the scene appears at the
+correct size on first paint instead of animating in from scale=1.
+-}
+scaleWrapperSnap : Float -> AnimBuilder mode -> AnimBuilder mode
+scaleWrapperSnap ratio =
+    Scale.for scaleGroupName
+        >> Scale.toX ratio
+        >> Scale.toY ratio
+        >> Scale.toZ ratio
         >> Scale.build
 
 
@@ -411,7 +433,7 @@ update msg model =
             ( { model
                 | animState =
                     Transition.animate model.animState <|
-                        perspectiveAnimation model.currentAnimAreaSize model.perspectiveStep
+                        perspectiveAnimation model.perspectiveStep
                 , perspectiveStep =
                     nextPerspectiveStep model.perspectiveStep
               }
@@ -428,14 +450,17 @@ update msg model =
             )
 
         InitStageElement (Ok { element }) ->
+            -- Snap the wrapper Scale to the correct ratio before starting
+            -- the first perspective step so the scene appears at the right
+            -- size on first paint instead of popping in from scale=1.
             let
-                measured =
-                    toInnerArea
-                        { width = element.width, height = element.height }
+                newScale =
+                    scaleForElement element
             in
             ( { model
-                | initialAnimAreaSize = measured
-                , currentAnimAreaSize = measured
+                | scale = newScale
+                , animState =
+                    Transition.retarget model.animState (scaleWrapperSnap newScale)
               }
             , Process.sleep 0
                 |> Task.perform (always TriggerAnimation)
@@ -446,24 +471,19 @@ update msg model =
 
         GotStageElement (Ok { element }) ->
             -- Transition engine cannot remap in-flight CSS transitions on
-            -- resize, but we can fire a fresh `Transition.animate` that
-            -- scales the cube and dot to the new container ratio. CSS
-            -- transitions smoothly interpolate to the new scale.
+            -- resize, but firing a fresh `Transition.animate` on the
+            -- dedicated scale wrapper group smoothly interpolates the whole
+            -- reference-coordinate scene (cube + dot) to the new ratio
+            -- without disturbing the in-flight perspective step.
             let
-                newAreaSize =
-                    toInnerArea
-                        { width = element.width, height = element.height }
-
-                scale =
-                    newAreaSize.width
-                        / model.initialAnimAreaSize.width
+                newScale =
+                    scaleForElement element
             in
             ( { model
-                | currentAnimAreaSize = newAreaSize
+                | scale = newScale
                 , animState =
                     Transition.animate model.animState <|
-                        scaleGroupTo cubeGroupName scale
-                            >> scaleGroupTo vanishingPointDot.groupName scale
+                        scaleWrapperTo newScale
               }
             , Cmd.none
             )
@@ -493,7 +513,7 @@ perspectiveStepEnded model =
     { model
         | animState =
             Transition.animate model.animState <|
-                perspectiveAnimation model.currentAnimAreaSize model.perspectiveStep
+                perspectiveAnimation model.perspectiveStep
         , perspectiveStep =
             nextPerspectiveStep model.perspectiveStep
     }
@@ -550,6 +570,28 @@ viewAnimationArea model =
                , style "aspect-ratio" "1 / 1"
                , style "background-color" "#ececf688"
                , style "border" "1px solid #4f4f7f18"
+               ]
+        )
+        [ viewScaleWrapper model ]
+
+
+{-| Wrapper sized to the fixed reference container space. A single
+uniform Scale animation on this element makes the whole scene (dot +
+cube) track the perspective container's actual size, so every child
+can be authored in fixed reference-coordinate pixels.
+-}
+viewScaleWrapper : Model -> Html Msg
+viewScaleWrapper model =
+    div
+        (Transition.attributes scaleGroupName model.animState
+            ++ [ id "scale-wrapper"
+               , View3D.transformStyle View3D.Preserve3D
+               , style "position" "absolute"
+               , style "top" (String.fromFloat containerBorderWidth ++ "px")
+               , style "left" (String.fromFloat containerBorderWidth ++ "px")
+               , style "width" (String.fromFloat referenceContainerSize ++ "px")
+               , style "height" (String.fromFloat referenceContainerSize ++ "px")
+               , style "transform-origin" "0 0"
                ]
         )
         [ viewVanishingPoint model.animState
@@ -617,31 +659,28 @@ viewCube model =
 
         cubeEvents =
             Transition.events GotTransitionsMsg
-
-        cubeSize =
-            toFloat model.cube.size
     in
     div
         (cubeAttrs
             ++ cubeEvents
             ++ [ View3D.transformStyle View3D.Preserve3D
-               , id model.cube.id
-               , style "width" (String.fromFloat cubeSize ++ "px")
-               , style "height" (String.fromFloat cubeSize ++ "px")
+               , id cubeId
+               , style "width" (String.fromFloat referenceCubeSize ++ "px")
+               , style "height" (String.fromFloat referenceCubeSize ++ "px")
                , style "position" "relative"
                ]
         )
-        [ viewFace cubeSize model.animState frontFace
-        , viewFace cubeSize model.animState backFace
-        , viewFace cubeSize model.animState rightFace
-        , viewFace cubeSize model.animState leftFace
-        , viewFace cubeSize model.animState topFace
-        , viewFace cubeSize model.animState bottomFace
+        [ viewFace model.animState frontFace
+        , viewFace model.animState backFace
+        , viewFace model.animState rightFace
+        , viewFace model.animState leftFace
+        , viewFace model.animState topFace
+        , viewFace model.animState bottomFace
         ]
 
 
-viewFace : Float -> Transition.AnimState -> FaceConfig -> Html Msg
-viewFace cubeSize animState config =
+viewFace : Transition.AnimState -> FaceConfig -> Html Msg
+viewFace animState config =
     let
         faceAnimAttributes =
             Transition.attributes config.groupName animState
@@ -654,8 +693,8 @@ viewFace cubeSize animState config =
             ++ [ View3D.transformStyle View3D.Preserve3D
                , id config.id
                , style "position" "absolute"
-               , style "width" (String.fromFloat cubeSize ++ "px")
-               , style "height" (String.fromFloat cubeSize ++ "px")
+               , style "width" (String.fromFloat referenceCubeSize ++ "px")
+               , style "height" (String.fromFloat referenceCubeSize ++ "px")
                , style "background-color" config.background
                , style "border" ("2px solid " ++ config.borderColor)
                , style "box-sizing" "border-box"
