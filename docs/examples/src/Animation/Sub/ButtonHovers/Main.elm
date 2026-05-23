@@ -60,10 +60,10 @@ baseSize windowWidth windowHeight =
             toFloat (min windowWidth windowHeight)
 
         width =
-            clamp 130 200 (ref * 0.35)
+            clamp 90 260 (ref * 0.22)
 
         height =
-            clamp 40 60 (width * 0.3)
+            clamp 32 76 (width * 0.34)
     in
     { height = height, width = width }
 
@@ -359,8 +359,9 @@ button label hoverMsg unhoverMsg groupName animState =
                , style "justify-content" "center"
                , style "background-color" "#3b82f6"
                , style "color" "white"
-               , style "font-size" "16px"
+               , style "font-size" "clamp(13px, 10cqmin, 16px)"
                , style "font-weight" "600"
+               , style "padding" "0 clamp(8px, 2.2cqmin, 16px)"
                , style "border-radius" "8px"
                , style "cursor" "pointer"
                , style "touch-action" "manipulation"
