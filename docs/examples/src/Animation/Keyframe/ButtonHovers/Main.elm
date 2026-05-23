@@ -281,7 +281,7 @@ button label hoverMsg unhoverMsg groupName animState =
                , style "justify-content" "center"
                , style "background-color" "#3b82f6"
                , style "color" "white"
-               , style "font-size" "clamp(13px, 10cqmin, 16px)"
+               , style "font-size" "clamp(14px, 3.5cqw, 26px)"
                , style "font-weight" "600"
                , style "padding" "0 clamp(8px, 2.2cqmin, 16px)"
                , style "border-radius" "8px"

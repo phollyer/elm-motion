@@ -50,22 +50,40 @@ zButton =
     "zButton"
 
 
-{-| Pick a base button size from the current viewport. The min axis drives
-the scale so the buttons stay legible in landscape phones too.
+{-| Match the other ButtonHovers examples (`cqmin`-based sizing) while
+staying in Sub's pixel-only sizing model. We approximate `cqmin`
+from the stage's responsive dimensions (90vmin of the viewport).
 -}
 baseSize : Int -> Int -> { height : Float, width : Float }
 baseSize windowWidth windowHeight =
     let
-        ref =
-            toFloat (min windowWidth windowHeight)
+        stageMinPx =
+            0.875 * toFloat (min windowWidth windowHeight)
+
+        cqminPx =
+            stageMinPx / 100
 
         width =
-            clamp 90 260 (ref * 0.22)
+            51 * cqminPx
 
         height =
-            clamp 32 76 (width * 0.34)
+            15.8 * cqminPx
     in
     { height = height, width = width }
+
+
+hoverSize : Int -> Int -> { height : Float, width : Float }
+hoverSize windowWidth windowHeight =
+    let
+        stageMinPx =
+            0.875 * toFloat (min windowWidth windowHeight)
+
+        cqminPx =
+            stageMinPx / 100
+    in
+    { height = 20 * cqminPx
+    , width = 60 * cqminPx
+    }
 
 
 
@@ -164,7 +182,7 @@ scaleDown =
 growSize : { height : Float, width : Float } -> AnimBuilder mode -> AnimBuilder mode
 growSize size =
     Size.for sizeButton
-        >> Size.toHW (size.height + 6) (size.width + 20)
+        >> Size.toHW size.height size.width
         >> Size.duration hoverDuration
         >> Size.easing hoverEasing
         >> Size.build
@@ -265,7 +283,7 @@ update msg model =
             ( { model
                 | animState =
                     Sub.animate model.animState
-                        (growSize (baseSize model.windowWidth model.windowHeight))
+                        (growSize (hoverSize model.windowWidth model.windowHeight))
               }
             , Cmd.none
             )
@@ -323,6 +341,7 @@ view : Model -> Html Msg
 view model =
     div
         [ class "example-stage"
+        , style "container-type" "size"
         ]
         [ text ""
         , div
@@ -359,7 +378,7 @@ button label hoverMsg unhoverMsg groupName animState =
                , style "justify-content" "center"
                , style "background-color" "#3b82f6"
                , style "color" "white"
-               , style "font-size" "clamp(13px, 10cqmin, 16px)"
+               , style "font-size" "clamp(14px, 3.5cqw, 26px)"
                , style "font-weight" "600"
                , style "padding" "0 clamp(8px, 2.2cqmin, 16px)"
                , style "border-radius" "8px"
