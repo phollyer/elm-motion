@@ -69,14 +69,9 @@ boxSizePercent =
     12
 
 
-boxWidthPx : Float -> Float
-boxWidthPx canvasW =
+boxSidePx : Float -> Float
+boxSidePx canvasW =
     (canvasW * boxSizePercent) / 100
-
-
-boxHeightPx : Float -> Float
-boxHeightPx canvasH =
-    (canvasH * boxSizePercent) / 100
 
 
 init : () -> ( Model, Cmd Msg )
@@ -108,23 +103,23 @@ measureCanvas =
 targetX : XPos -> Float -> Float
 targetX pos w =
     let
-        widthPx =
-            boxWidthPx w
+        sidePx =
+            boxSidePx w
     in
     case pos of
         XLeft ->
             0
 
         XCenter ->
-            (w - widthPx) / 2
+            (w - sidePx) / 2
 
         XRight ->
-            w - widthPx
+            w - sidePx
 
 
-targetY : Float -> Float
-targetY h =
-    (h - boxHeightPx h) / 2
+targetY : Float -> Float -> Float
+targetY w h =
+    (h - boxSidePx w) / 2
 
 
 
@@ -178,8 +173,8 @@ resize-handler behaviour.
 retargetBoxXY : Float -> Float -> Float -> Float -> AnimBuilder mode -> AnimBuilder mode
 retargetBoxXY w h x y =
     Translate.continueFor animGroupName
-        >> Translate.clampX 0 (w - boxWidthPx w)
-        >> Translate.clampY 0 (h - boxHeightPx h)
+        >> Translate.clampX 0 (w - boxSidePx w)
+        >> Translate.clampY 0 (h - boxSidePx w)
         >> Translate.toXY x y
         >> Translate.build
 
@@ -292,7 +287,7 @@ update msg model =
                     ( { modelWithSize
                         | animState =
                             Sub.retarget model.animState <|
-                                retargetBoxXY w h (targetX model.xPos w) (targetY h)
+                                retargetBoxXY w h (targetX model.xPos w) (targetY w h)
                       }
                     , Cmd.none
                     )
@@ -351,8 +346,8 @@ view model =
         , div [ id canvasId, class "example-canvas--fluid" ]
             [ div
                 (Sub.attributes animGroupName model.animState
-                    ++ [ style "width" (String.fromFloat (boxWidthPx model.canvasW) ++ "px")
-                       , style "height" (String.fromFloat (boxHeightPx model.canvasH) ++ "px")
+                    ++ [ style "width" (String.fromFloat (boxSidePx model.canvasW) ++ "px")
+                       , style "height" (String.fromFloat (boxSidePx model.canvasW) ++ "px")
                        , style "position" "absolute"
                        , style "top" "0"
                        , style "left" "0"

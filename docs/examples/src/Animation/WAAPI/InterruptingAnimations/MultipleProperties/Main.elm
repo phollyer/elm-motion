@@ -51,10 +51,11 @@ animGroupName =
     "movingBox"
 
 
-{-| Box width expressed as a percentage of the canvas. The box width is
-`boxPct cqw`, height is `boxPct cqh`, and `Translate.toX` targets are
+{-| Box size expressed as a percentage of the canvas width. The box uses
+`boxPct cqw` for both width and height so it always stays square, and
+`Translate.toX` targets are
 in `cqw` units, so the left, center and right anchors all scale with the
-canvas. The box is vertically centered via CSS (`top: <centerYCqh>cqh`)
+canvas. The box is vertically centered via CSS (`top: calc(50% - half box)`)
 so no Y animation is needed - one less moving part and zero Elm-side
 resize plumbing.
 -}
@@ -68,9 +69,9 @@ centerXCqw =
     (100 - boxPct) / 2
 
 
-centerYCqh : Float
-centerYCqh =
-    (100 - boxPct) / 2
+boxHalfPct : Float
+boxHalfPct =
+    boxPct / 2
 
 
 init : () -> ( Model, Cmd Msg )
@@ -255,9 +256,9 @@ view model =
             [ div
                 (WAAPI.attributes animGroupName model.animState
                     ++ [ style "width" (String.fromFloat boxPct ++ "cqw")
-                       , style "height" (String.fromFloat boxPct ++ "cqh")
+                       , style "height" (String.fromFloat boxPct ++ "cqw")
                        , style "position" "absolute"
-                       , style "top" (String.fromFloat centerYCqh ++ "cqh")
+                       , style "top" ("calc(50% - " ++ String.fromFloat boxHalfPct ++ "cqw)")
                        , style "left" "0"
                        , style "border-radius" "8px"
                        ]
