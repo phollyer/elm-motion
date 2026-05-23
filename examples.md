@@ -81,7 +81,7 @@ Suggested Status values: `OK`, `FIX`, `BLOCK`, `?`.
 | 16 | Keyframe | ControllingAnimations | OK |  |
 | 17 | Keyframe | DiscreteProperties | OK |  |
 | 18 | Keyframe | FadeInOut | OK |  |
-| 19 | Keyframe | HelloText | FIX | The text needs to be centered when it wraps on smaller screens, of the font size needs to scale with the viewport so that it doesn't need to wrap. |
+| 19 | Keyframe | HelloText | OK |  |
 | 20 | Keyframe | InterruptingAnimations/MultipleAxes | FIX | Box needs to be centered on startup and needs rounded corners/same styling as the boxes in the other examples, the box is moving too fast so there's no way to interrupt it |
 | 21 | Keyframe | InterruptingAnimations/MultipleProperties | FIX | The box should start centered, not offset to the left. If load the page, click Right, let it finish, then click a color, the box reverts to it's starting position, then animates the color change. |
 | 22 | Keyframe | InterruptingAnimations/SingleProperty | OK |  |
