@@ -22,9 +22,12 @@ you:
     the engine-level [`cssUnit`](Anim-Engine-WAAPI#cssUnit)) makes the browser
     re-evaluate values against the current viewport on every frame; no
     `onResize` plumbing is needed.
-  - **Sub** — currently `Px`-only. Non-`Px` units fall back to `Px` silently.
-    `Resize.bounds` plus `Sub.onResize` is the supported path for keeping a
-    Sub animation aligned with new layout.
+      - **Sub** — `Translate`, `Size`, and `PerspectiveOrigin` preserve relative
+        units in render output. During `Sub.onResize`, numeric remaps are applied
+        only to `Px` axes for resize-aware properties (`Translate`,
+        `PerspectiveOrigin`); non-`Px` axes are left unchanged so CSS units can
+        track layout natively. `Size` is currently not remapped by
+        `Resize.bounds` in Sub.
   - **WAAPI** — supports both. Use relative units when endpoints scale with
     layout, and `Resize.bounds` when endpoints are derived from `Px`
     measurements (e.g. `containerWidth - boxWidth`).

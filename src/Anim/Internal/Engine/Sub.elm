@@ -14,6 +14,10 @@ module Anim.Internal.Engine.Sub exposing
     , anyRunning
     , attributes
     , calculateProgress
+    , cssUnit
+    , cssUnitX
+    , cssUnitY
+    , cssUnitZ
     , delay
     , discreteEntry
     , discreteExit
@@ -372,8 +376,8 @@ applyTranslateResize animGroupName previousBounds bounds (AnimState state animGr
                             |> Animations.map
                                 (\_ anim ->
                                     case anim of
-                                        Translate cfg ->
-                                            Translate (resizeTranslate previousBounds bounds isLooping isPaused cfg)
+                                        Translate units cfg ->
+                                            Translate units (resizeTranslate units previousBounds bounds isLooping isPaused cfg)
 
                                         _ ->
                                             anim
@@ -397,8 +401,8 @@ applyTranslateResize animGroupName previousBounds bounds (AnimState state animGr
 
 {-| Resize the in-memory translate animation to match new bounds.
 -}
-resizeTranslate : Bounds -> Bounds -> Bool -> Bool -> PropertyAnimation Translate -> PropertyAnimation Translate
-resizeTranslate previousBounds bounds isLooping isPaused cfg =
+resizeTranslate : InternalUnit.ResolvedCssUnitAxes -> Bounds -> Bounds -> Bool -> Bool -> PropertyAnimation Translate -> PropertyAnimation Translate
+resizeTranslate units previousBounds bounds isLooping isPaused cfg =
     let
         oldStart =
             Translate.toRecord cfg.start
@@ -407,13 +411,13 @@ resizeTranslate previousBounds bounds isLooping isPaused cfg =
             Translate.toRecord cfg.end
 
         rx =
-            applyAxisLeg previousBounds.x bounds.x oldStart.x oldEnd.x
+            applyAxisLegForUnit units.x previousBounds.x bounds.x oldStart.x oldEnd.x
 
         ry =
-            applyAxisLeg previousBounds.y bounds.y oldStart.y oldEnd.y
+            applyAxisLegForUnit units.y previousBounds.y bounds.y oldStart.y oldEnd.y
 
         rz =
-            applyAxisLeg previousBounds.z bounds.z oldStart.z oldEnd.z
+            applyAxisLegForUnit units.z previousBounds.z bounds.z oldStart.z oldEnd.z
 
         newStart =
             Translate.fromRecord { x = rx.start, y = ry.start, z = rz.start }
@@ -470,6 +474,15 @@ applyAxisLeg maybePrevBounds maybeNewBounds startV endV =
     { start = result.start, end = result.end }
 
 
+applyAxisLegForUnit : Unit -> Maybe ResizeBuilder.AxisBounds -> Maybe ResizeBuilder.AxisBounds -> Float -> Float -> { start : Float, end : Float }
+applyAxisLegForUnit unit maybePrevBounds maybeNewBounds startV endV =
+    if unit == Px then
+        applyAxisLeg maybePrevBounds maybeNewBounds startV endV
+
+    else
+        { start = startV, end = endV }
+
+
 {-| Rescale an in-flight `PropertyAnimation` so that the elapsed
 fraction of the new leg matches the elapsed fraction of the old leg.
 -}
@@ -524,8 +537,8 @@ applyTranslatePositionResize animGroupName pos (AnimState state animGroups) =
                         |> Animations.map
                             (\_ anim ->
                                 case anim of
-                                    Translate cfg ->
-                                        Translate (positionTranslate pos cfg)
+                                    Translate units cfg ->
+                                        Translate units (positionTranslate units pos cfg)
 
                                     _ ->
                                         anim
@@ -542,8 +555,8 @@ applyTranslatePositionResize animGroupName pos (AnimState state animGroups) =
 
 {-| Apply a position snap to each translate axis via `ResizeBuilder.applyAxisPosition`.
 -}
-positionTranslate : ResizeBuilder.Position -> PropertyAnimation Translate -> PropertyAnimation Translate
-positionTranslate pos cfg =
+positionTranslate : InternalUnit.ResolvedCssUnitAxes -> ResizeBuilder.Position -> PropertyAnimation Translate -> PropertyAnimation Translate
+positionTranslate units pos cfg =
     let
         oldStart =
             Translate.toRecord cfg.start
@@ -552,18 +565,31 @@ positionTranslate pos cfg =
             Translate.toRecord cfg.end
 
         rx =
-            ResizeBuilder.applyAxisPosition pos.x oldStart.x oldEnd.x oldStart.x
+            applyAxisPositionForUnit units.x pos.x oldStart.x oldEnd.x oldStart.x
 
         ry =
-            ResizeBuilder.applyAxisPosition pos.y oldStart.y oldEnd.y oldStart.y
+            applyAxisPositionForUnit units.y pos.y oldStart.y oldEnd.y oldStart.y
 
         rz =
-            ResizeBuilder.applyAxisPosition pos.z oldStart.z oldEnd.z oldStart.z
+            applyAxisPositionForUnit units.z pos.z oldStart.z oldEnd.z oldStart.z
     in
     { cfg
         | start = Translate.fromRecord { x = rx.start, y = ry.start, z = rz.start }
         , end = Translate.fromRecord { x = rx.end, y = ry.end, z = rz.end }
     }
+
+
+applyAxisPositionForUnit : Unit -> Maybe Float -> Float -> Float -> Float -> { start : Float, end : Float }
+applyAxisPositionForUnit unit maybePosition startV endV fallbackCurrent =
+    if unit == Px then
+        let
+            result =
+                ResizeBuilder.applyAxisPosition maybePosition startV endV fallbackCurrent
+        in
+        { start = result.start, end = result.end }
+
+    else
+        { start = startV, end = endV }
 
 
 applyScaleResize : AnimGroupName -> Bounds -> Bounds -> AnimState -> AnimState
@@ -690,8 +716,8 @@ applyPerspectiveOriginPositionResize animGroupName pos (AnimState state animGrou
                         |> Animations.map
                             (\_ anim ->
                                 case anim of
-                                    PerspectiveOrigin cfg ->
-                                        PerspectiveOrigin (positionPerspectiveOrigin pos cfg)
+                                    PerspectiveOrigin units cfg ->
+                                        PerspectiveOrigin units (positionPerspectiveOrigin units pos cfg)
 
                                     _ ->
                                         anim
@@ -708,8 +734,8 @@ applyPerspectiveOriginPositionResize animGroupName pos (AnimState state animGrou
 
 {-| Apply a position snap to each perspective-origin axis via `ResizeBuilder.applyAxisPosition`.
 -}
-positionPerspectiveOrigin : ResizeBuilder.Position -> PropertyAnimation PerspectiveOrigin -> PropertyAnimation PerspectiveOrigin
-positionPerspectiveOrigin pos cfg =
+positionPerspectiveOrigin : InternalUnit.ResolvedCssUnitAxes -> ResizeBuilder.Position -> PropertyAnimation PerspectiveOrigin -> PropertyAnimation PerspectiveOrigin
+positionPerspectiveOrigin units pos cfg =
     let
         oldStart =
             PerspectiveOrigin.toRecord cfg.start
@@ -718,10 +744,10 @@ positionPerspectiveOrigin pos cfg =
             PerspectiveOrigin.toRecord cfg.end
 
         rx =
-            ResizeBuilder.applyAxisPosition pos.x oldStart.x oldEnd.x oldStart.x
+            applyAxisPositionForUnit units.x pos.x oldStart.x oldEnd.x oldStart.x
 
         ry =
-            ResizeBuilder.applyAxisPosition pos.y oldStart.y oldEnd.y oldStart.y
+            applyAxisPositionForUnit units.y pos.y oldStart.y oldEnd.y oldStart.y
     in
     { cfg
         | start = PerspectiveOrigin.fromRecord { x = rx.start, y = ry.start }
@@ -757,8 +783,8 @@ applyPerspectiveOriginResize animGroupName previousBounds bounds (AnimState stat
                             |> Animations.map
                                 (\_ anim ->
                                     case anim of
-                                        PerspectiveOrigin cfg ->
-                                            PerspectiveOrigin (resizePerspectiveOrigin previousBounds bounds isLooping isPaused cfg)
+                                        PerspectiveOrigin units cfg ->
+                                            PerspectiveOrigin units (resizePerspectiveOrigin units previousBounds bounds isLooping isPaused cfg)
 
                                         _ ->
                                             anim
@@ -780,8 +806,8 @@ applyPerspectiveOriginResize animGroupName previousBounds bounds (AnimState stat
                     updatedAnimGroups
 
 
-resizePerspectiveOrigin : Bounds -> Bounds -> Bool -> Bool -> PropertyAnimation PerspectiveOrigin -> PropertyAnimation PerspectiveOrigin
-resizePerspectiveOrigin previousBounds bounds isLooping isPaused cfg =
+resizePerspectiveOrigin : InternalUnit.ResolvedCssUnitAxes -> Bounds -> Bounds -> Bool -> Bool -> PropertyAnimation PerspectiveOrigin -> PropertyAnimation PerspectiveOrigin
+resizePerspectiveOrigin units previousBounds bounds isLooping isPaused cfg =
     let
         oldStart =
             PerspectiveOrigin.toRecord cfg.start
@@ -790,10 +816,10 @@ resizePerspectiveOrigin previousBounds bounds isLooping isPaused cfg =
             PerspectiveOrigin.toRecord cfg.end
 
         rx =
-            applyAxisLeg previousBounds.x bounds.x oldStart.x oldEnd.x
+            applyAxisLegForUnit units.x previousBounds.x bounds.x oldStart.x oldEnd.x
 
         ry =
-            applyAxisLeg previousBounds.y bounds.y oldStart.y oldEnd.y
+            applyAxisLegForUnit units.y previousBounds.y bounds.y oldStart.y oldEnd.y
 
         newStart =
             PerspectiveOrigin.fromRecord { x = rx.start, y = ry.start }
@@ -887,8 +913,14 @@ extractPropertyCurrentState anim =
         Opacity a ->
             interpolated PropertyBaselines.setOpacity interpolateOpacity a
 
-        PerspectiveOrigin a ->
-            interpolated PropertyBaselines.setPerspectiveOrigin interpolatePerspectiveOrigin a
+        PerspectiveOrigin units a ->
+            interpolated
+                (\value ->
+                    PropertyBaselines.setPerspectiveOrigin value
+                        >> PropertyBaselines.setPerspectiveOriginUnits units
+                )
+                interpolatePerspectiveOrigin
+                a
 
         Rotate a ->
             interpolated PropertyBaselines.setRotate interpolateRotate a
@@ -896,14 +928,26 @@ extractPropertyCurrentState anim =
         Scale a ->
             interpolated PropertyBaselines.setScale interpolateScale a
 
-        Size a ->
-            interpolated PropertyBaselines.setSize interpolateSize a
+        Size units a ->
+            interpolated
+                (\value ->
+                    PropertyBaselines.setSize value
+                        >> PropertyBaselines.setSizeUnits units
+                )
+                interpolateSize
+                a
 
         Skew a ->
             interpolated PropertyBaselines.setSkew interpolateSkew a
 
-        Translate a ->
-            interpolated PropertyBaselines.setTranslate interpolateTranslate a
+        Translate units a ->
+            interpolated
+                (\value ->
+                    PropertyBaselines.setTranslate value
+                        >> PropertyBaselines.setTranslateUnits units
+                )
+                interpolateTranslate
+                a
 
 
 
@@ -1178,8 +1222,8 @@ attributes animGroupName (AnimState _ animGroups) =
 collectCurrentTransform : Animation -> Builder.TransformParts -> Builder.TransformParts
 collectCurrentTransform anim acc =
     case anim of
-        Translate a ->
-            { acc | translate = Translate.toCssString { x = InternalUnit.default, y = InternalUnit.default, z = InternalUnit.default } (interpolateEasedProgress interpolateTranslate a) }
+        Translate units a ->
+            { acc | translate = Translate.toCssString units (interpolateEasedProgress interpolateTranslate a) }
 
         Rotate a ->
             { acc | rotate = Rotate.toCssString (interpolateEasedProgress interpolateRotate a) }
@@ -1246,8 +1290,8 @@ getNonTransformStyleAttribute anim =
         Opacity a ->
             [ Html.Attributes.style "opacity" (String.fromFloat (Opacity.toFloat (interpolateEasedProgress interpolateOpacity a))) ]
 
-        PerspectiveOrigin a ->
-            [ Html.Attributes.style "perspective-origin" (PerspectiveOrigin.toCssString { x = Percent, y = Percent, z = Percent } (interpolateEasedProgress interpolatePerspectiveOrigin a)) ]
+        PerspectiveOrigin units a ->
+            [ Html.Attributes.style "perspective-origin" (PerspectiveOrigin.toCssString units (interpolateEasedProgress interpolatePerspectiveOrigin a)) ]
 
         Rotate _ ->
             []
@@ -1255,7 +1299,7 @@ getNonTransformStyleAttribute anim =
         Scale _ ->
             []
 
-        Size a ->
+        Size units a ->
             let
                 size =
                     interpolateEasedProgress interpolateSize a
@@ -1263,14 +1307,14 @@ getNonTransformStyleAttribute anim =
                 ( width, height ) =
                     Size.toTuple size
             in
-            [ Html.Attributes.style "width" (String.fromFloat width ++ "px")
-            , Html.Attributes.style "height" (String.fromFloat height ++ "px")
+            [ Html.Attributes.style "width" (String.fromFloat width ++ InternalUnit.toCssSuffix units.x)
+            , Html.Attributes.style "height" (String.fromFloat height ++ InternalUnit.toCssSuffix units.y)
             ]
 
         Skew _ ->
             []
 
-        Translate _ ->
+        Translate _ _ ->
             []
 
 
@@ -1325,6 +1369,32 @@ speed =
 easing : Easing -> Builder.AnimBuilder mode -> Builder.AnimBuilder mode
 easing =
     Builder.easing
+
+
+
+-- ============================================================
+-- UNIT
+-- ============================================================
+
+
+cssUnit : Unit -> Builder.AnimBuilder mode -> Builder.AnimBuilder mode
+cssUnit =
+    Builder.cssUnit
+
+
+cssUnitX : Unit -> Builder.AnimBuilder mode -> Builder.AnimBuilder mode
+cssUnitX =
+    Builder.cssUnitX
+
+
+cssUnitY : Unit -> Builder.AnimBuilder mode -> Builder.AnimBuilder mode
+cssUnitY =
+    Builder.cssUnitY
+
+
+cssUnitZ : Unit -> Builder.AnimBuilder mode -> Builder.AnimBuilder mode
+cssUnitZ =
+    Builder.cssUnitZ
 
 
 
@@ -1886,7 +1956,7 @@ getSizeCurrent =
     getPropertyValue "size"
         (\prop ->
             case prop of
-                Size config ->
+                Size _ config ->
                     config
                         |> interpolateEasedProgress interpolateSize
                         |> Size.toRecord
@@ -1946,7 +2016,7 @@ getPerspectiveOriginCurrent =
     getPropertyValue "perspectiveOrigin"
         (\prop ->
             case prop of
-                PerspectiveOrigin config ->
+                PerspectiveOrigin _ config ->
                     config
                         |> interpolateEasedProgress interpolatePerspectiveOrigin
                         |> PerspectiveOrigin.toRecord
@@ -1970,7 +2040,7 @@ getRuntimePerspectiveOrigin =
     getPropertyValue "perspectiveOrigin"
         (\prop ->
             case prop of
-                PerspectiveOrigin cfg ->
+                PerspectiveOrigin _ cfg ->
                     Just cfg
 
                 _ ->
@@ -2076,7 +2146,7 @@ getRuntimeTranslate animGroupName =
     getPropertyValue "translate"
         (\prop ->
             case prop of
-                Translate cfg ->
+                Translate _ cfg ->
                     Just cfg
 
                 _ ->
@@ -2090,7 +2160,7 @@ getTranslateCurrent =
     getPropertyValue "translate"
         (\prop ->
             case prop of
-                Translate config ->
+                Translate _ config ->
                     config
                         |> interpolateEasedProgress interpolateTranslate
                         |> Translate.toRecord

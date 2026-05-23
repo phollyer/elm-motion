@@ -6,14 +6,13 @@ import Anim.Extra.View3D as View3D
 import Anim.Property.Scale as Scale
 import Anim.Property.Size as Size
 import Anim.Property.Translate as Translate
+import Anim.Unit exposing (Unit(..))
 import Browser
-import Browser.Events
 import Html exposing (Html, div, text)
 import Html.Attributes exposing (class, style)
 import Html.Events.Extra.Pointer as Pointer
 import Json.Decode as Decode exposing (Decoder)
 import Motion.Easing as Easing exposing (Easing(..))
-import Platform.Sub as Subscription
 
 
 
@@ -50,40 +49,24 @@ zButton =
     "zButton"
 
 
-{-| Match the other ButtonHovers examples (`cqmin`-based sizing) while
-staying in Sub's pixel-only sizing model. We approximate `cqmin`
-from the stage's responsive dimensions (90vmin of the viewport).
--}
-baseSize : Int -> Int -> { height : Float, width : Float }
-baseSize windowWidth windowHeight =
-    let
-        stageMinPx =
-            0.875 * toFloat (min windowWidth windowHeight)
-
-        cqminPx =
-            stageMinPx / 100
-
-        width =
-            51 * cqminPx
-
-        height =
-            15.8 * cqminPx
-    in
-    { height = height, width = width }
+baseWidth : Float
+baseWidth =
+    51
 
 
-hoverSize : Int -> Int -> { height : Float, width : Float }
-hoverSize windowWidth windowHeight =
-    let
-        stageMinPx =
-            0.875 * toFloat (min windowWidth windowHeight)
+baseHeight : Float
+baseHeight =
+    15.8
 
-        cqminPx =
-            stageMinPx / 100
-    in
-    { height = 20 * cqminPx
-    , width = 60 * cqminPx
-    }
+
+hoverWidth : Float
+hoverWidth =
+    60
+
+
+hoverHeight : Float
+hoverHeight =
+    20
 
 
 
@@ -91,10 +74,7 @@ hoverSize windowWidth windowHeight =
 
 
 type alias Model =
-    { animState : Sub.AnimState
-    , windowWidth : Int
-    , windowHeight : Int
-    }
+    { animState : Sub.AnimState }
 
 
 type alias Flags =
@@ -115,23 +95,18 @@ flagsDecoder =
 init : Decode.Value -> ( Model, Cmd Msg )
 init rawFlags =
     let
-        flags =
+        _ =
             Decode.decodeValue flagsDecoder rawFlags
                 |> Result.withDefault { width = 1024, height = 768 }
 
-        size =
-            baseSize flags.width flags.height
-
         animState =
             Sub.init
-                [ Size.initHW sizeButton size.height size.width
-                , Size.initHW scaleButton size.height size.width
-                , Size.initHW zButton size.height size.width
+                [ Size.initUnit Cqmin >> Size.initHW sizeButton baseHeight baseWidth
+                , Size.initUnit Cqmin >> Size.initHW scaleButton baseHeight baseWidth
+                , Size.initUnit Cqmin >> Size.initHW zButton baseHeight baseWidth
                 ]
     in
     ( { animState = animState
-      , windowWidth = flags.width
-      , windowHeight = flags.height
       }
     , Cmd.none
     )
@@ -179,40 +154,24 @@ scaleDown =
         >> Scale.build
 
 
-growSize : { height : Float, width : Float } -> AnimBuilder mode -> AnimBuilder mode
-growSize size =
+growSize : AnimBuilder mode -> AnimBuilder mode
+growSize =
     Size.for sizeButton
-        >> Size.toHW size.height size.width
+        >> Size.cssUnit Cqmin
+        >> Size.toHW hoverHeight hoverWidth
         >> Size.duration hoverDuration
         >> Size.easing hoverEasing
         >> Size.build
 
 
-shrinkSize : { height : Float, width : Float } -> AnimBuilder mode -> AnimBuilder mode
-shrinkSize size =
+shrinkSize : AnimBuilder mode -> AnimBuilder mode
+shrinkSize =
     Size.for sizeButton
-        >> Size.toHW size.height size.width
+        >> Size.cssUnit Cqmin
+        >> Size.toHW baseHeight baseWidth
         >> Size.duration hoverDuration
         >> Size.easing unhoverEasing
         >> Size.build
-
-
-{-| Fast settle animation used after a viewport change so all three buttons
-pick up the new resting size without snapping.
--}
-resizeSettle : { height : Float, width : Float } -> AnimBuilder mode -> AnimBuilder mode
-resizeSettle size =
-    let
-        toBase id_ =
-            Size.for id_
-                >> Size.toHW size.height size.width
-                >> Size.duration 1
-                >> Size.easing Linear
-                >> Size.build
-    in
-    toBase sizeButton
-        >> toBase scaleButton
-        >> toBase zButton
 
 
 liftUp : AnimBuilder mode -> AnimBuilder mode
@@ -248,7 +207,6 @@ type Msg
     | SizeUnhover
     | ZHover
     | ZUnhover
-    | WindowResized Int Int
 
 
 
@@ -282,8 +240,7 @@ update msg model =
         SizeHover ->
             ( { model
                 | animState =
-                    Sub.animate model.animState
-                        (growSize (hoverSize model.windowWidth model.windowHeight))
+                    Sub.animate model.animState growSize
               }
             , Cmd.none
             )
@@ -291,8 +248,7 @@ update msg model =
         SizeUnhover ->
             ( { model
                 | animState =
-                    Sub.animate model.animState
-                        (shrinkSize (baseSize model.windowWidth model.windowHeight))
+                    Sub.animate model.animState shrinkSize
               }
             , Cmd.none
             )
@@ -307,29 +263,15 @@ update msg model =
             , Cmd.none
             )
 
-        WindowResized w h ->
-            ( { model
-                | animState =
-                    Sub.animate model.animState
-                        (resizeSettle (baseSize w h))
-                , windowWidth = w
-                , windowHeight = h
-              }
-            , Cmd.none
-            )
-
 
 
 ---8<-- [end:trigger]
 ---8<-- [start:subscriptions]
 
 
-subscriptions : Model -> Subscription.Sub Msg
+subscriptions : Model -> Sub Msg
 subscriptions model =
-    Subscription.batch
-        [ Sub.subscriptions GotSubMsg model.animState
-        , Browser.Events.onResize WindowResized
-        ]
+    Sub.subscriptions GotSubMsg model.animState
 
 
 

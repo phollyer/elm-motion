@@ -5,14 +5,12 @@ import Anim.Engine.Sub as Sub
 import Anim.Extra.Color as Color exposing (Color)
 import Anim.Property.CustomColor as BgColor
 import Anim.Property.Translate as Translate
+import Anim.Unit exposing (Unit(..))
 import Browser
-import Browser.Dom as Dom
-import Browser.Events
 import Html exposing (Html, div, text)
-import Html.Attributes exposing (class, id, style)
+import Html.Attributes exposing (class, style)
 import Html.Events exposing (onClick)
 import Motion.Easing as Easing exposing (Easing(..))
-import Task
 
 
 
@@ -34,18 +32,7 @@ main =
 
 
 type alias Model =
-    { animState : Sub.AnimState
-    , canvasW : Float
-    , canvasH : Float
-    , xPos : XPos
-    , pendingMove : Maybe MoveIntent
-    , isReady : Bool
-    }
-
-
-type MoveIntent
-    = MoveToLeft
-    | MoveToRight
+    { animState : Sub.AnimState }
 
 
 type XPos
@@ -59,67 +46,49 @@ animGroupName =
     "movingBox"
 
 
-canvasId : String
-canvasId =
-    "anim-canvas"
-
-
-boxSizePercent : Float
-boxSizePercent =
+boxPct : Float
+boxPct =
     12
 
 
-boxSidePx : Float -> Float
-boxSidePx canvasW =
-    (canvasW * boxSizePercent) / 100
+centerXCqw : Float
+centerXCqw =
+    (100 - boxPct) / 2
+
+
+boxHalfPct : Float
+boxHalfPct =
+    boxPct / 2
 
 
 init : () -> ( Model, Cmd Msg )
 init _ =
     ( { animState =
             Sub.init
-                [ Translate.initXY animGroupName 0 0
+                [ Translate.initUnitX Cqw
+                    >> Translate.initX animGroupName centerXCqw
                 , BgColor.init animGroupName BgColor.BackgroundColor <| Color.rgb 118 118 118
                 ]
-      , canvasW = 0
-      , canvasH = 0
-      , xPos = XCenter
-      , pendingMove = Nothing
-      , isReady = False
       }
-    , measureCanvas
+    , Cmd.none
     )
-
-
-measureCanvas : Cmd Msg
-measureCanvas =
-    Task.attempt GotCanvas (Dom.getViewportOf canvasId)
 
 
 
 -- POSITION HELPERS
 
 
-targetX : XPos -> Float -> Float
-targetX pos w =
-    let
-        sidePx =
-            boxSidePx w
-    in
+targetX : XPos -> Float
+targetX pos =
     case pos of
         XLeft ->
             0
 
         XCenter ->
-            (w - sidePx) / 2
+            centerXCqw
 
         XRight ->
-            w - sidePx
-
-
-targetY : Float -> Float -> Float
-targetY w h =
-    (h - boxSidePx w) / 2
+            100 - boxPct
 
 
 
@@ -153,36 +122,10 @@ color4 =
 moveBoxX : Float -> AnimBuilder mode -> AnimBuilder mode
 moveBoxX x =
     Translate.for animGroupName
+        >> Translate.cssUnit Cqw
         >> Translate.toX x
-        >> Translate.speed 100
+        >> Translate.speed 25
         >> Translate.easing BounceOut
-        >> Translate.build
-
-
-{-| Re-anchor the translate to a new target. `Translate.continueFor`
-inherits `speed` and `easing` from the previous animation when the
-property is currently mid-animation, and `WAAPI.retarget` snapshots the
-current rendered position into the builder so the new animation starts
-from where the box actually is - no `fromX` needed, no teleporting.
-
-When the property is idle (resize fires after the box has settled), this
-snaps to the new position instead of animating, matching typical
-resize-handler behaviour.
-
--}
-retargetBoxXY : Float -> Float -> Float -> Float -> AnimBuilder mode -> AnimBuilder mode
-retargetBoxXY w h x y =
-    Translate.continueFor animGroupName
-        >> Translate.clampX 0 (w - boxSidePx w)
-        >> Translate.clampY 0 (h - boxSidePx w)
-        >> Translate.toXY x y
-        >> Translate.build
-
-
-snapBoxXY : Float -> Float -> AnimBuilder mode -> AnimBuilder mode
-snapBoxXY x y =
-    Translate.for animGroupName
-        >> Translate.toXY x y
         >> Translate.build
 
 
@@ -204,8 +147,6 @@ type Msg
     | MoveLeft
     | MoveRight
     | ChangeColor Color
-    | Resize
-    | GotCanvas (Result Dom.Error Dom.Viewport)
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -222,16 +163,20 @@ update msg model =
 
         MoveLeft ->
             ( { model
-                | pendingMove = Just MoveToLeft
+                | animState =
+                    Sub.animate model.animState <|
+                        moveBoxX (targetX XLeft)
               }
-            , measureCanvas
+            , Cmd.none
             )
 
         MoveRight ->
             ( { model
-                | pendingMove = Just MoveToRight
+                | animState =
+                    Sub.animate model.animState <|
+                        moveBoxX (targetX XRight)
               }
-            , measureCanvas
+            , Cmd.none
             )
 
         ChangeColor color ->
@@ -243,58 +188,6 @@ update msg model =
             , Cmd.none
             )
 
-        Resize ->
-            ( model, measureCanvas )
-
-        GotCanvas (Ok element) ->
-            let
-                w =
-                    element.viewport.width
-
-                h =
-                    element.viewport.height
-
-                modelWithSize =
-                    { model
-                        | canvasW = w
-                        , canvasH = h
-                        , pendingMove = Nothing
-                        , isReady = True
-                    }
-            in
-            case model.pendingMove of
-                Just MoveToLeft ->
-                    ( { modelWithSize
-                        | xPos = XLeft
-                        , animState =
-                            Sub.animate model.animState <|
-                                moveBoxX (targetX XLeft w)
-                      }
-                    , Cmd.none
-                    )
-
-                Just MoveToRight ->
-                    ( { modelWithSize
-                        | xPos = XRight
-                        , animState =
-                            Sub.animate model.animState <|
-                                moveBoxX (targetX XRight w)
-                      }
-                    , Cmd.none
-                    )
-
-                Nothing ->
-                    ( { modelWithSize
-                        | animState =
-                            Sub.retarget model.animState <|
-                                retargetBoxXY w h (targetX model.xPos w) (targetY w h)
-                      }
-                    , Cmd.none
-                    )
-
-        GotCanvas (Err _) ->
-            ( model, Cmd.none )
-
 
 
 -- SUBSCRIPTIONS
@@ -302,10 +195,7 @@ update msg model =
 
 subscriptions : Model -> Sub.Sub Msg
 subscriptions model =
-    Sub.batch
-        [ Sub.subscriptions GotAnimationUpdate model.animState
-        , Browser.Events.onResize (\_ _ -> Resize)
-        ]
+    Sub.subscriptions GotAnimationUpdate model.animState
 
 
 
@@ -343,22 +233,18 @@ view model =
             , colorButton color3 "Color 3"
             , colorButton color4 "Color 4"
             ]
-        , div [ id canvasId, class "example-canvas--fluid" ]
+        , div
+            [ class "example-canvas--fluid"
+            , style "container-type" "size"
+            ]
             [ div
                 (Sub.attributes animGroupName model.animState
-                    ++ [ style "width" (String.fromFloat (boxSidePx model.canvasW) ++ "px")
-                       , style "height" (String.fromFloat (boxSidePx model.canvasW) ++ "px")
+                    ++ [ style "width" (String.fromFloat boxPct ++ "cqw")
+                       , style "height" (String.fromFloat boxPct ++ "cqw")
                        , style "position" "absolute"
-                       , style "top" "0"
+                       , style "top" ("calc(50% - " ++ String.fromFloat boxHalfPct ++ "cqw)")
                        , style "left" "0"
                        , style "border-radius" "8px"
-                       , style "visibility"
-                            (if model.isReady then
-                                "visible"
-
-                             else
-                                "hidden"
-                            )
                        ]
                 )
                 []

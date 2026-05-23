@@ -7,6 +7,7 @@ import Anim.Property.Rotate as Rotate
 import Anim.Property.Scale as Scale
 import Anim.Property.Skew as Skew
 import Anim.Property.Translate as Translate
+import Anim.Unit exposing (Unit(..))
 import Browser
 import Html exposing (Html, button, div, text)
 import Html.Attributes exposing (class, style)
@@ -34,6 +35,16 @@ main =
 
 type alias Model =
     { animState : Keyframe.AnimState }
+
+
+boxSize : Float
+boxSize =
+    16
+
+
+boxSizeCss : String
+boxSizeCss =
+    String.fromFloat boxSize ++ "cqmin"
 
 
 type Permutation
@@ -148,7 +159,9 @@ init =
             Keyframe.init <|
                 List.concatMap
                     (\perm ->
-                        [ Translate.initXY (permutationKey perm) 0 0
+                        [ Translate.initUnitX Cqw
+                            >> Translate.initUnitY Cqh
+                            >> Translate.initXY (permutationKey perm) 0 0
                         , Skew.initXY (permutationKey perm) 0 0
                         ]
                     )
@@ -169,7 +182,9 @@ animatePermutation perm =
             permutationKey perm
     in
     Translate.for key
-        >> Translate.toXY 120 56
+        >> Translate.cssUnitX Cqw
+        >> Translate.cssUnitY Cqh
+        >> Translate.toXY 24 11.2
         >> Translate.duration 2000
         >> Translate.easing EaseInOut
         >> Translate.build
@@ -197,6 +212,8 @@ resetPermutation perm =
             permutationKey perm
     in
     Translate.for key
+        >> Translate.cssUnitX Cqw
+        >> Translate.cssUnitY Cqh
         >> Translate.toXY 0 0
         >> Translate.duration 2000
         >> Translate.easing EaseInOut
@@ -291,9 +308,11 @@ update msg model =
 
 view : Model -> Html Msg
 view model =
-    div [ class "example-stage" ]
-        [ div [ class "example-badge example-badge--static" ] [ text "Static" ]
-        , Keyframe.styleNode model.animState
+    div
+        [ class "example-stage"
+        , style "container-type" "size"
+        ]
+        [ Keyframe.styleNode model.animState
         , div [ class "example-controls" ]
             (List.map permButton allPermutations)
         , div [ class "example-controls" ]
@@ -357,22 +376,21 @@ animatedBox animState perm =
     in
     div
         [ style "position" "absolute"
-        , style "top" "50%"
+        , style "top" "clamp(10px, 2vmin, 16px)"
         , style "left" "50%"
-        , style "margin-top" "-40px"
-        , style "margin-left" "-40px"
+        , style "transform" "translateX(-50%)"
         ]
         [ div
             (Keyframe.attributes (permutationKey perm) animState
-                ++ [ style "width" "80px"
-                   , style "height" "80px"
+                ++ [ style "width" boxSizeCss
+                   , style "height" boxSizeCss
                    , style "background-color" ("rgba(" ++ rgb ++ ", 0.25)")
-                   , style "border-radius" "8px"
-                   , style "border" ("2px solid rgb(" ++ rgb ++ ")")
-                   , style "font-size" "11px"
+                   , style "border-radius" "1.6cqmin"
+                   , style "border" ("0.4cqmin solid rgb(" ++ rgb ++ ")")
+                   , style "font-size" "2.2cqmin"
                    , style "font-weight" "bold"
                    , style "color" ("rgb(" ++ rgb ++ ")")
-                   , style "padding" "4px"
+                   , style "padding" "0.8cqmin"
                    , style "box-sizing" "border-box"
                    ]
             )

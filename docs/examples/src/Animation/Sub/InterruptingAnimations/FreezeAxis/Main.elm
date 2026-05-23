@@ -3,14 +3,12 @@ module Animation.Sub.InterruptingAnimations.FreezeAxis.Main exposing (main)
 import Anim.Builder exposing (AnimBuilder)
 import Anim.Engine.Sub as Sub
 import Anim.Property.Translate as Translate
+import Anim.Unit exposing (Unit(..))
 import Browser
-import Browser.Dom as Dom
-import Browser.Events
 import Html exposing (Html, div, text)
-import Html.Attributes exposing (class, id, style)
+import Html.Attributes exposing (class, style)
 import Html.Events exposing (onClick)
 import Motion.Easing as Easing exposing (Easing(..))
-import Task
 
 
 
@@ -36,27 +34,8 @@ animGroupName =
     "movingBox"
 
 
-canvasId : String
-canvasId =
-    "anim-canvas"
-
-
 type alias Model =
-    { animState : Sub.AnimState
-    , canvasW : Float
-    , canvasH : Float
-    , xPos : XPos
-    , yPos : YPos
-    , pendingMove : Maybe MoveIntent
-    , isReady : Bool
-    }
-
-
-type MoveIntent
-    = MoveToLeft
-    | MoveToRight
-    | MoveToTop
-    | MoveToBottom
+    { animState : Sub.AnimState }
 
 
 type XPos
@@ -76,73 +55,57 @@ boxPct =
     12
 
 
-boxWidthPx : Float -> Float
-boxWidthPx canvasW =
-    (canvasW * boxPct) / 100
+centerXCqw : Float
+centerXCqw =
+    (100 - boxPct) / 2
 
 
-boxHeightPx : Float -> Float
-boxHeightPx canvasH =
-    (canvasH * boxPct) / 100
+centerYCqh : Float
+centerYCqh =
+    (100 - boxPct) / 2
 
 
 init : () -> ( Model, Cmd Msg )
 init _ =
     ( { animState =
             Sub.init
-                [ Translate.initXY animGroupName 0 0 ]
-      , canvasW = 0
-      , canvasH = 0
-      , xPos = XCenter
-      , yPos = YCenter
-      , pendingMove = Nothing
-      , isReady = False
+                [ Translate.initUnitX Cqw
+                    >> Translate.initUnitY Cqh
+                    >> Translate.initXY animGroupName centerXCqw centerYCqh
+                ]
       }
-    , measureCanvas
+    , Cmd.none
     )
-
-
-measureCanvas : Cmd Msg
-measureCanvas =
-    Task.attempt GotCanvas (Dom.getViewportOf canvasId)
 
 
 
 -- POSITION HELPERS
 
 
-targetX : XPos -> Float -> Float
-targetX pos w =
-    let
-        widthPx =
-            boxWidthPx w
-    in
+targetX : XPos -> Float
+targetX pos =
     case pos of
         XLeft ->
             0
 
         XCenter ->
-            (w - widthPx) / 2
+            (100 - boxPct) / 2
 
         XRight ->
-            w - widthPx
+            100 - boxPct
 
 
-targetY : YPos -> Float -> Float
-targetY pos h =
-    let
-        heightPx =
-            boxHeightPx h
-    in
+targetY : YPos -> Float
+targetY pos =
     case pos of
         YTop ->
             0
 
         YCenter ->
-            (h - heightPx) / 2
+            (100 - boxPct) / 2
 
         YBottom ->
-            h - heightPx
+            100 - boxPct
 
 
 
@@ -164,16 +127,11 @@ moveBoxY y =
 moveBox : (Translate.Builder mode -> Translate.Builder mode) -> AnimBuilder mode -> AnimBuilder mode
 moveBox moveFunc =
     Translate.for animGroupName
+        >> Translate.cssUnitX Cqw
+        >> Translate.cssUnitY Cqh
         >> moveFunc
-        >> Translate.speed 200
+        >> Translate.speed 25
         >> Translate.easing BounceOut
-        >> Translate.build
-
-
-snapBoxXY : Float -> Float -> AnimBuilder mode -> AnimBuilder mode
-snapBoxXY x y =
-    Translate.for animGroupName
-        >> Translate.toXY x y
         >> Translate.build
 
 
@@ -187,8 +145,6 @@ type Msg
     | MoveRight
     | MoveUp
     | MoveDown
-    | Resize
-    | GotCanvas (Result Dom.Error Dom.Viewport)
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -206,120 +162,53 @@ update msg model =
         ---8<-- [start:WithFreeze]
         MoveLeft ->
             ( { model
-                | pendingMove = Just MoveToLeft
+                | animState =
+                    Sub.animate model.animState <|
+                        Sub.freezeY [ Sub.translate ]
+                            >> moveBoxX (targetX XLeft)
               }
-            , measureCanvas
+            , Cmd.none
             )
 
         MoveRight ->
             ( { model
-                | pendingMove = Just MoveToRight
+                | animState =
+                    Sub.animate model.animState <|
+                        Sub.freezeY [ Sub.translate ]
+                            >> moveBoxX (targetX XRight)
               }
-            , measureCanvas
+            , Cmd.none
             )
 
         MoveUp ->
             ( { model
-                | pendingMove = Just MoveToTop
+                | animState =
+                    Sub.animate model.animState <|
+                        Sub.freezeX [ Sub.translate ]
+                            >> moveBoxY (targetY YTop)
               }
-            , measureCanvas
+            , Cmd.none
             )
 
         MoveDown ->
             ( { model
-                | pendingMove = Just MoveToBottom
+                | animState =
+                    Sub.animate model.animState <|
+                        Sub.freezeX [ Sub.translate ]
+                            >> moveBoxY (targetY YBottom)
               }
-            , measureCanvas
+            , Cmd.none
             )
 
-        ---8<-- [end:WithFreeze]
-        Resize ->
-            ( model, measureCanvas )
-
-        GotCanvas (Ok element) ->
-            let
-                w =
-                    element.viewport.width
-
-                h =
-                    element.viewport.height
-
-                modelWithSize =
-                    { model
-                        | canvasW = w
-                        , canvasH = h
-                        , pendingMove = Nothing
-                        , isReady = True
-                    }
-            in
-            case model.pendingMove of
-                Just MoveToLeft ->
-                    ( { modelWithSize
-                        | xPos = XLeft
-                        , animState =
-                            Sub.animate model.animState <|
-                                Sub.freezeY [ Sub.translate ]
-                                    >> moveBoxX (targetX XLeft w)
-                      }
-                    , Cmd.none
-                    )
-
-                Just MoveToRight ->
-                    ( { modelWithSize
-                        | xPos = XRight
-                        , animState =
-                            Sub.animate model.animState <|
-                                Sub.freezeY [ Sub.translate ]
-                                    >> moveBoxX (targetX XRight w)
-                      }
-                    , Cmd.none
-                    )
-
-                Just MoveToTop ->
-                    ( { modelWithSize
-                        | yPos = YTop
-                        , animState =
-                            Sub.animate model.animState <|
-                                Sub.freezeX [ Sub.translate ]
-                                    >> moveBoxY (targetY YTop h)
-                      }
-                    , Cmd.none
-                    )
-
-                Just MoveToBottom ->
-                    ( { modelWithSize
-                        | yPos = YBottom
-                        , animState =
-                            Sub.animate model.animState <|
-                                Sub.freezeX [ Sub.translate ]
-                                    >> moveBoxY (targetY YBottom h)
-                      }
-                    , Cmd.none
-                    )
-
-                Nothing ->
-                    ( { modelWithSize
-                        | animState =
-                            Sub.animate model.animState <|
-                                snapBoxXY (targetX model.xPos w) (targetY model.yPos h)
-                      }
-                    , Cmd.none
-                    )
-
-        GotCanvas (Err _) ->
-            ( model, Cmd.none )
 
 
-
+---8<-- [end:WithFreeze]
 -- SUBSCRIPTIONS
 
 
 subscriptions : Model -> Sub.Sub Msg
 subscriptions model =
-    Sub.batch
-        [ Sub.subscriptions GotAnimationUpdate model.animState
-        , Browser.Events.onResize (\_ _ -> Resize)
-        ]
+    Sub.subscriptions GotAnimationUpdate model.animState
 
 
 
@@ -352,20 +241,13 @@ view model =
         box =
             div
                 (Sub.attributes animGroupName model.animState
-                    ++ [ style "width" (String.fromFloat (boxWidthPx model.canvasW) ++ "px")
-                       , style "height" (String.fromFloat (boxHeightPx model.canvasH) ++ "px")
+                    ++ [ style "width" (String.fromFloat boxPct ++ "cqw")
+                       , style "height" (String.fromFloat boxPct ++ "cqh")
                        , style "background-color" "#FF5733"
                        , style "border-radius" "8px"
                        , style "position" "absolute"
                        , style "top" "0"
                        , style "left" "0"
-                       , style "visibility"
-                            (if model.isReady then
-                                "visible"
-
-                             else
-                                "hidden"
-                            )
                        ]
                 )
                 []
@@ -378,6 +260,9 @@ view model =
             , moveUpButton
             , moveDownButton
             ]
-        , div [ id canvasId, class "example-canvas--fluid" ]
+        , div
+            [ class "example-canvas--fluid"
+            , style "container-type" "size"
+            ]
             [ box ]
         ]

@@ -13,6 +13,7 @@ module Anim.Engine.Sub exposing
     , iterations, loopForever, alternate
     , delay, duration, speed
     , easing
+    , cssUnit, cssUnitX, cssUnitY, cssUnitZ
     , spring
     , stop, reset, restart, pause, resume
     , discreteEntry, discreteExit
@@ -39,17 +40,6 @@ For specific Engine guides and examples, see the
 
 For Engine comparisons, shared features, examples and code, see the
 [Engine Overview](https://phollyer.github.io/elm-motion/animation/engines/overview/) section in the docs.
-
-
-# Length Units
-
-The Sub Engine renders length-bearing properties (`Translate`, `Size`,
-`PerspectiveOrigin`) in `Px` only. Setting a non-`Px`
-[`Anim.Unit`](Anim-Unit) on a property targeted at Sub - via
-`Translate.cssUnit`, `Size.cssUnit`, or `PerspectiveOrigin.cssUnit` - is silently
-dropped and `Px` is rendered. To keep Sub animations responsive across resize
-events, use [`Anim.Resize.bounds`](Anim-Resize#bounds) with [`onResize`](#onResize).
-Relative-unit support on Sub is planned for a future release.
 
 
 # Types
@@ -148,6 +138,11 @@ To render an animation, you need to apply the animation `attributes` to your ele
 @docs easing
 
 📖 See [Easing](https://phollyer.github.io/elm-motion/animation/concepts/easing/) in the docs.
+
+
+# Units
+
+@docs cssUnit, cssUnitX, cssUnitY, cssUnitZ
 
 
 # Spring
@@ -256,6 +251,7 @@ import Anim.Extra.TransformOrder exposing (TransformProperty)
 import Anim.Internal.Builder as Builder
 import Anim.Internal.Engine.Sub as Internal
 import Anim.Resize as Resize
+import Anim.Unit exposing (Unit)
 import Browser exposing (UrlRequest(..))
 import Html
 import Motion.Easing exposing (Easing)
@@ -770,6 +766,64 @@ don't define their own easing.
 easing : Easing -> Builder.AnimBuilder mode -> Builder.AnimBuilder mode
 easing =
     Internal.easing
+
+
+
+-- ============================================================
+-- UNIT
+-- ============================================================
+
+
+{-| Set the default length [Unit](Anim-Unit#Unit) for all length-bearing
+properties in this builder.
+
+Applies to `Translate`, `Size`, and `PerspectiveOrigin`. `Custom` properties
+are configured with units per property constructor (for example
+`Custom.BorderRadius Unit.Px` or `Custom.Custom "letter-spacing" "ch"`) and are
+not affected by this engine-level default. Per-property
+[`cssUnit`](Anim-Property-Translate#cssUnit) calls take precedence over this
+engine-level default. If neither is set, properties render in `Px`.
+
+    import Anim.Engine.Sub as Sub
+    import Anim.Property.Translate as Translate
+    import Anim.Unit as Unit
+
+    Sub.animate model.animState <|
+        Sub.cssUnit Unit.Percent
+            >> Translate.for "box"
+            >> Translate.toX 50
+            >> Translate.build
+
+-}
+cssUnit : Unit -> Builder.AnimBuilder mode -> Builder.AnimBuilder mode
+cssUnit =
+    Internal.cssUnit
+
+
+{-| Set a per-axis default length [Unit](Anim-Unit#Unit) for the X axis. Used
+by `Translate.x`, `Size.width`, and `PerspectiveOrigin.x`. Per-property
+per-axis setters (e.g. `Translate.cssUnitX`) take precedence over this.
+-}
+cssUnitX : Unit -> Builder.AnimBuilder mode -> Builder.AnimBuilder mode
+cssUnitX =
+    Internal.cssUnitX
+
+
+{-| Set a per-axis default length [Unit](Anim-Unit#Unit) for the Y axis. Used
+by `Translate.y`, `Size.height`, and `PerspectiveOrigin.y`. Per-property
+per-axis setters (e.g. `Translate.cssUnitY`) take precedence over this.
+-}
+cssUnitY : Unit -> Builder.AnimBuilder mode -> Builder.AnimBuilder mode
+cssUnitY =
+    Internal.cssUnitY
+
+
+{-| Set a per-axis default length [Unit](Anim-Unit#Unit) for the Z axis. Used
+by `Translate.z`. Per-property `Translate.cssUnitZ` takes precedence.
+-}
+cssUnitZ : Unit -> Builder.AnimBuilder mode -> Builder.AnimBuilder mode
+cssUnitZ =
+    Internal.cssUnitZ
 
 
 

@@ -19,6 +19,7 @@ import Anim.Internal.Property.Scale exposing (Scale)
 import Anim.Internal.Property.Size exposing (Size)
 import Anim.Internal.Property.Skew exposing (Skew)
 import Anim.Internal.Property.Translate exposing (Translate)
+import Anim.Internal.Unit exposing (ResolvedCssUnitAxes)
 
 
 
@@ -31,12 +32,12 @@ type Animation
     = CustomProperty String String (PropertyAnimation Float)
     | CustomColorProperty String (PropertyAnimation Color)
     | Opacity (PropertyAnimation Opacity)
-    | PerspectiveOrigin (PropertyAnimation PerspectiveOrigin)
+    | PerspectiveOrigin ResolvedCssUnitAxes (PropertyAnimation PerspectiveOrigin)
     | Rotate (PropertyAnimation Rotate)
     | Scale (PropertyAnimation Scale)
-    | Size (PropertyAnimation Size)
+    | Size ResolvedCssUnitAxes (PropertyAnimation Size)
     | Skew (PropertyAnimation Skew)
-    | Translate (PropertyAnimation Translate)
+    | Translate ResolvedCssUnitAxes (PropertyAnimation Translate)
 
 
 type alias PropertyAnimation property =
@@ -59,7 +60,7 @@ type alias PropertyAnimation property =
 toPropertyKey : Animation -> String
 toPropertyKey prop =
     case prop of
-        Translate _ ->
+        Translate _ _ ->
             "translate"
 
         Rotate _ ->
@@ -74,10 +75,10 @@ toPropertyKey prop =
         Opacity _ ->
             "opacity"
 
-        PerspectiveOrigin _ ->
+        PerspectiveOrigin _ _ ->
             "perspectiveOrigin"
 
-        Size _ ->
+        Size _ _ ->
             "size"
 
         CustomProperty cssName _ _ ->
@@ -128,8 +129,8 @@ reverse anim =
             }
     in
     case anim of
-        Translate a ->
-            Translate (swap a)
+        Translate units a ->
+            Translate units (swap a)
 
         Rotate a ->
             Rotate (swap a)
@@ -143,11 +144,11 @@ reverse anim =
         Opacity a ->
             Opacity (swap a)
 
-        PerspectiveOrigin a ->
-            PerspectiveOrigin (swap a)
+        PerspectiveOrigin units a ->
+            PerspectiveOrigin units (swap a)
 
-        Size a ->
-            Size (swap a)
+        Size units a ->
+            Size units (swap a)
 
         CustomProperty cssName unit a ->
             CustomProperty cssName unit (swap a)
@@ -189,8 +190,8 @@ mapTiming f anim =
             applyTiming (f (toTiming a)) a
     in
     case anim of
-        Translate a ->
-            Translate (apply a)
+        Translate units a ->
+            Translate units (apply a)
 
         Rotate a ->
             Rotate (apply a)
@@ -204,11 +205,11 @@ mapTiming f anim =
         Opacity a ->
             Opacity (apply a)
 
-        PerspectiveOrigin a ->
-            PerspectiveOrigin (apply a)
+        PerspectiveOrigin units a ->
+            PerspectiveOrigin units (apply a)
 
-        Size a ->
-            Size (apply a)
+        Size units a ->
+            Size units (apply a)
 
         CustomProperty cssName unit a ->
             CustomProperty cssName unit (apply a)
@@ -239,7 +240,7 @@ foldTiming f anim =
         Opacity a ->
             f (toTiming a)
 
-        PerspectiveOrigin a ->
+        PerspectiveOrigin _ a ->
             f (toTiming a)
 
         Rotate a ->
@@ -248,11 +249,11 @@ foldTiming f anim =
         Scale a ->
             f (toTiming a)
 
-        Size a ->
+        Size _ a ->
             f (toTiming a)
 
         Skew a ->
             f (toTiming a)
 
-        Translate a ->
+        Translate _ a ->
             f (toTiming a)

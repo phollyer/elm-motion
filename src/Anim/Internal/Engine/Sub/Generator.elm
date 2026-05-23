@@ -146,7 +146,7 @@ toAnimation isComplete propertyConfig =
         Builder.ProcessedPerspectiveOriginConfig config ->
             Just
                 ( "perspectiveOrigin"
-                , PerspectiveOrigin <|
+                , PerspectiveOrigin config.cssUnit <|
                     build PerspectiveOrigin.default config
                 )
 
@@ -167,7 +167,7 @@ toAnimation isComplete propertyConfig =
         Builder.ProcessedSizeConfig config ->
             Just
                 ( "size"
-                , Size <|
+                , Size config.cssUnit <|
                     build Size.default config
                 )
 
@@ -181,7 +181,7 @@ toAnimation isComplete propertyConfig =
         Builder.ProcessedTranslateConfig config ->
             Just
                 ( "translate"
-                , Translate <|
+                , Translate config.cssUnit <|
                     build Translate.default config
                 )
 
