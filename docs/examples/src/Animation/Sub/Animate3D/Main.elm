@@ -57,10 +57,10 @@ init flags =
                 (toFloat flags.window.height)
 
         cubeSize =
-            animAreaSize_.width / 5
+            cubeSizePx animAreaSize_
 
         depth =
-            cubeSize / 2
+            cubeDepthPx animAreaSize_
 
         initialAnimState =
             Sub.init <|
@@ -140,6 +140,21 @@ type alias CubeConfig =
     }
 
 
+cubeSizeRatio : Float
+cubeSizeRatio =
+    0.18
+
+
+sideMoveRatio : Float
+sideMoveRatio =
+    10 / 18
+
+
+textMoveRatio : Float
+textMoveRatio =
+    4 / 18
+
+
 {-| Width available to the animation area for a given browser-window
 width, accounting for the centered container's max-width and padding.
 Never exceeds `baselineWidth`.
@@ -151,6 +166,53 @@ animAreaSize windowWidth windowHeight =
 
     else
         { width = windowHeight, height = windowHeight }
+
+
+cubeSizePx : { width : Float, height : Float } -> Float
+cubeSizePx area =
+    area.width * cubeSizeRatio
+
+
+cubeDepthPx : { width : Float, height : Float } -> Float
+cubeDepthPx area =
+    cubeSizePx area / 2
+
+
+sideMovePx : Float -> Float
+sideMovePx cubeSize =
+    cubeSize * sideMoveRatio
+
+
+textMovePx : Float -> Float
+textMovePx cubeSize =
+    cubeSize * textMoveRatio
+
+
+currentScale : Model -> Float
+currentScale model =
+    if model.initialAnimAreaSize.width <= 0 then
+        1
+
+    else
+        model.currentAnimAreaSize.width / model.initialAnimAreaSize.width
+
+
+borderWidthPx : Model -> Float
+borderWidthPx model =
+    let
+        scale =
+            currentScale model
+    in
+    if scale <= 0 then
+        2
+
+    else
+        2 / scale
+
+
+subPerspective : { width : Float, height : Float } -> Float
+subPerspective area =
+    max 1100 (1100 * (500 / area.width))
 
 
 
@@ -277,10 +339,20 @@ bottomFace =
 
 selectAnimation : Float -> State -> AnimBuilder mode -> AnimBuilder mode
 selectAnimation targetAmount state =
+    let
+        cubeSize =
+            targetAmount * 2
+
+        moveAmount =
+            sideMovePx cubeSize
+
+        textAmount =
+            textMovePx cubeSize
+    in
     case state of
         Opening ->
-            moveSidesOut targetAmount
-                >> moveTextsOut
+            moveSidesOut moveAmount targetAmount
+                >> moveTextsOut textAmount
 
         Closing ->
             moveSidesIn targetAmount
@@ -331,14 +403,14 @@ rotateCubeAntiClockwise =
 -- smaller pieces.
 
 
-moveSidesOut : Float -> AnimBuilder mode -> AnimBuilder mode
-moveSidesOut targetAmount =
-    moveFrontFaceOut targetAmount
-        >> moveBackFaceOut targetAmount
-        >> moveRightFaceOut targetAmount
-        >> moveLeftFaceOut targetAmount
-        >> moveTopFaceOut targetAmount
-        >> moveBottomFaceOut targetAmount
+moveSidesOut : Float -> Float -> AnimBuilder mode -> AnimBuilder mode
+moveSidesOut moveAmount targetAmount =
+    moveFrontFaceOut moveAmount targetAmount
+        >> moveBackFaceOut moveAmount targetAmount
+        >> moveRightFaceOut moveAmount targetAmount
+        >> moveLeftFaceOut moveAmount targetAmount
+        >> moveTopFaceOut moveAmount targetAmount
+        >> moveBottomFaceOut moveAmount targetAmount
 
 
 moveSidesIn : Float -> AnimBuilder mode -> AnimBuilder mode
@@ -375,13 +447,8 @@ moveFace config moveToBuilder =
 -- Top/Bottom faces move on Y (up/down)
 
 
-moveAmount : Float
-moveAmount =
-    50
-
-
-moveFrontFaceOut : Float -> AnimBuilder mode -> AnimBuilder mode
-moveFrontFaceOut toZ =
+moveFrontFaceOut : Float -> Float -> AnimBuilder mode -> AnimBuilder mode
+moveFrontFaceOut moveAmount toZ =
     moveFace frontFace <|
         Translate.toZ (toZ + moveAmount)
 
@@ -392,8 +459,8 @@ moveFrontFaceIn toZ =
         Translate.toZ toZ
 
 
-moveBackFaceOut : Float -> AnimBuilder mode -> AnimBuilder mode
-moveBackFaceOut toZ =
+moveBackFaceOut : Float -> Float -> AnimBuilder mode -> AnimBuilder mode
+moveBackFaceOut moveAmount toZ =
     moveFace backFace <|
         Translate.toZ (-1 * toZ - moveAmount)
 
@@ -404,8 +471,8 @@ moveBackFaceIn toZ =
         Translate.toZ (-1 * toZ)
 
 
-moveRightFaceOut : Float -> AnimBuilder mode -> AnimBuilder mode
-moveRightFaceOut toX =
+moveRightFaceOut : Float -> Float -> AnimBuilder mode -> AnimBuilder mode
+moveRightFaceOut moveAmount toX =
     moveFace rightFace <|
         Translate.toX (toX + moveAmount)
 
@@ -416,8 +483,8 @@ moveRightFaceIn toX =
         Translate.toX toX
 
 
-moveLeftFaceOut : Float -> AnimBuilder mode -> AnimBuilder mode
-moveLeftFaceOut toX =
+moveLeftFaceOut : Float -> Float -> AnimBuilder mode -> AnimBuilder mode
+moveLeftFaceOut moveAmount toX =
     moveFace leftFace <|
         Translate.toX (-1 * toX - moveAmount)
 
@@ -428,8 +495,8 @@ moveLeftFaceIn toX =
         Translate.toX (-1 * toX)
 
 
-moveTopFaceOut : Float -> AnimBuilder mode -> AnimBuilder mode
-moveTopFaceOut toY =
+moveTopFaceOut : Float -> Float -> AnimBuilder mode -> AnimBuilder mode
+moveTopFaceOut moveAmount toY =
     moveFace topFace <|
         Translate.toY (-1 * toY - moveAmount)
 
@@ -440,8 +507,8 @@ moveTopFaceIn toY =
         Translate.toY (-1 * toY)
 
 
-moveBottomFaceOut : Float -> AnimBuilder mode -> AnimBuilder mode
-moveBottomFaceOut toY =
+moveBottomFaceOut : Float -> Float -> AnimBuilder mode -> AnimBuilder mode
+moveBottomFaceOut moveAmount toY =
     moveFace bottomFace <|
         Translate.toY (toY + moveAmount)
 
@@ -459,11 +526,6 @@ moveBottomFaceIn toY =
 -- and then moves back (to Z=0) and rotates back (to Z=0deg) when sides close
 
 
-textMoveAmount : Float
-textMoveAmount =
-    20
-
-
 moveText : TextConfig -> Float -> Float -> AnimBuilder mode -> AnimBuilder mode
 moveText config toZ toRotate =
     sharedTiming
@@ -475,8 +537,8 @@ moveText config toZ toRotate =
         >> Rotate.build
 
 
-moveTextsOut : AnimBuilder mode -> AnimBuilder mode
-moveTextsOut =
+moveTextsOut : Float -> AnimBuilder mode -> AnimBuilder mode
+moveTextsOut textMoveAmount =
     moveText frontFace.text textMoveAmount 360
         >> moveText backFace.text textMoveAmount 360
         >> moveText rightFace.text textMoveAmount 360
@@ -677,6 +739,7 @@ view model =
             , id "example-stage"
             , style "width" "min(90vw, 90vh)"
             , style "height" "min(90vw, 90vh)"
+            , style "container-type" "size"
             ]
             [ text ""
             , viewAnimationArea model
@@ -690,10 +753,13 @@ viewAnimationArea model =
     let
         size =
             String.fromFloat model.currentAnimAreaSize.width ++ "px"
+
+        perspective =
+            subPerspective model.currentAnimAreaSize
     in
     div
         [ -- Perspective container
-          View3D.perspective 1000
+          View3D.perspective perspective
         , View3D.perspectiveOrigin View3D.Center
 
         --
@@ -725,6 +791,9 @@ viewCube model =
 
         cubeSize =
             model.cube.size
+
+        borderWidth =
+            borderWidthPx model
     in
     div
         (cubeAttrs
@@ -735,17 +804,17 @@ viewCube model =
                , style "position" "relative"
                ]
         )
-        [ viewFace cubeSize model.animState frontFace
-        , viewFace cubeSize model.animState backFace
-        , viewFace cubeSize model.animState rightFace
-        , viewFace cubeSize model.animState leftFace
-        , viewFace cubeSize model.animState topFace
-        , viewFace cubeSize model.animState bottomFace
+        [ viewFace cubeSize borderWidth model.animState frontFace
+        , viewFace cubeSize borderWidth model.animState backFace
+        , viewFace cubeSize borderWidth model.animState rightFace
+        , viewFace cubeSize borderWidth model.animState leftFace
+        , viewFace cubeSize borderWidth model.animState topFace
+        , viewFace cubeSize borderWidth model.animState bottomFace
         ]
 
 
-viewFace : Float -> Sub.AnimState -> FaceConfig -> Html Msg
-viewFace cubeSize animState config =
+viewFace : Float -> Float -> Sub.AnimState -> FaceConfig -> Html Msg
+viewFace cubeSize borderWidth animState config =
     let
         faceAnimAttributes =
             Sub.attributes config.groupName animState
@@ -761,13 +830,13 @@ viewFace cubeSize animState config =
                , style "width" (String.fromFloat cubeSize ++ "px")
                , style "height" (String.fromFloat cubeSize ++ "px")
                , style "background-color" config.background
-               , style "border" ("2px solid " ++ config.borderColor)
+               , style "border" (String.fromFloat borderWidth ++ "px solid " ++ config.borderColor)
                , style "box-sizing" "border-box"
                , style "display" "flex"
                , style "justify-content" "center"
                , style "align-items" "center"
                , style "font-weight" "bold"
-               , style "font-size" "14px"
+               , style "font-size" (String.fromFloat (cubeSize * 0.13) ++ "px")
                ]
         )
         [ div
