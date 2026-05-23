@@ -33,8 +33,6 @@ Use `ScrollTimeline.animate` from the `Anim.Engine.ScrollTimeline` module. Pass 
 
 A `ViewTimeline` ties animation progress to an element's position within the viewport — each element animates as it scrolls into (or out of) view.
 
-Use `ViewTimeline.animate` from the `Anim.Engine.ViewTimeline` module. The subject of the timeline is the element being animated. Use `rangeStart` and `rangeEnd` with the typed constructor functions to control exactly when in the element's scroll lifecycle the animation plays:
-
 --8<-- [start:view-timeline-example]
 
 ??? example "View Example"

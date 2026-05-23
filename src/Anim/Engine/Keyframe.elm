@@ -48,6 +48,10 @@ For Engine comparisons, shared features, examples and code, see the
 
 @docs AnimBuilder
 
+The following builders are narrowed versions of `AnimBuilder` that restrict the mode or engine.
+Use them when you want to restrict helpers to specific engines or modes, such as any that rely
+on engine-specific APIs.
+
 
 ### Timeline Builder
 
@@ -257,15 +261,6 @@ type alias AnimState =
 
 
 {-| Type alias for the base [AnimBuilder](Anim.Builder#AnimBuilder) type.
-
-Use this as the base type for builders that are shared across multiple engines,
-or that you want to be able to use with any engine:
-
-    f : AnimBuilder mode -> AnimBuilder mode
-
-Use the [TimelineBuilder](#TimelineBuilder) or the [EngineBuilder](#EngineBuilder)
-when you want to tighten the type restrictions and restrict builders to specific engines or timelines.
-
 -}
 type alias AnimBuilder mode =
     CSS.AnimBuilder mode
