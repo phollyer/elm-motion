@@ -1,25 +1,36 @@
 module Anim.Builder exposing
     ( AnimBuilder
+    , ForScrollTimeline, ForViewTimeline, ForDocumentTimeline
     , ForKeyframeEngine, ForSubEngine, ForTransitionEngine, ForWAAPIEngine
-    , ForDocumentTimeline, ForScrollTimeline, ForViewTimeline
+    , delay, duration, speed
+    , iterations, alternate
+    , easing, spring
+    , cssUnit, cssUnitX, cssUnitY, cssUnitZ
     )
 
-{-| Builder types for configuring animations with optional type-level restrictions.
+{-| Builder types and functions for configuring animations.
 
-Use these types to configure how strict your animation helper signatures should be.
-Choose generic modes for broad reuse, or constrained modes when you want stronger
-engine and timeline guarantees.
+The types here are the base building blocks for all animations.
 
-📖 See [Build: Builder Modes](https://phollyer.github.io/elm-motion/animation/workflow/build/#builder-modes)
-in the docs for detailed examples and patterns.
+The functions are shared configuration helpers.
 
 
 # Types
 
+📖 See [Build: Builder Modes](https://phollyer.github.io/elm-motion/animation/workflow/build/#builder-modes)
+in the docs for detailed examples and patterns.
+
 @docs AnimBuilder
 
 
-## Engine Modes
+## Timeline Modes
+
+Use these to restrict helpers to a particular timeline type.
+
+@docs ForScrollTimeline, ForViewTimeline, ForDocumentTimeline
+
+
+### Engine Modes
 
 Use these with `ForDocumentTimeline` when you want to restrict helpers to a specific engine that uses the
 browser's Document timeline: Transition, Keyframe, Sub, or WAAPI.
@@ -27,34 +38,62 @@ browser's Document timeline: Transition, Keyframe, Sub, or WAAPI.
 @docs ForKeyframeEngine, ForSubEngine, ForTransitionEngine, ForWAAPIEngine
 
 
-## Timeline Modes
+# Document Timeline Functions
 
-Use these to restrict helpers to a particular timeline type.
+These functions are configured for Document Timeline engines (Keyframe, Sub, Transition, WAAPI).
+They are not compatible with ScrollTimeline or ViewTimeline engines (they make no sense in those contexts).
 
-@docs ForDocumentTimeline, ForScrollTimeline, ForViewTimeline
+@docs delay, duration, speed
+
+
+# Universal Functions
+
+Use the shared helpers below for portable global configuration. The engine
+modules keep the same helpers as aliases.
+
+
+## Playback
+
+@docs iterations, alternate
+
+
+## Motion Behaviour
+
+@docs easing, spring
+
+
+## Units
+
+@docs cssUnit, cssUnitX, cssUnitY, cssUnitZ
 
 -}
 
 import Anim.Internal.Builder as Internal
+import Anim.Unit exposing (Unit)
+import Motion.Easing exposing (Easing)
+import Motion.Spring exposing (Spring)
 
 
-{-| The builder type for configuring animations.
+{-| The base builder type for configuring animations.
 
 The `mode` type parameter is a phantom type that controls where this builder can be used.
 Leave it generic for maximum reuse:
 
+    -- A generic builder that can be used with any engine or timeline
     f : AnimBuilder mode -> AnimBuilder mode
 
 Or constrain it to a specific timeline:
 
+    -- A builder that only works with document timeline Engines
     f : AnimBuilder (ForDocumentTimeline engine) -> AnimBuilder (ForDocumentTimeline engine)
 
 Or constrain it to a specific engine.
 
+    -- A builder that only works with the Sub Engine on the document timeline
     f : AnimBuilder (ForDocumentTimeline ForSubEngine) -> AnimBuilder (ForDocumentTimeline ForSubEngine)
 
-Constrained modes make function intent visible from the type signature and can help narrow
-which helpers are relevant during debugging.
+Constrained modes make function intent visible from the type signature, can help narrow
+which helpers are relevant during debugging, and trigger compiler errors for invalid usage.
 
 **Note**: For shorter type signatures, the engine modules expose shorthand aliases targeted to
 their specific engine and timeline combinations.
@@ -118,3 +157,162 @@ type alias ForScrollTimeline =
 -}
 type alias ForViewTimeline =
     Internal.ForViewTimeline
+
+
+{-| Set the global delay for all animations in a document-timeline builder.
+
+    introAnim : AnimBuilder mode -> AnimBuilder (ForDocumentTimeline engine)
+    introAnim =
+        delay 500
+            >> fadeInHeader
+            >> slideInSidebar
+            >> fadeInContent
+
+-}
+delay : Int -> AnimBuilder (ForDocumentTimeline engine) -> AnimBuilder (ForDocumentTimeline engine)
+delay =
+    Internal.delay
+
+
+{-| Set the global duration for all animations in a document-timeline builder.
+
+    introAnim : AnimBuilder mode -> AnimBuilder (ForDocumentTimeline engine)
+    introAnim =
+        duration 500
+            >> fadeInHeader
+            >> slideInSidebar
+            >> fadeInContent
+
+-}
+duration : Int -> AnimBuilder (ForDocumentTimeline engine) -> AnimBuilder (ForDocumentTimeline engine)
+duration =
+    Internal.duration
+
+
+{-| Set the global speed for all animations in a document-timeline builder.
+
+    introAnim : AnimBuilder mode -> AnimBuilder (ForDocumentTimeline engine)
+    introAnim =
+        speed 300
+            >> fadeInHeader
+            >> slideInSidebar
+            >> fadeInContent
+
+-}
+speed : Float -> AnimBuilder (ForDocumentTimeline engine) -> AnimBuilder (ForDocumentTimeline engine)
+speed =
+    Internal.speed
+
+
+{-| Set how many times an animation should repeat.
+
+    notificationAttentionLoop : AnimBuilder mode -> AnimBuilder mode
+    notificationAttentionLoop =
+        iterations 3
+            >> pulseBadge
+            >> nudgeBellIcon
+
+-}
+iterations : Int -> AnimBuilder mode -> AnimBuilder mode
+iterations =
+    Internal.iterations
+
+
+{-| Make an animation alternate direction on each iteration.
+
+    floatingCardLoop : AnimBuilder mode -> AnimBuilder mode
+    floatingCardLoop =
+        iterations 4
+            >> alternate
+            >> liftCard
+            >> glowCardBorder
+
+-}
+alternate : AnimBuilder mode -> AnimBuilder mode
+alternate =
+    Internal.alternate
+
+
+{-| Set the global easing function.
+
+    heroEntrance : AnimBuilder mode -> AnimBuilder mode
+    heroEntrance =
+        easing EaseInOut
+            >> fadeInHeroTitle
+            >> slideInHeroArtwork
+            >> revealPrimaryCta
+
+-}
+easing : Easing -> AnimBuilder mode -> AnimBuilder mode
+easing =
+    Internal.easing
+
+
+{-| Set the global spring.
+
+    draggableCardSettle : AnimBuilder mode -> AnimBuilder mode
+    draggableCardSettle =
+        spring Spring.wobbly
+            >> settleCardPosition
+            >> settleCardShadow
+
+-}
+spring : Spring -> AnimBuilder mode -> AnimBuilder mode
+spring =
+    Internal.spring
+
+
+{-| Set the default length unit for all length-bearing properties.
+
+    responsivePanelMotion : AnimBuilder mode -> AnimBuilder mode
+    responsivePanelMotion =
+        cssUnit Unit.Vw
+            >> slidePanelIn
+            >> growPanelHeight
+
+-}
+cssUnit : Unit -> AnimBuilder mode -> AnimBuilder mode
+cssUnit =
+    Internal.cssUnit
+
+
+{-| Set the default length unit for the X axis.
+
+    responsiveDrawerMotion : AnimBuilder mode -> AnimBuilder mode
+    responsiveDrawerMotion =
+        cssUnitX Unit.Vw
+            >> slideDrawerX
+            >> alignDrawerLabelX
+
+-}
+cssUnitX : Unit -> AnimBuilder mode -> AnimBuilder mode
+cssUnitX =
+    Internal.cssUnitX
+
+
+{-| Set the default length unit for the Y axis.
+
+    responsiveSheetMotion : AnimBuilder mode -> AnimBuilder mode
+    responsiveSheetMotion =
+        cssUnitY Unit.Vh
+            >> slideSheetY
+            >> alignSheetHeaderY
+
+-}
+cssUnitY : Unit -> AnimBuilder mode -> AnimBuilder mode
+cssUnitY =
+    Internal.cssUnitY
+
+
+{-| Set the default length unit for the Z axis.
+
+    layeredSceneMotion : AnimBuilder mode -> AnimBuilder mode
+    layeredSceneMotion =
+        cssUnitZ Unit.Px
+            >> pushSceneBackgroundBack
+            >> bringFloatingCardForward
+
+-}
+cssUnitZ : Unit -> AnimBuilder mode -> AnimBuilder mode
+cssUnitZ =
+    Internal.cssUnitZ

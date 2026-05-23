@@ -571,69 +571,25 @@ eventsStopPropagation =
 -- ============================================================
 
 
-{-| Set the delay for all animations.
-
-This will be inherited by all animations that
-don't define their own delay.
-
-    import Anim.Engine.Transition as Transition
-    import Anim.Property.Custom as Custom
-    import Anim.Unit exposing (Unit(..))
-
-    Transition.animate model.animState <|
-        Transition.delay 500
-            >> Custom.for "box" (Custom.BorderRadius Px)
-            >> Custom.to 24
-            >> Custom.build
-
+{-| Alias of [Anim.Builder.delay](Anim-Builder#delay).
 -}
 delay : Int -> Builder.AnimBuilder mode -> Builder.AnimBuilder mode
 delay =
-    CSS.delay
+    Builder.delay
 
 
-{-| Set the duration of all animations.
-
-This will be inherited by all animations that
-don't define their own duration.
-
-    import Anim.Engine.Transition as Transition
-    import Anim.Property.Custom as Custom
-    import Anim.Unit exposing (Unit(..))
-
-    Transition.animate model.animState <|
-        Transition.duration 500
-            >> Custom.for "box" (Custom.BorderRadius Px)
-            >> Custom.to 24
-            >> Custom.build
-
+{-| Alias of [Anim.Builder.duration](Anim-Builder#duration).
 -}
 duration : Int -> Builder.AnimBuilder mode -> Builder.AnimBuilder mode
 duration =
-    CSS.duration
+    Builder.duration
 
 
-{-| Set the speed that animations should run at.
-
-This will be inherited by all animations that
-don't define their own speed.
-
-Consult each property's documentation for details on how speed is interpreted.
-
-    import Anim.Engine.Transition as Transition
-    import Anim.Property.Custom as Custom
-    import Anim.Unit exposing (Unit(..))
-
-    Transition.animate model.animState <|
-        Transition.speed 100
-            >> Custom.for "box" (Custom.BorderRadius Px)
-            >> Custom.to 24
-            >> Custom.build
-
+{-| Alias of [Anim.Builder.speed](Anim-Builder#speed).
 -}
 speed : Float -> Builder.AnimBuilder mode -> Builder.AnimBuilder mode
 speed =
-    CSS.speed
+    Builder.speed
 
 
 
@@ -642,26 +598,11 @@ speed =
 -- ============================================================
 
 
-{-| Set the easing function to be used by all animations.
-
-This will be inherited by all animations that
-don't define their own easing.
-
-    import Easing exposing (Easing(..))
-    import Anim.Engine.Transition as Transition
-    import Anim.Property.Custom as Custom
-    import Anim.Unit exposing (Unit(..))
-
-    Transition.animate model.animState <|
-        Transition.easing BounceOut
-            >> Custom.for "box" (Custom.BorderRadius Px)
-            >> Custom.to 24
-            >> Custom.build
-
+{-| Alias of [Anim.Builder.easing](Anim-Builder#easing).
 -}
 easing : Easing -> Builder.AnimBuilder mode -> Builder.AnimBuilder mode
 easing =
-    CSS.easing
+    Builder.easing
 
 
 
@@ -670,53 +611,32 @@ easing =
 -- ============================================================
 
 
-{-| Set the default length [Unit](Anim-Unit#Unit) for all length-bearing
-properties in this builder.
-
-Applies to `Translate`, `Size`, and `PerspectiveOrigin`. Per-property
-[`cssUnit`](Anim-Property-Translate#cssUnit) calls take precedence over this
-engine-level default. If neither is set, properties render in `Px`.
-
-    import Anim.Engine.Transition as Transition
-    import Anim.Property.Translate as Translate
-    import Anim.Unit as Unit
-
-    Transition.animate model.animState <|
-        Transition.cssUnit Unit.Percent
-            >> Translate.for "box"
-            >> Translate.toX 50
-            >> Translate.build
-
+{-| Alias of [Anim.Builder.cssUnit](Anim-Builder#cssUnit).
 -}
 cssUnit : Unit -> Builder.AnimBuilder mode -> Builder.AnimBuilder mode
 cssUnit =
-    CSS.cssUnit
+    Builder.cssUnit
 
 
-{-| Set a per-axis default length [Unit](Anim-Unit#Unit) for the X axis. Used
-by `Translate.x`, `Size.width`, and `PerspectiveOrigin.x`. Per-property
-per-axis setters (e.g. `Translate.cssUnitX`) take precedence over this.
+{-| Alias of [Anim.Builder.cssUnitX](Anim-Builder#cssUnitX).
 -}
 cssUnitX : Unit -> Builder.AnimBuilder mode -> Builder.AnimBuilder mode
 cssUnitX =
-    CSS.cssUnitX
+    Builder.cssUnitX
 
 
-{-| Set a per-axis default length [Unit](Anim-Unit#Unit) for the Y axis. Used
-by `Translate.y`, `Size.height`, and `PerspectiveOrigin.y`. Per-property
-per-axis setters (e.g. `Translate.cssUnitY`) take precedence over this.
+{-| Alias of [Anim.Builder.cssUnitY](Anim-Builder#cssUnitY).
 -}
 cssUnitY : Unit -> Builder.AnimBuilder mode -> Builder.AnimBuilder mode
 cssUnitY =
-    CSS.cssUnitY
+    Builder.cssUnitY
 
 
-{-| Set a per-axis default length [Unit](Anim-Unit#Unit) for the Z axis. Used
-by `Translate.z`. Per-property `Translate.cssUnitZ` takes precedence.
+{-| Alias of [Anim.Builder.cssUnitZ](Anim-Builder#cssUnitZ).
 -}
 cssUnitZ : Unit -> Builder.AnimBuilder mode -> Builder.AnimBuilder mode
 cssUnitZ =
-    CSS.cssUnitZ
+    Builder.cssUnitZ
 
 
 
@@ -725,38 +645,11 @@ cssUnitZ =
 -- ============================================================
 
 
-{-| Set a spring as the default for all animations in this builder.
-
-Setting `spring` clears any previously-set global `easing`, and vice
-versa — they are mutually exclusive.
-
-Spring-driven motion has _emergent_ duration: the motion ends when
-the value has settled at the target. Per-property `duration` and
-`speed` are ignored when a spring is in effect; `delay` is honoured.
-
-**Caveat for the Transition engine.** CSS `transition` only supports
-a single `cubic-bezier(...)` timing function per property, so this
-engine cannot reproduce the full bouncing character of an under-damped
-spring. When a spring is set, the duration is overridden to the
-spring's settle time and the timing function falls back to a single
-overshoot bezier (`cubic-bezier(0.34, 1.56, 0.64, 1)`) that conveys a
-spring-like "snap" feel. For faithful spring physics, use the
-`Keyframe`, `WAAPI`, or `Sub` engine.
-
-    import Anim.Engine.Transition as Transition
-    import Anim.Property.Translate as Translate
-    import Motion.Spring as Spring
-
-    Transition.animate model.animState <|
-        Transition.spring Spring.wobbly
-            >> Translate.for "box"
-            >> Translate.toX 200
-            >> Translate.build
-
+{-| Alias of [Anim.Builder.spring](Anim-Builder#spring).
 -}
 spring : Spring -> Builder.AnimBuilder mode -> Builder.AnimBuilder mode
 spring =
-    CSS.spring
+    Builder.spring
 
 
 

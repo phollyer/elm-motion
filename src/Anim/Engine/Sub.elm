@@ -602,25 +602,11 @@ attributes =
 -- ============================================================
 
 
-{-| Set how many times an animation should repeat.
-
-    import Anim.Engine.Sub as Sub
-    import Anim.Property.Opacity as Opacity
-
-    pulse : Sub.EngineBuilder -> Sub.TimelineBuilder
-    pulse =
-        Opacity.for "box"
-            >> Opacity.to 0.2
-            >> Opacity.build
-
-    Sub.animate model.animState <|
-        Sub.iterations 3
-            >> pulse
-
+{-| Alias of [Anim.Builder.iterations](Anim-Builder#iterations).
 -}
 iterations : Int -> Builder.AnimBuilder mode -> Builder.AnimBuilder mode
 iterations =
-    Internal.iterations
+    Builder.iterations
 
 
 {-| Make an animation loop infinitely.
@@ -644,29 +630,11 @@ loopForever =
     Internal.loopForever
 
 
-{-| Make an animation alternate direction on each iteration (ping-pong effect).
-
-    import Anim.Engine.Sub as Sub
-    import Anim.Property.Opacity as Opacity
-
-    pulse : Sub.EngineBuilder -> Sub.TimelineBuilder
-    pulse =
-        Opacity.for "box"
-            >> Opacity.to 0.2
-            >> Opacity.build
-
-    Sub.animate model.animState <|
-        Sub.loopForever
-            >> Sub.alternate
-            >> pulse
-
-This creates a smooth ping-pong animation.
-The animation plays forward, then backward, then forward, etc.
-
+{-| Alias of [Anim.Builder.alternate](Anim-Builder#alternate).
 -}
 alternate : Builder.AnimBuilder mode -> Builder.AnimBuilder mode
 alternate =
-    Internal.alternate
+    Builder.alternate
 
 
 
@@ -675,69 +643,25 @@ alternate =
 -- ============================================================
 
 
-{-| Set the delay for all animations.
-
-This will be inherited by all animations that
-don't define their own delay.
-
-    import Anim.Engine.Sub as Sub
-    import Anim.Property.Custom as Custom
-    import Anim.Unit exposing (Unit(..))
-
-    Sub.animate model.animState <|
-        Sub.delay 500
-            >> Custom.for "box" (Custom.BorderRadius Px)
-            >> Custom.to 24
-            >> Custom.build
-
+{-| Alias of [Anim.Builder.delay](Anim-Builder#delay).
 -}
 delay : Int -> Builder.AnimBuilder mode -> Builder.AnimBuilder mode
 delay =
-    Internal.delay
+    Builder.delay
 
 
-{-| Set the duration of all animations.
-
-This will be inherited by all animations that
-don't define their own duration.
-
-    import Anim.Engine.Sub as Sub
-    import Anim.Property.Custom as Custom
-    import Anim.Unit exposing (Unit(..))
-
-    Sub.animate model.animState <|
-        Sub.duration 1000
-            >> Custom.for "box" (Custom.BorderRadius Px)
-            >> Custom.to 24
-            >> Custom.build
-
+{-| Alias of [Anim.Builder.duration](Anim-Builder#duration).
 -}
 duration : Int -> Builder.AnimBuilder mode -> Builder.AnimBuilder mode
 duration =
-    Internal.duration
+    Builder.duration
 
 
-{-| Set the speed that animations should run at.
-
-This will be inherited by all animations that
-don't define their own speed.
-
-Consult each property's documentation for details on how speed is interpreted.
-
-    import Anim.Engine.Sub as Sub
-    import Anim.Property.Custom as Custom
-    import Anim.Unit exposing (Unit(..))
-
-    Sub.animate model.animState <|
-        Sub.speed 100
-            >> Custom.for "box" (Custom.BorderRadius Px)
-            >> Custom.to 24
-            >> Custom.build
-
+{-| Alias of [Anim.Builder.speed](Anim-Builder#speed).
 -}
 speed : Float -> Builder.AnimBuilder mode -> Builder.AnimBuilder mode
 speed =
-    Internal.speed
+    Builder.speed
 
 
 
@@ -746,26 +670,11 @@ speed =
 -- ============================================================
 
 
-{-| Set the easing function to be used by all animations.
-
-This will be inherited by all animations that
-don't define their own easing.
-
-    import Easing exposing (Easing(..))
-    import Anim.Engine.Sub as Sub
-    import Anim.Property.Custom as Custom
-    import Anim.Unit exposing (Unit(..))
-
-    Sub.animate model.animState <|
-        Sub.easing BounceOut
-            >> Custom.for "box" (Custom.BorderRadius Px)
-            >> Custom.to 24
-            >> Custom.build
-
+{-| Alias of [Anim.Builder.easing](Anim-Builder#easing).
 -}
 easing : Easing -> Builder.AnimBuilder mode -> Builder.AnimBuilder mode
 easing =
-    Internal.easing
+    Builder.easing
 
 
 
@@ -774,56 +683,32 @@ easing =
 -- ============================================================
 
 
-{-| Set the default length [Unit](Anim-Unit#Unit) for all length-bearing
-properties in this builder.
-
-Applies to `Translate`, `Size`, and `PerspectiveOrigin`. `Custom` properties
-are configured with units per property constructor (for example
-`Custom.BorderRadius Unit.Px` or `Custom.Custom "letter-spacing" "ch"`) and are
-not affected by this engine-level default. Per-property
-[`cssUnit`](Anim-Property-Translate#cssUnit) calls take precedence over this
-engine-level default. If neither is set, properties render in `Px`.
-
-    import Anim.Engine.Sub as Sub
-    import Anim.Property.Translate as Translate
-    import Anim.Unit as Unit
-
-    Sub.animate model.animState <|
-        Sub.cssUnit Unit.Percent
-            >> Translate.for "box"
-            >> Translate.toX 50
-            >> Translate.build
-
+{-| Alias of [Anim.Builder.cssUnit](Anim-Builder#cssUnit).
 -}
 cssUnit : Unit -> Builder.AnimBuilder mode -> Builder.AnimBuilder mode
 cssUnit =
-    Internal.cssUnit
+    Builder.cssUnit
 
 
-{-| Set a per-axis default length [Unit](Anim-Unit#Unit) for the X axis. Used
-by `Translate.x`, `Size.width`, and `PerspectiveOrigin.x`. Per-property
-per-axis setters (e.g. `Translate.cssUnitX`) take precedence over this.
+{-| Alias of [Anim.Builder.cssUnitX](Anim-Builder#cssUnitX).
 -}
 cssUnitX : Unit -> Builder.AnimBuilder mode -> Builder.AnimBuilder mode
 cssUnitX =
-    Internal.cssUnitX
+    Builder.cssUnitX
 
 
-{-| Set a per-axis default length [Unit](Anim-Unit#Unit) for the Y axis. Used
-by `Translate.y`, `Size.height`, and `PerspectiveOrigin.y`. Per-property
-per-axis setters (e.g. `Translate.cssUnitY`) take precedence over this.
+{-| Alias of [Anim.Builder.cssUnitY](Anim-Builder#cssUnitY).
 -}
 cssUnitY : Unit -> Builder.AnimBuilder mode -> Builder.AnimBuilder mode
 cssUnitY =
-    Internal.cssUnitY
+    Builder.cssUnitY
 
 
-{-| Set a per-axis default length [Unit](Anim-Unit#Unit) for the Z axis. Used
-by `Translate.z`. Per-property `Translate.cssUnitZ` takes precedence.
+{-| Alias of [Anim.Builder.cssUnitZ](Anim-Builder#cssUnitZ).
 -}
 cssUnitZ : Unit -> Builder.AnimBuilder mode -> Builder.AnimBuilder mode
 cssUnitZ =
-    Internal.cssUnitZ
+    Builder.cssUnitZ
 
 
 
@@ -832,26 +717,11 @@ cssUnitZ =
 -- ============================================================
 
 
-{-| Set a global default `Spring` for every property in this animation.
-
-Individual properties can override with their own `spring` (or with
-`easing` to opt back into curve-driven motion).
-
-Spring and easing globals are mutually exclusive: setting one clears
-the other.
-
-    import Motion.Spring as Spring
-
-    Sub.animate model.animState <|
-        Sub.spring Spring.wobbly
-            >> Opacity.for "box"
-            >> Opacity.to 1
-            >> Opacity.build
-
+{-| Alias of [Anim.Builder.spring](Anim-Builder#spring).
 -}
 spring : Spring -> Builder.AnimBuilder mode -> Builder.AnimBuilder mode
 spring =
-    Internal.spring
+    Builder.spring
 
 
 

@@ -113,6 +113,7 @@ For Engine comparisons, shared features, examples and code, see the
 -}
 
 import Anim.Extra.TransformOrder exposing (TransformProperty)
+import Anim.Internal.Builder as Builder
 import Anim.Internal.Engine.ScrollTimeline as Internal
 import Anim.Unit exposing (Unit)
 import Html
@@ -337,22 +338,18 @@ horizontal =
 -- ============================================================
 
 
-{-| Set how many times the animation should repeat.
+{-| Alias of [Anim.Builder.iterations](Anim-Builder#iterations).
 -}
 iterations : Int -> TimelineBuilder -> TimelineBuilder
 iterations =
-    Internal.iterations
+    Builder.iterations
 
 
-{-| Alternate direction on each iteration (ping-pong).
-
-If `iterations` has not been set, this defaults to `2` so that the
-alternate direction has a second iteration to play.
-
+{-| Alias of [Anim.Builder.alternate](Anim-Builder#alternate).
 -}
 alternate : TimelineBuilder -> TimelineBuilder
 alternate =
-    Internal.alternate
+    Builder.alternate
 
 
 
@@ -361,11 +358,11 @@ alternate =
 -- ============================================================
 
 
-{-| Set the easing function.
+{-| Alias of [Anim.Builder.easing](Anim-Builder#easing).
 -}
 easing : Easing -> TimelineBuilder -> TimelineBuilder
 easing =
-    Internal.easing
+    Builder.easing
 
 
 
@@ -374,41 +371,32 @@ easing =
 -- ============================================================
 
 
-{-| Set the default length [Unit](Anim-Unit#Unit) for all length-bearing
-properties in this timeline.
-
-Applies to `Translate`, `Size`, and `PerspectiveOrigin`. Per-property
-[`cssUnit`](Anim-Property-Translate#cssUnit) calls take precedence over this
-engine-level default. If neither is set, properties render in `Px`.
-
+{-| Alias of [Anim.Builder.cssUnit](Anim-Builder#cssUnit).
 -}
 cssUnit : Unit -> TimelineBuilder -> TimelineBuilder
 cssUnit =
-    Internal.cssUnit
+    Builder.cssUnit
 
 
-{-| Set a per-axis default length [Unit](Anim-Unit#Unit) for the X axis.
-Applies to `Translate.x`, `Size.width`, and `PerspectiveOrigin.x`.
+{-| Alias of [Anim.Builder.cssUnitX](Anim-Builder#cssUnitX).
 -}
 cssUnitX : Unit -> TimelineBuilder -> TimelineBuilder
 cssUnitX =
-    Internal.cssUnitX
+    Builder.cssUnitX
 
 
-{-| Set a per-axis default length [Unit](Anim-Unit#Unit) for the Y axis.
-Applies to `Translate.y`, `Size.height`, and `PerspectiveOrigin.y`.
+{-| Alias of [Anim.Builder.cssUnitY](Anim-Builder#cssUnitY).
 -}
 cssUnitY : Unit -> TimelineBuilder -> TimelineBuilder
 cssUnitY =
-    Internal.cssUnitY
+    Builder.cssUnitY
 
 
-{-| Set a per-axis default length [Unit](Anim-Unit#Unit) for the Z axis.
-Applies to `Translate.z`.
+{-| Alias of [Anim.Builder.cssUnitZ](Anim-Builder#cssUnitZ).
 -}
 cssUnitZ : Unit -> TimelineBuilder -> TimelineBuilder
 cssUnitZ =
-    Internal.cssUnitZ
+    Builder.cssUnitZ
 
 
 
@@ -417,31 +405,11 @@ cssUnitZ =
 -- ============================================================
 
 
-{-| Set a spring as the default for all properties on this timeline.
-
-When a spring is set, the spring is sampled at evenly-spaced points
-and emitted as a pre-computed keyframes list. The browser then maps
-scroll progress (0 → 1) onto that sample list, so the spring's
-overshoot character is preserved — the "time" axis is just scroll
-position rather than wall-clock time.
-
-Setting `spring` clears any previously-set global `easing`, and
-vice versa — they are mutually exclusive.
-
-    import Anim.Engine.ScrollTimeline as ScrollTimeline
-    import Anim.Property.Translate as Translate
-    import Motion.Spring as Spring
-
-    ScrollTimeline.animate .id outgoing model.scrollItem <|
-        ScrollTimeline.spring Spring.wobbly
-            >> Translate.for "box"
-            >> Translate.toX 200
-            >> Translate.build
-
+{-| Alias of [Anim.Builder.spring](Anim-Builder#spring).
 -}
 spring : Spring -> TimelineBuilder -> TimelineBuilder
 spring =
-    Internal.spring
+    Builder.spring
 
 
 

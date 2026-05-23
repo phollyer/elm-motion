@@ -657,25 +657,11 @@ onResize =
 -- ============================================================
 
 
-{-| Set how many times an animation should repeat.
-
-    import Anim.Engine.WAAPI as WAAPI
-    import Anim.Property.Opacity as Opacity
-
-    pulse : WAAPI.EngineBuilder -> WAAPI.TimelineBuilder
-    pulse =
-        Opacity.for "box"
-            >> Opacity.to 0.2
-            >> Opacity.build
-
-    WAAPI.animate model.animState <|
-        WAAPI.iterations 3
-            >> pulse
-
+{-| Alias of [Anim.Builder.iterations](Anim-Builder#iterations).
 -}
 iterations : Int -> Builder.AnimBuilder mode -> Builder.AnimBuilder mode
 iterations =
-    Internal.iterations
+    Builder.iterations
 
 
 {-| Make an animation loop infinitely.
@@ -699,29 +685,11 @@ loopForever =
     Internal.loopForever
 
 
-{-| Make an animation alternate direction on each iteration (ping-pong effect).
-
-    import Anim.Engine.WAAPI as WAAPI
-    import Anim.Property.Opacity as Opacity
-
-    pulse : WAAPI.EngineBuilder -> WAAPI.TimelineBuilder
-    pulse =
-        Opacity.for "box"
-            >> Opacity.to 0.2
-            >> Opacity.build
-
-    WAAPI.animate model.animState <|
-        WAAPI.loopForever
-            >> WAAPI.alternate
-            >> pulse
-
-This creates a smooth ping-pong animation.
-The animation plays forward, then backward, then forward, etc.
-
+{-| Alias of [Anim.Builder.alternate](Anim-Builder#alternate).
 -}
 alternate : Builder.AnimBuilder mode -> Builder.AnimBuilder mode
 alternate =
-    Internal.alternate
+    Builder.alternate
 
 
 
@@ -730,69 +698,25 @@ alternate =
 -- ============================================================
 
 
-{-| Set the delay for all animations.
-
-This will be inherited by all animations that
-don't define their own delay.
-
-    import Anim.Engine.WAAPI as WAAPI
-    import Anim.Property.Custom as Custom
-    import Anim.Unit exposing (Unit(..))
-
-    WAAPI.animate model.animState <|
-        WAAPI.delay 500
-            >> Custom.for "box" (Custom.BorderRadius Px)
-            >> Custom.to 24
-            >> Custom.build
-
+{-| Alias of [Anim.Builder.delay](Anim-Builder#delay).
 -}
 delay : Int -> Builder.AnimBuilder mode -> Builder.AnimBuilder mode
 delay =
-    Internal.delay
+    Builder.delay
 
 
-{-| Set the duration of all animations.
-
-This will be inherited by all animations that
-don't define their own duration.
-
-    import Anim.Engine.WAAPI as WAAPI
-    import Anim.Property.Custom as Custom
-    import Anim.Unit exposing (Unit(..))
-
-    WAAPI.animate model.animState <|
-        WAAPI.duration 1000
-            >> Custom.for "box" (Custom.BorderRadius Px)
-            >> Custom.to 24
-            >> Custom.build
-
+{-| Alias of [Anim.Builder.duration](Anim-Builder#duration).
 -}
 duration : Int -> Builder.AnimBuilder mode -> Builder.AnimBuilder mode
 duration =
-    Internal.duration
+    Builder.duration
 
 
-{-| Set the speed that animations should run at.
-
-This will be inherited by all animations that
-don't define their own speed.
-
-Consult each property's documentation for details on how speed is interpreted.
-
-    import Anim.Engine.WAAPI as WAAPI
-    import Anim.Property.Custom as Custom
-    import Anim.Unit exposing (Unit(..))
-
-    WAAPI.animate model.animState <|
-        WAAPI.speed 100
-            >> Custom.for "box" (Custom.BorderRadius Px)
-            >> Custom.to 24
-            >> Custom.build
-
+{-| Alias of [Anim.Builder.speed](Anim-Builder#speed).
 -}
 speed : Float -> Builder.AnimBuilder mode -> Builder.AnimBuilder mode
 speed =
-    Internal.speed
+    Builder.speed
 
 
 
@@ -801,26 +725,11 @@ speed =
 -- ============================================================
 
 
-{-| Set the easing function to be used by all animations.
-
-This will be inherited by all animations that
-don't define their own easing.
-
-    import Easing exposing (Easing(..))
-    import Anim.Engine.WAAPI as WAAPI
-    import Anim.Property.Custom as Custom
-    import Anim.Unit exposing (Unit(..))
-
-    WAAPI.animate model.animState <|
-        WAAPI.easing BounceOut
-            >> Custom.for "box" (Custom.BorderRadius Px)
-            >> Custom.to 24
-            >> Custom.build
-
+{-| Alias of [Anim.Builder.easing](Anim-Builder#easing).
 -}
 easing : Easing -> Builder.AnimBuilder mode -> Builder.AnimBuilder mode
 easing =
-    Internal.easing
+    Builder.easing
 
 
 
@@ -829,53 +738,32 @@ easing =
 -- ============================================================
 
 
-{-| Set the default length [Unit](Anim-Unit#Unit) for all length-bearing
-properties in this builder.
-
-Applies to `Translate`, `Size`, and `PerspectiveOrigin`. Per-property
-[`cssUnit`](Anim-Property-Translate#cssUnit) calls take precedence over this
-engine-level default. If neither is set, properties render in `Px`.
-
-    import Anim.Engine.WAAPI as WAAPI
-    import Anim.Property.Translate as Translate
-    import Anim.Unit as Unit
-
-    WAAPI.animate model.animState <|
-        WAAPI.cssUnit Unit.Percent
-            >> Translate.for "box"
-            >> Translate.toX 50
-            >> Translate.build
-
+{-| Alias of [Anim.Builder.cssUnit](Anim-Builder#cssUnit).
 -}
 cssUnit : Unit -> Builder.AnimBuilder mode -> Builder.AnimBuilder mode
 cssUnit =
-    Internal.cssUnit
+    Builder.cssUnit
 
 
-{-| Set a per-axis default length [Unit](Anim-Unit#Unit) for the X axis. Used
-by `Translate.x`, `Size.width`, and `PerspectiveOrigin.x`. Per-property
-per-axis setters (e.g. `Translate.cssUnitX`) take precedence over this.
+{-| Alias of [Anim.Builder.cssUnitX](Anim-Builder#cssUnitX).
 -}
 cssUnitX : Unit -> Builder.AnimBuilder mode -> Builder.AnimBuilder mode
 cssUnitX =
-    Internal.cssUnitX
+    Builder.cssUnitX
 
 
-{-| Set a per-axis default length [Unit](Anim-Unit#Unit) for the Y axis. Used
-by `Translate.y`, `Size.height`, and `PerspectiveOrigin.y`. Per-property
-per-axis setters (e.g. `Translate.cssUnitY`) take precedence over this.
+{-| Alias of [Anim.Builder.cssUnitY](Anim-Builder#cssUnitY).
 -}
 cssUnitY : Unit -> Builder.AnimBuilder mode -> Builder.AnimBuilder mode
 cssUnitY =
-    Internal.cssUnitY
+    Builder.cssUnitY
 
 
-{-| Set a per-axis default length [Unit](Anim-Unit#Unit) for the Z axis. Used
-by `Translate.z`. Per-property `Translate.cssUnitZ` takes precedence.
+{-| Alias of [Anim.Builder.cssUnitZ](Anim-Builder#cssUnitZ).
 -}
 cssUnitZ : Unit -> Builder.AnimBuilder mode -> Builder.AnimBuilder mode
 cssUnitZ =
-    Internal.cssUnitZ
+    Builder.cssUnitZ
 
 
 
@@ -884,30 +772,11 @@ cssUnitZ =
 -- ============================================================
 
 
-{-| Set a spring as the default for all animations in this builder.
-
-Will be inherited by any property that doesn't define its own spring
-or easing. Setting `spring` clears any previously-set global `easing`,
-and vice versa — they are mutually exclusive.
-
-Spring-driven motion has _emergent_ duration: the motion ends when
-the value has settled at the target. Per-property `duration` and
-`speed` are ignored when a spring is in effect; `delay` is honoured.
-
-    import Anim.Engine.WAAPI as WAAPI
-    import Anim.Property.Translate as Translate
-    import Motion.Spring as Spring
-
-    WAAPI.animate model.animState <|
-        WAAPI.spring Spring.wobbly
-            >> Translate.for "box"
-            >> Translate.toX 200
-            >> Translate.build
-
+{-| Alias of [Anim.Builder.spring](Anim-Builder#spring).
 -}
 spring : Spring -> Builder.AnimBuilder mode -> Builder.AnimBuilder mode
 spring =
-    Internal.spring
+    Builder.spring
 
 
 
