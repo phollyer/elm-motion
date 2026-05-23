@@ -107,13 +107,16 @@ view : Model -> Html Msg
 view model =
     div
         [ class "example-stage"
-        , style "font-size" "48px"
+        , style "font-size" "clamp(28px, 10vw, 48px)"
         , style "font-weight" "bold"
+        , style "text-align" "center"
         ]
         ---8<-- [start:render]
         [ div [ class "example-badge example-badge--responsive" ] [ text "RESPONSIVE" ]
         , div
-            (Sub.attributes groupName model.animState)
+            (Sub.attributes groupName model.animState
+                ++ [ style "width" "100%" ]
+            )
             [ text "Hello World!" ]
         ]
 

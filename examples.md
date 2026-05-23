@@ -70,7 +70,7 @@ Suggested Status values: `OK`, `FIX`, `BLOCK`, `?`.
 | 5 | Transition | ControllingAnimations | OK |  |
 | 6 | Transition | DiscreteProperties | FIX | The buttons remain in position when the animation flips the discrete properties, they should collapse into the space vacated on discreteExit and move up above on discreteEntry - the other engine examples exhibit the correct bahaviour |
 | 7 | Transition | FadeInOut | OK |  |
-| 8 | Transition | HelloText | FIX | The text needs to be centered when it wraps on smaller screens, of the font size needs to scale with the viewport so that it doesn't need to wrap. |
+| 8 | Transition | HelloText | OK |  |
 | 9 | Transition | InterruptingAnimations/MultipleAxes | OK |  |
 | 10 | Transition | InterruptingAnimations/MultipleProperties | OK |  |
 | 11 | Transition | InterruptingAnimations/SingleProperty | OK |  |
@@ -93,7 +93,7 @@ Suggested Status values: `OK`, `FIX`, `BLOCK`, `?`.
 | 28 | Sub | ControllingAnimations | FIX | Once the animation has completed, and been Reset, the Resume button, if clicked will restart the animation, this is wrong behaviour. The Resume functionality should only be active during a Pause, like the keyframe and waapi engines. This is an Engine fix **not** an example fix. |
 | 29 | Sub | DiscreteProperties | OK |  |
 | 30 | Sub | FadeInOut | OK |  |
-| 31 | Sub | HelloText | FIX | The text needs to be centered when it wraps on smaller screens, of the font size needs to scale with the viewport so that it doesn't need to wrap. |
+| 31 | Sub | HelloText | OK |  |
 | 32 | Sub | InterruptingAnimations/FreezeAxis | OK |  |
 | 33 | Sub | InterruptingAnimations/MultipleAxes | OK |  |
 | 34 | Sub | InterruptingAnimations/MultipleProperties | OK |  |
@@ -107,7 +107,7 @@ Suggested Status values: `OK`, `FIX`, `BLOCK`, `?`.
 | 42 | WAAPI | ControllingAnimations | OK |  |
 | 43 | WAAPI | DiscreteProperties | OK |  |
 | 44 | WAAPI | FadeInOut | OK |  |
-| 45 | WAAPI | HelloText | FIX | The text needs to be centered when it wraps on smaller screens, of the font size needs to scale with the viewport so that it doesn't need to wrap. |
+| 45 | WAAPI | HelloText | OK |  |
 | 46 | WAAPI | InterruptingAnimations/FreezeAxis | OK |  |
 | 47 | WAAPI | InterruptingAnimations/MultipleAxes | OK |  |
 | 48 | WAAPI | InterruptingAnimations/MultipleProperties | OK |  |
