@@ -90,7 +90,7 @@ Suggested Status values: `OK`, `FIX`, `BLOCK`, `?`.
 | 25 | Sub | BorderColor | OK |  |
 | 26 | Sub | BorderRadius | OK |  |
 | 27 | Sub | ButtonHovers | OK |  |
-| 28 | Sub | ControllingAnimations | FIX | Once the animation has completed, and been Reset, the Resume button, if clicked will restart the animation, this is wrong behaviour. The Resume functionality should only be active during a Pause, like the keyframe and waapi engines. This is an Engine fix **not** an example fix. |
+| 28 | Sub | ControllingAnimations | OK |  |
 | 29 | Sub | DiscreteProperties | OK |  |
 | 30 | Sub | FadeInOut | OK |  |
 | 31 | Sub | HelloText | OK |  |
