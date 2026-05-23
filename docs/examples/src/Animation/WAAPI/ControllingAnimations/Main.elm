@@ -205,7 +205,7 @@ subscriptions model =
 view : Model -> Html Msg
 view model =
     div [ class "example-stage" ]
-        [ div [ class "example-badge example-badge--responsive" ] [ text "RESPONSIVE" ]
+        [ text ""
         , div [ class "example-controls" ]
             [ button [ onClick Animate, class "ui-action-button primary" ] [ text "🏀 Animate" ]
             , button [ onClick Pause, class "ui-action-button success" ] [ text "⏸️ Pause" ]

@@ -669,7 +669,7 @@ view model =
             , style "width" "min(90vw, 90vh)"
             , style "height" "min(90vw, 90vh)"
             ]
-            [ div [ Html.Attributes.class "example-badge example-badge--responsive" ] [ text "RESPONSIVE" ]
+            [ text ""
             , viewAnimationArea model
             ]
         ]

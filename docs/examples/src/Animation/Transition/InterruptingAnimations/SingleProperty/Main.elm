@@ -178,7 +178,7 @@ view model =
             button color4 "Color 4" Color4
     in
     div [ class "example-stage" ]
-        [ div [ class "example-badge example-badge--responsive" ] [ text "RESPONSIVE" ]
+        [ text ""
         , div [ class "example-controls" ]
             [ color1Button
             , color2Button

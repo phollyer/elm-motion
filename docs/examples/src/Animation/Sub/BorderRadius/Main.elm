@@ -120,7 +120,7 @@ view : Model -> Html Msg
 view model =
     div
         [ class "example-stage" ]
-        [ div [ class "example-badge example-badge--responsive" ] [ text "RESPONSIVE" ]
+        [ text ""
         , div [ class "example-controls" ]
             [ button
                 [ onClick TriggerRound

@@ -144,7 +144,7 @@ view model =
         [ class "example-stage"
         , style "text-align" "center"
         ]
-        [ div [ class "example-badge example-badge--responsive" ] [ text "RESPONSIVE" ]
+        [ text ""
         , div [ class "example-controls" ]
             [ button
                 [ onClick TriggerRed

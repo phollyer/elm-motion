@@ -83,9 +83,7 @@ view _ =
         , style "color" "#1f2937"
         , style "background" "#f9fafb"
         ]
-        [ div
-            [ class "example-badge example-badge--responsive" ]
-            [ text "RESPONSIVE" ]
+        [ text ""
         , -- Page header
           div
             [ style "text-align" "center"

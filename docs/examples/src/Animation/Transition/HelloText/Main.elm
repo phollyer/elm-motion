@@ -99,7 +99,7 @@ view model =
         , style "font-weight" "bold"
         , style "text-align" "center"
         ]
-        [ div [ class "example-badge example-badge--responsive" ] [ text "RESPONSIVE" ]
+        [ text ""
 
         ---8<-- [start:render]
         , div

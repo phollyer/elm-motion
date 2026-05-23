@@ -112,7 +112,7 @@ view model =
         , style "text-align" "center"
         ]
         ---8<-- [start:render]
-        [ div [ class "example-badge example-badge--responsive" ] [ text "RESPONSIVE" ]
+        [ text ""
         , div
             (Sub.attributes groupName model.animState
                 ++ [ style "width" "100%" ]

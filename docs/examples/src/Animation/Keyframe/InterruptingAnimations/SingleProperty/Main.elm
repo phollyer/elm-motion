@@ -181,7 +181,7 @@ view model =
         [ class "example-stage"
         , style "text-align" "center"
         ]
-        [ div [ class "example-badge example-badge--responsive" ] [ text "RESPONSIVE" ]
+        [ text ""
         , Keyframe.styleNode model.animState
         , div [ class "example-controls" ]
             [ color1Button

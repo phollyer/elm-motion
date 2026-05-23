@@ -81,7 +81,7 @@ view model =
         , style "text-align" "center"
         ]
         ---8<-- [start:render]
-        [ div [ class "example-badge example-badge--responsive" ] [ text "RESPONSIVE" ]
+        [ text ""
         , Keyframe.styleNode model.animState
         , div
             (Keyframe.attributes groupName model.animState

@@ -324,7 +324,7 @@ view model =
     div
         [ class "example-stage"
         ]
-        [ div [ class "example-badge example-badge--responsive" ] [ text "RESPONSIVE" ]
+        [ text ""
         , div
             [ style "padding" "7px"
             , style "border-radius" "12px"

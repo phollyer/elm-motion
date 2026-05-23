@@ -83,11 +83,7 @@ view _ =
         , style "color" "#1f2937"
         , style "background" "#ffffff"
         ]
-        [ div
-            [ class "example-badge example-badge--responsive"
-            , style "background" "#ffffff"
-            ]
-            [ text "RESPONSIVE" ]
+        [ text ""
         , -- Fixed progress bar at top of page
           div
             [ style "position" "fixed"

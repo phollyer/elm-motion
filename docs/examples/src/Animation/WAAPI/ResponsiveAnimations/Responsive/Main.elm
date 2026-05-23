@@ -325,9 +325,7 @@ view model =
         [ class "example-stage"
         , style "justify-content" "flex-start"
         ]
-        [ div
-            [ class "example-badge example-badge--responsive" ]
-            [ text "RESPONSIVE" ]
+        [ text ""
         , div
             [ class "example-controls"
             , style "margin-top" "5px"
