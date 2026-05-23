@@ -77,7 +77,8 @@ init : () -> ( Model, Cmd Msg )
 init _ =
     ( { animState =
             WAAPI.init motionCmd motionMsg <|
-                [ Translate.initX animGroupName centerXCqw
+                [ Translate.initUnitX Cqw
+                    >> Translate.initX animGroupName centerXCqw
                 , BgColor.init animGroupName BgColor.BackgroundColor <| Color.rgb 118 118 118
                 ]
       }
@@ -141,7 +142,7 @@ moveBoxX x =
     Translate.for animGroupName
         >> Translate.cssUnit Cqw
         >> Translate.toX x
-        >> Translate.speed 200
+        >> Translate.speed 25
         >> Translate.easing BounceOut
         >> Translate.build
 
