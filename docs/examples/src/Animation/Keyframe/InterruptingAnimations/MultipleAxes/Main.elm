@@ -52,7 +52,10 @@ init : () -> ( Model, Cmd Msg )
 init _ =
     ( { animState =
             Keyframe.init
-                [ Translate.initXY animGroupName 0 0 ]
+                [ Translate.initUnitX Cqw
+                    >> Translate.initUnitY Cqh
+                    >> Translate.initXY animGroupName (targetX XCenter) (targetY YCenter)
+                ]
       }
     , Cmd.none
     )
@@ -124,7 +127,7 @@ moveBox moveFunc =
         >> Translate.cssUnitX Cqw
         >> Translate.cssUnitY Cqh
         >> moveFunc
-        >> Translate.speed 100
+        >> Translate.speed 25
         >> Translate.easing BounceOut
         >> Translate.build
 
@@ -224,6 +227,7 @@ view model =
                     ++ [ style "width" (String.fromFloat boxPct ++ "cqw")
                        , style "height" (String.fromFloat boxPct ++ "cqh")
                        , style "background-color" "#FF5733"
+                       , style "border-radius" "8px"
                        , style "position" "absolute"
                        , style "top" "0"
                        , style "left" "0"

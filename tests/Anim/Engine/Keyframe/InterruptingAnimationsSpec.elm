@@ -1,6 +1,8 @@
 module Anim.Engine.Keyframe.InterruptingAnimationsSpec exposing (suite)
 
 import Anim.Engine.Keyframe as Keyframe
+import Anim.Extra.Color as Color
+import Anim.Property.CustomColor as BgColor
 import Anim.Property.Translate as Translate
 import Anim.Unit exposing (Unit(..))
 import Expect
@@ -70,4 +72,37 @@ suite =
                 css
                     |> String.contains "translate3d(88cqw, 0cqh, 0px)"
                     |> Expect.equal True
+        , test "after a Translate(Cqw) animation, a subsequent non-Translate animation preserves the cqw unit in the translate baseline" <|
+            \_ ->
+                let
+                    afterMove =
+                        Keyframe.animate
+                            (Keyframe.init [ Translate.initXY animGroup 0 0 ])
+                            (moveBoxX 88)
+
+                    afterColor =
+                        Keyframe.animate afterMove <|
+                            (BgColor.for animGroup BgColor.BackgroundColor
+                                >> BgColor.to (Color.rgb 255 0 0)
+                                >> BgColor.duration 500
+                                >> BgColor.build
+                            )
+
+                    css =
+                        Keyframe.maybeString animGroup afterColor
+                            |> Maybe.withDefault ""
+                in
+                Expect.all
+                    [ \_ ->
+                        css
+                            |> String.contains "translate3d(88cqw"
+                            |> Expect.equal True
+                            |> Expect.onFail ("Expected baseline transform to keep cqw unit; got:\n" ++ css)
+                    , \_ ->
+                        css
+                            |> String.contains "translate3d(88px"
+                            |> Expect.equal False
+                            |> Expect.onFail ("Baseline regressed to px unit; got:\n" ++ css)
+                    ]
+                    ()
         ]
