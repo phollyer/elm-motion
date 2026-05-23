@@ -66,7 +66,8 @@ init : () -> ( Model, Cmd Msg )
 init _ =
     ( { animState =
             Transition.init
-                [ Translate.initX animGroupName centerXCqw
+                [ Translate.initUnitX Cqw
+                    >> Translate.initX animGroupName centerXCqw
                 , BgColor.init animGroupName BgColor.BackgroundColor <| Color.rgb 118 118 118
                 ]
       }
@@ -130,7 +131,7 @@ moveBoxX x =
     Translate.for animGroupName
         >> Translate.cssUnit Cqw
         >> Translate.toX x
-        >> Translate.speed 100
+        >> Translate.speed 25
         >> Translate.easing BounceOut
         >> Translate.build
 
