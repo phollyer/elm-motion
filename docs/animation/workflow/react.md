@@ -234,7 +234,7 @@ How you receive events depends on the engine - DOM events vs subscriptions:
 
 ### DOM-Based Setup (Transition, Keyframe)
 
-Add the `events` helper to your animated elements:
+Add the `events` function to your animated elements:
 
 ??? example "View Source Code"
 

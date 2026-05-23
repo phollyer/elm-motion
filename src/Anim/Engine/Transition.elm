@@ -60,7 +60,7 @@ are used that don't run on the Document timeline (e.g., Scroll or View), you'll 
 
 The `EngineBuilder` is a builder type restricted to the Transition Engine.
 
-Use the `EngineBuilder` when you want to restrict helpers to the Transition Engine.
+Use the `EngineBuilder` when you want to restrict builder functions to the Transition Engine.
 
 @docs EngineBuilder
 

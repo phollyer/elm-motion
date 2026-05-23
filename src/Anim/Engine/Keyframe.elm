@@ -49,7 +49,7 @@ For Engine comparisons, shared features, examples and code, see the
 @docs AnimBuilder
 
 The following builders are narrowed versions of `AnimBuilder` that restrict the mode or engine.
-Use them when you want to restrict helpers to specific engines or modes, such as any that rely
+Use them when you want to restrict builder functions to specific engines or modes, such as any that rely
 on engine-specific APIs.
 
 
@@ -67,7 +67,7 @@ Engine tries to consume anything built with a `TimelineBuilder`, you'll get a ty
 
 The `EngineBuilder` is a builder type restricted to the Keyframe Engine.
 
-Use the `EngineBuilder` when you want to restrict helpers to the Keyframe Engine, such as any that rely
+Use the `EngineBuilder` when you want to restrict builder functions to the Keyframe Engine, such as any that rely
 on Keyframe-only APIs.
 
 @docs EngineBuilder

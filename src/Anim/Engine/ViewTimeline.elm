@@ -134,10 +134,10 @@ import Motion.Spring exposing (Spring)
 
 {-| Animation builder type for configuring view-driven animations.
 
-Use this in type annotations for animation helpers specific to the
+Use this in type annotations for animation builder functions specific to the
 ViewTimeline Engine.
 
-For helper functions that should work across all engines, use `AnimBuilder mode` from `Anim.Builder` instead.
+For builder functions that should work across all engines, use `AnimBuilder mode` from `Anim.Builder` instead.
 
 For mode restrictions and examples, see
 [Build: Builder Modes](https://phollyer.github.io/elm-motion/animation/workflow/build/#builder-modes).

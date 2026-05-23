@@ -68,7 +68,7 @@ are used that don't run on the Document timeline (e.g., Scroll or View), you'll 
 
 The `EngineBuilder` is a builder type restricted to the WAAPI Engine.
 
-Use the `EngineBuilder` when you want to restrict helpers to the WAAPI Engine, such as any that rely
+Use the `EngineBuilder` when you want to restrict builder functions to the WAAPI Engine, such as any that rely
 on WAAPI-only APIs.
 
 @docs EngineBuilder
@@ -619,7 +619,7 @@ Use with [Resize.bounds](Anim-Resize#bounds) to create a resize handler that upd
 animation configurations for all affected properties in the group.
 
 Not all properties in a group are affected by a resize — `Opacity` for example is unaffected by resizing —
-but those that are (e.g., `Translate`, `Scale`) have their own `bounds` helper that you can use to target
+but those that are (e.g., `Translate`, `Scale`) have their own `bounds` builder function that you can use to target
 just that property, and override the per-group default set with
 [`Anim.Resize.bounds`](Anim-Resize#bounds).
 
