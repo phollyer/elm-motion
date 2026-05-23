@@ -66,7 +66,7 @@ Suggested Status values: `OK`, `FIX`, `BLOCK`, `?`.
 | 1 | Transition | Animate3D | OK |  |
 | 2 | Transition | BorderColor | OK |  |
 | 3 | Transition | BorderRadius | OK |  |
-| 4 | Transition | ButtonHovers | FIX | Label text needs to scale in proportion to the button size, or there needs to be a minimum size that will ensure all the text is encapsulated and does not overflow |
+| 4 | Transition | ButtonHovers | OK |  |
 | 5 | Transition | ControllingAnimations | OK |  |
 | 6 | Transition | DiscreteProperties | FIX | The buttons remain in position when the animation flips the discrete properties, they should collapse into the space vacated on discreteExit and move up above on discreteEntry - the other engine examples exhibit the correct bahaviour |
 | 7 | Transition | FadeInOut | OK |  |
@@ -77,7 +77,7 @@ Suggested Status values: `OK`, `FIX`, `BLOCK`, `?`.
 | 12 | Keyframe | Animate3D | FIX | Labels on each side need to scale with the side or the text overflows as the side scales down |
 | 13 | Keyframe | BorderColor | OK |  |
 | 14 | Keyframe | BorderRadius | OK |  |
-| 15 | Keyframe | ButtonHovers | FIX | Label text needs to scale in proportion to the button size, or there needs to be a minimum size that will ensure all the text is encapsulated and does not overflow |
+| 15 | Keyframe | ButtonHovers | OK |  |
 | 16 | Keyframe | ControllingAnimations | OK |  |
 | 17 | Keyframe | DiscreteProperties | OK |  |
 | 18 | Keyframe | FadeInOut | OK |  |
@@ -103,7 +103,7 @@ Suggested Status values: `OK`, `FIX`, `BLOCK`, `?`.
 | 38 | WAAPI | Animate3D | FIX | Labels on each side need to scale with the side or the text overflows as the side scales down |
 | 39 | WAAPI | BorderColor | OK |  |
 | 40 | WAAPI | BorderRadius | OK |  |
-| 41 | WAAPI | ButtonHovers | FIX | Label text needs to scale in proportion to the button size, or there needs to be a minimum size that will ensure all the text is encapsulated and does not overflow |
+| 41 | WAAPI | ButtonHovers | OK |  |
 | 42 | WAAPI | ControllingAnimations | OK |  |
 | 43 | WAAPI | DiscreteProperties | OK |  |
 | 44 | WAAPI | FadeInOut | OK |  |
