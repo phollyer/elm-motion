@@ -111,10 +111,10 @@ view _ =
         , div
             [ style "max-width" "700px"
             , style "margin" "0 auto"
-            , style "padding" "60px 40px"
+            , style "padding" "clamp(24px, 6vmin, 60px) clamp(16px, 4.5vmin, 40px)"
             , style "display" "flex"
             , style "flex-direction" "column"
-            , style "gap" "60px"
+            , style "gap" "clamp(28px, 6vmin, 60px)"
             ]
             (List.map cardView cards)
         ]
@@ -178,7 +178,7 @@ cardView card =
                , style "flex-direction" "column"
                , style "gap" "24px"
                , style "align-items" "flex-start"
-               , style "padding" "32px"
+               , style "padding" "clamp(18px, 4vmin, 32px)"
                , style "background" "white"
                , style "border-radius" "16px"
                , style "box-shadow" "0 4px 24px rgba(99,102,241,0.08)"
