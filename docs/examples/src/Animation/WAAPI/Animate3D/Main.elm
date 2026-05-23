@@ -696,7 +696,7 @@ viewFace animState config =
                , style "justify-content" "center"
                , style "align-items" "center"
                , style "font-weight" "bold"
-               , style "font-size" "14px"
+               , style "font-size" "clamp(8px, 1.9cqmin, 14px)"
                ]
         )
         [ div

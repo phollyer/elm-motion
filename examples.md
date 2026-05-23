@@ -100,7 +100,7 @@ Suggested Status values: `OK`, `FIX`, `BLOCK`, `?`.
 | 35 | Sub | InterruptingAnimations/SingleProperty | OK |  |
 | 36 | Sub | ResponsiveAnimations/Responsive |  |  |
 | 37 | Sub | TransformOrder |  |  |
-| 38 | WAAPI | Animate3D | FIX | Labels on each side need to scale with the side or the text overflows as the side scales down |
+| 38 | WAAPI | Animate3D | OK |  |
 | 39 | WAAPI | BorderColor | OK |  |
 | 40 | WAAPI | BorderRadius | OK |  |
 | 41 | WAAPI | ButtonHovers | OK |  |
