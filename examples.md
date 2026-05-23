@@ -74,7 +74,7 @@ Suggested Status values: `OK`, `FIX`, `BLOCK`, `?`.
 | 9 | Transition | InterruptingAnimations/MultipleAxes | OK |  |
 | 10 | Transition | InterruptingAnimations/MultipleProperties | OK |  |
 | 11 | Transition | InterruptingAnimations/SingleProperty | OK |  |
-| 12 | Keyframe | Animate3D | FIX | Labels on each side need to scale with the side or the text overflows as the side scales down |
+| 12 | Keyframe | Animate3D | OK |  |
 | 13 | Keyframe | BorderColor | OK |  |
 | 14 | Keyframe | BorderRadius | OK |  |
 | 15 | Keyframe | ButtonHovers | OK |  |
@@ -115,7 +115,7 @@ Suggested Status values: `OK`, `FIX`, `BLOCK`, `?`.
 | 50 | WAAPI | ResponsiveAnimations/Responsive |  |  |
 | 51 | WAAPI | TransformOrder |  |  |
 | 52 | ScrollTimeline | (standalone) | OK |  |
-| 53 | ViewTimeline | (standalone) | FIX | The panel number and title need to switch to column layout. |
+| 53 | ViewTimeline | (standalone) | OK |  |
 
 ### Scroll
 

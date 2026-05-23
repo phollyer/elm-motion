@@ -123,11 +123,6 @@ cubeSize =
     18
 
 
-cubeSizeCss : String
-cubeSizeCss =
-    String.fromFloat cubeSize ++ "cqmin"
-
-
 {-| Distance each face sits in front of / behind the cube centre.
 Half the cube edge so adjacent faces meet at the cube corners.
 -}
@@ -634,6 +629,11 @@ viewAnimationArea model =
 ---8<-- [start:render]
 
 
+cubeSizeCss : String
+cubeSizeCss =
+    String.fromFloat cubeSize ++ "cqmin"
+
+
 viewCube : Model -> Html Msg
 viewCube model =
     let
@@ -685,7 +685,7 @@ viewFace animState config =
                , style "justify-content" "center"
                , style "align-items" "center"
                , style "font-weight" "bold"
-               , style "font-size" "14px"
+               , style "font-size" "clamp(8px, 1.9cqmin, 14px)"
                ]
         )
         [ div
