@@ -79,7 +79,7 @@ Suggested Status values: `OK`, `FIX`, `BLOCK`, `?`.
 | 14 | Keyframe | BorderRadius | OK |  |
 | 15 | Keyframe | ButtonHovers | FIX | Label text needs to scale in proportion to the button size, or there needs to be a minimum size that will ensure all the text is encapsulated and does not overflow |
 | 16 | Keyframe | ControllingAnimations | OK |  |
-| 17 | Keyframe | DiscreteProperties | FIX | Text in box needs centering correctly |
+| 17 | Keyframe | DiscreteProperties | OK |  |
 | 18 | Keyframe | FadeInOut | OK |  |
 | 19 | Keyframe | HelloText | FIX | The text needs to be centered when it wraps on smaller screens, of the font size needs to scale with the viewport so that it doesn't need to wrap. |
 | 20 | Keyframe | InterruptingAnimations/MultipleAxes | FIX | Box needs to be centered on startup and needs rounded corners/same styling as the boxes in the other examples, the box is moving too fast so there's no way to interrupt it |

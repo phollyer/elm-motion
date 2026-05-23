@@ -148,6 +148,7 @@ view model =
             (Keyframe.attributes animGroup model.animState
                 ++ Keyframe.events GotAnimMsg
                 ++ [ class "example-box"
+                   , style "display" "flex"
                    , style "background-color" "#4a90d9"
                    , style "border-radius" "12px"
                    , style "align-items" "center"
