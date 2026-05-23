@@ -34,7 +34,11 @@ type alias Model =
 
 init : ( Model, Cmd Msg )
 init =
-    ( { animState = Transition.init [ Opacity.init animGroup 1 ]
+    ( { animState =
+            Transition.init
+                [ Transition.discreteEntry "display" "flex"
+                    >> Opacity.init animGroup 1
+                ]
       }
     , Cmd.none
     )
@@ -138,7 +142,6 @@ view model =
             (Transition.attributes animGroup model.animState
                 ++ Transition.events GotAnimMsg
                 ++ [ class "example-box"
-                   , style "display" "flex"
                    , style "background-color" "#4a90d9"
                    , style "border-radius" "12px"
                    , style "align-items" "center"

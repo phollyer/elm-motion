@@ -68,7 +68,7 @@ Suggested Status values: `OK`, `FIX`, `BLOCK`, `?`.
 | 3 | Transition | BorderRadius | OK |  |
 | 4 | Transition | ButtonHovers | OK |  |
 | 5 | Transition | ControllingAnimations | OK |  |
-| 6 | Transition | DiscreteProperties | FIX | The buttons remain in position when the animation flips the discrete properties, they should collapse into the space vacated on discreteExit and move up above on discreteEntry - the other engine examples exhibit the correct bahaviour |
+| 6 | Transition | DiscreteProperties | OK |  |
 | 7 | Transition | FadeInOut | OK |  |
 | 8 | Transition | HelloText | OK |  |
 | 9 | Transition | InterruptingAnimations/MultipleAxes | OK |  |
