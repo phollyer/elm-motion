@@ -13,6 +13,14 @@ The [Transition](../engines/transition.md) and [Keyframe](../engines/keyframes.m
 
 ## Example
 
+--8<-- [start:desc]
+
+A box loops back and forth across a track. Use the **Narrow / Normal / Widen** buttons to change the track width while the animation is running. The box's current position is remapped proportionally into the new bounds, and its timing keeps in phase.
+
+--8<-- [end:desc]
+
+--8<-- [start:examples]
+
 ??? example "View Example"
 
     === "WAAPI"
@@ -23,7 +31,7 @@ The [Transition](../engines/transition.md) and [Keyframe](../engines/keyframes.m
 
         <iframe src="../../../examples/src/Animation/Sub/ResponsiveAnimations/Responsive/index.html" class="example-iframe" loading="lazy", style="height:550px;min-height:550px;max-height:550px"></iframe>
 
-A box loops back and forth across a track. Use the **Narrow / Normal / Widen** buttons to change the track width while the animation is running. The box's current position is remapped proportionally into the new bounds, and its timing keeps in phase.
+--8<-- [end:examples]
 
 ---
 
