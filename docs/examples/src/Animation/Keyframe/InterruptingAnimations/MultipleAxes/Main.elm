@@ -233,6 +233,7 @@ view model =
     in
     div [ class "example-stage" ]
         [ div [ class "example-badge example-badge--responsive" ] [ text "RESPONSIVE" ]
+        , Keyframe.styleNode model.animState
         , div [ class "example-controls" ]
             [ moveLeftButton
             , moveRightButton
