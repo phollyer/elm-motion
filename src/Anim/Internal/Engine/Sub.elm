@@ -1453,26 +1453,22 @@ resume animGroupName (AnimState state animGroups) =
             AnimState state animGroups
 
         Just animGroup ->
-            let
-                wasPaused =
-                    AnimGroup.isPaused animGroup
+            if not (AnimGroup.isPaused animGroup) then
+                -- Resume only re-activates an explicitly Paused animation.
+                -- After Reset or Complete it is a no-op.
+                AnimState state animGroups
 
-                newPendingControlEvents =
-                    if wasPaused then
-                        state.pendingControlEvents ++ [ Resumed animGroupName ]
-
-                    else
-                        state.pendingControlEvents
-            in
-            AnimState
-                { state
-                    | subscriptionsActive = True
-                    , pendingControlEvents = newPendingControlEvents
-                }
-                (AnimGroups.update animGroupName
-                    (Maybe.map (AnimGroup.setPlayState PlayState.Running))
-                    animGroups
-                )
+            else
+                AnimState
+                    { state
+                        | subscriptionsActive = True
+                        , pendingControlEvents =
+                            state.pendingControlEvents ++ [ Resumed animGroupName ]
+                    }
+                    (AnimGroups.update animGroupName
+                        (Maybe.map (AnimGroup.setPlayState PlayState.Running))
+                        animGroups
+                    )
 
 
 
