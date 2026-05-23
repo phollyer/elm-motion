@@ -38,7 +38,14 @@ type alias Model =
     , canvasW : Float
     , canvasH : Float
     , xPos : XPos
+    , pendingMove : Maybe MoveIntent
+    , isReady : Bool
     }
+
+
+type MoveIntent
+    = MoveToLeft
+    | MoveToRight
 
 
 type XPos
@@ -72,6 +79,8 @@ init _ =
       , canvasW = 0
       , canvasH = 0
       , xPos = XCenter
+      , pendingMove = Nothing
+      , isReady = False
       }
     , measureCanvas
     )
@@ -79,7 +88,7 @@ init _ =
 
 measureCanvas : Cmd Msg
 measureCanvas =
-    Task.attempt GotCanvas (Dom.getElement canvasId)
+    Task.attempt GotCanvas (Dom.getViewportOf canvasId)
 
 
 
@@ -187,7 +196,7 @@ type Msg
     | MoveRight
     | ChangeColor Color
     | Resize
-    | GotCanvas (Result Dom.Error Dom.Element)
+    | GotCanvas (Result Dom.Error Dom.Viewport)
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -204,22 +213,16 @@ update msg model =
 
         MoveLeft ->
             ( { model
-                | xPos = XLeft
-                , animState =
-                    Sub.animate model.animState <|
-                        moveBoxX (targetX XLeft model.canvasW)
+                | pendingMove = Just MoveToLeft
               }
-            , Cmd.none
+            , measureCanvas
             )
 
         MoveRight ->
             ( { model
-                | xPos = XRight
-                , animState =
-                    Sub.animate model.animState <|
-                        moveBoxX (targetX XRight model.canvasW)
+                | pendingMove = Just MoveToRight
               }
-            , Cmd.none
+            , measureCanvas
             )
 
         ChangeColor color ->
@@ -237,20 +240,48 @@ update msg model =
         GotCanvas (Ok element) ->
             let
                 w =
-                    element.element.width
+                    element.viewport.width
 
                 h =
-                    element.element.height
+                    element.viewport.height
+
+                modelWithSize =
+                    { model
+                        | canvasW = w
+                        , canvasH = h
+                        , pendingMove = Nothing
+                        , isReady = True
+                    }
             in
-            ( { model
-                | canvasW = w
-                , canvasH = h
-                , animState =
-                    Sub.retarget model.animState <|
-                        retargetBoxXY w h (targetX model.xPos w) (targetY h)
-              }
-            , Cmd.none
-            )
+            case model.pendingMove of
+                Just MoveToLeft ->
+                    ( { modelWithSize
+                        | xPos = XLeft
+                        , animState =
+                            Sub.animate model.animState <|
+                                moveBoxX (targetX XLeft w)
+                      }
+                    , Cmd.none
+                    )
+
+                Just MoveToRight ->
+                    ( { modelWithSize
+                        | xPos = XRight
+                        , animState =
+                            Sub.animate model.animState <|
+                                moveBoxX (targetX XRight w)
+                      }
+                    , Cmd.none
+                    )
+
+                Nothing ->
+                    ( { modelWithSize
+                        | animState =
+                            Sub.retarget model.animState <|
+                                retargetBoxXY w h (targetX model.xPos w) (targetY h)
+                      }
+                    , Cmd.none
+                    )
 
         GotCanvas (Err _) ->
             ( model, Cmd.none )
@@ -312,6 +343,13 @@ view model =
                        , style "top" "0"
                        , style "left" "0"
                        , style "border-radius" "8px"
+                       , style "visibility"
+                            (if model.isReady then
+                                "visible"
+
+                             else
+                                "hidden"
+                            )
                        ]
                 )
                 []

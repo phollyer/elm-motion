@@ -47,7 +47,16 @@ type alias Model =
     , canvasH : Float
     , xPos : XPos
     , yPos : YPos
+    , pendingMove : Maybe MoveIntent
+    , isReady : Bool
     }
+
+
+type MoveIntent
+    = MoveToLeft
+    | MoveToRight
+    | MoveToTop
+    | MoveToBottom
 
 
 type XPos
@@ -76,6 +85,8 @@ init _ =
       , canvasH = 0
       , xPos = XCenter
       , yPos = YCenter
+      , pendingMove = Nothing
+      , isReady = False
       }
     , measureCanvas
     )
@@ -83,7 +94,7 @@ init _ =
 
 measureCanvas : Cmd Msg
 measureCanvas =
-    Task.attempt GotCanvas (Dom.getElement canvasId)
+    Task.attempt GotCanvas (Dom.getViewportOf canvasId)
 
 
 
@@ -159,7 +170,7 @@ type Msg
     | MoveUp
     | MoveDown
     | Resize
-    | GotCanvas (Result Dom.Error Dom.Element)
+    | GotCanvas (Result Dom.Error Dom.Viewport)
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -177,46 +188,30 @@ update msg model =
         ---8<-- [start:WithFreeze]
         MoveLeft ->
             ( { model
-                | xPos = XLeft
-                , animState =
-                    Sub.animate model.animState <|
-                        Sub.freezeY [ Sub.translate ]
-                            >> moveBoxX (targetX XLeft model.canvasW)
+                | pendingMove = Just MoveToLeft
               }
-            , Cmd.none
+            , measureCanvas
             )
 
         MoveRight ->
             ( { model
-                | xPos = XRight
-                , animState =
-                    Sub.animate model.animState <|
-                        Sub.freezeY [ Sub.translate ]
-                            >> moveBoxX (targetX XRight model.canvasW)
+                | pendingMove = Just MoveToRight
               }
-            , Cmd.none
+            , measureCanvas
             )
 
         MoveUp ->
             ( { model
-                | yPos = YTop
-                , animState =
-                    Sub.animate model.animState <|
-                        Sub.freezeX [ Sub.translate ]
-                            >> moveBoxY (targetY YTop model.canvasH)
+                | pendingMove = Just MoveToTop
               }
-            , Cmd.none
+            , measureCanvas
             )
 
         MoveDown ->
             ( { model
-                | yPos = YBottom
-                , animState =
-                    Sub.animate model.animState <|
-                        Sub.freezeX [ Sub.translate ]
-                            >> moveBoxY (targetY YBottom model.canvasH)
+                | pendingMove = Just MoveToBottom
               }
-            , Cmd.none
+            , measureCanvas
             )
 
         ---8<-- [end:WithFreeze]
@@ -226,20 +221,72 @@ update msg model =
         GotCanvas (Ok element) ->
             let
                 w =
-                    element.element.width
+                    element.viewport.width
 
                 h =
-                    element.element.height
+                    element.viewport.height
+
+                modelWithSize =
+                    { model
+                        | canvasW = w
+                        , canvasH = h
+                        , pendingMove = Nothing
+                        , isReady = True
+                    }
             in
-            ( { model
-                | canvasW = w
-                , canvasH = h
-                , animState =
-                    Sub.animate model.animState <|
-                        snapBoxXY (targetX model.xPos w) (targetY model.yPos h)
-              }
-            , Cmd.none
-            )
+            case model.pendingMove of
+                Just MoveToLeft ->
+                    ( { modelWithSize
+                        | xPos = XLeft
+                        , animState =
+                            Sub.animate model.animState <|
+                                Sub.freezeY [ Sub.translate ]
+                                    >> moveBoxX (targetX XLeft w)
+                      }
+                    , Cmd.none
+                    )
+
+                Just MoveToRight ->
+                    ( { modelWithSize
+                        | xPos = XRight
+                        , animState =
+                            Sub.animate model.animState <|
+                                Sub.freezeY [ Sub.translate ]
+                                    >> moveBoxX (targetX XRight w)
+                      }
+                    , Cmd.none
+                    )
+
+                Just MoveToTop ->
+                    ( { modelWithSize
+                        | yPos = YTop
+                        , animState =
+                            Sub.animate model.animState <|
+                                Sub.freezeX [ Sub.translate ]
+                                    >> moveBoxY (targetY YTop h)
+                      }
+                    , Cmd.none
+                    )
+
+                Just MoveToBottom ->
+                    ( { modelWithSize
+                        | yPos = YBottom
+                        , animState =
+                            Sub.animate model.animState <|
+                                Sub.freezeX [ Sub.translate ]
+                                    >> moveBoxY (targetY YBottom h)
+                      }
+                    , Cmd.none
+                    )
+
+                Nothing ->
+                    ( { modelWithSize
+                        | animState =
+                            Sub.animate model.animState <|
+                                snapBoxXY (targetX model.xPos w) (targetY model.yPos h)
+                      }
+                    , Cmd.none
+                    )
 
         GotCanvas (Err _) ->
             ( model, Cmd.none )
@@ -290,9 +337,17 @@ view model =
                     ++ [ style "width" (String.fromFloat boxWidth ++ "px")
                        , style "height" (String.fromFloat boxWidth ++ "px")
                        , style "background-color" "#FF5733"
+                       , style "border-radius" "8px"
                        , style "position" "absolute"
                        , style "top" "0"
                        , style "left" "0"
+                       , style "visibility"
+                            (if model.isReady then
+                                "visible"
+
+                             else
+                                "hidden"
+                            )
                        ]
                 )
                 []
