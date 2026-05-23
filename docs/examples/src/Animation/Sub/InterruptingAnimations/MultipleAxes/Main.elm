@@ -86,6 +86,16 @@ boxHeightPx canvasH =
     (canvasH * boxSizePercent) / 100
 
 
+targetSpeedCqmin : Float
+targetSpeedCqmin =
+    25
+
+
+speedPx : Float -> Float -> Float
+speedPx canvasW canvasH =
+    (min canvasW canvasH * targetSpeedCqmin) / 100
+
+
 init : () -> ( Model, Cmd Msg )
 init _ =
     ( { animState =
@@ -149,24 +159,24 @@ targetY pos h =
 -- ANIMATIONS
 
 
-moveBoxX : Float -> AnimBuilder mode -> AnimBuilder mode
-moveBoxX x =
-    moveBox <|
+moveBoxX : Float -> Float -> AnimBuilder mode -> AnimBuilder mode
+moveBoxX pxPerSecond x =
+    moveBox pxPerSecond <|
         Translate.toX x
 
 
-moveBoxY : Float -> AnimBuilder mode -> AnimBuilder mode
-moveBoxY y =
-    moveBox <|
+moveBoxY : Float -> Float -> AnimBuilder mode -> AnimBuilder mode
+moveBoxY pxPerSecond y =
+    moveBox pxPerSecond <|
         Translate.toY y
 
 
-moveBox : (Translate.Builder mode -> Translate.Builder mode) -> AnimBuilder mode -> AnimBuilder mode
-moveBox moveFunc =
+moveBox : Float -> (Translate.Builder mode -> Translate.Builder mode) -> AnimBuilder mode -> AnimBuilder mode
+moveBox pxPerSecond moveFunc =
     Translate.for animGroupName
         >> moveFunc
-        >> Translate.speed 200
-        >> Translate.easing BounceOut
+        >> Translate.speed pxPerSecond
+        >> Translate.easing QuintOut
         >> Translate.build
 
 
@@ -244,6 +254,9 @@ update msg model =
                 h =
                     element.viewport.height
 
+                pxPerSecond =
+                    speedPx w h
+
                 modelWithSize =
                     { model
                         | canvasW = w
@@ -258,7 +271,7 @@ update msg model =
                         | xPos = XLeft
                         , animState =
                             Sub.animate model.animState <|
-                                moveBoxX (targetX XLeft w)
+                                moveBoxX pxPerSecond (targetX XLeft w)
                       }
                     , Cmd.none
                     )
@@ -268,7 +281,7 @@ update msg model =
                         | xPos = XRight
                         , animState =
                             Sub.animate model.animState <|
-                                moveBoxX (targetX XRight w)
+                                moveBoxX pxPerSecond (targetX XRight w)
                       }
                     , Cmd.none
                     )
@@ -278,7 +291,7 @@ update msg model =
                         | yPos = YTop
                         , animState =
                             Sub.animate model.animState <|
-                                moveBoxY (targetY YTop h)
+                                moveBoxY pxPerSecond (targetY YTop h)
                       }
                     , Cmd.none
                     )
@@ -288,7 +301,7 @@ update msg model =
                         | yPos = YBottom
                         , animState =
                             Sub.animate model.animState <|
-                                moveBoxY (targetY YBottom h)
+                                moveBoxY pxPerSecond (targetY YBottom h)
                       }
                     , Cmd.none
                     )

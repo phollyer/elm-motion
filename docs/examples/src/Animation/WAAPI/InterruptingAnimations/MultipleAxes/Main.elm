@@ -155,7 +155,7 @@ moveBox moveFunc =
         >> Translate.cssUnitY Cqh
         >> moveFunc
         >> Translate.speed 25
-        >> Translate.easing BounceOut
+        >> Translate.easing QuintOut
         >> Translate.build
 
 
