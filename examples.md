@@ -82,8 +82,8 @@ Suggested Status values: `OK`, `FIX`, `BLOCK`, `?`.
 | 17 | Keyframe | DiscreteProperties | OK |  |
 | 18 | Keyframe | FadeInOut | OK |  |
 | 19 | Keyframe | HelloText | OK |  |
-| 20 | Keyframe | InterruptingAnimations/MultipleAxes | FIX | Box needs to be centered on startup and needs rounded corners/same styling as the boxes in the other examples, the box is moving too fast so there's no way to interrupt it |
-| 21 | Keyframe | InterruptingAnimations/MultipleProperties | FIX | The box should start centered, not offset to the left. If load the page, click Right, let it finish, then click a color, the box reverts to it's starting position, then animates the color change. |
+| 20 | Keyframe | InterruptingAnimations/MultipleAxes | OK |  |
+| 21 | Keyframe | InterruptingAnimations/MultipleProperties | OK |  |
 | 22 | Keyframe | InterruptingAnimations/SingleProperty | OK |  |
 | 23 | Keyframe | TransformOrder |  |  |
 | 24 | Sub | Animate3D | OK |  |
