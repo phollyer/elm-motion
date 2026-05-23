@@ -71,9 +71,19 @@ type YPos
     | YBottom
 
 
-boxWidth : Float
-boxWidth =
-    100
+boxSizePercent : Float
+boxSizePercent =
+    12
+
+
+boxWidthPx : Float -> Float
+boxWidthPx canvasW =
+    (canvasW * boxSizePercent) / 100
+
+
+boxHeightPx : Float -> Float
+boxHeightPx canvasH =
+    (canvasH * boxSizePercent) / 100
 
 
 init : () -> ( Model, Cmd Msg )
@@ -103,28 +113,36 @@ measureCanvas =
 
 targetX : XPos -> Float -> Float
 targetX pos w =
+    let
+        widthPx =
+            boxWidthPx w
+    in
     case pos of
         XLeft ->
             0
 
         XCenter ->
-            (w - boxWidth) / 2
+            (w - widthPx) / 2
 
         XRight ->
-            w - boxWidth
+            w - widthPx
 
 
 targetY : YPos -> Float -> Float
 targetY pos h =
+    let
+        heightPx =
+            boxHeightPx h
+    in
     case pos of
         YTop ->
             0
 
         YCenter ->
-            (h - boxWidth) / 2
+            (h - heightPx) / 2
 
         YBottom ->
-            h - boxWidth
+            h - heightPx
 
 
 
@@ -330,8 +348,8 @@ view model =
         box =
             div
                 (Sub.attributes animGroupName model.animState
-                    ++ [ style "width" (String.fromFloat boxWidth ++ "px")
-                       , style "height" (String.fromFloat boxWidth ++ "px")
+                    ++ [ style "width" (String.fromFloat (boxWidthPx model.canvasW) ++ "px")
+                       , style "height" (String.fromFloat (boxHeightPx model.canvasH) ++ "px")
                        , style "background-color" "#FF5733"
                        , style "border-radius" "8px"
                        , style "position" "absolute"

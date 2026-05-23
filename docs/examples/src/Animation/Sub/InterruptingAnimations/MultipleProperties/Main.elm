@@ -64,9 +64,19 @@ canvasId =
     "anim-canvas"
 
 
-boxWidth : Float
-boxWidth =
-    100
+boxSizePercent : Float
+boxSizePercent =
+    12
+
+
+boxWidthPx : Float -> Float
+boxWidthPx canvasW =
+    (canvasW * boxSizePercent) / 100
+
+
+boxHeightPx : Float -> Float
+boxHeightPx canvasH =
+    (canvasH * boxSizePercent) / 100
 
 
 init : () -> ( Model, Cmd Msg )
@@ -97,20 +107,24 @@ measureCanvas =
 
 targetX : XPos -> Float -> Float
 targetX pos w =
+    let
+        widthPx =
+            boxWidthPx w
+    in
     case pos of
         XLeft ->
             0
 
         XCenter ->
-            (w - boxWidth) / 2
+            (w - widthPx) / 2
 
         XRight ->
-            w - boxWidth
+            w - widthPx
 
 
 targetY : Float -> Float
 targetY h =
-    (h - boxWidth) / 2
+    (h - boxHeightPx h) / 2
 
 
 
@@ -164,8 +178,8 @@ resize-handler behaviour.
 retargetBoxXY : Float -> Float -> Float -> Float -> AnimBuilder mode -> AnimBuilder mode
 retargetBoxXY w h x y =
     Translate.continueFor animGroupName
-        >> Translate.clampX 0 (w - boxWidth)
-        >> Translate.clampY 0 (h - boxWidth)
+        >> Translate.clampX 0 (w - boxWidthPx w)
+        >> Translate.clampY 0 (h - boxHeightPx h)
         >> Translate.toXY x y
         >> Translate.build
 
@@ -337,8 +351,8 @@ view model =
         , div [ id canvasId, class "example-canvas--fluid" ]
             [ div
                 (Sub.attributes animGroupName model.animState
-                    ++ [ style "width" (String.fromFloat boxWidth ++ "px")
-                       , style "height" (String.fromFloat boxWidth ++ "px")
+                    ++ [ style "width" (String.fromFloat (boxWidthPx model.canvasW) ++ "px")
+                       , style "height" (String.fromFloat (boxHeightPx model.canvasH) ++ "px")
                        , style "position" "absolute"
                        , style "top" "0"
                        , style "left" "0"
