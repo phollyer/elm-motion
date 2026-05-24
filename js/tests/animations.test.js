@@ -180,8 +180,46 @@ describe('processAnimationData (WAAPI engine)', () => {
         });
 
         const [keyframes, options] = element.animate.mock.calls[0];
-        // Keyframe interpolation path → 30 frames, linear easing, longest duration wins
-        expect(keyframes.length).toBeGreaterThan(2);
+        // Keyframe interpolation path uses fallback sampling density.
+        expect(keyframes.length).toBe(30);
+        expect(options.duration).toBe(600);
+        expect(options.easing).toBe('linear');
+    });
+
+    it('uses complex easing keyframe density for transform interpolation', () => {
+        const animGroup = 'box-bounce-density';
+        const animation = createFakeAnimation({ duration: 600 });
+        const element = makeElement({ animGroup, animations: [animation] });
+        installDom({ element, targetId: animGroup });
+
+        processAnimationData({
+            elements: {
+                [animGroup]: {
+                    properties: [
+                        {
+                            type: 'translate',
+                            startX: 0, startY: 0, startZ: 0,
+                            endX: 100, endY: 0, endZ: 0,
+                            duration: 600,
+                            easing: 'linear',
+                            easingKeyframes: Array.from({ length: 60 }, (_, i) => i / 59),
+                            version: 1
+                        },
+                        {
+                            type: 'rotate',
+                            startX: 0, startY: 0, startZ: 0,
+                            endX: 0, endY: 0, endZ: 180,
+                            duration: 600,
+                            easing: 'linear',
+                            version: 1
+                        }
+                    ]
+                }
+            }
+        });
+
+        const [keyframes, options] = element.animate.mock.calls[0];
+        expect(keyframes.length).toBe(60);
         expect(options.duration).toBe(600);
         expect(options.easing).toBe('linear');
     });
