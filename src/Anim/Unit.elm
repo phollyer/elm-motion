@@ -70,15 +70,29 @@ animation. Support for relative units on `Sub` is planned for a future release.
 
   - `Percent` - Percentage of the containing block (or the element's own box,
     for `translate`).
+      - `Cap` / `Ch` / `Ex` / `Ic` / `Lh` - Font-relative CSS lengths.
   - `Rem` - Font size of the root element.
   - `Em` - Font size of the element.
+      - `Rcap` / `Rch` / `Rex` / `Ric` / `Rlh` - Root-font-relative CSS lengths.
 
 **Viewport-relative**
 
   - `Vw` / `Vh` - 1% of the viewport's width / height.
+      - `Vi` / `Vb` - 1% of the viewport's inline / block axes.
+      - `Vmin` / `Vmax` - 1% of the viewport's smaller / larger axis.
   - `Dvw` / `Dvh` - Dynamic viewport: tracks URL-bar collapse on mobile.
+      - `Dvi` / `Dvb` - Dynamic viewport inline / block axes.
+      - `Dvmin` / `Dvmax` - Dynamic viewport smaller / larger axis.
   - `Svw` / `Svh` - Small viewport: assumes UI chrome is visible.
+      - `Svi` / `Svb` - Small viewport inline / block axes.
+      - `Svmin` / `Svmax` - Small viewport smaller / larger axis.
   - `Lvw` / `Lvh` - Large viewport: assumes UI chrome is hidden.
+      - `Lvi` / `Lvb` - Large viewport inline / block axes.
+      - `Lvmin` / `Lvmax` - Large viewport smaller / larger axis.
+
+**Physical absolute**
+
+    - `Cm` / `Mm` / `Q` / `In` / `Pt` / `Pc` - CSS physical length units.
 
 **Container-relative** (require an ancestor with `container-type` set)
 
@@ -93,17 +107,49 @@ animation. Support for relative units on `Sub` is planned for a future release.
 -}
 type Unit
     = Px
+    | Cm
+    | Mm
+    | Q
+    | In
+    | Pt
+    | Pc
     | Percent
+    | Cap
+    | Ch
+    | Ex
+    | Ic
+    | Lh
     | Vw
     | Vh
+    | Vi
+    | Vb
+    | Vmin
+    | Vmax
     | Dvw
     | Dvh
+    | Dvi
+    | Dvb
+    | Dvmin
+    | Dvmax
     | Svw
     | Svh
+    | Svi
+    | Svb
+    | Svmin
+    | Svmax
     | Lvw
     | Lvh
+    | Lvi
+    | Lvb
+    | Lvmin
+    | Lvmax
     | Rem
     | Em
+    | Rcap
+    | Rch
+    | Rex
+    | Ric
+    | Rlh
     | Cqi
     | Cqb
     | Cqw
@@ -130,8 +176,41 @@ toCssSuffix unit =
         Px ->
             "px"
 
+        Cm ->
+            "cm"
+
+        Mm ->
+            "mm"
+
+        Q ->
+            "Q"
+
+        In ->
+            "in"
+
+        Pt ->
+            "pt"
+
+        Pc ->
+            "pc"
+
         Percent ->
             "%"
+
+        Cap ->
+            "cap"
+
+        Ch ->
+            "ch"
+
+        Ex ->
+            "ex"
+
+        Ic ->
+            "ic"
+
+        Lh ->
+            "lh"
 
         Vw ->
             "vw"
@@ -139,11 +218,35 @@ toCssSuffix unit =
         Vh ->
             "vh"
 
+        Vi ->
+            "vi"
+
+        Vb ->
+            "vb"
+
+        Vmin ->
+            "vmin"
+
+        Vmax ->
+            "vmax"
+
         Dvw ->
             "dvw"
 
         Dvh ->
             "dvh"
+
+        Dvi ->
+            "dvi"
+
+        Dvb ->
+            "dvb"
+
+        Dvmin ->
+            "dvmin"
+
+        Dvmax ->
+            "dvmax"
 
         Svw ->
             "svw"
@@ -151,17 +254,56 @@ toCssSuffix unit =
         Svh ->
             "svh"
 
+        Svi ->
+            "svi"
+
+        Svb ->
+            "svb"
+
+        Svmin ->
+            "svmin"
+
+        Svmax ->
+            "svmax"
+
         Lvw ->
             "lvw"
 
         Lvh ->
             "lvh"
 
+        Lvi ->
+            "lvi"
+
+        Lvb ->
+            "lvb"
+
+        Lvmin ->
+            "lvmin"
+
+        Lvmax ->
+            "lvmax"
+
         Rem ->
             "rem"
 
         Em ->
             "em"
+
+        Rcap ->
+            "rcap"
+
+        Rch ->
+            "rch"
+
+        Rex ->
+            "rex"
+
+        Ric ->
+            "ric"
+
+        Rlh ->
+            "rlh"
 
         Cqi ->
             "cqi"

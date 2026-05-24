@@ -1,127 +1,156 @@
 # Responsive Animations
 
-There are two ways to keep animations in sync with layout changes:
+Responsive design is a broad topic, so this page focuses on how Elm Motion keeps animations aligned when layout changes.
 
-1. **Relative length units** — render with `Percent`, `Vw`, `Vh`, `Rem`, or `Em` via [`Anim.Unit`](https://package.elm-lang.org/packages/phollyer/elm-animate/latest/Anim-Unit) and the browser re-evaluates values against the current layout on every frame. No resize plumbing needed. Supported on the [Transition](../engines/transition.md), [Keyframe](../engines/keyframes.md), [WAAPI](../engines/waapi.md), [ScrollTimeline](../engines/scrolltimeline.md), and [ViewTimeline](../engines/viewtimeline.md) engines.
-2. **`Anim.Resize.bounds`** — explicit pixel-keyed bounds fed into the engine on each resize event. Use this when endpoints are computed from layout measurements in `Px` (e.g. `containerWidth - boxWidth`). Supported on the [Sub](../engines/sub.md) and [WAAPI](../engines/waapi.md) engines.
+Elm Motion supports two responsive animation workflows:
 
-When layout changes mid-animation, the Sub and WAAPI engines can keep animations in sync through the [`Anim.Resize`](https://package.elm-lang.org/packages/phollyer/elm-animate/latest/Anim-Resize) API. Feed new [`Bounds`](https://package.elm-lang.org/packages/phollyer/elm-animate/latest/Anim-Resize#Bounds) into the engine on each resize event and the in-flight animation is remapped proportionally into the new range — endpoints adopt the new bounds, the current value keeps its relative position, and normalized progress is preserved so timing stays in phase.
+1. measured pixel targets, updated on resize
+2. relative CSS units, re-evaluated by the browser as layout changes
 
-The [Transition](../engines/transition.md) and [Keyframe](../engines/keyframes.md) engines don't currently observe resize events directly; use relative length units for resize-aware animation on those engines. See [Transition and Keyframe Engines](#transition-and-keyframe-engines) below.
-
----
-
-## Example
-
---8<-- [start:desc]
-
-A box loops back and forth across a track. Use the slider to change track width while the animation is running. The box's current position is remapped proportionally into the new bounds, and its timing keeps in phase.
-
---8<-- [end:desc]
-
---8<-- [start:examples]
-
-??? example "View Example"
-
-    === "WAAPI"
-
-        <iframe src="../../../examples/src/Animation/WAAPI/ResponsiveAnimations/Responsive/index.html" class="example-iframe" loading="lazy", style="height:550px;min-height:550px;max-height:550px"></iframe>
-
-    === "Keyframe"
-
-        <iframe src="../../../examples/src/Animation/Keyframe/ResponsiveAnimations/Responsive/index.html" class="example-iframe" loading="lazy", style="height:550px;min-height:550px;max-height:550px"></iframe>
-
-    === "Sub"
-
-        <iframe src="../../../examples/src/Animation/Sub/ResponsiveAnimations/Responsive/index.html" class="example-iframe" loading="lazy", style="height:550px;min-height:550px;max-height:550px"></iframe>
-
---8<-- [end:examples]
+You can mix both strategies on the same page for different animations, and can also switch strategies during the lifetime of the page.
 
 ---
 
-## Quick Start
+## Path 1 - Measured Pixel Values
 
-Three pieces wire the resize API together.
+Use this path when your animations depend on measured pixel layout, or need to remain at, or be constrained to fixed pixel values.
 
-### 1. Subscribe to viewport changes
+This path is supported by the [Sub](../engines/sub.md), [WAAPI](../engines/waapi.md), [Transition](../engines/transition.md) and
+[Keyframe](../engines/keyframes.md) engines, but behaviour differs slightly.
 
-Use `Browser.Events.onResize` to know when the layout changes. The example also re-fires this message when the slider changes width so in-app width changes are treated the same as a real browser resize.
+- Sub & WAAPI: mid-flight animations remap proportionally to new resized values, idle animations re-position proportionally inside their container.
+- Keyframe & Transition: mid-flight values are not available, so mid-flight animations will move instantly to their end value and stop, idle animations
+re-position proportionally inside their container.
 
-??? example "View Source Code"
+### Workflow
 
-    === "WAAPI"
+#### Step 1 - Listen for resize
 
-        ```elm
-        --8<-- "docs/examples/src/Animation/WAAPI/ResponsiveAnimations/Responsive/Main.elm:subscriptions"
-        ```
+Use `Browser.Events.onResize` to listen for layout changes.
 
-    === "Sub"
+??? example "Example: subscribe to resize events"
 
-        ```elm
-        --8<-- "docs/examples/src/Animation/Sub/ResponsiveAnimations/Responsive/Main.elm:subscriptions"
-        ```
+    ```elm
+    subscriptions : Model -> Sub Msg
+    subscriptions model =
+        Sub.batch
+            [ Browser.Events.onResize OnResize
+            , ... -- other subscriptions
+            ]
+    ```
 
-### 2. Measure the new geometry
+#### Step 2 - Update the animation bounds
 
-When a resize fires, ask the browser for the new size of whatever element the animation is anchored to (with `Browser.Dom.getElement`) and wait for the result.
+When a resize happens, give the engine the updated pixel bounds.
 
-??? example "View Source Code"
+??? example "Example: measure the track again"
 
-    === "WAAPI"
+    ```elm
+    update : Msg -> Model -> ( Model, Cmd Msg )
+    update msg model =
+        case msg of
+            OnResize w h ->
+                (  handleResize (toFloat w) (toFloat h) model
+                , Cmd.none
+                )
 
-        ```elm
-        --8<-- "docs/examples/src/Animation/WAAPI/ResponsiveAnimations/Responsive/Main.elm:on-resize-update"
-        ```
+    handleResize : Float -> Float -> Model -> Model
+    handleResize w h model =
+        let
+            cookieBounds =
+                { x = Just { min = 0, max = w }
+                , y = Just { min = h - model.cqHeight, max = h }
+                , z = Nothing
+                }
 
-    === "Sub"
+            modalBounds =
+                { x = Just { min = 0, max = w }
+                , y = Just { min = 0, max = h }
+                , z = Nothing 
+                }
 
-        ```elm
-        --8<-- "docs/examples/src/Animation/Sub/ResponsiveAnimations/Responsive/Main.elm:on-resize-update"
-        ```
+        in
+        { model
+            | animState =
+                AnimEngine.onResize model.animState <|
+                    Translate.bounds "cookieQuestionsAnim" cookieBounds
+                        >> Translate.bounds "modalAnim" modalBounds
+        }
+    ```
 
-### 3. Hand the new bounds to the engine
-
-Call the engine's `onResize` with a chain of property-level `bounds` calls — one per group that needs updating. The engine remaps each group proportionally on the next animation frame.
-
-??? example "View Source Code"
-
-    === "WAAPI"
-
-        ```elm
-        --8<-- "docs/examples/src/Animation/WAAPI/ResponsiveAnimations/Responsive/Main.elm:on-resize-handler"
-        ```
-
-    === "Sub"
-
-        ```elm
-        --8<-- "docs/examples/src/Animation/Sub/ResponsiveAnimations/Responsive/Main.elm:on-resize-handler"
-        ```
+Any time the pixel range changes, tell the engine the new range for every affected anim group. The engine keeps the animations aligned with the new bounds.
 
 ---
 
-## How the Remap Works
+## Path 2 - Using Relative Units
 
-On every resize, each axis with new bounds is remapped:
+Follow this path when your targets use relative positioning inside their parent container. This is the quickest and simplest path, but it helps to have a good understanding of the various [CSS relative length units](https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/Values/length).
 
-- **Endpoints** (the animation's `start` and `end` values) adopt the new bounds.
-- **Current value** keeps its relative position within the range — if it was 25% of the way from start to end before, it's still 25% of the way after.
-- **Normalized progress** is preserved, so looping and ping-pong motion stay in phase.
+Elm Motion supports a broad set of relative units through [`Anim.Unit`](https://package.elm-lang.org/packages/phollyer/elm-animate/latest/Anim-Unit), including element/font units (`Percent`, `Em`, `Rem`, `Lh`, `Ch`, etc.), viewport units (`Vw`, `Vh`, `Vi`, `Vb`, `Vmin`, `Vmax` plus `Sv*`/`Lv*`/`Dv*` variants), and container units (`Cqi`, `Cqb`, `Cqw`, `Cqh`, `Cqmin`, `Cqmax`).
 
-Properties that aren't bounded by the resize (for example, `Opacity` when only the track width changed) are left untouched.
+When your animation can be expressed in those units, the browser re-evaluates values as layout changes. That means the animation stays responsive without resize subscriptions, DOM measurement, or remapping logic.
+
+This works well when the motion should scale naturally with the layout - for example, moving something across half a container or positioning something relative to viewport or container size.
+
+Relative units are the best fit when:
+
+- you want the browser to handle responsiveness for you
+- your animation values can be expressed without measuring layout in Elm
+
+??? example "Example: responsive animation with relative units"
+
+    ```elm
+    dropBall : AnimBuilder mode -> AnimBuilder mode
+    dropBall =
+        Translate.for "ball"
+            >> Translate.cssUnit Cqh
+            >> Translate.fromY 0
+            >> Translate.toY 88
+            >> Translate.speed 75
+            >> Translate.easing BounceOut
+            >> Translate.build
+    ```
+
+Animation-wise, that’s the full setup. It assumes the surrounding view/layout is already responsive.
+
+The unit values (0, 88, 75) are effectively percentage values of the element being animated's container height. `1cqh == 1%` of the container height.
+If you change the CSS Unit, be sure to adjust your builder values accordingly.
+
+To see this in action check out the following examples:
+
+- [Controlling Animations](controlling-animations.md#example)
+- [Interrupting Animations](interrupting-animations.md#multiple-properties)
+- [Transform Order](transform-order.md)
 
 ---
 
-## Transition and Keyframe Engines
+## Which Path Should You Choose?
 
-The [Transition](../engines/transition.md) and [Keyframe](../engines/keyframes.md) engines don't currently observe resize events — once an animation starts, pixel-based targets are fixed for the lifetime of that animation.
+Choose **relative units** when:
 
-For resize-aware behavior on these engines, use relative units (`Percent`, `Vw`/`Vh`, `Cqw`/`Cqh`, etc.) so the browser re-evaluates values against current layout each frame.
+- you can express motion in percentages, viewport units, font-relative units, or container units
+- you want the simplest setup
+- you want responsiveness to fall out of normal browser layout behavior
 
-If your targets are pixel-derived from measured layout and must be remapped proportionally while in flight, use [Sub](../engines/sub.md) or [WAAPI](../engines/waapi.md) with `Anim.Resize.bounds`.
+Choose **pixels with `onResize`** when:
+
+- your targets depend on live DOM measurements
+- you need things like `containerWidth - elementWidth`
+- your animation range must be recalculated from actual layout values
+
+If both are possible, prefer **relative units**.
+
+---
+
+## Engine Guidance
+
+- [Transition](../engines/transition.md) and [Keyframe](../engines/keyframes.md): use relative units for responsive behavior.
+- [Sub](../engines/sub.md) and [WAAPI](../engines/waapi.md): use relative units when you can, and use `onResize` with [`Anim.Resize.bounds`](https://package.elm-lang.org/packages/phollyer/elm-animate/latest/Anim-Resize#bounds) when you need measured pixel targets.
+- [ScrollTimeline](../engines/scroll-timeline.md) and [ViewTimeline](../engines/view-timeline.md): relative units are the responsive path.
 
 ---
 
 ## Next Steps
 
-[Interrupting Animations](interrupting-animations.md){ .md-button .md-button--primary }
 [Engines Overview](../engines/overview.md){ .md-button .md-button--primary }
+[Controlling Animations](controlling-animations.md){ .md-button .md-button--primary }
