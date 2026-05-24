@@ -150,7 +150,7 @@ Starting values in the builder config are ignored — the browser always starts 
 
 ### Mid-Flight Interruptions
 
-Because the browser starts from current computed style, interrupting an animation mid-flight automatically transitions smoothly from wherever the element is — just provide a new end value.
+Because the browser starts from current computed style, interrupting an animation mid-flight automatically transitions smoothly from wherever the element is — just provide a new end value and re-trigger with `animate`.
 
 ### OnLoad Animations
 
@@ -231,6 +231,19 @@ Apply `events` alongside `attributes` to attach the DOM transition event listene
 
 Use `eventsStopPropagation` to prevent events from bubbling to parent elements.
 
+### Responsive Strategy
+
+Use relative CSS units whenever the motion can be defined in layout-relative terms.
+
+For measured pixel targets:
+
+- Transition has no proportional remap API for resize updates.
+- On resize, recompute pixel targets and re-trigger with `animate`.
+- Running animations then continue smoothly from current computed style to the new target.
+- Idle animations stay at their last resolved value until you trigger a new target.
+
+📖 See [Responsive Animations](../concepts/responsive-animations.md) for more info.
+
 ### Timing
 
 Set `duration`, `speed`, and `delay` in the animation builder.
@@ -271,6 +284,7 @@ For accurate complex easing curves, use the [Keyframe](keyframes.md), [Sub](sub.
     Reset ->
         ( { model | animState = Transition.reset "card" model.animState }, Cmd.none )
     ```
+
 
 ### Discrete Properties
 

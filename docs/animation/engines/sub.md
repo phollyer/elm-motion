@@ -145,6 +145,14 @@ Call `animate` to apply an animation to the current `AnimState`. Triggering a ne
 
 📖 See [Interrupting Animations](../concepts/interrupting-animations.md/) for more info.
 
+### Mid-Flight Interruptions
+
+Sub keeps frame-by-frame runtime state, so interrupting with a new `animate` (or `retarget`) continues smoothly from the current in-flight position.
+
+### OnLoad Animations
+
+For on-load animations, trigger `animate` when the page initializes, the animation runs immediately.
+
 ### Events
 
 `update` returns a `List AnimEvent` per call — multiple events can occur in a single frame. Use `List.foldl` to process them.
@@ -213,6 +221,20 @@ Apply `attributes` to the animated element to apply the current inline styles on
     ```elm
     div (Sub.attributes "ball" model.animState) [ text "Ball" ]
     ```
+
+
+### Responsive Strategy
+
+Use relative CSS units whenever the motion can be defined in layout-relative terms.
+
+For measured pixel targets:
+
+- Sub supports proportional remap for resize updates.
+- On resize, update bounds with `onResize` and `Anim.Resize.bounds`.
+- Running animations remap to the equivalent relative position inside the updated bounds.
+- Idle animations also re-position proportionally inside the updated bounds.
+
+📖 See [Responsive Animations](../concepts/responsive-animations.md) for more info.
 
 ### Playback
 

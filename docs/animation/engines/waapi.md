@@ -172,6 +172,14 @@ Triggering a new `animate` animation while one is already running smoothly trans
 
 📖 See [Interrupting Animations](../concepts/interrupting-animations.md/) for more info.
 
+### Mid-Flight Interruptions
+
+WAAPI keeps runtime animation state, so interrupting with a new `animate` (or `retarget`) continues smoothly from the current in-flight position.
+
+### OnLoad Animations
+
+For on-load animations, trigger `animate` when the page initializes, the animation runs immediately.
+
 ### `animate`
 
 Use `animate` when you need state-tracked animations. The engine tracks start values, so subsequent animations always start from the last known position.
@@ -269,6 +277,19 @@ Apply `attributes` to the animated element to set its initial inline styles.
     ```elm
     div (WAAPI.attributes "card" model.animState) [ text "Animated card" ]
     ```
+
+### Responsive Strategy
+
+Use relative CSS units whenever the motion can be defined in layout-relative terms.
+
+For measured pixel targets:
+
+- WAAPI supports proportional remap for resize updates.
+- On resize, update bounds with `onResize` and `Anim.Resize.bounds`.
+- Running animations remap to the equivalent relative position inside the updated bounds.
+- Idle animations also re-position proportionally inside the updated bounds.
+
+📖 See [Responsive Animations](../concepts/responsive-animations.md) for more info.
 
 ### Playback
 

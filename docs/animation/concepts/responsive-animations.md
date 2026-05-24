@@ -19,8 +19,7 @@ This path is supported by the [Sub](../engines/sub.md), [WAAPI](../engines/waapi
 [Keyframe](../engines/keyframes.md) engines, but behaviour differs slightly.
 
 - Sub & WAAPI: mid-flight animations remap proportionally to new resized values, idle animations re-position proportionally inside their container.
-- Keyframe & Transition: mid-flight values are not available, so mid-flight animations will move instantly to their end value and stop, idle animations
-re-position proportionally inside their container.
+- Transition and Keyframe: no proportional remap API for resize updates. For engine-specific responsive strategies, see [Transition](../engines/transition.md) and [Keyframe](../engines/keyframes.md).
 
 ### Workflow
 
@@ -113,7 +112,7 @@ Relative units are the best fit when:
 
 Animation-wise, that’s the full setup. It assumes the surrounding view/layout is already responsive.
 
-The unit values (0, 88, 75) are effectively percentage values of the element being animated's container height. `1cqh == 1%` of the container height.
+In the example code, the unit values (0, 88, 75) are effectively percentage values of the element being animated's container height. `1cqh == 1%` of the container height.
 If you change the CSS Unit, be sure to adjust your builder values accordingly.
 
 To see this in action check out the following examples:
@@ -124,21 +123,24 @@ To see this in action check out the following examples:
 
 ---
 
-## Which Path Should You Choose?
+## Responsive Tooling
 
-Choose **relative units** when:
+Most animations only need one of the two paths above. If you need more control, these are the main tools to reach for.
 
-- you can express motion in percentages, viewport units, font-relative units, or container units
-- you want the simplest setup
-- you want responsiveness to fall out of normal browser layout behavior
+| Function | Where | What it helps with |
+| --- | --- | --- |
+| `retarget` | [Sub](../engines/sub.md), [WAAPI](../engines/waapi.md), [Transition](../engines/transition.md), [Keyframe](../engines/keyframes.md) | Change target while an animation is running. Sub and WAAPI continue smoothly; Transition and Keyframe snap to the new end value. |
+| `onResize` | [Sub](../engines/sub.md), [WAAPI](../engines/waapi.md) | Apply resize updates to active animations. |
+| `bounds` | [Anim.Resize](https://package.elm-lang.org/packages/phollyer/elm-animate/latest/Anim-Resize#bounds), [Translate](../properties/translate.md), [Scale](../properties/scale.md) | Set min/max movement ranges after a resize. |
+| `position` | [Translate](../properties/translate.md) | Set explicit x/y/z positions after a resize. |
+| `clampX`, `clampY`, `clampZ` | [Translate](../properties/translate.md), [Rotate](../properties/rotate.md), [Scale](../properties/scale.md), [Skew](../properties/skew.md) | Keep animated values inside safe limits. |
+| `clampWidth`, `clampHeight` | [Size](../properties/size.md) | Keep animated width and height inside safe limits. |
+| `clamp`, `unclamp` | [Opacity](../properties/opacity.md), [Custom](../properties/custom-property.md) | Add or remove value limits as needed. |
 
-Choose **pixels with `onResize`** when:
 
-- your targets depend on live DOM measurements
-- you need things like `containerWidth - elementWidth`
-- your animation range must be recalculated from actual layout values
+Note: Values are interpreted in the active CSS unit for each property, and updates apply only to the anim group(s) you target.
 
-If both are possible, prefer **relative units**.
+Start simple with relative units or measured pixels. Reach for these tools only when you need extra control.
 
 ---
 
