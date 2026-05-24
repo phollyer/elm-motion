@@ -13,7 +13,7 @@ module Anim.Engine.WAAPI exposing
     , iterations, loopForever, alternate
     , delay, duration, speed
     , easing
-    , cssUnit, cssUnitX, cssUnitY, cssUnitZ
+    , cssUnit, cssUnitX, cssUnitY, cssUnitZ, cssUnitWidth, cssUnitHeight
     , spring
     , stop, reset, restart, pause, resume
     , discreteEntry, discreteExit
@@ -146,7 +146,7 @@ This ensures the element displays the correct property values before, during, an
 
 # Unit
 
-@docs cssUnit, cssUnitX, cssUnitY, cssUnitZ
+@docs cssUnit, cssUnitX, cssUnitY, cssUnitZ, cssUnitWidth, cssUnitHeight
 
 
 # Spring
@@ -764,6 +764,34 @@ cssUnitY =
 cssUnitZ : Unit -> Builder.AnimBuilder mode -> Builder.AnimBuilder mode
 cssUnitZ =
     Builder.cssUnitZ
+
+
+{-| Set the default length unit used for width values in WAAPI animations.
+
+    responsiveCardWidth : AnimBuilder mode -> AnimBuilder mode
+    responsiveCardWidth =
+        cssUnitWidth Unit.Vw
+            >> growCardWidth
+            >> settleCardSpacing
+
+-}
+cssUnitWidth : Unit -> Builder.AnimBuilder mode -> Builder.AnimBuilder mode
+cssUnitWidth =
+    Builder.cssUnitX
+
+
+{-| Set the default length unit used for height values in WAAPI animations.
+
+    responsivePanelHeight : AnimBuilder mode -> AnimBuilder mode
+    responsivePanelHeight =
+        cssUnitHeight Unit.Vh
+            >> expandPanelHeight
+            >> alignPanelHeaderY
+
+-}
+cssUnitHeight : Unit -> Builder.AnimBuilder mode -> Builder.AnimBuilder mode
+cssUnitHeight =
+    Builder.cssUnitY
 
 
 

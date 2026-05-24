@@ -9,7 +9,7 @@ module Anim.Engine.ScrollTimeline exposing
     , horizontal
     , iterations, alternate
     , easing
-    , cssUnit, cssUnitX, cssUnitY, cssUnitZ
+    , cssUnit, cssUnitX, cssUnitY, cssUnitZ, cssUnitWidth, cssUnitHeight
     , spring
     , discreteEntry, discreteExit
     , transformOrder
@@ -93,7 +93,7 @@ For Engine comparisons, shared features, examples and code, see the
 
 # Unit
 
-@docs cssUnit, cssUnitX, cssUnitY, cssUnitZ
+@docs cssUnit, cssUnitX, cssUnitY, cssUnitZ, cssUnitWidth, cssUnitHeight
 
 
 # Spring
@@ -131,13 +131,7 @@ import Motion.Spring exposing (Spring)
 
 {-| Animation builder type for configuring scroll-driven animations.
 
-Use this in type annotations for animation helpers specific to the
-ScrollTimeline Engine.
-
-For helper functions that should work across all engines, use `AnimBuilder mode` from `Anim.Builder` instead.
-
-For mode restrictions and examples, see
-[Build: Builder Modes](https://phollyer.github.io/elm-motion/animation/workflow/build/#builder-modes).
+This type is an alias for `AnimBuilder ForScrollTimeline`, the two are interchangeable.
 
 -}
 type alias TimelineBuilder =
@@ -397,6 +391,34 @@ cssUnitY =
 cssUnitZ : Unit -> TimelineBuilder -> TimelineBuilder
 cssUnitZ =
     Builder.cssUnitZ
+
+
+{-| Set the default length unit used for width values in ScrollTimeline animations.
+
+    responsiveCardWidth : TimelineBuilder -> TimelineBuilder
+    responsiveCardWidth =
+        cssUnitWidth Unit.Vw
+            >> growCardWidth
+            >> settleCardSpacing
+
+-}
+cssUnitWidth : Unit -> TimelineBuilder -> TimelineBuilder
+cssUnitWidth =
+    Builder.cssUnitX
+
+
+{-| Set the default length unit used for height values in ScrollTimeline animations.
+
+    responsivePanelHeight : TimelineBuilder -> TimelineBuilder
+    responsivePanelHeight =
+        cssUnitHeight Unit.Vh
+            >> expandPanelHeight
+            >> alignPanelHeaderY
+
+-}
+cssUnitHeight : Unit -> TimelineBuilder -> TimelineBuilder
+cssUnitHeight =
+    Builder.cssUnitY
 
 
 

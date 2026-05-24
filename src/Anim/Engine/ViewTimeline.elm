@@ -9,7 +9,7 @@ module Anim.Engine.ViewTimeline exposing
     , Unit(..), Range(..), rangeStart, rangeEnd
     , iterations, alternate
     , easing
-    , cssUnit, cssUnitX, cssUnitY, cssUnitZ
+    , cssUnit, cssUnitX, cssUnitY, cssUnitZ, cssUnitWidth, cssUnitHeight
     , spring
     , discreteEntry, discreteExit
     , transformOrder
@@ -96,7 +96,7 @@ For Engine comparisons, shared features, examples and code, see the
 
 # Length Unit
 
-@docs cssUnit, cssUnitX, cssUnitY, cssUnitZ
+@docs cssUnit, cssUnitX, cssUnitY, cssUnitZ, cssUnitWidth, cssUnitHeight
 
 
 # Spring
@@ -485,6 +485,34 @@ cssUnitY =
 cssUnitZ : LengthUnit.Unit -> TimelineBuilder -> TimelineBuilder
 cssUnitZ =
     Builder.cssUnitZ
+
+
+{-| Set the default length unit used for width values in ViewTimeline animations.
+
+    responsiveCardWidth : TimelineBuilder -> TimelineBuilder
+    responsiveCardWidth =
+        cssUnitWidth LengthUnit.Vw
+            >> growCardWidth
+            >> settleCardSpacing
+
+-}
+cssUnitWidth : LengthUnit.Unit -> TimelineBuilder -> TimelineBuilder
+cssUnitWidth =
+    Builder.cssUnitX
+
+
+{-| Set the default length unit used for height values in ViewTimeline animations.
+
+    responsivePanelHeight : TimelineBuilder -> TimelineBuilder
+    responsivePanelHeight =
+        cssUnitHeight LengthUnit.Vh
+            >> expandPanelHeight
+            >> alignPanelHeaderY
+
+-}
+cssUnitHeight : LengthUnit.Unit -> TimelineBuilder -> TimelineBuilder
+cssUnitHeight =
+    Builder.cssUnitY
 
 
 
