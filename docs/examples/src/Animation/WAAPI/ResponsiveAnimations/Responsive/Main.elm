@@ -6,9 +6,9 @@ import Browser
 import Browser.Dom as Dom
 import Browser.Events
 import Dict exposing (Dict)
-import Html exposing (Html, div, text)
-import Html.Attributes exposing (class, id, style)
-import Html.Events exposing (onClick)
+import Html exposing (Html, div, input, text)
+import Html.Attributes as Attributes exposing (class, id, style, type_, value)
+import Html.Events exposing (onClick, onInput)
 import Json.Encode as Encode
 import Motion.Easing exposing (Easing(..))
 import Process
@@ -45,7 +45,7 @@ main =
 
 type alias Model =
     { animState : WAAPI.AnimState Msg
-    , widthPct : WidthPct
+    , widthPct : Float
     , trackPx : Float
     , rowStates : Dict AnimGroupName AnimPlayState
     }
@@ -57,23 +57,9 @@ type AnimPlayState
     | Paused
 
 
-type WidthPct
-    = Narrow
-    | Normal
-    | Widen
-
-
-widthPctToFloat : WidthPct -> Float
-widthPctToFloat pct =
-    case pct of
-        Narrow ->
-            50
-
-        Normal ->
-            75
-
-        Widen ->
-            100
+clampWidthPct : Float -> Float
+clampWidthPct pct =
+    max 50 (min 100 pct)
 
 
 boxAnim : String
@@ -118,7 +104,7 @@ init _ =
             WAAPI.init motionCmd motionMsg <|
                 [ Translate.initX boxAnim 0
                 ]
-      , widthPct = Normal
+      , widthPct = 75
       , trackPx = 0
       , rowStates = Dict.empty
       }
@@ -149,7 +135,7 @@ type Msg
     | Stop
     | StartRow AnimGroupName
     | StopRow AnimGroupName
-    | SetWidth WidthPct
+    | SetWidth String
     | OnResize
     | GotTrack (Result Dom.Error Dom.Element)
 
@@ -176,11 +162,16 @@ update msg model =
         StopRow group ->
             stopRow group ( model, Cmd.none )
 
-        SetWidth pct ->
-            ( { model | widthPct = pct }
-            , Process.sleep 100
-                |> Task.perform (\_ -> OnResize)
-            )
+        SetWidth raw ->
+            case String.toFloat raw of
+                Just pct ->
+                    ( { model | widthPct = clampWidthPct pct }
+                    , Process.sleep 0
+                        |> Task.perform (\_ -> OnResize)
+                    )
+
+                Nothing ->
+                    ( model, Cmd.none )
 
         ---8<-- [start:on-resize-update]
         OnResize ->
@@ -335,11 +326,31 @@ view model =
             ]
         , div
             [ class "example-controls"
-            , style "margin-top" "5px"
+            , style "margin-top" "8px"
+            , style "display" "flex"
+            , style "align-items" "center"
+            , style "gap" "10px"
             ]
-            [ ctrlBtn "Narrow" "" (SetWidth Narrow)
-            , ctrlBtn "Normal" "" (SetWidth Normal)
-            , ctrlBtn "Widen" "" (SetWidth Widen)
+            [ div
+                [ style "font-size" "12px"
+                , style "font-weight" "600"
+                ]
+                [ text "Track Width" ]
+            , input
+                [ type_ "range"
+                , Attributes.min "50"
+                , Attributes.max "100"
+                , Attributes.step "1"
+                , value (String.fromFloat model.widthPct)
+                , onInput SetWidth
+                , style "width" "240px"
+                ]
+                []
+            , div
+                [ style "font-size" "12px"
+                , style "min-width" "48px"
+                ]
+                [ text (String.fromInt (round model.widthPct) ++ "%") ]
             ]
         , div
             [ class "example-canvas"
@@ -350,7 +361,7 @@ view model =
             , style "background-color" "#d6d9dd"
             ]
             [ div
-                [ style "width" (String.fromFloat (widthPctToFloat model.widthPct) ++ "%")
+                [ style "width" (String.fromFloat model.widthPct ++ "%")
                 , style "align-self" "flex-start"
                 ]
                 [ trackRow "Proportional" trackId boxAnim proportionalColor model
