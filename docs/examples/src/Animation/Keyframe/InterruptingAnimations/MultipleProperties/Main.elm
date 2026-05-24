@@ -3,7 +3,7 @@ module Animation.Keyframe.InterruptingAnimations.MultipleProperties.Main exposin
 import Anim.Builder exposing (AnimBuilder)
 import Anim.Engine.Keyframe as Keyframe
 import Anim.Extra.Color as Color exposing (Color)
-import Anim.Property.CustomColor as BgColor
+import Anim.Property.CustomColor as CustomColor
 import Anim.Property.Translate as Translate
 import Anim.Unit exposing (Unit(..))
 import Browser
@@ -69,7 +69,7 @@ init _ =
             Keyframe.init
                 [ Translate.initUnit Cqw
                     >> Translate.initX animGroupName centerXCqw
-                , BgColor.init animGroupName BgColor.BackgroundColor <| Color.rgb 118 118 118
+                , CustomColor.init animGroupName CustomColor.BackgroundColor <| Color.rgb 118 118 118
                 ]
       }
     , Cmd.none
@@ -139,11 +139,11 @@ moveBoxX x =
 
 changeColor : Color -> AnimBuilder mode -> AnimBuilder mode
 changeColor color =
-    BgColor.for animGroupName BgColor.BackgroundColor
-        >> BgColor.to color
-        >> BgColor.duration 3000
-        >> BgColor.easing Linear
-        >> BgColor.build
+    CustomColor.for animGroupName CustomColor.BackgroundColor
+        >> CustomColor.to color
+        >> CustomColor.duration 3000
+        >> CustomColor.easing Linear
+        >> CustomColor.build
 
 
 

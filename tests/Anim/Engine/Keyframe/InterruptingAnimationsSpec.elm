@@ -2,7 +2,7 @@ module Anim.Engine.Keyframe.InterruptingAnimationsSpec exposing (suite)
 
 import Anim.Engine.Keyframe as Keyframe
 import Anim.Extra.Color as Color
-import Anim.Property.CustomColor as BgColor
+import Anim.Property.CustomColor as CustomColor
 import Anim.Property.Translate as Translate
 import Anim.Unit exposing (Unit(..))
 import Expect
@@ -82,10 +82,10 @@ suite =
 
                     afterColor =
                         Keyframe.animate afterMove <|
-                            (BgColor.for animGroup BgColor.BackgroundColor
-                                >> BgColor.to (Color.rgb 255 0 0)
-                                >> BgColor.duration 500
-                                >> BgColor.build
+                            (CustomColor.for animGroup CustomColor.BackgroundColor
+                                >> CustomColor.to (Color.rgb 255 0 0)
+                                >> CustomColor.duration 500
+                                >> CustomColor.build
                             )
 
                     css =
