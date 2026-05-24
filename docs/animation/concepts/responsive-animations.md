@@ -15,7 +15,7 @@ The [Transition](../engines/transition.md) and [Keyframe](../engines/keyframes.m
 
 --8<-- [start:desc]
 
-A box loops back and forth across a track. Use the **Narrow / Normal / Widen** buttons to change the track width while the animation is running. The box's current position is remapped proportionally into the new bounds, and its timing keeps in phase.
+A box loops back and forth across a track. Use the slider to change track width while the animation is running. The box's current position is remapped proportionally into the new bounds, and its timing keeps in phase.
 
 --8<-- [end:desc]
 
@@ -26,6 +26,10 @@ A box loops back and forth across a track. Use the **Narrow / Normal / Widen** b
     === "WAAPI"
 
         <iframe src="../../../examples/src/Animation/WAAPI/ResponsiveAnimations/Responsive/index.html" class="example-iframe" loading="lazy", style="height:550px;min-height:550px;max-height:550px"></iframe>
+
+    === "Keyframe"
+
+        <iframe src="../../../examples/src/Animation/Keyframe/ResponsiveAnimations/Responsive/index.html" class="example-iframe" loading="lazy", style="height:550px;min-height:550px;max-height:550px"></iframe>
 
     === "Sub"
 
@@ -41,7 +45,7 @@ Three pieces wire the resize API together.
 
 ### 1. Subscribe to viewport changes
 
-Use `Browser.Events.onResize` to know when the layout changes. The example also re-fires this message when the user clicks a width button so the in-app "resize" is treated the same as a real browser resize.
+Use `Browser.Events.onResize` to know when the layout changes. The example also re-fires this message when the slider changes width so in-app width changes are treated the same as a real browser resize.
 
 ??? example "View Source Code"
 
@@ -109,11 +113,11 @@ Properties that aren't bounded by the resize (for example, `Opacity` when only t
 
 ## Transition and Keyframe Engines
 
-The [Transition](../engines/transition.md) and [Keyframe](../engines/keyframes.md) engines don't currently observe resize events — once an animation starts, its target values are fixed for the lifetime of that animation.
+The [Transition](../engines/transition.md) and [Keyframe](../engines/keyframes.md) engines don't currently observe resize events — once an animation starts, pixel-based targets are fixed for the lifetime of that animation.
 
-If you need an animation to react to layout changes, use the [Sub](../engines/sub.md) or [WAAPI](../engines/waapi.md) engine.
+For resize-aware behavior on these engines, use relative units (`Percent`, `Vw`/`Vh`, `Cqw`/`Cqh`, etc.) so the browser re-evaluates values against current layout each frame.
 
-You can still call `Transition.retarget` / `Keyframe.retarget` from your own resize handler to snap an element to a freshly computed value, but the engine won't smoothly continue an in-flight animation toward the new geometry.
+If your targets are pixel-derived from measured layout and must be remapped proportionally while in flight, use [Sub](../engines/sub.md) or [WAAPI](../engines/waapi.md) with `Anim.Resize.bounds`.
 
 ---
 
