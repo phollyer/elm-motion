@@ -79,7 +79,7 @@ dropBall =
         >> Translate.cssUnit Cqh
         >> Translate.fromY 0
         >> Translate.toY (100 - ballSize)
-        >> Translate.speed 100
+        >> Translate.speed 75
         >> Translate.easing BounceOut
         >> Translate.build
 
