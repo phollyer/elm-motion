@@ -404,7 +404,7 @@ cssUnitZ =
 -}
 cssUnitWidth : Unit -> TimelineBuilder -> TimelineBuilder
 cssUnitWidth =
-    Builder.cssUnitX
+    Builder.cssUnitWidth
 
 
 {-| Set the default length unit used for height values in ScrollTimeline animations.
@@ -418,7 +418,7 @@ cssUnitWidth =
 -}
 cssUnitHeight : Unit -> TimelineBuilder -> TimelineBuilder
 cssUnitHeight =
-    Builder.cssUnitY
+    Builder.cssUnitHeight
 
 
 

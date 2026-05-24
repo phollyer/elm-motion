@@ -722,7 +722,7 @@ cssUnitZ =
 -}
 cssUnitWidth : Unit -> Builder.AnimBuilder mode -> Builder.AnimBuilder mode
 cssUnitWidth =
-    Builder.cssUnitX
+    Builder.cssUnitWidth
 
 
 {-| Set the default length unit used for height values in Sub animations.
@@ -736,7 +736,7 @@ cssUnitWidth =
 -}
 cssUnitHeight : Unit -> Builder.AnimBuilder mode -> Builder.AnimBuilder mode
 cssUnitHeight =
-    Builder.cssUnitY
+    Builder.cssUnitHeight
 
 
 

@@ -339,7 +339,7 @@ cssUnitZ =
 -}
 cssUnitWidth : Unit -> AnimBuilder mode -> AnimBuilder mode
 cssUnitWidth =
-    cssUnitX
+    Internal.cssUnitWidth
 
 
 {-| Set the default length unit used for height values.
@@ -353,4 +353,4 @@ cssUnitWidth =
 -}
 cssUnitHeight : Unit -> AnimBuilder mode -> AnimBuilder mode
 cssUnitHeight =
-    cssUnitY
+    Internal.cssUnitHeight

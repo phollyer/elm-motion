@@ -46,13 +46,33 @@ suite =
                     |> step 500
                     |> rendered
                     |> Query.has [ Selector.style "transform" "translate3d(50vw, 25vh, 0px)" ]
-        , test "engine-level cssUnit axis defaults apply to size" <|
+        , test "engine-level cssUnit axis defaults do not affect size" <|
             \_ ->
                 Sub.init [ Size.initHW "el" 100 200 ]
                     |> (\state ->
                             Sub.animate state
                                 (Sub.cssUnitX Unit.Vw
                                     >> Sub.cssUnitY Unit.Vh
+                                    >> Size.for "el"
+                                    >> Size.toHW 200 400
+                                    >> Size.duration 1000
+                                    >> Size.easing Linear
+                                    >> Size.build
+                                )
+                       )
+                    |> step 500
+                    |> rendered
+                    |> Expect.all
+                        [ Query.has [ Selector.style "width" "300px" ]
+                        , Query.has [ Selector.style "height" "150px" ]
+                        ]
+        , test "engine-level cssUnitWidth/cssUnitHeight defaults apply to size" <|
+            \_ ->
+                Sub.init [ Size.initHW "el" 100 200 ]
+                    |> (\state ->
+                            Sub.animate state
+                                (Sub.cssUnitWidth Unit.Vw
+                                    >> Sub.cssUnitHeight Unit.Vh
                                     >> Size.for "el"
                                     >> Size.toHW 200 400
                                     >> Size.duration 1000

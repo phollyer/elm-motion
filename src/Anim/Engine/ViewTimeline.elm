@@ -498,7 +498,7 @@ cssUnitZ =
 -}
 cssUnitWidth : LengthUnit.Unit -> TimelineBuilder -> TimelineBuilder
 cssUnitWidth =
-    Builder.cssUnitX
+    Builder.cssUnitWidth
 
 
 {-| Set the default length unit used for height values in ViewTimeline animations.
@@ -512,7 +512,7 @@ cssUnitWidth =
 -}
 cssUnitHeight : LengthUnit.Unit -> TimelineBuilder -> TimelineBuilder
 cssUnitHeight =
-    Builder.cssUnitY
+    Builder.cssUnitHeight
 
 
 
