@@ -19,7 +19,7 @@ define your builders and the functions here to configure them where needed.
 
 # Types
 
-📖 See [Build: Builder Modes](https://phollyer.github.io/elm-motion/animation/workflow/build/#builder-modes)
+📖 See [Builder Modes](https://phollyer.github.io/elm-motion/animation/concepts/builder-modes/)
 in the docs for detailed examples and patterns.
 
 @docs AnimBuilder

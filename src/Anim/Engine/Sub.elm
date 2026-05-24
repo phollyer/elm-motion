@@ -303,7 +303,7 @@ Here's an engine-specific timeline builder for the Sub Engine. It will result in
     f : Sub.TimelineBuilder ForSubEngine -> Sub.TimelineBuilder ForSubEngine
 
 For mode restrictions and examples, see
-[Build: Builder Modes](https://phollyer.github.io/elm-motion/animation/workflow/build/#builder-modes).
+[Builder Modes](https://phollyer.github.io/elm-motion/animation/concepts/builder-modes/).
 
 -}
 type alias TimelineBuilder engine =
@@ -317,7 +317,7 @@ This engine-specific builder will result in a type error if used with any other 
     f : Sub.EngineBuilder -> Sub.EngineBuilder
 
 For mode restrictions and examples, see
-[Build: Builder Modes](https://phollyer.github.io/elm-motion/animation/workflow/build/#builder-modes).
+[Builder Modes](https://phollyer.github.io/elm-motion/animation/concepts/builder-modes/).
 
 -}
 type alias EngineBuilder =

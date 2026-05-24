@@ -261,7 +261,7 @@ Here's an engine-specific timeline builder for the Transition Engine. It will re
     f : Transition.TimelineBuilder ForTransitionEngine -> Transition.TimelineBuilder ForTransitionEngine
 
 For mode restrictions and examples, see
-[Build: Builder Modes](https://phollyer.github.io/elm-motion/animation/workflow/build/#builder-modes).
+[Builder Modes](https://phollyer.github.io/elm-motion/animation/concepts/builder-modes/).
 
 -}
 type alias TimelineBuilder engine =
@@ -275,7 +275,7 @@ This engine-specific builder will result in a type error if used with any other 
     f : Transition.EngineBuilder -> Transition.EngineBuilder
 
 For mode restrictions and examples, see
-[Build: Builder Modes](https://phollyer.github.io/elm-motion/animation/workflow/build/#builder-modes).
+[Builder Modes](https://phollyer.github.io/elm-motion/animation/concepts/builder-modes/).
 
 -}
 type alias EngineBuilder =

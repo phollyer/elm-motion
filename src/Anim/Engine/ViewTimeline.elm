@@ -140,7 +140,7 @@ ViewTimeline Engine.
 For builder functions that should work across all engines, use `AnimBuilder mode` from `Anim.Builder` instead.
 
 For mode restrictions and examples, see
-[Build: Builder Modes](https://phollyer.github.io/elm-motion/animation/workflow/build/#builder-modes).
+[Builder Modes](https://phollyer.github.io/elm-motion/animation/concepts/builder-modes/).
 
 -}
 type alias TimelineBuilder =
