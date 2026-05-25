@@ -16,6 +16,37 @@ import Process
 import Task
 
 
+{-| WHY PIXELS, NOT CQMIN?
+
+Container-query units like `cqmin` would be the obvious choice for
+"responsive sizing", but they don't fit _this_ example well. Two things
+rule them out:
+
+1.  The cube is an assembly of six interdependent faces. Every face's
+    position is derived from the same `depth` value, and they have to
+    stay geometrically coherent for the shape to read as a cube. Any
+    drift between faces breaks the assembly visibly.
+
+2.  `cqmin` is a _relative_ unit, and the CSS Transitions spec doesn't
+    define how a running transition should react when its endpoints'
+    pixel resolutions change underneath it. Browsers handle it
+    inconsistently. If a resize lands mid-transition, faces in flight
+    can end up aiming at stale targets relative to the new container
+    size, so the cube comes apart for the rest of that transition.
+
+So the cube's size and face positions are authored in plain pixels
+against a fixed reference size, and responsive resizing is handled
+separately (see the wrapper `Scale` set up in `init` below). No per-face
+transition ever depends on a relative unit, and the geometry stays
+self-consistent at any viewport size.
+
+Other Transition examples that animate a single element with `cqmin` are
+fine - they don't have an assembly to keep coherent, and a single element
+redrawing at a new size per resize tick isn't visually disruptive.
+
+-}
+
+
 
 -- MAIN
 

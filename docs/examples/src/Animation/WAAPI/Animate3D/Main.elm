@@ -452,8 +452,8 @@ moveBottomFaceIn toY =
 
 -- TEXT - 3rd level of 3D animation
 --
--- Text moves forward (Z+20) and rotates (to Z=360deg) when sides expand,
--- and then moves back (to Z=0) and rotates back (to Z=0deg) when sides close
+-- Text moves forward (Z+4cqmin) and rotates (to Z=360deg) when sides expand,
+-- and then moves back (to Z=0cqmin) and rotates back (to Z=0deg) when sides close
 
 
 textMoveAmount : Float

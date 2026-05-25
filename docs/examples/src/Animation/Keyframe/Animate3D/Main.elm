@@ -252,29 +252,6 @@ bottomFace =
 
 
 
----8<-- [start:selectAnimation]
-
-
-selectAnimation : Float -> State -> AnimBuilder mode -> AnimBuilder mode
-selectAnimation targetAmount state =
-    case state of
-        Opening ->
-            moveSidesOut targetAmount
-                >> moveTextsOut
-
-        Closing ->
-            moveSidesIn targetAmount
-                >> moveTextsIn
-
-        RotatingOpen ->
-            rotateCubeClockwise
-
-        RotatingClosed ->
-            rotateCubeAntiClockwise
-
-
-
----8<-- [end:selectAnimation]
 -- ANIMATIONS
 --
 ---8<-- [start:animationFunctions]
@@ -328,21 +305,6 @@ moveSidesIn targetAmount =
         >> moveBottomFaceIn targetAmount
 
 
-sharedTiming : AnimBuilder mode -> AnimBuilder mode
-sharedTiming =
-    Keyframe.duration 1000
-        >> Keyframe.easing CircInOut
-
-
-moveFace : FaceConfig -> (Translate.Builder mode -> Translate.Builder mode) -> AnimBuilder mode -> AnimBuilder mode
-moveFace config moveToBuilder =
-    sharedTiming
-        >> Translate.for config.groupName
-        >> Translate.cssUnit Cqmin
-        >> moveToBuilder
-        >> Translate.build
-
-
 
 -- Each face moves along the axis it faces by a `moveAmount` (expressed in
 -- `Cqmin`, so it scales with the stage) when the cube expands, and moves
@@ -353,9 +315,24 @@ moveFace config moveToBuilder =
 -- Top/Bottom faces move on Y (up/down)
 
 
+sharedTiming : AnimBuilder mode -> AnimBuilder mode
+sharedTiming =
+    Keyframe.duration 1000
+        >> Keyframe.easing CircInOut
+
+
 moveAmount : Float
 moveAmount =
     10
+
+
+moveFace : FaceConfig -> (Translate.Builder mode -> Translate.Builder mode) -> AnimBuilder mode -> AnimBuilder mode
+moveFace config moveToBuilder =
+    sharedTiming
+        >> Translate.for config.groupName
+        >> Translate.cssUnit Cqmin
+        >> moveToBuilder
+        >> Translate.build
 
 
 moveFrontFaceOut : Float -> AnimBuilder mode -> AnimBuilder mode
@@ -433,8 +410,8 @@ moveBottomFaceIn toY =
 
 -- TEXT
 --
--- Text moves forward (Z+20) and rotates (to Z=360deg) when sides expand,
--- and then moves back (to Z=0) and rotates back (to Z=0deg) when sides close
+-- Text moves forward (Z+4cqmin) and rotates (to Z=360deg) when sides expand,
+-- and then moves back (to Z=0cqmin) and rotates back (to Z=0deg) when sides close
 
 
 textMoveAmount : Float
@@ -476,6 +453,29 @@ moveTextsIn =
 
 
 ---8<-- [end:animationFunctions]
+---8<-- [start:selectAnimation]
+
+
+selectAnimation : Float -> State -> AnimBuilder mode -> AnimBuilder mode
+selectAnimation targetAmount state =
+    case state of
+        Opening ->
+            moveSidesOut targetAmount
+                >> moveTextsOut
+
+        Closing ->
+            moveSidesIn targetAmount
+                >> moveTextsIn
+
+        RotatingOpen ->
+            rotateCubeClockwise
+
+        RotatingClosed ->
+            rotateCubeAntiClockwise
+
+
+
+---8<-- [end:selectAnimation]
 -- UPDATE
 
 
