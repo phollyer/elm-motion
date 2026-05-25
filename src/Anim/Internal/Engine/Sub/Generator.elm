@@ -42,6 +42,7 @@ init discreteEntryProps discreteExitProps properties =
         |> AnimGroup.setAnimations animations
         |> AnimGroup.setDiscreteEntry discreteEntryProps
         |> AnimGroup.setDiscreteExit discreteExitProps
+        |> AnimGroup.setWillChange (Builder.willChangeComposite processedProps)
 
 
 
@@ -84,6 +85,7 @@ generateAnimation iterationCount directionConfig maybeOrder discreteEntryProps d
         |> AnimGroup.setTransformOrder transformOrder
         |> AnimGroup.setDiscreteEntry discreteEntryProps
         |> AnimGroup.setDiscreteExit discreteExitProps
+        |> AnimGroup.setWillChange (Builder.willChangeComposite properties)
 
 
 

@@ -113,6 +113,7 @@ generate name counter maybeOrder iterationCount direction maybeTargetValues disc
         |> AnimGroup.setStyles (KeyframeStyles.fromProcessedProperties maybeOrder maybeTargetValues [] properties)
         |> AnimGroup.setRestartCounter counter
         |> AnimGroup.setIterationCount 0
+        |> AnimGroup.setWillChange (Builder.willChangeComposite properties)
         |> (\animGroup ->
                 if List.isEmpty properties && Dict.isEmpty discrete.entry && Dict.isEmpty discrete.exit then
                     animGroup

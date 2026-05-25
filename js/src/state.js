@@ -28,6 +28,15 @@ export const scrollDrivenIterationCounts = new Map();
 // Map<animGroup, string[]>  e.g. ['translate', 'rotate', 'skew', 'scale']
 export const elementTransformOrders = new Map();
 
+// Per-element `will-change` values applied by the engine so they can be
+// reverted on completion / cancel. Set only when Elm derives a non-empty
+// `willChange` string for an element. Scroll-driven animations seed this
+// once at start and intentionally never clear it (the optimisation must
+// persist for the lifetime of the scroll interaction); time-driven
+// animations clear it via `cleanupAnimGroup`.
+// Map<animGroup, { element: HTMLElement, value: string }>
+export const appliedWillChange = new Map();
+
 // Reference to the Elm app's ports object, set by init() in index.js.
 // Module-scoped instead of window-scoped to avoid global pollution and
 // silent collisions with host code that already uses `window.app`.
@@ -50,6 +59,15 @@ export const portsRef = { ports: null };
  * resolve, so retention across cleanup does not leak.
  */
 export function cleanupAnimGroup(animGroup) {
+    const wc = appliedWillChange.get(animGroup);
+    if (wc && wc.element && wc.element.isConnected) {
+        try {
+            wc.element.style.willChange = '';
+        } catch (_) {
+            // Element may have been detached or styles frozen; safe to ignore.
+        }
+    }
+    appliedWillChange.delete(animGroup);
     activeAnimations.delete(animGroup);
     animationGroups.delete(animGroup);
     lastKnownTransforms.delete(animGroup);
@@ -68,4 +86,5 @@ export function clearAllState() {
     lastKnownPerspectiveOrigins.clear();
     scrollDrivenIterationCounts.clear();
     elementTransformOrders.clear();
+    appliedWillChange.clear();
 }

@@ -1,6 +1,6 @@
 /* eslint-env browser */
 import { isTransformProperty, easingFunctions, parseIterations } from './utils.js';
-import { activeAnimations, animationGroups, elementTransformOrders, cleanupAnimGroup, lastKnownTransforms, lastKnownPerspectiveOrigins } from './state.js';
+import { activeAnimations, animationGroups, elementTransformOrders, cleanupAnimGroup, lastKnownTransforms, lastKnownPerspectiveOrigins, appliedWillChange } from './state.js';
 import { getTransformState, getElementOrder, interpolateSubProperty, computeTransformFromResolved, buildTransformString, getDefaultTransformState } from './transform.js';
 import { resolveNonTransformValues, createPropertyAnimation, extractPropertyConfig, buildPropertyKeyframes } from './properties.js';
 import { sendLifecycleEvent } from './ports.js';
@@ -457,6 +457,19 @@ export function processElementAnimation(animGroup, elementConfig, globalOptions 
     }
 
     const properties = elementConfig.properties || [];
+
+    // Seed the GPU-hint optimisation before any keyframes are computed so
+    // the compositor can promote the element to its own layer for the very
+    // first frame. Cleared by `cleanupAnimGroup` once all animations on
+    // this animGroup finish or cancel.
+    if (elementConfig.willChange && typeof elementConfig.willChange === 'string') {
+        try {
+            element.style.willChange = elementConfig.willChange;
+            appliedWillChange.set(animGroup, { element: element, value: elementConfig.willChange });
+        } catch (_) {
+            // Hostile environments (e.g. frozen styles) — non-fatal.
+        }
+    }
 
     const transformOrder = elementConfig.transformOrder;
     if (transformOrder && transformOrder.length > 0) {

@@ -6,6 +6,7 @@ module Anim.Internal.Engine.Keyframe.AnimGroup exposing
     , getIterationCount
     , getRestartCounter
     , getStyles
+    , getWillChange
     , incrementIterationCount
     , init
     , isActive
@@ -19,6 +20,7 @@ module Anim.Internal.Engine.Keyframe.AnimGroup exposing
     , setPlayState
     , setRestartCounter
     , setStyles
+    , setWillChange
     )
 
 import Anim.Internal.Engine.CSS.Styles as Styles exposing (Styles)
@@ -39,6 +41,7 @@ type AnimGroup
         , restartCounter : Int
         , iterationCount : Int
         , maybeAnimation : Maybe Animation
+        , willChange : String
         }
 
 
@@ -50,6 +53,7 @@ init =
         , restartCounter = 0
         , iterationCount = 0
         , maybeAnimation = Nothing
+        , willChange = ""
         }
 
 
@@ -171,6 +175,25 @@ addStyle key value (AnimGroup animGroup) =
 getStyles : AnimGroup -> Styles
 getStyles (AnimGroup animGroup) =
     animGroup.styles
+
+
+{-| Get the deduped, comma-joined `will-change` value derived from the
+properties this group animates. Empty when the group has no properties
+(or is being constructed). The Keyframe engine writes this into the
+inline style of the animated element so the browser can pre-promote
+the layer before the animation kicks off.
+-}
+getWillChange : AnimGroup -> String
+getWillChange (AnimGroup animGroup) =
+    animGroup.willChange
+
+
+{-| Set the precomputed `will-change` value for this group. See
+[`getWillChange`](#getWillChange).
+-}
+setWillChange : String -> AnimGroup -> AnimGroup
+setWillChange value (AnimGroup animGroup) =
+    AnimGroup { animGroup | willChange = value }
 
 
 mergeStyles : AnimGroup -> AnimGroup -> AnimGroup

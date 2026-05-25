@@ -1215,8 +1215,26 @@ attributes animGroupName (AnimState _ animGroups) =
                 discreteStyles =
                     discreteEntryStyles animGroup
                         ++ discreteExitStyles animGroup
+
+                willChangeStyle =
+                    -- `will-change` promotes the animated properties to
+                    -- their own compositor layer before per-frame style
+                    -- updates start landing. We clear it once the
+                    -- animation finishes (infinite loops never reach this
+                    -- branch) so the element doesn't keep paying the
+                    -- layer cost forever.
+                    if AnimGroup.isComplete animGroup then
+                        []
+
+                    else
+                        case AnimGroup.getWillChange animGroup of
+                            "" ->
+                                []
+
+                            value ->
+                                [ Html.Attributes.style "will-change" value ]
             in
-            transformStyle ++ nonTransformStyles ++ discreteStyles
+            willChangeStyle ++ transformStyle ++ nonTransformStyles ++ discreteStyles
 
 
 collectCurrentTransform : Animation -> Builder.TransformParts -> Builder.TransformParts

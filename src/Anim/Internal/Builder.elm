@@ -111,6 +111,8 @@ module Anim.Internal.Builder exposing
     , unfreezeAxes
     , updateBaselines
     , updateCurrentConfig
+    , willChangeComposite
+    , willChangeIndividual
     )
 
 import Anim.Extra.TransformOrder exposing (TransformProperty(..))
@@ -1511,6 +1513,136 @@ processedTimings prop =
 
         ProcessedTranslateConfig cfg ->
             { duration = cfg.duration, delay = cfg.delay }
+
+
+{-| Comma-joined `will-change` value for an animation that renders
+transforms as the modern individual properties (`translate`, `scale`).
+Used by the Transition engine, which writes `translate: ...` and
+`scale: ...` directly rather than packing them into `transform: ...`.
+
+Rotate and Skew still collapse to `transform` because there is no
+broadly-supported individual `rotate` / `skew` _animatable_ shorthand on
+the same rendering path. The returned string preserves the order of
+first appearance and is `""` for an empty list.
+
+    willChangeIndividual
+        [ ProcessedOpacityConfig cfg
+        , ProcessedTranslateConfig cfg
+        , ProcessedRotateConfig cfg
+        ]
+        --> "opacity, translate, transform"
+
+-}
+willChangeIndividual : List ProcessedPropertyConfig -> String
+willChangeIndividual =
+    toWillChangeString cssNamesIndividual
+
+
+{-| Comma-joined `will-change` value for an animation that renders
+transforms via the composite `transform` property. Used by the Keyframe
+and Sub engines, which build a single `transform: translate(...) rotate(...)
+scale(...) skew(...)` declaration.
+
+All transform-family properties collapse to a single `transform` entry.
+The returned string preserves the order of first appearance and is
+`""` for an empty list.
+
+    willChangeComposite
+        [ ProcessedOpacityConfig cfg
+        , ProcessedTranslateConfig cfg
+        , ProcessedRotateConfig cfg
+        ]
+        --> "opacity, transform"
+
+-}
+willChangeComposite : List ProcessedPropertyConfig -> String
+willChangeComposite =
+    toWillChangeString cssNamesComposite
+
+
+toWillChangeString : (ProcessedPropertyConfig -> List String) -> List ProcessedPropertyConfig -> String
+toWillChangeString toNames props =
+    props
+        |> List.concatMap toNames
+        |> dedupePreservingOrder
+        |> String.join ", "
+
+
+cssNamesIndividual : ProcessedPropertyConfig -> List String
+cssNamesIndividual prop =
+    case prop of
+        ProcessedCustomPropertyConfig cssName _ _ ->
+            [ cssName ]
+
+        ProcessedCustomColorPropertyConfig cssName _ ->
+            [ cssName ]
+
+        ProcessedOpacityConfig _ ->
+            [ "opacity" ]
+
+        ProcessedPerspectiveOriginConfig _ ->
+            [ "perspective-origin" ]
+
+        ProcessedRotateConfig _ ->
+            [ "transform" ]
+
+        ProcessedScaleConfig _ ->
+            [ "scale" ]
+
+        ProcessedSizeConfig _ ->
+            [ "width", "height" ]
+
+        ProcessedSkewConfig _ ->
+            [ "transform" ]
+
+        ProcessedTranslateConfig _ ->
+            [ "translate" ]
+
+
+cssNamesComposite : ProcessedPropertyConfig -> List String
+cssNamesComposite prop =
+    case prop of
+        ProcessedCustomPropertyConfig cssName _ _ ->
+            [ cssName ]
+
+        ProcessedCustomColorPropertyConfig cssName _ ->
+            [ cssName ]
+
+        ProcessedOpacityConfig _ ->
+            [ "opacity" ]
+
+        ProcessedPerspectiveOriginConfig _ ->
+            [ "perspective-origin" ]
+
+        ProcessedRotateConfig _ ->
+            [ "transform" ]
+
+        ProcessedScaleConfig _ ->
+            [ "transform" ]
+
+        ProcessedSizeConfig _ ->
+            [ "width", "height" ]
+
+        ProcessedSkewConfig _ ->
+            [ "transform" ]
+
+        ProcessedTranslateConfig _ ->
+            [ "transform" ]
+
+
+dedupePreservingOrder : List String -> List String
+dedupePreservingOrder =
+    List.foldl
+        (\name ( seen, acc ) ->
+            if Set.member name seen then
+                ( seen, acc )
+
+            else
+                ( Set.insert name seen, name :: acc )
+        )
+        ( Set.empty, [] )
+        >> Tuple.second
+        >> List.reverse
 
 
 

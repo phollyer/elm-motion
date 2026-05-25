@@ -320,9 +320,26 @@ attributes animGroupName ((AnimState _ animGroups) as animState) =
 
                         Nothing ->
                             "none"
+
+                willChangePairs =
+                    -- `will-change` promotes the animated properties to
+                    -- their own compositor layer ahead of the keyframes
+                    -- starting. We clear it once the animation finishes
+                    -- (infinite loops never reach this branch) so the
+                    -- element doesn't keep paying the layer cost forever.
+                    if AnimGroup.isComplete animGroup then
+                        []
+
+                    else
+                        case AnimGroup.getWillChange animGroup of
+                            "" ->
+                                []
+
+                            value ->
+                                [ ( "will-change", value ) ]
             in
             CSS.attributes
-                [ ( "animation", animationAttribute ) ]
+                (( "animation", animationAttribute ) :: willChangePairs)
                 AnimGroup.getStyles
                 animGroupName
                 animState
