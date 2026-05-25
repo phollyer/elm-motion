@@ -49,8 +49,8 @@ Get up and running in minutes.
         { animState : Transition.AnimState }
 
 
-    init : () -> ( Model, Cmd Msg )
-    init _ =
+    init : ( Model, Cmd Msg )
+    init =
         ( { animState = Transition.init [ Opacity.init "card" 0 ] }
         , Cmd.none
         )
@@ -135,8 +135,8 @@ Pass a list of property initializers to `init`. Each registers an animation grou
 ??? example "View Source Code"
 
     ```elm
-    init : () -> ( Model, Cmd Msg )
-    init _ =
+    init : ( Model, Cmd Msg )
+    init =
         ( { animState = Transition.init [ Opacity.init "card" 0 ] }
         , Cmd.none
         )
@@ -159,8 +159,8 @@ If a transition must run immediately on page load, use `Process.sleep 0` before 
 ??? example "View Source Code"
 
     ```elm
-    init : () -> ( Model, Cmd Msg )
-    init _ =
+    init : ( Model, Cmd Msg )
+    init =
         ( { animState = Transition.init [ Opacity.init "card" 0 ] }
         , Process.sleep 0 |> Task.perform (\_ -> TriggerFadeIn)
         )

@@ -4,15 +4,15 @@
 
 Animations need a timeline to animate on, and modern Browsers have three: Document, Scroll and Viewport.
 
-The Document timeline is the one most folks use and maybe do so without knowing about it. If you've ever done CSS transition, keyframe or `subscriptions` (`requestAnimationFrame`) animations, you've used the Document timeline. Perhaps unsurprisingly then, the Transition, Keyframe, Sub and WAAPI Engines all animate on the Document timeline.
+The Document timeline ties animations to **time** and is the one most folks use and maybe do so without knowing about it. If you've ever done CSS transition, keyframe or `subscriptions` (`requestAnimationFrame`) animations, you've used the Document timeline. Perhaps unsurprisingly then, the Transition, Keyframe, Sub and WAAPI Engines all animate on the Document timeline.
 
-Introduced around July 2023 are the more recent additions of the Scroll and Viewport timelines. These tie animations to scroll position and viewport position respectively, allowing animations to run in relation to scroll position as the user scrolls the document or container. The ScrollTimeline and ViewTimeline Engines target these new timelines.
+Introduced around July 2023 are the more recent additions of the Scroll and Viewport timelines. These tie animations to scroll position and viewport position respectively, not time, allowing animations to run in relation to scroll position as the user scrolls the document or container. The ScrollTimeline and ViewTimeline Engines target these new timelines.
 
 Due to the Scroll and Viewport timelines being fairly recent additions, not all browsers may support them. At the time of writing, Firefox doesn't. This is not a problem though, because the JS companion automatically falls back to  [scroll-timeline-polyfill](https://www.npmjs.com/package/scroll-timeline-polyfill) so your users always get the intended experience regardless of browser support.
 
 ## Coding Style
 
-The library codebase, and all the examples use function composition wherever possible.
+The library codebase, and all the examples use function composition extensively.
 
 ??? note "New to function composition (`>>`)?"
 

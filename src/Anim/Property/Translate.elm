@@ -241,8 +241,8 @@ continueFor =
     import Anim.Engine.* as Engine
     import Anim.Property.Translate as Translate
 
-    init : () -> ( Model, Cmd Msg )
-    init _ =
+    init : ( Model, Cmd Msg )
+    init =
         ( { animState = Engine.init [ Translate.initXYZ "animGroupName" 100 20 50 ] }
         , Cmd.none
         )
@@ -264,8 +264,8 @@ initXYZ animationKey x y z =
     import Anim.Engine.* as Engine
     import Anim.Property.Translate as Translate
 
-    init : () -> ( Model, Cmd Msg )
-    init _ =
+    init : ( Model, Cmd Msg )
+    init =
         ( { animState = Engine.init [ Translate.initXY "animGroupName" 100 20 ] }
         , Cmd.none
         )
@@ -287,8 +287,8 @@ initXY animationKey x y animBuilder =
     import Anim.Engine.* as Engine
     import Anim.Property.Translate as Translate
 
-    init : () -> ( Model, Cmd Msg )
-    init _ =
+    init : ( Model, Cmd Msg )
+    init =
         ( { animState = Engine.init [ Translate.initXZ "animGroupName" 100 50 ] }
         , Cmd.none
         )
@@ -310,8 +310,8 @@ initXZ animationKey x z animBuilder =
     import Anim.Engine.* as Engine
     import Anim.Property.Translate as Translate
 
-    init : () -> ( Model, Cmd Msg )
-    init _ =
+    init : ( Model, Cmd Msg )
+    init =
         ( { animState = Engine.init [ Translate.initX "animGroupName" 100 ] }
         , Cmd.none
         )
@@ -332,8 +332,8 @@ initX animationKey x animBuilder =
     import Anim.Engine.* as Engine
     import Anim.Property.Translate as Translate
 
-    init : () -> ( Model, Cmd Msg )
-    init _ =
+    init : ( Model, Cmd Msg )
+    init =
         ( { animState = Engine.init [ Translate.initYZ "animGroupName" 20 50 ] }
         , Cmd.none
         )
@@ -355,8 +355,8 @@ initYZ animationKey y z animBuilder =
     import Anim.Engine.* as Engine
     import Anim.Property.Translate as Translate
 
-    init : () -> ( Model, Cmd Msg )
-    init _ =
+    init : ( Model, Cmd Msg )
+    init =
         ( { animState = Engine.init [ Translate.initY "animGroupName" 20 ] }
         , Cmd.none
         )
@@ -377,8 +377,8 @@ initY animationKey y animBuilder =
     import Anim.Engine.* as Engine
     import Anim.Property.Translate as Translate
 
-    init : () -> ( Model, Cmd Msg )
-    init _ =
+    init : ( Model, Cmd Msg )
+    init =
         ( { animState = Engine.init [ Translate.initZ "animGroupName" 50 ] }
         , Cmd.none
         )

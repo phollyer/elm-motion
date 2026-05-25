@@ -18,10 +18,10 @@ import Motion.Easing exposing (Easing(..))
 main : Program () Model Msg
 main =
     Browser.element
-        { init = init
+        { init = \_ -> init
         , view = view
         , update = update
-        , subscriptions = subscriptions
+        , subscriptions = always Sub.none
         }
 
 
@@ -33,8 +33,8 @@ type alias Model =
     { animState : Keyframe.AnimState }
 
 
-init : () -> ( Model, Cmd Msg )
-init _ =
+init : ( Model, Cmd Msg )
+init =
     ( { animState =
             Keyframe.init
                 [ Translate.initY animGroup 0 ]
@@ -143,15 +143,6 @@ update msg model =
         ---8<-- [end:restart]
         GotAnimMsg _ ->
             ( model, Cmd.none )
-
-
-
--- SUBSCRIPTIONS
-
-
-subscriptions : Model -> Sub Msg
-subscriptions _ =
-    Sub.none
 
 
 

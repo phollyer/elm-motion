@@ -54,7 +54,7 @@ redrawing at a new size per resize tick isn't visually disruptive.
 main : Program () Model Msg
 main =
     Browser.document
-        { init = init
+        { init = \_ -> init
         , view = view
         , update = update
         , subscriptions = subscriptions
@@ -76,8 +76,8 @@ type alias Model =
 ---8<-- [start:initializeAndTrigger]
 
 
-init : () -> ( Model, Cmd Msg )
-init _ =
+init : ( Model, Cmd Msg )
+init =
     let
         initialAnimState =
             Transition.init <|

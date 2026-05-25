@@ -1,6 +1,7 @@
 module Animation.Transition.ButtonHovers.Main exposing (main)
 
-import Anim.Engine.Transition as Transition exposing (EngineBuilder)
+import Anim.Builder exposing (AnimBuilder)
+import Anim.Engine.Transition as Transition
 import Anim.Extra.View3D as View3D
 import Anim.Property.Scale as Scale
 import Anim.Property.Size as Size
@@ -20,10 +21,10 @@ import Motion.Easing exposing (Easing(..))
 main : Program () Model Msg
 main =
     Browser.element
-        { init = init
+        { init = \_ -> init
         , view = view
         , update = update
-        , subscriptions = subscriptions
+        , subscriptions = always Sub.none
         }
 
 
@@ -36,8 +37,8 @@ type alias Model =
     { animState : Transition.AnimState }
 
 
-init : () -> ( Model, Cmd Msg )
-init _ =
+init : ( Model, Cmd Msg )
+init =
     ( { animState =
             Transition.init
                 [ Size.initUnit Cqmin
@@ -112,7 +113,7 @@ unhoverEasing =
 ---8<-- [start:build]
 
 
-scaleUp : EngineBuilder -> EngineBuilder
+scaleUp : AnimBuilder mode -> AnimBuilder mode
 scaleUp =
     Scale.for scaleButton
         >> Scale.to 1.1
@@ -121,7 +122,7 @@ scaleUp =
         >> Scale.build
 
 
-scaleDown : EngineBuilder -> EngineBuilder
+scaleDown : AnimBuilder mode -> AnimBuilder mode
 scaleDown =
     Scale.for scaleButton
         >> Scale.to 1
@@ -130,7 +131,7 @@ scaleDown =
         >> Scale.build
 
 
-growSize : EngineBuilder -> EngineBuilder
+growSize : AnimBuilder mode -> AnimBuilder mode
 growSize =
     Size.for sizeButton
         >> Size.cssUnit Cqmin
@@ -140,7 +141,7 @@ growSize =
         >> Size.build
 
 
-shrinkSize : EngineBuilder -> EngineBuilder
+shrinkSize : AnimBuilder mode -> AnimBuilder mode
 shrinkSize =
     Size.for sizeButton
         >> Size.cssUnit Cqmin
@@ -150,7 +151,7 @@ shrinkSize =
         >> Size.build
 
 
-liftUp : EngineBuilder -> EngineBuilder
+liftUp : AnimBuilder mode -> AnimBuilder mode
 liftUp =
     Translate.for zButton
         >> Translate.toZ 60
@@ -159,7 +160,7 @@ liftUp =
         >> Translate.build
 
 
-setDown : EngineBuilder -> EngineBuilder
+setDown : AnimBuilder mode -> AnimBuilder mode
 setDown =
     Translate.for zButton
         >> Translate.toZ 0
@@ -219,16 +220,6 @@ update msg model =
 
 
 ---8<-- [end:trigger]
----8<-- [start:subscriptions]
-
-
-subscriptions : Model -> Sub Msg
-subscriptions _ =
-    Sub.none
-
-
-
----8<-- [end:subscriptions]
 -- VIEW
 
 

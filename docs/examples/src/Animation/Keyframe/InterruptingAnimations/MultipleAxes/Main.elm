@@ -18,7 +18,7 @@ import Motion.Easing exposing (Easing(..))
 main : Program () Model Msg
 main =
     Browser.element
-        { init = init
+        { init = \_ -> init
         , update = update
         , view = view
         , subscriptions = \_ -> Sub.none
@@ -48,8 +48,8 @@ boxPct =
     12
 
 
-init : () -> ( Model, Cmd Msg )
-init _ =
+init : ( Model, Cmd Msg )
+init =
     ( { animState =
             Keyframe.init
                 [ Translate.initUnitX Cqw

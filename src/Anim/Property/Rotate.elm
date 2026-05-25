@@ -144,8 +144,8 @@ for =
     import Anim.Engine.* as Engine
     import Anim.Property.Rotate as Rotate
 
-    init : () -> ( Model, Cmd Msg )
-    init _ =
+    init : ( Model, Cmd Msg )
+    init =
         ( { animState = Engine.init [ Rotate.initXYZ "animGroupName" 45 30 60 ] }
         , Cmd.none
         )
@@ -165,8 +165,8 @@ initXYZ animationKey x y z animBuilder =
     import Anim.Engine.* as Engine
     import Anim.Property.Rotate as Rotate
 
-    init : () -> ( Model, Cmd Msg )
-    init _ =
+    init : ( Model, Cmd Msg )
+    init =
         ( { animState = Engine.init [ Rotate.initXY "animGroupName" 45 30 ] }
         , Cmd.none
         )
@@ -186,8 +186,8 @@ initXY animationKey x y animBuilder =
     import Anim.Engine.* as Engine
     import Anim.Property.Rotate as Rotate
 
-    init : () -> ( Model, Cmd Msg )
-    init _ =
+    init : ( Model, Cmd Msg )
+    init =
         ( { animState = Engine.init [ Rotate.initXZ "animGroupName" 45 60 ] }
         , Cmd.none
         )
@@ -207,8 +207,8 @@ initXZ animationKey x z animBuilder =
     import Anim.Engine.* as Engine
     import Anim.Property.Rotate as Rotate
 
-    init : () -> ( Model, Cmd Msg )
-    init _ =
+    init : ( Model, Cmd Msg )
+    init =
         ( { animState = Engine.init [ Rotate.initX "animGroupName" 45 ] }
         , Cmd.none
         )
@@ -228,8 +228,8 @@ initX animationKey x animBuilder =
     import Anim.Engine.* as Engine
     import Anim.Property.Rotate as Rotate
 
-    init : () -> ( Model, Cmd Msg )
-    init _ =
+    init : ( Model, Cmd Msg )
+    init =
         ( { animState = Engine.init [ Rotate.initYZ "animGroupName" 30 60 ] }
         , Cmd.none
         )
@@ -249,8 +249,8 @@ initYZ animationKey y z animBuilder =
     import Anim.Engine.* as Engine
     import Anim.Property.Rotate as Rotate
 
-    init : () -> ( Model, Cmd Msg )
-    init _ =
+    init : ( Model, Cmd Msg )
+    init =
         ( { animState = Engine.init [ Rotate.initY "animGroupName" 30 ] }
         , Cmd.none
         )
@@ -270,8 +270,8 @@ initY animationKey y animBuilder =
     import Anim.Engine.* as Engine
     import Anim.Property.Rotate as Rotate
 
-    init : () -> ( Model, Cmd Msg )
-    init _ =
+    init : ( Model, Cmd Msg )
+    init =
         ( { animState = Engine.init [ Rotate.initZ "animGroupName" 60 ] }
         , Cmd.none
         )

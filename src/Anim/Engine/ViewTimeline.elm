@@ -128,7 +128,7 @@ import Motion.Spring exposing (Spring)
 
 {-| Builder type for view-driven animations.
 
-Use this in type annotations when a helper should only work with ViewTimeline.
+Use this in type annotations when a builder function should only work with ViewTimeline.
 
 📖 See [Builder Modes](https://phollyer.github.io/elm-motion/animation/concepts/builder-modes/)
 for patterns and examples.
@@ -178,8 +178,6 @@ animate =
   - `Cancelled String` — the animation was cancelled (e.g. element removed)
   - `Iteration String Int` — the animation looped; the `Int` is the cumulative iteration count
   - `AnimError String` — a message arrived but could not be decoded
-
-`Nothing` means the message was for something else.
 
 -}
 type AnimEvent

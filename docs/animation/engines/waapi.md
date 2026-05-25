@@ -61,8 +61,8 @@ Define ports and pass them to `init`. Your module declaration must use `port mod
     port motionMsg : (Json.Decode.Value -> msg) -> Sub msg
 
 
-    init : () -> ( Model, Cmd Msg )
-    init _ =
+    init : ( Model, Cmd Msg )
+    init =
         ( { animState = WAAPI.init motionCmd motionMsg [ Opacity.init "card" 0 ] }
         , Cmd.none
         )

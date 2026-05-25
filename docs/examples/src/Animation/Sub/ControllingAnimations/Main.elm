@@ -18,7 +18,7 @@ import Motion.Easing as Easing exposing (Easing(..))
 main : Program () Model Msg
 main =
     Browser.element
-        { init = init
+        { init = \_ -> init
         , view = view
         , update = update
         , subscriptions = subscriptions
@@ -52,8 +52,8 @@ ballSizeCqh =
 -- INIT
 
 
-init : () -> ( Model, Cmd Msg )
-init _ =
+init : ( Model, Cmd Msg )
+init =
     ( { animState =
             Sub.init
                 [ Translate.initY animGroup 0 ]

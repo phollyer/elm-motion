@@ -384,8 +384,8 @@ Use this to initialize the property in your Engine's `init` function.
     import Anim.Property.Custom as Property
     import Anim.Unit exposing (Unit(..))
 
-    init : () -> ( Model, Cmd Msg )
-    init _ =
+    init : ( Model, Cmd Msg )
+    init =
         ( { animState =
                 Engine.init
                     [ Property.init "box" (BorderRadius Px) 0 ]

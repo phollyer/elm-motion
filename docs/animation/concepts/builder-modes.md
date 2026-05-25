@@ -4,9 +4,6 @@ Builder modes let you control how broadly a builder function can be used.
 Use them when you want stronger intent signaling in type signatures,
 or when a builder only makes sense for a specific timeline or engine.
 
-If you are new to Elm Motion's builder flow, start with
-[Build](../workflow/build.md) first.
-
 ## Generic Mode
 
 Use a generic `mode` when a builder should work across engines.
@@ -91,6 +88,10 @@ Using a more specific `mode` can improve both readability and maintenance:
 - Intent signaling: type signatures communicate purpose immediately (for example, "Transition-only builder").
 - Faster bug triage: when a bug is tied to one engine or timeline, builder functions with incompatible modes can be ruled out quickly.
 
-## Next Step
+## Next Steps
 
-Go back to [Build](../workflow/build.md) to continue the core animation workflow.
+Learn about Interrupting Animations mid-flight.
+
+[Interrupting Animations →](../concepts/interrupting-animations.md){ .md-button .md-button--primary }
+
+Or go back to [Build](../workflow/build.md) to continue the core animation workflow.

@@ -190,8 +190,8 @@ type alias Builder mode =
     import Anim.Engine.* as Engine
     import Anim.Property.PerspectiveOrigin as PerspectiveOrigin
 
-    init : () -> ( Model, Cmd Msg )
-    init _ =
+    init : ( Model, Cmd Msg )
+    init =
         ( { animState = Engine.init [ PerspectiveOrigin.initXY "animGroupName" 50 50 ] }
         , Cmd.none
         )

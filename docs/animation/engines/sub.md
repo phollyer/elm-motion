@@ -47,8 +47,8 @@ Get up and running in minutes.
         { animState : Sub.AnimState }
 
 
-    init : () -> ( Model, Cmd Msg )
-    init _ =
+    init : ( Model, Cmd Msg )
+    init =
         ( { animState = Sub.init [ Translate.initY "ball" 0 ] }
         , Cmd.none
         )
@@ -123,8 +123,8 @@ Pass a list of property initializers to `init`. Each registers an animation grou
 ??? example "View Source Code"
 
     ```elm
-    init : () -> ( Model, Cmd Msg )
-    init _ =
+    init : ( Model, Cmd Msg )
+    init =
         ( { animState = Sub.init [ Opacity.init "ball" 0 ] }
         , Cmd.none
         )

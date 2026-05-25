@@ -149,6 +149,10 @@ update msg model =
             )
 
 
+
+-- SUBSCRIPTIONS
+
+
 subscriptions : Model -> Sub.Sub Msg
 subscriptions model =
     Sub.subscriptions GotAnimationUpdate model.animState

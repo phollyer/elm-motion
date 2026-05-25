@@ -191,8 +191,6 @@ containerToId container =
   - `Iteration String Int` — the animation looped; the `Int` is the cumulative iteration count
   - `AnimError String` — a message arrived but could not be decoded
 
-`Nothing` means the message was for something else.
-
 -}
 type AnimEvent
     = Ended AnimGroupName

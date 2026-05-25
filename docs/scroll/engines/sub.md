@@ -37,8 +37,8 @@ Store the `ScrollState` in your model and initialize it with `Sub.init`:
     type alias Model =
         { scrollState : Sub.ScrollState }
 
-    init : () -> ( Model, Cmd Msg )
-    init _ =
+    init : ( Model, Cmd Msg )
+    init =
         ( { scrollState = Sub.init }, Cmd.none )
     ```
 

@@ -16,18 +16,18 @@ A comprehensive Elm package for smooth, high-performance DOM animations and scro
 
 ### **Animation**
 
-- **Transition** — Browser-native; simple state-to-state animations, minimal control, minimal setup
-- **Keyframe** — Browser-native; looping, full control
-- **Sub** — Pure Elm; looping, full control, real-time mid-flight queries/diversions
-- **WAAPI** — Browser-native via JS; looping, full control, real-time mid-flight queries/diversions
-- **ScrollTimeline** — Browser-native via JS; scroll-driven, tied to a scroll container's progress
-- **ViewTimeline** — Browser-native via JS; viewport-driven, tied to an element entering and leaving view
+- **Transition** — Browser-native performance; quick setup for simple A→B animations, minimal control (stop, reset)
+- **Keyframe** — Browser-native performance; full control (stop, reset, restart, pause, resume), looping
+- **Sub** — Pure Elm; full control (stop, reset, restart, pause, resume), looping, real-time mid-flight queries/diversions
+- **WAAPI** — Browser-native performance via JS; full control (stop, reset, restart, pause, resume), looping, real-time mid-flight queries/diversions
+- **ScrollTimeline** — Browser-native performance via JS; scroll-driven, tied to a container's scroll progress
+- **ViewTimeline** — Browser-native performance via JS; viewport-driven, tied to an element entering and leaving view
 
 ### **Scroll**
 
 - **Cmd** — Simple fire-and-forget scrolls, minimal setup
-- **Task** — Composable scrolls with error handling
-- **Sub** — Stateful scrolling with events and mid-scroll queries and control
+- **Task** — Composable scrolling with typed error handling
+- **Sub** — Stateful scrolling with full control, events, and mid-scroll queries
 
 ---
 
@@ -64,7 +64,7 @@ ScrollTimeline.animate motionCmd Document fadeIn
 ViewTimeline.animate motionCmd fadeIn
 ```
 
-### Composable
+### Composability
 
 The builder API makes animations, and their building blocks, composable so you
 can easily build animations from smaller pieces.
@@ -122,9 +122,9 @@ Sub.scroll ScrollMsg model.scrollState scrollToSection
 
 ### Animation Features
 
-- **Hardware-Accelerated** — GPU-powered transforms (translate, rotate, scale, opacity)
+- **Hardware-Accelerated** — GPU-powered transforms (translate, rotate, scale, skew, opacity)
 - **Full 3D Support** — XYZ positioning, multi-axis rotation, perspective
-- **Per-Property Choreography** — Animate opacity, position, rotation and more on a single element in parallel, with independent duration, delay and easing per property — no master timeline to orchestrate
+- **Multi-Property Animations** — Animate multiple properties on the same element simultaneously, each with independent timing and easing — no master timeline to orchestrate
 - **Time, Scroll & Viewport Driven** — Drive animations by elapsed time, page scroll progress or an element's position in the viewport — same builder API, three different timelines
 
 ### Scroll Features
@@ -141,30 +141,14 @@ Sub.scroll ScrollMsg model.scrollState scrollToSection
 elm install phollyer/elm-motion
 ```
 
-For WAAPI support:
-
-```bash
-npm install @phollyer/elm-motion
-```
-
 ### Your First Animation
 
 ```elm
 import Anim.Builder exposing (AnimBuilder)
 import Anim.Engine.Transition as Transition
-import Anim.Property.Translate as Translate
+import Anim.Property.Opacity as Opacity
 
-
--- 1. Define your animation
-slideRight : AnimBuilder mode -> AnimBuilder mode
-slideRight =
-    Translate.for "sidebarAnim"
-        >> Translate.toX 200
-        >> Translate.duration 400
-        >> Translate.build
-
-
--- 2. Initialize state
+-- 1. Initialize state
 type alias Model =
     { animState : Transition.AnimState }
 
@@ -172,10 +156,20 @@ init : ( Model, Cmd Msg )
 init =
     ( { animState =
             Transition.init <|
-                [ Translate.initX "sidebarAnim" 100 ]
+                [ Opacity.init "headerAnim" 0 ]
       }
     , Cmd.none
     )
+
+
+-- 2. Define your animation
+fadeInHeader : AnimBuilder mode -> AnimBuilder mode
+fadeInHeader =
+    Opacity.for "headerAnim"
+        >> Opacity.to 1
+        >> Opacity.duration 400
+        >> Opacity.build
+
 
 
 -- 3. Trigger it
@@ -186,7 +180,7 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         Animate ->
-            ( { model | animState = Transition.animate model.animState slideRight }
+            ( { model | animState = Transition.animate model.animState fadeInHeader }
             , Cmd.none
             )
 
@@ -195,8 +189,8 @@ update msg model =
 view : Model -> Html Msg
 view model =
     Html.div
-        (Transition.attributes "sidebarAnim" model.animState)
-        [ Html.text "Slide me!" ]
+        (Transition.attributes "headerAnim" model.animState)
+        [ Html.text "Animated header with logo and nav" ]
 ```
 
 ### Your First Scroll

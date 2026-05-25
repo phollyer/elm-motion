@@ -27,7 +27,7 @@ Every animation follows this pattern:
     ```
 
     `for` and `build` are required to start and end the builder chain respectively. All other configurations are optional,
-    although without an end value the animations won't have anywhere to go!!
+    although without an `endValue` the animations won't have anywhere to go!!
 
 ## Builder Modes
 

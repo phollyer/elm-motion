@@ -21,7 +21,7 @@ import Motion.Easing exposing (Easing(..))
 main : Program () Model Msg
 main =
     Browser.element
-        { init = init
+        { init = \_ -> init
         , update = update
         , view = view
         , subscriptions = subscriptions
@@ -74,8 +74,8 @@ boxHalfPct =
     boxPct / 2
 
 
-init : () -> ( Model, Cmd Msg )
-init _ =
+init : ( Model, Cmd Msg )
+init =
     ( { animState =
             WAAPI.init motionCmd motionMsg <|
                 [ Translate.initUnitX Cqw

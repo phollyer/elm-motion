@@ -129,8 +129,8 @@ Use this to initialize the opacity in your Engine's `init` function.
     import Anim.Engine.* as Engine
     import Anim.Property.Opacity as Opacity
 
-    init : () -> ( Model, Cmd Msg )
-    init _ =
+    init : ( Model, Cmd Msg )
+    init =
         ( { animState = Engine.init [ Opacity.init "animGroupName" 0.5 ] }
         , Cmd.none
         )

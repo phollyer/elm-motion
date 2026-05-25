@@ -12,7 +12,7 @@ All three use the same `Scroll.Builder` pipeline, so you can switch engines with
 
 ## Coding Style
 
-The library codebase, and all the examples, use function composition wherever possible.
+The library codebase, and all the examples, use function composition extensively.
 
 ??? note "New to function composition (`>>`)?"
 

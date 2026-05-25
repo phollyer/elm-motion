@@ -144,8 +144,8 @@ for =
     import Anim.Engine.* as Engine
     import Anim.Property.Skew as Skew
 
-    init : () -> ( Model, Cmd Msg )
-    init _ =
+    init : ( Model, Cmd Msg )
+    init =
         ( { animState = Engine.init [ Skew.initXY "animGroupName" 12 6 ] }
         , Cmd.none
         )
@@ -165,8 +165,8 @@ initXY animationKey x y animBuilder =
     import Anim.Engine.* as Engine
     import Anim.Property.Skew as Skew
 
-    init : () -> ( Model, Cmd Msg )
-    init _ =
+    init : ( Model, Cmd Msg )
+    init =
         ( { animState = Engine.init [ Skew.initX "animGroupName" 12 ] }
         , Cmd.none
         )
@@ -186,8 +186,8 @@ initX animationKey x animBuilder =
     import Anim.Engine.* as Engine
     import Anim.Property.Skew as Skew
 
-    init : () -> ( Model, Cmd Msg )
-    init _ =
+    init : ( Model, Cmd Msg )
+    init =
         ( { animState = Engine.init [ Skew.initY "animGroupName" 8 ] }
         , Cmd.none
         )

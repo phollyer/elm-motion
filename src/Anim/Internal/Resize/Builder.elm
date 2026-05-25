@@ -61,7 +61,7 @@ type alias Entry =
 
 
 {-| Per-group accumulator. Adding a new supported property means
-extending this record and providing matching `setX` / `getX` helpers.
+extending this record and providing matching `setX` / `getX` builders.
 
 `default` is the group-wide fallback applied to any supported property
 on this group that has no explicit per-property entry.

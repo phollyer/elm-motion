@@ -19,10 +19,10 @@ import Motion.Easing as Easing exposing (Easing(..))
 -- MAIN
 
 
-main : Program Decode.Value Model Msg
+main : Program () Model Msg
 main =
     Browser.element
-        { init = init
+        { init = \_ -> init
         , view = view
         , update = update
         , subscriptions = subscriptions
@@ -38,29 +38,9 @@ type alias Model =
     { animState : Sub.AnimState }
 
 
-type alias Flags =
-    { width : Int
-    , height : Int
-    }
-
-
-flagsDecoder : Decoder Flags
-flagsDecoder =
-    Decode.field "window"
-        (Decode.map2 Flags
-            (Decode.field "width" Decode.int)
-            (Decode.field "height" Decode.int)
-        )
-
-
-init : Decode.Value -> ( Model, Cmd Msg )
-init rawFlags =
-    let
-        _ =
-            Decode.decodeValue flagsDecoder rawFlags
-                |> Result.withDefault { width = 1024, height = 768 }
-
-        animState =
+init : ( Model, Cmd Msg )
+init =
+    ( { animState =
             Sub.init
                 [ Size.initUnit Cqmin
                     >> Size.initHW sizeButton baseHeight baseWidth
@@ -69,8 +49,6 @@ init rawFlags =
                 , Size.initUnit Cqmin
                     >> Size.initHW zButton baseHeight baseWidth
                 ]
-    in
-    ( { animState = animState
       }
     , Cmd.none
     )
@@ -238,18 +216,12 @@ update msg model =
             )
 
         SizeHover ->
-            ( { model
-                | animState =
-                    Sub.animate model.animState growSize
-              }
+            ( { model  | animState = Sub.animate model.animState growSize    }
             , Cmd.none
             )
 
         SizeUnhover ->
-            ( { model
-                | animState =
-                    Sub.animate model.animState shrinkSize
-              }
+            ( { model  animState =  Sub.animate model.animState shrinkSize  }
             , Cmd.none
             )
 
@@ -266,6 +238,7 @@ update msg model =
 
 
 ---8<-- [end:trigger]
+-- SUBSCRIPTIONS
 ---8<-- [start:subscriptions]
 
 

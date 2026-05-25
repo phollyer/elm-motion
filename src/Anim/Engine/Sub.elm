@@ -57,14 +57,14 @@ and the
 
 This Engine uses the browser's Document timeline, along with the Transition, Keyframe, and WAAPI Engines.
 
-Use this in type annotations when a helper should work with document-timeline engines only.
+Use this in type annotations when a builder function should work with Document timeline engines only.
 
 @docs TimelineBuilder
 
 
 ### Engine Builder
 
-Use this in type annotations when a helper should only work with the Sub engine.
+Use this in type annotations when a builder function should only work with the Sub engine.
 
 @docs EngineBuilder
 
@@ -285,9 +285,9 @@ type alias AnimGroupName =
     String
 
 
-{-| Builder type for document-timeline helpers.
+{-| Builder type for Document timeline builders.
 
-Use this in type annotations when a helper should work with document-timeline engines.
+Use this in type annotations when a builder function should work with Document timeline engines.
 
 📖 See [Builder Modes](https://phollyer.github.io/elm-motion/animation/concepts/builder-modes/)
 for patterns and examples.
@@ -297,9 +297,9 @@ type alias TimelineBuilder engine =
     Internal.TimelineBuilder engine
 
 
-{-| Builder type for Sub-only helpers.
+{-| Builder type for Sub-only builders.
 
-Use this in type annotations when a helper should only work with this engine.
+Use this in type annotations when a builder function should only work with this engine.
 
 📖 See [Builder Modes](https://phollyer.github.io/elm-motion/animation/concepts/builder-modes/)
 for patterns and examples.

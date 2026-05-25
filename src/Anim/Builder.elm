@@ -24,21 +24,21 @@ in the docs for detailed examples and patterns.
 
 ## Timeline Modes
 
-Use these in type annotations when a helper should only work on a certain timeline.
+Use these in type annotations when a builder function should only work on a certain timeline.
 
 @docs ForScrollTimeline, ForViewTimeline, ForDocumentTimeline
 
 
 ### Engine Modes
 
-Use these with `ForDocumentTimeline` when a helper should only work with one document-timeline engine.
+Use these with `ForDocumentTimeline` when a builder function should only work with one specific Document timeline Engine.
 
 @docs ForKeyframeEngine, ForSubEngine, ForTransitionEngine, ForWAAPIEngine
 
 
 # Document Timeline Functions
 
-These settings are for document-timeline engines: Keyframe, Sub, Transition, and WAAPI.
+These settings are for Document timeline engines: Keyframe, Sub, Transition, and WAAPI.
 The engine modules re-export the same functions.
 
 @docs delay, duration, speed
@@ -88,7 +88,7 @@ type alias AnimBuilder mode =
     Internal.AnimBuilder mode
 
 
-{-| Builder mode for ScrollTimeline helpers.
+{-| Builder mode for ScrollTimeline builders.
 
     f : AnimBuilder ForScrollTimeline -> AnimBuilder ForScrollTimeline
 
@@ -97,7 +97,7 @@ type alias ForScrollTimeline =
     Internal.ForScrollTimeline
 
 
-{-| Builder mode for ViewTimeline helpers.
+{-| Builder mode for ViewTimeline builders.
 
     f : AnimBuilder ForViewTimeline -> AnimBuilder ForViewTimeline
 
@@ -106,7 +106,7 @@ type alias ForViewTimeline =
     Internal.ForViewTimeline
 
 
-{-| Builder mode for document-timeline helpers.
+{-| Builder mode for Document timeline builders.
 
     f : AnimBuilder (ForDocumentTimeline engine) -> AnimBuilder (ForDocumentTimeline engine)
 
@@ -115,7 +115,7 @@ type alias ForDocumentTimeline engine =
     Internal.ForDocumentTimeline engine
 
 
-{-| Builder mode for Keyframe helpers.
+{-| Builder mode for Keyframe builders.
 
     f : AnimBuilder (ForDocumentTimeline ForKeyframeEngine) -> AnimBuilder (ForDocumentTimeline ForKeyframeEngine)
 
@@ -124,7 +124,7 @@ type alias ForKeyframeEngine =
     Internal.ForKeyframeEngine
 
 
-{-| Builder mode for Sub helpers.
+{-| Builder mode for Sub builders.
 
     f : AnimBuilder (ForDocumentTimeline ForSubEngine) -> AnimBuilder (ForDocumentTimeline ForSubEngine)
 
@@ -133,7 +133,7 @@ type alias ForSubEngine =
     Internal.ForSubEngine
 
 
-{-| Builder mode for Transition helpers.
+{-| Builder mode for Transition builders.
 
     f : AnimBuilder (ForDocumentTimeline ForTransitionEngine) -> AnimBuilder (ForDocumentTimeline ForTransitionEngine)
 
@@ -142,7 +142,7 @@ type alias ForTransitionEngine =
     Internal.ForTransitionEngine
 
 
-{-| Builder mode for WAAPI helpers.
+{-| Builder mode for WAAPI builders.
 
     f : AnimBuilder (ForDocumentTimeline ForWAAPIEngine) -> AnimBuilder (ForDocumentTimeline ForWAAPIEngine)
 
@@ -151,7 +151,7 @@ type alias ForWAAPIEngine =
     Internal.ForWAAPIEngine
 
 
-{-| Set the global delay for all animations in a document-timeline builder.
+{-| Set the global delay for all animations in a Document timeline builder.
 
     introAnim : AnimBuilder mode -> AnimBuilder (ForDocumentTimeline engine)
     introAnim =
@@ -166,7 +166,7 @@ delay =
     Internal.delay
 
 
-{-| Set the global duration for all animations in a document-timeline builder.
+{-| Set the global duration for all animations in a Document timeline builder.
 
     introAnim : AnimBuilder mode -> AnimBuilder (ForDocumentTimeline engine)
     introAnim =
@@ -181,7 +181,7 @@ duration =
     Internal.duration
 
 
-{-| Set the global speed for all animations in a document-timeline builder.
+{-| Set the global speed for all animations in a Document timeline builder.
 
     introAnim : AnimBuilder mode -> AnimBuilder (ForDocumentTimeline engine)
     introAnim =

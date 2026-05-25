@@ -21,10 +21,10 @@ import Task
 main : Program () Model Msg
 main =
     Browser.document
-        { init = init
+        { init = \_ -> init
         , view = view
         , update = update
-        , subscriptions = subscriptions
+        , subscriptions = always Sub.none
         }
 
 
@@ -42,8 +42,8 @@ type alias Model =
 ---8<-- [start:initializeAndTrigger]
 
 
-init : () -> ( Model, Cmd Msg )
-init _ =
+init : ( Model, Cmd Msg )
+init =
     let
         initialAnimState =
             Keyframe.init <|
@@ -565,15 +565,6 @@ stateChanged state model =
         | state = state
         , animState = animState
     }
-
-
-
--- SUBSCRIPTIONS
-
-
-subscriptions : Model -> Sub Msg
-subscriptions _ =
-    Sub.none
 
 
 

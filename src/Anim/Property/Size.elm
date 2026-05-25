@@ -161,8 +161,8 @@ Use this to initialize the size in your Engine's `init` function.
     import Anim.Engine.* as Engine
     import Anim.Property.Size as Size
 
-    init : () -> ( Model, Cmd Msg )
-    init _ =
+    init : ( Model, Cmd Msg )
+    init =
         ( { animState = Engine.init [ Size.init "animGroupName" 100 ] }
         , Cmd.none
         )
@@ -185,8 +185,8 @@ init animationKey value animBuilder =
     import Anim.Engine.* as Engine
     import Anim.Property.Size as Size
 
-    init : () -> ( Model, Cmd Msg )
-    init _ =
+    init : ( Model, Cmd Msg )
+    init =
         ( { animState = Engine.init [ Size.initHW "animGroupName" 200 100 ] }
         , Cmd.none
         )
@@ -207,8 +207,8 @@ initHW animationKey h w animBuilder =
     import Anim.Engine.* as Engine
     import Anim.Property.Size as Size
 
-    init : () -> ( Model, Cmd Msg )
-    init _ =
+    init : ( Model, Cmd Msg )
+    init =
         ( { animState = Engine.init [ Size.initW "animGroupName" 200 ] }
         , Cmd.none
         )
@@ -229,8 +229,8 @@ initW animationKey w animBuilder =
     import Anim.Engine.* as Engine
     import Anim.Property.Size as Size
 
-    init : () -> ( Model, Cmd Msg )
-    init _ =
+    init : ( Model, Cmd Msg )
+    init =
         ( { animState = Engine.init [ Size.initH "animGroupName" 150 ] }
         , Cmd.none
         )

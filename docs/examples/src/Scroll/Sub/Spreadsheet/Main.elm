@@ -117,6 +117,7 @@ scrollToRegion regionId =
 
 
 ---8<-- [end:build]
+-- SUBSCRIPTIONS
 ---8<-- [start:subscriptions]
 
 

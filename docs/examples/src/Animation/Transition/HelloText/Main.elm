@@ -1,6 +1,6 @@
 module Animation.Transition.HelloText.Main exposing (main)
 
-import Anim.Engine.Transition as Transition exposing (EngineBuilder)
+import Anim.Engine.Transition as Transition exposing (AnimBuilder)
 import Anim.Property.Opacity as Opacity
 import Browser
 import Html exposing (Html, div, text)
@@ -60,7 +60,7 @@ groupName =
     "helloText"
 
 
-fadeIn : EngineBuilder -> EngineBuilder
+fadeIn : AnimBuilder mode -> AnimBuilder mode
 fadeIn =
     Opacity.for groupName
         >> Opacity.to 1

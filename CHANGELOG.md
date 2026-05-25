@@ -53,7 +53,7 @@ Initial release of `phollyer/elm-motion`.
 
 ### Animation
 
-- **Transition Engine** — Browser-native CSS transitions; simple state-to-state animations with minimal setup
+- **Transition Engine** — Browser-native CSS transitions; quick setup for simple A→B animations with minimal setup
 - **Keyframe Engine** — Browser-native `@keyframes`; looping, full playback control
 - **Sub Engine** — Pure Elm, frame-by-frame via subscriptions; looping, real-time mid-flight queries and diversions
 - **WAAPI Engine** — Web Animations API via JavaScript ports; looping, full control, real-time mid-flight queries and diversions
@@ -63,8 +63,8 @@ Initial release of `phollyer/elm-motion`.
 ### Scroll
 
 - **Cmd Engine** — Fire-and-forget scrolling with minimal setup
-- **Task Engine** — Composable scrolls with error handling
-- **Sub Engine** — Stateful scrolling with events and mid-scroll queries and control
+- **Task Engine** — Composable scrolling with typed error handling
+- **Sub Engine** — Stateful scrolling with full control, events, and mid-scroll queries
 
 ### Properties
 

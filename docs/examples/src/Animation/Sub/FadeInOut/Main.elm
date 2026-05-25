@@ -7,7 +7,6 @@ import Browser
 import Html exposing (Html, button, div, text)
 import Html.Attributes exposing (class, id, style)
 import Html.Events exposing (onClick)
-import Motion.Easing as Easing exposing (Easing(..))
 
 
 
@@ -25,6 +24,7 @@ main =
 
 
 
+-- MODEL
 ---8<-- [start:model]
 
 
@@ -44,6 +44,7 @@ init =
 
 
 ---8<-- [end:model]
+-- ANIMATION
 ---8<-- [start:build]
 
 
@@ -57,7 +58,6 @@ fadeTo to =
     Opacity.for animGroup
         >> Opacity.to to
         >> Opacity.duration 2500
-        >> Opacity.easing CubicInOut
         >> Opacity.build
 
 
@@ -73,6 +73,7 @@ fadeOut =
 
 
 ---8<-- [end:build]
+-- UPDATE
 ---8<-- [start:Msg]
 
 
@@ -114,6 +115,7 @@ update msg model =
 
 
 ---8<-- [end:trigger]
+-- SUBSCRIPTIONS
 ---8<-- [start:subscriptions]
 
 

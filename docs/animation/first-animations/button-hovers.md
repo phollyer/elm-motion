@@ -144,7 +144,7 @@ Three different hover effects.
             --8<-- "docs/examples/src/Animation/Keyframe/ButtonHovers/Main.elm:render"
             ```
 
-            Keyframe animations also need a `style` node with the keyframe rules. 
+            Keyframe animations also need a `styleNode` with the keyframe rules. 
             
             📖 See [Keyframe Style Node](/animation/engines/keyframes.md#keyframes-style-node) for more info.
 
@@ -197,7 +197,7 @@ Three different hover effects.
 
     Keep the Engine's state updated to make use of state-tracked features.
 
-    For the Transition and Keyframe engines, `update` is not required for this example; for the Sub and WAAPI engines, `update` is required. Timeline engines (`ScrollTimeline` and `ViewTimeline`) are also fire-and-forget and do not use `update`.
+    For the Transition and Keyframe engines, `update` is not required for this example; for the Sub and WAAPI engines, `update` is required.
 
 
     ??? example "View Source Code"
@@ -236,7 +236,7 @@ Three different hover effects.
             --8<-- "docs/examples/src/Animation/WAAPI/ButtonHovers/Main.elm:subscriptions"
             ```
 
-            Required for this interactive hover example so WAAPI property updates stay in sync.
+            Required for this interactive hover example so WAAPI property updates stay in sync - without it, mid-flight interruptions won't work correctly.
 
 --8<-- [end:breaking-it-down]
 

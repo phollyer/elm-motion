@@ -22,7 +22,7 @@ import Motion.Easing exposing (Easing(..))
 main : Program () Model Msg
 main =
     Browser.element
-        { init = init
+        { init = \_ -> init
         , view = view
         , update = update
         , subscriptions = subscriptions
@@ -48,8 +48,8 @@ type alias Model =
     { animState : WAAPI.AnimState Msg }
 
 
-init : () -> ( Model, Cmd Msg )
-init _ =
+init : ( Model, Cmd Msg )
+init =
     ( { animState =
             WAAPI.init motionCmd motionMsg <|
                 [ Size.initUnit Cqmin
@@ -182,6 +182,7 @@ setDown =
 
 
 ---8<-- [end:build]
+-- UPDATE
 ---8<-- [start:Msg]
 
 
@@ -258,6 +259,8 @@ update msg model =
 
 
 
+---8<-- [end:trigger]
+-- SUBSCRIPTIONS
 ---8<-- [start:subscriptions]
 
 
@@ -268,7 +271,6 @@ subscriptions model =
 
 
 ---8<-- [end:subscriptions]
----8<-- [end:trigger]
 -- VIEW
 
 

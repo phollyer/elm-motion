@@ -16,7 +16,7 @@ import Scroll.Engine.Sub as Scroll exposing (ScrollBuilder)
 main : Program () Model Msg
 main =
     Browser.element
-        { init = init
+        { init = \_ -> init
         , view = view
         , update = update
         , subscriptions = subscriptions
@@ -24,6 +24,7 @@ main =
 
 
 
+-- MODEL
 ---8<-- [start:model]
 
 
@@ -41,8 +42,8 @@ type ScrollStatus
     | Failed String
 
 
-init : () -> ( Model, Cmd Msg )
-init _ =
+init : ( Model, Cmd Msg )
+init =
     ( { scrollState = Scroll.init
       , status = Idle
       }
@@ -128,6 +129,7 @@ scrollToElement targetId =
 
 
 ---8<-- [end:build]
+-- SUBSCRIPTIONS
 ---8<-- [start:subscriptions]
 
 

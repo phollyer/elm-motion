@@ -1,6 +1,6 @@
 module Animation.Transition.DiscreteProperties.Main exposing (main)
 
-import Anim.Engine.Transition as Transition exposing (EngineBuilder)
+import Anim.Engine.Transition as Transition exposing (AnimBuilder)
 import Anim.Property.Opacity as Opacity
 import Browser
 import Html exposing (Html, button, div, p, text)
@@ -28,8 +28,7 @@ main =
 
 
 type alias Model =
-    { animState : Transition.AnimState
-    }
+    { animState : Transition.AnimState }
 
 
 init : ( Model, Cmd Msg )
@@ -53,20 +52,18 @@ animGroup =
     "fadeAnim"
 
 
-fadeIn : EngineBuilder -> EngineBuilder
+fadeIn : AnimBuilder mode -> AnimBuilder mode
 fadeIn =
-    Transition.discreteEntry "display" "flex"
-        >> Opacity.for animGroup
+    Opacity.for animGroup
         >> Opacity.to 1
         >> Opacity.duration 800
         >> Opacity.easing QuartIn
         >> Opacity.build
 
 
-fadeOut : EngineBuilder -> EngineBuilder
+fadeOut : AnimBuilder mode -> AnimBuilder mode
 fadeOut =
-    Transition.discreteExit "display" "flex" "none"
-        >> Opacity.for animGroup
+    Opacity.for animGroup
         >> Opacity.to 0
         >> Opacity.duration 800
         >> Opacity.easing CubicIn
@@ -88,14 +85,20 @@ update msg model =
     case msg of
         Show ->
             ( { model
-                | animState = Transition.animate model.animState fadeIn
+                | animState =
+                    Transition.animate model.animState <|
+                        Transition.discreteEntry "display" "flex"
+                            >> fadeIn
               }
             , Cmd.none
             )
 
         Hide ->
             ( { model
-                | animState = Transition.animate model.animState fadeOut
+                | animState =
+                    Transition.animate model.animState <|
+                        Transition.discreteExit "display" "flex" "none"
+                            >> fadeOut
               }
             , Cmd.none
             )

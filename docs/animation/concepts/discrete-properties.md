@@ -227,6 +227,6 @@ For engine-specific details on how discrete properties are implemented under the
 
 ## Next Steps
 
-Now that you've learnt about the Engines and Properties, learn about Interrupting Animations mid-flight.
+Now that you've learnt about the Engines and Properties, learn about Builder Modes and how they make builder functions reusable across engines.
 
-[Interrupting Animations →](../concepts/interrupting-animations.md){ .md-button .md-button--primary }
+[Builder Modes →](../concepts/builder-modes.md){ .md-button .md-button--primary }

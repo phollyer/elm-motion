@@ -57,14 +57,14 @@ which engines a helper is meant to work with.
 
 ### Timeline Builder
 
-Use this when a helper should work with document-timeline engines only.
+Use this when a builder function should work with Document timeline engines only.
 
 @docs TimelineBuilder
 
 
 ### Engine Builder
 
-Use this when a helper should only work with the Keyframe engine.
+Use this when a builder function should only work with the Keyframe engine.
 
 @docs EngineBuilder
 
@@ -268,9 +268,9 @@ type alias AnimGroupName =
     String
 
 
-{-| Builder type for document-timeline helpers.
+{-| Builder type for Document timeline builders.
 
-Use this in type annotations when a helper should work with document-timeline engines.
+Use this in type annotations when a builder function should work with Document timeline engines.
 
 📖 See [Builder Modes](https://phollyer.github.io/elm-motion/animation/concepts/builder-modes/)
 for patterns and examples.
@@ -280,9 +280,9 @@ type alias TimelineBuilder engine =
     Internal.TimelineBuilder engine
 
 
-{-| Builder type for Keyframe-only helpers.
+{-| Builder type for Keyframe-only builders.
 
-Use this in type annotations when a helper should only work with this engine.
+Use this in type annotations when a builder function should only work with this engine.
 
 📖 See [Builder Modes](https://phollyer.github.io/elm-motion/animation/concepts/builder-modes/)
 for patterns and examples.

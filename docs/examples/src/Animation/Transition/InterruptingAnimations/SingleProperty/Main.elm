@@ -35,8 +35,7 @@ animGroupName =
 
 
 type alias Model =
-    { animState : Transition.AnimState
-    }
+    { animState : Transition.AnimState }
 
 
 init : ( Model, Cmd Msg )

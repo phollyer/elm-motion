@@ -16,7 +16,7 @@ import Scroll.Engine.Cmd as Scroll exposing (ScrollBuilder)
 main : Program () Model Msg
 main =
     Browser.element
-        { init = init
+        { init = \_ -> init
         , view = view
         , update = update
         , subscriptions = always Sub.none
@@ -37,8 +37,8 @@ type ScrollStatus
     | Arrived
 
 
-init : () -> ( Model, Cmd Msg )
-init _ =
+init : ( Model, Cmd Msg )
+init =
     ( { status = Idle }, Cmd.none )
 
 

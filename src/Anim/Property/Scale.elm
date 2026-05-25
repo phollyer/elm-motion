@@ -154,8 +154,8 @@ Use this to initialize the scale in your Engine's `init` function.
     import Anim.Engine.* as Engine
     import Anim.Property.Scale as Scale
 
-    init : () -> ( Model, Cmd Msg )
-    init _ =
+    init : ( Model, Cmd Msg )
+    init =
         ( { animState = Engine.init [ Scale.init "animGroupName" 1.5 ] }
         , Cmd.none
         )
@@ -177,8 +177,8 @@ init animationKey value animBuilder =
     import Anim.Engine.* as Engine
     import Anim.Property.Scale as Scale
 
-    init : () -> ( Model, Cmd Msg )
-    init _ =
+    init : ( Model, Cmd Msg )
+    init =
         ( { animState = Engine.init [ Scale.initXYZ "animGroupName" 1.5 1.2 1.0 ] }
         , Cmd.none
         )
@@ -198,8 +198,8 @@ initXYZ animationKey x y z animBuilder =
     import Anim.Engine.* as Engine
     import Anim.Property.Scale as Scale
 
-    init : () -> ( Model, Cmd Msg )
-    init _ =
+    init : ( Model, Cmd Msg )
+    init =
         ( { animState = Engine.init [ Scale.initXY "animGroupName" 1.5 1.2 ] }
         , Cmd.none
         )
@@ -219,8 +219,8 @@ initXY animationKey x y animBuilder =
     import Anim.Engine.* as Engine
     import Anim.Property.Scale as Scale
 
-    init : () -> ( Model, Cmd Msg )
-    init _ =
+    init : ( Model, Cmd Msg )
+    init =
         ( { animState = Engine.init [ Scale.initXZ "animGroupName" 1.5 1.0 ] }
         , Cmd.none
         )
@@ -240,8 +240,8 @@ initXZ animationKey x z animBuilder =
     import Anim.Engine.* as Engine
     import Anim.Property.Scale as Scale
 
-    init : () -> ( Model, Cmd Msg )
-    init _ =
+    init : ( Model, Cmd Msg )
+    init =
         ( { animState = Engine.init [ Scale.initX "animGroupName" 1.5 ] }
         , Cmd.none
         )
@@ -261,8 +261,8 @@ initX animationKey x animBuilder =
     import Anim.Engine.* as Engine
     import Anim.Property.Scale as Scale
 
-    init : () -> ( Model, Cmd Msg )
-    init _ =
+    init : ( Model, Cmd Msg )
+    init =
         ( { animState = Engine.init [ Scale.initYZ "animGroupName" 1.2 1.0 ] }
         , Cmd.none
         )
@@ -282,8 +282,8 @@ initYZ animationKey y z animBuilder =
     import Anim.Engine.* as Engine
     import Anim.Property.Scale as Scale
 
-    init : () -> ( Model, Cmd Msg )
-    init _ =
+    init : ( Model, Cmd Msg )
+    init =
         ( { animState = Engine.init [ Scale.initY "animGroupName" 1.2 ] }
         , Cmd.none
         )
@@ -303,8 +303,8 @@ initY animationKey y animBuilder =
     import Anim.Engine.* as Engine
     import Anim.Property.Scale as Scale
 
-    init : () -> ( Model, Cmd Msg )
-    init _ =
+    init : ( Model, Cmd Msg )
+    init =
         ( { animState = Engine.init [ Scale.initZ "animGroupName" 1.0 ] }
         , Cmd.none
         )

@@ -15,7 +15,9 @@ A comprehensive Elm package for smooth, high-performance DOM animations and scro
 
 - **Hardware-Accelerated** — GPU-powered transforms (translate, rotate, scale, skew, opacity)
 - **Full 3D Support** — XYZ positioning, multi-axis rotation, perspective
-- **Multi-Property Animations** — Animate opacity, position, rotation, and more on the same element simultaneously, each with independent timing and easing
+- **Multi-Property Animations** — Animate multiple properties on the same element simultaneously, each with independent timing and easing
+ — no master timeline to orchestrate
+- **Time, Scroll & Viewport Driven** — Drive animations by elapsed time, page scroll progress or an element's position in the viewport — same builder API, three different timelines
 
 ### Scroll
 
@@ -29,18 +31,18 @@ A comprehensive Elm package for smooth, high-performance DOM animations and scro
 
 | Engine | Key Features |
 | -------- | ---------- |
-| [Transition](animation/engines/transition.md) | Browser-native performance, quick setup for simple A→B animations |
-| [Keyframe](animation/engines/keyframes.md) | Browser-native performance, looping, full control (stop, reset, restart, pause, resume) |
-| [Sub](animation/engines/sub.md) | Full control, real-time mid-flight queries/diversions |
-| [WAAPI](animation/engines/waapi.md) | Browser-native performance, looping, full control, real-time mid-flight queries/diversions |
-| [Scroll Timeline](animation/engines/scroll-timeline.md) | Fire-and-forget animation tied to container scroll position |
-| [View Timeline](animation/engines/view-timeline.md) | Fire-and-forget animation tied to element viewport position |
+| [Transition](animation/engines/transition.md) | Browser-native performance; quick setup for simple A→B animations, minimal control (stop, reset) |
+| [Keyframe](animation/engines/keyframes.md) | Browser-native performance, full control (stop, reset, restart, pause, resume), looping |
+| [Sub](animation/engines/sub.md) | Pure Elm; full control (stop, reset, restart, pause, resume), looping, real-time mid-flight queries/diversions |
+| [WAAPI](animation/engines/waapi.md) | Browser-native performance via JS; full control (stop, reset, restart, pause, resume), looping, real-time mid-flight queries/diversions |
+| [Scroll Timeline](animation/engines/scroll-timeline.md) | Browser-native performance via JS; scroll-driven, tied to a container's scroll progress |
+| [View Timeline](animation/engines/view-timeline.md) | Browser-native performance via JS; viewport-driven, tied to an element entering and leaving view |
 
 ### Scroll
 
 | Engine | Key Features |
 | -------- | ---------- |
-| [Cmd](scroll/engines/cmd.md) | Fire-and-forget scrolling to elements or positions |
+| [Cmd](scroll/engines/cmd.md) | Simple fire-and-forget scrolls, minimal setup |
 | [Task](scroll/engines/task.md) | Composable scrolling with typed error handling |
 | [Sub](scroll/engines/sub.md) | Stateful scrolling with full control, events, and mid-scroll queries |
 

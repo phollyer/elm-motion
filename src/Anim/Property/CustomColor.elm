@@ -150,8 +150,8 @@ Use this to initialize the property in your Engine's `init` function.
     import Anim.Extra.Color as Color
     import Anim.Property.CustomColor as CustomColor
 
-    init : () -> ( Model, Cmd Msg )
-    init _ =
+    init : ( Model, Cmd Msg )
+    init =
         ( { animState =
                 Engine.init
                     [ CustomColor.init "box" BorderColor <|

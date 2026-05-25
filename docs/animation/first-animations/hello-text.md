@@ -148,7 +148,7 @@ Fades in text when the page loads. The obligatory "Hello" example.
             --8<-- "docs/examples/src/Animation/Keyframe/HelloText/Main.elm:render"
             ```
 
-            Keyframe animations also need a `style` node with the keyframe rules. 
+            Keyframe animations also need a `styleNode` with the keyframe rules. 
             
             📖 See [Keyframe Style Node](/animation/engines/keyframes.md#keyframes-style-node) for more info.
 

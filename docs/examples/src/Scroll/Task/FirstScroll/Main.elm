@@ -17,7 +17,7 @@ import Task
 main : Program () Model Msg
 main =
     Browser.element
-        { init = init
+        { init = \_ -> init
         , view = view
         , update = update
         , subscriptions = always Sub.none
@@ -25,6 +25,7 @@ main =
 
 
 
+-- MODEL
 ---8<-- [start:model]
 
 
@@ -39,8 +40,8 @@ type ScrollStatus
     | Failed String
 
 
-init : () -> ( Model, Cmd Msg )
-init _ =
+init : ( Model, Cmd Msg )
+init =
     ( { status = Idle }, Cmd.none )
 
 
