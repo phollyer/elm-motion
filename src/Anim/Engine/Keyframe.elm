@@ -30,9 +30,9 @@ module Anim.Engine.Keyframe exposing
     , getTranslateStart, getTranslateEnd, getTranslateRange
     )
 
-{-| Use CSS keyframe animations.
+{-| CSS keyframe animations with browser-native performance.
 
-Use this engine when you want browser-native keyframes with Elm state around them.
+This engine is a good fit for 'on-load' animations, or if you need looping, alternating, or pause/resume functionality.
 
 📖 For setup, examples, and behaviour details, see the
 [Keyframe Engine Documentation](https://phollyer.github.io/elm-motion/animation/engines/keyframes/)
@@ -49,10 +49,10 @@ and the
 
 @docs AnimBuilder
 
-Use `AnimBuilder` for most helper functions.
+Use `AnimBuilder` for most builder functions.
 
 Use `TimelineBuilder` or `EngineBuilder` only when you want a type annotation to say
-which engines a helper is meant to work with.
+which engines a builder is meant to work with.
 
 
 ### Timeline Builder
@@ -348,9 +348,9 @@ animate =
     Internal.animate
 
 
-{-| Update the target and snap straight to the new end values.
+{-| Update the target and move the element instantly to the new end values.
 
-Use this when the target changed and you want the element to jump to the new result
+Use this when the target changed and you want the element to move there immediately
 instead of continuing smoothly.
 
 📖 For when to use `retarget` and which engines can continue smoothly, see

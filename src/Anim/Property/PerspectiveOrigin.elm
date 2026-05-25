@@ -588,7 +588,7 @@ bounds =
     ResizeBuilder.setPerspectiveOrigin
 
 
-{-| One-shot position snap for an anim group's perspective-origin during resize.
+{-| One-shot position update for an anim group's perspective-origin during resize.
 
 Use `position` when an axis is **not** animating (`start == end`) but its
 correct screen position depends on layout - for example, a perspective
@@ -606,9 +606,9 @@ a portrait → landscape resize.
                 , y = Nothing
                 }
 
-Each axis is `Just newPos` to snap that axis, or `Nothing` to leave it
-untouched. On a static axis the snap sets `start`, `end`, and `current`
-to `newPos`. On an animating axis (`start /= end`) the snap is ignored,
+Each axis is `Just newPos` to move that axis instantly, or `Nothing` to leave it
+untouched. On a static axis the update sets `start`, `end`, and `current`
+to `newPos`. On an animating axis (`start /= end`) the update is ignored,
 because the next interpolation frame would overwrite a current-only
 change. Use [`bounds`](#bounds) (with its proportional remap) to retarget
 animating axes.

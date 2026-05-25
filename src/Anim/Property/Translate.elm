@@ -140,7 +140,7 @@ for full per-engine behaviour.
 
 Keep translate values on each axis within a range you choose.
 
-Values outside the range snap to the nearest boundary. Relative `byX`/`byY`/`byZ` moves
+Values outside the range are clamped to the nearest boundary. Relative `byX`/`byY`/`byZ` moves
 stop at the boundary instead of pushing past it — handy for keeping an element on-screen
 during drags or resizes.
 
@@ -978,7 +978,7 @@ byZ =
 {-| Keep the X axis translate within `[min, max]` for this animation group.
 
 The range stays in effect for future `animate` / `retarget` calls
-until you call [unclampX](#unclampX). Values outside the range snap to the boundary,
+until you call [unclampX](#unclampX). Values outside the range are clamped to the boundary,
 and relative `byX` moves stop at the boundary instead of pushing past it.
 
 Typical use is a resize handler that updates playfield bounds when the canvas changes:
@@ -1083,7 +1083,7 @@ bounds =
     ResizeBuilder.setTranslate
 
 
-{-| One-shot position snap for an anim group's translate property during resize.
+{-| One-shot position update for an anim group's translate property during resize.
 
 Use `position` when an axis is **not** animating (`start == end`) but its
 correct screen position depends on layout - for example, a dot that sits
@@ -1098,9 +1098,9 @@ landscape resize.
                 , z = Nothing
                 }
 
-Each axis is `Just newPos` to snap that axis, or `Nothing` to leave it
-untouched. On a static axis the snap sets `start`, `end`, and `current`
-to `newPos`. On an animating axis (`start /= end`) the snap is ignored,
+Each axis is `Just newPos` to move that axis instantly, or `Nothing` to leave it
+untouched. On a static axis the update sets `start`, `end`, and `current`
+to `newPos`. On an animating axis (`start /= end`) the update is ignored,
 because the next interpolation frame would overwrite a current-only
 change. Use [`bounds`](#bounds) (with its proportional remap) to
 retarget animating axes.

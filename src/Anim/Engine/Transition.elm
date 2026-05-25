@@ -324,9 +324,9 @@ animate =
     Internal.animate
 
 
-{-| Update the target and snap straight to the new end values.
+{-| Update the target and move the element instantly to the new end values.
 
-Use this when the target changed and you want the element to jump to the new result.
+Use this when the target changed and you want the element to move there immediately.
 
 📖 For when to use `retarget` and which engines can continue smoothly, see
 [Responsive Animations](https://phollyer.github.io/elm-motion/animation/concepts/responsive-animations/)

@@ -93,7 +93,7 @@ Use different group names when you want separate animation sets for different el
     Name your animation functions based on what they do: `fadeIn`, `slideLeft`, `bounceOnHover`.
 
 !!! tip "Extract common patterns"
-    If you use the same configurations often, create helper functions.
+    If you use the same configurations often, create builder functions.
 
 ??? example "View Source Code"
 
@@ -129,13 +129,13 @@ Use different group names when you want separate animation sets for different el
             >> Translate.toY 0
             >> Translate.build
 
-    -- Common timing helper
+    -- Common timing builder
     withStandardTiming : AnimBuilder mode -> AnimBuilder mode
     withStandardTiming =
         Engine.duration 300
             >> Engine.easing QuintOut
 
-    -- Compose small helpers into a larger animation
+    -- Compose small builders into a larger animation
     myAnimation : String -> AnimBuilder mode -> AnimBuilder mode
     myAnimation animGroup =
         withStandardTiming

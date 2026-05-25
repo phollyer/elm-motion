@@ -51,7 +51,7 @@ In the examples below, try the same sequence — click "Move Right" then "Move U
 
 ## Re-Anchoring with `retarget`
 
-If an animation needs its end value updated mid-flight (resize handlers, drag interactions, container measurement), use `retarget` rather than `animate`. Behaviour differs by engine — Sub and WAAPI continue smoothly from the current rendered value, while Transition and Keyframe snap to the new target.
+If an animation needs its end value updated mid-flight (resize handlers, drag interactions, container measurement), use `retarget` rather than `animate`. Behaviour differs by engine — Sub and WAAPI continue smoothly from the current rendered value, while Transition and Keyframe move the element instantly to the new target.
 
 See [Responsive Animations](responsive-animations.md) for the full breakdown.
 

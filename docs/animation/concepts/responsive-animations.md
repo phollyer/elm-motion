@@ -129,7 +129,7 @@ Most animations only need one of the two paths above. If you need more control, 
 
 | Function | Where | What it helps with |
 | --- | --- | --- |
-| `retarget` | [Sub](../engines/sub.md), [WAAPI](../engines/waapi.md), [Transition](../engines/transition.md), [Keyframe](../engines/keyframes.md) | Change target while an animation is running. Sub and WAAPI continue smoothly; Transition and Keyframe snap to the new end value. |
+| `retarget` | [Sub](../engines/sub.md), [WAAPI](../engines/waapi.md), [Transition](../engines/transition.md), [Keyframe](../engines/keyframes.md) | Change target while an animation is running. Sub and WAAPI continue smoothly; Transition and Keyframe move the element instantly to the new end value. |
 | `onResize` | [Sub](../engines/sub.md), [WAAPI](../engines/waapi.md) | Apply resize updates to active animations. |
 | `bounds` | [Anim.Resize](https://package.elm-lang.org/packages/phollyer/elm-animate/latest/Anim-Resize#bounds), [Translate](../properties/translate.md), [Scale](../properties/scale.md) | Set min/max movement ranges after a resize. |
 | `position` | [Translate](../properties/translate.md) | Set explicit x/y/z positions after a resize. |

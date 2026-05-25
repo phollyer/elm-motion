@@ -216,12 +216,12 @@ update msg model =
             )
 
         SizeHover ->
-            ( { model  | animState = Sub.animate model.animState growSize    }
+            ( { model | animState = Sub.animate model.animState growSize }
             , Cmd.none
             )
 
         SizeUnhover ->
-            ( { model  animState =  Sub.animate model.animState shrinkSize  }
+            ( { model | animState = Sub.animate model.animState shrinkSize }
             , Cmd.none
             )
 
