@@ -39,8 +39,7 @@ f : AnimBuilder mode -> AnimBuilder mode
 
 The builder type signature includes the `mode` type parameter which can be used to tighten the use of a function, and trigger compiler errors if used outside of the specified use.
 
-See [Builder Modes](../concepts/builder-modes.md) for detailed guidance, equivalence examples,
-and rules of thumb for choosing the right level of type restriction.
+📖 See [Builder Modes](../concepts/builder-modes.md) more information.
 
 ## Animation Group Names
 
