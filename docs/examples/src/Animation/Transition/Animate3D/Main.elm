@@ -84,7 +84,7 @@ init _ =
                     >> Rotate.initX bottomFace.groupName -90
 
                 -- The text labels all start on the same plane as their faces
-                -- at z=0, which is the default starting position for elements, so we don't need
+                -- at z=0, which is the default starting value, so we don't need
                 -- to initialize them
                 ]
     in

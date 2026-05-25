@@ -64,7 +64,8 @@ init _ =
                   -- sides and rotate. This is a fixed 3D depth
                   -- offset, unrelated to layout, so it stays
                   -- in pixels.
-                  Translate.initUnit Px >> Translate.initZ cubeGroupName 200
+                  Translate.initUnit Px
+                    >> Translate.initZ cubeGroupName 200
 
                 -- Position each face in 3D space along the axis it faces.
                 -- Face offsets use `Cqmin` so the cube scales proportionally
@@ -72,7 +73,8 @@ init _ =
                 -- Front/Back faces move on Z (forward/backward)
                 -- Left/Right faces move on X (sideways)
                 -- Top/Bottom faces move on Y (up/down)
-                , Translate.initUnit Cqmin >> Translate.initZ frontFace.groupName depth
+                , Translate.initUnit Cqmin
+                    >> Translate.initZ frontFace.groupName depth
                 , Translate.initUnit Cqmin
                     >> Translate.initZ backFace.groupName (depth * -1)
                     -- Rotate each face into position to build the cube
@@ -92,7 +94,7 @@ init _ =
                     >> Rotate.initX bottomFace.groupName -90
 
                 -- The text labels all start on the same plane as their faces
-                -- at z=0, which is the default starting position for elements, so we don't need
+                -- at z=0, which is the default starting value, so we don't need
                 -- to initialize them
                 ]
     in

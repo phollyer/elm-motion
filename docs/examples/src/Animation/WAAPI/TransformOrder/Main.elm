@@ -320,7 +320,8 @@ update msg model =
                     WAAPI.animate model.animState <|
                         List.foldl
                             (\perm acc ->
-                                resetPermutation perm >> acc
+                                resetPermutation perm
+                                    >> acc
                             )
                             identity
                             allPermutations
