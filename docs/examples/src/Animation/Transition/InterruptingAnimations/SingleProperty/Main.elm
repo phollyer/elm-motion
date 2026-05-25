@@ -178,8 +178,7 @@ view model =
             button color4 "Color 4" Color4
     in
     div [ class "example-stage" ]
-        [ text ""
-        , div [ class "example-controls" ]
+        [ div [ class "example-controls" ]
             [ color1Button
             , color2Button
             , color3Button

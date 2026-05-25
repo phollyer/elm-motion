@@ -59,6 +59,7 @@ import Anim.Internal.Resize.Builder as Internal
 {-| Builder type passed to an Engine's `onResize` function.
 
 Holds per-group resize bounds so the Engine can apply them on the next frame.
+
 -}
 type alias Builder =
     Internal.Builder

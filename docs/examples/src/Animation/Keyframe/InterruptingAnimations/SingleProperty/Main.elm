@@ -181,8 +181,7 @@ view model =
         [ class "example-stage"
         , style "text-align" "center"
         ]
-        [ text ""
-        , Keyframe.styleNode model.animState
+        [ Keyframe.styleNode model.animState
         , div [ class "example-controls" ]
             [ color1Button
             , color2Button

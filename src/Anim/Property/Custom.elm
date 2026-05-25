@@ -554,6 +554,7 @@ If `min > max`, the values are swapped.
 
 📖 See [Responsive Animations](https://phollyer.github.io/elm-motion/animation/concepts/responsive-animations/)
 for patterns and examples.
+
 -}
 clamp : Float -> Float -> Builder mode -> Builder mode
 clamp =

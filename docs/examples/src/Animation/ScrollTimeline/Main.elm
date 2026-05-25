@@ -83,8 +83,7 @@ view _ =
         , style "color" "#1f2937"
         , style "background" "#ffffff"
         ]
-        [ text ""
-        , -- Fixed progress bar at top of page
+        [ -- Fixed progress bar at top of page
           div
             [ style "position" "fixed"
             , style "top" "0"

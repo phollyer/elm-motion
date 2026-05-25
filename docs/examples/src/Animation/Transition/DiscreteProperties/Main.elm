@@ -50,7 +50,7 @@ init =
 
 animGroup : String
 animGroup =
-    "boxAnim"
+    "fadeAnim"
 
 
 fadeIn : EngineBuilder -> EngineBuilder
@@ -117,8 +117,7 @@ update msg model =
 view : Model -> Html Msg
 view model =
     div [ class "example-stage" ]
-        [ text ""
-        , Transition.startingStyleNode model.animState
+        [ Transition.startingStyleNode model.animState
         , div [ class "example-controls" ]
             [ button
                 [ onClick Show

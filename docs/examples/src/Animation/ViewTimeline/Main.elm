@@ -83,8 +83,7 @@ view _ =
         , style "color" "#1f2937"
         , style "background" "#f9fafb"
         ]
-        [ text ""
-        , -- Page header
+        [ -- Page header
           div
             [ style "text-align" "center"
             , style "padding" "80px 40px 60px"

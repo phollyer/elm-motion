@@ -30,51 +30,6 @@ main =
 
 
 -- MODEL
--- Avoid typos from hardcoding strings in multiple places
-
-
-scaleButton : String
-scaleButton =
-    "scaleButton"
-
-
-sizeButton : String
-sizeButton =
-    "sizeButton"
-
-
-zButton : String
-zButton =
-    "zButton"
-
-
-{-| Base resting size expressed in `cqmin` so each button scales with the
-shorter axis of `.example-stage` (the stage itself declares
-`container-type: size`). The hover state grows the box by ~15% on each
-axis - container-relative units mean the demo stays naturally responsive
-without any `onResize` plumbing in Elm.
--}
-baseWidth : Float
-baseWidth =
-    51
-
-
-baseHeight : Float
-baseHeight =
-    15.8
-
-
-hoverWidth : Float
-hoverWidth =
-    60
-
-
-hoverHeight : Float
-hoverHeight =
-    20
-
-
-
 --8<-- [start:model]
 
 
@@ -98,6 +53,42 @@ init _ =
 
 --8<-- [end:model]
 -- ANIMATIONS
+-- Avoid typos from hardcoding strings in multiple places
+
+
+scaleButton : String
+scaleButton =
+    "scaleButton"
+
+
+sizeButton : String
+sizeButton =
+    "sizeButton"
+
+
+zButton : String
+zButton =
+    "zButton"
+
+
+baseWidth : Float
+baseWidth =
+    51
+
+
+baseHeight : Float
+baseHeight =
+    15.8
+
+
+hoverWidth : Float
+hoverWidth =
+    60
+
+
+hoverHeight : Float
+hoverHeight =
+    20
 
 
 hoverDuration : Int
@@ -245,8 +236,7 @@ view model =
         [ class "example-stage"
         , style "container-type" "size"
         ]
-        [ text ""
-        , Keyframe.styleNode model.animState
+        [ Keyframe.styleNode model.animState
         , div
             [ style "padding" "7px"
             , style "border-radius" "12px"

@@ -33,10 +33,6 @@ type alias Model =
     { animState : Keyframe.AnimState }
 
 
-
--- INIT
-
-
 init : () -> ( Model, Cmd Msg )
 init _ =
     ( { animState =
@@ -47,17 +43,16 @@ init _ =
     )
 
 
+
+-- ANIMATION
+
+
 animGroup : String
 animGroup =
     "bouncingBall"
 
 
-{-| Ball size as a percentage of the canvas height (in `cqh` units). The
-canvas declares `container-type: size`, so `cqh` resolves against the
-canvas itself - the animation, ball size and travel distance all scale
-with the canvas regardless of viewport size or surrounding chrome. No
-Elm-side resize plumbing required; the browser re-evaluates `cqh` against
-current layout on every frame.
+{-| Ball size as a percentage of the canvas height (in `cqh` units).
 -}
 ballSize : Float
 ballSize =
@@ -67,10 +62,6 @@ ballSize =
 ballSizeCqh : String
 ballSizeCqh =
     String.fromFloat ballSize ++ "cqh"
-
-
-
--- ANIMATION
 
 
 dropBall : AnimBuilder mode -> AnimBuilder mode

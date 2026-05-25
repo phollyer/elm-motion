@@ -23,26 +23,7 @@ main =
 
 
 
--- ANIMATION
----8<-- [start:build]
--- Avoid typos from hardcoding strings in multiple places
-
-
-groupName : String
-groupName =
-    "helloText"
-
-
-fadeIn : AnimBuilder mode -> AnimBuilder mode
-fadeIn =
-    Opacity.for groupName
-        >> Opacity.to 1
-        >> Opacity.duration 5000
-        >> Opacity.build
-
-
-
---8<-- [end:build]
+-- MODEL
 ---8<-- [start:model]
 
 
@@ -69,6 +50,26 @@ init =
 
 ---8<-- [end:trigger]
 ---8<-- [end:model]
+-- ANIMATION
+---8<-- [start:build]
+-- Avoid typos from hardcoding strings in multiple places
+
+
+groupName : String
+groupName =
+    "helloText"
+
+
+fadeIn : AnimBuilder mode -> AnimBuilder mode
+fadeIn =
+    Opacity.for groupName
+        >> Opacity.to 1
+        >> Opacity.duration 5000
+        >> Opacity.build
+
+
+
+--8<-- [end:build]
 ---8<-- [start:update]
 
 
@@ -112,8 +113,7 @@ view model =
         , style "text-align" "center"
         ]
         ---8<-- [start:render]
-        [ text ""
-        , div
+        [ div
             (Sub.attributes groupName model.animState
                 ++ [ style "width" "100%" ]
             )

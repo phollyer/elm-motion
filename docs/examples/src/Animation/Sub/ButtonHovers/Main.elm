@@ -31,45 +31,6 @@ main =
 
 
 -- MODEL
--- Avoid typos from hardcoding strings in multiple places
-
-
-scaleButton : String
-scaleButton =
-    "scaleButton"
-
-
-sizeButton : String
-sizeButton =
-    "sizeButton"
-
-
-zButton : String
-zButton =
-    "zButton"
-
-
-baseWidth : Float
-baseWidth =
-    51
-
-
-baseHeight : Float
-baseHeight =
-    15.8
-
-
-hoverWidth : Float
-hoverWidth =
-    60
-
-
-hoverHeight : Float
-hoverHeight =
-    20
-
-
-
 --8<-- [start:model]
 
 
@@ -115,6 +76,42 @@ init rawFlags =
 
 --8<-- [end:model]
 -- ANIMATIONS
+-- Avoid typos from hardcoding strings in multiple places
+
+
+scaleButton : String
+scaleButton =
+    "scaleButton"
+
+
+sizeButton : String
+sizeButton =
+    "sizeButton"
+
+
+zButton : String
+zButton =
+    "zButton"
+
+
+baseWidth : Float
+baseWidth =
+    51
+
+
+baseHeight : Float
+baseHeight =
+    15.8
+
+
+hoverWidth : Float
+hoverWidth =
+    60
+
+
+hoverHeight : Float
+hoverHeight =
+    20
 
 
 hoverDuration : Int
@@ -285,8 +282,7 @@ view model =
         [ class "example-stage"
         , style "container-type" "size"
         ]
-        [ text ""
-        , div
+        [ div
             [ style "padding" "7px"
             , style "border-radius" "12px"
             , style "border" "2px solid #041e53"

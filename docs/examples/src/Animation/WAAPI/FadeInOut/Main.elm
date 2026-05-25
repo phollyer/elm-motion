@@ -60,7 +60,7 @@ init =
 
 animGroup : String
 animGroup =
-    "boxAnim"
+    "fadeAnim"
 
 
 fadeTo : Float -> AnimBuilder mode -> AnimBuilder mode
@@ -151,8 +151,7 @@ view model =
     div
         [ class "example-stage"
         ]
-        [ text ""
-        , div
+        [ div
             [ class "example-controls" ]
             [ button
                 [ onClick TriggerFadeIn

@@ -217,8 +217,7 @@ view model =
         [ class "example-stage"
         , style "text-align" "center"
         ]
-        [ text ""
-        , div [ class "example-controls" ]
+        [ div [ class "example-controls" ]
             [ color1Button
             , color2Button
             , color3Button

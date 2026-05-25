@@ -720,6 +720,7 @@ until you call [unclampX](#unclampX). If `min > max`, the values are swapped.
 
 📖 See [Responsive Animations](https://phollyer.github.io/elm-motion/animation/concepts/responsive-animations/)
 for patterns and examples.
+
 -}
 clampX : Float -> Float -> Builder mode -> Builder mode
 clampX =
@@ -729,6 +730,7 @@ clampX =
 {-| Keep the Y axis scale within `[min, max]` for this animation group.
 
 See [clampX](#clampX) for behaviour.
+
 -}
 clampY : Float -> Float -> Builder mode -> Builder mode
 clampY =
@@ -738,6 +740,7 @@ clampY =
 {-| Keep the Z axis scale within `[min, max]` for this animation group.
 
 See [clampX](#clampX) for behaviour.
+
 -}
 clampZ : Float -> Float -> Builder mode -> Builder mode
 clampZ =

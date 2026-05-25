@@ -236,8 +236,7 @@ view model =
                 []
     in
     div [ class "example-stage" ]
-        [ text ""
-        , Keyframe.styleNode model.animState
+        [ Keyframe.styleNode model.animState
         , div [ class "example-controls" ]
             [ moveLeftButton
             , moveRightButton

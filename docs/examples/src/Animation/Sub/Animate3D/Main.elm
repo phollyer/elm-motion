@@ -595,8 +595,7 @@ view model =
             , style "height" "min(90vw, 90vh)"
             , style "container-type" "size"
             ]
-            [ text ""
-            , viewAnimationArea model
+            [ viewAnimationArea model
             ]
         ]
     }

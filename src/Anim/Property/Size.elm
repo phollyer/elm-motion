@@ -607,6 +607,7 @@ until you call [unclampWidth](#unclampWidth). If `min > max`, the values are swa
 
 📖 See [Responsive Animations](https://phollyer.github.io/elm-motion/animation/concepts/responsive-animations/)
 for patterns and examples.
+
 -}
 clampWidth : Float -> Float -> Builder mode -> Builder mode
 clampWidth =
@@ -616,6 +617,7 @@ clampWidth =
 {-| Keep height within `[min, max]` for this animation group.
 
 See [clampWidth](#clampWidth) for behaviour.
+
 -}
 clampHeight : Float -> Float -> Builder mode -> Builder mode
 clampHeight =

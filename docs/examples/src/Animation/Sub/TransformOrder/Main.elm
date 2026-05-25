@@ -331,8 +331,7 @@ view model =
         [ class "example-stage"
         , style "container-type" "size"
         ]
-        [ text ""
-        , div [ class "example-controls" ]
+        [ div [ class "example-controls" ]
             (List.map permButton allPermutations)
         , div [ class "example-controls" ]
             [ actionButton "▶️ All" AnimateAll "#16a34a"

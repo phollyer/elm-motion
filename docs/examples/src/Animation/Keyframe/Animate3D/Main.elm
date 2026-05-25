@@ -429,7 +429,7 @@ moveBottomFaceIn toY =
 
 
 
--- TEXT 
+-- TEXT
 --
 -- Text moves forward (Z+20) and rotates (to Z=360deg) when sides expand,
 -- and then moves back (to Z=0) and rotates back (to Z=0deg) when sides close
@@ -591,8 +591,7 @@ view model =
             , style "height" "min(90vw, 90vh)"
             , style "container-type" "size"
             ]
-            [ text ""
-            , viewAnimationArea model
+            [ viewAnimationArea model
             ]
         ]
     }

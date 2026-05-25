@@ -669,8 +669,7 @@ view model =
             , style "width" "min(90vw, 90vh)"
             , style "height" "min(90vw, 90vh)"
             ]
-            [ text ""
-            , viewAnimationArea model
+            [ viewAnimationArea model
             ]
         ]
     }

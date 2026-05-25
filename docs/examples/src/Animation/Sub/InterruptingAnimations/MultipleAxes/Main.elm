@@ -254,8 +254,7 @@ view model =
                 []
     in
     div [ class "example-stage" ]
-        [ text ""
-        , div [ class "example-controls" ]
+        [ div [ class "example-controls" ]
             [ moveLeftButton
             , moveRightButton
             , moveUpButton

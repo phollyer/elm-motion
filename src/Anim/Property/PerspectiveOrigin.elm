@@ -538,6 +538,7 @@ The active unit (percent or px) on each value is preserved.
 
 📖 See [Responsive Animations](https://phollyer.github.io/elm-motion/animation/concepts/responsive-animations/)
 for patterns and examples.
+
 -}
 clampX : Float -> Float -> Builder mode -> Builder mode
 clampX =
@@ -547,6 +548,7 @@ clampX =
 {-| Keep the Y axis perspective-origin within `[min, max]` for this animation group.
 
 See [clampX](#clampX) for behaviour.
+
 -}
 clampY : Float -> Float -> Builder mode -> Builder mode
 clampY =

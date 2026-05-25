@@ -221,8 +221,7 @@ view model =
                 [ text label ]
     in
     div [ class "example-stage" ]
-        [ text ""
-        , Keyframe.styleNode model.animState
+        [ Keyframe.styleNode model.animState
         , div [ class "example-controls" ]
             [ posButton "#333" "Move Left" MoveLeft
             , posButton "#333" "Move Right" MoveRight

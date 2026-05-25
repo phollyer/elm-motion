@@ -222,8 +222,7 @@ view model =
                 [ text label ]
     in
     div [ class "example-stage" ]
-        [ text ""
-        , div [ class "example-controls" ]
+        [ div [ class "example-controls" ]
             [ posButton "#333" "Move Left" MoveLeft
             , posButton "#333" "Move Right" MoveRight
             ]

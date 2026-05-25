@@ -1004,6 +1004,7 @@ Typical use is a resize handler that updates playfield bounds when the canvas ch
 
 📖 See [Responsive Animations](https://phollyer.github.io/elm-motion/animation/concepts/responsive-animations/)
 for more patterns.
+
 -}
 clampX : Float -> Float -> Builder mode -> Builder mode
 clampX =
@@ -1013,6 +1014,7 @@ clampX =
 {-| Keep the Y axis translate within `[min, max]` for this animation group.
 
 See [clampX](#clampX) for behaviour and example.
+
 -}
 clampY : Float -> Float -> Builder mode -> Builder mode
 clampY =
@@ -1022,6 +1024,7 @@ clampY =
 {-| Keep the Z axis translate within `[min, max]` for this animation group.
 
 See [clampX](#clampX) for behaviour and example.
+
 -}
 clampZ : Float -> Float -> Builder mode -> Builder mode
 clampZ =
