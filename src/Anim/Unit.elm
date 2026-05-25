@@ -58,6 +58,10 @@ for full per-engine behaviour.
 
 -}
 
+-- ============================================================
+-- TYPES
+-- ============================================================
+
 
 {-| The length unit applied when rendering length-bearing values.
 
@@ -155,6 +159,12 @@ type Unit
     | Cqh
     | Cqmin
     | Cqmax
+
+
+
+-- ============================================================
+-- RENDER
+-- ============================================================
 
 
 {-| Render a `Unit` as the matching CSS unit suffix string.

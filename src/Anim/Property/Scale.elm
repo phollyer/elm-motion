@@ -132,21 +132,6 @@ type alias Builder mode =
 -- ============================================================
 
 
-{-| Turn the `AnimBuilder` into a scale animation `Builder` for the specified animation group.
-
-Use this to start configuring a scale animation.
-
-    myAnimation : AnimBuilder mode -> AnimBuilder mode
-    myAnimation =
-        Scale.for "animGroupName"
-            >> ... -- Configure and build the animation
-
--}
-for : AnimGroupName -> AnimBuilder mode -> Builder mode
-for =
-    SB.for
-
-
 {-| Set the initial scale.
 
 Use this to initialize the scale in your Engine's `init` function.
@@ -323,6 +308,21 @@ initZ animationKey z animBuilder =
 -- ============================================================
 -- BUILD
 -- ============================================================
+
+
+{-| Turn the `AnimBuilder` into a scale animation `Builder` for the specified animation group.
+
+Use this to start configuring a scale animation.
+
+    myAnimation : AnimBuilder mode -> AnimBuilder mode
+    myAnimation =
+        Scale.for "animGroupName"
+            >> ... -- Configure and build the animation
+
+-}
+for : AnimGroupName -> AnimBuilder mode -> Builder mode
+for =
+    SB.for
 
 
 {-| Complete the [Builder](#Builder) animation configuration and return an `AnimBuilder`
@@ -659,6 +659,12 @@ Similarly, a speed of `4.0` would complete the same animation in 1 second, and a
 speed : Float -> Builder mode -> Builder mode
 speed =
     SB.speed
+
+
+
+-- ============================================================
+-- EASING
+-- ============================================================
 
 
 {-| Set the easing function for the animation.

@@ -8,6 +8,10 @@ module Anim.Internal.Engine.Shared.PlayState exposing
     , toCssString
     )
 
+-- ============================================================
+-- TYPES
+-- ============================================================
+
 
 type PlayState
     = NotStarted
@@ -16,6 +20,12 @@ type PlayState
     | Reset
     | Complete
     | Cancelled
+
+
+
+-- ============================================================
+-- QUERY
+-- ============================================================
 
 
 isActive : PlayState -> Bool
@@ -49,6 +59,12 @@ isPaused state =
 isRunning : PlayState -> Bool
 isRunning state =
     state == Running
+
+
+
+-- ============================================================
+-- VIEW
+-- ============================================================
 
 
 toCssString : PlayState -> String

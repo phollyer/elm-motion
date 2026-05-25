@@ -29,6 +29,12 @@ import Dict exposing (Dict)
 import Shared.Easing
 
 
+
+-- ============================================================
+-- APPLY
+-- ============================================================
+
+
 {-| Apply each entry of `propertyProgress` to `baselines`, looking up the
 matching `PropertyState` (and its stored config) in `propertyStates`.
 
@@ -152,6 +158,12 @@ applyConfigProgress config rawProgress baselines =
                     Shared.Easing.toFunction cfg.easing rawProgress
             in
             PropertyBaselines.setCustomColorProperty cssName (Color.interpolate t start cfg.end) baselines
+
+
+
+-- ============================================================
+-- HELPERS
+-- ============================================================
 
 
 {-| Resolve the animation's start value with a three-tier fallback:

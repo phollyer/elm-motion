@@ -103,9 +103,8 @@ type Builder
         }
 
 
-
 -- ============================================================
--- INIT
+-- BUILD
 -- ============================================================
 
 
@@ -117,12 +116,6 @@ init =
         , easing = Nothing
         , delay = 0
         }
-
-
-
--- ============================================================
--- BUILD
--- ============================================================
 
 
 for : String -> ScrollBuilder -> Builder
@@ -188,12 +181,6 @@ applyDelay delayMs scrollBuilder =
         scrollBuilder
 
 
-
--- ============================================================
--- SETTERS (global defaults, used by engines)
--- ============================================================
-
-
 addScrollTarget : ScrollTarget -> ScrollBuilder -> ScrollBuilder
 addScrollTarget scrollTarget (ScrollBuilder data) =
     ScrollBuilder { data | scrollTargets = scrollTarget :: data.scrollTargets }
@@ -221,49 +208,7 @@ setDelay ms (ScrollBuilder data) =
 
 
 -- ============================================================
--- GETTERS - used by engines to read global defaults and scroll
--- targets
--- ============================================================
-
-
-getScrollTargets : ScrollBuilder -> List ScrollTarget
-getScrollTargets (ScrollBuilder data) =
-    data.scrollTargets
-
-
-getTimeSpecWithDefault : ScrollBuilder -> TimeSpec
-getTimeSpecWithDefault (ScrollBuilder data) =
-    data.timing |> Maybe.withDefault (Duration 0)
-
-
-getEasing : ScrollBuilder -> Maybe Easing
-getEasing (ScrollBuilder data) =
-    data.easing
-
-
-getEasingWithDefault : ScrollBuilder -> Easing
-getEasingWithDefault (ScrollBuilder data) =
-    data.easing |> Maybe.withDefault QuintOut
-
-
-getDelay : ScrollBuilder -> Maybe Int
-getDelay (ScrollBuilder data) =
-    if data.delay == 0 then
-        Nothing
-
-    else
-        Just data.delay
-
-
-getDelayWithDefault : ScrollBuilder -> Int
-getDelayWithDefault (ScrollBuilder data) =
-    data.delay
-
-
-
--- ============================================================
--- BUILDER - TIMING OVERRIDES - per-scroll configuration that
---  overrides global defaults
+-- TIMING
 -- ============================================================
 
 
@@ -282,14 +227,18 @@ speed speedPxPerSec (Builder config) =
     Builder { config | timing = Just (Speed speedPxPerSec) }
 
 
+-- ============================================================
+-- EASING
+-- ============================================================
+
+
 easing : Easing -> Builder -> Builder
 easing easingFn (Builder config) =
     Builder { config | easing = Just easingFn }
 
 
-
 -- ============================================================
--- BUILDER — TARGET CONFIGURATION
+-- TARGETING
 -- ============================================================
 
 
@@ -445,51 +394,8 @@ byY dy (Builder config) =
         }
 
 
-
 -- ============================================================
--- BUILDER — AXIS SELECTION
--- ============================================================
-
-
-onBothAxes : Builder -> Builder
-onBothAxes (Builder config) =
-    let
-        (ScrollTarget.ScrollTarget targetData) =
-            config.scrollTarget
-    in
-    Builder
-        { config
-            | scrollTarget = ScrollTarget.ScrollTarget { targetData | axis = Both }
-        }
-
-
-onXAxis : Builder -> Builder
-onXAxis (Builder config) =
-    let
-        (ScrollTarget.ScrollTarget targetData) =
-            config.scrollTarget
-    in
-    Builder
-        { config
-            | scrollTarget = ScrollTarget.ScrollTarget { targetData | axis = X }
-        }
-
-
-onYAxis : Builder -> Builder
-onYAxis (Builder config) =
-    let
-        (ScrollTarget.ScrollTarget targetData) =
-            config.scrollTarget
-    in
-    Builder
-        { config
-            | scrollTarget = ScrollTarget.ScrollTarget { targetData | axis = Y }
-        }
-
-
-
--- ============================================================
--- BUILDER — OFFSETS
+-- OFFSETS
 -- ============================================================
 
 
@@ -539,3 +445,84 @@ withOffsetY offsetY (Builder config) =
                 ScrollTarget.ScrollTarget
                     { targetData | offset = ( offsetX, offsetY ) }
         }
+
+
+-- ============================================================
+-- AXIS SELECTION
+-- ============================================================
+
+
+onBothAxes : Builder -> Builder
+onBothAxes (Builder config) =
+    let
+        (ScrollTarget.ScrollTarget targetData) =
+            config.scrollTarget
+    in
+    Builder
+        { config
+            | scrollTarget = ScrollTarget.ScrollTarget { targetData | axis = Both }
+        }
+
+
+onXAxis : Builder -> Builder
+onXAxis (Builder config) =
+    let
+        (ScrollTarget.ScrollTarget targetData) =
+            config.scrollTarget
+    in
+    Builder
+        { config
+            | scrollTarget = ScrollTarget.ScrollTarget { targetData | axis = X }
+        }
+
+
+onYAxis : Builder -> Builder
+onYAxis (Builder config) =
+    let
+        (ScrollTarget.ScrollTarget targetData) =
+            config.scrollTarget
+    in
+    Builder
+        { config
+            | scrollTarget = ScrollTarget.ScrollTarget { targetData | axis = Y }
+        }
+
+
+-- ============================================================
+-- QUERY
+-- ============================================================
+
+
+getScrollTargets : ScrollBuilder -> List ScrollTarget
+getScrollTargets (ScrollBuilder data) =
+    data.scrollTargets
+
+
+getTimeSpecWithDefault : ScrollBuilder -> TimeSpec
+getTimeSpecWithDefault (ScrollBuilder data) =
+    data.timing |> Maybe.withDefault (Duration 0)
+
+
+getEasing : ScrollBuilder -> Maybe Easing
+getEasing (ScrollBuilder data) =
+    data.easing
+
+
+getEasingWithDefault : ScrollBuilder -> Easing
+getEasingWithDefault (ScrollBuilder data) =
+    data.easing |> Maybe.withDefault QuintOut
+
+
+getDelay : ScrollBuilder -> Maybe Int
+getDelay (ScrollBuilder data) =
+    if data.delay == 0 then
+        Nothing
+
+    else
+        Just data.delay
+
+
+getDelayWithDefault : ScrollBuilder -> Int
+getDelayWithDefault (ScrollBuilder data) =
+    data.delay
+

@@ -13,12 +13,24 @@ import Anim.Internal.Engine.Sub.Animation exposing (Animation)
 import Dict exposing (Dict)
 
 
+
+-- ============================================================
+-- TYPES
+-- ============================================================
+
+
 type alias PropertyName =
     String
 
 
 type Animations
     = Animations (Dict PropertyName Animation)
+
+
+
+-- ============================================================
+-- OPERATIONS
+-- ============================================================
 
 
 init : Animations

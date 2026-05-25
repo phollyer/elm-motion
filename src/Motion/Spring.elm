@@ -38,6 +38,12 @@ Curated configurations covering the common feel-points.
 import Motion.Internal.Spring as Internal
 
 
+
+-- ============================================================
+-- TYPES
+-- ============================================================
+
+
 {-| Opaque spring configuration. Construct one via a preset (`gentle`,
 `wobbly`, `stiff`, `slow`, `noWobble`) or [`custom`](#custom).
 
@@ -49,6 +55,12 @@ determine how long it takes to come to rest.
 -}
 type alias Spring =
     Internal.Spring
+
+
+
+-- ============================================================
+-- PRESETS
+-- ============================================================
 
 
 {-| A soft, slow settle. Mild overshoot, takes its time.
@@ -131,6 +143,12 @@ noWobble =
         , mass = 1
         , initialVelocity = 0
         }
+
+
+
+-- ============================================================
+-- CUSTOM
+-- ============================================================
 
 
 {-| Hand-tune a spring's physics.

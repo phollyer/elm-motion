@@ -41,27 +41,6 @@ support =
 
 
 -- ============================================================
--- QUERY
--- ============================================================
-
-
-getX : Rotate -> Float
-getX (Rotate angles) =
-    angles.x
-
-
-getY : Rotate -> Float
-getY (Rotate angles) =
-    angles.y
-
-
-getZ : Rotate -> Float
-getZ (Rotate angles) =
-    angles.z
-
-
-
--- ============================================================
 -- TRANSFORM
 -- ============================================================
 
@@ -113,6 +92,27 @@ toRecord =
 toTriple : Rotate -> ( Float, Float, Float )
 toTriple =
     Axis.toTriple support
+
+
+
+-- ============================================================
+-- QUERY
+-- ============================================================
+
+
+getX : Rotate -> Float
+getX (Rotate angles) =
+    angles.x
+
+
+getY : Rotate -> Float
+getY (Rotate angles) =
+    angles.y
+
+
+getZ : Rotate -> Float
+getZ (Rotate angles) =
+    angles.z
 
 
 

@@ -74,13 +74,8 @@ init =
 
 
 -- ============================================================
--- GETTERS
+-- QUERY
 -- ============================================================
-
-
-addAnimation : Animations -> AnimGroup -> AnimGroup
-addAnimation additional (AnimGroup group) =
-    AnimGroup { group | animations = Animations.add additional group.animations }
 
 
 getAnimationDirection : AnimGroup -> AnimationDirection
@@ -129,12 +124,6 @@ getWillChange (AnimGroup group) =
     group.willChange
 
 
-
--- ============================================================
--- QUERIES
--- ============================================================
-
-
 isComplete : AnimGroup -> Bool
 isComplete (AnimGroup group) =
     PlayState.isComplete group.playState
@@ -152,8 +141,13 @@ isRunning (AnimGroup group) =
 
 
 -- ============================================================
--- SETTERS
+-- BUILD
 -- ============================================================
+
+
+addAnimation : Animations -> AnimGroup -> AnimGroup
+addAnimation additional (AnimGroup group) =
+    AnimGroup { group | animations = Animations.add additional group.animations }
 
 
 setAnimationDirection : AnimationDirection -> AnimGroup -> AnimGroup

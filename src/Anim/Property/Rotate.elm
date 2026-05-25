@@ -124,21 +124,6 @@ type alias Builder mode =
 -- ============================================================
 
 
-{-| Turn the `AnimBuilder` into a rotate animation `Builder` for the specified animation group.
-
-Use this to start configuring a rotate animation.
-
-    myAnimation : AnimBuilder mode -> AnimBuilder mode
-    myAnimation =
-        Rotate.for "animGroupName"
-            >> ... -- Configure and build the animation
-
--}
-for : AnimGroupName -> AnimBuilder mode -> Builder mode
-for =
-    RB.for
-
-
 {-| Set the initial X, Y, and Z rotation.
 
     import Anim.Engine.* as Engine
@@ -284,6 +269,27 @@ initZ animationKey z animBuilder =
         |> fromZ z
         |> toZ z
         |> build
+
+
+
+-- ============================================================
+-- BUILD
+-- ============================================================
+
+
+{-| Turn the `AnimBuilder` into a rotate animation `Builder` for the specified animation group.
+
+Use this to start configuring a rotate animation.
+
+    myAnimation : AnimBuilder mode -> AnimBuilder mode
+    myAnimation =
+        Rotate.for "animGroupName"
+            >> ... -- Configure and build the animation
+
+-}
+for : AnimGroupName -> AnimBuilder mode -> Builder mode
+for =
+    RB.for
 
 
 {-| Complete the [Builder](#Builder) animation configuration and return an `AnimBuilder`
@@ -569,6 +575,27 @@ duration =
     RB.duration
 
 
+{-| Set the delay (milliseconds) before the animation starts.
+
+    myAnimation : AnimBuilder mode -> AnimBuilder mode
+    myAnimation =
+        Rotate.for "animGroupName"
+            >> Rotate.toZ 180
+            >> Rotate.delay 500
+            >> ... -- continue with animation
+
+-}
+delay : Int -> Builder mode -> Builder mode
+delay =
+    RB.delay
+
+
+
+-- ============================================================
+-- EASING
+-- ============================================================
+
+
 {-| Set the easing function for the animation.
 
     import Easing exposing (Easing(..))
@@ -613,21 +640,6 @@ and vice versa — they are mutually exclusive.
 spring : Spring -> Builder mode -> Builder mode
 spring =
     RB.spring
-
-
-{-| Set the delay (milliseconds) before the animation starts.
-
-    myAnimation : AnimBuilder mode -> AnimBuilder mode
-    myAnimation =
-        Rotate.for "animGroupName"
-            >> Rotate.toZ 180
-            >> Rotate.delay 500
-            >> ... -- continue with animation
-
--}
-delay : Int -> Builder mode -> Builder mode
-delay =
-    RB.delay
 
 
 

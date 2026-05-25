@@ -317,6 +317,309 @@ extractRunningProperties =
 
 
 -- ============================================================
+-- EVENTS
+-- ============================================================
+
+
+type AnimEvent
+    = Started AnimGroupName
+    | Ended AnimGroupName
+    | Cancelled AnimGroupName Float
+    | Restarted AnimGroupName
+    | Paused AnimGroupName Float
+    | Resumed AnimGroupName
+    | Iteration AnimGroupName Int
+    | Progress AnimGroupName Float
+    | AnimError String
+
+
+
+-- ============================================================
+-- UPDATE
+-- ============================================================
+
+
+type AnimMsg
+    = JavascriptUpdate Decode.Value
+
+
+update : AnimMsg -> AnimState msg -> ( AnimState msg, Maybe AnimEvent )
+update msg ((AnimState state animGroups) as animState) =
+    case msg of
+        JavascriptUpdate jsonValue ->
+            case Decode.decodeValue (Decode.field "type" Decode.string) jsonValue of
+                Ok "animationUpdate" ->
+                    -- Ignore events from scroll/view-driven engines — they are handled
+                    -- by ScrollTimeline.update and ViewTimeline.update respectively.
+                    let
+                        engineField =
+                            Decode.decodeValue (Decode.field "engine" Decode.string) jsonValue
+                    in
+                    case engineField of
+                        Ok "scrollTimeline" ->
+                            ( animState, Nothing )
+
+                        Ok "viewTimeline" ->
+                            ( animState, Nothing )
+
+                        _ ->
+                            case Decode.decodeValue animEventDecoder jsonValue of
+                                Ok animEvent ->
+                                    ( handleLifecycleEvent animEvent animState
+                                    , Just animEvent
+                                    )
+
+                                Err error ->
+                                    ( animState
+                                    , Just <|
+                                        AnimError <|
+                                            "Failed to decode animation event: "
+                                                ++ Decode.errorToString error
+                                    )
+
+                Ok "propertyUpdate" ->
+                    case Decode.decodeValue animationUpdateDecoder jsonValue of
+                        Ok animUpdate ->
+                            let
+                                updatedAnimations =
+                                    AnimGroups.update animUpdate.animGroupName
+                                        (Maybe.map (updateAnimGroup animUpdate))
+                                        animGroups
+
+                                -- Update global isRunning based on animation status
+                                hasRunningAnimations =
+                                    AnimGroups.groups updatedAnimations
+                                        |> List.any
+                                            (AnimGroup.getPropertyStates
+                                                >> AnimGroups.groups
+                                                >> List.any (\prop -> prop.status == AnimGroup.Running)
+                                            )
+                            in
+                            ( AnimState { state | subscriptionsActive = hasRunningAnimations } updatedAnimations
+                            , Just (Progress animUpdate.animGroupName animUpdate.progress)
+                            )
+
+                        Err error ->
+                            ( animState
+                            , Just (AnimError ("Failed to decode animation update: " ++ Decode.errorToString error))
+                            )
+
+                Ok unknown ->
+                    ( animState
+                    , Just (AnimError ("Unknown message type: " ++ unknown))
+                    )
+
+                Err error ->
+                    ( animState
+                    , Just (AnimError ("Unknown message type: " ++ Decode.errorToString error))
+                    )
+
+
+handleLifecycleEvent : AnimEvent -> AnimState msg -> AnimState msg
+handleLifecycleEvent animEvent (AnimState state animGroups) =
+    let
+        animGroupName =
+            animEventGroupName animEvent
+
+        newStatus =
+            animEventToStatus animEvent
+
+        applyIteration : AnimGroup -> AnimGroup
+        applyIteration =
+            case animEvent of
+                Iteration _ iter ->
+                    AnimGroup.setCurrentIteration iter
+
+                _ ->
+                    identity
+
+        updatedAnimGroups =
+            AnimGroups.update animGroupName
+                (Maybe.map
+                    (AnimGroup.setStatus newStatus
+                        >> AnimGroup.setProgress
+                            (case animEvent of
+                                Paused _ progress ->
+                                    progress
+
+                                Cancelled _ progress ->
+                                    progress
+
+                                Progress _ progress ->
+                                    progress
+
+                                _ ->
+                                    0
+                            )
+                        >> applyIteration
+                    )
+                )
+                animGroups
+    in
+    AnimState
+        { state
+            | subscriptionsActive =
+                AnimGroups.groups updatedAnimGroups
+                    |> List.any AnimGroup.isRunning
+        }
+        updatedAnimGroups
+
+
+updateAnimGroup : AnimationUpdate -> AnimGroup -> AnimGroup
+updateAnimGroup animUpdate animGroup =
+    let
+        updateStatus : String -> PropertyState -> PropertyState
+        updateStatus propType propAnim =
+            case AnimGroups.get propType animUpdate.propertyVersions of
+                Nothing ->
+                    propAnim
+
+                Just currentVersion ->
+                    if currentVersion == propAnim.version then
+                        { propAnim
+                            | status =
+                                if animUpdate.isAnimating then
+                                    AnimGroup.Running
+
+                                else
+                                    AnimGroup.Complete
+                        }
+
+                    else
+                        propAnim
+    in
+    animGroup
+        |> AnimGroup.setProgress animUpdate.progress
+        |> AnimGroup.setPropertyStates (AnimGroups.map updateStatus (AnimGroup.getPropertyStates animGroup))
+        |> AnimGroup.setSnapshot
+            (animGroup
+                |> AnimGroup.getPropertySnapshot
+                |> ProgressApply.applyPropertyProgress animUpdate.propertyProgress (AnimGroup.getPropertyStates animGroup)
+            )
+
+
+{-| Decoder for AnimEvent from lifecycle events.
+-}
+animEventDecoder : Decode.Decoder AnimEvent
+animEventDecoder =
+    Decode.map3 statusToAnimEvent
+        (Decode.oneOf [ Decode.at [ "payload", "animGroup" ] Decode.string, Decode.at [ "payload", "elementId" ] Decode.string ])
+        (Decode.at [ "payload", "status" ] Decode.string)
+        (Decode.at [ "payload", "progress" ] Decode.float)
+
+
+{-| Map a decoded status string to the appropriate AnimEvent constructor.
+-}
+statusToAnimEvent : String -> String -> Float -> AnimEvent
+statusToAnimEvent animGroupName status progress =
+    case status of
+        "started" ->
+            Started animGroupName
+
+        "paused" ->
+            Paused animGroupName progress
+
+        "resumed" ->
+            Resumed animGroupName
+
+        "completed" ->
+            Ended animGroupName
+
+        "cancelled" ->
+            Cancelled animGroupName progress
+
+        "stopped" ->
+            Ended animGroupName
+
+        "reset" ->
+            Cancelled animGroupName progress
+
+        "restarted" ->
+            Restarted animGroupName
+
+        "iteration" ->
+            Iteration animGroupName (round progress)
+
+        invalid ->
+            AnimError ("Unknown status: " ++ invalid)
+
+
+animEventGroupName : AnimEvent -> String
+animEventGroupName animEvent =
+    case animEvent of
+        Started name ->
+            name
+
+        Ended name ->
+            name
+
+        Cancelled name _ ->
+            name
+
+        Restarted name ->
+            name
+
+        Paused name _ ->
+            name
+
+        Resumed name ->
+            name
+
+        Iteration name _ ->
+            name
+
+        Progress name _ ->
+            name
+
+        AnimError _ ->
+            ""
+
+
+animEventToStatus : AnimEvent -> AnimationStatus
+animEventToStatus animEvent =
+    case animEvent of
+        Started _ ->
+            AnimGroup.Running
+
+        Ended _ ->
+            AnimGroup.Complete
+
+        Cancelled _ _ ->
+            AnimGroup.Complete
+
+        Restarted _ ->
+            AnimGroup.Running
+
+        Paused _ _ ->
+            AnimGroup.Paused
+
+        Resumed _ ->
+            AnimGroup.Running
+
+        Iteration _ _ ->
+            AnimGroup.Running
+
+        Progress _ _ ->
+            AnimGroup.Running
+
+        AnimError _ ->
+            AnimGroup.Complete
+
+
+
+-- ============================================================
+-- SUBSCRIPTIONS
+-- ============================================================
+
+
+subscriptions : (AnimMsg -> msg) -> AnimState msg -> Sub msg
+subscriptions toMsg (AnimState state _) =
+    state.subscriptionPort <|
+        (toMsg << JavascriptUpdate)
+
+
+
+-- ============================================================
 -- RESIZE
 -- ============================================================
 
@@ -1698,309 +2001,6 @@ scalePerspectiveOriginDurationForResize r =
 
     else
         r.oldDurationMs
-
-
-
--- ============================================================
--- EVENTS
--- ============================================================
-
-
-type AnimEvent
-    = Started AnimGroupName
-    | Ended AnimGroupName
-    | Cancelled AnimGroupName Float
-    | Restarted AnimGroupName
-    | Paused AnimGroupName Float
-    | Resumed AnimGroupName
-    | Iteration AnimGroupName Int
-    | Progress AnimGroupName Float
-    | AnimError String
-
-
-
--- ============================================================
--- UPDATE
--- ============================================================
-
-
-type AnimMsg
-    = JavascriptUpdate Decode.Value
-
-
-update : AnimMsg -> AnimState msg -> ( AnimState msg, Maybe AnimEvent )
-update msg ((AnimState state animGroups) as animState) =
-    case msg of
-        JavascriptUpdate jsonValue ->
-            case Decode.decodeValue (Decode.field "type" Decode.string) jsonValue of
-                Ok "animationUpdate" ->
-                    -- Ignore events from scroll/view-driven engines — they are handled
-                    -- by ScrollTimeline.update and ViewTimeline.update respectively.
-                    let
-                        engineField =
-                            Decode.decodeValue (Decode.field "engine" Decode.string) jsonValue
-                    in
-                    case engineField of
-                        Ok "scrollTimeline" ->
-                            ( animState, Nothing )
-
-                        Ok "viewTimeline" ->
-                            ( animState, Nothing )
-
-                        _ ->
-                            case Decode.decodeValue animEventDecoder jsonValue of
-                                Ok animEvent ->
-                                    ( handleLifecycleEvent animEvent animState
-                                    , Just animEvent
-                                    )
-
-                                Err error ->
-                                    ( animState
-                                    , Just <|
-                                        AnimError <|
-                                            "Failed to decode animation event: "
-                                                ++ Decode.errorToString error
-                                    )
-
-                Ok "propertyUpdate" ->
-                    case Decode.decodeValue animationUpdateDecoder jsonValue of
-                        Ok animUpdate ->
-                            let
-                                updatedAnimations =
-                                    AnimGroups.update animUpdate.animGroupName
-                                        (Maybe.map (updateAnimGroup animUpdate))
-                                        animGroups
-
-                                -- Update global isRunning based on animation status
-                                hasRunningAnimations =
-                                    AnimGroups.groups updatedAnimations
-                                        |> List.any
-                                            (AnimGroup.getPropertyStates
-                                                >> AnimGroups.groups
-                                                >> List.any (\prop -> prop.status == AnimGroup.Running)
-                                            )
-                            in
-                            ( AnimState { state | subscriptionsActive = hasRunningAnimations } updatedAnimations
-                            , Just (Progress animUpdate.animGroupName animUpdate.progress)
-                            )
-
-                        Err error ->
-                            ( animState
-                            , Just (AnimError ("Failed to decode animation update: " ++ Decode.errorToString error))
-                            )
-
-                Ok unknown ->
-                    ( animState
-                    , Just (AnimError ("Unknown message type: " ++ unknown))
-                    )
-
-                Err error ->
-                    ( animState
-                    , Just (AnimError ("Unknown message type: " ++ Decode.errorToString error))
-                    )
-
-
-handleLifecycleEvent : AnimEvent -> AnimState msg -> AnimState msg
-handleLifecycleEvent animEvent (AnimState state animGroups) =
-    let
-        animGroupName =
-            animEventGroupName animEvent
-
-        newStatus =
-            animEventToStatus animEvent
-
-        applyIteration : AnimGroup -> AnimGroup
-        applyIteration =
-            case animEvent of
-                Iteration _ iter ->
-                    AnimGroup.setCurrentIteration iter
-
-                _ ->
-                    identity
-
-        updatedAnimGroups =
-            AnimGroups.update animGroupName
-                (Maybe.map
-                    (AnimGroup.setStatus newStatus
-                        >> AnimGroup.setProgress
-                            (case animEvent of
-                                Paused _ progress ->
-                                    progress
-
-                                Cancelled _ progress ->
-                                    progress
-
-                                Progress _ progress ->
-                                    progress
-
-                                _ ->
-                                    0
-                            )
-                        >> applyIteration
-                    )
-                )
-                animGroups
-    in
-    AnimState
-        { state
-            | subscriptionsActive =
-                AnimGroups.groups updatedAnimGroups
-                    |> List.any AnimGroup.isRunning
-        }
-        updatedAnimGroups
-
-
-updateAnimGroup : AnimationUpdate -> AnimGroup -> AnimGroup
-updateAnimGroup animUpdate animGroup =
-    let
-        updateStatus : String -> PropertyState -> PropertyState
-        updateStatus propType propAnim =
-            case AnimGroups.get propType animUpdate.propertyVersions of
-                Nothing ->
-                    propAnim
-
-                Just currentVersion ->
-                    if currentVersion == propAnim.version then
-                        { propAnim
-                            | status =
-                                if animUpdate.isAnimating then
-                                    AnimGroup.Running
-
-                                else
-                                    AnimGroup.Complete
-                        }
-
-                    else
-                        propAnim
-    in
-    animGroup
-        |> AnimGroup.setProgress animUpdate.progress
-        |> AnimGroup.setPropertyStates (AnimGroups.map updateStatus (AnimGroup.getPropertyStates animGroup))
-        |> AnimGroup.setSnapshot
-            (animGroup
-                |> AnimGroup.getPropertySnapshot
-                |> ProgressApply.applyPropertyProgress animUpdate.propertyProgress (AnimGroup.getPropertyStates animGroup)
-            )
-
-
-{-| Decoder for AnimEvent from lifecycle events.
--}
-animEventDecoder : Decode.Decoder AnimEvent
-animEventDecoder =
-    Decode.map3 statusToAnimEvent
-        (Decode.oneOf [ Decode.at [ "payload", "animGroup" ] Decode.string, Decode.at [ "payload", "elementId" ] Decode.string ])
-        (Decode.at [ "payload", "status" ] Decode.string)
-        (Decode.at [ "payload", "progress" ] Decode.float)
-
-
-{-| Map a decoded status string to the appropriate AnimEvent constructor.
--}
-statusToAnimEvent : String -> String -> Float -> AnimEvent
-statusToAnimEvent animGroupName status progress =
-    case status of
-        "started" ->
-            Started animGroupName
-
-        "paused" ->
-            Paused animGroupName progress
-
-        "resumed" ->
-            Resumed animGroupName
-
-        "completed" ->
-            Ended animGroupName
-
-        "cancelled" ->
-            Cancelled animGroupName progress
-
-        "stopped" ->
-            Ended animGroupName
-
-        "reset" ->
-            Cancelled animGroupName progress
-
-        "restarted" ->
-            Restarted animGroupName
-
-        "iteration" ->
-            Iteration animGroupName (round progress)
-
-        invalid ->
-            AnimError ("Unknown status: " ++ invalid)
-
-
-animEventGroupName : AnimEvent -> String
-animEventGroupName animEvent =
-    case animEvent of
-        Started name ->
-            name
-
-        Ended name ->
-            name
-
-        Cancelled name _ ->
-            name
-
-        Restarted name ->
-            name
-
-        Paused name _ ->
-            name
-
-        Resumed name ->
-            name
-
-        Iteration name _ ->
-            name
-
-        Progress name _ ->
-            name
-
-        AnimError _ ->
-            ""
-
-
-animEventToStatus : AnimEvent -> AnimationStatus
-animEventToStatus animEvent =
-    case animEvent of
-        Started _ ->
-            AnimGroup.Running
-
-        Ended _ ->
-            AnimGroup.Complete
-
-        Cancelled _ _ ->
-            AnimGroup.Complete
-
-        Restarted _ ->
-            AnimGroup.Running
-
-        Paused _ _ ->
-            AnimGroup.Paused
-
-        Resumed _ ->
-            AnimGroup.Running
-
-        Iteration _ _ ->
-            AnimGroup.Running
-
-        Progress _ _ ->
-            AnimGroup.Running
-
-        AnimError _ ->
-            AnimGroup.Complete
-
-
-
--- ============================================================
--- SUBSCRIPTIONS
--- ============================================================
-
-
-subscriptions : (AnimMsg -> msg) -> AnimState msg -> Sub msg
-subscriptions toMsg (AnimState state _) =
-    state.subscriptionPort <|
-        (toMsg << JavascriptUpdate)
 
 
 

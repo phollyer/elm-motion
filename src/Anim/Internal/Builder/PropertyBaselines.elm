@@ -80,6 +80,66 @@ empty =
     PropertyBaselines Dict.empty
 
 
+setCustomProperty : String -> Float -> String -> PropertyBaselines -> PropertyBaselines
+setCustomProperty cssPropertyName value unit (PropertyBaselines dict) =
+    PropertyBaselines (Dict.insert ("custom:" ++ cssPropertyName) (CustomPropertyValue value unit) dict)
+
+
+setCustomColorProperty : String -> Color -> PropertyBaselines -> PropertyBaselines
+setCustomColorProperty cssPropertyName value (PropertyBaselines dict) =
+    PropertyBaselines (Dict.insert ("customColor:" ++ cssPropertyName) (CustomColorPropertyValue value) dict)
+
+
+setOpacity : Opacity -> PropertyBaselines -> PropertyBaselines
+setOpacity value (PropertyBaselines dict) =
+    PropertyBaselines (Dict.insert "opacity" (OpacityValue value) dict)
+
+
+setPerspectiveOrigin : PerspectiveOrigin -> PropertyBaselines -> PropertyBaselines
+setPerspectiveOrigin value (PropertyBaselines dict) =
+    PropertyBaselines (Dict.insert "perspectiveOrigin" (PerspectiveOriginValue value) dict)
+
+
+setRotate : Rotate -> PropertyBaselines -> PropertyBaselines
+setRotate value (PropertyBaselines dict) =
+    PropertyBaselines (Dict.insert "rotate" (RotateValue value) dict)
+
+
+setScale : Scale -> PropertyBaselines -> PropertyBaselines
+setScale value (PropertyBaselines dict) =
+    PropertyBaselines (Dict.insert "scale" (ScaleValue value) dict)
+
+
+setSize : Size -> PropertyBaselines -> PropertyBaselines
+setSize value (PropertyBaselines dict) =
+    PropertyBaselines (Dict.insert "size" (SizeValue value) dict)
+
+
+setSkew : Skew -> PropertyBaselines -> PropertyBaselines
+setSkew value (PropertyBaselines dict) =
+    PropertyBaselines (Dict.insert "skew" (SkewValue value) dict)
+
+
+setTranslate : Translate -> PropertyBaselines -> PropertyBaselines
+setTranslate value (PropertyBaselines dict) =
+    PropertyBaselines (Dict.insert "translate" (TranslateValue value) dict)
+
+
+setTranslateUnits : InternalUnit.ResolvedCssUnitAxes -> PropertyBaselines -> PropertyBaselines
+setTranslateUnits units (PropertyBaselines dict) =
+    PropertyBaselines (Dict.insert "translateUnits" (TranslateUnitsValue units) dict)
+
+
+setSizeUnits : InternalUnit.ResolvedCssUnitAxes -> PropertyBaselines -> PropertyBaselines
+setSizeUnits units (PropertyBaselines dict) =
+    PropertyBaselines (Dict.insert "sizeUnits" (SizeUnitsValue units) dict)
+
+
+setPerspectiveOriginUnits : InternalUnit.ResolvedCssUnitAxes -> PropertyBaselines -> PropertyBaselines
+setPerspectiveOriginUnits units (PropertyBaselines dict) =
+    PropertyBaselines (Dict.insert "perspectiveOriginUnits" (PerspectiveOriginUnitsValue units) dict)
+
+
 
 -- ============================================================
 -- TRANSFORM
@@ -144,7 +204,7 @@ updateCustomColorProperty cssPropertyName colorString baselines =
 
 
 -- ============================================================
--- GETTERS
+-- QUERY
 -- ============================================================
 
 
@@ -360,65 +420,3 @@ getUnit cssPropertyName (PropertyBaselines dict) =
 
 
 -- ============================================================
--- SETTERS
--- ============================================================
-
-
-setCustomProperty : String -> Float -> String -> PropertyBaselines -> PropertyBaselines
-setCustomProperty cssPropertyName value unit (PropertyBaselines dict) =
-    PropertyBaselines (Dict.insert ("custom:" ++ cssPropertyName) (CustomPropertyValue value unit) dict)
-
-
-setCustomColorProperty : String -> Color -> PropertyBaselines -> PropertyBaselines
-setCustomColorProperty cssPropertyName value (PropertyBaselines dict) =
-    PropertyBaselines (Dict.insert ("customColor:" ++ cssPropertyName) (CustomColorPropertyValue value) dict)
-
-
-setOpacity : Opacity -> PropertyBaselines -> PropertyBaselines
-setOpacity value (PropertyBaselines dict) =
-    PropertyBaselines (Dict.insert "opacity" (OpacityValue value) dict)
-
-
-setPerspectiveOrigin : PerspectiveOrigin -> PropertyBaselines -> PropertyBaselines
-setPerspectiveOrigin value (PropertyBaselines dict) =
-    PropertyBaselines (Dict.insert "perspectiveOrigin" (PerspectiveOriginValue value) dict)
-
-
-setRotate : Rotate -> PropertyBaselines -> PropertyBaselines
-setRotate value (PropertyBaselines dict) =
-    PropertyBaselines (Dict.insert "rotate" (RotateValue value) dict)
-
-
-setScale : Scale -> PropertyBaselines -> PropertyBaselines
-setScale value (PropertyBaselines dict) =
-    PropertyBaselines (Dict.insert "scale" (ScaleValue value) dict)
-
-
-setSize : Size -> PropertyBaselines -> PropertyBaselines
-setSize value (PropertyBaselines dict) =
-    PropertyBaselines (Dict.insert "size" (SizeValue value) dict)
-
-
-setSkew : Skew -> PropertyBaselines -> PropertyBaselines
-setSkew value (PropertyBaselines dict) =
-    PropertyBaselines (Dict.insert "skew" (SkewValue value) dict)
-
-
-setTranslate : Translate -> PropertyBaselines -> PropertyBaselines
-setTranslate value (PropertyBaselines dict) =
-    PropertyBaselines (Dict.insert "translate" (TranslateValue value) dict)
-
-
-setTranslateUnits : InternalUnit.ResolvedCssUnitAxes -> PropertyBaselines -> PropertyBaselines
-setTranslateUnits units (PropertyBaselines dict) =
-    PropertyBaselines (Dict.insert "translateUnits" (TranslateUnitsValue units) dict)
-
-
-setSizeUnits : InternalUnit.ResolvedCssUnitAxes -> PropertyBaselines -> PropertyBaselines
-setSizeUnits units (PropertyBaselines dict) =
-    PropertyBaselines (Dict.insert "sizeUnits" (SizeUnitsValue units) dict)
-
-
-setPerspectiveOriginUnits : InternalUnit.ResolvedCssUnitAxes -> PropertyBaselines -> PropertyBaselines
-setPerspectiveOriginUnits units (PropertyBaselines dict) =
-    PropertyBaselines (Dict.insert "perspectiveOriginUnits" (PerspectiveOriginUnitsValue units) dict)

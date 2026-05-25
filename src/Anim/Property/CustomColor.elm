@@ -191,6 +191,13 @@ for animGroupName cssProperty =
     Internal.for animGroupName (toCssPropertyName cssProperty)
 
 
+{-| Complete the animation configuration and return an `AnimBuilder`.
+-}
+build : Builder mode -> AnimBuilder mode
+build =
+    Internal.build
+
+
 toCssPropertyName : ColorProperty -> String
 toCssPropertyName cssProperty =
     case cssProperty of
@@ -268,13 +275,6 @@ toCssPropertyName cssProperty =
 
         Custom cssName ->
             cssName
-
-
-{-| Complete the animation configuration and return an `AnimBuilder`.
--}
-build : Builder mode -> AnimBuilder mode
-build =
-    Internal.build
 
 
 

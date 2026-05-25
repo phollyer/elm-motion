@@ -203,6 +203,43 @@ type Property
     | Custom String String
 
 
+
+-- ============================================================
+-- INITIALIZE
+-- ============================================================
+
+
+{-| Set the initial value for a custom CSS property.
+
+Use this to initialize the property in your Engine's `init` function.
+
+    import Anim.Engine.* as Engine
+    import Anim.Property.Custom as Property
+    import Anim.Unit exposing (Unit(..))
+
+    init : ( Model, Cmd Msg )
+    init =
+        ( { animState =
+                Engine.init
+                    [ Property.init "box" (BorderRadius Px) 0 ]
+          }
+        , Cmd.none
+        )
+
+-}
+init : AnimGroupName -> Property -> Float -> AnimBuilder mode -> AnimBuilder mode
+init animGroupName cssProperty value animBuilder =
+    let
+        ( name, unit ) =
+            toCssArgs cssProperty
+    in
+    animBuilder
+        |> Internal.for animGroupName name unit
+        |> Internal.from value
+        |> Internal.to value
+        |> Internal.build
+
+
 toCssArgs : Property -> ( String, String )
 toCssArgs cssProperty =
     case cssProperty of
@@ -368,43 +405,6 @@ toCssArgs cssProperty =
         -- Escape hatch
         Custom name unit ->
             ( name, unit )
-
-
-
--- ============================================================
--- INITIALIZE
--- ============================================================
-
-
-{-| Set the initial value for a custom CSS property.
-
-Use this to initialize the property in your Engine's `init` function.
-
-    import Anim.Engine.* as Engine
-    import Anim.Property.Custom as Property
-    import Anim.Unit exposing (Unit(..))
-
-    init : ( Model, Cmd Msg )
-    init =
-        ( { animState =
-                Engine.init
-                    [ Property.init "box" (BorderRadius Px) 0 ]
-          }
-        , Cmd.none
-        )
-
--}
-init : AnimGroupName -> Property -> Float -> AnimBuilder mode -> AnimBuilder mode
-init animGroupName cssProperty value animBuilder =
-    let
-        ( name, unit ) =
-            toCssArgs cssProperty
-    in
-    animBuilder
-        |> Internal.for animGroupName name unit
-        |> Internal.from value
-        |> Internal.to value
-        |> Internal.build
 
 
 

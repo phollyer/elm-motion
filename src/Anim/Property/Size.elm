@@ -246,6 +246,10 @@ initH animationKey h animBuilder =
         |> SB.build
 
 
+
+-- Initial Unit
+
+
 {-| Set the length [Unit](Anim-Unit#Unit) used by every subsequent `init*` call
 for `Size` values. Defaults to `Px`.
 
@@ -546,6 +550,12 @@ and vice versa — they are mutually exclusive.
 spring : Spring -> Builder mode -> Builder mode
 spring =
     SB.spring
+
+
+
+-- ============================================================
+-- UNIT
+-- ============================================================
 
 
 {-| Set the length [Unit](Anim-Unit#Unit) used to render width and height for

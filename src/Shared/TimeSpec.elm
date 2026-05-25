@@ -5,10 +5,20 @@ module Shared.TimeSpec exposing
     , toCssString
     )
 
+-- ============================================================
+-- TYPES
+-- ============================================================
+
 
 type TimeSpec
     = Duration Int -- milliseconds
     | Speed Float -- units per second
+
+
+
+-- ============================================================
+-- QUERY
+-- ============================================================
 
 
 duration : Float -> TimeSpec -> Float
@@ -37,6 +47,12 @@ speed distance_ duration_ timeSpec =
 
         Speed unitsPerSecond ->
             unitsPerSecond
+
+
+
+-- ============================================================
+-- VIEW
+-- ============================================================
 
 
 toCssString : Float -> Maybe TimeSpec -> String

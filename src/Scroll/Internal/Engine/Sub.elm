@@ -505,6 +505,38 @@ type ScrollEvent
 
 
 -- ============================================================
+-- TIMING
+-- ============================================================
+
+
+delay : Int -> ScrollBuilder -> ScrollBuilder
+delay =
+    SB.setDelay
+
+
+duration : Int -> ScrollBuilder -> ScrollBuilder
+duration =
+    SB.setDuration
+
+
+speed : Float -> ScrollBuilder -> ScrollBuilder
+speed =
+    SB.setSpeed
+
+
+
+-- ============================================================
+-- EASING
+-- ============================================================
+
+
+easing : Easing -> ScrollBuilder -> ScrollBuilder
+easing =
+    SB.setEasing
+
+
+
+-- ============================================================
 -- CONTROLS
 -- ============================================================
 
@@ -658,38 +690,6 @@ restart containerId toMsg (ScrollState scrollData) =
     ( ScrollState { scrollData | scrolls = updatedScrolls, pendingEvents = newPendingEvents }
     , Cmd.batch scrollCmds
     )
-
-
-
--- ============================================================
--- TIMING
--- ============================================================
-
-
-delay : Int -> ScrollBuilder -> ScrollBuilder
-delay =
-    SB.setDelay
-
-
-duration : Int -> ScrollBuilder -> ScrollBuilder
-duration =
-    SB.setDuration
-
-
-speed : Float -> ScrollBuilder -> ScrollBuilder
-speed =
-    SB.setSpeed
-
-
-
--- ============================================================
--- EASING
--- ============================================================
-
-
-easing : Easing -> ScrollBuilder -> ScrollBuilder
-easing =
-    SB.setEasing
 
 
 

@@ -80,6 +80,38 @@ toTriple =
 
 
 -- ============================================================
+-- CONVERSIONS
+-- ============================================================
+
+
+toCssString : InternalUnit.ResolvedCssUnitAxes -> Translate -> String
+toCssString axes (Translate coords) =
+    "translate3d("
+        ++ String.fromFloat coords.x
+        ++ InternalUnit.toCssSuffix axes.x
+        ++ ", "
+        ++ String.fromFloat coords.y
+        ++ InternalUnit.toCssSuffix axes.y
+        ++ ", "
+        ++ String.fromFloat coords.z
+        ++ InternalUnit.toCssSuffix axes.z
+        ++ ")"
+
+
+toCssPropertyValue : InternalUnit.ResolvedCssUnitAxes -> Translate -> String
+toCssPropertyValue axes (Translate coords) =
+    String.fromFloat coords.x
+        ++ InternalUnit.toCssSuffix axes.x
+        ++ " "
+        ++ String.fromFloat coords.y
+        ++ InternalUnit.toCssSuffix axes.y
+        ++ " "
+        ++ String.fromFloat coords.z
+        ++ InternalUnit.toCssSuffix axes.z
+
+
+
+-- ============================================================
 -- MATH
 -- ============================================================
 
@@ -112,35 +144,3 @@ speed =
 duration : Float -> TimeSpec -> Float
 duration =
     TimeSpec.duration
-
-
-
--- ============================================================
--- CONVERSIONS
--- ============================================================
-
-
-toCssString : InternalUnit.ResolvedCssUnitAxes -> Translate -> String
-toCssString axes (Translate coords) =
-    "translate3d("
-        ++ String.fromFloat coords.x
-        ++ InternalUnit.toCssSuffix axes.x
-        ++ ", "
-        ++ String.fromFloat coords.y
-        ++ InternalUnit.toCssSuffix axes.y
-        ++ ", "
-        ++ String.fromFloat coords.z
-        ++ InternalUnit.toCssSuffix axes.z
-        ++ ")"
-
-
-toCssPropertyValue : InternalUnit.ResolvedCssUnitAxes -> Translate -> String
-toCssPropertyValue axes (Translate coords) =
-    String.fromFloat coords.x
-        ++ InternalUnit.toCssSuffix axes.x
-        ++ " "
-        ++ String.fromFloat coords.y
-        ++ InternalUnit.toCssSuffix axes.y
-        ++ " "
-        ++ String.fromFloat coords.z
-        ++ InternalUnit.toCssSuffix axes.z

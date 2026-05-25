@@ -396,7 +396,8 @@ type alias ScrollDrivenConfig =
 
 
 
--- Constructing fresh builder instances and their sub-records.
+-- ============================================================
+-- INITIALIZE
 -- ============================================================
 
 
@@ -467,9 +468,7 @@ initScrollDrivenConfig =
 
 
 -- ============================================================
--- BUILDER PIPELINE - DEFAULTS
--- Setting global timing, easing, delay, and transform order
--- that apply to all properties unless overridden per-property.
+-- DEFAULTS
 -- ============================================================
 
 
@@ -774,7 +773,6 @@ normalizeTransformOrder order =
 
 -- ============================================================
 -- ANIMATION TARGETING
--- Selecting which animation group to configure.
 -- ============================================================
 
 
@@ -809,8 +807,6 @@ getAnimationConfigs animGroupName (AnimBuilder data) =
 
 -- ============================================================
 -- PLAYBACK
--- Iteration count, animation direction, and discrete
--- CSS transition support.
 -- ============================================================
 
 
@@ -918,9 +914,7 @@ getAnimationDirection (AnimBuilder data) =
 
 
 -- ============================================================
--- BUILDER PIPELINE - FREEZE AXES
--- Locking and unlocking specific transform axes at their
--- current baseline values during animation.
+-- FREEZE AXES
 -- ============================================================
 
 
@@ -1018,8 +1012,7 @@ freezePropertyName prop =
 
 
 -- ============================================================
--- QUERYING
--- Read-only access to builder configuration and state.
+-- QUERY
 -- ============================================================
 
 
@@ -1132,8 +1125,6 @@ getDelayWithDefault (AnimBuilder data) =
 
 -- ============================================================
 -- STATE MANAGEMENT
--- Injecting baselines, clearing transient data, merging end
--- states, and updating element configurations between cycles.
 -- ============================================================
 
 
@@ -1648,9 +1639,6 @@ dedupePreservingOrder =
 
 -- ============================================================
 -- PROCESSING
--- Resolving raw AnimBuilder configuration into engine-ready
--- ProcessedAnimationData with concrete timing, easing, and
--- delay values.
 -- ============================================================
 
 
@@ -1911,8 +1899,6 @@ resolveDelayWithDefault =
 
 -- ============================================================
 -- TRANSFORM ORDERING
--- Assembling CSS transform strings with consistent ordering
--- across all animation engines (transitions, keyframes, WAAPI).
 -- ============================================================
 
 
@@ -1983,9 +1969,7 @@ collectPropertyTransform property acc =
 
 
 -- ============================================================
--- ANIMATION HISTORY & CONTROL
--- Tracking the animation timeline for each element and
--- supporting replay of previous animations by ID.
+-- ANIMATION HISTORY
 -- ============================================================
 
 
@@ -2037,7 +2021,6 @@ addAnimationToHistory processedData (AnimBuilder data) =
 
 -- ============================================================
 -- SCROLL-DRIVEN ANIMATION
--- Setters and getters for scroll/view timeline configuration.
 -- ============================================================
 
 

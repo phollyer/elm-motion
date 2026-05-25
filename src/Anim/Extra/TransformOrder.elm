@@ -28,6 +28,10 @@ section in the docs for more details.
 
 -}
 
+-- ============================================================
+-- TYPES
+-- ============================================================
+
 
 {-| Represents transform properties.
 -}
@@ -36,6 +40,12 @@ type TransformProperty
     | Rotate
     | Skew
     | Scale
+
+
+
+-- ============================================================
+-- DEFAULT
+-- ============================================================
 
 
 {-| The default order in which transform properties are applied when multiple transform

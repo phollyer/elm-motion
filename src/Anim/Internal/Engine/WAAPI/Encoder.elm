@@ -35,8 +35,20 @@ import Shared.Easing.Keyframes as EasingKeyframes
 import Shared.Spring as SpringSolver
 
 
+
+-- ============================================================
+-- TYPES
+-- ============================================================
+
+
 type alias AnimGroupName =
     String
+
+
+
+-- ============================================================
+-- ENCODE
+-- ============================================================
 
 
 encode : AnimGroups AnimGroup -> Builder.ProcessedAnimationData -> Encode.Value
@@ -216,6 +228,12 @@ encodeAnimationDirection direction =
             Encode.string "alternate"
 
 
+
+-- ============================================================
+-- RESIZE
+-- ============================================================
+
+
 {-| Encode a `resize` command, including the seek position (`currentTimeMs`)
 computed on the Elm side.
 -}
@@ -310,6 +328,12 @@ encodePerspectiveOriginPosition r =
         , ( "y", encodeMaybeFloat r.y )
         , ( "unit", Encode.string r.unit )
         ]
+
+
+
+-- ============================================================
+-- HELPERS
+-- ============================================================
 
 
 encodeMaybeFloat : Maybe Float -> Encode.Value
@@ -837,6 +861,12 @@ isComplexEasing easing_ =
 
         _ ->
             False
+
+
+
+-- ============================================================
+-- SCROLL TIMELINE
+-- ============================================================
 
 
 {-| Encode a scroll-driven animation using a `ScrollTimeline`.

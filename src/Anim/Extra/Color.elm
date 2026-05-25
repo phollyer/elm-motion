@@ -86,7 +86,7 @@ type alias Color =
 
 
 -- ============================================================
--- CONSTRUCTORS
+-- COLOR CONSTRUCTORS
 -- ============================================================
 
 
@@ -171,8 +171,9 @@ elmColor =
 
 
 -- ============================================================
--- FROM CONVERSIONS
+-- COLOR TRANSFORMATIONS
 -- ============================================================
+-- Hex Colors
 
 
 {-| Create a color from a hex string.
@@ -189,6 +190,17 @@ Invalid hex strings will return `Nothing`.
 fromHex : String -> Maybe Color
 fromHex =
     Internal.fromHex
+
+
+{-| Convert a Color to a hex string .
+-}
+toHex : Color -> String
+toHex =
+    Internal.toHex
+
+
+
+-- RGB Colors
 
 
 {-| Create a Color from RGB components.
@@ -209,6 +221,24 @@ fromRgb =
 fromRgba : { r : Int, g : Int, b : Int, a : Float } -> Color
 fromRgba =
     Internal.fromRGBA
+
+
+{-| Convert a Color to an RGB color record.
+-}
+toRgb : Color -> { r : Int, g : Int, b : Int }
+toRgb =
+    Internal.toRgb
+
+
+{-| Convert a Color to an RGBA color record.
+-}
+toRgba : Color -> { r : Int, g : Int, b : Int, a : Float }
+toRgba =
+    Internal.toRgba
+
+
+
+-- HSL Colors
 
 
 {-| Create a Color from HSL components.
@@ -244,6 +274,24 @@ fromHsla =
     Internal.fromHSLA
 
 
+{-| Convert a Color to an HSL color record.
+-}
+toHsl : Color -> { h : Float, s : Float, l : Float }
+toHsl =
+    Internal.toHsl
+
+
+{-| Convert a Color to an HSLA color record.
+-}
+toHsla : Color -> { h : Float, s : Float, l : Float, a : Float }
+toHsla =
+    Internal.toHsla
+
+
+
+-- Elm Color
+
+
 {-| Create a [Color](#Color) from an [elm-color](https://package.elm-lang.org/packages/avh4/elm-color/latest/) [Color](https://package.elm-lang.org/packages/avh4/elm-color/latest/Color) value.
 
     import Color
@@ -254,6 +302,17 @@ fromHsla =
 fromElmColor : Color.Color -> Color
 fromElmColor =
     Internal.fromElmColor
+
+
+{-| Convert a Color to an [elm-color](https://package.elm-lang.org/packages/avh4/elm-color/latest/) [Color](https://package.elm-lang.org/packages/avh4/elm-color/latest/Color) value.
+-}
+toElmColor : Color -> Color.Color
+toElmColor =
+    Internal.toElmColor
+
+
+
+-- Parsing
 
 
 {-| Parse a color from various string formats.
@@ -282,54 +341,6 @@ fromString "invalid" -- Nothing
 fromString : String -> Maybe Color
 fromString =
     Internal.fromString
-
-
-
--- ============================================================
--- TO CONVERSIONS
--- ============================================================
-
-
-{-| Convert a Color to a hex string .
--}
-toHex : Color -> String
-toHex =
-    Internal.toHex
-
-
-{-| Convert a Color to an RGB color record.
--}
-toRgb : Color -> { r : Int, g : Int, b : Int }
-toRgb =
-    Internal.toRgb
-
-
-{-| Convert a Color to an RGBA color record.
--}
-toRgba : Color -> { r : Int, g : Int, b : Int, a : Float }
-toRgba =
-    Internal.toRgba
-
-
-{-| Convert a Color to an HSL color record.
--}
-toHsl : Color -> { h : Float, s : Float, l : Float }
-toHsl =
-    Internal.toHsl
-
-
-{-| Convert a Color to an HSLA color record.
--}
-toHsla : Color -> { h : Float, s : Float, l : Float, a : Float }
-toHsla =
-    Internal.toHsla
-
-
-{-| Convert a Color to an [elm-color](https://package.elm-lang.org/packages/avh4/elm-color/latest/) [Color](https://package.elm-lang.org/packages/avh4/elm-color/latest/Color) value.
--}
-toElmColor : Color -> Color.Color
-toElmColor =
-    Internal.toElmColor
 
 
 

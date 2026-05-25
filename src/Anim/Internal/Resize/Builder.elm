@@ -47,6 +47,13 @@ new range, and the timing cursor's normalised progress is preserved.
 import Dict exposing (Dict)
 
 
+
+
+-- ============================================================
+-- TYPES
+-- ============================================================
+
+
 {-| The name of an anim group a directive targets.
 -}
 type alias AnimGroupName =
@@ -119,6 +126,11 @@ can carry directives for many groups in one engine `onResize` call.
 -}
 type Builder
     = Builder (Dict AnimGroupName GroupEntries)
+
+
+-- ============================================================
+-- BUILD
+-- ============================================================
 
 
 {-| Empty builder with no resize directives for any group.
@@ -213,6 +225,53 @@ setTranslate name bounds_ (Builder d) =
         )
 
 
+{-| Record a one-shot translate-position snap for the given anim group.
+Applied after any bounds directive; only static axes are affected.
+-}
+setTranslatePosition : AnimGroupName -> Position -> Builder -> Builder
+setTranslatePosition name pos (Builder d) =
+    Builder
+        (Dict.update name
+            (updateEntries (\e -> { e | translatePosition = Just pos }))
+            d
+        )
+
+
+setScale : AnimGroupName -> Bounds -> Builder -> Builder
+setScale name bounds_ (Builder d) =
+    Builder
+        (Dict.update name
+            (updateEntries (\e -> { e | scale = Just { bounds = bounds_ } }))
+            d
+        )
+
+
+setPerspectiveOrigin : AnimGroupName -> Bounds -> Builder -> Builder
+setPerspectiveOrigin name bounds_ (Builder d) =
+    Builder
+        (Dict.update name
+            (updateEntries (\entries -> { entries | perspectiveOrigin = Just { bounds = bounds_ } }))
+            d
+        )
+
+
+{-| Record a one-shot perspective-origin position snap for the given anim
+group. Applied after any bounds directive; only static axes are affected.
+-}
+setPerspectiveOriginPosition : AnimGroupName -> Position -> Builder -> Builder
+setPerspectiveOriginPosition name pos (Builder d) =
+    Builder
+        (Dict.update name
+            (updateEntries (\e -> { e | perspectiveOriginPosition = Just pos }))
+            d
+        )
+
+
+-- ============================================================
+-- QUERY
+-- ============================================================
+
+
 {-| Read the effective translate directive for the given anim group: the
 explicit per-property entry if present, otherwise the group-wide default.
 -}
@@ -230,33 +289,12 @@ getTranslate name (Builder d) =
             )
 
 
-{-| Record a one-shot translate-position snap for the given anim group.
-Applied after any bounds directive; only static axes are affected.
--}
-setTranslatePosition : AnimGroupName -> Position -> Builder -> Builder
-setTranslatePosition name pos (Builder d) =
-    Builder
-        (Dict.update name
-            (updateEntries (\e -> { e | translatePosition = Just pos }))
-            d
-        )
-
-
 {-| Read the translate-position snap recorded for the given anim group, if any.
 -}
 getTranslatePosition : AnimGroupName -> Builder -> Maybe Position
 getTranslatePosition name (Builder d) =
     Dict.get name d
         |> Maybe.andThen .translatePosition
-
-
-setScale : AnimGroupName -> Bounds -> Builder -> Builder
-setScale name bounds_ (Builder d) =
-    Builder
-        (Dict.update name
-            (updateEntries (\e -> { e | scale = Just { bounds = bounds_ } }))
-            d
-        )
 
 
 {-| Read the effective scale directive for the given anim group: the
@@ -276,15 +314,6 @@ getScale name (Builder d) =
             )
 
 
-setPerspectiveOrigin : AnimGroupName -> Bounds -> Builder -> Builder
-setPerspectiveOrigin name bounds_ (Builder d) =
-    Builder
-        (Dict.update name
-            (updateEntries (\entries -> { entries | perspectiveOrigin = Just { bounds = bounds_ } }))
-            d
-        )
-
-
 {-| Read the effective perspective-origin directive for the given anim group:
 the explicit per-property entry if present, otherwise the group-wide default.
 -}
@@ -300,18 +329,6 @@ getPerspectiveOrigin name (Builder d) =
                     Nothing ->
                         e.default
             )
-
-
-{-| Record a one-shot perspective-origin position snap for the given anim
-group. Applied after any bounds directive; only static axes are affected.
--}
-setPerspectiveOriginPosition : AnimGroupName -> Position -> Builder -> Builder
-setPerspectiveOriginPosition name pos (Builder d) =
-    Builder
-        (Dict.update name
-            (updateEntries (\e -> { e | perspectiveOriginPosition = Just pos }))
-            d
-        )
 
 
 getPerspectiveOriginPosition : AnimGroupName -> Builder -> Maybe Position
@@ -466,3 +483,4 @@ applyAxisPosition maybeNewPos startV endV currentV =
 
             else
                 { start = startV, end = endV, current = currentV }
+

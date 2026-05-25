@@ -313,6 +313,58 @@ build =
 
 
 -- ============================================================
+-- UNIT
+-- ============================================================
+
+
+{-| Set the length [Unit](Anim-Unit#Unit) used to render this property's values.
+
+Defaults to `Px`. Setting a relative unit (`Percent`, `Vw`, `Vh`, `Rem`, `Em`)
+makes the browser re-evaluate the rendered perspective origin against current
+layout, so the animation follows resize automatically.
+
+    import Anim.Unit as Unit
+
+    myAnimation : AnimBuilder mode -> AnimBuilder mode
+    myAnimation =
+        PerspectiveOrigin.for "animGroupName"
+            >> PerspectiveOrigin.toXY 25 75
+            >> PerspectiveOrigin.cssUnit Unit.Percent
+            >> PerspectiveOrigin.build
+
+This setting takes precedence over any [length](Anim-Engine-WAAPI#cssUnit) set
+on the engine, and over the legacy [`px`](#px) / [`percent`](#percent)
+switchers (which only choose between pixels and percentages).
+
+The `Sub` engine currently only supports `Px`; setting a non-`Px` unit on a
+perspective-origin targeted at `Sub` reports an error and falls back to `Px`.
+
+-}
+cssUnit : Unit.Unit -> Builder mode -> Builder mode
+cssUnit =
+    PB.cssUnit
+
+
+{-| Set the length [Unit](Anim-Unit#Unit) used to render the X-axis
+perspective-origin value. Overrides any unit set by [`cssUnit`](#cssUnit) or by
+the engine's `cssUnit`/`cssUnitX` setter for the X axis.
+-}
+cssUnitX : Unit.Unit -> Builder mode -> Builder mode
+cssUnitX =
+    PB.cssUnitX
+
+
+{-| Set the length [Unit](Anim-Unit#Unit) used to render the Y-axis
+perspective-origin value. Overrides any unit set by [`cssUnit`](#cssUnit) or by
+the engine's `cssUnit`/`cssUnitY` setter for the Y axis.
+-}
+cssUnitY : Unit.Unit -> Builder mode -> Builder mode
+cssUnitY =
+    PB.cssUnitY
+
+
+
+-- ============================================================
 -- FROM
 -- ============================================================
 
@@ -385,6 +437,36 @@ toY =
 -- ============================================================
 
 
+{-| Set the delay (milliseconds) before the animation starts.
+
+    myAnimation : AnimBuilder mode -> AnimBuilder mode
+    myAnimation =
+        PerspectiveOrigin.for "animGroupName"
+            >> PerspectiveOrigin.to 200
+            >> PerspectiveOrigin.delay 500
+            >> ... -- continue with animation
+
+-}
+delay : Int -> Builder mode -> Builder mode
+delay =
+    PB.delay
+
+
+{-| Set the animation duration (milliseconds).
+
+    myAnimation : AnimBuilder mode -> AnimBuilder mode
+    myAnimation =
+        PerspectiveOrigin.for "animGroupName"
+            >> PerspectiveOrigin.to 200
+            >> PerspectiveOrigin.duration 2000
+            >> ... -- continue with animation
+
+-}
+duration : Int -> Builder mode -> Builder mode
+duration =
+    PB.duration
+
+
 {-| The speed represents how many units per second the perspective origin changes.
 
 For example, an animation from `0` to `200px` with a speed of `100.0` will take 2 seconds to complete.
@@ -402,19 +484,10 @@ speed =
     PB.speed
 
 
-{-| Set the animation duration (milliseconds).
 
-    myAnimation : AnimBuilder mode -> AnimBuilder mode
-    myAnimation =
-        PerspectiveOrigin.for "animGroupName"
-            >> PerspectiveOrigin.to 200
-            >> PerspectiveOrigin.duration 2000
-            >> ... -- continue with animation
-
--}
-duration : Int -> Builder mode -> Builder mode
-duration =
-    PB.duration
+-- ============================================================
+-- EASING
+-- ============================================================
 
 
 {-| Set the easing function for the animation.
@@ -461,67 +534,6 @@ and vice versa — they are mutually exclusive.
 spring : Spring -> Builder mode -> Builder mode
 spring =
     PB.spring
-
-
-{-| Set the delay (milliseconds) before the animation starts.
-
-    myAnimation : AnimBuilder mode -> AnimBuilder mode
-    myAnimation =
-        PerspectiveOrigin.for "animGroupName"
-            >> PerspectiveOrigin.to 200
-            >> PerspectiveOrigin.delay 500
-            >> ... -- continue with animation
-
--}
-delay : Int -> Builder mode -> Builder mode
-delay =
-    PB.delay
-
-
-{-| Set the length [Unit](Anim-Unit#Unit) used to render this property's values.
-
-Defaults to `Px`. Setting a relative unit (`Percent`, `Vw`, `Vh`, `Rem`, `Em`)
-makes the browser re-evaluate the rendered perspective origin against current
-layout, so the animation follows resize automatically.
-
-    import Anim.Unit as Unit
-
-    myAnimation : AnimBuilder mode -> AnimBuilder mode
-    myAnimation =
-        PerspectiveOrigin.for "animGroupName"
-            >> PerspectiveOrigin.toXY 25 75
-            >> PerspectiveOrigin.cssUnit Unit.Percent
-            >> PerspectiveOrigin.build
-
-This setting takes precedence over any [length](Anim-Engine-WAAPI#cssUnit) set
-on the engine, and over the legacy [`px`](#px) / [`percent`](#percent)
-switchers (which only choose between pixels and percentages).
-
-The `Sub` engine currently only supports `Px`; setting a non-`Px` unit on a
-perspective-origin targeted at `Sub` reports an error and falls back to `Px`.
-
--}
-cssUnit : Unit.Unit -> Builder mode -> Builder mode
-cssUnit =
-    PB.cssUnit
-
-
-{-| Set the length [Unit](Anim-Unit#Unit) used to render the X-axis
-perspective-origin value. Overrides any unit set by [`cssUnit`](#cssUnit) or by
-the engine's `cssUnit`/`cssUnitX` setter for the X axis.
--}
-cssUnitX : Unit.Unit -> Builder mode -> Builder mode
-cssUnitX =
-    PB.cssUnitX
-
-
-{-| Set the length [Unit](Anim-Unit#Unit) used to render the Y-axis
-perspective-origin value. Overrides any unit set by [`cssUnit`](#cssUnit) or by
-the engine's `cssUnit`/`cssUnitY` setter for the Y axis.
--}
-cssUnitY : Unit.Unit -> Builder mode -> Builder mode
-cssUnitY =
-    PB.cssUnitY
 
 
 

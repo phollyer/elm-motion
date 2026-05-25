@@ -56,6 +56,12 @@ The animation will respect the new bounds on the next animation frame.
 import Anim.Internal.Resize.Builder as Internal
 
 
+
+-- ============================================================
+-- BUILDER
+-- ============================================================
+
+
 {-| Builder type passed to an Engine's `onResize` function.
 
 Holds per-group resize bounds so the Engine can apply them on the next frame.
@@ -63,6 +69,12 @@ Holds per-group resize bounds so the Engine can apply them on the next frame.
 -}
 type alias Builder =
     Internal.Builder
+
+
+
+-- ============================================================
+-- BOUNDS
+-- ============================================================
 
 
 {-| Inclusive numeric range for one axis.

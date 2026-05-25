@@ -12,12 +12,24 @@ import Scroll.Internal.Shared.Container exposing (Container(..))
 import Task exposing (Task)
 
 
+
+-- ============================================================
+-- TYPES
+-- ============================================================
+
+
 type alias Element =
     Dom.Element
 
 
 type alias Viewport =
     Dom.Viewport
+
+
+
+-- ============================================================
+-- QUERY
+-- ============================================================
 
 
 getElement : String -> Task Dom.Error Element
@@ -35,16 +47,6 @@ getViewport container =
             Dom.getViewportOf containerNodeId
 
 
-setViewport : Container -> Float -> Float -> Task Dom.Error ()
-setViewport container x y =
-    case container of
-        Document ->
-            Dom.setViewport x y
-
-        Container containerNodeId ->
-            Dom.setViewportOf containerNodeId x y
-
-
 getContainerInfo : Container -> Task Dom.Error (Maybe Dom.Element)
 getContainerInfo container =
     case container of
@@ -53,3 +55,19 @@ getContainerInfo container =
 
         Container containerNodeId ->
             Task.map Just (Dom.getElement containerNodeId)
+
+
+
+-- ============================================================
+-- COMMAND
+-- ============================================================
+
+
+setViewport : Container -> Float -> Float -> Task Dom.Error ()
+setViewport container x y =
+    case container of
+        Document ->
+            Dom.setViewport x y
+
+        Container containerNodeId ->
+            Dom.setViewportOf containerNodeId x y

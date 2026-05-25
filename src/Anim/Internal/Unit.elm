@@ -25,6 +25,12 @@ builder pipeline. `ResolvedCssUnitAxes` is the resolved record stored on a
 import Anim.Unit as Unit exposing (Unit)
 
 
+
+-- ============================================================
+-- RE-EXPORTS
+-- ============================================================
+
+
 default : Unit
 default =
     Unit.Px
@@ -33,6 +39,12 @@ default =
 toCssSuffix : Unit -> String
 toCssSuffix =
     Unit.toCssSuffix
+
+
+
+-- ============================================================
+-- TYPES
+-- ============================================================
 
 
 type alias CssUnitAxes =
@@ -47,6 +59,12 @@ type alias ResolvedCssUnitAxes =
     , y : Unit
     , z : Unit
     }
+
+
+
+-- ============================================================
+-- BUILD
+-- ============================================================
 
 
 emptyCssUnitAxes : CssUnitAxes
@@ -72,6 +90,12 @@ setCssUnitY unit axes =
 setCssUnitZ : Unit -> CssUnitAxes -> CssUnitAxes
 setCssUnitZ unit axes =
     { axes | z = Just unit }
+
+
+
+-- ============================================================
+-- RESOLVE
+-- ============================================================
 
 
 {-| Merge per-axis local overrides over global overrides, falling back to

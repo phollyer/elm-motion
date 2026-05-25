@@ -79,6 +79,12 @@ import Motion.Easing exposing (Easing)
 import Motion.Spring exposing (Spring)
 
 
+
+-- ============================================================
+-- TYPES
+-- ============================================================
+
+
 {-| Base builder type for animations.
 
     f : AnimBuilder mode -> AnimBuilder mode
@@ -86,6 +92,12 @@ import Motion.Spring exposing (Spring)
 -}
 type alias AnimBuilder mode =
     Internal.AnimBuilder mode
+
+
+
+-- ============================================================
+-- TIMELINE MODES
+-- ============================================================
 
 
 {-| Builder mode for ScrollTimeline builders.
@@ -113,6 +125,12 @@ type alias ForViewTimeline =
 -}
 type alias ForDocumentTimeline engine =
     Internal.ForDocumentTimeline engine
+
+
+
+-- ============================================================
+-- ENGINE MODES
+-- ============================================================
 
 
 {-| Builder mode for Keyframe builders.
@@ -149,6 +167,12 @@ type alias ForTransitionEngine =
 -}
 type alias ForWAAPIEngine =
     Internal.ForWAAPIEngine
+
+
+
+-- ============================================================
+-- DOCUMENT TIMELINE FUNCTIONS
+-- ============================================================
 
 
 {-| Set the global delay for all animations in a Document timeline builder.
@@ -196,6 +220,13 @@ speed =
     Internal.speed
 
 
+
+-- ============================================================
+-- UNIVERSAL FUNCTIONS
+-- ============================================================
+-- Playback
+
+
 {-| Set how many times an animation should repeat.
 
     notificationAttentionLoop : AnimBuilder mode -> AnimBuilder mode
@@ -225,6 +256,10 @@ alternate =
     Internal.alternate
 
 
+
+-- Motion Behaviour
+
+
 {-| Set the global easing function.
 
     heroEntrance : AnimBuilder mode -> AnimBuilder mode
@@ -252,6 +287,10 @@ easing =
 spring : Spring -> AnimBuilder mode -> AnimBuilder mode
 spring =
     Internal.spring
+
+
+
+-- Units
 
 
 {-| Set the default length unit for all length-bearing properties.

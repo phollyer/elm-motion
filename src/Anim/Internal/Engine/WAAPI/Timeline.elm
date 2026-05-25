@@ -7,10 +7,22 @@ module Anim.Internal.Engine.WAAPI.Timeline exposing
 import Json.Decode as Decode
 
 
+
+-- ============================================================
+-- TYPES
+-- ============================================================
+
+
 type Engine
     = Waapi
     | ScrollTimeline
     | ViewTimeline
+
+
+
+-- ============================================================
+-- ROUTING
+-- ============================================================
 
 
 isAnimationUpdateFor : Engine -> Decode.Value -> Bool

@@ -316,6 +316,27 @@ duration =
     SB.duration
 
 
+{-| Set the delay (milliseconds) before the animation starts.
+
+    myAnimation : AnimBuilder mode -> AnimBuilder mode
+    myAnimation =
+        Skew.for "animGroupName"
+            >> Skew.toXY 12 0
+            >> Skew.delay 500
+            >> ... -- continue with animation
+
+-}
+delay : Int -> Builder mode -> Builder mode
+delay =
+    SB.delay
+
+
+
+-- ============================================================
+-- EASING
+-- ============================================================
+
+
 {-| Set the easing function for the animation.
 
     import Easing exposing (Easing(..))
@@ -360,21 +381,6 @@ and vice versa — they are mutually exclusive.
 spring : Spring -> Builder mode -> Builder mode
 spring =
     SB.spring
-
-
-{-| Set the delay (milliseconds) before the animation starts.
-
-    myAnimation : AnimBuilder mode -> AnimBuilder mode
-    myAnimation =
-        Skew.for "animGroupName"
-            >> Skew.toXY 12 0
-            >> Skew.delay 500
-            >> ... -- continue with animation
-
--}
-delay : Int -> Builder mode -> Builder mode
-delay =
-    SB.delay
 
 
 

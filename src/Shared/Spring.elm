@@ -28,6 +28,10 @@ physics math.
 
 -}
 
+-- ============================================================
+-- TYPES
+-- ============================================================
+
 
 {-| Spring configuration.
 
@@ -60,6 +64,12 @@ type alias MotionParams =
     , from : Float
     , to : Float
     }
+
+
+
+-- ============================================================
+-- QUERY
+-- ============================================================
 
 
 {-| Position at the given time (in milliseconds from motion start).
@@ -95,6 +105,12 @@ near-zero damping).
 settleTimeMs : MotionParams -> Float
 settleTimeMs params =
     settleTimeS (precompute params) * 1000.0
+
+
+
+-- ============================================================
+-- BAKE
+-- ============================================================
 
 
 {-| Bake the motion to keyframe samples for engines that need a static

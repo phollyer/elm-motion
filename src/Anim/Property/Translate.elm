@@ -190,52 +190,6 @@ type alias Builder mode =
 -- ============================================================
 
 
-{-| Turn the `AnimBuilder` into a translate animation `Builder` for the specified animation group.
-
-Use this to start configuring a translate animation.
-
-    myAnimation : AnimBuilder mode -> AnimBuilder mode
-    myAnimation =
-        Translate.for "animGroupName"
-            >> ... -- Configure and build the animation
-
--}
-for : AnimGroupName -> AnimBuilder mode -> Builder mode
-for =
-    TB.for
-
-
-{-| Like [for](#for), but inherits `easing`, `spring`, `delay`, and timing
-(`duration` / `speed`) from the previous translate animation on the same
-animation group.
-
-Use this when the surrounding world changed (e.g. window resize, parent
-relayout) and the animation should continue toward an updated target while
-keeping the same visual character.
-
-    -- on resize:
-    Translate.continueFor "box"
-        >> Translate.toX newTargetX
-        >> Translate.build
-
-Any of the four inherited fields can still be overridden by setting them
-explicitly after `continueFor`:
-
-    Translate.continueFor "box"
-        >> Translate.toX newTargetX
-        >> Translate.speed 200
-        -- override inherited timing
-        >> Translate.build
-
-If no previous translate animation exists for the group, `continueFor`
-behaves exactly like `for`.
-
--}
-continueFor : AnimGroupName -> AnimBuilder mode -> Builder mode
-continueFor =
-    TB.forContinuing
-
-
 {-| Set the initial X, Y, and Z position.
 
     import Anim.Engine.* as Engine
@@ -394,6 +348,10 @@ initZ animationKey z animBuilder =
         |> TB.build
 
 
+
+-- Initial Unit
+
+
 {-| Set the length [Unit](Anim-Unit#Unit) used by every subsequent `init*` call
 for `Translate` values. Defaults to `Px`.
 
@@ -445,6 +403,21 @@ initUnitZ =
 -- ============================================================
 
 
+{-| Turn the `AnimBuilder` into a translate animation `Builder` for the specified animation group.
+
+Use this to start configuring a translate animation.
+
+    myAnimation : AnimBuilder mode -> AnimBuilder mode
+    myAnimation =
+        Translate.for "animGroupName"
+            >> ... -- Configure and build the animation
+
+-}
+for : AnimGroupName -> AnimBuilder mode -> Builder mode
+for =
+    TB.for
+
+
 {-| Complete the [Builder](#Builder) animation configuration and return an `AnimBuilder`
 so you can continue configuring other property animations or execute the animation with an Engine.
 
@@ -459,6 +432,43 @@ so you can continue configuring other property animations or execute the animati
 build : Builder mode -> AnimBuilder mode
 build =
     TB.build
+
+
+
+-- ============================================================
+-- CONTINUE A RUNNING ANIMATION
+-- ============================================================
+
+
+{-| Like [for](#for), but inherits `easing`, `spring`, `delay`, and timing
+(`duration` / `speed`) from the previous translate animation on the same
+animation group.
+
+Use this when the surrounding world changed (e.g. window resize, parent
+relayout) and the animation should continue toward an updated target while
+keeping the same visual character.
+
+    -- on resize:
+    Translate.continueFor "box"
+        >> Translate.toX newTargetX
+        >> Translate.build
+
+Any of the four inherited fields can still be overridden by setting them
+explicitly after `continueFor`:
+
+    Translate.continueFor "box"
+        >> Translate.toX newTargetX
+        >> Translate.speed 200
+        -- override inherited timing
+        >> Translate.build
+
+If no previous translate animation exists for the group, `continueFor`
+behaves exactly like `for`.
+
+-}
+continueFor : AnimGroupName -> AnimBuilder mode -> Builder mode
+continueFor =
+    TB.forContinuing
 
 
 
@@ -695,163 +705,6 @@ toZ =
 
 
 -- ============================================================
--- TIMING
--- ============================================================
-
-
-{-| The speed represents how many pixels the element moves per second.
-
-For example, lets take a translate animation from `(0, 0)` to `(100, 0)`.
-A speed of `50.0` means the element will move 50 pixels per second, so our animation will take 2 seconds to complete (0 -> 50 in 1 second, then 50 -> 100 in the next second).
-
-    myAnimation : AnimBuilder mode -> AnimBuilder mode
-    myAnimation =
-        Translate.for "animGroupName"
-            >> Translate.toX 100
-            >> Translate.speed 50
-            >> ... -- continue with animation
-
-Similarly, a speed of `100.0` would complete the same animation in 1 second, and a speed of `25.0` would take 4 seconds.
-
--}
-speed : Float -> Builder mode -> Builder mode
-speed =
-    TB.speed
-
-
-{-| Set the animation duration (milliseconds).
-
-    myAnimation : AnimBuilder mode -> AnimBuilder mode
-    myAnimation =
-        Translate.for "animGroupName"
-            >> Translate.toY 300
-            >> Translate.duration 2000
-            >> ... -- continue with animation
-
--}
-duration : Int -> Builder mode -> Builder mode
-duration =
-    TB.duration
-
-
-{-| Set the easing function for the animation.
-
-    import Easing exposing (Easing(..))
-
-    myAnimation : AnimBuilder mode -> AnimBuilder mode
-    myAnimation =
-        Translate.for "animGroupName"
-            >> Translate.toY 300
-            >> Translate.easing EaseInOut
-            >> ... -- continue with animation
-
--}
-easing : Easing -> Builder mode -> Builder mode
-easing =
-    TB.easing
-
-
-
--- ============================================================
--- SPRING
--- ============================================================
-
-
-{-| Drive this property with a spring instead of an easing curve.
-
-Spring-driven motion has _emergent_ duration: the motion ends when
-the value has settled at the target. Any `duration` or `speed` set on
-this property is ignored when a spring is used. `delay` is honoured.
-
-Setting `spring` clears any previously-set `easing` on this property,
-and vice versa — they are mutually exclusive.
-
-    import Motion.Spring as Spring
-
-    myAnimation : AnimBuilder mode -> AnimBuilder mode
-    myAnimation =
-        Translate.for "animGroupName"
-            >> Translate.toY 300
-            >> Translate.spring Spring.wobbly
-
--}
-spring : Spring -> Builder mode -> Builder mode
-spring =
-    TB.spring
-
-
-{-| Set the delay (milliseconds) before the animation starts.
-
-    myAnimation : AnimBuilder mode -> AnimBuilder mode
-    myAnimation =
-        Translate.for "animGroupName"
-            >> Translate.toY 300
-            >> Translate.delay 500
-            >> ... -- continue with animation
-
--}
-delay : Int -> Builder mode -> Builder mode
-delay =
-    TB.delay
-
-
-{-| Set the length [Unit](Anim-Unit#Unit) used to render translate values for
-this property.
-
-Defaults to `Px`. Setting a relative unit (`Percent`, `Vw`, `Vh`, `Rem`, `Em`)
-makes the browser re-evaluate the rendered translation against current layout,
-so the animation follows resize automatically.
-
-    import Anim.Unit as Unit
-
-    myAnimation : AnimBuilder mode -> AnimBuilder mode
-    myAnimation =
-        Translate.for "animGroupName"
-            >> Translate.toX 50
-            >> Translate.cssUnit Unit.Percent
-            >> Translate.build
-
-This setting takes precedence over any [length](Anim-Engine-WAAPI#cssUnit) set
-on the engine.
-
-The `Sub` engine currently only supports `Px`; setting a non-`Px` unit on a
-translate targeted at `Sub` reports an error and falls back to `Px`.
-
--}
-cssUnit : Unit -> Builder mode -> Builder mode
-cssUnit =
-    TB.cssUnit
-
-
-{-| Set the length [Unit](Anim-Unit#Unit) used to render the X-axis translate
-value for this property. Overrides any unit set by [`cssUnit`](#cssUnit) or by
-the engine's `cssUnit`/`cssUnitX` setter for the X axis.
--}
-cssUnitX : Unit -> Builder mode -> Builder mode
-cssUnitX =
-    TB.cssUnitX
-
-
-{-| Set the length [Unit](Anim-Unit#Unit) used to render the Y-axis translate
-value for this property. Overrides any unit set by [`cssUnit`](#cssUnit) or by
-the engine's `cssUnit`/`cssUnitY` setter for the Y axis.
--}
-cssUnitY : Unit -> Builder mode -> Builder mode
-cssUnitY =
-    TB.cssUnitY
-
-
-{-| Set the length [Unit](Anim-Unit#Unit) used to render the Z-axis translate
-value for this property. Overrides any unit set by [`cssUnit`](#cssUnit) or by
-the engine's `cssUnit`/`cssUnitZ` setter for the Z axis.
--}
-cssUnitZ : Unit -> Builder mode -> Builder mode
-cssUnitZ =
-    TB.cssUnitZ
-
-
-
--- ============================================================
 -- BY
 -- ============================================================
 
@@ -967,6 +820,175 @@ This would animate from `0` to `100` on the Z axis.
 byZ : Float -> Builder mode -> Builder mode
 byZ =
     TB.byZ
+
+
+
+-- ============================================================
+-- TIMING
+-- ============================================================
+
+
+{-| Set the delay (milliseconds) before the animation starts.
+
+    myAnimation : AnimBuilder mode -> AnimBuilder mode
+    myAnimation =
+        Translate.for "animGroupName"
+            >> Translate.toY 300
+            >> Translate.delay 500
+            >> ... -- continue with animation
+
+-}
+delay : Int -> Builder mode -> Builder mode
+delay =
+    TB.delay
+
+
+{-| Set the animation duration (milliseconds).
+
+    myAnimation : AnimBuilder mode -> AnimBuilder mode
+    myAnimation =
+        Translate.for "animGroupName"
+            >> Translate.toY 300
+            >> Translate.duration 2000
+            >> ... -- continue with animation
+
+-}
+duration : Int -> Builder mode -> Builder mode
+duration =
+    TB.duration
+
+
+{-| The speed represents how many pixels the element moves per second.
+
+For example, lets take a translate animation from `(0, 0)` to `(100, 0)`.
+A speed of `50.0` means the element will move 50 pixels per second, so our animation will take 2 seconds to complete (0 -> 50 in 1 second, then 50 -> 100 in the next second).
+
+    myAnimation : AnimBuilder mode -> AnimBuilder mode
+    myAnimation =
+        Translate.for "animGroupName"
+            >> Translate.toX 100
+            >> Translate.speed 50
+            >> ... -- continue with animation
+
+Similarly, a speed of `100.0` would complete the same animation in 1 second, and a speed of `25.0` would take 4 seconds.
+
+-}
+speed : Float -> Builder mode -> Builder mode
+speed =
+    TB.speed
+
+
+
+-- ============================================================
+-- EASING
+-- ============================================================
+
+
+{-| Set the easing function for the animation.
+
+    import Easing exposing (Easing(..))
+
+    myAnimation : AnimBuilder mode -> AnimBuilder mode
+    myAnimation =
+        Translate.for "animGroupName"
+            >> Translate.toY 300
+            >> Translate.easing EaseInOut
+            >> ... -- continue with animation
+
+-}
+easing : Easing -> Builder mode -> Builder mode
+easing =
+    TB.easing
+
+
+
+-- ============================================================
+-- SPRING
+-- ============================================================
+
+
+{-| Drive this property with a spring instead of an easing curve.
+
+Spring-driven motion has _emergent_ duration: the motion ends when
+the value has settled at the target. Any `duration` or `speed` set on
+this property is ignored when a spring is used. `delay` is honoured.
+
+Setting `spring` clears any previously-set `easing` on this property,
+and vice versa — they are mutually exclusive.
+
+    import Motion.Spring as Spring
+
+    myAnimation : AnimBuilder mode -> AnimBuilder mode
+    myAnimation =
+        Translate.for "animGroupName"
+            >> Translate.toY 300
+            >> Translate.spring Spring.wobbly
+
+-}
+spring : Spring -> Builder mode -> Builder mode
+spring =
+    TB.spring
+
+
+
+-- ============================================================
+-- UNIT
+-- ============================================================
+
+
+{-| Set the length [Unit](Anim-Unit#Unit) used to render translate values for
+this property.
+
+Defaults to `Px`. Setting a relative unit (`Percent`, `Vw`, `Vh`, `Rem`, `Em`)
+makes the browser re-evaluate the rendered translation against current layout,
+so the animation follows resize automatically.
+
+    import Anim.Unit as Unit
+
+    myAnimation : AnimBuilder mode -> AnimBuilder mode
+    myAnimation =
+        Translate.for "animGroupName"
+            >> Translate.toX 50
+            >> Translate.cssUnit Unit.Percent
+            >> Translate.build
+
+This setting takes precedence over any [length](Anim-Engine-WAAPI#cssUnit) set
+on the engine.
+
+The `Sub` engine currently only supports `Px`; setting a non-`Px` unit on a
+translate targeted at `Sub` reports an error and falls back to `Px`.
+
+-}
+cssUnit : Unit -> Builder mode -> Builder mode
+cssUnit =
+    TB.cssUnit
+
+
+{-| Set the length [Unit](Anim-Unit#Unit) used to render the X-axis translate
+value for this property. Overrides any unit set by [`cssUnit`](#cssUnit) or by
+the engine's `cssUnit`/`cssUnitX` setter for the X axis.
+-}
+cssUnitX : Unit -> Builder mode -> Builder mode
+cssUnitX =
+    TB.cssUnitX
+
+
+{-| Set the length [Unit](Anim-Unit#Unit) used to render the Y-axis translate
+value for this property. Overrides any unit set by [`cssUnit`](#cssUnit) or by
+the engine's `cssUnit`/`cssUnitY` setter for the Y axis.
+-}
+cssUnitY : Unit -> Builder mode -> Builder mode
+cssUnitY =
+    TB.cssUnitY
+
+
+{-| Set the length [Unit](Anim-Unit#Unit) used to render the Z-axis translate
+value for this property. Overrides any unit set by [`cssUnit`](#cssUnit) or by
+the engine's `cssUnit`/`cssUnitZ` setter for the Z axis.
+-}
+cssUnitZ : Unit -> Builder mode -> Builder mode
+cssUnitZ =
+    TB.cssUnitZ
 
 
 
