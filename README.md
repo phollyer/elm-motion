@@ -4,7 +4,7 @@ A comprehensive Elm package for smooth, high-performance DOM animations and scro
 
 ## 👀 At a Glance
 
-- **6 Animation Engines** — Keyframe, ScrollTimeline, Sub, Transition, ViewTimeline, WAAPI
+- **6 Animation Engines** — Transition, Keyframe, Sub, WAAPI, ScrollTimeline, ViewTimeline
 - **3 Scroll Engines** — Cmd, Sub, Task
 - **Three timelines, one API** — drive animations by time, scroll progress or viewport position
 - **Mid-flight control** — query, divert, pause, resume, restart and stop animations and scrolls in motion
@@ -38,7 +38,7 @@ A comprehensive Elm package for smooth, high-performance DOM animations and scro
 Elm Motion gives you a consistent builder API for configuring animations and scrolls across
 multiple Engines.
 
-Define your animations once, then run them with any Animation Engine.
+Define your animations once, then run them with any Engine.
 
 ```elm
 -- Define once
@@ -62,6 +62,39 @@ WAAPI.animate model.animState fadeIn
 ScrollTimeline.animate motionCmd Document fadeIn
 
 ViewTimeline.animate motionCmd fadeIn
+```
+
+### Composable
+
+The builder API makes animations, and their building blocks, composable so you
+can easily build animations from smaller pieces.
+
+```elm
+-- Standard timing for all animations
+standardTiming : AnimBuilder mode -> AnimBuilder mode 
+standardTiming =
+    Transition.duration 300
+        >> Transition.easing QuadOut
+
+-- Define animations
+fadeIn : AnimBuilder mode -> AnimBuilder mode
+fadeIn =
+    Opacity.for "headerEntranceAnim"
+        >> Opacity.to 1
+        >> Opacity.build
+
+slideIn : AnimBuilder mode -> AnimBuilder mode
+slideIn =
+    Translate.for "sidebarEntranceAnim"
+        >> Translate.toX 0
+        >> Translate.build
+
+-- Compose together
+Transition.animate model.animState <|
+    standardTiming
+        >> fadeIn
+        >> slideIn
+
 ```
 
 The same philosophy applies to scrolling — define once, use with any Scroll Engine.
@@ -212,7 +245,7 @@ view _ =
 
 The `WAAPI`, `ScrollTimeline` and `ViewTimeline` engines require the
 [`@phollyer/elm-motion`](https://www.npmjs.com/package/@phollyer/elm-motion)
-JavaScript companion. The CSS and `Sub` engines do not.
+JavaScript companion.
 
 ```bash
 npm install @phollyer/elm-motion

@@ -6,31 +6,11 @@ import { getDefaultTransformState, computeTransformFromResolved } from './transf
 import { sendLifecycleEvent, sendIterationEvent, sendPropertyUpdate, buildAnimatedPropertyData } from './ports.js';
 import { reportError } from './errors.js';
 
-/**
- * Property keys whose data is read from the live `CSSStyleDeclaration` returned
- * by `window.getComputedStyle(element)`. The `transform` branch is intentionally
- * absent: transform values are computed analytically from `transformState` and
- * never need a style flush. Custom-property keys are dynamic (`custom:<css>` /
- * `customColor:<css>`) and detected by prefix in `needsComputedStyle`.
- */
-const COMPUTED_STYLE_KEYS = ['opacity', 'size', 'perspectiveOrigin'];
-
-/**
- * Return true if any property in `propertyVersions` requires reading the
- * element's live computed style. Used to skip the layout-flushing
- * `getComputedStyle` call entirely for pure-transform animations - the most
- * common case for the WAAPI engine, and the one that benefits most from
- * compositor-only playback.
- */
-export function needsComputedStyle(propertyVersions) {
-    for (const key of COMPUTED_STYLE_KEYS) {
-        if (key in propertyVersions) return true;
-    }
-    for (const key in propertyVersions) {
-        if (key.startsWith('custom:') || key.startsWith('customColor:')) return true;
-    }
-    return false;
-}
+// Sub-property keys covered by the merged transform animation. When the
+// 'transform' entry is active, raw per-iteration progress for each of these
+// is computed individually (sub-properties can have different durations and
+// each completes locally when its own duration elapses).
+const TRANSFORM_SUB_PROPS = ['translate', 'rotate', 'scale', 'skew'];
 
 // Minimum interval (ms) between per-frame propertyUpdate emissions during an
 // animation. Default 0 = no throttle: emit on every requestAnimationFrame
@@ -144,8 +124,18 @@ function removeTrackedAnimationVersion(animGroup, propertyType, version) {
     }
 }
 
-function getResolvedEndTransformState(resolvedTransformValues) {
-    return {
+/**
+ * Cache the end values of a merged transform animation into
+ * `lastKnownTransforms` so the resize machinery in `animations.js` has the
+ * correct anchor after the animation finishes. Resize math reads this
+ * cache to compute proportional rescaling; without it the post-animation
+ * resize falls back to a DOM read of the inline style.
+ */
+function cacheFinalTransformState(animGroup, resolvedTransformValues) {
+    if (!resolvedTransformValues) {
+        return;
+    }
+    const finalState = {
         x: resolvedTransformValues.translate.endX,
         y: resolvedTransformValues.translate.endY,
         z: resolvedTransformValues.translate.endZ,
@@ -157,36 +147,42 @@ function getResolvedEndTransformState(resolvedTransformValues) {
         rotateZ: resolvedTransformValues.rotate.endZ,
         skewX: resolvedTransformValues.skew.endX,
         skewY: resolvedTransformValues.skew.endY,
-        translateUnitX: (resolvedTransformValues.translate && typeof resolvedTransformValues.translate.unitX === 'string') ? resolvedTransformValues.translate.unitX : 'px',
-        translateUnitY: (resolvedTransformValues.translate && typeof resolvedTransformValues.translate.unitY === 'string') ? resolvedTransformValues.translate.unitY : 'px',
-        translateUnitZ: (resolvedTransformValues.translate && typeof resolvedTransformValues.translate.unitZ === 'string') ? resolvedTransformValues.translate.unitZ : 'px'
+        translateUnitX: (typeof resolvedTransformValues.translate.unitX === 'string') ? resolvedTransformValues.translate.unitX : 'px',
+        translateUnitY: (typeof resolvedTransformValues.translate.unitY === 'string') ? resolvedTransformValues.translate.unitY : 'px',
+        translateUnitZ: (typeof resolvedTransformValues.translate.unitZ === 'string') ? resolvedTransformValues.translate.unitZ : 'px'
     };
+    lastKnownTransforms.set(animGroup, finalState);
 }
 
-function getTrackedTransformState(animGroup, resolvedTransformValues, fallbackTransformState) {
-    if (resolvedTransformValues) {
-        const transformState = fallbackTransformState || getDefaultTransformState();
-        lastKnownTransforms.set(animGroup, transformState);
-        return transformState;
+/**
+ * Compute the per-sub-property local progress for the merged transform
+ * animation at a given `globalProgress` (0..1 across the merged duration).
+ *
+ * Mirrors the duration-ratio scaling in `interpolateSubProperty` (transform.js)
+ * so each sub-property's progress reaches 1.0 when its own duration elapses,
+ * even when other sub-properties of the merged animation are still running.
+ * Easing is intentionally NOT applied here — the Elm side
+ * (`ProgressApply.applyPropertyProgress`) applies the property's easing.
+ */
+function buildTransformSubPropertyProgress(globalProgress, resolvedTransformValues, maxDuration) {
+    const out = {};
+    for (const key of TRANSFORM_SUB_PROPS) {
+        const subProp = resolvedTransformValues[key];
+        if (!subProp) continue;
+        const durationRatio = (subProp.duration > 0 && maxDuration > 0)
+            ? (subProp.duration / maxDuration)
+            : 1;
+        out[key] = Math.min(1.0, durationRatio > 0 ? globalProgress / durationRatio : 1.0);
     }
-
-    return lastKnownTransforms.get(animGroup) || getDefaultTransformState();
+    return out;
 }
 
-function sendTrackedPropertyUpdate(animGroup, propertyType, version, transformState, element, isAnimating, progress) {
+function sendTrackedPropertyUpdate(animGroup, propertyType, version, propertyProgress, isAnimating, progress) {
     const propertyVersions = buildPropertyVersions(animGroup, propertyType, version);
-    // Skip the layout-flushing getComputedStyle call when only transform
-    // properties are animated. The transform branch of buildAnimatedPropertyData
-    // is computed analytically from transformState and never reads computedStyle,
-    // so for the common pure-transform case (translate / rotate / scale / skew)
-    // we save one style flush per element per rAF tick.
-    const computedStyle = needsComputedStyle(propertyVersions)
-        ? window.getComputedStyle(element)
-        : null;
     const propertyData = {
         elementId: animGroup,
         animGroup: animGroup,
-        ...buildAnimatedPropertyData(animGroup, propertyVersions, transformState, element, computedStyle),
+        ...buildAnimatedPropertyData(propertyProgress),
         isAnimating: isAnimating,
         propertyVersions: propertyVersions
     };
@@ -375,6 +371,7 @@ export function setupAnimationEvents(animGroup, propertyType, element, animation
     let lastComputedTransformState = resolvedTransformValues
         ? computeTransformFromResolved(resolvedTransformValues, 0, transformAnimDuration)
         : null;
+    let lastProgress = 0;
     let lastTime = 0;
     let rafId = null;
 
@@ -387,8 +384,21 @@ export function setupAnimationEvents(animGroup, propertyType, element, animation
                 updateGroupIterationState(animGroup, entry.generation, entry.propertyIndex, animation);
             }
 
+            // getLiveTransformState is invoked for its `lastKnownTransforms`
+            // side-effect: the resize machinery in `animations.js` reads that
+            // cache to anchor proportional rescaling on the next viewport
+            // resize. The returned state is no longer sent to Elm — Elm
+            // interpolates from its own anchored start using the per-property
+            // progress emitted below.
             const transformState = getLiveTransformState(animGroup, animation, resolvedTransformValues, transformAnimDuration);
             lastComputedTransformState = transformState;
+
+            const globalProgress = getAnimationProgress(animGroup, animation);
+            lastProgress = globalProgress;
+
+            const propertyProgress = resolvedTransformValues
+                ? buildTransformSubPropertyProgress(globalProgress, resolvedTransformValues, transformAnimDuration)
+                : { [propertyType]: globalProgress };
 
             const isAnimatingFlag = playStateAtTick === 'running';
 
@@ -396,10 +406,9 @@ export function setupAnimationEvents(animGroup, propertyType, element, animation
                 animGroup,
                 null,
                 null,
-                transformState,
-                element,
+                propertyProgress,
                 isAnimatingFlag,
-                getAnimationProgress(animGroup, animation)
+                globalProgress
             );
             lastTime = now;
         }
@@ -449,12 +458,12 @@ export function setupAnimationEvents(animGroup, propertyType, element, animation
 
         if (wasActive && entryGeneration != null && animationGroups.get(animGroup)?.generation === entryGeneration) {
             const allComplete = finalizeAnimationTracking(animGroup, entryGeneration, 'completed');
-            const finalTransformState = getTrackedTransformState(
-                animGroup,
-                resolvedTransformValues,
-                resolvedTransformValues ? getResolvedEndTransformState(resolvedTransformValues) : null
-            );
-            sendTrackedPropertyUpdate(animGroup, propertyType, version, finalTransformState, element, !allComplete);
+            // Cache end-of-animation transform state for the next resize.
+            cacheFinalTransformState(animGroup, resolvedTransformValues);
+            const finalProgress = resolvedTransformValues
+                ? Object.fromEntries(TRANSFORM_SUB_PROPS.map(k => [k, 1]))
+                : { [propertyType]: 1 };
+            sendTrackedPropertyUpdate(animGroup, propertyType, version, finalProgress, !allComplete);
         }
     });
 
@@ -467,8 +476,15 @@ export function setupAnimationEvents(animGroup, propertyType, element, animation
 
         if (wasActive && entryGeneration != null && animationGroups.get(animGroup)?.generation === entryGeneration) {
             const allCancelled = finalizeAnimationTracking(animGroup, entryGeneration, 'cancelled');
-            const cancelTransformState = getTrackedTransformState(animGroup, resolvedTransformValues, lastComputedTransformState);
-            sendTrackedPropertyUpdate(animGroup, propertyType, version, cancelTransformState, element, !allCancelled);
+            // Freeze the cached transform state at the last-known live values
+            // so resize math after cancel doesn't read a stale baseline.
+            if (resolvedTransformValues && lastComputedTransformState) {
+                lastKnownTransforms.set(animGroup, lastComputedTransformState);
+            }
+            const cancelProgress = resolvedTransformValues
+                ? buildTransformSubPropertyProgress(lastProgress, resolvedTransformValues, transformAnimDuration)
+                : { [propertyType]: lastProgress };
+            sendTrackedPropertyUpdate(animGroup, propertyType, version, cancelProgress, !allCancelled);
         }
     });
 

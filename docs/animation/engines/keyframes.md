@@ -148,6 +148,14 @@ Call `animate` to apply an animation to the current `AnimState`.
                 )
     ```
 
+### Mid-Flight Interruptions
+
+Triggering `animate` while an animation is running cancels the current animation and replaces it with new one. This will cause a jump in state from wherever the animation was, to the start state of the new animation.
+
+### OnLoad Animations
+
+For on-load animations, trigger `animate` when the page initializes, the animation runs immediately.
+
 ### Events
 
 `update` returns a single `AnimEvent` per call.
@@ -270,6 +278,19 @@ Apply `events` alongside `attributes` to attach the DOM animation event listener
 
 Use `eventsStopPropagation` to prevent events from bubbling to parent elements.
 
+### Responsive Strategy
+
+Use relative CSS units whenever the motion can be defined in layout-relative terms.
+
+For measured pixel targets:
+
+- Keyframe has no proportional remap API for resize updates.
+- On resize, recompute pixel targets and re-position with `retarget`.
+- The animation instantly moves to the `retarget`ed position and stops.
+- Idle animations stay at their last resolved value until you trigger a new target.
+
+📖 See [Responsive Animations](../concepts/responsive-animations.md) for more info.
+
 ### Playback
 
 Set `iterations`, `loopForever`, and `alternate` in the animation builder.
@@ -307,23 +328,6 @@ Keyframe animations use the full Easing library with exact mathematical curves �
 Calling `animate` while an animation is running cancels the current animation — the element jumps to the current animation's end state before the new one begins. There is no access to the mid-flight position.
 
 For smooth mid-flight redirections, use the [Sub](sub.md) or [WAAPI](waapi.md) engine instead.
-
-??? example "View Source Code"
-
-    ```elm
-    Stop ->
-        ( { model | animState = Keyframe.stop "card" model.animState }, Cmd.none )
-
-    Reset ->
-        ( { model | animState = Keyframe.reset "card" model.animState }, Cmd.none )
-
-    Restart ->
-        let
-            ( animState, eventCmd ) =
-                Keyframe.restart "card" GotAnimMsg model.animState
-        in
-        ( { model | animState = animState }, eventCmd )
-    ```
 
 ### Discrete Properties
 

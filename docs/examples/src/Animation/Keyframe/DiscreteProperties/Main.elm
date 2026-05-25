@@ -50,7 +50,7 @@ init =
 
 animGroup : String
 animGroup =
-    "boxAnim"
+    "fadeAnim"
 
 
 fadeIn : AnimBuilder mode -> AnimBuilder mode
@@ -123,8 +123,7 @@ update msg model =
 view : Model -> Html Msg
 view model =
     div [ class "example-stage" ]
-        [ div [ class "example-badge example-badge--responsive" ] [ text "RESPONSIVE" ]
-        , Keyframe.styleNode model.animState
+        [ Keyframe.styleNode model.animState
         , div [ class "example-controls" ]
             [ button
                 [ onClick Show
@@ -148,6 +147,7 @@ view model =
             (Keyframe.attributes animGroup model.animState
                 ++ Keyframe.events GotAnimMsg
                 ++ [ class "example-box"
+                   , style "display" "flex"
                    , style "background-color" "#4a90d9"
                    , style "border-radius" "12px"
                    , style "align-items" "center"

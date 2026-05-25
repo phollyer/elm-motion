@@ -61,7 +61,7 @@ init =
 
 animGroup : String
 animGroup =
-    "boxAnim"
+    "fadeAnim"
 
 
 fadeIn : AnimBuilder mode -> AnimBuilder mode
@@ -147,8 +147,7 @@ subscriptions model =
 view : Model -> Html Msg
 view model =
     div [ class "example-stage" ]
-        [ div [ class "example-badge example-badge--responsive" ] [ text "RESPONSIVE" ]
-        , div [ class "example-controls" ]
+        [ div [ class "example-controls" ]
             [ button
                 [ onClick Show
                 , class "ui-action-button primary"

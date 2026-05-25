@@ -15,34 +15,30 @@ groupName =
     "card"
 
 
-type Msg
-    = NoOp
-
-
-fakeCommandPort : Encode.Value -> Cmd Msg
+fakeCommandPort : Encode.Value -> Cmd msg
 fakeCommandPort _ =
     Cmd.none
 
 
-fakeSubscriptionPort : (Decode.Value -> Msg) -> Sub Msg
+fakeSubscriptionPort : (Decode.Value -> msg) -> Sub msg
 fakeSubscriptionPort _ =
     Sub.none
 
 
-initWith : List (WAAPI.EngineBuilder -> WAAPI.EngineBuilder) -> WAAPI.AnimState Msg
+initWith : List (WAAPI.EngineBuilder -> WAAPI.EngineBuilder) -> WAAPI.AnimState msg
 initWith =
     WAAPI.init fakeCommandPort fakeSubscriptionPort
 
 
-animate : (WAAPI.EngineBuilder -> WAAPI.EngineBuilder) -> WAAPI.AnimState Msg -> WAAPI.AnimState Msg
+animate : (WAAPI.EngineBuilder -> WAAPI.EngineBuilder) -> WAAPI.AnimState msg -> WAAPI.AnimState msg
 animate config state =
     WAAPI.animate state config
         |> Tuple.first
 
 
-animatedState : WAAPI.AnimState Msg
+animatedState : WAAPI.AnimState msg
 animatedState =
-    initWith [ PerspectiveOrigin.initPercent groupName 50 50 ]
+    initWith [ PerspectiveOrigin.initXY groupName 50 50 ]
         |> animate
             (PerspectiveOrigin.for groupName
                 >> PerspectiveOrigin.cssUnit Unit.Percent
@@ -77,7 +73,7 @@ suite =
                     ()
         , test "current reads from the latest snapshot" <|
             \_ ->
-                initWith [ PerspectiveOrigin.initPercent groupName 40 60 ]
+                initWith [ PerspectiveOrigin.initXY groupName 40 60 ]
                     |> WAAPI.getPerspectiveOriginCurrent groupName
                     |> Expect.equal (Just { x = 40, y = 60 })
         , test "current is Nothing for unknown group" <|

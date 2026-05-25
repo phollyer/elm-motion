@@ -299,6 +299,43 @@ describe('resizeTransformAnimation', () => {
         expect(newAnim.pauseCalls).toBe(1);
     });
 
+    it('rebuilds resize keyframes using complex easing sample count', () => {
+        const liveAnim = createFakeAnimation({ duration: 1000 });
+        liveAnim.playState = 'running';
+        liveAnim.currentTime = 250;
+        const newAnim = createFakeAnimation({ duration: 800 });
+        const animateMock = vi.fn(() => newAnim);
+        const element = makeElement('box', animateMock);
+        installDom({ element: element, targetId: 'box' });
+
+        const resolved = defaultResolved();
+        resolved.translate.easingKeyframes = Array.from({ length: 60 }, (_, i) => i / 59);
+
+        const elementAnims = new Map();
+        elementAnims.set('transform', {
+            animation: liveAnim,
+            version: 1,
+            animGroup: 'box',
+            resolvedValues: resolved,
+            generation: 1,
+            propertyIndex: 0,
+            updateFn: vi.fn()
+        });
+        activeAnimations.set('box', elementAnims);
+        animationGroups.set('box', { propertyIterations: [0], propertyConfigs: [] });
+
+        resizeTransformAnimation({
+            elementId: 'box',
+            startX: 0, startY: 0, startZ: 0,
+            endX: 400, endY: 0, endZ: 0,
+            currentX: 100, currentY: 0, currentZ: 0,
+            duration: 800
+        });
+
+        const [keyframes] = animateMock.mock.calls[0];
+        expect(keyframes.length).toBe(60);
+    });
+
     it('seeks to currentTimeMs=0 to restart a collapsed one-shot leg', () => {
         // When Elm collapses a one-shot leg under the Proportional strategy
         // it sends `currentTimeMs: 0` so the easing curve restarts cleanly

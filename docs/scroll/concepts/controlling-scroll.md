@@ -32,7 +32,7 @@ Immediately jumps to the target scroll position and completes the animation:
 ??? example "View Source Code"
 
     ```elm
-    --8<-- "docs/examples/src/Engines/Scroll/Sub/ControllingScrolls/Main.elm:stop"
+    --8<-- "docs/examples/src/Scroll/Sub/ControllingScrolls/Main.elm:stop"
     ```
 
 ### Reset
@@ -42,7 +42,7 @@ Immediately jumps back to the starting scroll position and stops:
 ??? example "View Source Code"
 
     ```elm
-    --8<-- "docs/examples/src/Engines/Scroll/Sub/ControllingScrolls/Main.elm:reset"
+    --8<-- "docs/examples/src/Scroll/Sub/ControllingScrolls/Main.elm:reset"
     ```
 
 ### Restart
@@ -52,7 +52,7 @@ Resets to the start position, then immediately begins scrolling again:
 ??? example "View Source Code"
 
     ```elm
-    --8<-- "docs/examples/src/Engines/Scroll/Sub/ControllingScrolls/Main.elm:restart"
+    --8<-- "docs/examples/src/Scroll/Sub/ControllingScrolls/Main.elm:restart"
     ```
 
 
@@ -63,7 +63,7 @@ Freezes the scroll at its current position. The scroll can be resumed later:
 ??? example "View Source Code"
 
     ```elm
-    --8<-- "docs/examples/src/Engines/Scroll/Sub/ControllingScrolls/Main.elm:pause"
+    --8<-- "docs/examples/src/Scroll/Sub/ControllingScrolls/Main.elm:pause"
     ```
 
 ### Resume
@@ -73,7 +73,7 @@ Continues a paused scroll from exactly where it was frozen:
 ??? example "View Source Code"
 
     ```elm
-    --8<-- "docs/examples/src/Engines/Scroll/Sub/ControllingScrolls/Main.elm:resume"
+    --8<-- "docs/examples/src/Scroll/Sub/ControllingScrolls/Main.elm:resume"
     ```
 
 ## Next Steps

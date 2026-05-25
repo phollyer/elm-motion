@@ -15,6 +15,7 @@ import Anim.Internal.Engine.Sub as Internal
 import Anim.Property.Opacity as Opacity
 import Anim.Property.Translate as Translate
 import Anim.Resize as Resize
+import Anim.Unit as Unit
 import Expect
 import Motion.Easing exposing (Easing(..))
 import Test exposing (Test, describe, test)
@@ -56,6 +57,20 @@ endX : Sub.AnimState -> Float
 endX state =
     Sub.getTranslateEnd groupName state
         |> Maybe.map .x
+        |> Maybe.withDefault -1
+
+
+currentY : Sub.AnimState -> Float
+currentY state =
+    Sub.getTranslateCurrent groupName state
+        |> Maybe.map .y
+        |> Maybe.withDefault -1
+
+
+endY : Sub.AnimState -> Float
+endY state =
+    Sub.getTranslateEnd groupName state
+        |> Maybe.map .y
         |> Maybe.withDefault -1
 
 
@@ -401,6 +416,80 @@ suite =
                     in
                     currentX resized
                         |> within 0.001 before
+            , test "non-px translate axes are not numerically remapped" <|
+                \_ ->
+                    let
+                        state =
+                            initialState
+                                |> (\s ->
+                                        Sub.animate s
+                                            (Translate.for groupName
+                                                >> Translate.cssUnit Unit.Vw
+                                                >> Translate.toX 100
+                                                >> Translate.duration 1000
+                                                >> Translate.easing Linear
+                                                >> Translate.build
+                                            )
+                                   )
+                                |> step 500
+
+                        beforeCurrent =
+                            currentX state
+
+                        beforeEnd =
+                            endX state
+
+                        resized =
+                            onResize groupName
+                                { x = Just { min = 0, max = 300 }
+                                , y = Nothing
+                                }
+                                state
+                    in
+                    Expect.all
+                        [ \_ -> currentX resized |> within 0.001 beforeCurrent
+                        , \_ -> endX resized |> within 0.001 beforeEnd
+                        ]
+                        ()
+            , test "mixed axes remap only the px-authored axis" <|
+                \_ ->
+                    let
+                        state =
+                            initialState
+                                |> (\s ->
+                                        Sub.animate s
+                                            (Translate.for groupName
+                                                >> Translate.cssUnitX Unit.Vw
+                                                >> Translate.cssUnitY Unit.Px
+                                                >> Translate.toXY 100 80
+                                                >> Translate.duration 1000
+                                                >> Translate.easing Linear
+                                                >> Translate.build
+                                            )
+                                   )
+                                |> step 500
+
+                        beforeCurrentX =
+                            currentX state
+
+                        beforeEndX =
+                            endX state
+
+                        resized =
+                            Sub.onResize state <|
+                                Translate.bounds groupName
+                                    { x = Just { min = 0, max = 300 }
+                                    , y = Just { min = 0, max = 40 }
+                                    , z = Nothing
+                                    }
+                    in
+                    Expect.all
+                        [ \_ -> currentX resized |> within 0.001 beforeCurrentX
+                        , \_ -> endX resized |> within 0.001 beforeEndX
+                        , \_ -> currentY resized |> within 0.5 20
+                        , \_ -> endY resized |> within 0.001 40
+                        ]
+                        ()
             ]
         , describe "non-translate properties are untouched"
             [ test "opacity in the same group is left alone" <|

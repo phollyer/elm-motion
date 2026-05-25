@@ -3,26 +3,25 @@ module Anim.Unit exposing
     , toCssSuffix
     )
 
-{-| Length unit selector for length-bearing properties
+{-| Length unit for length-bearing properties
 ([Translate](Anim.Property.Translate), [Size](Anim.Property.Size),
 [PerspectiveOrigin](Anim.Property.PerspectiveOrigin),
 [Custom](Anim.Property.Custom)).
 
-The default is `Px`, which preserves the original pixel-only behaviour.
-Setting a relative unit on an Engine, group, or property makes the browser
-re-evaluate the rendered values against current layout - the animation follows
-resize automatically without needing [Resize.bounds](Anim.Resize#bounds) plumbing.
+The default is `Px`. Switching to a relative unit (`Percent`, `Vw`, `Vh`,
+`Cqw`, `Cqh`, `Rem`, `Em`, etc.) makes the browser re-evaluate the animation
+against current layout, so the animation follows window or container resize
+automatically - no [Resize.bounds](Anim.Resize#bounds) plumbing needed.
 
-The Engines reach for the unit in this order, taking the first one set:
+You can set the unit per-property (`Translate.cssUnit`, `Size.cssUnit`,
+`PerspectiveOrigin.cssUnit`) or globally on an Engine (`WAAPI.cssUnit`,
+`Transition.cssUnit`, etc.). Property-level settings win over Engine-level ones.
 
-1.  Property-level (`Translate.cssUnit`, `Size.cssUnit`, `PerspectiveOrigin.cssUnit`)
-2.  Engine-level (`WAAPI.cssUnit`, `Transition.cssUnit`, `Keyframe.cssUnit`,
-    `ScrollTimeline.cssUnit`, `ViewTimeline.cssUnit`)
-3.  `Px` (built-in default)
+The `Sub` Engine only supports `Px`. Setting a non-`Px` unit on a property
+animated by `Sub` falls back to `Px` and reports an error.
 
-The `Sub` Engine currently only supports `Px`. Setting a non-`Px` unit on a
-property targeted at `Sub` reports an error and falls back to `Px` for that
-animation. Support for relative units on `Sub` is planned for a future release.
+📖 See [Responsive Animations](https://phollyer.github.io/elm-motion/animation/concepts/responsive-animations/)
+for full per-engine behaviour.
 
 
 # Choosing a unit
@@ -70,15 +69,29 @@ animation. Support for relative units on `Sub` is planned for a future release.
 
   - `Percent` - Percentage of the containing block (or the element's own box,
     for `translate`).
+      - `Cap` / `Ch` / `Ex` / `Ic` / `Lh` - Font-relative CSS lengths.
   - `Rem` - Font size of the root element.
   - `Em` - Font size of the element.
+      - `Rcap` / `Rch` / `Rex` / `Ric` / `Rlh` - Root-font-relative CSS lengths.
 
 **Viewport-relative**
 
   - `Vw` / `Vh` - 1% of the viewport's width / height.
+      - `Vi` / `Vb` - 1% of the viewport's inline / block axes.
+      - `Vmin` / `Vmax` - 1% of the viewport's smaller / larger axis.
   - `Dvw` / `Dvh` - Dynamic viewport: tracks URL-bar collapse on mobile.
+      - `Dvi` / `Dvb` - Dynamic viewport inline / block axes.
+      - `Dvmin` / `Dvmax` - Dynamic viewport smaller / larger axis.
   - `Svw` / `Svh` - Small viewport: assumes UI chrome is visible.
+      - `Svi` / `Svb` - Small viewport inline / block axes.
+      - `Svmin` / `Svmax` - Small viewport smaller / larger axis.
   - `Lvw` / `Lvh` - Large viewport: assumes UI chrome is hidden.
+      - `Lvi` / `Lvb` - Large viewport inline / block axes.
+      - `Lvmin` / `Lvmax` - Large viewport smaller / larger axis.
+
+**Physical absolute**
+
+    - `Cm` / `Mm` / `Q` / `In` / `Pt` / `Pc` - CSS physical length units.
 
 **Container-relative** (require an ancestor with `container-type` set)
 
@@ -93,17 +106,49 @@ animation. Support for relative units on `Sub` is planned for a future release.
 -}
 type Unit
     = Px
+    | Cm
+    | Mm
+    | Q
+    | In
+    | Pt
+    | Pc
     | Percent
+    | Cap
+    | Ch
+    | Ex
+    | Ic
+    | Lh
     | Vw
     | Vh
+    | Vi
+    | Vb
+    | Vmin
+    | Vmax
     | Dvw
     | Dvh
+    | Dvi
+    | Dvb
+    | Dvmin
+    | Dvmax
     | Svw
     | Svh
+    | Svi
+    | Svb
+    | Svmin
+    | Svmax
     | Lvw
     | Lvh
+    | Lvi
+    | Lvb
+    | Lvmin
+    | Lvmax
     | Rem
     | Em
+    | Rcap
+    | Rch
+    | Rex
+    | Ric
+    | Rlh
     | Cqi
     | Cqb
     | Cqw
@@ -130,8 +175,41 @@ toCssSuffix unit =
         Px ->
             "px"
 
+        Cm ->
+            "cm"
+
+        Mm ->
+            "mm"
+
+        Q ->
+            "Q"
+
+        In ->
+            "in"
+
+        Pt ->
+            "pt"
+
+        Pc ->
+            "pc"
+
         Percent ->
             "%"
+
+        Cap ->
+            "cap"
+
+        Ch ->
+            "ch"
+
+        Ex ->
+            "ex"
+
+        Ic ->
+            "ic"
+
+        Lh ->
+            "lh"
 
         Vw ->
             "vw"
@@ -139,11 +217,35 @@ toCssSuffix unit =
         Vh ->
             "vh"
 
+        Vi ->
+            "vi"
+
+        Vb ->
+            "vb"
+
+        Vmin ->
+            "vmin"
+
+        Vmax ->
+            "vmax"
+
         Dvw ->
             "dvw"
 
         Dvh ->
             "dvh"
+
+        Dvi ->
+            "dvi"
+
+        Dvb ->
+            "dvb"
+
+        Dvmin ->
+            "dvmin"
+
+        Dvmax ->
+            "dvmax"
 
         Svw ->
             "svw"
@@ -151,17 +253,56 @@ toCssSuffix unit =
         Svh ->
             "svh"
 
+        Svi ->
+            "svi"
+
+        Svb ->
+            "svb"
+
+        Svmin ->
+            "svmin"
+
+        Svmax ->
+            "svmax"
+
         Lvw ->
             "lvw"
 
         Lvh ->
             "lvh"
 
+        Lvi ->
+            "lvi"
+
+        Lvb ->
+            "lvb"
+
+        Lvmin ->
+            "lvmin"
+
+        Lvmax ->
+            "lvmax"
+
         Rem ->
             "rem"
 
         Em ->
             "em"
+
+        Rcap ->
+            "rcap"
+
+        Rch ->
+            "rch"
+
+        Rex ->
+            "rex"
+
+        Ric ->
+            "ric"
+
+        Rlh ->
+            "rlh"
 
         Cqi ->
             "cqi"

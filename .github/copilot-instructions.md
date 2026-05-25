@@ -6,6 +6,7 @@ The library is unpublished. Breaking changes are expected when adding features o
 
 - **Never** account for backward compatibility unless the user explicitly asks.
 - **Never** guess user intent, a solution, or implementation details. Read API docs and codebase, ask for clarification when requirements are ambiguous, and validate any theoretical solution with tests before implementing it.
+- **Never* auto commit or publish changes without explicit user instruction to do so. Always ask for confirmation before performing these actions.
 - **Always** ensure that any new code is covered by tests that verify its correctness and edge cases. If modifying existing code, ensure tests cover the modified behavior and add tests if coverage is insufficient.
 - **Always** remove deprecated functions and stale comments when refactoring.
 - **Always** preserve original functionality during refactoring or optimization unless the user requests a behavior change.

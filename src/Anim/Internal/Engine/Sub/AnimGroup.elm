@@ -8,6 +8,7 @@ module Anim.Internal.Engine.Sub.AnimGroup exposing
     , getDiscreteExit
     , getIterations
     , getTransformOrder
+    , getWillChange
     , init
     , isComplete
     , isPaused
@@ -20,6 +21,7 @@ module Anim.Internal.Engine.Sub.AnimGroup exposing
     , setIterationCount
     , setPlayState
     , setTransformOrder
+    , setWillChange
     )
 
 import Anim.Extra.TransformOrder as TransformProperty exposing (TransformProperty)
@@ -45,6 +47,7 @@ type AnimGroup
         , currentIteration : Int
         , discreteEntry : Dict String String
         , discreteExit : Dict String DiscreteExitProperty
+        , willChange : String
         }
 
 
@@ -65,6 +68,7 @@ init =
         , currentIteration = 0
         , discreteEntry = Dict.empty
         , discreteExit = Dict.empty
+        , willChange = ""
         }
 
 
@@ -112,6 +116,17 @@ getIterations (AnimGroup group) =
 getTransformOrder : AnimGroup -> List TransformProperty
 getTransformOrder (AnimGroup group) =
     group.transformOrder
+
+
+{-| Get the deduped, comma-joined `will-change` value derived from the
+properties this group animates. Empty when the group has no properties
+(or is being constructed). The Sub engine writes this into the inline
+style of the animated element so the browser can pre-promote the layer
+before the per-frame style updates begin.
+-}
+getWillChange : AnimGroup -> String
+getWillChange (AnimGroup group) =
+    group.willChange
 
 
 
@@ -169,6 +184,14 @@ setAnimations animations (AnimGroup group) =
 setTransformOrder : List TransformProperty -> AnimGroup -> AnimGroup
 setTransformOrder transformOrder (AnimGroup group) =
     AnimGroup { group | transformOrder = transformOrder }
+
+
+{-| Set the precomputed `will-change` value for this group. See
+[`getWillChange`](#getWillChange).
+-}
+setWillChange : String -> AnimGroup -> AnimGroup
+setWillChange value (AnimGroup group) =
+    AnimGroup { group | willChange = value }
 
 
 setDiscreteEntry : Dict String String -> AnimGroup -> AnimGroup

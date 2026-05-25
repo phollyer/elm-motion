@@ -1,6 +1,7 @@
 module Anim.Property.Translate exposing
     ( Builder, AnimGroupName
     , initXYZ, initXY, initXZ, initX, initYZ, initY, initZ
+    , initUnit, initUnitX, initUnitY, initUnitZ
     , for, build
     , continueFor
     , fromXYZ, fromXY, fromXZ, fromX, fromYZ, fromY, fromZ
@@ -49,6 +50,30 @@ will use the current end value as the start, ensuring a smooth transition betwee
 @docs initXYZ, initXY, initXZ, initX, initYZ, initY, initZ
 
 
+## Initial Unit
+
+Set the length [Unit](Anim-Unit#Unit) used by subsequent `init*` calls.
+Order matters - `initUnit*` only affects `init*` calls that follow it in
+the pipeline. Defaults to `Px`.
+
+    import Anim.Unit exposing (Unit(..))
+
+    init _ =
+        ( { animState =
+                Engine.init
+                    [ Translate.initUnit Cqw
+                        >> Translate.initX "box" 50
+                    , Translate.initUnitX Cqw
+                        >> Translate.initUnitY Cqh
+                        >> Translate.initXY "ball" 40 20
+                    ]
+          }
+        , Cmd.none
+        )
+
+@docs initUnit, initUnitX, initUnitY, initUnitZ
+
+
 # Build
 
 @docs for, build
@@ -80,31 +105,13 @@ for details.
 
 ## End Value (Relative)
 
-The end value is computed as `current + delta` at build time.
+Move by a delta instead of to a fixed position. The end value is `current + delta`.
 
-How the **current** position is determined depends on
-the engine, the underlying technology being targeted, and the state of the animation:
+What counts as **current** depends on the engine: `Sub` and `WAAPI` always use the live
+animated position, while `Keyframe` and `Transition` use the last configured start or end value.
 
-  - **Sub / WAAPI** — _always accurate_; both track current animated position, even mid-flight.
-
-
-### Animations that have completed:
-
-  - **Keyframe / Transition** — _always accurate_;
-      - uses the current configurations start value if provided
-      - otherwise, uses the previous animation's end value
-      - otherwise, the default value (0 for translate) applies
-
-
-### Animations that are in-flight:
-
-CSS Keyframe and Transition do not track the current position of the animation mid-flight,
-so relative movements are based on the start and end values of the current/previous configuration:
-
-  - **Keyframe/Transition** — _not accurate_;
-      - uses the start value of the current configuration if it exists
-      - otherwise, uses the in-flight end value
-      - otherwise, the default value (0 for translate) applies
+📖 See [Start Values](https://phollyer.github.io/elm-motion/animation/engines/overview/#start-values)
+for full per-engine behaviour.
 
 @docs byXYZ, byXY, byXZ, byX, byYZ, byY, byZ
 
@@ -131,16 +138,14 @@ so relative movements are based on the start and end values of the current/previ
 
 ## Bounds
 
-Declare a per-axis range that every translate value on this animGroup must
-stay within. Clamps are persistent across `animate` / `retarget` calls until
-you clear them, and apply to every value that flows through the property
-pipeline — explicit `from*` / `to*`, relative `by*`, and the auto-from value
-used by `continueFor` / `retarget`.
+Keep translate values on each axis within a range you choose.
 
-A value outside the range snaps to the nearest boundary. A relative `byX`
-that would push the element past the boundary stops at the boundary instead
-— useful for keeping a player ship on-screen, or making sure a resize from
-landscape to portrait pulls a now-off-canvas element back into view.
+Values outside the range snap to the nearest boundary. Relative `byX`/`byY`/`byZ` moves
+stop at the boundary instead of pushing past it — handy for keeping an element on-screen
+during drags or resizes.
+
+📖 See [Responsive Animations](https://phollyer.github.io/elm-motion/animation/concepts/responsive-animations/)
+for patterns and examples.
 
 @docs clampX, clampY, clampZ, unclampX, unclampY, unclampZ
 
@@ -152,7 +157,7 @@ landscape to portrait pulls a now-off-canvas element back into view.
 
 -}
 
-import Anim.Internal.Builder exposing (AnimBuilder)
+import Anim.Internal.Builder as SB exposing (AnimBuilder)
 import Anim.Internal.Builder.Translate as TB
 import Anim.Internal.Resize.Builder as ResizeBuilder
 import Anim.Resize as Resize
@@ -173,7 +178,7 @@ type alias AnimGroupName =
     String
 
 
-{-| Type alias for the internal `TranslateBuilder`.
+{-| Builder type for translate animations.
 -}
 type alias Builder mode =
     TB.TranslateBuilder mode
@@ -246,6 +251,9 @@ continueFor =
 initXYZ : AnimGroupName -> Float -> Float -> Float -> AnimBuilder mode -> AnimBuilder mode
 initXYZ animationKey x y z =
     TB.for animationKey
+        >> TB.applyInitCssUnitX
+        >> TB.applyInitCssUnitY
+        >> TB.applyInitCssUnitZ
         >> fromXYZ x y z
         >> TB.toXYZ x y z
         >> TB.build
@@ -267,6 +275,8 @@ initXY : AnimGroupName -> Float -> Float -> AnimBuilder mode -> AnimBuilder mode
 initXY animationKey x y animBuilder =
     animBuilder
         |> TB.for animationKey
+        |> TB.applyInitCssUnitX
+        |> TB.applyInitCssUnitY
         |> fromXY x y
         |> TB.toXY x y
         |> TB.build
@@ -288,6 +298,8 @@ initXZ : AnimGroupName -> Float -> Float -> AnimBuilder mode -> AnimBuilder mode
 initXZ animationKey x z animBuilder =
     animBuilder
         |> TB.for animationKey
+        |> TB.applyInitCssUnitX
+        |> TB.applyInitCssUnitZ
         |> fromXZ x z
         |> TB.toXZ x z
         |> TB.build
@@ -309,6 +321,7 @@ initX : AnimGroupName -> Float -> AnimBuilder mode -> AnimBuilder mode
 initX animationKey x animBuilder =
     animBuilder
         |> TB.for animationKey
+        |> TB.applyInitCssUnitX
         |> fromX x
         |> TB.toX x
         |> TB.build
@@ -330,6 +343,8 @@ initYZ : AnimGroupName -> Float -> Float -> AnimBuilder mode -> AnimBuilder mode
 initYZ animationKey y z animBuilder =
     animBuilder
         |> TB.for animationKey
+        |> TB.applyInitCssUnitY
+        |> TB.applyInitCssUnitZ
         |> fromYZ y z
         |> TB.toYZ y z
         |> TB.build
@@ -351,6 +366,7 @@ initY : AnimGroupName -> Float -> AnimBuilder mode -> AnimBuilder mode
 initY animationKey y animBuilder =
     animBuilder
         |> TB.for animationKey
+        |> TB.applyInitCssUnitY
         |> fromY y
         |> TB.toY y
         |> TB.build
@@ -372,9 +388,55 @@ initZ : AnimGroupName -> Float -> AnimBuilder mode -> AnimBuilder mode
 initZ animationKey z animBuilder =
     animBuilder
         |> TB.for animationKey
+        |> TB.applyInitCssUnitZ
         |> fromZ z
         |> TB.toZ z
         |> TB.build
+
+
+{-| Set the length [Unit](Anim-Unit#Unit) used by every subsequent `init*` call
+for `Translate` values. Defaults to `Px`.
+
+Order matters - only `init*` calls downstream of this setter in the pipeline
+are affected; calls upstream keep their previously selected unit (or `Px`).
+Later per-axis setters ([`initUnitX`](#initUnitX), [`initUnitY`](#initUnitY),
+[`initUnitZ`](#initUnitZ)) override this setting on the relevant axis.
+
+    import Anim.Unit exposing (Unit(..))
+
+    Engine.init
+        [ Translate.initUnit Cqw
+            >> Translate.initX "box" 50
+        ]
+
+-}
+initUnit : Unit -> AnimBuilder mode -> AnimBuilder mode
+initUnit =
+    SB.setTranslateInitCssUnit
+
+
+{-| Set the X-axis unit used by every subsequent `init*` call for `Translate`
+values. Overrides any unit set by [`initUnit`](#initUnit) on the X axis.
+-}
+initUnitX : Unit -> AnimBuilder mode -> AnimBuilder mode
+initUnitX =
+    SB.setTranslateInitCssUnitX
+
+
+{-| Set the Y-axis unit used by every subsequent `init*` call for `Translate`
+values. Overrides any unit set by [`initUnit`](#initUnit) on the Y axis.
+-}
+initUnitY : Unit -> AnimBuilder mode -> AnimBuilder mode
+initUnitY =
+    SB.setTranslateInitCssUnitY
+
+
+{-| Set the Z-axis unit used by every subsequent `init*` call for `Translate`
+values. Overrides any unit set by [`initUnit`](#initUnit) on the Z axis.
+-}
+initUnitZ : Unit -> AnimBuilder mode -> AnimBuilder mode
+initUnitZ =
+    SB.setTranslateInitCssUnitZ
 
 
 
@@ -913,16 +975,13 @@ byZ =
 -- ============================================================
 
 
-{-| Constrain the X axis of the named animGroup's translate to `[min, max]`.
+{-| Keep the X axis translate within `[min, max]` for this animation group.
 
-The clamp is persistent: once declared it applies to every subsequent
-`animate` / `retarget` call on this animGroup until you call [unclampX](#unclampX)
-(or call `clampX` again with new bounds). It is enforced at build time on
-every value that flows through the pipeline \\u2014 explicit `fromX` / `toX`,
-relative `byX`, and the auto-from value used by `continueFor` / `retarget`.
+The range stays in effect for future `animate` / `retarget` calls
+until you call [unclampX](#unclampX). Values outside the range snap to the boundary,
+and relative `byX` moves stop at the boundary instead of pushing past it.
 
-A typical use is the resize handler on a fluid layout, declaring the
-playfield bounds whenever the canvas size changes:
+Typical use is a resize handler that updates playfield bounds when the canvas changes:
 
     update msg model =
         case msg of
@@ -943,10 +1002,8 @@ playfield bounds whenever the canvas size changes:
                         >> Translate.build
                 )
 
-Clamps are applied at [build](#build) time, so they affect every value
-declared in the pipeline regardless of order \\u2014 explicit `from*` / `to*`
-called before or after `clampX` are clamped, and so is the runtime snapshot
-used by `continueFor`. If `min > max` the arguments are swapped automatically.
+📖 See [Responsive Animations](https://phollyer.github.io/elm-motion/animation/concepts/responsive-animations/)
+for more patterns.
 
 -}
 clampX : Float -> Float -> Builder mode -> Builder mode
@@ -954,7 +1011,7 @@ clampX =
     TB.clampX
 
 
-{-| Constrain the Y axis of the active animGroup's translate to `[min, max]`.
+{-| Keep the Y axis translate within `[min, max]` for this animation group.
 
 See [clampX](#clampX) for behaviour and example.
 
@@ -964,7 +1021,7 @@ clampY =
     TB.clampY
 
 
-{-| Constrain the Z axis of the active animGroup's translate to `[min, max]`.
+{-| Keep the Z axis translate within `[min, max]` for this animation group.
 
 See [clampX](#clampX) for behaviour and example.
 
@@ -974,24 +1031,21 @@ clampZ =
     TB.clampZ
 
 
-{-| Remove a previously declared X axis clamp on the active animGroup. No-op
-if no clamp is set.
+{-| Remove the X axis range for this animation group. Does nothing if no range is set.
 -}
 unclampX : Builder mode -> Builder mode
 unclampX =
     TB.unclampX
 
 
-{-| Remove a previously declared Y axis clamp on the active animGroup. No-op
-if no clamp is set.
+{-| Remove the Y axis range for this animation group. Does nothing if no range is set.
 -}
 unclampY : Builder mode -> Builder mode
 unclampY =
     TB.unclampY
 
 
-{-| Remove a previously declared Z axis clamp on the active animGroup. No-op
-if no clamp is set.
+{-| Remove the Z axis range for this animation group. Does nothing if no range is set.
 -}
 unclampZ : Builder mode -> Builder mode
 unclampZ =

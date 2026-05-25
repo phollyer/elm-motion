@@ -82,7 +82,7 @@ describe('ElmMotion public API', () => {
                 expect.objectContaining({
                     type: 'propertyUpdate',
                     animGroup,
-                    opacity: 0.4,
+                    propertyProgress: expect.objectContaining({ opacity: 0.5 }),
                     progress: 0.5,
                     isAnimating: true
                 })
@@ -125,8 +125,13 @@ describe('ElmMotion public API', () => {
         expect(propertyUpdate.propertyVersions).toEqual(
             expect.objectContaining({ 'customColor:background-color': 1 })
         );
-        expect(propertyUpdate.customColorProperties).toEqual(
-            expect.objectContaining({ 'background-color': 'rgb(0, 0, 0)' })
+        // Phase 4: JS emits raw per-property progress rather than absolute
+        // interpolated color values. Elm interpolates from its anchored start
+        // colour (snapshotted in the Generator) using this progress, so the
+        // mid-flight interrupt regression is now covered by the propertyProgress
+        // payload presence rather than a specific colour string.
+        expect(propertyUpdate.propertyProgress).toEqual(
+            expect.objectContaining({ 'customColor:background-color': 0.5 })
         );
     });
 

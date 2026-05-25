@@ -9,27 +9,21 @@ module Anim.Engine.ScrollTimeline exposing
     , horizontal
     , iterations, alternate
     , easing
-    , cssUnit, cssUnitX, cssUnitY, cssUnitZ
+    , cssUnit, cssUnitX, cssUnitY, cssUnitZ, cssUnitWidth, cssUnitHeight
     , spring
     , discreteEntry, discreteExit
     , transformOrder
     )
 
-{-| Scroll-driven animations that tie progress to a container's scroll position.
+{-| Use scroll position to drive animation progress.
 
-Animations run automatically as the user scrolls — no `AnimState` required.
-`update` and `subscriptions` are optional, and only needed if you want to react
-to lifecycle events.
+Animations run automatically as the user scrolls, so you do not need an `AnimState`.
+`update` and `subscriptions` are optional and only matter when you want events.
 
-The Engine uses the [ScrollTimeline](https://developer.mozilla.org/en-US/docs/Web/API/ScrollTimeline)
-interface to the Web Animations API (WAAPI) and so requires the `@phollyer/elm-motion` JavaScript
-companion library.
-
-For specific Engine guides, setup instructions, and examples, see the
-[ScrollTimeline Engine Documentation](https://phollyer.github.io/elm-motion/animation/engines/scroll-timeline/).
-
-For Engine comparisons, shared features, examples and code, see the
-[Engine Overview](https://phollyer.github.io/elm-motion/animation/engines/overview/) section in the docs.
+📖 For setup, browser support, and examples, see the
+[ScrollTimeline Engine Documentation](https://phollyer.github.io/elm-motion/animation/engines/scroll-timeline/)
+and the
+[Engine Overview](https://phollyer.github.io/elm-motion/animation/engines/overview/).
 
 
 # Types
@@ -93,7 +87,7 @@ For Engine comparisons, shared features, examples and code, see the
 
 # Unit
 
-@docs cssUnit, cssUnitX, cssUnitY, cssUnitZ
+@docs cssUnit, cssUnitX, cssUnitY, cssUnitZ, cssUnitWidth, cssUnitHeight
 
 
 # Spring
@@ -113,6 +107,7 @@ For Engine comparisons, shared features, examples and code, see the
 -}
 
 import Anim.Extra.TransformOrder exposing (TransformProperty)
+import Anim.Internal.Builder as Builder
 import Anim.Internal.Engine.ScrollTimeline as Internal
 import Anim.Unit exposing (Unit)
 import Html
@@ -128,16 +123,7 @@ import Motion.Spring exposing (Spring)
 -- ============================================================
 
 
-{-| Animation builder type for configuring scroll-driven animations.
-
-Use this in type annotations for animation helpers specific to the
-ScrollTimeline Engine.
-
-For helper functions that should work across all engines, use `AnimBuilder mode` from `Anim.Builder` instead.
-
-For mode restrictions and examples, see
-[Build: Builder Modes](https://phollyer.github.io/elm-motion/animation/workflow/build/#builder-modes).
-
+{-| Builder type for scroll-driven animations.
 -}
 type alias TimelineBuilder =
     Internal.TimelineBuilder
@@ -198,14 +184,14 @@ containerToId container =
 -- ============================================================
 
 
-{-| Lifecycle events emitted by the ScrollTimeline engine.
+{-| Lifecycle events from the ScrollTimeline engine.
 
   - `Ended String` — the scroll position reached the end of the animation range
   - `Cancelled String` — the animation was cancelled (e.g. element removed)
   - `Iteration String Int` — the animation looped; the `Int` is the cumulative iteration count
   - `AnimError String` — a message arrived but could not be decoded
 
-Returned as a `Maybe` — `Nothing` indicates the message was not intended for this engine.
+`Nothing` means the message was for something else.
 
 -}
 type AnimEvent
@@ -221,7 +207,7 @@ type AnimEvent
 -- ============================================================
 
 
-{-| Internal message type. Add this to your `Msg` to receive scroll-driven lifecycle events.
+{-| Message type used with `update`.
 
     type Msg
         = GotScrollMsg ScrollTimeline.AnimMsg
@@ -232,9 +218,9 @@ type alias AnimMsg =
     Internal.AnimMsg
 
 
-{-| Decode an `AnimMsg` into a `Maybe AnimEvent`.
+{-| Turn an engine message into an event.
 
-Messages that do not match ScrollTimeline lifecycle events return `Nothing`.
+Messages that do not belong to this engine return `Nothing`.
 
     update : Msg -> Model -> ( Model, Cmd Msg )
     update msg model =
@@ -275,10 +261,9 @@ toAnimEvent internalEvent =
 -- ============================================================
 
 
-{-| Subscribe to scroll-driven lifecycle events from JavaScript.
+{-| Subscribe to lifecycle events for this engine.
 
-Wire this up alongside your `motionMsg` port. Unlike the WAAPI engine,
-no `AnimState` is needed — subscriptions are always active.
+Wire this up alongside your `motionMsg` port.
 
     subscriptions : Model -> Sub Msg
     subscriptions _ =
@@ -337,22 +322,18 @@ horizontal =
 -- ============================================================
 
 
-{-| Set how many times the animation should repeat.
+{-| Alias of [Anim.Builder.iterations](Anim-Builder#iterations).
 -}
 iterations : Int -> TimelineBuilder -> TimelineBuilder
 iterations =
-    Internal.iterations
+    Builder.iterations
 
 
-{-| Alternate direction on each iteration (ping-pong).
-
-If `iterations` has not been set, this defaults to `2` so that the
-alternate direction has a second iteration to play.
-
+{-| Alias of [Anim.Builder.alternate](Anim-Builder#alternate).
 -}
 alternate : TimelineBuilder -> TimelineBuilder
 alternate =
-    Internal.alternate
+    Builder.alternate
 
 
 
@@ -361,11 +342,11 @@ alternate =
 -- ============================================================
 
 
-{-| Set the easing function.
+{-| Alias of [Anim.Builder.easing](Anim-Builder#easing).
 -}
 easing : Easing -> TimelineBuilder -> TimelineBuilder
 easing =
-    Internal.easing
+    Builder.easing
 
 
 
@@ -374,41 +355,60 @@ easing =
 -- ============================================================
 
 
-{-| Set the default length [Unit](Anim-Unit#Unit) for all length-bearing
-properties in this timeline.
-
-Applies to `Translate`, `Size`, and `PerspectiveOrigin`. Per-property
-[`cssUnit`](Anim-Property-Translate#cssUnit) calls take precedence over this
-engine-level default. If neither is set, properties render in `Px`.
-
+{-| Alias of [Anim.Builder.cssUnit](Anim-Builder#cssUnit).
 -}
 cssUnit : Unit -> TimelineBuilder -> TimelineBuilder
 cssUnit =
-    Internal.cssUnit
+    Builder.cssUnit
 
 
-{-| Set a per-axis default length [Unit](Anim-Unit#Unit) for the X axis.
-Applies to `Translate.x`, `Size.width`, and `PerspectiveOrigin.x`.
+{-| Alias of [Anim.Builder.cssUnitX](Anim-Builder#cssUnitX).
 -}
 cssUnitX : Unit -> TimelineBuilder -> TimelineBuilder
 cssUnitX =
-    Internal.cssUnitX
+    Builder.cssUnitX
 
 
-{-| Set a per-axis default length [Unit](Anim-Unit#Unit) for the Y axis.
-Applies to `Translate.y`, `Size.height`, and `PerspectiveOrigin.y`.
+{-| Alias of [Anim.Builder.cssUnitY](Anim-Builder#cssUnitY).
 -}
 cssUnitY : Unit -> TimelineBuilder -> TimelineBuilder
 cssUnitY =
-    Internal.cssUnitY
+    Builder.cssUnitY
 
 
-{-| Set a per-axis default length [Unit](Anim-Unit#Unit) for the Z axis.
-Applies to `Translate.z`.
+{-| Alias of [Anim.Builder.cssUnitZ](Anim-Builder#cssUnitZ).
 -}
 cssUnitZ : Unit -> TimelineBuilder -> TimelineBuilder
 cssUnitZ =
-    Internal.cssUnitZ
+    Builder.cssUnitZ
+
+
+{-| Set the default length unit used for width values in ScrollTimeline animations.
+
+    responsiveCardWidth : TimelineBuilder -> TimelineBuilder
+    responsiveCardWidth =
+        cssUnitWidth Unit.Vw
+            >> growCardWidth
+            >> settleCardSpacing
+
+-}
+cssUnitWidth : Unit -> TimelineBuilder -> TimelineBuilder
+cssUnitWidth =
+    Builder.cssUnitWidth
+
+
+{-| Set the default length unit used for height values in ScrollTimeline animations.
+
+    responsivePanelHeight : TimelineBuilder -> TimelineBuilder
+    responsivePanelHeight =
+        cssUnitHeight Unit.Vh
+            >> expandPanelHeight
+            >> alignPanelHeaderY
+
+-}
+cssUnitHeight : Unit -> TimelineBuilder -> TimelineBuilder
+cssUnitHeight =
+    Builder.cssUnitHeight
 
 
 
@@ -417,31 +417,11 @@ cssUnitZ =
 -- ============================================================
 
 
-{-| Set a spring as the default for all properties on this timeline.
-
-When a spring is set, the spring is sampled at evenly-spaced points
-and emitted as a pre-computed keyframes list. The browser then maps
-scroll progress (0 → 1) onto that sample list, so the spring's
-overshoot character is preserved — the "time" axis is just scroll
-position rather than wall-clock time.
-
-Setting `spring` clears any previously-set global `easing`, and
-vice versa — they are mutually exclusive.
-
-    import Anim.Engine.ScrollTimeline as ScrollTimeline
-    import Anim.Property.Translate as Translate
-    import Motion.Spring as Spring
-
-    ScrollTimeline.animate .id outgoing model.scrollItem <|
-        ScrollTimeline.spring Spring.wobbly
-            >> Translate.for "box"
-            >> Translate.toX 200
-            >> Translate.build
-
+{-| Alias of [Anim.Builder.spring](Anim-Builder#spring).
 -}
 spring : Spring -> TimelineBuilder -> TimelineBuilder
 spring =
-    Internal.spring
+    Builder.spring
 
 
 

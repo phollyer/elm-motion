@@ -357,6 +357,23 @@ attributes animGroupName ((AnimState _ data) as animState) =
                                 else
                                     Html.Attributes.style prop from
                             )
+
+                willChangeAttrs =
+                    -- `will-change` promotes the animated properties to
+                    -- their own compositor layer ahead of the transition
+                    -- starting. We clear it once the transition finishes so
+                    -- the element doesn't keep paying the layer cost
+                    -- forever (the classic `will-change` anti-pattern).
+                    if isComplete then
+                        []
+
+                    else
+                        case AnimGroup.getWillChange animGroup of
+                            "" ->
+                                []
+
+                            value ->
+                                [ Html.Attributes.style "will-change" value ]
             in
             CSS.attributes
                 []
@@ -364,6 +381,7 @@ attributes animGroupName ((AnimState _ data) as animState) =
                 animGroupName
                 animState
                 ++ discreteExitAttrs
+                ++ willChangeAttrs
 
 
 startingStyleNode : AnimState -> Html.Html msg

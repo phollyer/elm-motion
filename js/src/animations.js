@@ -1,6 +1,6 @@
 /* eslint-env browser */
 import { isTransformProperty, easingFunctions, parseIterations } from './utils.js';
-import { activeAnimations, animationGroups, elementTransformOrders, cleanupAnimGroup, lastKnownTransforms, lastKnownPerspectiveOrigins } from './state.js';
+import { activeAnimations, animationGroups, elementTransformOrders, cleanupAnimGroup, lastKnownTransforms, lastKnownPerspectiveOrigins, appliedWillChange } from './state.js';
 import { getTransformState, getElementOrder, interpolateSubProperty, computeTransformFromResolved, buildTransformString, getDefaultTransformState } from './transform.js';
 import { resolveNonTransformValues, createPropertyAnimation, extractPropertyConfig, buildPropertyKeyframes } from './properties.js';
 import { sendLifecycleEvent } from './ports.js';
@@ -112,6 +112,21 @@ function sanitizeResizeDuration(candidateDuration, oldDuration) {
     }
 
     return candidateDuration;
+}
+
+const DEFAULT_TRANSFORM_KEYFRAME_COUNT = 30;
+
+function deriveTransformKeyframeCount(resolved) {
+    const lengths = ['translate', 'scale', 'rotate', 'skew']
+        .map((key) => resolved?.[key]?.easingKeyframes)
+        .filter((keyframes) => Array.isArray(keyframes) && keyframes.length > 1)
+        .map((keyframes) => keyframes.length);
+
+    if (lengths.length === 0) {
+        return DEFAULT_TRANSFORM_KEYFRAME_COUNT;
+    }
+
+    return Math.max(...lengths);
 }
 
 /**
@@ -443,6 +458,19 @@ export function processElementAnimation(animGroup, elementConfig, globalOptions 
 
     const properties = elementConfig.properties || [];
 
+    // Seed the GPU-hint optimisation before any keyframes are computed so
+    // the compositor can promote the element to its own layer for the very
+    // first frame. Cleared by `cleanupAnimGroup` once all animations on
+    // this animGroup finish or cancel.
+    if (elementConfig.willChange && typeof elementConfig.willChange === 'string') {
+        try {
+            element.style.willChange = elementConfig.willChange;
+            appliedWillChange.set(animGroup, { element: element, value: elementConfig.willChange });
+        } catch (_) {
+            // Hostile environments (e.g. frozen styles) — non-fatal.
+        }
+    }
+
     const transformOrder = elementConfig.transformOrder;
     if (transformOrder && transformOrder.length > 0) {
         elementTransformOrders.set(animGroup, transformOrder);
@@ -665,7 +693,7 @@ function createMergedTransformAnimation(animGroup, element, transformProperties,
         };
     }
 
-    const KEYFRAME_COUNT = 30;
+    const KEYFRAME_COUNT = deriveTransformKeyframeCount(resolved);
     const keyframes = [];
 
     for (let index = 0; index < KEYFRAME_COUNT; index++) {
@@ -1159,7 +1187,7 @@ export function _resizeTransformAnimationImmediate(commandData) {
         Number(resolved.skew?.duration) || 0
     );
     const forceGroups = computeForceGroups(resolved);
-    const KEYFRAME_COUNT = 30;
+    const KEYFRAME_COUNT = deriveTransformKeyframeCount(resolved);
     const keyframes = [];
     for (let index = 0; index < KEYFRAME_COUNT; index++) {
         const globalProgress = index / (KEYFRAME_COUNT - 1);
@@ -1498,7 +1526,7 @@ export function _translatePositionAnimationImmediate(commandData) {
         );
         const order = getElementOrder(element);
         const forceGroups = computeForceGroups(resolved);
-        const KEYFRAME_COUNT = 30;
+        const KEYFRAME_COUNT = deriveTransformKeyframeCount(resolved);
         const keyframes = [];
         for (let index = 0; index < KEYFRAME_COUNT; index++) {
             const globalProgress = index / (KEYFRAME_COUNT - 1);

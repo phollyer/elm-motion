@@ -52,12 +52,7 @@ animGroup =
     "bouncingBall"
 
 
-{-| Ball size as a percentage of the canvas height (in `cqh` units). The
-canvas declares `container-type: size`, so `cqh` resolves against the
-canvas itself - the animation, ball size and travel distance all scale
-with the canvas regardless of viewport size or surrounding chrome. No
-Elm-side resize plumbing required; the browser re-evaluates `cqh` against
-current layout on every frame.
+{-| Ball size as a percentage of the canvas height (in `cqh` units).
 -}
 ballSize : Float
 ballSize =
@@ -79,7 +74,7 @@ dropBall =
         >> Translate.cssUnit Cqh
         >> Translate.fromY 0
         >> Translate.toY (100 - ballSize)
-        >> Translate.speed 100
+        >> Translate.speed 75
         >> Translate.easing BounceOut
         >> Translate.build
 
@@ -127,8 +122,7 @@ update msg model =
 view : Model -> Html Msg
 view model =
     div [ class "example-stage" ]
-        [ div [ class "example-badge example-badge--responsive" ] [ text "RESPONSIVE" ]
-        , div [ class "example-controls" ]
+        [ div [ class "example-controls" ]
             [ button [ onClick Animate, class "ui-action-button primary" ] [ text "🏀 Animate" ]
             , button [ onClick Stop, class "ui-action-button warning" ] [ text "⏹️ Stop" ]
             , button [ onClick Reset, class "ui-action-button purple" ] [ text "⏮️ Reset" ]

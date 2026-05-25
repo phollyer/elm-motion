@@ -34,7 +34,11 @@ type alias Model =
 
 init : ( Model, Cmd Msg )
 init =
-    ( { animState = Transition.init [ Opacity.init animGroup 1 ]
+    ( { animState =
+            Transition.init
+                [ Transition.discreteEntry "display" "flex"
+                    >> Opacity.init animGroup 1
+                ]
       }
     , Cmd.none
     )
@@ -46,7 +50,7 @@ init =
 
 animGroup : String
 animGroup =
-    "boxAnim"
+    "fadeAnim"
 
 
 fadeIn : EngineBuilder -> EngineBuilder
@@ -113,8 +117,7 @@ update msg model =
 view : Model -> Html Msg
 view model =
     div [ class "example-stage" ]
-        [ div [ class "example-badge example-badge--responsive" ] [ text "RESPONSIVE" ]
-        , Transition.startingStyleNode model.animState
+        [ Transition.startingStyleNode model.animState
         , div [ class "example-controls" ]
             [ button
                 [ onClick Show
@@ -138,7 +141,6 @@ view model =
             (Transition.attributes animGroup model.animState
                 ++ Transition.events GotAnimMsg
                 ++ [ class "example-box"
-                   , style "display" "flex"
                    , style "background-color" "#4a90d9"
                    , style "border-radius" "12px"
                    , style "align-items" "center"

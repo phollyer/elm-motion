@@ -1,5 +1,6 @@
 module Anim.Internal.Builder.Size exposing
     ( SizeBuilder
+    , applyInitCssUnit
     , build
     , clampHeight
     , clampWidth
@@ -285,6 +286,18 @@ cssUnitWidth unit (SizeBuilder config builder) =
 cssUnitHeight : Unit -> SizeBuilder mode -> SizeBuilder mode
 cssUnitHeight unit (SizeBuilder config builder) =
     SizeBuilder (PropertyBuilder.cssUnitY unit config) builder
+
+
+{-| Seed the per-property `cssUnit` axes on the config from the AnimBuilder's
+stored init-time unit defaults. Called at the start of every public `init*`
+helper so values supplied during initialization are rendered with whatever
+`initUnit*` was active at that point in the pipeline.
+-}
+applyInitCssUnit : SizeBuilder mode -> SizeBuilder mode
+applyInitCssUnit (SizeBuilder config builder) =
+    SizeBuilder
+        { config | cssUnit = Builder.getSizeInitCssUnit builder }
+        builder
 
 
 

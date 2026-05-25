@@ -172,8 +172,10 @@ export interface Vec3 {
 }
 
 /**
- * Internal transform-state snapshot used by `buildAnimatedPropertyData`.
- * Exposed for consumers that wrap the companion; not part of the port wire format.
+ * Internal transform-state snapshot used by the resize/transform machinery
+ * (`getLiveTransformState`, `computeTransformFromResolved`, and the
+ * `lastKnownTransforms` cache). Exposed for consumers that wrap the
+ * companion; not part of the port wire format.
  */
 export interface TransformState {
     transform: string;

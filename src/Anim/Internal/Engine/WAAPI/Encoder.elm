@@ -342,8 +342,16 @@ encodeProcessedAnimGroupConfig animGroupName targetId propertyState transformOrd
             transformBaseline
                 |> Maybe.map (\baseline -> [ ( "transformBaseline", baseline ) ])
                 |> Maybe.withDefault []
+
+        willChangeField =
+            case Builder.willChangeComposite propertyConfigs of
+                "" ->
+                    []
+
+                value ->
+                    [ ( "willChange", Encode.string value ) ]
     in
-    Encode.object (baseFields ++ orderField ++ baselineField)
+    Encode.object (baseFields ++ orderField ++ baselineField ++ willChangeField)
 
 
 {-| Encode the Elm-side transform snapshot baseline (init values plus any

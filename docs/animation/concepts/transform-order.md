@@ -26,19 +26,29 @@ So, changing the order, changes the result - as can be seen in the following exa
 
 ## Example
 
+--8<-- [start:desc]
+
 There are 6 boxes in the center, each one is triggered with the **same** animation, the only difference is the transform order.
 
-=== "Keyframe"
+--8<-- [end:desc]
 
-    <iframe src="../../../examples/src/Animation/Keyframe/TransformOrder/index.html" class="example-iframe" loading="lazy"></iframe>
+--8<-- [start:examples]
 
-=== "Sub"
+??? example "View Examples"
 
-    <iframe src="../../../examples/src/Animation/Sub/TransformOrder/index.html" class="example-iframe" loading="lazy"></iframe>
+    === "Keyframe"
 
-=== "WAAPI"
+        <iframe src="../../../examples/src/Animation/Keyframe/TransformOrder/index.html" class="example-iframe" loading="lazy"></iframe>
 
-    <iframe src="../../../examples/src/Animation/WAAPI/TransformOrder/index.html" class="example-iframe" loading="lazy"></iframe>
+    === "Sub"
+
+        <iframe src="../../../examples/src/Animation/Sub/TransformOrder/index.html" class="example-iframe" loading="lazy"></iframe>
+
+    === "WAAPI"
+
+        <iframe src="../../../examples/src/Animation/WAAPI/TransformOrder/index.html" class="example-iframe" loading="lazy"></iframe>
+
+--8<-- [end:examples]
 
 ??? example "View Source Code"
 

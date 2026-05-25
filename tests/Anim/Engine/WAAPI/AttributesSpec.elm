@@ -59,31 +59,27 @@ suite =
 -- ============================================================
 
 
-type Msg
-    = NoOp
-
-
-fakeCommandPort : Encode.Value -> Cmd Msg
+fakeCommandPort : Encode.Value -> Cmd msg
 fakeCommandPort _ =
     Cmd.none
 
 
-fakeSubscriptionPort : (Decode.Value -> Msg) -> Sub Msg
+fakeSubscriptionPort : (Decode.Value -> msg) -> Sub msg
 fakeSubscriptionPort _ =
     Sub.none
 
 
-initWith : List (WAAPI.EngineBuilder -> WAAPI.EngineBuilder) -> WAAPI.AnimState Msg
+initWith : List (WAAPI.EngineBuilder -> WAAPI.EngineBuilder) -> WAAPI.AnimState msg
 initWith =
     WAAPI.init fakeCommandPort fakeSubscriptionPort
 
 
-animate : (WAAPI.EngineBuilder -> WAAPI.EngineBuilder) -> WAAPI.AnimState Msg -> WAAPI.AnimState Msg
+animate : (WAAPI.EngineBuilder -> WAAPI.EngineBuilder) -> WAAPI.AnimState msg -> WAAPI.AnimState msg
 animate config state =
     WAAPI.animate state config |> Tuple.first
 
 
-query : WAAPI.AnimState Msg -> Query.Single Msg
+query : WAAPI.AnimState msg -> Query.Single msg
 query state =
     Html.div (WAAPI.attributes "el" state) []
         |> Query.fromHtml
@@ -116,9 +112,9 @@ initOnlyTests =
                         [ Query.has [ Selector.style "width" "120px" ]
                         , Query.has [ Selector.style "height" "120px" ]
                         ]
-        , test "PerspectiveOrigin.initPercent emits perspective-origin" <|
+        , test "PerspectiveOrigin.initXY emits perspective-origin" <|
             \_ ->
-                initWith [ PerspectiveOrigin.initPercent "el" 50 75 ]
+                initWith [ PerspectiveOrigin.initXY "el" 50 75 ]
                     |> query
                     |> Query.has [ Selector.style "perspective-origin" "50% 75%" ]
         ]

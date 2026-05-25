@@ -42,6 +42,7 @@ init discreteEntryProps discreteExitProps properties =
         |> AnimGroup.setAnimations animations
         |> AnimGroup.setDiscreteEntry discreteEntryProps
         |> AnimGroup.setDiscreteExit discreteExitProps
+        |> AnimGroup.setWillChange (Builder.willChangeComposite processedProps)
 
 
 
@@ -84,6 +85,7 @@ generateAnimation iterationCount directionConfig maybeOrder discreteEntryProps d
         |> AnimGroup.setTransformOrder transformOrder
         |> AnimGroup.setDiscreteEntry discreteEntryProps
         |> AnimGroup.setDiscreteExit discreteExitProps
+        |> AnimGroup.setWillChange (Builder.willChangeComposite properties)
 
 
 
@@ -146,7 +148,7 @@ toAnimation isComplete propertyConfig =
         Builder.ProcessedPerspectiveOriginConfig config ->
             Just
                 ( "perspectiveOrigin"
-                , PerspectiveOrigin <|
+                , PerspectiveOrigin config.cssUnit <|
                     build PerspectiveOrigin.default config
                 )
 
@@ -167,7 +169,7 @@ toAnimation isComplete propertyConfig =
         Builder.ProcessedSizeConfig config ->
             Just
                 ( "size"
-                , Size <|
+                , Size config.cssUnit <|
                     build Size.default config
                 )
 
@@ -181,7 +183,7 @@ toAnimation isComplete propertyConfig =
         Builder.ProcessedTranslateConfig config ->
             Just
                 ( "translate"
-                , Translate <|
+                , Translate config.cssUnit <|
                     build Translate.default config
                 )
 

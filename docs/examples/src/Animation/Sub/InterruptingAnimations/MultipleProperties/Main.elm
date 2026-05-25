@@ -3,16 +3,14 @@ module Animation.Sub.InterruptingAnimations.MultipleProperties.Main exposing (..
 import Anim.Builder exposing (AnimBuilder)
 import Anim.Engine.Sub as Sub
 import Anim.Extra.Color as Color exposing (Color)
-import Anim.Property.CustomColor as BgColor
+import Anim.Property.CustomColor as CustomColor
 import Anim.Property.Translate as Translate
+import Anim.Unit exposing (Unit(..))
 import Browser
-import Browser.Dom as Dom
-import Browser.Events
 import Html exposing (Html, div, text)
-import Html.Attributes exposing (class, id, style)
+import Html.Attributes exposing (class, style)
 import Html.Events exposing (onClick)
 import Motion.Easing as Easing exposing (Easing(..))
-import Task
 
 
 
@@ -34,11 +32,7 @@ main =
 
 
 type alias Model =
-    { animState : Sub.AnimState
-    , canvasW : Float
-    , canvasH : Float
-    , xPos : XPos
-    }
+    { animState : Sub.AnimState }
 
 
 type XPos
@@ -52,56 +46,49 @@ animGroupName =
     "movingBox"
 
 
-canvasId : String
-canvasId =
-    "anim-canvas"
+boxPct : Float
+boxPct =
+    12
 
 
-boxWidth : Float
-boxWidth =
-    100
+centerXCqw : Float
+centerXCqw =
+    (100 - boxPct) / 2
+
+
+boxHalfPct : Float
+boxHalfPct =
+    boxPct / 2
 
 
 init : () -> ( Model, Cmd Msg )
 init _ =
     ( { animState =
             Sub.init
-                [ Translate.initXY animGroupName 0 0
-                , BgColor.init animGroupName BgColor.BackgroundColor <| Color.rgb 118 118 118
+                [ Translate.initUnitX Cqw
+                    >> Translate.initX animGroupName centerXCqw
+                , CustomColor.init animGroupName CustomColor.BackgroundColor <| Color.rgb 118 118 118
                 ]
-      , canvasW = 0
-      , canvasH = 0
-      , xPos = XCenter
       }
-    , measureCanvas
+    , Cmd.none
     )
-
-
-measureCanvas : Cmd Msg
-measureCanvas =
-    Task.attempt GotCanvas (Dom.getElement canvasId)
 
 
 
 -- POSITION HELPERS
 
 
-targetX : XPos -> Float -> Float
-targetX pos w =
+targetX : XPos -> Float
+targetX pos =
     case pos of
         XLeft ->
             0
 
         XCenter ->
-            (w - boxWidth) / 2
+            centerXCqw
 
         XRight ->
-            w - boxWidth
-
-
-targetY : Float -> Float
-targetY h =
-    (h - boxWidth) / 2
+            100 - boxPct
 
 
 
@@ -135,46 +122,20 @@ color4 =
 moveBoxX : Float -> AnimBuilder mode -> AnimBuilder mode
 moveBoxX x =
     Translate.for animGroupName
+        >> Translate.cssUnit Cqw
         >> Translate.toX x
-        >> Translate.speed 100
+        >> Translate.speed 25
         >> Translate.easing BounceOut
-        >> Translate.build
-
-
-{-| Re-anchor the translate to a new target. `Translate.continueFor`
-inherits `speed` and `easing` from the previous animation when the
-property is currently mid-animation, and `WAAPI.retarget` snapshots the
-current rendered position into the builder so the new animation starts
-from where the box actually is - no `fromX` needed, no teleporting.
-
-When the property is idle (resize fires after the box has settled), this
-snaps to the new position instead of animating, matching typical
-resize-handler behaviour.
-
--}
-retargetBoxXY : Float -> Float -> Float -> Float -> AnimBuilder mode -> AnimBuilder mode
-retargetBoxXY w h x y =
-    Translate.continueFor animGroupName
-        >> Translate.clampX 0 (w - boxWidth)
-        >> Translate.clampY 0 (h - boxWidth)
-        >> Translate.toXY x y
-        >> Translate.build
-
-
-snapBoxXY : Float -> Float -> AnimBuilder mode -> AnimBuilder mode
-snapBoxXY x y =
-    Translate.for animGroupName
-        >> Translate.toXY x y
         >> Translate.build
 
 
 changeColor : Color -> AnimBuilder mode -> AnimBuilder mode
 changeColor color =
-    BgColor.for animGroupName BgColor.BackgroundColor
-        >> BgColor.to color
-        >> BgColor.duration 3000
-        >> BgColor.easing Linear
-        >> BgColor.build
+    CustomColor.for animGroupName CustomColor.BackgroundColor
+        >> CustomColor.to color
+        >> CustomColor.duration 3000
+        >> CustomColor.easing Linear
+        >> CustomColor.build
 
 
 
@@ -186,8 +147,6 @@ type Msg
     | MoveLeft
     | MoveRight
     | ChangeColor Color
-    | Resize
-    | GotCanvas (Result Dom.Error Dom.Element)
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -204,20 +163,18 @@ update msg model =
 
         MoveLeft ->
             ( { model
-                | xPos = XLeft
-                , animState =
+                | animState =
                     Sub.animate model.animState <|
-                        moveBoxX (targetX XLeft model.canvasW)
+                        moveBoxX (targetX XLeft)
               }
             , Cmd.none
             )
 
         MoveRight ->
             ( { model
-                | xPos = XRight
-                , animState =
+                | animState =
                     Sub.animate model.animState <|
-                        moveBoxX (targetX XRight model.canvasW)
+                        moveBoxX (targetX XRight)
               }
             , Cmd.none
             )
@@ -231,30 +188,6 @@ update msg model =
             , Cmd.none
             )
 
-        Resize ->
-            ( model, measureCanvas )
-
-        GotCanvas (Ok element) ->
-            let
-                w =
-                    element.element.width
-
-                h =
-                    element.element.height
-            in
-            ( { model
-                | canvasW = w
-                , canvasH = h
-                , animState =
-                    Sub.retarget model.animState <|
-                        retargetBoxXY w h (targetX model.xPos w) (targetY h)
-              }
-            , Cmd.none
-            )
-
-        GotCanvas (Err _) ->
-            ( model, Cmd.none )
-
 
 
 -- SUBSCRIPTIONS
@@ -262,10 +195,7 @@ update msg model =
 
 subscriptions : Model -> Sub.Sub Msg
 subscriptions model =
-    Sub.batch
-        [ Sub.subscriptions GotAnimationUpdate model.animState
-        , Browser.Events.onResize (\_ _ -> Resize)
-        ]
+    Sub.subscriptions GotAnimationUpdate model.animState
 
 
 
@@ -292,8 +222,7 @@ view model =
                 [ text label ]
     in
     div [ class "example-stage" ]
-        [ div [ class "example-badge example-badge--responsive" ] [ text "RESPONSIVE" ]
-        , div [ class "example-controls" ]
+        [ div [ class "example-controls" ]
             [ posButton "#333" "Move Left" MoveLeft
             , posButton "#333" "Move Right" MoveRight
             ]
@@ -303,13 +232,16 @@ view model =
             , colorButton color3 "Color 3"
             , colorButton color4 "Color 4"
             ]
-        , div [ id canvasId, class "example-canvas--fluid" ]
+        , div
+            [ class "example-canvas--fluid"
+            , style "container-type" "size"
+            ]
             [ div
                 (Sub.attributes animGroupName model.animState
-                    ++ [ style "width" (String.fromFloat boxWidth ++ "px")
-                       , style "height" (String.fromFloat boxWidth ++ "px")
+                    ++ [ style "width" (String.fromFloat boxPct ++ "cqw")
+                       , style "height" (String.fromFloat boxPct ++ "cqw")
                        , style "position" "absolute"
-                       , style "top" "0"
+                       , style "top" ("calc(50% - " ++ String.fromFloat boxHalfPct ++ "cqw)")
                        , style "left" "0"
                        , style "border-radius" "8px"
                        ]

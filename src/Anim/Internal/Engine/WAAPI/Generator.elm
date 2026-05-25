@@ -81,6 +81,7 @@ generateAnimation iterations animationDirection globalTransformOrder discreteEnt
                         ( propType
                         , { version = newVersion
                           , status = NotStarted
+                          , config = resolveStartFromSnapshot snapshot property
                           }
                         )
                     )
@@ -146,6 +147,58 @@ propertyTypeString property =
             "customColor:" ++ cssName
 
 
+{-| When a property config has `start = Nothing`, resolve it to the value
+currently held in the snapshot. This anchors the per-frame Elm-side
+interpolation to a fixed starting point for the lifetime of the animation,
+so subsequent baseline mutations cannot cause the interpolation start to
+drift.
+
+If the snapshot also has no value for the property, `start` is left as
+`Nothing` — `ProgressApply` falls back to property-specific identity values
+in that case.
+
+-}
+resolveStartFromSnapshot : PropertyBaselines -> Builder.ProcessedPropertyConfig -> Builder.ProcessedPropertyConfig
+resolveStartFromSnapshot snapshot property =
+    let
+        fill : Maybe a -> Maybe a -> Maybe a
+        fill existing fromSnapshot =
+            case existing of
+                Just _ ->
+                    existing
+
+                Nothing ->
+                    fromSnapshot
+    in
+    case property of
+        Builder.ProcessedTranslateConfig config ->
+            Builder.ProcessedTranslateConfig { config | start = fill config.start (PropertyBaselines.getTranslate snapshot) }
+
+        Builder.ProcessedRotateConfig config ->
+            Builder.ProcessedRotateConfig { config | start = fill config.start (PropertyBaselines.getRotate snapshot) }
+
+        Builder.ProcessedSkewConfig config ->
+            Builder.ProcessedSkewConfig { config | start = fill config.start (PropertyBaselines.getSkew snapshot) }
+
+        Builder.ProcessedScaleConfig config ->
+            Builder.ProcessedScaleConfig { config | start = fill config.start (PropertyBaselines.getScale snapshot) }
+
+        Builder.ProcessedOpacityConfig config ->
+            Builder.ProcessedOpacityConfig { config | start = fill config.start (PropertyBaselines.getOpacity snapshot) }
+
+        Builder.ProcessedPerspectiveOriginConfig config ->
+            Builder.ProcessedPerspectiveOriginConfig { config | start = fill config.start (PropertyBaselines.getPerspectiveOrigin snapshot) }
+
+        Builder.ProcessedSizeConfig config ->
+            Builder.ProcessedSizeConfig { config | start = fill config.start (PropertyBaselines.getSize snapshot) }
+
+        Builder.ProcessedCustomPropertyConfig cssName unit config ->
+            Builder.ProcessedCustomPropertyConfig cssName unit { config | start = fill config.start (PropertyBaselines.getCustomProperty cssName snapshot) }
+
+        Builder.ProcessedCustomColorPropertyConfig cssName config ->
+            Builder.ProcessedCustomColorPropertyConfig cssName { config | start = fill config.start (PropertyBaselines.getCustomColorProperty cssName snapshot) }
+
+
 
 -- ============================================================
 -- PROPERTY BOUNDS
@@ -168,7 +221,13 @@ propertyBounds properties =
                     { start = maybeSet PropertyBaselines.setOpacity config.start start, end = PropertyBaselines.setOpacity config.end end }
 
                 Builder.ProcessedPerspectiveOriginConfig config ->
-                    { start = maybeSet PropertyBaselines.setPerspectiveOrigin config.start start, end = PropertyBaselines.setPerspectiveOrigin config.end end }
+                    { start =
+                        maybeSet PropertyBaselines.setPerspectiveOrigin config.start start
+                            |> PropertyBaselines.setPerspectiveOriginUnits config.cssUnit
+                    , end =
+                        PropertyBaselines.setPerspectiveOrigin config.end end
+                            |> PropertyBaselines.setPerspectiveOriginUnits config.cssUnit
+                    }
 
                 Builder.ProcessedRotateConfig config ->
                     { start = maybeSet PropertyBaselines.setRotate config.start start, end = PropertyBaselines.setRotate config.end end }
@@ -177,13 +236,25 @@ propertyBounds properties =
                     { start = maybeSet PropertyBaselines.setScale config.start start, end = PropertyBaselines.setScale config.end end }
 
                 Builder.ProcessedSizeConfig config ->
-                    { start = maybeSet PropertyBaselines.setSize config.start start, end = PropertyBaselines.setSize config.end end }
+                    { start =
+                        maybeSet PropertyBaselines.setSize config.start start
+                            |> PropertyBaselines.setSizeUnits config.cssUnit
+                    , end =
+                        PropertyBaselines.setSize config.end end
+                            |> PropertyBaselines.setSizeUnits config.cssUnit
+                    }
 
                 Builder.ProcessedSkewConfig config ->
                     { start = maybeSet PropertyBaselines.setSkew config.start start, end = PropertyBaselines.setSkew config.end end }
 
                 Builder.ProcessedTranslateConfig config ->
-                    { start = maybeSet PropertyBaselines.setTranslate config.start start, end = PropertyBaselines.setTranslate config.end end }
+                    { start =
+                        maybeSet PropertyBaselines.setTranslate config.start start
+                            |> PropertyBaselines.setTranslateUnits config.cssUnit
+                    , end =
+                        PropertyBaselines.setTranslate config.end end
+                            |> PropertyBaselines.setTranslateUnits config.cssUnit
+                    }
     in
     List.foldl setBounds { start = PropertyBaselines.empty, end = PropertyBaselines.empty } properties
 
@@ -215,6 +286,7 @@ endBounds properties =
 
                 Builder.ProcessedPerspectiveOriginConfig config ->
                     PropertyBaselines.setPerspectiveOrigin config.end end
+                        |> PropertyBaselines.setPerspectiveOriginUnits config.cssUnit
 
                 Builder.ProcessedRotateConfig config ->
                     PropertyBaselines.setRotate config.end end
@@ -224,11 +296,13 @@ endBounds properties =
 
                 Builder.ProcessedSizeConfig config ->
                     PropertyBaselines.setSize config.end end
+                        |> PropertyBaselines.setSizeUnits config.cssUnit
 
                 Builder.ProcessedSkewConfig config ->
                     PropertyBaselines.setSkew config.end end
 
                 Builder.ProcessedTranslateConfig config ->
                     PropertyBaselines.setTranslate config.end end
+                        |> PropertyBaselines.setTranslateUnits config.cssUnit
     in
     List.foldl setBounds PropertyBaselines.empty properties

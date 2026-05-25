@@ -9,27 +9,21 @@ module Anim.Engine.ViewTimeline exposing
     , Unit(..), Range(..), rangeStart, rangeEnd
     , iterations, alternate
     , easing
-    , cssUnit, cssUnitX, cssUnitY, cssUnitZ
+    , cssUnit, cssUnitX, cssUnitY, cssUnitZ, cssUnitWidth, cssUnitHeight
     , spring
     , discreteEntry, discreteExit
     , transformOrder
     )
 
-{-| View-driven animations that tie progress to an element's position within the viewport.
+{-| Use an element's position in the viewport to drive animation progress.
 
-Animations run automatically as the element scrolls into and out of view — no `AnimState`
-required. `update` and `subscriptions` are optional, and only needed if you want to react
-to lifecycle events.
+Animations run automatically as the element moves through view, so you do not need an `AnimState`.
+`update` and `subscriptions` are optional and only matter when you want events.
 
-The Engine uses the [ViewTimeline](https://developer.mozilla.org/en-US/docs/Web/API/ViewTimeline)
-interface to the Web Animations API (WAAPI) and so requires the `@phollyer/elm-motion` JavaScript
-companion library.
-
-For specific Engine guides, setup instructions, and examples, see the
-[ViewTimeline Engine Documentation](https://phollyer.github.io/elm-motion/animation/engines/view-timeline/).
-
-For Engine comparisons, shared features, examples and code, see the
-[Engine Overview](https://phollyer.github.io/elm-motion/animation/engines/overview/) section in the docs.
+📖 For setup, browser support, and examples, see the
+[ViewTimeline Engine Documentation](https://phollyer.github.io/elm-motion/animation/engines/view-timeline/)
+and the
+[Engine Overview](https://phollyer.github.io/elm-motion/animation/engines/overview/).
 
 
 # Types
@@ -96,7 +90,7 @@ For Engine comparisons, shared features, examples and code, see the
 
 # Length Unit
 
-@docs cssUnit, cssUnitX, cssUnitY, cssUnitZ
+@docs cssUnit, cssUnitX, cssUnitY, cssUnitZ, cssUnitWidth, cssUnitHeight
 
 
 # Spring
@@ -116,6 +110,7 @@ For Engine comparisons, shared features, examples and code, see the
 -}
 
 import Anim.Extra.TransformOrder exposing (TransformProperty)
+import Anim.Internal.Builder as Builder
 import Anim.Internal.Engine.ViewTimeline as Internal
 import Anim.Unit as LengthUnit
 import Html
@@ -131,15 +126,12 @@ import Motion.Spring exposing (Spring)
 -- ============================================================
 
 
-{-| Animation builder type for configuring view-driven animations.
+{-| Builder type for view-driven animations.
 
-Use this in type annotations for animation helpers specific to the
-ViewTimeline Engine.
+Use this in type annotations when a helper should only work with ViewTimeline.
 
-For helper functions that should work across all engines, use `AnimBuilder mode` from `Anim.Builder` instead.
-
-For mode restrictions and examples, see
-[Build: Builder Modes](https://phollyer.github.io/elm-motion/animation/workflow/build/#builder-modes).
+📖 See [Builder Modes](https://phollyer.github.io/elm-motion/animation/concepts/builder-modes/)
+for patterns and examples.
 
 -}
 type alias TimelineBuilder =
@@ -180,14 +172,14 @@ animate =
 -- ============================================================
 
 
-{-| Lifecycle events emitted by the ViewTimeline engine.
+{-| Lifecycle events from the ViewTimeline engine.
 
   - `Ended String` — the element scrolled past the end of the animation range
   - `Cancelled String` — the animation was cancelled (e.g. element removed)
   - `Iteration String Int` — the animation looped; the `Int` is the cumulative iteration count
   - `AnimError String` — a message arrived but could not be decoded
 
-Returned as a `Maybe` — `Nothing` indicates the message was not intended for this engine.
+`Nothing` means the message was for something else.
 
 -}
 type AnimEvent
@@ -203,7 +195,7 @@ type AnimEvent
 -- ============================================================
 
 
-{-| Internal message type. Add this to your `Msg` to receive view-driven lifecycle events.
+{-| Message type used with `update`.
 
     type Msg
         = GotViewMsg ViewTimeline.AnimMsg
@@ -214,9 +206,9 @@ type alias AnimMsg =
     Internal.AnimMsg
 
 
-{-| Decode an `AnimMsg` into a `Maybe AnimEvent`.
+{-| Turn an engine message into an event.
 
-Messages that do not match ViewTimeline lifecycle events return `Nothing`.
+Messages that do not belong to this engine return `Nothing`.
 
     update : Msg -> Model -> ( Model, Cmd Msg )
     update msg model =
@@ -257,10 +249,9 @@ toAnimEvent internalEvent =
 -- ============================================================
 
 
-{-| Subscribe to view-driven lifecycle events from JavaScript.
+{-| Subscribe to lifecycle events for this engine.
 
-Wire this up alongside your `motionMsg` port. Unlike the WAAPI engine,
-no `AnimState` is needed — subscriptions are always active.
+Wire this up alongside your `motionMsg` port.
 
     subscriptions : Model -> Sub Msg
     subscriptions _ =
@@ -425,22 +416,18 @@ unitToString unit =
 -- ============================================================
 
 
-{-| Set how many times the animation should repeat.
+{-| Alias of [Anim.Builder.iterations](Anim-Builder#iterations).
 -}
 iterations : Int -> TimelineBuilder -> TimelineBuilder
 iterations =
-    Internal.iterations
+    Builder.iterations
 
 
-{-| Alternate direction on each iteration (ping-pong).
-
-If `iterations` has not been set, this defaults to `2` so that the
-alternate direction has a second iteration to play.
-
+{-| Alias of [Anim.Builder.alternate](Anim-Builder#alternate).
 -}
 alternate : TimelineBuilder -> TimelineBuilder
 alternate =
-    Internal.alternate
+    Builder.alternate
 
 
 
@@ -449,11 +436,11 @@ alternate =
 -- ============================================================
 
 
-{-| Set the easing function.
+{-| Alias of [Anim.Builder.easing](Anim-Builder#easing).
 -}
 easing : Easing -> TimelineBuilder -> TimelineBuilder
 easing =
-    Internal.easing
+    Builder.easing
 
 
 
@@ -462,44 +449,60 @@ easing =
 -- ============================================================
 
 
-{-| Set the default length [Unit](Anim-Unit#Unit) for all length-bearing
-properties in this timeline.
-
-Applies to `Translate`, `Size`, and `PerspectiveOrigin`. Per-property
-[`cssUnit`](Anim-Property-Translate#cssUnit) calls take precedence over this
-engine-level default. If neither is set, properties render in `Px`.
-
-Note: this is unrelated to the [Range Unit](#Unit) used by `rangeStart` and
-`rangeEnd`.
-
+{-| Alias of [Anim.Builder.cssUnit](Anim-Builder#cssUnit).
 -}
 cssUnit : LengthUnit.Unit -> TimelineBuilder -> TimelineBuilder
 cssUnit =
-    Internal.cssUnit
+    Builder.cssUnit
 
 
-{-| Set a per-axis default length [Unit](Anim-Unit#Unit) for the X axis.
-Applies to `Translate.x`, `Size.width`, and `PerspectiveOrigin.x`.
+{-| Alias of [Anim.Builder.cssUnitX](Anim-Builder#cssUnitX).
 -}
 cssUnitX : LengthUnit.Unit -> TimelineBuilder -> TimelineBuilder
 cssUnitX =
-    Internal.cssUnitX
+    Builder.cssUnitX
 
 
-{-| Set a per-axis default length [Unit](Anim-Unit#Unit) for the Y axis.
-Applies to `Translate.y`, `Size.height`, and `PerspectiveOrigin.y`.
+{-| Alias of [Anim.Builder.cssUnitY](Anim-Builder#cssUnitY).
 -}
 cssUnitY : LengthUnit.Unit -> TimelineBuilder -> TimelineBuilder
 cssUnitY =
-    Internal.cssUnitY
+    Builder.cssUnitY
 
 
-{-| Set a per-axis default length [Unit](Anim-Unit#Unit) for the Z axis.
-Applies to `Translate.z`.
+{-| Alias of [Anim.Builder.cssUnitZ](Anim-Builder#cssUnitZ).
 -}
 cssUnitZ : LengthUnit.Unit -> TimelineBuilder -> TimelineBuilder
 cssUnitZ =
-    Internal.cssUnitZ
+    Builder.cssUnitZ
+
+
+{-| Set the default length unit used for width values in ViewTimeline animations.
+
+    responsiveCardWidth : TimelineBuilder -> TimelineBuilder
+    responsiveCardWidth =
+        cssUnitWidth LengthUnit.Vw
+            >> growCardWidth
+            >> settleCardSpacing
+
+-}
+cssUnitWidth : LengthUnit.Unit -> TimelineBuilder -> TimelineBuilder
+cssUnitWidth =
+    Builder.cssUnitWidth
+
+
+{-| Set the default length unit used for height values in ViewTimeline animations.
+
+    responsivePanelHeight : TimelineBuilder -> TimelineBuilder
+    responsivePanelHeight =
+        cssUnitHeight LengthUnit.Vh
+            >> expandPanelHeight
+            >> alignPanelHeaderY
+
+-}
+cssUnitHeight : LengthUnit.Unit -> TimelineBuilder -> TimelineBuilder
+cssUnitHeight =
+    Builder.cssUnitHeight
 
 
 
@@ -508,32 +511,11 @@ cssUnitZ =
 -- ============================================================
 
 
-{-| Set a spring as the default for all properties on this timeline.
-
-When a spring is set, the spring is sampled at evenly-spaced points
-and emitted as a pre-computed keyframes list. The browser then maps
-view-progress (0 → 1, scaled by `rangeStart` / `rangeEnd`) onto that
-sample list, so the spring's overshoot character is preserved — the
-"time" axis is just element position within the viewport rather than
-wall-clock time.
-
-Setting `spring` clears any previously-set global `easing`, and
-vice versa — they are mutually exclusive.
-
-    import Anim.Engine.ViewTimeline as ViewTimeline
-    import Anim.Property.Translate as Translate
-    import Motion.Spring as Spring
-
-    ViewTimeline.animate outgoing <|
-        ViewTimeline.spring Spring.wobbly
-            >> Translate.for "box"
-            >> Translate.toX 200
-            >> Translate.build
-
+{-| Alias of [Anim.Builder.spring](Anim-Builder#spring).
 -}
 spring : Spring -> TimelineBuilder -> TimelineBuilder
 spring =
-    Internal.spring
+    Builder.spring
 
 
 

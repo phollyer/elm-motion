@@ -1,7 +1,7 @@
 /* eslint-env browser */
 /* global window, document, CSS, ScrollTimeline, ViewTimeline */
 import { parseIterations, updateGroupIteration, easingFunctions, DEFAULT_TRANSFORM_ORDER } from './utils.js';
-import { scrollDrivenIterationCounts, elementTransformOrders, cleanupAnimGroup } from './state.js';
+import { scrollDrivenIterationCounts, elementTransformOrders, cleanupAnimGroup, appliedWillChange } from './state.js';
 import { getTransformState, buildTransformString } from './transform.js';
 import { resolveNonTransformValues, buildPropertyKeyframes, resolveScrollDrivenTransformValues } from './properties.js';
 import { sendScrollLifecycleEvent } from './ports.js';
@@ -158,6 +158,18 @@ function applyScrollDrivenAnimation(animGroup, element, elementConfig, timeline,
         Object.entries(discreteEntry).forEach(function ([prop, value]) {
             element.style[prop] = value;
         });
+    }
+
+    // Scroll-driven animations are continuous for the lifetime of the scroll
+    // interaction, so the GPU hint is seeded once at start and intentionally
+    // never cleared (no `cleanupAnimGroup` runs for these engines).
+    if (elementConfig.willChange && typeof elementConfig.willChange === 'string') {
+        try {
+            element.style.willChange = elementConfig.willChange;
+            appliedWillChange.set(animGroup, { element: element, value: elementConfig.willChange });
+        } catch (_) {
+            // Non-fatal.
+        }
     }
     const baseTimingOptions = Object.assign(
         { timeline: timeline, fill: 'both' },

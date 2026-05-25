@@ -3,14 +3,12 @@ module Animation.Keyframe.InterruptingAnimations.MultipleAxes.Main exposing (mai
 import Anim.Builder exposing (AnimBuilder)
 import Anim.Engine.Keyframe as Keyframe
 import Anim.Property.Translate as Translate
+import Anim.Unit exposing (Unit(..))
 import Browser
-import Browser.Dom as Dom
-import Browser.Events
 import Html exposing (Html, div, text)
-import Html.Attributes exposing (class, id, style)
+import Html.Attributes exposing (class, style)
 import Html.Events exposing (onClick)
-import Motion.Easing as Easing exposing (Easing(..))
-import Task
+import Motion.Easing exposing (Easing(..))
 
 
 
@@ -23,7 +21,7 @@ main =
         { init = init
         , update = update
         , view = view
-        , subscriptions = subscriptions
+        , subscriptions = \_ -> Sub.none
         }
 
 
@@ -36,18 +34,35 @@ animGroupName =
     "movingBox"
 
 
-canvasId : String
-canvasId =
-    "anim-canvas"
-
-
 type alias Model =
-    { animState : Keyframe.AnimState
-    , canvasW : Float
-    , canvasH : Float
-    , xPos : XPos
-    , yPos : YPos
-    }
+    { animState : Keyframe.AnimState }
+
+
+{-| Box size expressed as a percentage of the canvas on each axis.
+The box width is `boxPct cqw`, height is `boxPct cqh`, and translate
+targets are expressed in the matching axis-unit. Everything scales
+with the canvas - no Elm-side resize handling required.
+-}
+boxPct : Float
+boxPct =
+    12
+
+
+init : () -> ( Model, Cmd Msg )
+init _ =
+    ( { animState =
+            Keyframe.init
+                [ Translate.initUnitX Cqw
+                    >> Translate.initUnitY Cqh
+                    >> Translate.initXY animGroupName (targetX XCenter) (targetY YCenter)
+                ]
+      }
+    , Cmd.none
+    )
+
+
+
+-- POSITION HELPERS
 
 
 type XPos
@@ -62,58 +77,34 @@ type YPos
     | YBottom
 
 
-boxWidth : Float
-boxWidth =
-    100
-
-
-init : () -> ( Model, Cmd Msg )
-init _ =
-    ( { animState =
-            Keyframe.init
-                [ Translate.initXY animGroupName 0 0 ]
-      , canvasW = 0
-      , canvasH = 0
-      , xPos = XCenter
-      , yPos = YCenter
-      }
-    , measureCanvas
-    )
-
-
-measureCanvas : Cmd Msg
-measureCanvas =
-    Task.attempt GotCanvas (Dom.getElement canvasId)
-
-
-
--- POSITION HELPERS
-
-
-targetX : XPos -> Float -> Float
-targetX pos w =
+{-| X target in `cqw` (0..100 - boxPct).
+-}
+targetX : XPos -> Float
+targetX pos =
     case pos of
         XLeft ->
             0
 
         XCenter ->
-            (w - boxWidth) / 2
+            (100 - boxPct) / 2
 
         XRight ->
-            w - boxWidth
+            100 - boxPct
 
 
-targetY : YPos -> Float -> Float
-targetY pos h =
+{-| Y target in `cqh` (0..100 - boxPct).
+-}
+targetY : YPos -> Float
+targetY pos =
     case pos of
         YTop ->
             0
 
         YCenter ->
-            (h - boxWidth) / 2
+            (100 - boxPct) / 2
 
         YBottom ->
-            h - boxWidth
+            100 - boxPct
 
 
 
@@ -133,16 +124,11 @@ moveBoxY y =
 moveBox : (Translate.Builder mode -> Translate.Builder mode) -> AnimBuilder mode -> AnimBuilder mode
 moveBox moveFunc =
     Translate.for animGroupName
+        >> Translate.cssUnitX Cqw
+        >> Translate.cssUnitY Cqh
         >> moveFunc
-        >> Translate.speed 100
-        >> Translate.easing BounceOut
-        >> Translate.build
-
-
-snapBoxXY : Float -> Float -> AnimBuilder mode -> AnimBuilder mode
-snapBoxXY x y =
-    Translate.for animGroupName
-        >> Translate.toXY x y
+        >> Translate.speed 25
+        >> Translate.easing QuintOut
         >> Translate.build
 
 
@@ -156,8 +142,6 @@ type Msg
     | MoveRight
     | MoveUp
     | MoveDown
-    | Resize
-    | GotCanvas (Result Dom.Error Dom.Element)
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -174,76 +158,39 @@ update msg model =
 
         MoveLeft ->
             ( { model
-                | xPos = XLeft
-                , animState =
+                | animState =
                     Keyframe.animate model.animState <|
-                        moveBoxX (targetX XLeft model.canvasW)
+                        moveBoxX (targetX XLeft)
               }
             , Cmd.none
             )
 
         MoveRight ->
             ( { model
-                | xPos = XRight
-                , animState =
+                | animState =
                     Keyframe.animate model.animState <|
-                        moveBoxX (targetX XRight model.canvasW)
+                        moveBoxX (targetX XRight)
               }
             , Cmd.none
             )
 
         MoveUp ->
             ( { model
-                | yPos = YTop
-                , animState =
+                | animState =
                     Keyframe.animate model.animState <|
-                        moveBoxY (targetY YTop model.canvasH)
+                        moveBoxY (targetY YTop)
               }
             , Cmd.none
             )
 
         MoveDown ->
             ( { model
-                | yPos = YBottom
-                , animState =
+                | animState =
                     Keyframe.animate model.animState <|
-                        moveBoxY (targetY YBottom model.canvasH)
+                        moveBoxY (targetY YBottom)
               }
             , Cmd.none
             )
-
-        Resize ->
-            ( model, measureCanvas )
-
-        GotCanvas (Ok element) ->
-            let
-                w =
-                    element.element.width
-
-                h =
-                    element.element.height
-            in
-            ( { model
-                | canvasW = w
-                , canvasH = h
-                , animState =
-                    Keyframe.animate model.animState <|
-                        snapBoxXY (targetX model.xPos w) (targetY model.yPos h)
-              }
-            , Cmd.none
-            )
-
-        GotCanvas (Err _) ->
-            ( model, Cmd.none )
-
-
-
--- SUBSCRIPTIONS
-
-
-subscriptions : Model -> Sub Msg
-subscriptions _ =
-    Browser.Events.onResize (\_ _ -> Resize)
 
 
 
@@ -277,9 +224,10 @@ view model =
             div
                 (Keyframe.attributes animGroupName model.animState
                     ++ Keyframe.events GotAnimationUpdate
-                    ++ [ style "width" (String.fromFloat boxWidth ++ "px")
-                       , style "height" (String.fromFloat boxWidth ++ "px")
+                    ++ [ style "width" (String.fromFloat boxPct ++ "cqw")
+                       , style "height" (String.fromFloat boxPct ++ "cqh")
                        , style "background-color" "#FF5733"
+                       , style "border-radius" "8px"
                        , style "position" "absolute"
                        , style "top" "0"
                        , style "left" "0"
@@ -288,14 +236,16 @@ view model =
                 []
     in
     div [ class "example-stage" ]
-        [ div [ class "example-badge example-badge--static" ] [ text "Static" ]
-        , Keyframe.styleNode model.animState
+        [ Keyframe.styleNode model.animState
         , div [ class "example-controls" ]
             [ moveLeftButton
             , moveRightButton
             , moveUpButton
             , moveDownButton
             ]
-        , div [ id canvasId, class "example-canvas--fluid" ]
+        , div
+            [ class "example-canvas--fluid"
+            , style "container-type" "size"
+            ]
             [ box ]
         ]

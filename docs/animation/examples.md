@@ -84,11 +84,27 @@ Trigger an animation, then interrupt it mid-flight.
 
 --8<-- "docs/animation/concepts/3d/rotating-cube.md:examples"
 
---8<-- "docs/animation/concepts/3d/perspective-origin.md:desc"
-
---8<-- "docs/animation/concepts/3d/perspective-origin.md:examples"
-
 [Go to page](concepts/3d.md){ .md-button .md-button--primary }
+
+---
+
+## Transform Order
+
+--8<-- "docs/animation/concepts/transform-order.md:desc"
+
+--8<-- "docs/animation/concepts/transform-order.md:examples"
+
+[Go to page](concepts/transform-order.md){ .md-button .md-button--primary }
+
+---
+
+## Responsive Animations
+
+--8<-- "docs/animation/concepts/responsive-animations.md:desc"
+
+--8<-- "docs/animation/concepts/responsive-animations.md:examples"
+
+[Go to page](concepts/responsive-animations.md){ .md-button .md-button--primary }
 
 ---
 

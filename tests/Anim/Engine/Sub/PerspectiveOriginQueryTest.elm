@@ -16,7 +16,7 @@ groupName =
 
 baseState : Sub.AnimState
 baseState =
-    Sub.init [ PerspectiveOrigin.initPercent groupName 50 50 ]
+    Sub.init [ PerspectiveOrigin.initXY groupName 50 50 ]
 
 
 animatedState : Sub.AnimState

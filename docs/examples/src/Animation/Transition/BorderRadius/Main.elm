@@ -49,15 +49,20 @@ init =
 
 animGroup : String
 animGroup =
-    "boxAnim"
+    "radiusAnim"
+
+
+standardTiming : Property.Builder mode -> Property.Builder mode
+standardTiming =
+    Property.duration 800
+        >> Property.easing CubicInOut
 
 
 roundCorners : EngineBuilder -> EngineBuilder
 roundCorners =
     Property.for animGroup (Property.BorderRadius Px)
         >> Property.to 48
-        >> Property.duration 800
-        >> Property.easing CubicInOut
+        >> standardTiming
         >> Property.build
 
 
@@ -65,8 +70,7 @@ squareCorners : EngineBuilder -> EngineBuilder
 squareCorners =
     Property.for animGroup (Property.BorderRadius Px)
         >> Property.to 0
-        >> Property.duration 800
-        >> Property.easing CubicInOut
+        >> standardTiming
         >> Property.build
 
 
@@ -101,8 +105,7 @@ update msg model =
 view : Model -> Html Msg
 view model =
     div [ class "example-stage" ]
-        [ div [ class "example-badge example-badge--responsive" ] [ text "RESPONSIVE" ]
-        , div [ class "example-controls" ]
+        [ div [ class "example-controls" ]
             [ button
                 [ onClick TriggerRound
                 , class "ui-action-button primary"

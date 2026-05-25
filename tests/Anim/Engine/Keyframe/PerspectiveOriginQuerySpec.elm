@@ -15,7 +15,7 @@ groupName =
 
 animatedState : Keyframe.AnimState
 animatedState =
-    Keyframe.init [ PerspectiveOrigin.initPercent groupName 50 50 ]
+    Keyframe.init [ PerspectiveOrigin.initXY groupName 50 50 ]
         |> (\state ->
                 Keyframe.animate state <|
                     PerspectiveOrigin.for groupName

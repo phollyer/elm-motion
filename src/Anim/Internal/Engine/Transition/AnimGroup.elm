@@ -5,6 +5,7 @@ module Anim.Internal.Engine.Transition.AnimGroup exposing
     , getPropertyKeys
     , getStartingStyles
     , getStyles
+    , getWillChange
     , init
     , isActive
     , isCancelled
@@ -17,6 +18,7 @@ module Anim.Internal.Engine.Transition.AnimGroup exposing
     , setPropertyKeys
     , setStartingStyles
     , setStyles
+    , setWillChange
     )
 
 import Anim.Internal.Builder as Builder
@@ -40,6 +42,7 @@ type AnimGroup
         , discreteExit : Dict String Builder.DiscreteExitProperty
         , startingStyles : List String
         , propertyKeys : Set String
+        , willChange : String
         }
 
 
@@ -58,6 +61,7 @@ init =
         , discreteExit = Dict.empty
         , startingStyles = []
         , propertyKeys = Set.empty
+        , willChange = ""
         }
 
 
@@ -89,6 +93,17 @@ report which properties are mid-flight.
 getPropertyKeys : AnimGroup -> Set String
 getPropertyKeys (AnimGroup animGroup) =
     animGroup.propertyKeys
+
+
+{-| Get the deduped, comma-joined `will-change` value derived from the
+properties this group animates. Empty when the group has no properties
+(or is being constructed). The Transition engine writes this into the
+inline style of the animated element while the animation is in flight
+(see [`Anim.Internal.Engine.Transition.attributes`](Anim-Internal-Engine-Transition#attributes)).
+-}
+getWillChange : AnimGroup -> String
+getWillChange (AnimGroup animGroup) =
+    animGroup.willChange
 
 
 
@@ -125,6 +140,14 @@ setStyles styles (AnimGroup animGroup) =
 setPropertyKeys : Set String -> AnimGroup -> AnimGroup
 setPropertyKeys keys (AnimGroup animGroup) =
     AnimGroup { animGroup | propertyKeys = keys }
+
+
+{-| Set the precomputed `will-change` value for this group. See
+[`getWillChange`](#getWillChange).
+-}
+setWillChange : String -> AnimGroup -> AnimGroup
+setWillChange value (AnimGroup animGroup) =
+    AnimGroup { animGroup | willChange = value }
 
 
 
@@ -212,6 +235,7 @@ mergeStyles (AnimGroup newGroup) (AnimGroup existingGroup) newCssProps =
         , discreteExit = mergedDiscreteExit
         , startingStyles = newGroup.startingStyles
         , propertyKeys = Set.union newGroup.propertyKeys existingGroup.propertyKeys
+        , willChange = mergeWillChange existingGroup.willChange newGroup.willChange
         }
 
 
@@ -272,6 +296,38 @@ splitRespectingParens value =
                     helper rest depth (c :: current) acc
     in
     helper chars 0 [] []
+
+
+{-| Merge two comma-joined `will-change` values, preserving the order of
+the existing entries and appending any new entries that aren't already
+listed. Empty inputs are skipped so a fresh group merging into one with
+no will-change works in either direction.
+-}
+mergeWillChange : String -> String -> String
+mergeWillChange existing new =
+    case ( existing, new ) of
+        ( "", _ ) ->
+            new
+
+        ( _, "" ) ->
+            existing
+
+        _ ->
+            let
+                split value =
+                    value
+                        |> String.split ","
+                        |> List.map String.trim
+                        |> List.filter (not << String.isEmpty)
+
+                existingParts =
+                    split existing
+
+                newOnlyParts =
+                    split new
+                        |> List.filter (\p -> not (List.member p existingParts))
+            in
+            String.join ", " (existingParts ++ newOnlyParts)
 
 
 

@@ -45,6 +45,10 @@ The library codebase, and all the examples use function composition wherever pos
 
 Throughout the documentation you will find examples demonstrating features or concepts. The vast majority are for animations on the Document timeline, therefore all these examples will show the exact same animation for each of the Document timeline Engines.
 
+!!! info "Responsive by default"
+
+    All examples in this documentation are responsive - they adapt smoothly when the viewport is resized. If an engine tab is missing from a given example, it is because that engine either cannot express the animation at all, or cannot do so responsively. The remaining engine tabs show the same animation built with engines that can.
+
 Here's a few examples to get started with.
 
 ### 1. Hello Text

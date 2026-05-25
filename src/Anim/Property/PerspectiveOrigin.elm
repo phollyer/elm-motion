@@ -1,6 +1,7 @@
 module Anim.Property.PerspectiveOrigin exposing
     ( Builder, AnimGroupName
-    , initPx, initPercent
+    , initXY, initX, initY
+    , initUnit, initUnitX, initUnitY
     , for, build
     , cssUnit, cssUnitX, cssUnitY
     , from, fromXY, fromX, fromY
@@ -52,7 +53,33 @@ will use the current end value as the start, ensuring a smooth transition betwee
 
 # Initialize
 
-@docs initPx, initPercent
+The default unit for `perspective-origin` is `Percent`. Use
+[`initUnit`](#initUnit) (or [`initUnitX`](#initUnitX) /
+[`initUnitY`](#initUnitY)) to switch the unit used by subsequent `init*`
+calls.
+
+@docs initXY, initX, initY
+
+
+## Initial Unit
+
+Set the length [Unit](Anim-Unit#Unit) used by subsequent `init*` calls.
+Order matters - `initUnit*` only affects `init*` calls that follow it in
+the pipeline. Defaults to `Percent`.
+
+    import Anim.Unit exposing (Unit(..))
+
+    init _ =
+        ( { animState =
+                Engine.init
+                    [ PerspectiveOrigin.initUnit Px
+                        >> PerspectiveOrigin.initXY "vp" 200 150
+                    ]
+          }
+        , Cmd.none
+        )
+
+@docs initUnit, initUnitX, initUnitY
 
 
 # Build
@@ -105,8 +132,10 @@ for details.
 
 ## Bounds
 
-Declare persistent per-axis clamps that constrain every value flowing through
-the pipeline. See [clampX](#clampX) for behaviour.
+Keep perspective-origin values on each axis within a range you choose.
+
+📖 See [Responsive Animations](https://phollyer.github.io/elm-motion/animation/concepts/responsive-animations/)
+for patterns and examples.
 
 @docs clampX, clampY, unclampX, unclampY
 
@@ -120,7 +149,7 @@ new bounds during `onResize`.
 
 -}
 
-import Anim.Internal.Builder exposing (AnimBuilder)
+import Anim.Internal.Builder as IB exposing (AnimBuilder)
 import Anim.Internal.Builder.PerspectiveOrigin as PB
 import Anim.Internal.Resize.Builder as ResizeBuilder
 import Anim.Resize as Resize
@@ -141,7 +170,7 @@ type alias AnimGroupName =
     String
 
 
-{-| Type alias for the internal `PerspectiveOriginBuilder`.
+{-| Builder type for perspective-origin animations.
 -}
 type alias Builder mode =
     PB.PerspectiveOriginBuilder mode
@@ -153,48 +182,96 @@ type alias Builder mode =
 -- ============================================================
 
 
-{-| Set the initial perspective origin using pixel values.
+{-| Set the initial perspective origin on both axes. Uses whichever
+[Unit](Anim-Unit#Unit) was most recently selected by [`initUnit`](#initUnit) /
+[`initUnitX`](#initUnitX) / [`initUnitY`](#initUnitY) upstream in the pipeline
+(defaults to `Percent`).
 
     import Anim.Engine.* as Engine
     import Anim.Property.PerspectiveOrigin as PerspectiveOrigin
 
     init : () -> ( Model, Cmd Msg )
     init _ =
-        ( { animState = Engine.init [ PerspectiveOrigin.initPx "animGroupName" 200 150 ] }
+        ( { animState = Engine.init [ PerspectiveOrigin.initXY "animGroupName" 50 50 ] }
         , Cmd.none
         )
 
 -}
-initPx : AnimGroupName -> Float -> Float -> AnimBuilder mode -> AnimBuilder mode
-initPx animationKey x y animBuilder =
+initXY : AnimGroupName -> Float -> Float -> AnimBuilder mode -> AnimBuilder mode
+initXY animationKey x y animBuilder =
     animBuilder
         |> for animationKey
-        |> PB.cssUnit Unit.Px
+        |> PB.applyInitCssUnit
         |> fromXY x y
         |> toXY x y
         |> build
 
 
-{-| Set the initial perspective origin using percentage values.
-
-    import Anim.Engine.* as Engine
-    import Anim.Property.PerspectiveOrigin as PerspectiveOrigin
-
-    init : () -> ( Model, Cmd Msg )
-    init _ =
-        ( { animState = Engine.init [ PerspectiveOrigin.initPercent "animGroupName" 50 50 ] }
-        , Cmd.none
-        )
-
+{-| Set the initial X-axis perspective origin. Uses whichever
+[Unit](Anim-Unit#Unit) was most recently selected by [`initUnit`](#initUnit) /
+[`initUnitX`](#initUnitX) upstream in the pipeline (defaults to `Percent`).
 -}
-initPercent : AnimGroupName -> Float -> Float -> AnimBuilder mode -> AnimBuilder mode
-initPercent animationKey x y animBuilder =
+initX : AnimGroupName -> Float -> AnimBuilder mode -> AnimBuilder mode
+initX animationKey x animBuilder =
     animBuilder
         |> for animationKey
-        |> PB.cssUnit Unit.Percent
-        |> fromXY x y
-        |> toXY x y
+        |> PB.applyInitCssUnit
+        |> fromX x
+        |> toX x
         |> build
+
+
+{-| Set the initial Y-axis perspective origin. Uses whichever
+[Unit](Anim-Unit#Unit) was most recently selected by [`initUnit`](#initUnit) /
+[`initUnitY`](#initUnitY) upstream in the pipeline (defaults to `Percent`).
+-}
+initY : AnimGroupName -> Float -> AnimBuilder mode -> AnimBuilder mode
+initY animationKey y animBuilder =
+    animBuilder
+        |> for animationKey
+        |> PB.applyInitCssUnit
+        |> fromY y
+        |> toY y
+        |> build
+
+
+{-| Set the length [Unit](Anim-Unit#Unit) used by every subsequent `init*` call
+for `PerspectiveOrigin` values. Defaults to `Percent`.
+
+Order matters - only `init*` calls downstream of this setter in the pipeline
+are affected; calls upstream keep their previously selected unit (or `Percent`).
+Later per-axis setters ([`initUnitX`](#initUnitX), [`initUnitY`](#initUnitY))
+override this setting on the relevant axis.
+
+    import Anim.Unit exposing (Unit(..))
+
+    Engine.init
+        [ PerspectiveOrigin.initUnit Px
+            >> PerspectiveOrigin.initXY "vp" 200 150
+        ]
+
+-}
+initUnit : Unit.Unit -> AnimBuilder mode -> AnimBuilder mode
+initUnit =
+    IB.setPerspectiveOriginInitCssUnit
+
+
+{-| Set the X-axis unit used by every subsequent `init*` call for
+`PerspectiveOrigin` values. Overrides any unit set by [`initUnit`](#initUnit)
+on the X axis.
+-}
+initUnitX : Unit.Unit -> AnimBuilder mode -> AnimBuilder mode
+initUnitX =
+    IB.setPerspectiveOriginInitCssUnitX
+
+
+{-| Set the Y-axis unit used by every subsequent `init*` call for
+`PerspectiveOrigin` values. Overrides any unit set by [`initUnit`](#initUnit)
+on the Y axis.
+-}
+initUnitY : Unit.Unit -> AnimBuilder mode -> AnimBuilder mode
+initUnitY =
+    IB.setPerspectiveOriginInitCssUnitY
 
 
 
@@ -453,15 +530,14 @@ cssUnitY =
 -- ============================================================
 
 
-{-| Constrain the X axis of the active animGroup's perspective-origin to
-`[min, max]`.
+{-| Keep the X axis perspective-origin within `[min, max]` for this animation group.
 
-The clamp is persistent: once declared it applies to every subsequent
-`animate` / `retarget` call on this animGroup until you call [unclampX](#unclampX)
-(or call `clampX` again with new bounds). Clamps are applied at [build](#build)
-time, so they affect every value declared in the pipeline regardless of order.
-If `min > max` the arguments are swapped automatically. The active unit
-(percent or px) on each value is preserved.
+The range stays in effect for future `animate` / `retarget` calls
+until you call [unclampX](#unclampX). If `min > max`, the values are swapped.
+The active unit (percent or px) on each value is preserved.
+
+📖 See [Responsive Animations](https://phollyer.github.io/elm-motion/animation/concepts/responsive-animations/)
+for patterns and examples.
 
 -}
 clampX : Float -> Float -> Builder mode -> Builder mode
@@ -469,8 +545,7 @@ clampX =
     PB.clampX
 
 
-{-| Constrain the Y axis of the active animGroup's perspective-origin to
-`[min, max]`.
+{-| Keep the Y axis perspective-origin within `[min, max]` for this animation group.
 
 See [clampX](#clampX) for behaviour.
 
@@ -480,16 +555,14 @@ clampY =
     PB.clampY
 
 
-{-| Remove a previously declared X axis clamp on the active animGroup. No-op
-if no clamp is set.
+{-| Remove the X axis range for this animation group. Does nothing if no range is set.
 -}
 unclampX : Builder mode -> Builder mode
 unclampX =
     PB.unclampX
 
 
-{-| Remove a previously declared Y axis clamp on the active animGroup. No-op
-if no clamp is set.
+{-| Remove the Y axis range for this animation group. Does nothing if no range is set.
 -}
 unclampY : Builder mode -> Builder mode
 unclampY =

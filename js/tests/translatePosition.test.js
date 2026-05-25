@@ -226,6 +226,22 @@ describe('translatePositionAnimation', () => {
         expect(anim.setKeyframesCalls.length).toBe(1);
     });
 
+    it('uses complex easing sample count when rebuilding translatePosition keyframes', () => {
+        const element = makeElement('box');
+        installDom({ element: element, targetId: 'box' });
+        const resolved = defaultResolved({ startX: 0, endX: 500, startY: 0, endY: 0 });
+        resolved.translate.easingKeyframes = Array.from({ length: 60 }, (_, i) => i / 59);
+        const anim = seedTransformAnimation('box', resolved);
+
+        translatePositionAnimation({
+            elementId: 'box',
+            x: null, y: 250, z: null
+        });
+
+        expect(anim.setKeyframesCalls.length).toBe(1);
+        expect(anim.setKeyframesCalls[0].length).toBe(60);
+    });
+
     it('does not throw when the element cannot be found', () => {
         installDom({ element: makeElement('box'), targetId: 'box' });
         expect(() => translatePositionAnimation({

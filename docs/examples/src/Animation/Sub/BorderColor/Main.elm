@@ -52,15 +52,20 @@ init =
 
 animGroup : String
 animGroup =
-    "boxAnim"
+    "borderAnim"
+
+
+standardTiming : CustomColor.Builder mode -> CustomColor.Builder mode
+standardTiming =
+    CustomColor.duration 800
+        >> CustomColor.easing CubicInOut
 
 
 toRed : AnimBuilder mode -> AnimBuilder mode
 toRed =
     CustomColor.for animGroup CustomColor.BorderColor
         >> CustomColor.to (Color.rgb 239 68 68)
-        >> CustomColor.duration 800
-        >> CustomColor.easing CubicInOut
+        >> standardTiming
         >> CustomColor.build
 
 
@@ -68,8 +73,7 @@ toBlue : AnimBuilder mode -> AnimBuilder mode
 toBlue =
     CustomColor.for animGroup CustomColor.BorderColor
         >> CustomColor.to (Color.rgb 59 130 246)
-        >> CustomColor.duration 800
-        >> CustomColor.easing CubicInOut
+        >> standardTiming
         >> CustomColor.build
 
 
@@ -123,8 +127,7 @@ view : Model -> Html Msg
 view model =
     div
         [ class "example-stage" ]
-        [ div [ class "example-badge example-badge--responsive" ] [ text "RESPONSIVE" ]
-        , div [ class "example-controls" ]
+        [ div [ class "example-controls" ]
             [ button
                 [ onClick TriggerRed
                 , class "ui-action-button"

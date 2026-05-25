@@ -1,18 +1,16 @@
-module Animation.Transition.InterruptingAnimations.MultipleProperties.Main exposing (..)
+module Animation.Transition.InterruptingAnimations.MultipleProperties.Main exposing (main)
 
 import Anim.Builder exposing (AnimBuilder)
 import Anim.Engine.Transition as Transition
 import Anim.Extra.Color as Color exposing (Color)
-import Anim.Property.CustomColor as BgColor
+import Anim.Property.CustomColor as CustomColor
 import Anim.Property.Translate as Translate
+import Anim.Unit exposing (Unit(..))
 import Browser
-import Browser.Dom as Dom
-import Browser.Events
 import Html exposing (Html, div, text)
-import Html.Attributes exposing (class, id, style)
+import Html.Attributes exposing (class, style)
 import Html.Events exposing (onClick)
-import Motion.Easing as Easing exposing (Easing(..))
-import Task
+import Motion.Easing exposing (Easing(..))
 
 
 
@@ -25,7 +23,7 @@ main =
         { init = init
         , update = update
         , view = view
-        , subscriptions = subscriptions
+        , subscriptions = \_ -> Sub.none
         }
 
 
@@ -34,11 +32,52 @@ main =
 
 
 type alias Model =
-    { animState : Transition.AnimState
-    , canvasW : Float
-    , canvasH : Float
-    , xPos : XPos
-    }
+    { animState : Transition.AnimState }
+
+
+animGroupName : String
+animGroupName =
+    "movingBox"
+
+
+{-| Box size expressed as a percentage of the canvas width. The box uses
+`boxPct cqw` for both width and height so it always stays square, and
+`Translate.toX` targets are
+in `cqw` units, so the left, center and right anchors all scale with the
+canvas. The box is vertically centered via CSS (`top: calc(50% - half box)`)
+so no Y animation is needed - one less moving part and zero Elm-side
+resize plumbing.
+-}
+boxPct : Float
+boxPct =
+    12
+
+
+centerXCqw : Float
+centerXCqw =
+    (100 - boxPct) / 2
+
+
+boxHalfPct : Float
+boxHalfPct =
+    boxPct / 2
+
+
+init : () -> ( Model, Cmd Msg )
+init _ =
+    ( { animState =
+            Transition.init
+                [ Translate.initUnitX Cqw
+                    >> Translate.initX animGroupName centerXCqw
+                , CustomColor.init animGroupName CustomColor.BackgroundColor <| Color.rgb 118 118 118
+                ]
+      }
+    , Cmd.none
+    )
+
+
+
+-- POSITION HELPERS
 
 
 type XPos
@@ -47,61 +86,17 @@ type XPos
     | XRight
 
 
-animGroupName : String
-animGroupName =
-    "movingBox"
-
-
-canvasId : String
-canvasId =
-    "anim-canvas"
-
-
-boxWidth : Float
-boxWidth =
-    100
-
-
-init : () -> ( Model, Cmd Msg )
-init _ =
-    ( { animState =
-            Transition.init
-                [ Translate.initXY animGroupName 0 0
-                , BgColor.init animGroupName BgColor.BackgroundColor <| Color.rgb 118 118 118
-                ]
-      , canvasW = 0
-      , canvasH = 0
-      , xPos = XCenter
-      }
-    , measureCanvas
-    )
-
-
-measureCanvas : Cmd Msg
-measureCanvas =
-    Task.attempt GotCanvas (Dom.getElement canvasId)
-
-
-
--- POSITION HELPERS
-
-
-targetX : XPos -> Float -> Float
-targetX pos w =
+targetX : XPos -> Float
+targetX pos =
     case pos of
         XLeft ->
             0
 
         XCenter ->
-            (w - boxWidth) / 2
+            centerXCqw
 
         XRight ->
-            w - boxWidth
-
-
-targetY : Float -> Float
-targetY h =
-    (h - boxWidth) / 2
+            100 - boxPct
 
 
 
@@ -135,41 +130,20 @@ color4 =
 moveBoxX : Float -> AnimBuilder mode -> AnimBuilder mode
 moveBoxX x =
     Translate.for animGroupName
+        >> Translate.cssUnit Cqw
         >> Translate.toX x
-        >> Translate.speed 100
+        >> Translate.speed 25
         >> Translate.easing BounceOut
-        >> Translate.build
-
-
-{-| Re-anchor the translate to a new target. The same builder works
-across every engine - only the engine's `retarget` semantics differ.
-
-The Transition engine has no JavaScript-side runtime snapshot of the
-currently rendered position, so it cannot smoothly continue an in-flight
-transition when the target moves. Instead, `Transition.retarget` snaps
-to the freshly computed end values and marks the animation complete.
-That's the right call for resize: the box always ends up exactly where
-the new viewport puts it, no matter how rapidly the resize handler
-fires.
-
-The Sub and WAAPI engines, given the identical builder, smoothly
-continue from the current rendered position toward the new target.
-
--}
-retargetBoxXY : Float -> Float -> Float -> Float -> AnimBuilder mode -> AnimBuilder mode
-retargetBoxXY _ _ x y =
-    Translate.continueFor animGroupName
-        >> Translate.toXY x y
         >> Translate.build
 
 
 changeColor : Color -> AnimBuilder mode -> AnimBuilder mode
 changeColor color =
-    BgColor.for animGroupName BgColor.BackgroundColor
-        >> BgColor.to color
-        >> BgColor.duration 3000
-        >> BgColor.easing Linear
-        >> BgColor.build
+    CustomColor.for animGroupName CustomColor.BackgroundColor
+        >> CustomColor.to color
+        >> CustomColor.duration 3000
+        >> CustomColor.easing Linear
+        >> CustomColor.build
 
 
 
@@ -181,8 +155,6 @@ type Msg
     | MoveLeft
     | MoveRight
     | ChangeColor Color
-    | Resize
-    | GotCanvas (Result Dom.Error Dom.Element)
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -199,20 +171,18 @@ update msg model =
 
         MoveLeft ->
             ( { model
-                | xPos = XLeft
-                , animState =
+                | animState =
                     Transition.animate model.animState <|
-                        moveBoxX (targetX XLeft model.canvasW)
+                        moveBoxX (targetX XLeft)
               }
             , Cmd.none
             )
 
         MoveRight ->
             ( { model
-                | xPos = XRight
-                , animState =
+                | animState =
                     Transition.animate model.animState <|
-                        moveBoxX (targetX XRight model.canvasW)
+                        moveBoxX (targetX XRight)
               }
             , Cmd.none
             )
@@ -225,41 +195,6 @@ update msg model =
               }
             , Cmd.none
             )
-
-        Resize ->
-            ( model, measureCanvas )
-
-        GotCanvas (Ok element) ->
-            let
-                w =
-                    element.element.width
-
-                h =
-                    element.element.height
-
-                newAnimState =
-                    Transition.retarget model.animState <|
-                        retargetBoxXY w h (targetX model.xPos w) (targetY h)
-            in
-            ( { model
-                | canvasW = w
-                , canvasH = h
-                , animState = newAnimState
-              }
-            , Cmd.none
-            )
-
-        GotCanvas (Err _) ->
-            ( model, Cmd.none )
-
-
-
--- SUBSCRIPTIONS
-
-
-subscriptions : Model -> Sub Msg
-subscriptions _ =
-    Browser.Events.onResize (\_ _ -> Resize)
 
 
 
@@ -286,8 +221,7 @@ view model =
                 [ text label ]
     in
     div [ class "example-stage" ]
-        [ div [ class "example-badge example-badge--static" ] [ text "Static" ]
-        , div [ class "example-controls" ]
+        [ div [ class "example-controls" ]
             [ posButton "#333" "Move Left" MoveLeft
             , posButton "#333" "Move Right" MoveRight
             ]
@@ -297,14 +231,17 @@ view model =
             , colorButton color3 "Color 3"
             , colorButton color4 "Color 4"
             ]
-        , div [ id canvasId, class "example-canvas--fluid" ]
+        , div
+            [ class "example-canvas--fluid"
+            , style "container-type" "size"
+            ]
             [ div
                 (Transition.attributes animGroupName model.animState
                     ++ Transition.events GotAnimationUpdate
-                    ++ [ style "width" (String.fromFloat boxWidth ++ "px")
-                       , style "height" (String.fromFloat boxWidth ++ "px")
+                    ++ [ style "width" (String.fromFloat boxPct ++ "cqw")
+                       , style "height" (String.fromFloat boxPct ++ "cqw")
                        , style "position" "absolute"
-                       , style "top" "0"
+                       , style "top" ("calc(50% - " ++ String.fromFloat boxHalfPct ++ "cqw)")
                        , style "left" "0"
                        , style "border-radius" "8px"
                        ]

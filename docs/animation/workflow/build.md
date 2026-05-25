@@ -22,7 +22,7 @@ Every animation follows this pattern:
             >> Property.to endValue         -- Property specific alternatives to `to` are available
             >> Property.delay 100           -- ms
             >> Property.duration 500        -- ms, or `Property.speed 50` (units per second)
-            >> Property.easing BounceOut    -- Make the animation feel natural
+            >> Property.easing BounceOut    -- or `Property.spring wobbly`
             >> Property.build               -- Finalize (required)
     ```
 
@@ -31,89 +31,16 @@ Every animation follows this pattern:
 
 ## Builder Modes
 
-`AnimBuilder` has a type parameter (`mode`) that controls where a builder can be used.
-Use this to keep helper functions either broad (cross-engine) or intentionally restricted.
+A typical builder function has the following type signature:
 
-??? example "View Source Code"
+```elm
+f : AnimBuilder mode -> AnimBuilder mode
+```
 
-    ```elm
-    import Anim.Builder exposing (AnimBuilder)
-    import Anim.Property.Opacity as Opacity
+The builder type signature includes the `mode` type parameter which can be used to tighten the use of a function, and trigger compiler errors if used outside of the specified use.
 
-
-    -- Works with any animation engine.
-    fadeIn : AnimBuilder mode -> AnimBuilder mode
-    fadeIn =
-        Opacity.for "card"
-            >> Opacity.to 1
-            >> Opacity.build
-    ```
-
-### Document Timeline Restrictions
-
-`ForDocumentTimeline engine` restricts usage to Document timeline engines:
-
-- Transition
-- Keyframe
-- Sub
-- WAAPI
-
-??? example "View Source Code"
-
-    ```elm
-    import Anim.Builder exposing (AnimBuilder, ForDocumentTimeline)
-    import Anim.Engine.Transition as Transition
-
-
-    -- These are equivalent.
-    f : Transition.TimelineBuilder engine -> Transition.TimelineBuilder engine
-    f : AnimBuilder (ForDocumentTimeline engine) -> AnimBuilder (ForDocumentTimeline engine)
-    f =
-        identity
-    ```
-
-### Engine-Specific Restrictions
-
-Use an engine mode when a helper must only work with one specific engine.
-
-??? example "View Source Code"
-
-    ```elm
-    import Anim.Builder exposing (AnimBuilder, ForDocumentTimeline, ForTransitionEngine)
-    import Anim.Engine.Transition as Transition
-
-
-    -- All three are equivalent.
-    transitionOnlyA : Transition.EngineBuilder -> Transition.EngineBuilder
-    transitionOnlyA =
-        identity
-
-
-    transitionOnlyB : Transition.TimelineBuilder ForTransitionEngine -> Transition.TimelineBuilder ForTransitionEngine
-    transitionOnlyB =
-        identity
-
-
-    transitionOnlyC : AnimBuilder (ForDocumentTimeline ForTransitionEngine) -> AnimBuilder (ForDocumentTimeline ForTransitionEngine)
-    transitionOnlyC =
-        identity
-    ```
-
-Use the narrowest mode that matches your intent:
-
-- Reusable helper across engines: `AnimBuilder mode -> AnimBuilder mode`
-- Any Document timeline engine: `AnimBuilder (ForDocumentTimeline engine) -> ...`
-- One specific Document timeline engine: `AnimBuilder (ForDocumentTimeline ForXEngine) -> ...`
-
-### Why Tighten Builder Modes?
-
-Using a more specific mode can improve both readability and maintenance:
-
-- Intent signaling: type signatures communicate purpose immediately (for example, "Transition-only helper").
-- Faster bug triage: when a bug is tied to one engine or timeline, helpers with incompatible modes can be ruled out quickly.
-
-This is similar to passing only the fields a function needs instead of a full model.
-Narrower types do not prove correctness, but they reduce the search space when diagnosing issues.
+See [Builder Modes](../concepts/builder-modes.md) for detailed guidance, equivalence examples,
+and rules of thumb for choosing the right level of type restriction.
 
 ## Animation Group Names
 

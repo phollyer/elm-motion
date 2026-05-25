@@ -36,6 +36,7 @@ init discreteTransitions discreteEntry discreteExit properties =
         |> AnimGroup.setDiscreteEntry discreteEntry
         |> AnimGroup.setDiscreteExit discreteExit
         |> AnimGroup.setPropertyKeys (propertyKeysOf processedProps)
+        |> AnimGroup.setWillChange (Builder.willChangeIndividual processedProps)
         |> AnimGroup.setStyles
             (TransitionStyles.fromProcessedProperties
                 (baseStyles discreteTransitions processedProps)
@@ -55,6 +56,7 @@ generateAnimation discreteTransitions discreteEntry discreteExit processedProps 
         |> AnimGroup.setDiscreteEntry discreteEntry
         |> AnimGroup.setDiscreteExit discreteExit
         |> AnimGroup.setPropertyKeys (propertyKeysOf processedProps)
+        |> AnimGroup.setWillChange (Builder.willChangeIndividual processedProps)
         |> AnimGroup.setStyles
             (TransitionStyles.fromProcessedProperties
                 (baseStyles discreteTransitions processedProps)

@@ -82,8 +82,10 @@ for details.
 
 ## Bounds
 
-Declare a persistent clamp that constrains every opacity value flowing
-through the pipeline. See [clamp](#clamp) for behaviour.
+Keep opacity within a range you choose.
+
+📖 See [Responsive Animations](https://phollyer.github.io/elm-motion/animation/concepts/responsive-animations/)
+for patterns and examples.
 
 @docs clamp, unclamp
 
@@ -108,7 +110,7 @@ type alias AnimGroupName =
     String
 
 
-{-| Type alias for the internal `OpacityBuilder`.
+{-| Builder type for opacity animations.
 -}
 type alias Builder mode =
     OB.OpacityBuilder mode
@@ -333,13 +335,13 @@ spring =
 -- ============================================================
 
 
-{-| Constrain the active animGroup's opacity to `[min, max]`.
+{-| Keep opacity within `[min, max]` for this animation group.
 
-The clamp is persistent: once declared it applies to every subsequent
-`animate` / `retarget` call on this animGroup until you call [unclamp](#unclamp)
-(or call `clamp` again with new bounds). Clamps are applied at [build](#build)
-time, so they affect every value declared in the pipeline regardless of order.
-If `min > max` the arguments are swapped automatically.
+The range stays in effect for future `animate` / `retarget` calls
+until you call [unclamp](#unclamp). If `min > max`, the values are swapped.
+
+📖 See [Responsive Animations](https://phollyer.github.io/elm-motion/animation/concepts/responsive-animations/)
+for patterns and examples.
 
 -}
 clamp : Float -> Float -> Builder mode -> Builder mode
@@ -347,8 +349,7 @@ clamp =
     OB.clamp
 
 
-{-| Remove a previously declared opacity clamp on the active animGroup. No-op
-if no clamp is set.
+{-| Remove the opacity range for this animation group. Does nothing if no range is set.
 -}
 unclamp : Builder mode -> Builder mode
 unclamp =

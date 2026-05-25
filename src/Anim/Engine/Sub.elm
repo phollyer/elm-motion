@@ -13,6 +13,7 @@ module Anim.Engine.Sub exposing
     , iterations, loopForever, alternate
     , delay, duration, speed
     , easing
+    , cssUnit, cssUnitX, cssUnitY, cssUnitZ, cssUnitWidth, cssUnitHeight
     , spring
     , stop, reset, restart, pause, resume
     , discreteEntry, discreteExit
@@ -32,24 +33,14 @@ module Anim.Engine.Sub exposing
     , getTranslateRange, getTranslateStart, getTranslateEnd, getTranslateCurrent
     )
 
-{-| Run Subscription-based animations with frame-by-frame control.
+{-| Use a subscription-based animation engine with full Elm-side control.
 
-For specific Engine guides and examples, see the
-[Sub Engine Documentation](https://phollyer.github.io/elm-motion/animation/engines/sub/).
+This engine is a good fit when your app needs current values, progress, or frequent retargeting.
 
-For Engine comparisons, shared features, examples and code, see the
-[Engine Overview](https://phollyer.github.io/elm-motion/animation/engines/overview/) section in the docs.
-
-
-# Length Units
-
-The Sub Engine renders length-bearing properties (`Translate`, `Size`,
-`PerspectiveOrigin`) in `Px` only. Setting a non-`Px`
-[`Anim.Unit`](Anim-Unit) on a property targeted at Sub - via
-`Translate.cssUnit`, `Size.cssUnit`, or `PerspectiveOrigin.cssUnit` - is silently
-dropped and `Px` is rendered. To keep Sub animations responsive across resize
-events, use [`Anim.Resize.bounds`](Anim-Resize#bounds) with [`onResize`](#onResize).
-Relative-unit support on Sub is planned for a future release.
+📖 For setup, examples, and behaviour details, see the
+[Sub Engine Documentation](https://phollyer.github.io/elm-motion/animation/engines/sub/)
+and the
+[Engine Overview](https://phollyer.github.io/elm-motion/animation/engines/overview/).
 
 
 # Types
@@ -66,18 +57,14 @@ Relative-unit support on Sub is planned for a future release.
 
 This Engine uses the browser's Document timeline, along with the Transition, Keyframe, and WAAPI Engines.
 
-Use the `TimelineBuilder` to configure animations that run on the Document timeline only. If any Engines
-are used that don't run on the Document timeline (e.g., Scroll or View), you'll get a type error.
+Use this in type annotations when a helper should work with document-timeline engines only.
 
 @docs TimelineBuilder
 
 
 ### Engine Builder
 
-The `EngineBuilder` is a builder type restricted to the Sub Engine.
-
-Use the `EngineBuilder` when you want to restrict helpers to the Sub Engine, such as any that rely
-on Sub-only APIs.
+Use this in type annotations when a helper should only work with the Sub engine.
 
 @docs EngineBuilder
 
@@ -124,7 +111,7 @@ on Sub-only APIs.
 
 # View
 
-To render an animation, you need to apply the animation `attributes` to your element.
+To render an animation, add `attributes` to the element you want to animate.
 
 @docs attributes
 
@@ -148,6 +135,11 @@ To render an animation, you need to apply the animation `attributes` to your ele
 @docs easing
 
 📖 See [Easing](https://phollyer.github.io/elm-motion/animation/concepts/easing/) in the docs.
+
+
+# Units
+
+@docs cssUnit, cssUnitX, cssUnitY, cssUnitZ, cssUnitWidth, cssUnitHeight
 
 
 # Spring
@@ -256,6 +248,7 @@ import Anim.Extra.TransformOrder exposing (TransformProperty)
 import Anim.Internal.Builder as Builder
 import Anim.Internal.Engine.Sub as Internal
 import Anim.Resize as Resize
+import Anim.Unit exposing (Unit)
 import Browser exposing (UrlRequest(..))
 import Html
 import Motion.Easing exposing (Easing)
@@ -268,9 +261,9 @@ import Motion.Spring exposing (Spring)
 -- ============================================================
 
 
-{-| The animation state type used to store animation configurations.
+{-| Holds the Sub engine state.
 
-Store it in your model.
+Keep this in your model.
 
     type alias Model =
         { animState : Sub.AnimState }
@@ -286,42 +279,30 @@ type alias AnimBuilder mode =
     Internal.AnimBuilder mode
 
 
-{-| A type alias for animation group names.
-
-Used to identify which animation group to target.
-
+{-| The name of the animation group you want to target.
 -}
 type alias AnimGroupName =
     String
 
 
-{-| Type alias for the internal `TimelineBuilder` type.
+{-| Builder type for document-timeline helpers.
 
-This generic timeline builder works with any engine that uses the same timeline,
-but will result in a type error if used with an Engine that does not.
+Use this in type annotations when a helper should work with document-timeline engines.
 
-    f : Sub.TimelineBuilder engine -> Sub.TimelineBuilder engine
-
-Here's an engine-specific timeline builder for the Sub Engine. It will result in a type error if used with any other engine.
-
-    f : Sub.TimelineBuilder ForSubEngine -> Sub.TimelineBuilder ForSubEngine
-
-For mode restrictions and examples, see
-[Build: Builder Modes](https://phollyer.github.io/elm-motion/animation/workflow/build/#builder-modes).
+📖 See [Builder Modes](https://phollyer.github.io/elm-motion/animation/concepts/builder-modes/)
+for patterns and examples.
 
 -}
 type alias TimelineBuilder engine =
     Internal.TimelineBuilder engine
 
 
-{-| Type alias for the internal `EngineBuilder` type.
+{-| Builder type for Sub-only helpers.
 
-This engine-specific builder will result in a type error if used with any other engine.
+Use this in type annotations when a helper should only work with this engine.
 
-    f : Sub.EngineBuilder -> Sub.EngineBuilder
-
-For mode restrictions and examples, see
-[Build: Builder Modes](https://phollyer.github.io/elm-motion/animation/workflow/build/#builder-modes).
+📖 See [Builder Modes](https://phollyer.github.io/elm-motion/animation/concepts/builder-modes/)
+for patterns and examples.
 
 -}
 type alias EngineBuilder =
@@ -384,18 +365,13 @@ animate =
     Internal.animate
 
 
-{-| Continue an in-flight animation toward a new target without restarting it.
+{-| Continue a running animation toward a new target.
 
-Works like [animate](#animate), but for any property currently mid-animation,
-[continueFor](Anim-Property-Translate#continueFor) will inherit the
-in-flight timing (duration / speed / easing / delay) and use the property's
-current animated value as the new `from` — producing smooth retargeting
-instead of a fresh animation.
+Use this when the target changed and you want motion to keep going smoothly.
+If nothing is running, the new value is applied as the next target.
 
-Idle properties fall back to `for`-style behaviour: they snap to the new
-value rather than animating. This is the typical resize-handler pattern —
-while the user is mid-drag the box keeps animating; once the resize stops,
-the box snaps to its final position.
+📖 For responsive and resize patterns, see
+[Responsive Animations](https://phollyer.github.io/elm-motion/animation/concepts/responsive-animations/).
 
 -}
 retarget : AnimState -> (EngineBuilder -> EngineBuilder) -> AnimState
@@ -403,13 +379,12 @@ retarget =
     Internal.retarget
 
 
-{-| Adjust the in-flight properties of every anim group named in the
-builder to match new container sizes, using the directives composed in
-a [`Anim.Resize.Builder`](Anim-Resize#Builder).
+{-| Update one or more animation groups after a resize.
 
-Each property `onResize` call names the anim group it targets, so a
-single `Sub.onResize` invocation can update many groups at once.
-Properties without a directive on a given group are left untouched.
+Use this when your targets depend on measured pixel values and need to be recalculated.
+
+📖 For resize strategies and examples, see
+[Responsive Animations](https://phollyer.github.io/elm-motion/animation/concepts/responsive-animations/).
 
 Typical resize handler:
 
@@ -466,7 +441,7 @@ type AnimEvent
 -- ============================================================
 
 
-{-| Internal message type.
+{-| Message type used with `update`.
 
     import Anim.Engine.Sub as Sub
 
@@ -606,25 +581,11 @@ attributes =
 -- ============================================================
 
 
-{-| Set how many times an animation should repeat.
-
-    import Anim.Engine.Sub as Sub
-    import Anim.Property.Opacity as Opacity
-
-    pulse : Sub.EngineBuilder -> Sub.TimelineBuilder
-    pulse =
-        Opacity.for "box"
-            >> Opacity.to 0.2
-            >> Opacity.build
-
-    Sub.animate model.animState <|
-        Sub.iterations 3
-            >> pulse
-
+{-| Alias of [Anim.Builder.iterations](Anim-Builder#iterations).
 -}
 iterations : Int -> Builder.AnimBuilder mode -> Builder.AnimBuilder mode
 iterations =
-    Internal.iterations
+    Builder.iterations
 
 
 {-| Make an animation loop infinitely.
@@ -648,29 +609,11 @@ loopForever =
     Internal.loopForever
 
 
-{-| Make an animation alternate direction on each iteration (ping-pong effect).
-
-    import Anim.Engine.Sub as Sub
-    import Anim.Property.Opacity as Opacity
-
-    pulse : Sub.EngineBuilder -> Sub.TimelineBuilder
-    pulse =
-        Opacity.for "box"
-            >> Opacity.to 0.2
-            >> Opacity.build
-
-    Sub.animate model.animState <|
-        Sub.loopForever
-            >> Sub.alternate
-            >> pulse
-
-This creates a smooth ping-pong animation.
-The animation plays forward, then backward, then forward, etc.
-
+{-| Alias of [Anim.Builder.alternate](Anim-Builder#alternate).
 -}
 alternate : Builder.AnimBuilder mode -> Builder.AnimBuilder mode
 alternate =
-    Internal.alternate
+    Builder.alternate
 
 
 
@@ -679,69 +622,25 @@ alternate =
 -- ============================================================
 
 
-{-| Set the delay for all animations.
-
-This will be inherited by all animations that
-don't define their own delay.
-
-    import Anim.Engine.Sub as Sub
-    import Anim.Property.Custom as Custom
-    import Anim.Unit exposing (Unit(..))
-
-    Sub.animate model.animState <|
-        Sub.delay 500
-            >> Custom.for "box" (Custom.BorderRadius Px)
-            >> Custom.to 24
-            >> Custom.build
-
+{-| Alias of [Anim.Builder.delay](Anim-Builder#delay).
 -}
 delay : Int -> Builder.AnimBuilder mode -> Builder.AnimBuilder mode
 delay =
-    Internal.delay
+    Builder.delay
 
 
-{-| Set the duration of all animations.
-
-This will be inherited by all animations that
-don't define their own duration.
-
-    import Anim.Engine.Sub as Sub
-    import Anim.Property.Custom as Custom
-    import Anim.Unit exposing (Unit(..))
-
-    Sub.animate model.animState <|
-        Sub.duration 1000
-            >> Custom.for "box" (Custom.BorderRadius Px)
-            >> Custom.to 24
-            >> Custom.build
-
+{-| Alias of [Anim.Builder.duration](Anim-Builder#duration).
 -}
 duration : Int -> Builder.AnimBuilder mode -> Builder.AnimBuilder mode
 duration =
-    Internal.duration
+    Builder.duration
 
 
-{-| Set the speed that animations should run at.
-
-This will be inherited by all animations that
-don't define their own speed.
-
-Consult each property's documentation for details on how speed is interpreted.
-
-    import Anim.Engine.Sub as Sub
-    import Anim.Property.Custom as Custom
-    import Anim.Unit exposing (Unit(..))
-
-    Sub.animate model.animState <|
-        Sub.speed 100
-            >> Custom.for "box" (Custom.BorderRadius Px)
-            >> Custom.to 24
-            >> Custom.build
-
+{-| Alias of [Anim.Builder.speed](Anim-Builder#speed).
 -}
 speed : Float -> Builder.AnimBuilder mode -> Builder.AnimBuilder mode
 speed =
-    Internal.speed
+    Builder.speed
 
 
 
@@ -750,26 +649,73 @@ speed =
 -- ============================================================
 
 
-{-| Set the easing function to be used by all animations.
-
-This will be inherited by all animations that
-don't define their own easing.
-
-    import Easing exposing (Easing(..))
-    import Anim.Engine.Sub as Sub
-    import Anim.Property.Custom as Custom
-    import Anim.Unit exposing (Unit(..))
-
-    Sub.animate model.animState <|
-        Sub.easing BounceOut
-            >> Custom.for "box" (Custom.BorderRadius Px)
-            >> Custom.to 24
-            >> Custom.build
-
+{-| Alias of [Anim.Builder.easing](Anim-Builder#easing).
 -}
 easing : Easing -> Builder.AnimBuilder mode -> Builder.AnimBuilder mode
 easing =
-    Internal.easing
+    Builder.easing
+
+
+
+-- ============================================================
+-- UNIT
+-- ============================================================
+
+
+{-| Alias of [Anim.Builder.cssUnit](Anim-Builder#cssUnit).
+-}
+cssUnit : Unit -> Builder.AnimBuilder mode -> Builder.AnimBuilder mode
+cssUnit =
+    Builder.cssUnit
+
+
+{-| Alias of [Anim.Builder.cssUnitX](Anim-Builder#cssUnitX).
+-}
+cssUnitX : Unit -> Builder.AnimBuilder mode -> Builder.AnimBuilder mode
+cssUnitX =
+    Builder.cssUnitX
+
+
+{-| Alias of [Anim.Builder.cssUnitY](Anim-Builder#cssUnitY).
+-}
+cssUnitY : Unit -> Builder.AnimBuilder mode -> Builder.AnimBuilder mode
+cssUnitY =
+    Builder.cssUnitY
+
+
+{-| Alias of [Anim.Builder.cssUnitZ](Anim-Builder#cssUnitZ).
+-}
+cssUnitZ : Unit -> Builder.AnimBuilder mode -> Builder.AnimBuilder mode
+cssUnitZ =
+    Builder.cssUnitZ
+
+
+{-| Set the default length unit used for width values in Sub animations.
+
+    responsiveCardWidth : AnimBuilder mode -> AnimBuilder mode
+    responsiveCardWidth =
+        cssUnitWidth Unit.Vw
+            >> growCardWidth
+            >> settleCardSpacing
+
+-}
+cssUnitWidth : Unit -> Builder.AnimBuilder mode -> Builder.AnimBuilder mode
+cssUnitWidth =
+    Builder.cssUnitWidth
+
+
+{-| Set the default length unit used for height values in Sub animations.
+
+    responsivePanelHeight : AnimBuilder mode -> AnimBuilder mode
+    responsivePanelHeight =
+        cssUnitHeight Unit.Vh
+            >> expandPanelHeight
+            >> alignPanelHeaderY
+
+-}
+cssUnitHeight : Unit -> Builder.AnimBuilder mode -> Builder.AnimBuilder mode
+cssUnitHeight =
+    Builder.cssUnitHeight
 
 
 
@@ -778,26 +724,11 @@ easing =
 -- ============================================================
 
 
-{-| Set a global default `Spring` for every property in this animation.
-
-Individual properties can override with their own `spring` (or with
-`easing` to opt back into curve-driven motion).
-
-Spring and easing globals are mutually exclusive: setting one clears
-the other.
-
-    import Motion.Spring as Spring
-
-    Sub.animate model.animState <|
-        Sub.spring Spring.wobbly
-            >> Opacity.for "box"
-            >> Opacity.to 1
-            >> Opacity.build
-
+{-| Alias of [Anim.Builder.spring](Anim-Builder#spring).
 -}
 spring : Spring -> Builder.AnimBuilder mode -> Builder.AnimBuilder mode
 spring =
-    Internal.spring
+    Builder.spring
 
 
 

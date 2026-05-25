@@ -99,9 +99,8 @@ import Anim.Internal.Engine.Shared.AnimGroups as AnimGroups exposing (AnimGroups
 import Anim.Internal.Engine.WAAPI.AnimGroup as AnimGroup exposing (AnimGroup, AnimationStatus, PropertyState, ResizeAxisState)
 import Anim.Internal.Engine.WAAPI.Encoder exposing (..)
 import Anim.Internal.Engine.WAAPI.Generator as Generator
+import Anim.Internal.Engine.WAAPI.ProgressApply as ProgressApply
 import Anim.Internal.Extra.Color as Color exposing (Color(..))
-import Anim.Internal.Property.Custom as CustomProperty
-import Anim.Internal.Property.CustomColor as CustomColorProperty
 import Anim.Internal.Property.Opacity as Opacity
 import Anim.Internal.Property.PerspectiveOrigin as PerspectiveOrigin
 import Anim.Internal.Property.Rotate as Rotate
@@ -562,8 +561,18 @@ applyPerspectiveOriginPositionResize animGroupName pos ((AnimState state animGro
                     currentPO =
                         PropertyBaselines.getPerspectiveOrigin snapshot
 
+                    -- Pull the actual stored unit from the snapshot - the
+                    -- baseline was tagged with the resolved unit by
+                    -- `Generator.propertyBounds` when the animation was
+                    -- created. Hard-coding `Percent` here would emit a `%`
+                    -- suffix on a payload whose X/Y are in `px` (or any
+                    -- other unit), producing perspective-origin values
+                    -- like `400% 300%` that send the rendered cube off
+                    -- screen during a drag-resize.
                     unit =
-                        Percent
+                        PropertyBaselines.getPerspectiveOriginUnits snapshot
+                            |> Maybe.map .x
+                            |> Maybe.withDefault InternalUnit.default
 
                     current =
                         currentPO
@@ -605,12 +614,7 @@ applyPerspectiveOriginPositionResize animGroupName pos ((AnimState state animGro
                                 (PropertyBaselines.setPerspectiveOrigin newBaselinePO)
 
                     unitStr =
-                        case unit of
-                            Percent ->
-                                "%"
-
-                            _ ->
-                                "px"
+                        InternalUnit.toCssSuffix unit
                 in
                 ( AnimState { state | builder = updatedBuilder } updatedAnimGroups
                 , state.commandPort
@@ -1513,7 +1517,14 @@ computePerspectiveOriginResizePayload animGroupName previousBounds bounds (AnimS
                                     }
 
                                 unit =
-                                    Percent
+                                    -- Use the unit stored on the snapshot
+                                    -- by `Generator.propertyBounds` when
+                                    -- the animation was created, so a
+                                    -- resize emits matching `px`/`%`/etc.
+                                    -- suffixes on the keyframes JS rebuilds.
+                                    PropertyBaselines.getPerspectiveOriginUnits snapshot
+                                        |> Maybe.map .x
+                                        |> Maybe.withDefault InternalUnit.default
 
                                 liveOldStart2d =
                                     oldStart
@@ -1552,12 +1563,7 @@ computePerspectiveOriginResizePayload animGroupName previousBounds bounds (AnimS
                                         && maybeFloatNearlyEqual currentTimeMs oldCurrentTimeMs
 
                                 unitStr =
-                                    case unit of
-                                        Percent ->
-                                            "%"
-
-                                        _ ->
-                                            "px"
+                                    InternalUnit.toCssSuffix unit
                             in
                             if noChange then
                                 Nothing
@@ -1847,15 +1853,6 @@ handleLifecycleEvent animEvent (AnimState state animGroups) =
 updateAnimGroup : AnimationUpdate -> AnimGroup -> AnimGroup
 updateAnimGroup animUpdate animGroup =
     let
-        buildProp : (AnimationUpdate -> Maybe a) -> (b -> PropertyBaselines -> PropertyBaselines) -> (a -> b) -> PropertyBaselines -> PropertyBaselines
-        buildProp propFn setterFn converterFn b =
-            case propFn animUpdate of
-                Just val ->
-                    setterFn (converterFn val) b
-
-                Nothing ->
-                    b
-
         updateStatus : String -> PropertyState -> PropertyState
         updateStatus propType propAnim =
             case AnimGroups.get propType animUpdate.propertyVersions of
@@ -1882,14 +1879,7 @@ updateAnimGroup animUpdate animGroup =
         |> AnimGroup.setSnapshot
             (animGroup
                 |> AnimGroup.getPropertySnapshot
-                |> buildProp .opacity PropertyBaselines.setOpacity Opacity.fromFloat
-                |> buildProp .perspectiveOrigin PropertyBaselines.setPerspectiveOrigin perspectiveOriginFromRecord
-                |> buildProp .rotate PropertyBaselines.setRotate Rotate.fromRecord
-                |> buildProp .scale PropertyBaselines.setScale Scale.fromRecord
-                |> buildProp .size PropertyBaselines.setSize Size.fromRecord
-                |> buildProp .translate PropertyBaselines.setTranslate Translate.fromRecord
-                |> PropertyBaselines.updateCustomProperties animUpdate.customProperties
-                |> PropertyBaselines.updateCustomColorProperties animUpdate.customColorProperties
+                |> ProgressApply.applyPropertyProgress animUpdate.propertyProgress (AnimGroup.getPropertyStates animGroup)
             )
 
 
@@ -2068,7 +2058,17 @@ attributes animGroupName (AnimState state data) =
                             Nothing
                         , if isElmOwned "perspectiveOrigin" then
                             PropertyBaselines.getPerspectiveOrigin snapshot
-                                |> Maybe.map (\po -> Html.Attributes.style "perspective-origin" (PerspectiveOrigin.toCssString { x = Percent, y = Percent, z = Percent } po))
+                                |> Maybe.map
+                                    (\po ->
+                                        Html.Attributes.style "perspective-origin"
+                                            (PerspectiveOrigin.toCssString
+                                                (PropertyBaselines.getPerspectiveOriginUnits snapshot
+                                                    |> Maybe.withDefault
+                                                        { x = Percent, y = Percent, z = Percent }
+                                                )
+                                                po
+                                            )
+                                    )
 
                           else
                             Nothing
@@ -2079,8 +2079,14 @@ attributes animGroupName (AnimState state data) =
                         PropertyBaselines.getSize snapshot
                             |> Maybe.map
                                 (\s ->
-                                    [ Html.Attributes.style "width" (Size.widthToCssString { x = InternalUnit.default, y = InternalUnit.default, z = InternalUnit.default } s)
-                                    , Html.Attributes.style "height" (Size.heightToCssString { x = InternalUnit.default, y = InternalUnit.default, z = InternalUnit.default } s)
+                                    let
+                                        sizeUnits =
+                                            PropertyBaselines.getSizeUnits snapshot
+                                                |> Maybe.withDefault
+                                                    { x = InternalUnit.default, y = InternalUnit.default, z = InternalUnit.default }
+                                    in
+                                    [ Html.Attributes.style "width" (Size.widthToCssString sizeUnits s)
+                                    , Html.Attributes.style "height" (Size.heightToCssString sizeUnits s)
                                     ]
                                 )
                             |> Maybe.withDefault []
@@ -2120,9 +2126,12 @@ attributes animGroupName (AnimState state data) =
                     buildTransformStyles
                         (AnimGroup.getTransformOrder animGroup)
                         snapshot
-                        (findCurrentTranslate animGroupName state.builder
-                            |> Maybe.map .cssUnit
-                            |> Maybe.withDefault { x = InternalUnit.default, y = InternalUnit.default, z = InternalUnit.default }
+                        (PropertyBaselines.getTranslateUnits snapshot
+                            |> Maybe.withDefault
+                                (findCurrentTranslate animGroupName state.builder
+                                    |> Maybe.map .cssUnit
+                                    |> Maybe.withDefault { x = InternalUnit.default, y = InternalUnit.default, z = InternalUnit.default }
+                                )
                         )
             in
             dataAttr
@@ -2356,80 +2365,67 @@ resetSingleKey animGroupName (AnimState state animGroups) =
 
         Just { properties } ->
             let
-                -- Extract start and end states from the animation history
-                states =
-                    Generator.propertyBounds properties
-
                 startStates =
-                    states.start
+                    (Generator.propertyBounds properties).start
 
-                -- Get properties that were in the original animation
-                animatedPropertyTypes =
-                    List.map Generator.propertyTypeString properties
+                propertyConfigs : List ( String, Builder.ProcessedPropertyConfig )
+                propertyConfigs =
+                    List.map (\p -> ( Generator.propertyTypeString p, p )) properties
 
-                resetBuilder =
-                    Builder.init []
-                        |> Builder.duration 0
-                        |> Builder.easing Linear
-                        |> Builder.for animGroupName
-                        |> resetProperties animGroupName properties startStates
-
-                processedData =
-                    Builder.process resetBuilder
+                resetCmd =
+                    state.commandPort <|
+                        encodeCommandWithProperties "reset" animGroupName Nothing
             in
             case AnimGroups.get animGroupName animGroups of
                 Nothing ->
-                    -- No tracking entry, create one with property versions
                     let
-                        newProperties =
-                            animatedPropertyTypes
-                                |> List.map (\propType -> ( propType, { version = 1, status = AnimGroup.NotStarted } ))
+                        newPropertyStates =
+                            propertyConfigs
+                                |> List.map
+                                    (\( propType, config ) ->
+                                        ( propType
+                                        , { version = 1
+                                          , status = AnimGroup.NotStarted
+                                          , config = config
+                                          }
+                                        )
+                                    )
                                 |> AnimGroups.fromList
 
                         newAnimGroup =
                             AnimGroup.init
                                 |> AnimGroup.setSnapshot startStates
-                                |> AnimGroup.setPropertyStates newProperties
-
-                        updatedElementAnimations =
-                            AnimGroups.insert animGroupName newAnimGroup animGroups
-
-                        updatedAnimState =
-                            AnimState
-                                { state | subscriptionsActive = False }
-                                updatedElementAnimations
+                                |> AnimGroup.setPropertyStates newPropertyStates
                     in
-                    ( updatedAnimState
-                    , state.commandPort <|
-                        encode updatedElementAnimations processedData
+                    ( AnimState
+                        { state | subscriptionsActive = False }
+                        (AnimGroups.insert animGroupName newAnimGroup animGroups)
+                    , resetCmd
                     )
 
                 Just animGroup ->
-                    -- Existing tracking entry, increment versions for reset properties
                     let
-                        updatedPropertyStates =
-                            animGroup
-                                |> AnimGroup.bumpPropertyVersions animatedPropertyTypes
-                                |> AnimGroup.getPropertyStates
-
+                        -- Bump versions so any in-flight `propertyUpdate` from
+                        -- the now-cancelled animation is rejected as stale.
+                        -- Config is refreshed only to satisfy `bumpPropertyVersions`;
+                        -- no animation will be run against it after a reset.
                         resetAnimGroup =
                             animGroup
+                                |> AnimGroup.bumpPropertyVersions propertyConfigs
                                 |> AnimGroup.setSnapshot startStates
-                                |> AnimGroup.setPropertyStates updatedPropertyStates
                                 |> AnimGroup.setProgress 0
 
-                        updatedAnimGroup =
+                        updatedAnimGroups =
                             AnimGroups.insert animGroupName resetAnimGroup animGroups
                     in
                     ( AnimState
                         { state
                             | subscriptionsActive =
-                                AnimGroups.groups updatedAnimGroup
+                                AnimGroups.groups updatedAnimGroups
                                     |> List.any AnimGroup.isRunning
                         }
-                        updatedAnimGroup
-                    , state.commandPort <|
-                        encode updatedAnimGroup processedData
+                        updatedAnimGroups
+                    , resetCmd
                     )
 
 
@@ -2447,10 +2443,6 @@ restartSingleKey resolvedKey (AnimState state animGroups) =
         Just processedData ->
             -- Get properties that are being restarted
             let
-                restartedPropertyTypes =
-                    processedData.properties
-                        |> List.map Generator.propertyTypeString
-
                 startStates =
                     (Generator.propertyBounds processedData.properties).start
             in
@@ -2459,8 +2451,8 @@ restartSingleKey resolvedKey (AnimState state animGroups) =
                     -- No tracking entry exists, create one with property versions
                     let
                         newProperties =
-                            restartedPropertyTypes
-                                |> List.map (\propType -> ( propType, { version = 1, status = AnimGroup.NotStarted } ))
+                            processedData.properties
+                                |> List.map (\p -> ( Generator.propertyTypeString p, { version = 1, status = AnimGroup.NotStarted, config = p } ))
                                 |> AnimGroups.fromList
 
                         newAnimGroup =
@@ -2518,10 +2510,13 @@ restartSingleKey resolvedKey (AnimState state animGroups) =
                             (Generator.propertyBounds rebasedProcessedData.properties).start
 
                         updatedProperties =
-                            restartedPropertyTypes
+                            rebasedProcessedData.properties
                                 |> List.foldl
-                                    (\propType acc ->
+                                    (\property acc ->
                                         let
+                                            propType =
+                                                Generator.propertyTypeString property
+
                                             newVersion =
                                                 animGroup
                                                     |> AnimGroup.getPropertyStates
@@ -2531,7 +2526,7 @@ restartSingleKey resolvedKey (AnimState state animGroups) =
                                                     |> Maybe.withDefault 1
                                         in
                                         AnimGroups.insert propType
-                                            { version = newVersion, status = AnimGroup.NotStarted }
+                                            { version = newVersion, status = AnimGroup.NotStarted, config = property }
                                             acc
                                     )
                                     (AnimGroup.getPropertyStates animGroup)
@@ -2566,78 +2561,6 @@ resume animGroup (AnimState state animGroups) =
     , state.commandPort <|
         encodeCommandWithProperties "resume" animGroup Nothing
     )
-
-
-resetProperties : String -> List Builder.ProcessedPropertyConfig -> PropertyBaselines -> EngineBuilder -> EngineBuilder
-resetProperties animGroupName properties startStates =
-    let
-        -- Use the actual stored start states to reset each property that was animated
-        buildFromStartState : (PropertyBaselines -> Maybe a) -> (a -> EngineBuilder -> EngineBuilder) -> EngineBuilder -> EngineBuilder
-        buildFromStartState accessor builderFn animBuilder =
-            case accessor startStates of
-                Just start ->
-                    builderFn start animBuilder
-
-                Nothing ->
-                    animBuilder
-
-        opacityBuilder start =
-            Opacity.for animGroupName
-                >> Opacity.to start
-                >> Opacity.build
-
-        rotateBuilder start =
-            Rotate.for animGroupName
-                >> Rotate.to start
-                >> Rotate.build
-
-        scaleBuilder start =
-            Scale.for animGroupName
-                >> Scale.to start
-                >> Scale.build
-
-        sizeBuilder start =
-            Size.for animGroupName
-                >> Size.to start
-                >> Size.build
-
-        translateBuilder start =
-            Translate.for animGroupName
-                >> Translate.to start
-                >> Translate.build
-
-        buildCustomFromStartState : Builder.ProcessedPropertyConfig -> (EngineBuilder -> EngineBuilder)
-        buildCustomFromStartState propertyConfig =
-            case propertyConfig of
-                Builder.ProcessedCustomPropertyConfig cssName unit _ ->
-                    case PropertyBaselines.getCustomProperty cssName startStates of
-                        Just start ->
-                            CustomProperty.for animGroupName cssName unit
-                                >> CustomProperty.to start
-                                >> CustomProperty.build
-
-                        Nothing ->
-                            identity
-
-                Builder.ProcessedCustomColorPropertyConfig cssName _ ->
-                    case PropertyBaselines.getCustomColorProperty cssName startStates of
-                        Just start ->
-                            CustomColorProperty.for animGroupName cssName
-                                >> CustomColorProperty.to start
-                                >> CustomColorProperty.build
-
-                        Nothing ->
-                            identity
-
-                _ ->
-                    identity
-    in
-    buildFromStartState PropertyBaselines.getOpacity opacityBuilder
-        >> buildFromStartState PropertyBaselines.getRotate rotateBuilder
-        >> buildFromStartState PropertyBaselines.getScale scaleBuilder
-        >> buildFromStartState PropertyBaselines.getSize sizeBuilder
-        >> buildFromStartState PropertyBaselines.getTranslate translateBuilder
-        >> List.foldl (>>) identity (List.map buildCustomFromStartState properties)
 
 
 
@@ -3126,16 +3049,9 @@ getRuntimeTranslate animGroupName (AnimState _ animGroups) =
 type alias AnimationUpdate =
     { animGroupName : String
     , progress : Float
-    , translate : Maybe { x : Float, y : Float, z : Float }
-    , opacity : Maybe Float
-    , perspectiveOrigin : Maybe { x : Float, y : Float, unit : String }
-    , rotate : Maybe { x : Float, y : Float, z : Float }
-    , scale : Maybe { x : Float, y : Float, z : Float }
-    , size : Maybe { width : Float, height : Float }
-    , customProperties : Dict.Dict String Float
-    , customColorProperties : Dict.Dict String String
     , isAnimating : Bool
     , propertyVersions : AnimGroups Int -- Maps property type to version number
+    , propertyProgress : Dict.Dict String Float -- Per-property raw progress for Elm-side interpolation
     }
 
 
@@ -3144,21 +3060,9 @@ animationUpdateDecoder =
     Decode.succeed AnimationUpdate
         |> andMap (Decode.oneOf [ Decode.field "animGroup" Decode.string, Decode.field "elementId" Decode.string ])
         |> andMap (Decode.oneOf [ Decode.field "progress" Decode.float, Decode.succeed 0 ])
-        |> andMap (Decode.maybe (Decode.field "translate" (Decode.map3 (\x y z -> { x = x, y = y, z = z }) (Decode.field "x" Decode.float) (Decode.field "y" Decode.float) (Decode.field "z" Decode.float))))
-        |> andMap (Decode.maybe (Decode.field "opacity" Decode.float))
-        |> andMap (Decode.maybe (Decode.field "perspectiveOrigin" (Decode.map3 (\x y unit -> { x = x, y = y, unit = unit }) (Decode.field "x" Decode.float) (Decode.field "y" Decode.float) (Decode.field "unit" Decode.string))))
-        |> andMap (Decode.maybe (Decode.field "rotate" (Decode.map3 (\x y z -> { x = x, y = y, z = z }) (Decode.field "x" Decode.float) (Decode.field "y" Decode.float) (Decode.field "z" Decode.float))))
-        |> andMap (Decode.maybe (Decode.field "scale" (Decode.map3 (\x y z -> { x = x, y = y, z = z }) (Decode.field "x" Decode.float) (Decode.field "y" Decode.float) (Decode.field "z" Decode.float))))
-        |> andMap (Decode.maybe (Decode.field "size" (Decode.map2 (\w h -> { width = w, height = h }) (Decode.field "width" Decode.float) (Decode.field "height" Decode.float))))
-        |> andMap (Decode.oneOf [ Decode.field "customProperties" (Decode.dict Decode.float), Decode.succeed Dict.empty ])
-        |> andMap (Decode.oneOf [ Decode.field "customColorProperties" (Decode.dict Decode.string), Decode.succeed Dict.empty ])
         |> andMap (Decode.field "isAnimating" Decode.bool)
         |> andMap propertyVersionDecoder
-
-
-perspectiveOriginFromRecord : { x : Float, y : Float, unit : String } -> PerspectiveOrigin.PerspectiveOrigin
-perspectiveOriginFromRecord { x, y } =
-    PerspectiveOrigin.fromRecord { x = x, y = y }
+        |> andMap (Decode.oneOf [ Decode.field "propertyProgress" (Decode.dict Decode.float), Decode.succeed Dict.empty ])
 
 
 propertyVersionDecoder : Decoder (AnimGroups Int)

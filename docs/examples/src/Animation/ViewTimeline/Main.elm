@@ -83,10 +83,7 @@ view _ =
         , style "color" "#1f2937"
         , style "background" "#f9fafb"
         ]
-        [ div
-            [ class "example-badge example-badge--responsive" ]
-            [ text "RESPONSIVE" ]
-        , -- Page header
+        [ -- Page header
           div
             [ style "text-align" "center"
             , style "padding" "80px 40px 60px"
@@ -111,10 +108,10 @@ view _ =
         , div
             [ style "max-width" "700px"
             , style "margin" "0 auto"
-            , style "padding" "60px 40px"
+            , style "padding" "clamp(24px, 6vmin, 60px) clamp(16px, 4.5vmin, 40px)"
             , style "display" "flex"
             , style "flex-direction" "column"
-            , style "gap" "60px"
+            , style "gap" "clamp(28px, 6vmin, 60px)"
             ]
             (List.map cardView cards)
         ]
@@ -153,7 +150,7 @@ cards =
       , color = "#7c3aed"
       , label = "04"
       , title = "Fire and forget"
-      , body = "View timeline animations are fire-and-forget. No AnimState required - just call ViewTimeline.animate in your init and the browser handles the rest."
+      , body = "View timeline animations are fire-and-forget. No AnimState required - just trigger in your init and the browser handles the rest."
       }
     , { animGroupName = "view-card-5"
       , color = "#5b21b6"
@@ -178,7 +175,7 @@ cardView card =
                , style "flex-direction" "column"
                , style "gap" "24px"
                , style "align-items" "flex-start"
-               , style "padding" "32px"
+               , style "padding" "clamp(18px, 4vmin, 32px)"
                , style "background" "white"
                , style "border-radius" "16px"
                , style "box-shadow" "0 4px 24px rgba(99,102,241,0.08)"
@@ -187,9 +184,9 @@ cardView card =
         )
         [ div
             [ style "display" "flex"
-            , style "flex-direction" "row"
-            , style "gap" "16px"
-            , style "align-items" "center"
+            , style "flex-direction" "column"
+            , style "gap" "10px"
+            , style "align-items" "flex-start"
             ]
             [ span
                 [ style "font-size" "2rem"
@@ -203,7 +200,7 @@ cardView card =
             , div
                 [ style "flex" "1"
                 , style "min-width" "0"
-                , style "text-align" "center"
+                , style "text-align" "left"
                 ]
                 [ h2
                     [ style "font-size" "1.3rem"

@@ -1,6 +1,7 @@
 module Anim.Property.Size exposing
     ( Builder, AnimGroupName
     , init, initHW, initW, initH
+    , initUnit, initUnitWidth, initUnitHeight
     , for, build
     , fromHW, fromH, fromW, from
     , toHW, toH, toW
@@ -43,6 +44,28 @@ will use the current end value as the start, ensuring a smooth transition betwee
 # Initialize
 
 @docs init, initHW, initW, initH
+
+
+## Initial Unit
+
+Set the length [Unit](Anim-Unit#Unit) used by subsequent `init*` calls.
+Order matters - `initUnit*` only affects `init*` calls that follow it in
+the pipeline. Defaults to `Px`.
+
+    import Anim.Unit exposing (Unit(..))
+
+    init _ =
+        ( { animState =
+                Engine.init
+                    [ Size.initUnitWidth Cqw
+                        >> Size.initUnitHeight Cqh
+                        >> Size.initHW "btn" 8 25
+                    ]
+          }
+        , Cmd.none
+        )
+
+@docs initUnit, initUnitWidth, initUnitHeight
 
 
 # Build
@@ -91,14 +114,16 @@ for details.
 
 ## Bounds
 
-Declare persistent width/height clamps that constrain every value flowing
-through the pipeline. See [clampWidth](#clampWidth) for behaviour.
+Keep width and height within a range you choose.
+
+📖 See [Responsive Animations](https://phollyer.github.io/elm-motion/animation/concepts/responsive-animations/)
+for patterns and examples.
 
 @docs clampWidth, clampHeight, unclampWidth, unclampHeight
 
 -}
 
-import Anim.Internal.Builder exposing (AnimBuilder)
+import Anim.Internal.Builder as IB exposing (AnimBuilder)
 import Anim.Internal.Builder.Size as SB
 import Anim.Unit exposing (Unit)
 import Motion.Easing exposing (Easing)
@@ -117,7 +142,7 @@ type alias AnimGroupName =
     String
 
 
-{-| Type alias for the internal `SizeBuilder`.
+{-| Builder type for size animations.
 -}
 type alias Builder mode =
     SB.SizeBuilder mode
@@ -149,6 +174,7 @@ init : AnimGroupName -> Float -> AnimBuilder mode -> AnimBuilder mode
 init animationKey value animBuilder =
     animBuilder
         |> SB.for animationKey
+        |> SB.applyInitCssUnit
         |> fromHW value value
         |> SB.toHW value value
         |> SB.build
@@ -170,6 +196,7 @@ initHW : AnimGroupName -> Float -> Float -> AnimBuilder mode -> AnimBuilder mode
 initHW animationKey h w animBuilder =
     animBuilder
         |> SB.for animationKey
+        |> SB.applyInitCssUnit
         |> fromHW h w
         |> SB.toHW h w
         |> SB.build
@@ -191,6 +218,7 @@ initW : AnimGroupName -> Float -> AnimBuilder mode -> AnimBuilder mode
 initW animationKey w animBuilder =
     animBuilder
         |> SB.for animationKey
+        |> SB.applyInitCssUnit
         |> fromW w
         |> SB.toW w
         |> SB.build
@@ -212,9 +240,47 @@ initH : AnimGroupName -> Float -> AnimBuilder mode -> AnimBuilder mode
 initH animationKey h animBuilder =
     animBuilder
         |> SB.for animationKey
+        |> SB.applyInitCssUnit
         |> fromH h
         |> SB.toH h
         |> SB.build
+
+
+{-| Set the length [Unit](Anim-Unit#Unit) used by every subsequent `init*` call
+for `Size` values. Defaults to `Px`.
+
+Order matters - only `init*` calls downstream of this setter in the pipeline
+are affected; calls upstream keep their previously selected unit (or `Px`).
+Later per-axis setters ([`initUnitWidth`](#initUnitWidth),
+[`initUnitHeight`](#initUnitHeight)) override this setting on the relevant axis.
+
+    import Anim.Unit exposing (Unit(..))
+
+    Engine.init
+        [ Size.initUnit Cqmin
+            >> Size.initHW "btn" 8 25
+        ]
+
+-}
+initUnit : Unit -> AnimBuilder mode -> AnimBuilder mode
+initUnit =
+    IB.setSizeInitCssUnit
+
+
+{-| Set the width-axis unit used by every subsequent `init*` call for `Size`
+values. Overrides any unit set by [`initUnit`](#initUnit) on the width axis.
+-}
+initUnitWidth : Unit -> AnimBuilder mode -> AnimBuilder mode
+initUnitWidth =
+    IB.setSizeInitCssUnitWidth
+
+
+{-| Set the height-axis unit used by every subsequent `init*` call for `Size`
+values. Overrides any unit set by [`initUnit`](#initUnit) on the height axis.
+-}
+initUnitHeight : Unit -> AnimBuilder mode -> AnimBuilder mode
+initUnitHeight =
+    IB.setSizeInitCssUnitHeight
 
 
 
@@ -534,14 +600,13 @@ cssUnitHeight =
 -- ============================================================
 
 
-{-| Constrain the width of the active animGroup's size to `[min, max]`.
+{-| Keep width within `[min, max]` for this animation group.
 
-The clamp is persistent: once declared it applies to every subsequent
-`animate` / `retarget` call on this animGroup until you call
-[unclampWidth](#unclampWidth) (or call `clampWidth` again with new bounds).
-Clamps are applied at [build](#build) time, so they affect every value
-declared in the pipeline regardless of order. If `min > max` the arguments
-are swapped automatically.
+The range stays in effect for future `animate` / `retarget` calls
+until you call [unclampWidth](#unclampWidth). If `min > max`, the values are swapped.
+
+📖 See [Responsive Animations](https://phollyer.github.io/elm-motion/animation/concepts/responsive-animations/)
+for patterns and examples.
 
 -}
 clampWidth : Float -> Float -> Builder mode -> Builder mode
@@ -549,7 +614,7 @@ clampWidth =
     SB.clampWidth
 
 
-{-| Constrain the height of the active animGroup's size to `[min, max]`.
+{-| Keep height within `[min, max]` for this animation group.
 
 See [clampWidth](#clampWidth) for behaviour.
 
@@ -559,16 +624,14 @@ clampHeight =
     SB.clampHeight
 
 
-{-| Remove a previously declared width clamp on the active animGroup. No-op
-if no clamp is set.
+{-| Remove the width range for this animation group. Does nothing if no range is set.
 -}
 unclampWidth : Builder mode -> Builder mode
 unclampWidth =
     SB.unclampWidth
 
 
-{-| Remove a previously declared height clamp on the active animGroup. No-op
-if no clamp is set.
+{-| Remove the height range for this animation group. Does nothing if no range is set.
 -}
 unclampHeight : Builder mode -> Builder mode
 unclampHeight =

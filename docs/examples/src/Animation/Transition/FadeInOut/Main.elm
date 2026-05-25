@@ -50,7 +50,7 @@ init =
 
 animGroup : String
 animGroup =
-    "boxAnim"
+    "fadeAnim"
 
 
 fadeTo : Float -> AnimBuilder mode -> AnimBuilder mode
@@ -105,8 +105,7 @@ update msg model =
 view : Model -> Html Msg
 view model =
     div [ class "example-stage" ]
-        [ div [ class "example-badge example-badge--responsive" ] [ text "RESPONSIVE" ]
-        , div [ class "example-controls" ]
+        [ div [ class "example-controls" ]
             [ button
                 [ onClick TriggerFadeIn
                 , class "ui-action-button primary"

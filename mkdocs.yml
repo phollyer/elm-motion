@@ -110,6 +110,7 @@ nav:
         - Custom Color Property: animation/properties/custom-color-property.md
       - Discrete Properties: animation/concepts/discrete-properties.md
     - Concepts:
+      - Builder Modes: animation/concepts/builder-modes.md
       - Interrupting Animations: animation/concepts/interrupting-animations.md
       - Responsive Animations: animation/concepts/responsive-animations.md
       - Controlling Animations: animation/concepts/controlling-animations.md

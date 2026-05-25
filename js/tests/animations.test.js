@@ -2,7 +2,7 @@
 /* global global */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { processAnimationData, processElementAnimation } from '../src/animations.js';
-import { activeAnimations, animationGroups, elementTransformOrders, lastKnownTransforms } from '../src/state.js';
+import { activeAnimations, animationGroups, elementTransformOrders, lastKnownTransforms, appliedWillChange, cleanupAnimGroup } from '../src/state.js';
 import { createFakeAnimation, installDom, cleanupDom } from './_publicApiHelpers.js';
 
 function makeElement({ animGroup, animations = [createFakeAnimation()], order = null }) {
@@ -25,6 +25,7 @@ function clearGlobalState() {
     animationGroups.clear();
     elementTransformOrders.clear();
     lastKnownTransforms.clear();
+    appliedWillChange.clear();
 }
 
 beforeEach(clearGlobalState);
@@ -180,8 +181,46 @@ describe('processAnimationData (WAAPI engine)', () => {
         });
 
         const [keyframes, options] = element.animate.mock.calls[0];
-        // Keyframe interpolation path → 30 frames, linear easing, longest duration wins
-        expect(keyframes.length).toBeGreaterThan(2);
+        // Keyframe interpolation path uses fallback sampling density.
+        expect(keyframes.length).toBe(30);
+        expect(options.duration).toBe(600);
+        expect(options.easing).toBe('linear');
+    });
+
+    it('uses complex easing keyframe density for transform interpolation', () => {
+        const animGroup = 'box-bounce-density';
+        const animation = createFakeAnimation({ duration: 600 });
+        const element = makeElement({ animGroup, animations: [animation] });
+        installDom({ element, targetId: animGroup });
+
+        processAnimationData({
+            elements: {
+                [animGroup]: {
+                    properties: [
+                        {
+                            type: 'translate',
+                            startX: 0, startY: 0, startZ: 0,
+                            endX: 100, endY: 0, endZ: 0,
+                            duration: 600,
+                            easing: 'linear',
+                            easingKeyframes: Array.from({ length: 60 }, (_, i) => i / 59),
+                            version: 1
+                        },
+                        {
+                            type: 'rotate',
+                            startX: 0, startY: 0, startZ: 0,
+                            endX: 0, endY: 0, endZ: 180,
+                            duration: 600,
+                            easing: 'linear',
+                            version: 1
+                        }
+                    ]
+                }
+            }
+        });
+
+        const [keyframes, options] = element.animate.mock.calls[0];
+        expect(keyframes.length).toBe(60);
         expect(options.duration).toBe(600);
         expect(options.easing).toBe('linear');
     });
@@ -560,5 +599,108 @@ describe('processElementAnimation transformBaseline seeding', () => {
         })).not.toThrow();
 
         expect(lastKnownTransforms.has(animGroup)).toBe(false);
+    });
+});
+
+describe('will-change application (WAAPI engine)', () => {
+    it('applies elementConfig.willChange to the element and records it', () => {
+        const animGroup = 'box-wc';
+        const animation = createFakeAnimation({ duration: 200 });
+        const element = makeElement({ animGroup, animations: [animation] });
+        installDom({ element, targetId: animGroup });
+
+        processAnimationData({
+            elements: {
+                [animGroup]: {
+                    willChange: 'transform, opacity',
+                    properties: [
+                        { type: 'opacity', startValue: 0, endValue: 1, duration: 200, easing: 'linear', version: 1 }
+                    ]
+                }
+            }
+        });
+
+        expect(element.style.willChange).toBe('transform, opacity');
+        const entry = appliedWillChange.get(animGroup);
+        expect(entry).toBeDefined();
+        expect(entry.element).toBe(element);
+        expect(entry.value).toBe('transform, opacity');
+    });
+
+    it('does not touch element.style.willChange when no willChange is provided', () => {
+        const animGroup = 'box-no-wc';
+        const animation = createFakeAnimation({ duration: 200 });
+        const element = makeElement({ animGroup, animations: [animation] });
+        installDom({ element, targetId: animGroup });
+
+        processAnimationData({
+            elements: {
+                [animGroup]: {
+                    properties: [
+                        { type: 'opacity', startValue: 0, endValue: 1, duration: 200, easing: 'linear', version: 1 }
+                    ]
+                }
+            }
+        });
+
+        expect(element.style.willChange).toBeUndefined();
+        expect(appliedWillChange.has(animGroup)).toBe(false);
+    });
+
+    it('clears the inline will-change when cleanupAnimGroup runs', () => {
+        const animGroup = 'box-wc-clear';
+        const animation = createFakeAnimation({ duration: 200 });
+        const element = makeElement({ animGroup, animations: [animation] });
+        // Mock "connectedness" so cleanup attempts to clear the style.
+        element.isConnected = true;
+        installDom({ element, targetId: animGroup });
+
+        processAnimationData({
+            elements: {
+                [animGroup]: {
+                    willChange: 'transform',
+                    properties: [
+                        {
+                            type: 'translate',
+                            startX: 0, startY: 0, startZ: 0,
+                            endX: 50, endY: 0, endZ: 0,
+                            duration: 200, easing: 'linear', version: 1
+                        }
+                    ]
+                }
+            }
+        });
+
+        expect(element.style.willChange).toBe('transform');
+
+        cleanupAnimGroup(animGroup);
+
+        expect(element.style.willChange).toBe('');
+        expect(appliedWillChange.has(animGroup)).toBe(false);
+    });
+
+    it('does nothing on cleanup when element is no longer connected', () => {
+        const animGroup = 'box-wc-detached';
+        const animation = createFakeAnimation({ duration: 200 });
+        const element = makeElement({ animGroup, animations: [animation] });
+        element.isConnected = true;
+        installDom({ element, targetId: animGroup });
+
+        processAnimationData({
+            elements: {
+                [animGroup]: {
+                    willChange: 'opacity',
+                    properties: [
+                        { type: 'opacity', startValue: 0, endValue: 1, duration: 200, easing: 'linear', version: 1 }
+                    ]
+                }
+            }
+        });
+
+        // Element becomes detached before cleanup.
+        element.isConnected = false;
+        expect(() => cleanupAnimGroup(animGroup)).not.toThrow();
+        expect(element.style.willChange).toBe('opacity'); // untouched
+        expect(appliedWillChange.has(animGroup)).toBe(false);
     });
 });

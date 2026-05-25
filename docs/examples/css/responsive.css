@@ -36,9 +36,9 @@
     }
 }
 
-/* Small pill that tags an example as responsive (animation reacts to
-   resize) or static (only the layout responds; the animation itself
-   does not adapt mid-flight). Fixed to the iframe viewport, centred
+/* Small pill that tags static examples (layout responds, while the
+    animation itself does not adapt mid-flight). Fixed to the iframe
+    viewport, centred
    in the 5vh gutter above the stage. Sizing is expressed in vh with
    clamp() floors/ceilings so the pill grows with the iframe height
    without ever spilling onto the stage or ballooning on tall pages. */
@@ -57,11 +57,6 @@
     z-index: 200;
     pointer-events: none;
     user-select: none;
-}
-
-.example-badge--responsive {
-    background-color: #d1fae5;
-    color: #065f46;
 }
 
 .example-badge--static {

@@ -3,14 +3,12 @@ module Animation.Sub.InterruptingAnimations.MultipleAxes.Main exposing (main)
 import Anim.Builder exposing (AnimBuilder)
 import Anim.Engine.Sub as Sub
 import Anim.Property.Translate as Translate
+import Anim.Unit exposing (Unit(..))
 import Browser
-import Browser.Dom as Dom
-import Browser.Events
 import Html exposing (Html, div, text)
-import Html.Attributes exposing (class, id, style)
+import Html.Attributes exposing (class, style)
 import Html.Events exposing (onClick)
 import Motion.Easing as Easing exposing (Easing(..))
-import Task
 
 
 
@@ -36,18 +34,8 @@ animGroupName =
     "movingBox"
 
 
-canvasId : String
-canvasId =
-    "anim-canvas"
-
-
 type alias Model =
-    { animState : Sub.AnimState
-    , canvasW : Float
-    , canvasH : Float
-    , xPos : XPos
-    , yPos : YPos
-    }
+    { animState : Sub.AnimState }
 
 
 type XPos
@@ -62,58 +50,67 @@ type YPos
     | YBottom
 
 
-boxWidth : Float
-boxWidth =
-    100
+boxPct : Float
+boxPct =
+    12
+
+
+targetSpeed : Float
+targetSpeed =
+    25
+
+
+centerXCqw : Float
+centerXCqw =
+    (100 - boxPct) / 2
+
+
+centerYCqh : Float
+centerYCqh =
+    (100 - boxPct) / 2
 
 
 init : () -> ( Model, Cmd Msg )
 init _ =
     ( { animState =
             Sub.init
-                [ Translate.initXY animGroupName 0 0 ]
-      , canvasW = 0
-      , canvasH = 0
-      , xPos = XCenter
-      , yPos = YCenter
+                [ Translate.initUnitX Cqw
+                    >> Translate.initUnitY Cqh
+                    >> Translate.initXY animGroupName centerXCqw centerYCqh
+                ]
       }
-    , measureCanvas
+    , Cmd.none
     )
-
-
-measureCanvas : Cmd Msg
-measureCanvas =
-    Task.attempt GotCanvas (Dom.getElement canvasId)
 
 
 
 -- POSITION HELPERS
 
 
-targetX : XPos -> Float -> Float
-targetX pos w =
+targetX : XPos -> Float
+targetX pos =
     case pos of
         XLeft ->
             0
 
         XCenter ->
-            (w - boxWidth) / 2
+            (100 - boxPct) / 2
 
         XRight ->
-            w - boxWidth
+            100 - boxPct
 
 
-targetY : YPos -> Float -> Float
-targetY pos h =
+targetY : YPos -> Float
+targetY pos =
     case pos of
         YTop ->
             0
 
         YCenter ->
-            (h - boxWidth) / 2
+            (100 - boxPct) / 2
 
         YBottom ->
-            h - boxWidth
+            100 - boxPct
 
 
 
@@ -135,16 +132,11 @@ moveBoxY y =
 moveBox : (Translate.Builder mode -> Translate.Builder mode) -> AnimBuilder mode -> AnimBuilder mode
 moveBox moveFunc =
     Translate.for animGroupName
+        >> Translate.cssUnitX Cqw
+        >> Translate.cssUnitY Cqh
         >> moveFunc
-        >> Translate.speed 200
-        >> Translate.easing BounceOut
-        >> Translate.build
-
-
-snapBoxXY : Float -> Float -> AnimBuilder mode -> AnimBuilder mode
-snapBoxXY x y =
-    Translate.for animGroupName
-        >> Translate.toXY x y
+        >> Translate.speed targetSpeed
+        >> Translate.easing QuintOut
         >> Translate.build
 
 
@@ -158,8 +150,6 @@ type Msg
     | MoveRight
     | MoveUp
     | MoveDown
-    | Resize
-    | GotCanvas (Result Dom.Error Dom.Element)
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -177,80 +167,49 @@ update msg model =
         ---8<-- [start:WithoutFreeze]
         MoveLeft ->
             ( { model
-                | xPos = XLeft
-                , animState =
+                | animState =
                     Sub.animate model.animState <|
-                        moveBoxX (targetX XLeft model.canvasW)
+                        moveBoxX (targetX XLeft)
               }
             , Cmd.none
             )
 
         MoveRight ->
             ( { model
-                | xPos = XRight
-                , animState =
+                | animState =
                     Sub.animate model.animState <|
-                        moveBoxX (targetX XRight model.canvasW)
+                        moveBoxX (targetX XRight)
               }
             , Cmd.none
             )
 
         MoveUp ->
             ( { model
-                | yPos = YTop
-                , animState =
+                | animState =
                     Sub.animate model.animState <|
-                        moveBoxY (targetY YTop model.canvasH)
+                        moveBoxY (targetY YTop)
               }
             , Cmd.none
             )
 
         MoveDown ->
             ( { model
-                | yPos = YBottom
-                , animState =
+                | animState =
                     Sub.animate model.animState <|
-                        moveBoxY (targetY YBottom model.canvasH)
+                        moveBoxY (targetY YBottom)
               }
             , Cmd.none
             )
 
-        ---8<-- [end:WithoutFreeze]
-        Resize ->
-            ( model, measureCanvas )
-
-        GotCanvas (Ok element) ->
-            let
-                w =
-                    element.element.width
-
-                h =
-                    element.element.height
-            in
-            ( { model
-                | canvasW = w
-                , canvasH = h
-                , animState =
-                    Sub.animate model.animState <|
-                        snapBoxXY (targetX model.xPos w) (targetY model.yPos h)
-              }
-            , Cmd.none
-            )
-
-        GotCanvas (Err _) ->
-            ( model, Cmd.none )
 
 
-
+---8<-- [end:WithoutFreeze]
 -- SUBSCRIPTIONS
 
 
 subscriptions : Model -> Sub.Sub Msg
 subscriptions model =
-    Sub.batch
-        [ Sub.subscriptions GotAnimationUpdate model.animState
-        , Browser.Events.onResize (\_ _ -> Resize)
-        ]
+    Sub.subscriptions GotAnimationUpdate model.animState
 
 
 
@@ -283,9 +242,10 @@ view model =
         box =
             div
                 (Sub.attributes animGroupName model.animState
-                    ++ [ style "width" (String.fromFloat boxWidth ++ "px")
-                       , style "height" (String.fromFloat boxWidth ++ "px")
+                    ++ [ style "width" (String.fromFloat boxPct ++ "cqw")
+                       , style "height" (String.fromFloat boxPct ++ "cqh")
                        , style "background-color" "#FF5733"
+                       , style "border-radius" "8px"
                        , style "position" "absolute"
                        , style "top" "0"
                        , style "left" "0"
@@ -294,13 +254,15 @@ view model =
                 []
     in
     div [ class "example-stage" ]
-        [ div [ class "example-badge example-badge--responsive" ] [ text "RESPONSIVE" ]
-        , div [ class "example-controls" ]
+        [ div [ class "example-controls" ]
             [ moveLeftButton
             , moveRightButton
             , moveUpButton
             , moveDownButton
             ]
-        , div [ id canvasId, class "example-canvas--fluid" ]
+        , div
+            [ class "example-canvas--fluid"
+            , style "container-type" "size"
+            ]
             [ box ]
         ]

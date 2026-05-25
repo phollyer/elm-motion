@@ -28,6 +28,8 @@ module Anim.Internal.Builder exposing
     , clearAnimData
     , clearClamp
     , cssUnit
+    , cssUnitHeight
+    , cssUnitWidth
     , cssUnitX
     , cssUnitY
     , cssUnitZ
@@ -60,13 +62,16 @@ module Anim.Internal.Builder exposing
     , getEasingWithDefault
     , getFrozenAxes
     , getIterations
+    , getPerspectiveOriginInitCssUnit
     , getRuntimeBaseline
     , getScrollAxis
     , getScrollSource
+    , getSizeInitCssUnit
     , getSpring
     , getTimeSpec
     , getTimeSpecWithDefault
     , getTransformOrder
+    , getTranslateInitCssUnit
     , getViewRangeEnd
     , getViewRangeStart
     , init
@@ -85,8 +90,18 @@ module Anim.Internal.Builder exposing
     , processedTimings
     , setAnimTarget
     , setClamp
+    , setPerspectiveOriginInitCssUnit
+    , setPerspectiveOriginInitCssUnitX
+    , setPerspectiveOriginInitCssUnitY
     , setScrollAxis
     , setScrollSource
+    , setSizeInitCssUnit
+    , setSizeInitCssUnitHeight
+    , setSizeInitCssUnitWidth
+    , setTranslateInitCssUnit
+    , setTranslateInitCssUnitX
+    , setTranslateInitCssUnitY
+    , setTranslateInitCssUnitZ
     , setViewRangeEnd
     , setViewRangeStart
     , speed
@@ -96,6 +111,8 @@ module Anim.Internal.Builder exposing
     , unfreezeAxes
     , updateBaselines
     , updateCurrentConfig
+    , willChangeComposite
+    , willChangeIndividual
     )
 
 import Anim.Extra.TransformOrder exposing (TransformProperty(..))
@@ -188,7 +205,11 @@ type alias DefaultsConfig =
     , globalSpring : Maybe Spring
     , globalDelay : Maybe Int
     , globalCssUnit : InternalUnit.CssUnitAxes
+    , globalSizeCssUnit : InternalUnit.CssUnitAxes
     , globalTransformOrder : Maybe (List TransformProperty)
+    , translateInitCssUnit : InternalUnit.CssUnitAxes
+    , sizeInitCssUnit : InternalUnit.CssUnitAxes
+    , perspectiveOriginInitCssUnit : InternalUnit.CssUnitAxes
     }
 
 
@@ -398,7 +419,11 @@ initDefaults =
     , globalSpring = Nothing
     , globalDelay = Nothing
     , globalCssUnit = InternalUnit.emptyCssUnitAxes
+    , globalSizeCssUnit = InternalUnit.emptyCssUnitAxes
     , globalTransformOrder = Nothing
+    , translateInitCssUnit = InternalUnit.emptyCssUnitAxes
+    , sizeInitCssUnit = InternalUnit.emptyCssUnitAxes
+    , perspectiveOriginInitCssUnit = InternalUnit.emptyCssUnitAxes
     }
 
 
@@ -524,7 +549,13 @@ cssUnit unit (AnimBuilder data) =
             data.defaults
     in
     AnimBuilder
-        { data | defaults = { defs | globalCssUnit = InternalUnit.setAllCssUnitAxes unit defs.globalCssUnit } }
+        { data
+            | defaults =
+                { defs
+                    | globalCssUnit = InternalUnit.setAllCssUnitAxes unit defs.globalCssUnit
+                    , globalSizeCssUnit = InternalUnit.setAllCssUnitAxes unit defs.globalSizeCssUnit
+                }
+        }
 
 
 cssUnitX : Unit -> AnimBuilder mode -> AnimBuilder mode
@@ -555,6 +586,148 @@ cssUnitZ unit (AnimBuilder data) =
     in
     AnimBuilder
         { data | defaults = { defs | globalCssUnit = InternalUnit.setCssUnitZ unit defs.globalCssUnit } }
+
+
+cssUnitWidth : Unit -> AnimBuilder mode -> AnimBuilder mode
+cssUnitWidth unit (AnimBuilder data) =
+    let
+        defs =
+            data.defaults
+    in
+    AnimBuilder
+        { data | defaults = { defs | globalSizeCssUnit = InternalUnit.setCssUnitX unit defs.globalSizeCssUnit } }
+
+
+cssUnitHeight : Unit -> AnimBuilder mode -> AnimBuilder mode
+cssUnitHeight unit (AnimBuilder data) =
+    let
+        defs =
+            data.defaults
+    in
+    AnimBuilder
+        { data | defaults = { defs | globalSizeCssUnit = InternalUnit.setCssUnitY unit defs.globalSizeCssUnit } }
+
+
+
+-- Per-property init-time CSS unit defaults. Set by the public
+-- `Translate.initUnit*` / `Size.initUnit*` / `PerspectiveOrigin.initUnit*`
+-- families; consumed by the corresponding `init*` value helpers when they
+-- create the AnimationConfig.
+
+
+setTranslateInitCssUnit : Unit -> AnimBuilder mode -> AnimBuilder mode
+setTranslateInitCssUnit unit (AnimBuilder data) =
+    let
+        defs =
+            data.defaults
+    in
+    AnimBuilder
+        { data | defaults = { defs | translateInitCssUnit = InternalUnit.setAllCssUnitAxes unit defs.translateInitCssUnit } }
+
+
+setTranslateInitCssUnitX : Unit -> AnimBuilder mode -> AnimBuilder mode
+setTranslateInitCssUnitX unit (AnimBuilder data) =
+    let
+        defs =
+            data.defaults
+    in
+    AnimBuilder
+        { data | defaults = { defs | translateInitCssUnit = InternalUnit.setCssUnitX unit defs.translateInitCssUnit } }
+
+
+setTranslateInitCssUnitY : Unit -> AnimBuilder mode -> AnimBuilder mode
+setTranslateInitCssUnitY unit (AnimBuilder data) =
+    let
+        defs =
+            data.defaults
+    in
+    AnimBuilder
+        { data | defaults = { defs | translateInitCssUnit = InternalUnit.setCssUnitY unit defs.translateInitCssUnit } }
+
+
+setTranslateInitCssUnitZ : Unit -> AnimBuilder mode -> AnimBuilder mode
+setTranslateInitCssUnitZ unit (AnimBuilder data) =
+    let
+        defs =
+            data.defaults
+    in
+    AnimBuilder
+        { data | defaults = { defs | translateInitCssUnit = InternalUnit.setCssUnitZ unit defs.translateInitCssUnit } }
+
+
+getTranslateInitCssUnit : AnimBuilder mode -> InternalUnit.CssUnitAxes
+getTranslateInitCssUnit (AnimBuilder data) =
+    data.defaults.translateInitCssUnit
+
+
+setSizeInitCssUnit : Unit -> AnimBuilder mode -> AnimBuilder mode
+setSizeInitCssUnit unit (AnimBuilder data) =
+    let
+        defs =
+            data.defaults
+    in
+    AnimBuilder
+        { data | defaults = { defs | sizeInitCssUnit = InternalUnit.setAllCssUnitAxes unit defs.sizeInitCssUnit } }
+
+
+setSizeInitCssUnitWidth : Unit -> AnimBuilder mode -> AnimBuilder mode
+setSizeInitCssUnitWidth unit (AnimBuilder data) =
+    let
+        defs =
+            data.defaults
+    in
+    AnimBuilder
+        { data | defaults = { defs | sizeInitCssUnit = InternalUnit.setCssUnitX unit defs.sizeInitCssUnit } }
+
+
+setSizeInitCssUnitHeight : Unit -> AnimBuilder mode -> AnimBuilder mode
+setSizeInitCssUnitHeight unit (AnimBuilder data) =
+    let
+        defs =
+            data.defaults
+    in
+    AnimBuilder
+        { data | defaults = { defs | sizeInitCssUnit = InternalUnit.setCssUnitY unit defs.sizeInitCssUnit } }
+
+
+getSizeInitCssUnit : AnimBuilder mode -> InternalUnit.CssUnitAxes
+getSizeInitCssUnit (AnimBuilder data) =
+    data.defaults.sizeInitCssUnit
+
+
+setPerspectiveOriginInitCssUnit : Unit -> AnimBuilder mode -> AnimBuilder mode
+setPerspectiveOriginInitCssUnit unit (AnimBuilder data) =
+    let
+        defs =
+            data.defaults
+    in
+    AnimBuilder
+        { data | defaults = { defs | perspectiveOriginInitCssUnit = InternalUnit.setAllCssUnitAxes unit defs.perspectiveOriginInitCssUnit } }
+
+
+setPerspectiveOriginInitCssUnitX : Unit -> AnimBuilder mode -> AnimBuilder mode
+setPerspectiveOriginInitCssUnitX unit (AnimBuilder data) =
+    let
+        defs =
+            data.defaults
+    in
+    AnimBuilder
+        { data | defaults = { defs | perspectiveOriginInitCssUnit = InternalUnit.setCssUnitX unit defs.perspectiveOriginInitCssUnit } }
+
+
+setPerspectiveOriginInitCssUnitY : Unit -> AnimBuilder mode -> AnimBuilder mode
+setPerspectiveOriginInitCssUnitY unit (AnimBuilder data) =
+    let
+        defs =
+            data.defaults
+    in
+    AnimBuilder
+        { data | defaults = { defs | perspectiveOriginInitCssUnit = InternalUnit.setCssUnitY unit defs.perspectiveOriginInitCssUnit } }
+
+
+getPerspectiveOriginInitCssUnit : AnimBuilder mode -> InternalUnit.CssUnitAxes
+getPerspectiveOriginInitCssUnit (AnimBuilder data) =
+    data.defaults.perspectiveOriginInitCssUnit
 
 
 transformOrder : List TransformProperty -> AnimBuilder mode -> AnimBuilder mode
@@ -1096,11 +1269,11 @@ clearAnimData (AnimBuilder data) =
 
 
 mergeBaselines : AnimBuilder mode -> AnimBuilder mode
-mergeBaselines (AnimBuilder ({ state, animation } as data)) =
+mergeBaselines (AnimBuilder ({ state, animation, defaults } as data)) =
     let
         newBaselines =
             animation.animGroups
-                |> AnimGroups.map (\_ config -> extractBaselinesFromConfig config)
+                |> AnimGroups.map (\_ config -> extractBaselinesFromConfig defaults config)
 
         mergeBoth key new old =
             AnimGroups.insert key (PropertyBaselines.merge old new)
@@ -1148,16 +1321,19 @@ updateBaselines key f (AnimBuilder data) =
         }
 
 
-extractBaselinesFromConfig : AnimGroupConfig -> PropertyBaselines
-extractBaselinesFromConfig elementConfig =
-    List.foldl extractPropertyBaseline PropertyBaselines.empty elementConfig.properties
+extractBaselinesFromConfig : DefaultsConfig -> AnimGroupConfig -> PropertyBaselines
+extractBaselinesFromConfig defaults elementConfig =
+    List.foldl (extractPropertyBaseline defaults) PropertyBaselines.empty elementConfig.properties
 
 
-extractPropertyBaseline : PropertyConfig -> PropertyBaselines -> PropertyBaselines
-extractPropertyBaseline propConfig baselines =
+extractPropertyBaseline : DefaultsConfig -> PropertyConfig -> PropertyBaselines -> PropertyBaselines
+extractPropertyBaseline defaults propConfig baselines =
     case propConfig of
         TranslateConfig cfg ->
-            PropertyBaselines.setTranslate cfg.end baselines
+            baselines
+                |> PropertyBaselines.setTranslate cfg.end
+                |> PropertyBaselines.setTranslateUnits
+                    (InternalUnit.resolveCssUnitAxes cfg.cssUnit defaults.globalCssUnit InternalUnit.default)
 
         RotateConfig cfg ->
             PropertyBaselines.setRotate cfg.end baselines
@@ -1172,10 +1348,16 @@ extractPropertyBaseline propConfig baselines =
             PropertyBaselines.setOpacity cfg.end baselines
 
         PerspectiveOriginConfig cfg ->
-            PropertyBaselines.setPerspectiveOrigin cfg.end baselines
+            baselines
+                |> PropertyBaselines.setPerspectiveOrigin cfg.end
+                |> PropertyBaselines.setPerspectiveOriginUnits
+                    (InternalUnit.resolveCssUnitAxes cfg.cssUnit defaults.globalCssUnit Percent)
 
         SizeConfig cfg ->
-            PropertyBaselines.setSize cfg.end baselines
+            baselines
+                |> PropertyBaselines.setSize cfg.end
+                |> PropertyBaselines.setSizeUnits
+                    (InternalUnit.resolveCssUnitAxes cfg.cssUnit defaults.globalSizeCssUnit InternalUnit.default)
 
         CustomPropertyConfig cssName unit cfg ->
             PropertyBaselines.setCustomProperty cssName cfg.end unit baselines
@@ -1333,6 +1515,136 @@ processedTimings prop =
             { duration = cfg.duration, delay = cfg.delay }
 
 
+{-| Comma-joined `will-change` value for an animation that renders
+transforms as the modern individual properties (`translate`, `scale`).
+Used by the Transition engine, which writes `translate: ...` and
+`scale: ...` directly rather than packing them into `transform: ...`.
+
+Rotate and Skew still collapse to `transform` because there is no
+broadly-supported individual `rotate` / `skew` _animatable_ shorthand on
+the same rendering path. The returned string preserves the order of
+first appearance and is `""` for an empty list.
+
+    willChangeIndividual
+        [ ProcessedOpacityConfig cfg
+        , ProcessedTranslateConfig cfg
+        , ProcessedRotateConfig cfg
+        ]
+        --> "opacity, translate, transform"
+
+-}
+willChangeIndividual : List ProcessedPropertyConfig -> String
+willChangeIndividual =
+    toWillChangeString cssNamesIndividual
+
+
+{-| Comma-joined `will-change` value for an animation that renders
+transforms via the composite `transform` property. Used by the Keyframe
+and Sub engines, which build a single `transform: translate(...) rotate(...)
+scale(...) skew(...)` declaration.
+
+All transform-family properties collapse to a single `transform` entry.
+The returned string preserves the order of first appearance and is
+`""` for an empty list.
+
+    willChangeComposite
+        [ ProcessedOpacityConfig cfg
+        , ProcessedTranslateConfig cfg
+        , ProcessedRotateConfig cfg
+        ]
+        --> "opacity, transform"
+
+-}
+willChangeComposite : List ProcessedPropertyConfig -> String
+willChangeComposite =
+    toWillChangeString cssNamesComposite
+
+
+toWillChangeString : (ProcessedPropertyConfig -> List String) -> List ProcessedPropertyConfig -> String
+toWillChangeString toNames props =
+    props
+        |> List.concatMap toNames
+        |> dedupePreservingOrder
+        |> String.join ", "
+
+
+cssNamesIndividual : ProcessedPropertyConfig -> List String
+cssNamesIndividual prop =
+    case prop of
+        ProcessedCustomPropertyConfig cssName _ _ ->
+            [ cssName ]
+
+        ProcessedCustomColorPropertyConfig cssName _ ->
+            [ cssName ]
+
+        ProcessedOpacityConfig _ ->
+            [ "opacity" ]
+
+        ProcessedPerspectiveOriginConfig _ ->
+            [ "perspective-origin" ]
+
+        ProcessedRotateConfig _ ->
+            [ "transform" ]
+
+        ProcessedScaleConfig _ ->
+            [ "scale" ]
+
+        ProcessedSizeConfig _ ->
+            [ "width", "height" ]
+
+        ProcessedSkewConfig _ ->
+            [ "transform" ]
+
+        ProcessedTranslateConfig _ ->
+            [ "translate" ]
+
+
+cssNamesComposite : ProcessedPropertyConfig -> List String
+cssNamesComposite prop =
+    case prop of
+        ProcessedCustomPropertyConfig cssName _ _ ->
+            [ cssName ]
+
+        ProcessedCustomColorPropertyConfig cssName _ ->
+            [ cssName ]
+
+        ProcessedOpacityConfig _ ->
+            [ "opacity" ]
+
+        ProcessedPerspectiveOriginConfig _ ->
+            [ "perspective-origin" ]
+
+        ProcessedRotateConfig _ ->
+            [ "transform" ]
+
+        ProcessedScaleConfig _ ->
+            [ "transform" ]
+
+        ProcessedSizeConfig _ ->
+            [ "width", "height" ]
+
+        ProcessedSkewConfig _ ->
+            [ "transform" ]
+
+        ProcessedTranslateConfig _ ->
+            [ "transform" ]
+
+
+dedupePreservingOrder : List String -> List String
+dedupePreservingOrder =
+    List.foldl
+        (\name ( seen, acc ) ->
+            if Set.member name seen then
+                ( seen, acc )
+
+            else
+                ( Set.insert name seen, name :: acc )
+        )
+        ( Set.empty, [] )
+        >> Tuple.second
+        >> List.reverse
+
+
 
 -- ============================================================
 -- PROCESSING
@@ -1381,6 +1693,7 @@ processProperty globalData property =
                 processStandardAnimation
                     { config = config
                     , globalData = globalData
+                    , globalCssUnit = globalData.globalCssUnit
                     , defaultStart = 0
                     , defaultCssUnit = InternalUnit.default
                     , distanceFn = \a b -> abs (b - a)
@@ -1394,6 +1707,7 @@ processProperty globalData property =
                 processStandardAnimation
                     { config = config
                     , globalData = globalData
+                    , globalCssUnit = globalData.globalCssUnit
                     , defaultStart = Color.transparent
                     , defaultCssUnit = InternalUnit.default
                     , distanceFn = Color.distance
@@ -1407,6 +1721,7 @@ processProperty globalData property =
                 processStandardAnimation
                     { config = config
                     , globalData = globalData
+                    , globalCssUnit = globalData.globalCssUnit
                     , defaultStart = Opacity.fromFloat 1.0
                     , defaultCssUnit = InternalUnit.default
                     , distanceFn = Opacity.distance
@@ -1420,6 +1735,7 @@ processProperty globalData property =
                 processStandardAnimation
                     { config = config
                     , globalData = globalData
+                    , globalCssUnit = globalData.globalCssUnit
                     , defaultStart = PerspectiveOrigin.default
                     , defaultCssUnit = Percent
                     , distanceFn = PerspectiveOrigin.distance
@@ -1433,6 +1749,7 @@ processProperty globalData property =
                 processStandardAnimation
                     { config = config
                     , globalData = globalData
+                    , globalCssUnit = globalData.globalCssUnit
                     , defaultStart = Rotate.default
                     , defaultCssUnit = InternalUnit.default
                     , distanceFn = Rotate.distance
@@ -1446,6 +1763,7 @@ processProperty globalData property =
                 processStandardAnimation
                     { config = config
                     , globalData = globalData
+                    , globalCssUnit = globalData.globalCssUnit
                     , defaultStart = Scale.default
                     , defaultCssUnit = InternalUnit.default
                     , distanceFn = Scale.distance
@@ -1459,6 +1777,7 @@ processProperty globalData property =
                 processStandardAnimation
                     { config = config
                     , globalData = globalData
+                    , globalCssUnit = globalData.globalSizeCssUnit
                     , defaultStart = Size.default
                     , defaultCssUnit = InternalUnit.default
                     , distanceFn = Size.distance
@@ -1472,6 +1791,7 @@ processProperty globalData property =
                 processStandardAnimation
                     { config = config
                     , globalData = globalData
+                    , globalCssUnit = globalData.globalCssUnit
                     , defaultStart = Skew.default
                     , defaultCssUnit = InternalUnit.default
                     , distanceFn = Skew.distance
@@ -1485,6 +1805,7 @@ processProperty globalData property =
                 processStandardAnimation
                     { config = config
                     , globalData = globalData
+                    , globalCssUnit = globalData.globalCssUnit
                     , defaultStart = Translate.default
                     , defaultCssUnit = InternalUnit.default
                     , distanceFn = Translate.distance
@@ -1497,6 +1818,7 @@ processProperty globalData property =
 processStandardAnimation :
     { config : AnimationConfig a
     , globalData : DefaultsConfig
+    , globalCssUnit : InternalUnit.CssUnitAxes
     , defaultStart : a
     , defaultCssUnit : Unit
     , distanceFn : a -> a -> Float
@@ -1505,7 +1827,7 @@ processStandardAnimation :
     , wrapper : ProcessedAnimationConfig a -> ProcessedPropertyConfig
     }
     -> ProcessedPropertyConfig
-processStandardAnimation { config, globalData, defaultStart, defaultCssUnit, distanceFn, durationFn, speedFn, wrapper } =
+processStandardAnimation { config, globalData, globalCssUnit, defaultStart, defaultCssUnit, distanceFn, durationFn, speedFn, wrapper } =
     let
         start =
             Maybe.withDefault defaultStart config.start
@@ -1551,7 +1873,7 @@ processStandardAnimation { config, globalData, defaultStart, defaultCssUnit, dis
         , timing = resolvedTiming
         , easing = resolveEasingWithDefault config.easing globalData.globalEasing EaseInOut
         , spring = resolvedSpring
-        , cssUnit = InternalUnit.resolveCssUnitAxes config.cssUnit globalData.globalCssUnit defaultCssUnit
+        , cssUnit = InternalUnit.resolveCssUnitAxes config.cssUnit globalCssUnit defaultCssUnit
         , delay = resolveDelayWithDefault config.delay globalData.globalDelay 0
         }
 

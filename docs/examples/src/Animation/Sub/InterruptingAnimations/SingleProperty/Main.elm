@@ -3,7 +3,7 @@ module Animation.Sub.InterruptingAnimations.SingleProperty.Main exposing (main)
 import Anim.Builder exposing (AnimBuilder)
 import Anim.Engine.Sub as Sub
 import Anim.Extra.Color as Color exposing (Color)
-import Anim.Property.CustomColor as BgColor
+import Anim.Property.CustomColor as CustomColor
 import Browser
 import Html exposing (Html, div, text)
 import Html.Attributes exposing (class, style)
@@ -43,7 +43,7 @@ init : ( Model, Cmd Msg )
 init =
     ( { animState =
             Sub.init
-                [ BgColor.init animGroupName BgColor.BackgroundColor <|
+                [ CustomColor.init animGroupName CustomColor.BackgroundColor <|
                     Color.rgb 118 118 118
                 ]
       }
@@ -77,31 +77,31 @@ color4 =
 
 toColor1 : AnimBuilder mode -> AnimBuilder mode
 toColor1 =
-    colorBox (BgColor.to color1)
+    colorBox (CustomColor.to color1)
 
 
 toColor2 : AnimBuilder mode -> AnimBuilder mode
 toColor2 =
-    colorBox (BgColor.to color2)
+    colorBox (CustomColor.to color2)
 
 
 toColor3 : AnimBuilder mode -> AnimBuilder mode
 toColor3 =
-    colorBox (BgColor.to color3)
+    colorBox (CustomColor.to color3)
 
 
 toColor4 : AnimBuilder mode -> AnimBuilder mode
 toColor4 =
-    colorBox (BgColor.to color4)
+    colorBox (CustomColor.to color4)
 
 
-colorBox : (BgColor.Builder mode -> BgColor.Builder mode) -> AnimBuilder mode -> AnimBuilder mode
+colorBox : (CustomColor.Builder mode -> CustomColor.Builder mode) -> AnimBuilder mode -> AnimBuilder mode
 colorBox moveFunc =
-    BgColor.for animGroupName BgColor.BackgroundColor
+    CustomColor.for animGroupName CustomColor.BackgroundColor
         >> moveFunc
-        >> BgColor.duration 3000
-        >> BgColor.easing Linear
-        >> BgColor.build
+        >> CustomColor.duration 3000
+        >> CustomColor.easing Linear
+        >> CustomColor.build
 
 
 
@@ -186,8 +186,7 @@ view model =
         [ class "example-stage"
         , style "text-align" "center"
         ]
-        [ div [ class "example-badge example-badge--responsive" ] [ text "RESPONSIVE" ]
-        , div [ class "example-controls" ]
+        [ div [ class "example-controls" ]
             [ color1Button
             , color2Button
             , color3Button

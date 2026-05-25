@@ -24,26 +24,7 @@ main =
 
 
 
--- ANIMATION
----8<-- [start:build]
--- Avoid typos from hardcoding strings in multiple places
-
-
-groupName : String
-groupName =
-    "helloText"
-
-
-fadeIn : EngineBuilder -> EngineBuilder
-fadeIn =
-    Opacity.for groupName
-        >> Opacity.to 1
-        >> Opacity.duration 5000
-        >> Opacity.build
-
-
-
----8<-- [end:build]
+-- MODEL
 ---8<-- [start:model]
 
 
@@ -69,6 +50,26 @@ init =
 
 ---8<-- [end:model]
 ---8<-- [end:trigger-cmd]
+-- ANIMATION
+---8<-- [start:build]
+-- Avoid typos from hardcoding strings in multiple places
+
+
+groupName : String
+groupName =
+    "helloText"
+
+
+fadeIn : EngineBuilder -> EngineBuilder
+fadeIn =
+    Opacity.for groupName
+        >> Opacity.to 1
+        >> Opacity.duration 5000
+        >> Opacity.build
+
+
+
+---8<-- [end:build]
 -- UPDATE
 
 
@@ -95,14 +96,15 @@ view : Model -> Html Msg
 view model =
     div
         [ class "example-stage"
-        , style "font-size" "48px"
+        , style "font-size" "clamp(28px, 10vw, 48px)"
         , style "font-weight" "bold"
+        , style "text-align" "center"
         ]
-        [ div [ class "example-badge example-badge--responsive" ] [ text "RESPONSIVE" ]
-
         ---8<-- [start:render]
-        , div
-            (Transition.attributes groupName model.animState)
+        [ div
+            (Transition.attributes groupName model.animState
+                ++ [ style "width" "100%" ]
+            )
             [ text "Hello World!" ]
         ]
 

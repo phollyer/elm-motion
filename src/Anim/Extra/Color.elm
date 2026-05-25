@@ -78,7 +78,7 @@ import Color
 -- ============================================================
 
 
-{-| Type alias for Color values used in animations.
+{-| Color used in animations.
 -}
 type alias Color =
     Internal.Color

@@ -106,18 +106,36 @@ init =
 
 
 animate : AnimState -> (EngineBuilder -> EngineBuilder) -> AnimState
-animate =
+animate (AnimState state animGroups) transform =
     let
-        generateAnimGroup : Maybe (List TransformProperty) -> EngineBuilder -> AnimGroupName -> Builder.ProcessedAnimGroupConfig -> AnimGroup
-        generateAnimGroup _ builder animGroupName config =
+        builder =
+            transform state.builder
+
+        processedAnimData =
+            Builder.process builder
+
+        setPlayStateWithStyle : PlayState.PlayState -> AnimGroup -> AnimGroup
+        setPlayStateWithStyle playState animGroup =
+            animGroup
+                |> AnimGroup.setPlayState playState
+                |> AnimGroup.addStyle "animation-play-state" (PlayState.toCssString playState)
+
+        generateAnimGroup : AnimGroupName -> Builder.ProcessedAnimGroupConfig -> AnimGroup
+        generateAnimGroup animGroupName config =
             let
                 discrete : DiscreteConfig
                 discrete =
                     { entry = Builder.getDiscreteEntryProperties builder
                     , exit = Builder.getDiscreteExitProperties builder
                     }
+
+                currentCounter =
+                    AnimGroups.get animGroupName animGroups
+                        |> Maybe.map AnimGroup.getRestartCounter
+                        |> Maybe.withDefault 0
             in
-            Generator.generateAnimation
+            Generator.generateRestart
+                currentCounter
                 config.transformOrder
                 (Builder.getIterations builder)
                 (Builder.getAnimationDirection builder)
@@ -126,8 +144,8 @@ animate =
                 animGroupName
                 config.properties
 
-        insertAnimGroup : AnimGroups a -> AnimGroupName -> AnimGroup -> AnimGroups AnimGroup -> AnimGroups AnimGroup
-        insertAnimGroup _ animGroupName newAnimGroup acc =
+        insertAnimGroup : AnimGroupName -> AnimGroup -> AnimGroups AnimGroup -> AnimGroups AnimGroup
+        insertAnimGroup animGroupName newAnimGroup acc =
             case AnimGroups.get animGroupName acc of
                 Nothing ->
                     AnimGroups.insert animGroupName newAnimGroup acc
@@ -137,7 +155,18 @@ animate =
                         (AnimGroup.mergeStyles newAnimGroup currentGroup)
                         acc
     in
-    CSS.animate AnimGroup.setPlayState generateAnimGroup insertAnimGroup
+    AnimState
+        { builder =
+            builder
+                |> Builder.addAnimationToHistory processedAnimData
+                |> Builder.mergeBaselines
+                |> Builder.clearAnimData
+        }
+        (processedAnimData.groups
+            |> AnimGroups.map generateAnimGroup
+            |> AnimGroups.foldl insertAnimGroup animGroups
+            |> AnimGroups.map (\_ animGroup -> setPlayStateWithStyle PlayState.Running animGroup)
+        )
 
 
 {-| Re-anchor an animation to a new target by snapping to the new end values.
@@ -291,9 +320,26 @@ attributes animGroupName ((AnimState _ animGroups) as animState) =
 
                         Nothing ->
                             "none"
+
+                willChangePairs =
+                    -- `will-change` promotes the animated properties to
+                    -- their own compositor layer ahead of the keyframes
+                    -- starting. We clear it once the animation finishes
+                    -- (infinite loops never reach this branch) so the
+                    -- element doesn't keep paying the layer cost forever.
+                    if AnimGroup.isComplete animGroup then
+                        []
+
+                    else
+                        case AnimGroup.getWillChange animGroup of
+                            "" ->
+                                []
+
+                            value ->
+                                [ ( "will-change", value ) ]
             in
             CSS.attributes
-                [ ( "animation", animationAttribute ) ]
+                (( "animation", animationAttribute ) :: willChangePairs)
                 AnimGroup.getStyles
                 animGroupName
                 animState

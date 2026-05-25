@@ -12,16 +12,12 @@ module Scroll.Engine.Sub exposing
     , getPosition, getPositionX, getPositionY
     )
 
-{-| Stateful subscription-based scroll animations.
+{-| Use a stateful scroll engine when you need progress, control, or scroll events.
 
-Use this module when you need to track ongoing scrolls, query their state,
-react to their progress, or control them mid-flight (pause, resume, stop, etc.).
-
-For specific Engine guides and examples, see the
-[Scroll Sub Engine Documentation](https://phollyer.github.io/elm-motion/engines/scroll/sub/).
-
-For Engine comparisons, shared features, examples and code, see the
-[Scroll Overview](https://phollyer.github.io/elm-motion/engines/scroll/overview/) section in the docs.
+📖 For setup, examples, and behaviour details, see the
+[Scroll Sub Engine Documentation](https://phollyer.github.io/elm-motion/engines/scroll/sub/)
+and the
+[Scroll Overview](https://phollyer.github.io/elm-motion/engines/scroll/overview/).
 
 Use the [Builder](Scroll-Builder) module to configure scroll targets.
 
@@ -102,10 +98,9 @@ import Scroll.Internal.ScrollBuilder as SB
 -- ============================================================
 
 
-{-| The internal state type used to store scroll state.
+{-| Holds the scroll engine state.
 
-Store it in your model to track ongoing scrolls, query their state,
-react to their progress, or control them mid-flight.
+Keep this in your model.
 
     import Scroll.Engine.Sub as Sub
 
@@ -117,7 +112,7 @@ type alias ScrollState =
     Internal.ScrollState
 
 
-{-| Scroll builder type for configuring scroll animations.
+{-| Builder type for scroll animations.
 -}
 type alias ScrollBuilder =
     SB.ScrollBuilder
@@ -134,13 +129,13 @@ type Container
     | Container String
 
 
-{-| Internal message type.
+{-| Message type used with `update`.
 -}
 type alias ScrollMsg =
     Internal.ScrollMsg
 
 
-{-| Scroll lifecycle events emitted by the scroll engine.
+{-| Scroll lifecycle events from this engine.
 
   - `Started` - A scroll animation began playing
   - `Ended` - A scroll animation completed naturally
@@ -152,7 +147,7 @@ type alias ScrollMsg =
 
 The `Container` parameter identifies the scroll surface.
 
-All events are collected and returned through the [`update`](#update) function.
+You receive these events from [`update`](#update).
 
 -}
 type ScrollEvent
@@ -191,7 +186,7 @@ init =
 -- ============================================================
 
 
-{-| Trigger a stateful scroll animation.
+{-| Start a scroll animation and keep tracking it in state.
 
     import Scroll.Engine.Sub as Sub
 
@@ -218,7 +213,7 @@ scroll =
 -- ============================================================
 
 
-{-| Handle scroll animation lifecycle messages and events.
+{-| Handle messages from this engine.
 
     import Scroll.Engine.Sub as Sub
 
