@@ -27,13 +27,14 @@ module Anim.Engine.Transition exposing
     , getTranslateEnd
     )
 
-{-| Run native CSS Transition animations.
+{-| Use CSS transitions for simple A to B animations.
 
-For specific Engine guides and examples, see the
-[Transition Engine Documentation](https://phollyer.github.io/elm-motion/animation/engines/transition/).
+This engine is a good fit when you want browser-native transitions with a small API surface.
 
-For Engine comparisons, shared features, examples and code, see the
-[Engine Overview](https://phollyer.github.io/elm-motion/animation/engines/overview/) section in the docs.
+📖 For setup, examples, and behaviour details, see the
+[Transition Engine Documentation](https://phollyer.github.io/elm-motion/animation/engines/transition/)
+and the
+[Engine Overview](https://phollyer.github.io/elm-motion/animation/engines/overview/).
 
 
 # Types
@@ -50,17 +51,14 @@ For Engine comparisons, shared features, examples and code, see the
 
 This Engine uses the browser's Document timeline, along with the Keyframe, Sub, and WAAPI Engines.
 
-Use the `TimelineBuilder` to configure animations that run on the Document timeline only. If any Engines
-are used that don't run on the Document timeline (e.g., Scroll or View), you'll get a type error.
+Use this in type annotations when a helper should work with document-timeline engines only.
 
 @docs TimelineBuilder
 
 
 ### Engine Builder
 
-The `EngineBuilder` is a builder type restricted to the Transition Engine.
-
-Use the `EngineBuilder` when you want to restrict builder functions to the Transition Engine.
+Use this in type annotations when a helper should only work with the Transition engine.
 
 @docs EngineBuilder
 
@@ -95,7 +93,7 @@ Use the `EngineBuilder` when you want to restrict builder functions to the Trans
 
 # View
 
-To render a CSS transition animation, you need to apply the animation `attributes` to your element.
+To render a transition, add `attributes` to the element you want to animate.
 
 @docs attributes
 
@@ -222,9 +220,9 @@ import Motion.Spring exposing (Spring)
 -- ============================================================
 
 
-{-| The animation state type used to store animation configurations and transitions.
+{-| Holds the Transition engine state.
 
-Store it in your model.
+Keep this in your model.
 
     type alias Model =
         { animState : Transition.AnimState }
@@ -240,42 +238,30 @@ type alias AnimBuilder mode =
     Internal.AnimBuilder mode
 
 
-{-| A type alias for animation group names.
-
-Used to identify which animation group to target.
-
+{-| The name of the animation group you want to target.
 -}
 type alias AnimGroupName =
     String
 
 
-{-| Type alias for the internal `TimelineBuilder` type.
+{-| Builder type for document-timeline helpers.
 
-This generic timeline builder works with any engine that uses the same timeline,
-but will result in a type error if used with an Engine that does not.
+Use this in type annotations when a helper should work with document-timeline engines.
 
-    f : Transition.TimelineBuilder engine -> Transition.TimelineBuilder engine
-
-Here's an engine-specific timeline builder for the Transition Engine. It will result in a type error if used with any other engine.
-
-    f : Transition.TimelineBuilder ForTransitionEngine -> Transition.TimelineBuilder ForTransitionEngine
-
-For mode restrictions and examples, see
-[Builder Modes](https://phollyer.github.io/elm-motion/animation/concepts/builder-modes/).
+📖 See [Builder Modes](https://phollyer.github.io/elm-motion/animation/concepts/builder-modes/)
+for patterns and examples.
 
 -}
 type alias TimelineBuilder engine =
     Internal.TimelineBuilder engine
 
 
-{-| Type alias for the internal `EngineBuilder` type.
+{-| Builder type for Transition-only helpers.
 
-This engine-specific builder will result in a type error if used with any other engine.
+Use this in type annotations when a helper should only work with this engine.
 
-    f : Transition.EngineBuilder -> Transition.EngineBuilder
-
-For mode restrictions and examples, see
-[Builder Modes](https://phollyer.github.io/elm-motion/animation/concepts/builder-modes/).
+📖 See [Builder Modes](https://phollyer.github.io/elm-motion/animation/concepts/builder-modes/)
+for patterns and examples.
 
 -}
 type alias EngineBuilder =
@@ -338,22 +324,14 @@ animate =
     Internal.animate
 
 
-{-| Re-anchor an animation to a new target by snapping to the new end values.
+{-| Update the target and snap straight to the new end values.
 
-The Transition engine has no JavaScript-side runtime snapshot of the
-currently rendered values - it only knows the previous _target_, not where
-the element actually is on screen. That makes it impossible to smoothly
-continue an in-flight transition when the target changes mid-flight (the
-typical resize-handler case).
+Use this when the target changed and you want the element to jump to the new result.
 
-`retarget` therefore guarantees a deterministic outcome: the element snaps
-to the freshly computed end values with `transition: none` and the
-animation group is marked complete. It's safe to call repeatedly during a
-drag or resize without accumulating partial transitions or visual glitches.
-
-The Sub and WAAPI engines provide a `retarget` with the same builder API
-that smoothly continues from the current rendered position - swap in those
-engines if you need visual continuity instead of a snap.
+📖 For when to use `retarget` and which engines can continue smoothly, see
+[Responsive Animations](https://phollyer.github.io/elm-motion/animation/concepts/responsive-animations/)
+and the
+[Transition Engine Documentation](https://phollyer.github.io/elm-motion/animation/engines/transition/).
 
 -}
 retarget : AnimState -> (EngineBuilder -> EngineBuilder) -> AnimState
@@ -367,20 +345,15 @@ retarget =
 -- ============================================================
 
 
-{-| The ID of the element where the handler is attached.
-
-Returns `Nothing` if the element has no ID attribute.
-
+{-| The ID of the element that owns the event listener.
 -}
 type alias CurrentTargetId =
     Maybe String
 
 
-{-| The ID of the element that triggered the event.
+{-| The ID of the element that started the event.
 
-Returns `Nothing` if the element has no ID attribute.
-
-This may be different from `CurrentTargetId` if the event bubbled up from a child element.
+This can be different from `CurrentTargetId` when the event bubbled from a child element.
 
 -}
 type alias TargetId =
@@ -402,7 +375,7 @@ type AnimEvent
 -- ============================================================
 
 
-{-| Internal message type.
+{-| Message type used with `update`.
 
     import Anim.Engine.Transition as Transition
 
@@ -415,9 +388,9 @@ type alias AnimMsg =
     Internal.AnimMsg
 
 
-{-| Handle animation lifecycle messages.
+{-| Handle messages from this engine.
 
-Returns the updated state and an [AnimEvent](#AnimEvent) for you to pattern match on.
+Returns the updated state and the event for this message.
 
     import Anim.Engine.Transition as Transition
 

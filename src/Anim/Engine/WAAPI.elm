@@ -33,15 +33,14 @@ module Anim.Engine.WAAPI exposing
     , getTranslateRange, getTranslateStart, getTranslateEnd, getTranslateCurrent
     )
 
-{-| Run animations using the Web Animations API via ports for maximum performance.
+{-| Use the Web Animations API through ports.
 
-Requires the `@phollyer/elm-motion` JavaScript companion library.
+Choose this engine when you want browser-driven animation with Elm state around it.
 
-For specific Engine guides, setup instructions, and examples, see the
-[WAAPI Engine Documentation](https://phollyer.github.io/elm-motion/animation/engines/waapi/).
-
-For Engine comparisons, shared features, examples and code, see the
-[Engine Overview](https://phollyer.github.io/elm-motion/animation/engines/overview/) section in the docs.
+📖 For setup, examples, and behaviour details, see the
+[WAAPI Engine Documentation](https://phollyer.github.io/elm-motion/animation/engines/waapi/)
+and the
+[Engine Overview](https://phollyer.github.io/elm-motion/animation/engines/overview/).
 
 
 # Types
@@ -56,20 +55,14 @@ For Engine comparisons, shared features, examples and code, see the
 
 ### Timeline Builder
 
-This Engine uses the browser's Document timeline, along with the Keyframe, Sub, and Transition Engines.
-
-Use the `TimelineBuilder` to configure animations that run on the Document timeline only. If any Engines
-are used that don't run on the Document timeline (e.g., Scroll or View), you'll get a type error.
+Use this in type annotations when a helper should work with document-timeline engines only.
 
 @docs TimelineBuilder
 
 
 ### Engine Builder
 
-The `EngineBuilder` is a builder type restricted to the WAAPI Engine.
-
-Use the `EngineBuilder` when you want to restrict builder functions to the WAAPI Engine, such as any that rely
-on WAAPI-only APIs.
+Use this in type annotations when a helper should only work with the WAAPI engine.
 
 @docs EngineBuilder
 
@@ -111,9 +104,7 @@ on WAAPI-only APIs.
 
 # View
 
-Apply `attributes` to your element to set its starting and end state as inline styles.
-
-This ensures the element displays the correct property values before, during, and after the animation runs.
+Add `attributes` to the element you want to animate.
 
 @docs attributes
 
@@ -269,9 +260,9 @@ import Motion.Spring exposing (Spring)
 -- ============================================================
 
 
-{-| The animation state type used to store animation configurations.
+{-| Holds the WAAPI engine state.
 
-Store it in your model.
+Keep this in your model.
 
 The `msg` type parameter is your `Msg` type.
 
@@ -283,48 +274,36 @@ type alias AnimState msg =
     Internal.AnimState msg
 
 
-{-| Type alias for the base [AnimBuilder](Anim.Builder#AnimBuilder) type.
+{-| Base animation builder type for this engine.
 -}
 type alias AnimBuilder mode =
     Internal.AnimBuilder mode
 
 
-{-| A type alias for animation group names.
-
-Used to identify which animation group to target.
-
+{-| The name of the animation group you want to target.
 -}
 type alias AnimGroupName =
     String
 
 
-{-| Type alias for the internal `TimelineBuilder` type.
+{-| Builder type for document-timeline helpers.
 
-This generic timeline builder works with any engine that uses the same timeline,
-but will result in a type error if used with an Engine that does not.
+Use this in type annotations when a helper should work with document-timeline engines.
 
-    f : WAAPI.TimelineBuilder engine -> WAAPI.TimelineBuilder engine
-
-Here's an engine-specific timeline builder for the WAAPI Engine. It will result in a type error if used with any other engine.
-
-    f : WAAPI.TimelineBuilder ForWAAPIEngine -> WAAPI.TimelineBuilder ForWAAPIEngine
-
-For mode restrictions and examples, see
-[Builder Modes](https://phollyer.github.io/elm-motion/animation/concepts/builder-modes/).
+📖 See [Builder Modes](https://phollyer.github.io/elm-motion/animation/concepts/builder-modes/)
+for patterns and examples.
 
 -}
 type alias TimelineBuilder engine =
     Internal.TimelineBuilder engine
 
 
-{-| Type alias for the internal `EngineBuilder` type.
+{-| Builder type for WAAPI-only helpers.
 
-This engine-specific builder will result in a type error if used with any other engine.
+Use this in type annotations when a helper should only work with this engine.
 
-    f : WAAPI.EngineBuilder -> WAAPI.EngineBuilder
-
-For mode restrictions and examples, see
-[Builder Modes](https://phollyer.github.io/elm-motion/animation/concepts/builder-modes/).
+📖 See [Builder Modes](https://phollyer.github.io/elm-motion/animation/concepts/builder-modes/)
+for patterns and examples.
 
 -}
 type alias EngineBuilder =
@@ -397,18 +376,13 @@ animate =
     Internal.animate
 
 
-{-| Continue an in-flight animation toward a new target without restarting it.
+{-| Continue a running animation toward a new target.
 
-Works like [animate](#animate), but for any property the engine currently
-reports as `Running`, [continueFor](Anim-Property-Translate#continueFor) will
-inherit the in-flight timing (duration / speed / easing / delay) and use the
-property's current animated value as the new `from` — producing smooth
-retargeting instead of a fresh animation.
+Use this when the target changed and you want motion to keep going smoothly.
+If nothing is running, the new value becomes the next target.
 
-Idle properties fall back to `for`-style behaviour: they snap to the new
-value rather than animating. This is the typical resize-handler pattern —
-while the user is mid-drag the box keeps animating; once the resize stops,
-the box snaps to its final position.
+📖 For responsive and resize patterns, see
+[Responsive Animations](https://phollyer.github.io/elm-motion/animation/concepts/responsive-animations/).
 
     import Anim.Engine.WAAPI as WAAPI
     import Anim.Property.Translate as Translate
@@ -461,9 +435,9 @@ fireAndForget =
 -- ============================================================
 
 
-{-| Animation lifecycle events from the Web Animations API.
+{-| Animation lifecycle events from this engine.
 
-Returned as a `Maybe` — `Nothing` indicates the message was not intended for this engine.
+`Nothing` means the message was for something else.
 
 -}
 type AnimEvent
@@ -484,7 +458,7 @@ type AnimEvent
 -- ============================================================
 
 
-{-| Internal message type.
+{-| Message type used with `update`.
 
     import Anim.Engine.WAAPI as WAAPI
 
@@ -497,9 +471,9 @@ type alias AnimMsg =
     Internal.AnimMsg
 
 
-{-| Handle animation lifecycle messages.
+{-| Handle messages from this engine.
 
-Returns the updated state and an [AnimEvent](#AnimEvent) for you to pattern match on.
+Returns the updated state and the event for this message.
 
     import Anim.Engine.WAAPI as WAAPI
 

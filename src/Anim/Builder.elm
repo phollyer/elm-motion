@@ -8,13 +8,10 @@ module Anim.Builder exposing
     , cssUnit, cssUnitX, cssUnitY, cssUnitZ, cssUnitWidth, cssUnitHeight
     )
 
-{-| Builder types and functions for configuring animations.
+{-| Shared builder types and settings for animations.
 
-The types here are the base building blocks for all animations, and the
-functions are shared configuration builder functions.
-
-Use the Engine and Property modules to build animations, the types here to
-define your builders and the functions here to configure them where needed.
+Most app code will use the engine and property modules directly.
+This module is mainly for shared type annotations and global builder settings.
 
 
 # Types
@@ -27,34 +24,30 @@ in the docs for detailed examples and patterns.
 
 ## Timeline Modes
 
-Use these to restrict builder functions to engines that use a particular timeline.
+Use these in type annotations when a helper should only work on a certain timeline.
 
 @docs ForScrollTimeline, ForViewTimeline, ForDocumentTimeline
 
 
 ### Engine Modes
 
-Use these with `ForDocumentTimeline` when you want to restrict builder functions to a specific engine that uses the
-browser's Document timeline: Transition, Keyframe, Sub, or WAAPI.
+Use these with `ForDocumentTimeline` when a helper should only work with one document-timeline engine.
 
 @docs ForKeyframeEngine, ForSubEngine, ForTransitionEngine, ForWAAPIEngine
 
 
 # Document Timeline Functions
 
-These functions are configured for Document Timeline engines (Keyframe, Sub, Transition, WAAPI).
-They are not compatible with ScrollTimeline or ViewTimeline engines (they make no sense in those contexts).
-If you try to use them in a ScrollTimeline or ViewTimeline builder, you'll get a type error.
-
-The engine modules re-export these same builder functions.
+These settings are for document-timeline engines: Keyframe, Sub, Transition, and WAAPI.
+The engine modules re-export the same functions.
 
 @docs delay, duration, speed
 
 
 # Universal Functions
 
-Use the shared builder functions below for portable global configuration. The engine
-modules re-export these same builder functions.
+Use the shared builder functions below for settings that work across engines.
+The engine modules re-export the same functions.
 
 
 ## Playback
@@ -69,13 +62,12 @@ modules re-export these same builder functions.
 
 ## Units
 
-Set the CSS unit for all multi-dimensional properties that use length values.
+Set the CSS unit for built-in properties that use length values.
 
-Currently, these functions affect `Translate`, `Size`, and `PerspectiveOrigin`, and are used to define
-the CSS unit used for rendering the values of those properties. Useful for responsive designs where you
-want to use container-relative units like `cqmin` or `cqw`.
+This is useful when you want those properties to render in units like `px`, `rem`, or container units.
 
-Custom properties that use length values declare which unit they use in their config, and will not be affected by these functions.
+📖 See the property docs and [Responsive Animations](https://phollyer.github.io/elm-motion/animation/concepts/responsive-animations/)
+for details.
 
 @docs cssUnit, cssUnitX, cssUnitY, cssUnitZ, cssUnitWidth, cssUnitHeight
 
@@ -87,8 +79,7 @@ import Motion.Easing exposing (Easing)
 import Motion.Spring exposing (Spring)
 
 
-{-| The base builder type for configuring animations that can be consumed
-by any animation engine.
+{-| Base builder type for animations.
 
     f : AnimBuilder mode -> AnimBuilder mode
 
@@ -97,10 +88,7 @@ type alias AnimBuilder mode =
     Internal.AnimBuilder mode
 
 
-{-| ScrollTimeline Engine builder mode.
-
-Builders defined with this `mode` are only compatible with the ScrollTimeline Engine,
-and will produce a type error if used with any other engine.
+{-| Builder mode for ScrollTimeline helpers.
 
     f : AnimBuilder ForScrollTimeline -> AnimBuilder ForScrollTimeline
 
@@ -109,10 +97,7 @@ type alias ForScrollTimeline =
     Internal.ForScrollTimeline
 
 
-{-| ViewTimeline Engine builder mode.
-
-Builders defined with this `mode` are only compatible with the ViewTimeline Engine,
-and will produce a type error if used with any other engine.
+{-| Builder mode for ViewTimeline helpers.
 
     f : AnimBuilder ForViewTimeline -> AnimBuilder ForViewTimeline
 
@@ -121,10 +106,7 @@ type alias ForViewTimeline =
     Internal.ForViewTimeline
 
 
-{-| Document timeline builder mode.
-
-Builders defined with this `mode` are compatible with any engine that uses the browser's Document timeline:
-Keyframe, Sub, Transition, and WAAPI.
+{-| Builder mode for document-timeline helpers.
 
     f : AnimBuilder (ForDocumentTimeline engine) -> AnimBuilder (ForDocumentTimeline engine)
 
@@ -133,7 +115,7 @@ type alias ForDocumentTimeline engine =
     Internal.ForDocumentTimeline engine
 
 
-{-| Keyframe Engine builder mode.
+{-| Builder mode for Keyframe helpers.
 
     f : AnimBuilder (ForDocumentTimeline ForKeyframeEngine) -> AnimBuilder (ForDocumentTimeline ForKeyframeEngine)
 
@@ -142,7 +124,7 @@ type alias ForKeyframeEngine =
     Internal.ForKeyframeEngine
 
 
-{-| Sub Engine builder mode.
+{-| Builder mode for Sub helpers.
 
     f : AnimBuilder (ForDocumentTimeline ForSubEngine) -> AnimBuilder (ForDocumentTimeline ForSubEngine)
 
@@ -151,7 +133,7 @@ type alias ForSubEngine =
     Internal.ForSubEngine
 
 
-{-| Transition Engine builder mode.
+{-| Builder mode for Transition helpers.
 
     f : AnimBuilder (ForDocumentTimeline ForTransitionEngine) -> AnimBuilder (ForDocumentTimeline ForTransitionEngine)
 
@@ -160,7 +142,7 @@ type alias ForTransitionEngine =
     Internal.ForTransitionEngine
 
 
-{-| WAAPI Engine builder mode.
+{-| Builder mode for WAAPI helpers.
 
     f : AnimBuilder (ForDocumentTimeline ForWAAPIEngine) -> AnimBuilder (ForDocumentTimeline ForWAAPIEngine)
 

@@ -132,8 +132,10 @@ for details.
 
 ## Bounds
 
-Declare persistent per-axis clamps that constrain every value flowing through
-the pipeline. See [clampX](#clampX) for behaviour.
+Keep perspective-origin values on each axis within a range you choose.
+
+📖 See [Responsive Animations](https://phollyer.github.io/elm-motion/animation/concepts/responsive-animations/)
+for patterns and examples.
 
 @docs clampX, clampY, unclampX, unclampY
 
@@ -168,7 +170,7 @@ type alias AnimGroupName =
     String
 
 
-{-| Type alias for the internal `PerspectiveOriginBuilder`.
+{-| Builder type for perspective-origin animations.
 -}
 type alias Builder mode =
     PB.PerspectiveOriginBuilder mode
@@ -528,43 +530,37 @@ cssUnitY =
 -- ============================================================
 
 
-{-| Constrain the X axis of the active animGroup's perspective-origin to
-`[min, max]`.
+{-| Keep the X axis perspective-origin within `[min, max]` for this animation group.
 
-The clamp is persistent: once declared it applies to every subsequent
-`animate` / `retarget` call on this animGroup until you call [unclampX](#unclampX)
-(or call `clampX` again with new bounds). Clamps are applied at [build](#build)
-time, so they affect every value declared in the pipeline regardless of order.
-If `min > max` the arguments are swapped automatically. The active unit
-(percent or px) on each value is preserved.
+The range stays in effect for future `animate` / `retarget` calls
+until you call [unclampX](#unclampX). If `min > max`, the values are swapped.
+The active unit (percent or px) on each value is preserved.
 
+📖 See [Responsive Animations](https://phollyer.github.io/elm-motion/animation/concepts/responsive-animations/)
+for patterns and examples.
 -}
 clampX : Float -> Float -> Builder mode -> Builder mode
 clampX =
     PB.clampX
 
 
-{-| Constrain the Y axis of the active animGroup's perspective-origin to
-`[min, max]`.
+{-| Keep the Y axis perspective-origin within `[min, max]` for this animation group.
 
 See [clampX](#clampX) for behaviour.
-
 -}
 clampY : Float -> Float -> Builder mode -> Builder mode
 clampY =
     PB.clampY
 
 
-{-| Remove a previously declared X axis clamp on the active animGroup. No-op
-if no clamp is set.
+{-| Remove the X axis range for this animation group. Does nothing if no range is set.
 -}
 unclampX : Builder mode -> Builder mode
 unclampX =
     PB.unclampX
 
 
-{-| Remove a previously declared Y axis clamp on the active animGroup. No-op
-if no clamp is set.
+{-| Remove the Y axis range for this animation group. Does nothing if no range is set.
 -}
 unclampY : Builder mode -> Builder mode
 unclampY =

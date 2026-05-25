@@ -3,26 +3,25 @@ module Anim.Unit exposing
     , toCssSuffix
     )
 
-{-| Length unit selector for length-bearing properties
+{-| Length unit for length-bearing properties
 ([Translate](Anim.Property.Translate), [Size](Anim.Property.Size),
 [PerspectiveOrigin](Anim.Property.PerspectiveOrigin),
 [Custom](Anim.Property.Custom)).
 
-The default is `Px`, which preserves the original pixel-only behaviour.
-Setting a relative unit on an Engine, group, or property makes the browser
-re-evaluate the rendered values against current layout - the animation follows
-resize automatically without needing [Resize.bounds](Anim.Resize#bounds) plumbing.
+The default is `Px`. Switching to a relative unit (`Percent`, `Vw`, `Vh`,
+`Cqw`, `Cqh`, `Rem`, `Em`, etc.) makes the browser re-evaluate the animation
+against current layout, so the animation follows window or container resize
+automatically - no [Resize.bounds](Anim.Resize#bounds) plumbing needed.
 
-The Engines reach for the unit in this order, taking the first one set:
+You can set the unit per-property (`Translate.cssUnit`, `Size.cssUnit`,
+`PerspectiveOrigin.cssUnit`) or globally on an Engine (`WAAPI.cssUnit`,
+`Transition.cssUnit`, etc.). Property-level settings win over Engine-level ones.
 
-1.  Property-level (`Translate.cssUnit`, `Size.cssUnit`, `PerspectiveOrigin.cssUnit`)
-2.  Engine-level (`WAAPI.cssUnit`, `Transition.cssUnit`, `Keyframe.cssUnit`,
-    `ScrollTimeline.cssUnit`, `ViewTimeline.cssUnit`)
-3.  `Px` (built-in default)
+The `Sub` Engine only supports `Px`. Setting a non-`Px` unit on a property
+animated by `Sub` falls back to `Px` and reports an error.
 
-The `Sub` Engine currently only supports `Px`. Setting a non-`Px` unit on a
-property targeted at `Sub` reports an error and falls back to `Px` for that
-animation. Support for relative units on `Sub` is planned for a future release.
+📖 See [Responsive Animations](https://phollyer.github.io/elm-motion/animation/concepts/responsive-animations/)
+for full per-engine behaviour.
 
 
 # Choosing a unit

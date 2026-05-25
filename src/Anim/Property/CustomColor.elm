@@ -93,7 +93,7 @@ type alias AnimGroupName =
     String
 
 
-{-| Type alias for the internal `Builder`.
+{-| Builder type for custom color animations.
 -}
 type alias Builder mode =
     Internal.Builder mode

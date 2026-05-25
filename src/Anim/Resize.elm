@@ -3,34 +3,23 @@ module Anim.Resize exposing
     , AxisBounds, Bounds, bounds
     )
 
-{-| This module provides a way to set new bounds for
-an animation when a resize event occurs. Use the [bounds](#bounds) function
-in conjunction with an Engine's `onResize` function and the Engine will apply
-the new bounds on the next animation frame.
+{-| Update animation bounds when the viewport or a container resizes.
+
+Use [bounds](#bounds) together with an Engine's `onResize` function. The Engine applies the
+new bounds on the next animation frame.
 
 
 # When to use `Resize.bounds`
 
-`Resize.bounds` is the explicit, pixel-keyed escape hatch for animations whose
-endpoints are computed from layout dimensions in `Px`. Before reaching for it,
-consider whether a relative [`Anim.Unit`](Anim-Unit) (`Percent`, `Vw`, `Vh`,
-`Rem`, `Em`) on the animated property would let the browser handle resize for
-you:
+`Resize.bounds` is the escape hatch for animations whose endpoints are calculated in
+pixels (for example `containerWidth - boxWidth`).
 
-  - **CSS Transition, Keyframe, WAAPI, ScrollTimeline, ViewTimeline** —
-    rendered values follow the unit. Setting `Translate.cssUnit Unit.Vw` (or
-    the engine-level [`cssUnit`](Anim-Engine-WAAPI#cssUnit)) makes the browser
-    re-evaluate values against the current viewport on every frame; no
-    `onResize` plumbing is needed.
-      - **Sub** — `Translate`, `Size`, and `PerspectiveOrigin` preserve relative
-        units in render output. During `Sub.onResize`, numeric remaps are applied
-        only to `Px` axes for resize-aware properties (`Translate`,
-        `PerspectiveOrigin`); non-`Px` axes are left unchanged so CSS units can
-        track layout natively. `Size` is currently not remapped by
-        `Resize.bounds` in Sub.
-  - **WAAPI** — supports both. Use relative units when endpoints scale with
-    layout, and `Resize.bounds` when endpoints are derived from `Px`
-    measurements (e.g. `containerWidth - boxWidth`).
+Before reaching for it, consider whether a relative [`Anim.Unit`](Anim-Unit)
+(`Percent`, `Vw`, `Vh`, `Rem`, `Em`, `Cqw`, `Cqh`...) on the animated property
+would let the browser handle the resize for you - no `onResize` plumbing required.
+
+📖 See [Responsive Animations](https://phollyer.github.io/elm-motion/animation/concepts/responsive-animations/)
+for per-engine details and patterns.
 
 After a resize event, pass the new bounds to the engine:
 
@@ -50,7 +39,7 @@ After a resize event, pass the new bounds to the engine:
         , Cmd.none
         )
 
-The animation will respect the new bounds on the next animation frame after resize.
+The animation will respect the new bounds on the next animation frame.
 
 
 # Builder
@@ -67,10 +56,9 @@ The animation will respect the new bounds on the next animation frame after resi
 import Anim.Internal.Resize.Builder as Internal
 
 
-{-| Opaque builder type consumed by [WAAPI.onResize](Anim.Engine.WAAPI#responsive-animations) or [Sub.onResize](Anim.Engine.Sub).
+{-| Builder type passed to an Engine's `onResize` function.
 
-This builder stores per-group resize bounds so the Engine can apply them when handling a resize event.
-
+Holds per-group resize bounds so the Engine can apply them on the next frame.
 -}
 type alias Builder =
     Internal.Builder

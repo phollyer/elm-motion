@@ -15,21 +15,15 @@ module Anim.Engine.ViewTimeline exposing
     , transformOrder
     )
 
-{-| View-driven animations that tie progress to an element's position within the viewport.
+{-| Use an element's position in the viewport to drive animation progress.
 
-Animations run automatically as the element scrolls into and out of view — no `AnimState`
-required. `update` and `subscriptions` are optional, and only needed if you want to react
-to lifecycle events.
+Animations run automatically as the element moves through view, so you do not need an `AnimState`.
+`update` and `subscriptions` are optional and only matter when you want events.
 
-The Engine uses the [ViewTimeline](https://developer.mozilla.org/en-US/docs/Web/API/ViewTimeline)
-interface to the Web Animations API (WAAPI) and so requires the `@phollyer/elm-motion` JavaScript
-companion library.
-
-For specific Engine guides, setup instructions, and examples, see the
-[ViewTimeline Engine Documentation](https://phollyer.github.io/elm-motion/animation/engines/view-timeline/).
-
-For Engine comparisons, shared features, examples and code, see the
-[Engine Overview](https://phollyer.github.io/elm-motion/animation/engines/overview/) section in the docs.
+📖 For setup, browser support, and examples, see the
+[ViewTimeline Engine Documentation](https://phollyer.github.io/elm-motion/animation/engines/view-timeline/)
+and the
+[Engine Overview](https://phollyer.github.io/elm-motion/animation/engines/overview/).
 
 
 # Types
@@ -132,15 +126,12 @@ import Motion.Spring exposing (Spring)
 -- ============================================================
 
 
-{-| Animation builder type for configuring view-driven animations.
+{-| Builder type for view-driven animations.
 
-Use this in type annotations for animation builder functions specific to the
-ViewTimeline Engine.
+Use this in type annotations when a helper should only work with ViewTimeline.
 
-For builder functions that should work across all engines, use `AnimBuilder mode` from `Anim.Builder` instead.
-
-For mode restrictions and examples, see
-[Builder Modes](https://phollyer.github.io/elm-motion/animation/concepts/builder-modes/).
+📖 See [Builder Modes](https://phollyer.github.io/elm-motion/animation/concepts/builder-modes/)
+for patterns and examples.
 
 -}
 type alias TimelineBuilder =
@@ -181,14 +172,14 @@ animate =
 -- ============================================================
 
 
-{-| Lifecycle events emitted by the ViewTimeline engine.
+{-| Lifecycle events from the ViewTimeline engine.
 
   - `Ended String` — the element scrolled past the end of the animation range
   - `Cancelled String` — the animation was cancelled (e.g. element removed)
   - `Iteration String Int` — the animation looped; the `Int` is the cumulative iteration count
   - `AnimError String` — a message arrived but could not be decoded
 
-Returned as a `Maybe` — `Nothing` indicates the message was not intended for this engine.
+`Nothing` means the message was for something else.
 
 -}
 type AnimEvent
@@ -204,7 +195,7 @@ type AnimEvent
 -- ============================================================
 
 
-{-| Internal message type. Add this to your `Msg` to receive view-driven lifecycle events.
+{-| Message type used with `update`.
 
     type Msg
         = GotViewMsg ViewTimeline.AnimMsg
@@ -215,9 +206,9 @@ type alias AnimMsg =
     Internal.AnimMsg
 
 
-{-| Decode an `AnimMsg` into a `Maybe AnimEvent`.
+{-| Turn an engine message into an event.
 
-Messages that do not match ViewTimeline lifecycle events return `Nothing`.
+Messages that do not belong to this engine return `Nothing`.
 
     update : Msg -> Model -> ( Model, Cmd Msg )
     update msg model =
@@ -258,10 +249,9 @@ toAnimEvent internalEvent =
 -- ============================================================
 
 
-{-| Subscribe to view-driven lifecycle events from JavaScript.
+{-| Subscribe to lifecycle events for this engine.
 
-Wire this up alongside your `motionMsg` port. Unlike the WAAPI engine,
-no `AnimState` is needed — subscriptions are always active.
+Wire this up alongside your `motionMsg` port.
 
     subscriptions : Model -> Sub Msg
     subscriptions _ =

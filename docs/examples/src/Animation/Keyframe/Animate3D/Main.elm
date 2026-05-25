@@ -276,7 +276,7 @@ selectAnimation targetAmount state =
 -- ANIMATIONS
 --
 ---8<-- [start:animationFunctions]
--- CUBE - 1st level of 3D animation
+-- CUBE ROTATION
 --
 -- We only rotate the cube, not individual faces, they maintain their
 -- position in 3D space because we use `View3D.transformStyle View3D.Preserve3D`
@@ -303,10 +303,7 @@ rotateCubeAntiClockwise =
 
 
 
--- SIDES - 2nd level of 3D animation
---
--- For the side movement animations, we build complex animations out of
--- smaller pieces.
+-- SIDES
 
 
 moveSidesOut : Float -> AnimBuilder mode -> AnimBuilder mode
@@ -432,7 +429,7 @@ moveBottomFaceIn toY =
 
 
 
--- TEXT - 3rd level of 3D animation
+-- TEXT 
 --
 -- Text moves forward (Z+20) and rotates (to Z=360deg) when sides expand,
 -- and then moves back (to Z=0) and rotates back (to Z=0deg) when sides close
@@ -609,9 +606,9 @@ viewAnimationArea model =
         , View3D.perspectiveOrigin View3D.Center
 
         --
-        -- Workaround for Chrome on macOS GPU compositing issues with 3D transforms.
+        -- Harmless hack for Chrome on macOS GPU compositing issues with 3D transforms.
         -- Setting opacity: 0.99 forces a new compositing layer, which prevents
-        -- the colored rectangle artifacts that can appear during complex 3D animations.
+        -- colored rectangle artifacts that can appear during complex 3D animations.
         -- It's not perfect, some flickering can still occur.
         , View3D.opacityHack
         , id "animation-area"

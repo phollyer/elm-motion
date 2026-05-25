@@ -105,31 +105,13 @@ for details.
 
 ## End Value (Relative)
 
-The end value is computed as `current + delta` at build time.
+Move by a delta instead of to a fixed position. The end value is `current + delta`.
 
-How the **current** position is determined depends on
-the engine, the underlying technology being targeted, and the state of the animation:
+What counts as **current** depends on the engine: `Sub` and `WAAPI` always use the live
+animated position, while `Keyframe` and `Transition` use the last configured start or end value.
 
-  - **Sub / WAAPI** — _always accurate_; both track current animated position, even mid-flight.
-
-
-### Animations that have completed:
-
-  - **Keyframe / Transition** — _always accurate_;
-      - uses the current configurations start value if provided
-      - otherwise, uses the previous animation's end value
-      - otherwise, the default value (0 for translate) applies
-
-
-### Animations that are in-flight:
-
-CSS Keyframe and Transition do not track the current position of the animation mid-flight,
-so relative movements are based on the start and end values of the current/previous configuration:
-
-  - **Keyframe/Transition** — _not accurate_;
-      - uses the start value of the current configuration if it exists
-      - otherwise, uses the in-flight end value
-      - otherwise, the default value (0 for translate) applies
+📖 See [Start Values](https://phollyer.github.io/elm-motion/animation/engines/overview/#start-values)
+for full per-engine behaviour.
 
 @docs byXYZ, byXY, byXZ, byX, byYZ, byY, byZ
 
@@ -156,16 +138,14 @@ so relative movements are based on the start and end values of the current/previ
 
 ## Bounds
 
-Declare a per-axis range that every translate value on this animGroup must
-stay within. Clamps are persistent across `animate` / `retarget` calls until
-you clear them, and apply to every value that flows through the property
-pipeline — explicit `from*` / `to*`, relative `by*`, and the auto-from value
-used by `continueFor` / `retarget`.
+Keep translate values on each axis within a range you choose.
 
-A value outside the range snaps to the nearest boundary. A relative `byX`
-that would push the element past the boundary stops at the boundary instead
-— useful for keeping a player ship on-screen, or making sure a resize from
-landscape to portrait pulls a now-off-canvas element back into view.
+Values outside the range snap to the nearest boundary. Relative `byX`/`byY`/`byZ` moves
+stop at the boundary instead of pushing past it — handy for keeping an element on-screen
+during drags or resizes.
+
+📖 See [Responsive Animations](https://phollyer.github.io/elm-motion/animation/concepts/responsive-animations/)
+for patterns and examples.
 
 @docs clampX, clampY, clampZ, unclampX, unclampY, unclampZ
 
@@ -198,7 +178,7 @@ type alias AnimGroupName =
     String
 
 
-{-| Type alias for the internal `TranslateBuilder`.
+{-| Builder type for translate animations.
 -}
 type alias Builder mode =
     TB.TranslateBuilder mode
@@ -995,16 +975,13 @@ byZ =
 -- ============================================================
 
 
-{-| Constrain the X axis of the named animGroup's translate to `[min, max]`.
+{-| Keep the X axis translate within `[min, max]` for this animation group.
 
-The clamp is persistent: once declared it applies to every subsequent
-`animate` / `retarget` call on this animGroup until you call [unclampX](#unclampX)
-(or call `clampX` again with new bounds). It is enforced at build time on
-every value that flows through the pipeline \\u2014 explicit `fromX` / `toX`,
-relative `byX`, and the auto-from value used by `continueFor` / `retarget`.
+The range stays in effect for future `animate` / `retarget` calls
+until you call [unclampX](#unclampX). Values outside the range snap to the boundary,
+and relative `byX` moves stop at the boundary instead of pushing past it.
 
-A typical use is the resize handler on a fluid layout, declaring the
-playfield bounds whenever the canvas size changes:
+Typical use is a resize handler that updates playfield bounds when the canvas changes:
 
     update msg model =
         case msg of
@@ -1025,55 +1002,47 @@ playfield bounds whenever the canvas size changes:
                         >> Translate.build
                 )
 
-Clamps are applied at [build](#build) time, so they affect every value
-declared in the pipeline regardless of order \\u2014 explicit `from*` / `to*`
-called before or after `clampX` are clamped, and so is the runtime snapshot
-used by `continueFor`. If `min > max` the arguments are swapped automatically.
-
+📖 See [Responsive Animations](https://phollyer.github.io/elm-motion/animation/concepts/responsive-animations/)
+for more patterns.
 -}
 clampX : Float -> Float -> Builder mode -> Builder mode
 clampX =
     TB.clampX
 
 
-{-| Constrain the Y axis of the active animGroup's translate to `[min, max]`.
+{-| Keep the Y axis translate within `[min, max]` for this animation group.
 
 See [clampX](#clampX) for behaviour and example.
-
 -}
 clampY : Float -> Float -> Builder mode -> Builder mode
 clampY =
     TB.clampY
 
 
-{-| Constrain the Z axis of the active animGroup's translate to `[min, max]`.
+{-| Keep the Z axis translate within `[min, max]` for this animation group.
 
 See [clampX](#clampX) for behaviour and example.
-
 -}
 clampZ : Float -> Float -> Builder mode -> Builder mode
 clampZ =
     TB.clampZ
 
 
-{-| Remove a previously declared X axis clamp on the active animGroup. No-op
-if no clamp is set.
+{-| Remove the X axis range for this animation group. Does nothing if no range is set.
 -}
 unclampX : Builder mode -> Builder mode
 unclampX =
     TB.unclampX
 
 
-{-| Remove a previously declared Y axis clamp on the active animGroup. No-op
-if no clamp is set.
+{-| Remove the Y axis range for this animation group. Does nothing if no range is set.
 -}
 unclampY : Builder mode -> Builder mode
 unclampY =
     TB.unclampY
 
 
-{-| Remove a previously declared Z axis clamp on the active animGroup. No-op
-if no clamp is set.
+{-| Remove the Z axis range for this animation group. Does nothing if no range is set.
 -}
 unclampZ : Builder mode -> Builder mode
 unclampZ =

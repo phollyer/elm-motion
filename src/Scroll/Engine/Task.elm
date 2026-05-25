@@ -6,16 +6,12 @@ module Scroll.Engine.Task exposing
     , easing
     )
 
-{-| Composable scroll animations via Task with error handling.
+{-| Use scroll animations as Tasks when you want results or error handling.
 
-Use this module when you need to handle scroll success or failure,
-or compose scroll operations with other Tasks.
-
-For specific Engine guides and examples, see the
-[Scroll Task Engine Documentation](https://phollyer.github.io/elm-motion/engines/scroll/task/).
-
-For Engine comparisons, shared features, examples and code, see the
-[Scroll Overview](https://phollyer.github.io/elm-motion/engines/scroll/overview/) section in the docs.
+📖 For setup, examples, and behaviour details, see the
+[Scroll Task Engine Documentation](https://phollyer.github.io/elm-motion/engines/scroll/task/)
+and the
+[Scroll Overview](https://phollyer.github.io/elm-motion/engines/scroll/overview/).
 
 Use the [Builder](Scroll-Builder) module to configure scroll targets.
 
@@ -60,7 +56,7 @@ import Task exposing (Task)
 -- ============================================================
 
 
-{-| Animation builder type for configuring scroll animations.
+{-| Builder type for scroll animations.
 -}
 type alias ScrollBuilder =
     SB.ScrollBuilder
@@ -77,9 +73,9 @@ type Container
     | Container String
 
 
-{-| Error type for failed scroll [Task](http://package.elm-lang.org/packages/elm/core/latest/Task)s.
+{-| Error returned when a scroll task fails.
 
-Provides details about what failed during a scroll operation:
+It tells you what container failed, which target was involved, and the DOM error:
 
   - `container`: The container that was being scrolled
   - `targetElementId`: The element ID if scrolling to an element target
@@ -94,9 +90,9 @@ type ScrollError
         }
 
 
-{-| Value type for successful scroll [Task](http://package.elm-lang.org/packages/elm/core/latest/Task)s.
+{-| Value returned when a scroll task succeeds.
 
-Provides details about the completed scroll operation:
+It tells you which container finished scrolling and, when relevant, which target element was used:
 
   - `container`: The container that was scrolled
   - `targetElementId`: The element ID if scrolled to an element target
@@ -114,12 +110,10 @@ type alias ScrollOk =
 -- ============================================================
 
 
-{-| Execute scroll animations as a [Task](https://package.elm-lang.org/packages/elm/core/latest/Task).
+{-| Start one or more scrolls as a [Task](https://package.elm-lang.org/packages/elm/core/latest/Task).
 
-Returns a `List ScrollOk` because a single builder can chain multiple scroll targets.
-Each target produces one `ScrollOk` on success. If any target fails, the task fails
-immediately with `ScrollError` and remaining scrolls are abandoned. Use
-[`scrollEach`](#scrollEach) if you need all scrolls to run regardless of failures.
+You get one `ScrollOk` for each completed target. If any target fails, the task stops with `ScrollError`.
+Use [`scrollEach`](#scrollEach) when you want every target to run even if one fails.
 
     import Scroll.Builder as Scroll
     import Scroll.Engine.Task as Task
@@ -132,13 +126,7 @@ immediately with `ScrollError` and remaining scrolls are abandoned. Use
     Task.scroll (scrollToElement "target-section")
          |> Task.attempt HandleScrollResult
 
-**Note:** Because each call to `scroll` pre-calculates its frame steps from the
-current DOM state at the moment it runs, triggering the same scroll sequence
-multiple times in quick succession can lead to unexpected results.
-
-For example, subsequent scrolls do not cancel or replace the old one, so overlapping
-scrolls on the same container will compete with each other. If you need to interrupt or
-retrigger scrolls safely, use
+If you need progress, cancellation, or safe retriggering, use
 [Scroll.Engine.Sub](Scroll-Engine-Sub) instead.
 
 -}
@@ -149,10 +137,9 @@ scroll =
         >> Task.map (List.map toPublicOk)
 
 
-{-| Execute each scroll target in sequence and collect per-target results.
+{-| Run each scroll target in order and collect every result.
 
-Unlike [`scroll`](#scroll), this function continues after failures and always
-returns all results in pipeline order — one `Result` per scroll target.
+Unlike [`scroll`](#scroll), this keeps going after failures and gives you one `Result` per target.
 
     import Scroll.Builder as Scroll
     import Scroll.Engine.Task as Task

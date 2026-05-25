@@ -5,16 +5,14 @@ module Scroll.Engine.Cmd exposing
     , easing
     )
 
-{-| Fire-and-forget scroll animations via Cmd.
+{-| Use a simple fire-and-forget scroll command.
 
-Use this module when you don't need state management, error handling,
-or animation control. The scroll runs and completes independently.
+Choose this engine when you just want to trigger a scroll and move on.
 
-For specific Engine guides and examples, see the
-[Scroll Cmd Engine Documentation](https://phollyer.github.io/elm-motion/engines/scroll/cmd/).
-
-For Engine comparisons, shared features, examples and code, see the
-[Scroll Overview](https://phollyer.github.io/elm-motion/engines/scroll/overview/) section in the docs.
+📖 For setup, examples, and behaviour details, see the
+[Scroll Cmd Engine Documentation](https://phollyer.github.io/elm-motion/engines/scroll/cmd/)
+and the
+[Scroll Overview](https://phollyer.github.io/elm-motion/engines/scroll/overview/).
 
 Use the [Builder](Scroll-Builder) module to configure scroll targets.
 
@@ -54,7 +52,7 @@ import Scroll.Internal.ScrollBuilder as SB
 -- ============================================================
 
 
-{-| Animation builder type for configuring scroll animations.
+{-| Builder type for scroll animations.
 -}
 type alias ScrollBuilder =
     SB.ScrollBuilder
@@ -66,7 +64,7 @@ type alias ScrollBuilder =
 -- ============================================================
 
 
-{-| Execute scroll animations as a fire-and-forget [Cmd](https://package.elm-lang.org/packages/elm/core/latest/Cmd).
+{-| Start a scroll as a fire-and-forget [Cmd](https://package.elm-lang.org/packages/elm/core/latest/Cmd).
 
     import Scroll.Engine.Cmd as Cmd
 
@@ -77,13 +75,7 @@ type alias ScrollBuilder =
     Cmd.scroll ScrollCompleted <|
         scrollToElement "target-section"
 
-**Note:** Because each call to `scroll` pre-calculates its frame steps from the
-current DOM state at the moment it runs, triggering the same scroll sequence
-multiple times in quick succession can lead to unexpected results.
-
-For example, subsequent scrolls do not cancel or replace the old one, so overlapping
-scrolls on the same container will compete with each other. If you need to interrupt or
-retrigger scrolls safely, use
+If you need progress, cancellation, or safe retriggering, use
 [Scroll.Engine.Sub](Scroll-Engine-Sub) instead.
 
 -}

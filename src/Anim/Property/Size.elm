@@ -114,8 +114,10 @@ for details.
 
 ## Bounds
 
-Declare persistent width/height clamps that constrain every value flowing
-through the pipeline. See [clampWidth](#clampWidth) for behaviour.
+Keep width and height within a range you choose.
+
+📖 See [Responsive Animations](https://phollyer.github.io/elm-motion/animation/concepts/responsive-animations/)
+for patterns and examples.
 
 @docs clampWidth, clampHeight, unclampWidth, unclampHeight
 
@@ -140,7 +142,7 @@ type alias AnimGroupName =
     String
 
 
-{-| Type alias for the internal `SizeBuilder`.
+{-| Builder type for size animations.
 -}
 type alias Builder mode =
     SB.SizeBuilder mode
@@ -598,41 +600,36 @@ cssUnitHeight =
 -- ============================================================
 
 
-{-| Constrain the width of the active animGroup's size to `[min, max]`.
+{-| Keep width within `[min, max]` for this animation group.
 
-The clamp is persistent: once declared it applies to every subsequent
-`animate` / `retarget` call on this animGroup until you call
-[unclampWidth](#unclampWidth) (or call `clampWidth` again with new bounds).
-Clamps are applied at [build](#build) time, so they affect every value
-declared in the pipeline regardless of order. If `min > max` the arguments
-are swapped automatically.
+The range stays in effect for future `animate` / `retarget` calls
+until you call [unclampWidth](#unclampWidth). If `min > max`, the values are swapped.
 
+📖 See [Responsive Animations](https://phollyer.github.io/elm-motion/animation/concepts/responsive-animations/)
+for patterns and examples.
 -}
 clampWidth : Float -> Float -> Builder mode -> Builder mode
 clampWidth =
     SB.clampWidth
 
 
-{-| Constrain the height of the active animGroup's size to `[min, max]`.
+{-| Keep height within `[min, max]` for this animation group.
 
 See [clampWidth](#clampWidth) for behaviour.
-
 -}
 clampHeight : Float -> Float -> Builder mode -> Builder mode
 clampHeight =
     SB.clampHeight
 
 
-{-| Remove a previously declared width clamp on the active animGroup. No-op
-if no clamp is set.
+{-| Remove the width range for this animation group. Does nothing if no range is set.
 -}
 unclampWidth : Builder mode -> Builder mode
 unclampWidth =
     SB.unclampWidth
 
 
-{-| Remove a previously declared height clamp on the active animGroup. No-op
-if no clamp is set.
+{-| Remove the height range for this animation group. Does nothing if no range is set.
 -}
 unclampHeight : Builder mode -> Builder mode
 unclampHeight =

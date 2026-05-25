@@ -15,21 +15,15 @@ module Anim.Engine.ScrollTimeline exposing
     , transformOrder
     )
 
-{-| Scroll-driven animations that tie progress to a container's scroll position.
+{-| Use scroll position to drive animation progress.
 
-Animations run automatically as the user scrolls — no `AnimState` required.
-`update` and `subscriptions` are optional, and only needed if you want to react
-to lifecycle events.
+Animations run automatically as the user scrolls, so you do not need an `AnimState`.
+`update` and `subscriptions` are optional and only matter when you want events.
 
-The Engine uses the [ScrollTimeline](https://developer.mozilla.org/en-US/docs/Web/API/ScrollTimeline)
-interface to the Web Animations API (WAAPI) and so requires the `@phollyer/elm-motion` JavaScript
-companion library.
-
-For specific Engine guides, setup instructions, and examples, see the
-[ScrollTimeline Engine Documentation](https://phollyer.github.io/elm-motion/animation/engines/scroll-timeline/).
-
-For Engine comparisons, shared features, examples and code, see the
-[Engine Overview](https://phollyer.github.io/elm-motion/animation/engines/overview/) section in the docs.
+📖 For setup, browser support, and examples, see the
+[ScrollTimeline Engine Documentation](https://phollyer.github.io/elm-motion/animation/engines/scroll-timeline/)
+and the
+[Engine Overview](https://phollyer.github.io/elm-motion/animation/engines/overview/).
 
 
 # Types
@@ -129,10 +123,7 @@ import Motion.Spring exposing (Spring)
 -- ============================================================
 
 
-{-| Animation builder type for configuring scroll-driven animations.
-
-This type is an alias for `AnimBuilder ForScrollTimeline`, the two are interchangeable.
-
+{-| Builder type for scroll-driven animations.
 -}
 type alias TimelineBuilder =
     Internal.TimelineBuilder
@@ -193,14 +184,14 @@ containerToId container =
 -- ============================================================
 
 
-{-| Lifecycle events emitted by the ScrollTimeline engine.
+{-| Lifecycle events from the ScrollTimeline engine.
 
   - `Ended String` — the scroll position reached the end of the animation range
   - `Cancelled String` — the animation was cancelled (e.g. element removed)
   - `Iteration String Int` — the animation looped; the `Int` is the cumulative iteration count
   - `AnimError String` — a message arrived but could not be decoded
 
-Returned as a `Maybe` — `Nothing` indicates the message was not intended for this engine.
+`Nothing` means the message was for something else.
 
 -}
 type AnimEvent
@@ -216,7 +207,7 @@ type AnimEvent
 -- ============================================================
 
 
-{-| Internal message type. Add this to your `Msg` to receive scroll-driven lifecycle events.
+{-| Message type used with `update`.
 
     type Msg
         = GotScrollMsg ScrollTimeline.AnimMsg
@@ -227,9 +218,9 @@ type alias AnimMsg =
     Internal.AnimMsg
 
 
-{-| Decode an `AnimMsg` into a `Maybe AnimEvent`.
+{-| Turn an engine message into an event.
 
-Messages that do not match ScrollTimeline lifecycle events return `Nothing`.
+Messages that do not belong to this engine return `Nothing`.
 
     update : Msg -> Model -> ( Model, Cmd Msg )
     update msg model =
@@ -270,10 +261,9 @@ toAnimEvent internalEvent =
 -- ============================================================
 
 
-{-| Subscribe to scroll-driven lifecycle events from JavaScript.
+{-| Subscribe to lifecycle events for this engine.
 
-Wire this up alongside your `motionMsg` port. Unlike the WAAPI engine,
-no `AnimState` is needed — subscriptions are always active.
+Wire this up alongside your `motionMsg` port.
 
     subscriptions : Model -> Sub Msg
     subscriptions _ =

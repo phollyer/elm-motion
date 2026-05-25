@@ -124,7 +124,7 @@ type alias ScrollBuilder =
     Internal.ScrollBuilder
 
 
-{-| Type alias for the internal `Builder`.
+{-| Builder type during scroll configuration.
 -}
 type alias Builder =
     Internal.Builder

@@ -30,13 +30,14 @@ module Anim.Engine.Keyframe exposing
     , getTranslateStart, getTranslateEnd, getTranslateRange
     )
 
-{-| Run native CSS Keyframe animations.
+{-| Use CSS keyframe animations.
 
-For specific Engine guides and examples, see the
-[Keyframe Engine Documentation](https://phollyer.github.io/elm-motion/animation/engines/keyframes/).
+Use this engine when you want browser-native keyframes with Elm state around them.
 
-For Engine comparisons, shared features, examples and code, see the
-[Engine Overview](https://phollyer.github.io/elm-motion/animation/engines/overview/) section in the docs.
+📖 For setup, examples, and behaviour details, see the
+[Keyframe Engine Documentation](https://phollyer.github.io/elm-motion/animation/engines/keyframes/)
+and the
+[Engine Overview](https://phollyer.github.io/elm-motion/animation/engines/overview/).
 
 
 # Types
@@ -48,27 +49,22 @@ For Engine comparisons, shared features, examples and code, see the
 
 @docs AnimBuilder
 
-The following builders are narrowed versions of `AnimBuilder` that restrict the mode or engine.
-Use them when you want to restrict builder functions to specific engines or modes, such as any that rely
-on engine-specific APIs.
+Use `AnimBuilder` for most helper functions.
+
+Use `TimelineBuilder` or `EngineBuilder` only when you want a type annotation to say
+which engines a helper is meant to work with.
 
 
 ### Timeline Builder
 
-This Engine uses the browser's Document timeline, along with the Transition, Sub, and WAAPI Engines.
-
-Use the `TimelineBuilder` to confine animations to the Document timeline. If a non-Document timeline
-Engine tries to consume anything built with a `TimelineBuilder`, you'll get a type error.
+Use this when a helper should work with document-timeline engines only.
 
 @docs TimelineBuilder
 
 
 ### Engine Builder
 
-The `EngineBuilder` is a builder type restricted to the Keyframe Engine.
-
-Use the `EngineBuilder` when you want to restrict builder functions to the Keyframe Engine, such as any that rely
-on Keyframe-only APIs.
+Use this when a helper should only work with the Keyframe engine.
 
 @docs EngineBuilder
 
@@ -103,8 +99,8 @@ on Keyframe-only APIs.
 
 # View
 
-To render a CSS keyframe animation, you need to apply the animation `attributes` to your element
-and include a `<style>` node with the generated keyframes.
+To render keyframes, add `attributes` to the element and include `styleNode`
+or `styleNodeFor` somewhere in your view.
 
 @docs attributes
 
@@ -248,9 +244,9 @@ import Motion.Spring exposing (Spring)
 -- ============================================================
 
 
-{-| The animation state type used to store animation configurations and keyframes.
+{-| Holds the Keyframe engine state.
 
-Store it in your model.
+Keep this in your model.
 
     type alias Model =
         { animState : Keyframe.AnimState }
@@ -266,43 +262,30 @@ type alias AnimBuilder mode =
     CSS.AnimBuilder mode
 
 
-{-| A type alias for animation group names.
-
-Used to identify which animation group to target.
-
+{-| The name of the animation group you want to target.
 -}
 type alias AnimGroupName =
     String
 
 
-{-| Type alias for the internal `TimelineBuilder` type.
+{-| Builder type for document-timeline helpers.
 
-This generic timeline builder works with any engine that uses the same timeline,
-but will result in a type error if consumed by an Engine that does not:
+Use this in type annotations when a helper should work with document-timeline engines.
 
-    f : Keyframe.TimelineBuilder engine -> Keyframe.TimelineBuilder engine
-
-Here's an engine-specific timeline builder for the Keyframe Engine. It will result
-in a type error if consumed by any other engine:
-
-    f : Keyframe.TimelineBuilder ForKeyframeEngine -> Keyframe.TimelineBuilder ForKeyframeEngine
-
-For mode restrictions and examples, see
-[Builder Modes](https://phollyer.github.io/elm-motion/animation/concepts/builder-modes/).
+📖 See [Builder Modes](https://phollyer.github.io/elm-motion/animation/concepts/builder-modes/)
+for patterns and examples.
 
 -}
 type alias TimelineBuilder engine =
     Internal.TimelineBuilder engine
 
 
-{-| Type alias for the internal `EngineBuilder` type.
+{-| Builder type for Keyframe-only helpers.
 
-This engine-specific builder will result in a type error if used with any other engine.
+Use this in type annotations when a helper should only work with this engine.
 
-    f : Keyframe.EngineBuilder -> Keyframe.EngineBuilder
-
-For mode restrictions and examples, see
-[Builder Modes](https://phollyer.github.io/elm-motion/animation/concepts/builder-modes/).
+📖 See [Builder Modes](https://phollyer.github.io/elm-motion/animation/concepts/builder-modes/)
+for patterns and examples.
 
 -}
 type alias EngineBuilder =
@@ -365,23 +348,15 @@ animate =
     Internal.animate
 
 
-{-| Re-anchor an animation to a new target by snapping to the new end values.
+{-| Update the target and snap straight to the new end values.
 
-The Keyframe engine has no JavaScript-side runtime snapshot of the
-currently rendered values - it only knows the previous _target_, not where
-the element actually is on screen. That makes it impossible to smoothly
-continue an in-flight keyframe animation when the target changes
-mid-flight (the typical resize-handler case).
+Use this when the target changed and you want the element to jump to the new result
+instead of continuing smoothly.
 
-`retarget` therefore guarantees a deterministic outcome: the freshly
-computed end values are written inline, the keyframe animation is
-cleared, and the group is marked complete. It's safe to call repeatedly
-during a drag or resize without accumulating partial animations or visual
-glitches.
-
-The Sub and WAAPI engines provide a `retarget` with the same builder API
-that smoothly continues from the current rendered position - swap in
-those engines if you need visual continuity instead of a snap.
+📖 For when to use `retarget` and which engines can continue smoothly, see
+[Responsive Animations](https://phollyer.github.io/elm-motion/animation/concepts/responsive-animations/)
+and the
+[Keyframe Engine Documentation](https://phollyer.github.io/elm-motion/animation/engines/keyframes/).
 
 -}
 retarget : AnimState -> (EngineBuilder -> EngineBuilder) -> AnimState
@@ -395,20 +370,15 @@ retarget =
 -- ============================================================
 
 
-{-| The ID of the element where the handler is attached.
-
-Returns `Nothing` if the element has no ID attribute.
-
+{-| The ID of the element that owns the event listener.
 -}
 type alias CurrentTargetId =
     Maybe String
 
 
-{-| The ID of the element that triggered the event.
+{-| The ID of the element that started the event.
 
-Returns `Nothing` if the element has no ID attribute.
-
-This may be different from `CurrentTargetId` if the event bubbled up from a child element.
+This can be different from `CurrentTargetId` when the event bubbled from a child element.
 
 -}
 type alias TargetId =
@@ -433,7 +403,7 @@ type AnimEvent
 -- ============================================================
 
 
-{-| Internal message type.
+{-| Message type used with `update`.
 
     import Anim.Engine.Keyframe as Keyframe
 
@@ -446,9 +416,9 @@ type alias AnimMsg =
     Internal.AnimMsg
 
 
-{-| Handle animation lifecycle messages.
+{-| Handle messages from this engine.
 
-Returns the updated state and an [AnimEvent](#AnimEvent) for you to pattern match on.
+Returns the updated state and the event for this message.
 
     import Anim.Engine.Keyframe as Keyframe
 
