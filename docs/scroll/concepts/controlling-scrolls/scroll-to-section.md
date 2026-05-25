@@ -19,7 +19,7 @@ Scroll to sections with full control.
 ??? example "View Source Code"
 
     ```elm
-    --8<-- "docs/examples/src/Engines/Scroll/Sub/ControllingScrolls/Main.elm"
+    --8<-- "docs/examples/src/Scroll/Sub/ControllingScrolls/Main.elm"
     ```
 
 --8<-- [end:code]

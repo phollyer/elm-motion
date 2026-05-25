@@ -42,12 +42,6 @@ Pause, resume, restart, stop, and reset scrolls while they run.
 
     <iframe src="../../examples/src/Scroll/Sub/ControllingScrolls/index.html" class="example-iframe" loading="lazy"></iframe>
 
-??? example "View Source Code"
-
-    ```elm
-    --8<-- "docs/examples/src/Engines/Scroll/Sub/ControllingScrolls/Main.elm"
-    ```
-
 [Go to page](concepts/controlling-scroll.md){ .md-button .md-button--primary }
 
 ---
