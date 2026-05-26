@@ -143,7 +143,7 @@ Call `animate` to apply an animation to the current `AnimState`. Triggering a ne
         )
     ```
 
-📖 See [Interrupting Animations](../concepts/interrupting-animations.md/) for more info.
+📖 See [Interrupting Animations](../concepts/interrupting-animations.md) for more info.
 
 ### Mid-Flight Interruptions
 

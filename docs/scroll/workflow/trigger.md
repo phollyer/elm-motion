@@ -61,7 +61,7 @@ Once you've [built](build.md) your scroll, you need to trigger it. Triggering is
         ```
 
         - Returns a `Task` so you can compose multiple scrolls with `Task.andThen`.
-        - The result delivers all completed `ScrollOk` values on success or a `ScrollError` on failure. See [React - Task Engine](react.md#task-engine) for handling both.
+        - The result delivers all completed `ScrollOk` values on success or a `ScrollError` on failure. 📖 See [React - Task Engine](react.md#task-engine) for handling both.
 
     === "Sub"
 

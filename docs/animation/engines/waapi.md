@@ -170,7 +170,7 @@ The WAAPI engine offers two trigger functions: `animate` for state-tracked anima
 
 Triggering a new `animate` animation while one is already running smoothly transitions from the current mid-flight position to the new end values.
 
-📖 See [Interrupting Animations](../concepts/interrupting-animations.md/) for more info.
+📖 See [Interrupting Animations](../concepts/interrupting-animations.md) for more info.
 
 ### Mid-Flight Interruptions
 

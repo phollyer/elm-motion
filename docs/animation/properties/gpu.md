@@ -27,9 +27,9 @@ This is why a `Translate` animation can remain silky smooth even during heavy El
 | [Translate](translate.md) | `transform: translate()` |
 
 
-📖 - [Animations and Performance (MDN)](https://developer.mozilla.org/en-US/docs/Web/Performance/Animation_performance_and_frame_rate) — animation performance and frame rate
+📖 See [Animations and Performance (MDN)](https://developer.mozilla.org/en-US/docs/Web/Performance/Animation_performance_and_frame_rate) for more on animation performance and frame rate.
 
-📖 - [Stick to Compositor-Only Properties (web.dev)](https://web.dev/articles/stick-to-compositor-only-properties-and-manage-layer-count) — why compositor-only properties are fast
+📖 See [Stick to Compositor-Only Properties (web.dev)](https://web.dev/articles/stick-to-compositor-only-properties-and-manage-layer-count) for why compositor-only properties are fast.
 
 ## Next Steps
 

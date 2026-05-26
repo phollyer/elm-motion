@@ -17,9 +17,9 @@ Most builders should look like this:
         ...
     ```
 
-The lowercase `mode` is a type variable - "whatever `mode` the caller has, this builder accepts it and returns the same one". The same `myAnim` can be passed to `Transition.animate`, `Keyframe.animate`, `WAAPI.animate`, `ScrollTimeline.animate`, and so on without any change.
+The lowercase `mode` is a type variable - "whatever `mode` the caller has, this builder accepts it and returns the same one". A builder defined this way can be used by all animation engines, and in general this is exacly what you want.
 
-If you can write a builder this way, do it. You get the maximum flexibility for free.
+If you're new to type variables, `mode` can be expressed however you want, it just needs to be consistent: `AnimBuilder m -> AnimBuilder m` works just the same. Throughout these docs we use `mode`.
 
 ## Narrowing the `mode`
 

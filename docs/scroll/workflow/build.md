@@ -85,7 +85,7 @@ Scroll multiple containers at once:
     `Scroll.speed` usually gives a more consistent user experience across short and long distances than fixed `duration`.
 
 !!! tip "Extract common patterns"
-    If you use the same configurations often, create builder functions.
+    If you use the same configurations often, create reusable builder functions.
 
     ??? example "View Source Code"
 

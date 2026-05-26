@@ -29,6 +29,12 @@ Every animation follows this pattern:
     `for` and `build` are required to start and end the builder chain respectively. All other configurations are optional,
     although without an `endValue` the animations won't have anywhere to go!!
 
+All animations are created by building them up with property specific builder functions. Each property has the same basic API, while multi-dimensional properties like `Translate` also have axis specific builders.
+
+Once built, the animations can be passed to any animation engine.
+
+📖 See [Properties Overview](../properties/overview.md) for more information.
+
 ## Builder Modes
 
 A typical builder function has the following type signature:
@@ -39,7 +45,7 @@ f : AnimBuilder mode -> AnimBuilder mode
 
 The builder type signature includes the `mode` type parameter which can be used to tighten the use of a function, and trigger compiler errors if used outside of the specified use.
 
-📖 See [Builder Modes](../concepts/builder-modes.md) more information.
+📖 See [Builder Modes](../concepts/builder-modes.md) for more information.
 
 ## Animation Group Names
 
@@ -92,62 +98,81 @@ Use different group names when you want separate animation sets for different el
     Name your animation functions based on what they do: `fadeIn`, `slideLeft`, `bounceOnHover`.
 
 !!! tip "Extract common patterns"
-    If you use the same configurations often, create builder functions.
+    If you use the same configurations often, create reusable builder functions.
 
 ??? example "View Source Code"
 
     ```elm
-    fadeIn : String -> AnimBuilder mode -> AnimBuilder mode
-    fadeIn animGroup =
-        Opacity.for animGroup
-            >> Opacity.to 1
+    -- Reusable Fade Builders
+    fadeTo :  Float -> AnimGroupName -> AnimBuilder mode -> AnimBuilder mode
+    fadeTo opacity groupName  =
+        Opacity.for groupName
+            >> Opacity.to opacity
+            >> Opacity.duration 400
             >> Opacity.build
 
-    rotateClockwise : String -> AnimBuilder mode -> AnimBuilder mode
-    rotateClockwise animGroupName =
-        Rotate.for animGroup
-            >> Rotate.toZ 90
-            >> Rotate.build
+    fadeIn : AnimGroupName -> AnimBuilder mode -> AnimBuilder mode
+    fadeIn =
+        fadeTo 1
 
-    rotateAntiClockwise : String -> AnimBuilder mode -> AnimBuilder mode
-    rotateAntiClockwise animGroupName =
-        Rotate.for animGroup
-            >> Rotate.toZ 0
-            >> Rotate.build
+    fadeOut : AnimGroupName -> AnimBuilder mode -> AnimBuilder mode
+    fadeOut =
+        fadeTo 0
 
-    slideDown : String -> AnimBuilder mode -> AnimBuilder mode
-    slideDown animGroup =
-        Translate.for animGroup
-            >> Translate.toY 50
+    -- Reusable Slide Builder
+    slideTo : AnimGroupName -> (Translate.Builder mode -> Translate.Builder mode) -> AnimBuilder mode -> AnimBuilder mode
+    slideTo groupName slideTo =
+        Translate.for groupName
+            >> slideTo
+            >> Translate.speed 200
+            >> Translate.spring Spring.wobbly
             >> Translate.build
 
+    -- Reusable Sidebar Builder
+    slideSidebar : Float -> AnimBuilder mode -> AnimBuilder mode
+    slideSidebar toX =
+        slideTo "sidebarAnim" <|
+            Translate.toX toX
 
-    slideUp : String -> AnimBuilder mode -> AnimBuilder mode
-    slideUp animGroup =
-        Translate.for animGroup
-            >> Translate.toY 0
-            >> Translate.build
+    -- Reusable Content Builder
+    slideContent : Float -> AnimBuilder mode -> AnimBuilder mode
+    slideContent toY =
+        slideTo "contentAnim" <|
+            Translate.toY toY
 
-    -- Common timing builder
-    withStandardTiming : AnimBuilder mode -> AnimBuilder mode
-    withStandardTiming =
-        Engine.duration 300
-            >> Engine.easing QuintOut
 
-    -- Compose small builders into a larger animation
-    myAnimation : String -> AnimBuilder mode -> AnimBuilder mode
-    myAnimation animGroup =
-        withStandardTiming
-            >> fadeIn animGroup
-            >> slideUp animGroup
-            >> rotateClockwise animGroup
+    -- Specific Sidebar Builders
+    sidebarEntrance : AnimBuilder mode -> AnimBuilder mode
+    sidebarEntrance =
+        fadeIn "sidebarAnim" 
+            >> slideSidebar 0
 
-    myOtherAnimation : String -> AnimBuilder mode -> AnimBuilder mode
-    myOtherAnimation animGroup =
-        withStandardTiming
-            >> fadeIn animGroup
-            >> slideDown animGroup
-            >> rotateAntiClockwise animGroup
+    sidebarExit : AnimBuilder mode -> AnimBuilder mode
+    sidebarExit =
+        fadeOut "sidebarAnim" 
+            >> slideSidebar -300
+
+    -- Specific Content Builders
+    contentEntrance : AnimBuilder mode -> AnimBuilder mode
+    contentEntrance =
+        fadeIn "contentAnim"
+            >> slideContent 0
+
+    contentExit : AnimBuilder mode -> AnimBuilder mode
+    contentExit =
+        fadeOut "contentAnim"
+            >> slideContent 300
+
+    -- Specific Page Builders
+    pageEntrance : AnimBuilder mode -> AnimBuilder mode
+    pageEntrance =
+        sidebarEntrance
+            >> contentEntrance
+
+    pageExit : AnimBuilder mode -> AnimBuilder mode
+    pageExit =
+        sidebarExit
+            >> contentExit
     ```
 
 ## Next Steps
