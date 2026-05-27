@@ -205,9 +205,8 @@ update msg model =
         MoveUp ->
             let
                 ( newAnimState, cmd ) =
-                    WAAPI.animate model.animState <|
-                        WAAPI.freezeX [ WAAPI.translate ]
-                            >> moveBoxY (targetY YTop)
+                    WAAPI.retarget model.animState <|
+                        moveBoxY (targetY YTop)
             in
             ( { model | animState = newAnimState }, cmd )
 

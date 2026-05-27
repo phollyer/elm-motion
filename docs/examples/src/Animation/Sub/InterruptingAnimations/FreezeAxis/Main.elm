@@ -183,9 +183,8 @@ update msg model =
         MoveUp ->
             ( { model
                 | animState =
-                    Sub.animate model.animState <|
-                        Sub.freezeX [ Sub.translate ]
-                            >> moveBoxY (targetY YTop)
+                    Sub.retarget model.animState <|
+                        moveBoxY (targetY YTop)
               }
             , Cmd.none
             )

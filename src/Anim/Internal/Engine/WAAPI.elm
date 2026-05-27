@@ -119,7 +119,6 @@ import Json.Decode as Decode exposing (Decoder)
 import Json.Encode as Encode
 import Motion.Easing exposing (Easing(..))
 import Motion.Spring exposing (Spring)
-import Set exposing (Set)
 
 
 
@@ -281,41 +280,128 @@ setSnapshot anims =
     AnimGroups.map (\_ anim -> { propertySnapshot = AnimGroup.getPropertySnapshot anim }) anims
 
 
-{-| Like [animate](#animate), but inherits in-flight timing for any property
-the engine currently reports as `Running`; idle properties fall back to
-`for`-style snap behaviour.
+{-| Snap the named anim groups to the targets described by `build`, with no
+animation.
+
+For every property mentioned in `build`, the engine cancels any in-flight
+WAAPI animation on that property, writes the target value as inline style
+on the element, and marks the property `Complete`. Builder timing fields
+(`duration`, `delay`, `easing`, `spring`) are accepted but ignored —
+there is no animation to apply them to.
+
+Frozen axes are preserved: only unfrozen axes are snapped. Untouched
+properties on the same anim group continue running.
+
+The JS side emits a `Cancelled` [AnimEvent](#AnimEvent) for every
+property whose animation was previously playing and is touched by the
+build. No `Started` events are emitted.
+
+Use `retarget` to instantly reposition an element — e.g. after a layout
+change, a teleport, or to seed a new starting position before a follow-up
+`animate` call. For a smooth redirect from the current position toward a
+new target, use [animate](#animate) with a factored builder instead.
+
 -}
 retarget : AnimState msg -> (EngineBuilder -> EngineBuilder) -> ( AnimState msg, Cmd msg )
-retarget ((AnimState _ animGroups) as animState) build =
-    animate animState
-        (Builder.injectRunningProperties (extractRunningProperties animGroups) >> build)
+retarget (AnimState state animGroups) build =
+    let
+        builder =
+            state.builder
+                |> Builder.injectCurrentStates (setSnapshot animGroups)
+                |> build
 
+        processed =
+            Builder.process builder
 
-extractRunningProperties : AnimGroups AnimGroup -> Dict.Dict String (Set String)
-extractRunningProperties =
-    AnimGroups.foldl
-        (\animGroupName animGroup acc ->
+        frozenAxes =
+            Builder.getAllFrozenAxes builder
+
+        touchedAxes =
+            Builder.getAllTouchedAxes builder
+
+        generateAnimGroup : AnimGroupName -> Builder.ProcessedAnimGroupConfig -> AnimGroup
+        generateAnimGroup animGroupName config =
+            Generator.generateAnimation
+                processed.iterations
+                processed.animationDirection
+                config.transformOrder
+                (Builder.getDiscreteEntryProperties builder)
+                (Builder.getDiscreteExitProperties builder)
+                (AnimGroups.get animGroupName animGroups)
+                config.properties
+
+        -- Mark every property on the freshly generated (touched) group as
+        -- Complete and advance its snapshot to the target value: the snap
+        -- puts the property at its target with no animation pending. The
+        -- JS side will emit Cancelled for any previously-Running animation
+        -- when it cancels the WAAPI handle.
+        snapPropertyStates : AnimGroup -> AnimGroup
+        snapPropertyStates freshAnimGroup =
             let
-                running =
-                    AnimGroup.getPropertyStates animGroup
-                        |> AnimGroups.toList
-                        |> List.filterMap
-                            (\( propKey, propState ) ->
-                                if propState.status == AnimGroup.Running then
-                                    Just propKey
+                touchedStates =
+                    AnimGroup.getPropertyStates freshAnimGroup
 
-                                else
-                                    Nothing
-                            )
-                        |> Set.fromList
+                fullProgress =
+                    touchedStates
+                        |> AnimGroups.names
+                        |> List.map (\name -> ( name, 1.0 ))
+                        |> Dict.fromList
+
+                snappedSnapshot =
+                    freshAnimGroup
+                        |> AnimGroup.getPropertySnapshot
+                        |> ProgressApply.applyPropertyProgress fullProgress touchedStates
             in
-            if Set.isEmpty running then
-                acc
+            freshAnimGroup
+                |> AnimGroup.setSnapshot snappedSnapshot
+                |> AnimGroup.setStatus AnimGroup.Complete
 
-            else
-                Dict.insert animGroupName running acc
-        )
-        Dict.empty
+        insertSnap : AnimGroupName -> AnimGroup -> AnimGroups AnimGroup -> AnimGroups AnimGroup
+        insertSnap animGroupName freshAnimGroup acc =
+            let
+                snapped =
+                    snapPropertyStates freshAnimGroup
+            in
+            case AnimGroups.get animGroupName acc of
+                Nothing ->
+                    AnimGroups.insert animGroupName snapped acc
+
+                Just existing ->
+                    -- `addPropertyStates` unions snapped's states over
+                    -- existing's, biasing toward snapped on key collision.
+                    -- Untouched properties on `existing` carry over with
+                    -- their current Running/Paused/Complete status.
+                    AnimGroups.insert animGroupName
+                        (AnimGroup.addPropertyStates snapped existing)
+                        acc
+
+        nextAnimGroups =
+            processed.groups
+                |> AnimGroups.map generateAnimGroup
+                |> AnimGroups.foldl insertSnap animGroups
+
+        nextSubscriptionsActive =
+            nextAnimGroups
+                |> AnimGroups.groups
+                |> List.any AnimGroup.isRunning
+
+        nextState =
+            AnimState
+                { state
+                    | builder =
+                        builder
+                            |> Builder.addAnimationToHistory processed
+                            |> Builder.mergeBaselines
+                            |> Builder.clearAnimData
+                    , subscriptionsActive = nextSubscriptionsActive
+                }
+                nextAnimGroups
+
+        retargetCmd =
+            state.commandPort <|
+                encodeRetarget nextAnimGroups frozenAxes touchedAxes processed
+    in
+    ( nextState, retargetCmd )
 
 
 

@@ -36,8 +36,8 @@ init : ( Model, Cmd Msg )
 init =
     ( { animState =
             Sub.init
-                [ Sub.discreteEntry "display" "flex"
-                    >> Opacity.init animGroup 1
+                [ Sub.discreteEntry "display" "none"
+                    >> Opacity.init animGroup 0
                 ]
       }
     , Cmd.none

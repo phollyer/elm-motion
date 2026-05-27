@@ -47,39 +47,8 @@ Moving 100 pixels at 200px/s takes 500ms. Moving 400 pixels takes 2000ms.
 !!! tip "When to use speed"
     Speed shines for **Translate** animations where elements travel different distances. A short move feels snappy while a long move takes appropriately longer — matching how physical objects behave.
 
-
-## Which to Use?
-
-In practice, most properties work better with **duration**:
-
-| Property | Recommendation | Why |
-| -------- | -------------- | --- |
-| **Translate** | Speed | Distance-based timing feels natural for movement |
-| **Rotate** | Either | Speed works for ongoing rotation; duration for UI effects |
-| **Scale** | Duration | "Scale factor per second" is unintuitive; consistent timing is clearer |
-| **Opacity** | Duration | Fades should feel consistent across your UI |
-| **Colors** | Duration | "Color channel units per second" is meaningless |
-| **Size** | Duration | Size changes are typically timed UI effects |
-
 !!! example "Practical example"
     A drag-and-drop interface where items snap to grid positions — use `speed` so nearby drops feel quick and distant drops take longer. But the fade effect when picking up an item? Use `duration` for consistency.
-
-## Global vs Local Timing
-
-Set timing globally on the engine to apply to all animations, or locally on individual properties to override:
-
-??? example "View Source Code"
-
-    ```elm
-    -- Global timing on the engine
-    Engine.duration 300
-
-    -- Local override on specific property
-    Property.for "boxAnim"
-        >> ... -- Config
-        >> Property.speed 500  -- Overrides global 300ms
-        >> Property.build
-    ```
 
 ## Important Notes
 

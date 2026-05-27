@@ -460,8 +460,14 @@ function cancelLegacyTransformAnimations(elementAnims) {
     ['translate', 'scale', 'rotate', 'skew'].forEach(propType => {
         if (elementAnims.has(propType)) {
             const existing = elementAnims.get(propType);
-            existing.animation.cancel();
+            // Delete BEFORE cancel so the listener's `isActiveEntry()`
+            // guard returns false and the listener exits silently.
             elementAnims.delete(propType);
+            try {
+                existing.animation.cancel();
+            } catch (_) {
+                // Already-cancelled / detached handles are safe to ignore.
+            }
         }
     });
 }
@@ -2041,5 +2047,374 @@ export function processAnimationData(animationData) {
             const uniqueId = element.id || (animGroup + '__multi_' + index);
             processElementAnimation(uniqueId, elementConfig, globalOptions, isRestart, element);
         });
+    });
+}
+
+/**
+ * Snap touched properties to their new target values with no animation.
+ *
+ * For every property in `commandData.elements`, cancels any in-flight WAAPI
+ * animation on that property and writes the target value as inline style.
+ * Untouched properties on the same anim group are left alone (their
+ * animations continue running).
+ *
+ * Builder timing (duration/delay/easing/spring) carried in the payload is
+ * ignored — the snap writes the END state directly. A `cancelled`
+ * lifecycle event is emitted via the in-flight animation's `cancel`
+ * listener for any previously-playing animation that the snap kills.
+ */
+export function retargetAnimation(commandData) {
+    if (!commandData || !commandData.elements) {
+        reportError('Invalid retarget data format received', {
+            source: 'animation',
+            severity: 'warning',
+            code: 'COMMAND_INVALID',
+            engine: 'WAAPI'
+        });
+        return;
+    }
+
+    Object.entries(commandData.elements).forEach(([animGroup, elementConfig]) => {
+        const targets = findAllAnimTargets(animGroup);
+        if (targets.length <= 1) {
+            retargetElement(animGroup, elementConfig);
+            return;
+        }
+
+        targets.forEach((element, index) => {
+            const uniqueId = element.id || (animGroup + '__multi_' + index);
+            retargetElement(uniqueId, elementConfig, element);
+        });
+    });
+}
+
+function retargetElement(animGroup, elementConfig, resolvedElement = null) {
+    const element = resolvedElement || findAnimTarget(animGroup);
+    if (!element) {
+        reportError(`Element with data-anim-target="${animGroup}" not found`, {
+            source: 'animation',
+            severity: 'warning',
+            code: 'TARGET_NOT_FOUND',
+            engine: 'WAAPI',
+            elementId: animGroup
+        });
+        return;
+    }
+
+    const properties = elementConfig.properties || [];
+
+    // Seed transformBaseline cache so a follow-up animate() reads the
+    // correct start values when nothing has populated the cache yet.
+    if (elementConfig.transformBaseline && !lastKnownTransforms.has(animGroup)) {
+        lastKnownTransforms.set(animGroup, baselineToTransformState(elementConfig.transformBaseline));
+    }
+
+    if (elementConfig.transformOrder && elementConfig.transformOrder.length > 0) {
+        elementTransformOrders.set(animGroup, elementConfig.transformOrder);
+    }
+
+    const transformProperties = properties.filter(property => isTransformProperty(property.type));
+    const nonTransformProperties = properties.filter(property => !isTransformProperty(property.type));
+
+    const elementAnims = activeAnimations.get(animGroup);
+
+    let cancelledAnything = false;
+    if (transformProperties.length > 0) {
+        const continuationApplied = retargetTransformWithContinuation(
+            animGroup, element, transformProperties, elementAnims
+        );
+        if (!continuationApplied) {
+            cancelledAnything = snapTransformProperties(animGroup, element, transformProperties, elementAnims) || cancelledAnything;
+        }
+    }
+
+    nonTransformProperties.forEach(property => {
+        cancelledAnything = snapNonTransformProperty(animGroup, element, property, elementAnims) || cancelledAnything;
+    });
+
+    // Emit a single `cancelled` lifecycle event per group when at least
+    // one in-flight animation was actually killed by the snap. The
+    // per-property cancel listeners were short-circuited (see
+    // `cancelSilently`) precisely so they could not race the snap by
+    // pushing a stale mid-flight `propertyUpdate` that would regress the
+    // snapshot Elm already advanced to the target.
+    if (cancelledAnything) {
+        sendLifecycleEvent('cancelled', animGroup);
+    }
+}
+
+/**
+ * Cancel the WAAPI Animation handle without letting its `cancel` event
+ * listener fire its usual finalize path (which would emit a stale
+ * mid-flight `propertyUpdate` and a `cancelled` lifecycle event).
+ *
+ * The listener guards every side-effect with `isActiveEntry()`, which
+ * checks `activeAnimations.get(animGroup).get(propType).version`. By
+ * deleting the entry before calling `.cancel()`, we make that lookup
+ * fail and the listener exits silently. The snap emits its own
+ * lifecycle event from `retargetElement` once for the whole group.
+ *
+ * Returns `true` when an entry existed and was cancelled.
+ */
+function cancelSilently(elementAnims, propType) {
+    if (!elementAnims || !elementAnims.has(propType)) {
+        return false;
+    }
+    const existing = elementAnims.get(propType);
+    elementAnims.delete(propType);
+    try {
+        existing.animation.cancel();
+    } catch (_) {
+        // Already-cancelled / detached handles are safe to ignore.
+    }
+    return true;
+}
+
+/**
+ * Compute the live mid-flight transform of an in-flight merged transform
+ * animation. Falls back to the cached `lastKnownTransforms` state when
+ * the animation has no resolved values or has not started ticking yet.
+ */
+function readLiveTransform(animGroup, element, existing) {
+    if (existing && existing.resolvedValues) {
+        const timing = existing.animation?.effect?.getTiming();
+        const duration = timing?.duration || 0;
+        const currentTime = existing.animation?.currentTime || 0;
+        if (duration > 0) {
+            const progress = Math.min(1.0, Math.max(0.0, currentTime / duration));
+            return computeTransformFromResolved(existing.resolvedValues, progress, duration);
+        }
+    }
+    return getTransformState(animGroup, element);
+}
+
+const TRANSLATE_RETARGET_AXES = [
+    { axis: 'x', suffix: 'X' },
+    { axis: 'y', suffix: 'Y' },
+    { axis: 'z', suffix: 'Z' }
+];
+
+/**
+ * Build a continuation transform animation when the retarget command
+ * touches only a subset of translate axes and an in-flight transform
+ * animation is mid-flight. Touched axes snap to the new target via flat
+ * keyframes; untouched axes preserve the in-flight animation's original
+ * (start, end, easing) so they continue smoothly toward their existing
+ * target. The new WAAPI animation uses the same total duration as the
+ * old one and starts with `delay: -oldT`, putting it at the same
+ * progress where the old one was cancelled — for untouched axes this is
+ * indistinguishable from the original animation continuing.
+ *
+ * Non-translate transform properties in the retarget command are
+ * full-snapped (flat keyframes at their new target) — per-axis
+ * continuation for rotate/scale/skew is out of scope for now.
+ *
+ * Returns `true` when a continuation animation was built; `false` when
+ * the caller should fall back to the full-snap path (no in-flight
+ * animation, no translate in the command, or every axis is touched).
+ */
+function retargetTransformWithContinuation(animGroup, element, transformProperties, elementAnims) {
+    if (!elementAnims) return false;
+    const existing = elementAnims.get('transform');
+    if (!existing || !existing.resolvedValues || !existing.animation) return false;
+
+    const timing = existing.animation.effect?.getTiming();
+    const oldDuration = timing?.duration || 0;
+    if (!(oldDuration > 0)) return false;
+
+    const oldT = existing.animation.currentTime;
+    if (!Number.isFinite(oldT) || oldT < 0 || oldT >= oldDuration) return false;
+
+    const translateProp = transformProperties.find(property => property.type === 'translate');
+    if (!translateProp) return false;
+
+    const hasAnyTouchedFlag = TRANSLATE_RETARGET_AXES.some(
+        ({ suffix }) => typeof translateProp[`touched${suffix}`] === 'boolean'
+    );
+    if (!hasAnyTouchedFlag) return false;
+
+    const hasAnyUntouched = TRANSLATE_RETARGET_AXES.some(
+        ({ suffix }) => translateProp[`touched${suffix}`] === false
+    );
+    if (!hasAnyUntouched) return false;
+
+    // Shallow clone preserves old per-axis start/end/easing/units;
+    // mutations below only overwrite touched axes (translate) and
+    // full-snap axes (other transform properties).
+    const oldResolved = existing.resolvedValues;
+    const resolved = {
+        translate: { ...oldResolved.translate },
+        scale: { ...oldResolved.scale },
+        rotate: { ...oldResolved.rotate },
+        skew: { ...oldResolved.skew }
+    };
+
+    TRANSLATE_RETARGET_AXES.forEach(({ suffix }) => {
+        if (translateProp[`touched${suffix}`] !== true) return;
+        const target = translateProp[`end${suffix}`];
+        if (!Number.isFinite(target)) return;
+        resolved.translate[`start${suffix}`] = target;
+        resolved.translate[`end${suffix}`] = target;
+    });
+
+    // Carry forward any user-supplied units on the retarget command; absent
+    // values keep the in-flight units to avoid unit-interpretation jumps.
+    ['unitX', 'unitY', 'unitZ'].forEach(key => {
+        const candidate = translateProp[key];
+        if (typeof candidate === 'string' && candidate.length > 0) {
+            resolved.translate[key] = candidate;
+        }
+    });
+
+    transformProperties.forEach(property => {
+        if (property.type === 'translate') return;
+        const target = resolved[property.type];
+        const axes = RESOLVED_TRANSFORM_AXES[property.type];
+        if (!target || !axes) return;
+        axes.forEach(({ suffix }) => {
+            const newEnd = property[`end${suffix}`];
+            if (!Number.isFinite(newEnd)) return;
+            target[`start${suffix}`] = newEnd;
+            target[`end${suffix}`] = newEnd;
+        });
+    });
+
+    cancelSilently(elementAnims, 'transform');
+    cancelLegacyTransformAnimations(elementAnims);
+
+    const order = getElementOrder(element);
+    const forceGroups = computeForceGroups(resolved);
+    const KEYFRAME_COUNT = deriveTransformKeyframeCount(resolved);
+    const keyframes = [];
+    for (let index = 0; index < KEYFRAME_COUNT; index++) {
+        const globalProgress = index / (KEYFRAME_COUNT - 1);
+        const interpTranslate = interpolateSubProperty(resolved.translate, globalProgress, oldDuration);
+        const interpScale = interpolateSubProperty(resolved.scale, globalProgress, oldDuration);
+        const interpRotate = interpolateSubProperty(resolved.rotate, globalProgress, oldDuration);
+        const interpSkew = interpolateSubProperty(resolved.skew, globalProgress, oldDuration);
+        keyframes.push({
+            transform: buildTransformString(
+                interpTranslate.x, interpTranslate.y, interpTranslate.z,
+                interpScale.x, interpScale.y, interpScale.z,
+                interpRotate.x, interpRotate.y, interpRotate.z,
+                interpSkew.x, interpSkew.y, order, forceGroups,
+                resolved.translate.unitX || 'px',
+                resolved.translate.unitY || 'px',
+                resolved.translate.unitZ || 'px'
+            )
+        });
+    }
+
+    // `delay: -oldT` advances the animation to oldT of progress at start,
+    // so untouched axes resume on the same easing curve at the same point
+    // the cancelled animation was sampling.
+    const newAnimation = element.animate(keyframes, {
+        duration: oldDuration,
+        delay: -oldT,
+        easing: 'linear',
+        fill: 'forwards',
+        iterations: 1,
+        direction: 'normal'
+    });
+
+    const newVersion = (existing.version || 1) + 1;
+    const entry = {
+        animation: newAnimation,
+        version: newVersion,
+        animGroup: animGroup,
+        easingKeyframes: null,
+        transformProperties: transformProperties,
+        resolvedValues: resolved,
+        generation: existing.generation,
+        propertyIndex: existing.propertyIndex
+    };
+    elementAnims.set('transform', entry);
+    entry.updateFn = setupAnimationEvents(animGroup, 'transform', element, newAnimation, newVersion, resolved);
+
+    return true;
+}
+
+function snapTransformProperties(animGroup, element, transformProperties, elementAnims) {
+    // Read the live mid-flight transform BEFORE cancelling so axes the
+    // build does not mention end up frozen at their actual on-screen
+    // position rather than at the stale cached baseline.
+    const existing = elementAnims ? elementAnims.get('transform') : null;
+    const currentTransform = readLiveTransform(animGroup, element, existing);
+
+    const cancelled = cancelSilently(elementAnims, 'transform');
+    if (elementAnims) {
+        cancelLegacyTransformAnimations(elementAnims);
+    }
+
+    const order = getElementOrder(element);
+    const resolved = buildDefaultResolvedTransform(currentTransform);
+
+    transformProperties.forEach(property => {
+        const target = resolved[property.type];
+        const axes = RESOLVED_TRANSFORM_AXES[property.type];
+        if (target && axes) {
+            assignResolvedTransformProperty(target, property, currentTransform, axes);
+        }
+    });
+
+    const forceGroups = computeForceGroups(resolved);
+    const tUx = resolved.translate.unitX || 'px';
+    const tUy = resolved.translate.unitY || 'px';
+    const tUz = resolved.translate.unitZ || 'px';
+
+    element.style.transform = buildTransformString(
+        resolved.translate.endX, resolved.translate.endY, resolved.translate.endZ,
+        resolved.scale.endX, resolved.scale.endY, resolved.scale.endZ,
+        resolved.rotate.endX, resolved.rotate.endY, resolved.rotate.endZ,
+        resolved.skew.endX, resolved.skew.endY, order, forceGroups, tUx, tUy, tUz
+    );
+
+    // Update the cache so subsequent reads (animate, getTransformState)
+    // see the snapped end state rather than the pre-snap current value.
+    lastKnownTransforms.set(animGroup, {
+        x: resolved.translate.endX, y: resolved.translate.endY, z: resolved.translate.endZ,
+        scaleX: resolved.scale.endX, scaleY: resolved.scale.endY, scaleZ: resolved.scale.endZ,
+        rotateX: resolved.rotate.endX, rotateY: resolved.rotate.endY, rotateZ: resolved.rotate.endZ,
+        skewX: resolved.skew.endX, skewY: resolved.skew.endY,
+        translateUnitX: tUx, translateUnitY: tUy, translateUnitZ: tUz
+    });
+
+    return cancelled;
+}
+
+function snapNonTransformProperty(animGroup, element, property, elementAnims) {
+    const propType = (property.type === 'customProperty')
+        ? `custom:${property.cssProperty}`
+        : (property.type === 'customColorProperty')
+            ? `customColor:${property.cssProperty}`
+            : property.type;
+
+    const cancelled = cancelSilently(elementAnims, propType);
+
+    const resolved = resolveNonTransformValues(animGroup, element, property);
+    if (!resolved) return cancelled;
+
+    const { keyframes } = buildPropertyKeyframes(resolved, property.easingKeyframes, property.easing);
+    if (!keyframes || keyframes.length === 0) return cancelled;
+
+    applyKeyframeToInlineStyle(element, keyframes[keyframes.length - 1]);
+    return cancelled;
+}
+
+/**
+ * Apply a WAAPI keyframe object as inline style on the element. Skips
+ * the WAAPI-internal `offset` / `easing` keys. Routes CSS custom
+ * properties (those starting with `--`) through `setProperty`.
+ */
+function applyKeyframeToInlineStyle(element, keyframe) {
+    Object.entries(keyframe).forEach(([key, value]) => {
+        if (key === 'offset' || key === 'easing' || value === undefined || value === null) {
+            return;
+        }
+        if (key.startsWith('--')) {
+            element.style.setProperty(key, String(value));
+        } else {
+            element.style[key] = value;
+        }
     });
 }

@@ -44,6 +44,8 @@ module Anim.Internal.Builder exposing
     , extractTransformsFromProperty
     , for
     , freezeAxes
+    , getAllFrozenAxes
+    , getAllTouchedAxes
     , getAnimGroupConfig
     , getAnimGroups
     , getAnimTarget
@@ -58,7 +60,6 @@ module Anim.Internal.Builder exposing
     , getDelayWithDefault
     , getDiscreteEntryProperties
     , getDiscreteExitProperties
-    , getAllFrozenAxes
     , getEasing
     , getEasingWithDefault
     , getFrozenAxes
@@ -83,6 +84,7 @@ module Anim.Internal.Builder exposing
     , isPropertyRunning
     , iterations
     , loopForever
+    , markTouchedAxes
     , mergeBaselines
     , normalizeTransformOrder
     , process
@@ -228,6 +230,7 @@ type alias AnimGroupData =
     { currentAnimGroup : Maybe AnimGroupName
     , animGroups : AnimGroups AnimGroupConfig
     , frozenAxes : Dict String (List String)
+    , touchedAxes : Dict ( AnimGroupName, String ) (Set String)
     }
 
 
@@ -434,6 +437,7 @@ initAnimation =
     { currentAnimGroup = Nothing
     , animGroups = AnimGroups.init
     , frozenAxes = Dict.empty
+    , touchedAxes = Dict.empty
     }
 
 
@@ -1009,6 +1013,40 @@ values to avoid snap-back from stale Elm snapshots).
 getAllFrozenAxes : AnimBuilder mode -> Dict String (List String)
 getAllFrozenAxes (AnimBuilder data) =
     data.animation.frozenAxes
+
+
+{-| Mark axes of a property as having been explicitly set by the user's
+builder pipeline (via `toX`, `toY`, etc.). Used by `WAAPI.retarget` to
+distinguish user-targeted axes (which snap to the new target) from
+untouched axes (which continue their in-flight animation to its
+existing end target). Cleared between animate calls via `initAnimation`.
+-}
+markTouchedAxes : AnimGroupName -> String -> List String -> AnimBuilder mode -> AnimBuilder mode
+markTouchedAxes animGroupName propName axes (AnimBuilder data) =
+    let
+        anim =
+            data.animation
+
+        newTouchedAxes =
+            Dict.update ( animGroupName, propName )
+                (\maybeSet ->
+                    case maybeSet of
+                        Just existing ->
+                            Just (List.foldl Set.insert existing axes)
+
+                        Nothing ->
+                            Just (Set.fromList axes)
+                )
+                anim.touchedAxes
+    in
+    AnimBuilder { data | animation = { anim | touchedAxes = newTouchedAxes } }
+
+
+{-| Get the full touched-axes dictionary keyed by (animGroupName, propertyName).
+-}
+getAllTouchedAxes : AnimBuilder mode -> Dict ( AnimGroupName, String ) (Set String)
+getAllTouchedAxes (AnimBuilder data) =
+    data.animation.touchedAxes
 
 
 addIfMissing : a -> List a -> List a

@@ -1,7 +1,7 @@
 /* eslint-env node */
 /* global global */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { processAnimationData, processElementAnimation } from '../src/animations.js';
+import { processAnimationData, processElementAnimation, retargetAnimation } from '../src/animations.js';
 import { activeAnimations, animationGroups, elementTransformOrders, lastKnownTransforms, appliedWillChange, cleanupAnimGroup } from '../src/state.js';
 import { createFakeAnimation, installDom, cleanupDom } from './_publicApiHelpers.js';
 
@@ -786,3 +786,71 @@ describe('will-change application (WAAPI engine)', () => {
         expect(appliedWillChange.has(animGroup)).toBe(false);
     });
 });
+
+describe('retargetAnimation (WAAPI engine)', () => {
+    it('does not throw when payload is missing or has no elements', () => {
+        installDom({ element: makeElement({ animGroup: 'x' }), targetId: 'x' });
+        expect(() => retargetAnimation(null)).not.toThrow();
+        expect(() => retargetAnimation({})).not.toThrow();
+    });
+
+    it('snaps a touched transform property to the new target inline style', () => {
+        const animGroup = 'ball';
+        const element = makeElement({ animGroup });
+        installDom({ element, targetId: animGroup });
+
+        retargetAnimation({
+            elements: {
+                [animGroup]: {
+                    properties: [
+                        {
+                            type: 'translate',
+                            startX: 0, startY: 0, startZ: 0,
+                            endX: 250, endY: 0, endZ: 0,
+                            unit: 'px',
+                            duration: 500,
+                            easing: 'linear',
+                            version: 1
+                        }
+                    ]
+                }
+            }
+        });
+
+        expect(element.style.transform).toContain('translate3d(250px, 0px, 0px)');
+        expect(element.animate).not.toHaveBeenCalled();
+    });
+
+    it('cancels an in-flight transform animation before snapping', () => {
+        const animGroup = 'ball';
+        const element = makeElement({ animGroup });
+        installDom({ element, targetId: animGroup });
+
+        const inflight = createFakeAnimation();
+        activeAnimations.set(animGroup, new Map([
+            ['transform', { animation: inflight, version: 1 }]
+        ]));
+
+        retargetAnimation({
+            elements: {
+                [animGroup]: {
+                    properties: [
+                        {
+                            type: 'translate',
+                            startX: 0, startY: 0, startZ: 0,
+                            endX: 100, endY: 0, endZ: 0,
+                            unit: 'px',
+                            duration: 500,
+                            easing: 'linear',
+                            version: 2
+                        }
+                    ]
+                }
+            }
+        });
+
+        expect(inflight.cancelCalls).toBe(1);
+        expect(element.style.transform).toContain('translate3d(100px, 0px, 0px)');
+    });
+});
+

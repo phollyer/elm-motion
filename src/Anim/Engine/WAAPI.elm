@@ -376,10 +376,14 @@ animate =
     Internal.animate
 
 
-{-| Continue a running animation toward a new target.
+{-| Change the targeted properties instantly to their new values.
 
-Use this when the target changed and you want motion to keep going smoothly.
-If nothing is running, the new value becomes the next target.
+Only the properties included in the new builder are affected, any other properties
+in the group will be left untouched.
+
+A `Cancelled` event is emitted from JS for every property whose
+animation was previously playing and is touched by the build. No
+`Started` events are emitted.
 
 📖 For responsive and resize patterns, see
 [Responsive Animations](https://phollyer.github.io/elm-motion/animation/concepts/responsive-animations/).
@@ -390,7 +394,7 @@ If nothing is running, the new value becomes the next target.
     let
         ( animState, animCmd ) =
             WAAPI.retarget model.animState <|
-                Translate.continueFor "box"
+                Translate.for "box"
                     >> Translate.toX newX
                     >> Translate.build
     in

@@ -303,17 +303,9 @@ fromZ z (TranslateBuilder config builder) =
 
 to : Translate -> TranslateBuilder mode -> TranslateBuilder mode
 to value (TranslateBuilder config builder) =
-    let
-        startVal =
-            Maybe.withDefault Translate.default config.start
-    in
     TranslateBuilder
-        { config
-            | start = Just startVal
-            , end = value
-            , distance = Translate.distance startVal value
-        }
-        builder
+        (setEnd value config)
+        (markAxes [ "x", "y", "z" ] builder)
 
 
 toXYZ : Float -> Float -> Float -> TranslateBuilder mode -> TranslateBuilder mode
@@ -326,9 +318,13 @@ toXY x y (TranslateBuilder config builder) =
     let
         z =
             Translate.getZ config.end
+
+        newEnd =
+            Translate.fromTriple ( x, y, z )
     in
-    toXYZ x y z <|
-        TranslateBuilder config builder
+    TranslateBuilder
+        (setEnd newEnd config)
+        (markAxes [ "x", "y" ] builder)
 
 
 toXZ : Float -> Float -> TranslateBuilder mode -> TranslateBuilder mode
@@ -336,9 +332,13 @@ toXZ x z (TranslateBuilder config builder) =
     let
         y =
             Translate.getY config.end
+
+        newEnd =
+            Translate.fromTriple ( x, y, z )
     in
-    toXYZ x y z <|
-        TranslateBuilder config builder
+    TranslateBuilder
+        (setEnd newEnd config)
+        (markAxes [ "x", "z" ] builder)
 
 
 toX : Float -> TranslateBuilder mode -> TranslateBuilder mode
@@ -349,9 +349,13 @@ toX x (TranslateBuilder config builder) =
 
         z =
             Translate.getZ config.end
+
+        newEnd =
+            Translate.fromTriple ( x, y, z )
     in
-    toXYZ x y z <|
-        TranslateBuilder config builder
+    TranslateBuilder
+        (setEnd newEnd config)
+        (markAxes [ "x" ] builder)
 
 
 toYZ : Float -> Float -> TranslateBuilder mode -> TranslateBuilder mode
@@ -359,9 +363,13 @@ toYZ y z (TranslateBuilder config builder) =
     let
         x =
             Translate.getX config.end
+
+        newEnd =
+            Translate.fromTriple ( x, y, z )
     in
-    toXYZ x y z <|
-        TranslateBuilder config builder
+    TranslateBuilder
+        (setEnd newEnd config)
+        (markAxes [ "y", "z" ] builder)
 
 
 toY : Float -> TranslateBuilder mode -> TranslateBuilder mode
@@ -372,9 +380,13 @@ toY y (TranslateBuilder config builder) =
 
         z =
             Translate.getZ config.end
+
+        newEnd =
+            Translate.fromTriple ( x, y, z )
     in
-    toXYZ x y z <|
-        TranslateBuilder config builder
+    TranslateBuilder
+        (setEnd newEnd config)
+        (markAxes [ "y" ] builder)
 
 
 toZ : Float -> TranslateBuilder mode -> TranslateBuilder mode
@@ -385,9 +397,13 @@ toZ z (TranslateBuilder config builder) =
 
         y =
             Translate.getY config.end
+
+        newEnd =
+            Translate.fromTriple ( x, y, z )
     in
-    toXYZ x y z <|
-        TranslateBuilder config builder
+    TranslateBuilder
+        (setEnd newEnd config)
+        (markAxes [ "z" ] builder)
 
 
 
@@ -415,7 +431,7 @@ by delta (TranslateBuilder config builder) =
             , end = endVal
             , distance = Translate.distance startVal endVal
         }
-        builder
+        (markAxes [ "x", "y", "z" ] builder)
 
 
 byXYZ : Float -> Float -> Float -> TranslateBuilder mode -> TranslateBuilder mode
@@ -424,33 +440,162 @@ byXYZ dx dy dz =
 
 
 byXY : Float -> Float -> TranslateBuilder mode -> TranslateBuilder mode
-byXY dx dy =
-    byXYZ dx dy 0
+byXY dx dy (TranslateBuilder config builder) =
+    let
+        startVal =
+            Maybe.withDefault Translate.default config.start
+
+        endVal =
+            Translate.fromTriple
+                ( Translate.getX startVal + dx
+                , Translate.getY startVal + dy
+                , Translate.getZ startVal
+                )
+    in
+    TranslateBuilder
+        { config
+            | start = Just startVal
+            , end = endVal
+            , distance = Translate.distance startVal endVal
+        }
+        (markAxes [ "x", "y" ] builder)
 
 
 byXZ : Float -> Float -> TranslateBuilder mode -> TranslateBuilder mode
-byXZ dx dz =
-    byXYZ dx 0 dz
+byXZ dx dz (TranslateBuilder config builder) =
+    let
+        startVal =
+            Maybe.withDefault Translate.default config.start
+
+        endVal =
+            Translate.fromTriple
+                ( Translate.getX startVal + dx
+                , Translate.getY startVal
+                , Translate.getZ startVal + dz
+                )
+    in
+    TranslateBuilder
+        { config
+            | start = Just startVal
+            , end = endVal
+            , distance = Translate.distance startVal endVal
+        }
+        (markAxes [ "x", "z" ] builder)
 
 
 byX : Float -> TranslateBuilder mode -> TranslateBuilder mode
-byX dx =
-    byXYZ dx 0 0
+byX dx (TranslateBuilder config builder) =
+    let
+        startVal =
+            Maybe.withDefault Translate.default config.start
+
+        endVal =
+            Translate.fromTriple
+                ( Translate.getX startVal + dx
+                , Translate.getY startVal
+                , Translate.getZ startVal
+                )
+    in
+    TranslateBuilder
+        { config
+            | start = Just startVal
+            , end = endVal
+            , distance = Translate.distance startVal endVal
+        }
+        (markAxes [ "x" ] builder)
 
 
 byYZ : Float -> Float -> TranslateBuilder mode -> TranslateBuilder mode
-byYZ dy dz =
-    byXYZ 0 dy dz
+byYZ dy dz (TranslateBuilder config builder) =
+    let
+        startVal =
+            Maybe.withDefault Translate.default config.start
+
+        endVal =
+            Translate.fromTriple
+                ( Translate.getX startVal
+                , Translate.getY startVal + dy
+                , Translate.getZ startVal + dz
+                )
+    in
+    TranslateBuilder
+        { config
+            | start = Just startVal
+            , end = endVal
+            , distance = Translate.distance startVal endVal
+        }
+        (markAxes [ "y", "z" ] builder)
 
 
 byY : Float -> TranslateBuilder mode -> TranslateBuilder mode
-byY dy =
-    byXYZ 0 dy 0
+byY dy (TranslateBuilder config builder) =
+    let
+        startVal =
+            Maybe.withDefault Translate.default config.start
+
+        endVal =
+            Translate.fromTriple
+                ( Translate.getX startVal
+                , Translate.getY startVal + dy
+                , Translate.getZ startVal
+                )
+    in
+    TranslateBuilder
+        { config
+            | start = Just startVal
+            , end = endVal
+            , distance = Translate.distance startVal endVal
+        }
+        (markAxes [ "y" ] builder)
 
 
 byZ : Float -> TranslateBuilder mode -> TranslateBuilder mode
-byZ dz =
-    byXYZ 0 0 dz
+byZ dz (TranslateBuilder config builder) =
+    let
+        startVal =
+            Maybe.withDefault Translate.default config.start
+
+        endVal =
+            Translate.fromTriple
+                ( Translate.getX startVal
+                , Translate.getY startVal
+                , Translate.getZ startVal + dz
+                )
+    in
+    TranslateBuilder
+        { config
+            | start = Just startVal
+            , end = endVal
+            , distance = Translate.distance startVal endVal
+        }
+        (markAxes [ "z" ] builder)
+
+
+
+-- Private helpers shared by TO setters.
+
+
+setEnd : Translate -> TranslateConfig -> TranslateConfig
+setEnd newEnd config =
+    let
+        startVal =
+            Maybe.withDefault Translate.default config.start
+    in
+    { config
+        | start = Just startVal
+        , end = newEnd
+        , distance = Translate.distance startVal newEnd
+    }
+
+
+markAxes : List String -> AnimBuilder mode -> AnimBuilder mode
+markAxes axes builder =
+    case Builder.getCurrentAnimGroupName builder of
+        Just animGroupName ->
+            Builder.markTouchedAxes animGroupName "translate" axes builder
+
+        Nothing ->
+            builder
 
 
 
