@@ -1,6 +1,6 @@
-# View Timeline Engine
+# ViewTimeline Engine
 
-This page is a practical guide to using the ViewTimeline engine from setup through common real-world usage.
+This page is a practical guide to using the ViewTimeline engine.
 Read [Engines Overview](overview.md) when you want side-by-side comparisons and tradeoffs.
 
 The ViewTimeline Engine is a lightweight engine that uses the Browsers native `ViewTimeline` API.
@@ -20,7 +20,7 @@ up as they are scrolled into view.
 
 ## Quick Walkthrough
 
-Get up and running in minutes.
+Here's the general workflow to get up an running quickly.
 
 ### 1. Build
 
@@ -137,30 +137,7 @@ Fire-and-forget, returns a `Cmd msg` with no state to store.
     ViewTimeline.animate motionCmd scrollAnimation
     ```
 
-### Events
-
-Subscribing to events is optional. If you only need the visual animation, no subscription or `update` is required.
-
-The incoming port is only needed if you want lifecycle events:
-
-??? example "View Source Code"
-
-    ```elm
-    handleAnimEvent : Maybe ViewTimeline.AnimEvent -> Model -> ( Model, Cmd Msg )
-    handleAnimEvent maybeEvent model =
-        case maybeEvent of
-            Just (ViewTimeline.Ended "hero-card") ->
-                ( model, Cmd.none )
-
-            Just (ViewTimeline.Iteration "hero-card" count) ->
-                ( model, Cmd.none )
-
-            Just (ViewTimeline.AnimError err) ->
-                ( model, Cmd.none )
-
-            _ ->
-                ( model, Cmd.none )
-    ```
+📖 See [Triggering Animations](../workflow/trigger.md) for more info.
 
 ### Update
 
@@ -181,6 +158,42 @@ If subscribing to events, handle animation messages in your update function. `up
                 ( model, Cmd.none )
     ```
 
+### Events
+
+`update` returns a `Maybe AnimEvent` per call — `Nothing` means no event occurred this message.
+
+Every event carries the animation group name. Some events carry an additional value:
+
+- `Iteration` includes the iteration count (`Int`)
+- `AnimError` carries an error string from the JavaScript layer
+
+??? example "View Source Code"
+
+    ```elm
+    handleAnimEvent : Maybe ViewTimeline.AnimEvent -> Model -> ( Model, Cmd Msg )
+    handleAnimEvent maybeEvent model =
+        case maybeEvent of
+            Just (ViewTimeline.Ended "hero-card") ->
+                ( model, Cmd.none )
+
+            Just (ViewTimeline.Iteration "hero-card" count) ->
+                ( model, Cmd.none )
+
+            Just (ViewTimeline.AnimError err) ->
+                ( model, Cmd.none )
+
+            _ ->
+                ( model, Cmd.none )
+    ```
+
+| Event | Fires when... |
+| ----- | ------------- |
+| `Started` | Animation begins playing |
+| `Ended` | Animation completes |
+| `Cancelled` | Animation is cancelled before completing |
+| `Iteration` | Each iteration completes (looping or alternating) |
+| `AnimError` | The JavaScript layer reports an error |
+
 ### Subscriptions
 
 Pass the message constructor and the incoming events port to receive lifecycle events.
@@ -195,6 +208,8 @@ Pass the message constructor and the incoming events port to receive lifecycle e
         ViewTimeline.subscriptions GotViewMsg motionMsg
     ```
 
+📖 See [React](../workflow/react.md) for more info.
+
 ### View
 
 Apply `attributes` to the animated element to attach the required animation group identifier.
@@ -206,6 +221,8 @@ Apply `attributes` to the animated element to attach the required animation grou
         (ViewTimeline.attributes "hero-card")
         [ text "I animate as the user scrolls" ]
     ```
+
+📖 See [Render](../workflow/render.md) for more info.
 
 ### Axis
 
@@ -228,7 +245,7 @@ Setting the range determines when the animation starts and ends relative to the 
 
 Use `rangeStart` and `rangeEnd` with `Range` constructor values. Both are optional — omitting them defaults to `Cover 0 Perc` through `Cover 100 Perc`.
 
-??? example "Show Source Code"
+??? example "View Source Code"
 
     ```elm
     ViewTimeline.animate motionCmd <|
@@ -251,11 +268,23 @@ For nuanced differences between `Entry`/`EntryCrossing` and `Exit`/`ExitCrossing
 
 ### Playback
 
-`iterations` and `alternate` work the same as in other engines, with one difference: `alternate` only has an effect when `iterations > 1`. Calling `alternate` without first calling `iterations` will automatically set iterations to `2`.
+`iterations` and `alternate` work the same as in other engines. Calling `alternate` when `iterations` is unset or `1` automatically bumps `iterations` to `2`.
 
-📖 See [Playback](overview.md) in the Engines Overview for details.
+📖 See [Playback](../concepts/playback.md) for the full looping, iterations, and alternate API with live examples.
 
 ### Easing
+
+Set the default easing for all properties that don't override it.
+
+??? example "View Source Code"
+
+    ```elm
+    fadeIn =
+        ViewTimeline.easing CubicInOut
+            >> Opacity.for "card"
+            >> Opacity.to 1
+            >> Opacity.build
+    ```
 
 📖 See [Easing](../concepts/easing.md) for available easing functions.
 
@@ -289,7 +318,6 @@ Choose ViewTimeline when playback should follow how an element moves through the
 
 - Best for: section reveals, scroll storytelling, and enter/exit viewport choreography.
 - Avoid when: you need pause/resume/stop/reset controls or AnimState queries.
-- Prefer: [Scroll Timeline](scroll-timeline.md) when progress should follow container scroll position rather than element visibility.
 
 ### API Quick Reference
 

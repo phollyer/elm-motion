@@ -1,6 +1,6 @@
 # WAAPI Engine
 
-This page is a practical guide to using the WAAPI engine from setup through advanced usage.
+This page is a practical guide to using the WAAPI engine.
 Read [Engines Overview](overview.md) when you want side-by-side comparisons and tradeoffs.
 
 The WAAPI Engine uses the Web Animations API via Elm ports and a JavaScript companion. It combines browser-native performance with programmatic control.
@@ -17,11 +17,13 @@ The WAAPI Engine uses the Web Animations API via Elm ports and a JavaScript comp
 
     --8<-- "docs/animation/concepts/3d/rotating-cube/waapi.md:code"
 
+
+
 ---
 
 ## Quick Walkthrough
 
-Get up and running in minutes.
+Here's the general workflow to get up an running quickly.
 
 ### 1. Build
 
@@ -42,7 +44,7 @@ Get up and running in minutes.
 
 ### 2. Initialize
 
-Define ports and pass them to `init`. Your module declaration must use `port module` to define ports. See [Initialize](#initialize) for full details.
+Make your module a `port` module, define your ports: `motionCmd` and `motionMsg`, and pass them to `init` with your property initializers.
 
 ??? example "View Source Code"
 
@@ -52,18 +54,22 @@ Define ports and pass them to `init`. Your module declaration must use `port mod
     import Json.Decode
     import Json.Encode
 
+    -- Outgoing to JS
+    port motionCmd : Json.Encode.Value -> Cmd msg
+
+    -- Incoming from JS
+    port motionMsg : (Json.Decode.Value -> msg) -> Sub msg
+
 
     type alias Model =
         { animState : WAAPI.AnimState Msg }
 
 
-    port motionCmd : Json.Encode.Value -> Cmd msg
-    port motionMsg : (Json.Decode.Value -> msg) -> Sub msg
-
-
     init : ( Model, Cmd Msg )
     init =
-        ( { animState = WAAPI.init motionCmd motionMsg [ Opacity.init "card" 0 ] }
+        ( { animState = 
+            WAAPI.init motionCmd motionMsg <|   
+                [ Opacity.init "card" 0 ] }
         , Cmd.none
         )
     ```
@@ -85,7 +91,7 @@ Render WAAPI attributes on the animated element.
 
 ### 4. Trigger with `animate`
 
-Call `animate` to start a state-tracked animation. See [Trigger](#trigger) for `fireAndForget` and other options.
+Call `animate` to start a state-tracked animation.
 
 ??? example "View Source Code"
 
@@ -100,7 +106,7 @@ Call `animate` to start a state-tracked animation. See [Trigger](#trigger) for `
 
 ### 5. React
 
-Subscribe to events, then process messages with `update`. See [Subscriptions](#subscriptions) and [Update](#update) for full details.
+Subscribe to events, then process messages with `update`.
 
 ??? example "View Source Code"
 
@@ -137,7 +143,6 @@ Subscribe to events, then process messages with `update`. See [Subscriptions](#s
 
 The WAAPI engine communicates through two ports: one outgoing (Elm → JS) and one incoming (JS → Elm). Define them in your port module, then pass them to `init` along with property initializers.
 
-📖 See [WAAPI JavaScript](../../installation.md#waapi-javascript) for install instructions.
 
 ??? example "View Source Code"
 
@@ -149,7 +154,7 @@ The WAAPI engine communicates through two ports: one outgoing (Elm → JS) and o
     -- Outgoing port (Elm → JS): sends all animation commands
     port motionCmd : Json.Encode.Value -> Cmd msg
 
-    -- Incoming port (JS → Elm): receives all animation events
+    -- Incoming port (JS → Elm): receives all animation messages
     port motionMsg : (Json.Encode.Value -> msg) -> Sub msg
 
     init : ( Model, Cmd Msg )
@@ -164,21 +169,13 @@ The WAAPI engine communicates through two ports: one outgoing (Elm → JS) and o
         )
     ```
 
+📖 See [Initialize](../workflow/init.md) for more info.
+
+📖 See [WAAPI JavaScript](../../installation.md#waapi-javascript) for install instructions.
+
 ### Trigger
 
 The WAAPI engine offers two trigger functions: `animate` for state-tracked animations and `fireAndForget` for fire-and-forget effects.
-
-Triggering a new `animate` animation while one is already running smoothly transitions from the current mid-flight position to the new end values.
-
-📖 See [Interrupting Animations](../concepts/interrupting-animations.md) for more info.
-
-### Mid-Flight Interruptions
-
-WAAPI keeps runtime animation state, so interrupting with a new `animate` (or `retarget`) continues smoothly from the current in-flight position.
-
-### OnLoad Animations
-
-For on-load animations, trigger `animate` when the page initializes, the animation runs immediately.
 
 ### `animate`
 
@@ -199,8 +196,6 @@ Use `animate` when you need state-tracked animations. The engine tracks start va
 
 Use `fireAndForget` for one-shot effects where you don't need to pause, resume, query, or interrupt. It takes the port function directly and returns a bare `Cmd msg` with no state to store.
 
-Because there is no state tracking, explicit `from` and `to` values are required.
-
 ??? example "View Source Code"
 
     ```elm
@@ -210,12 +205,41 @@ Because there is no state tracking, explicit `from` and `to` values are required
         )
     ```
 
-!!! warning "No state, no control"
-    Since `fireAndForget` bypasses `AnimState`, you can't pause, resume, stop, restart, interrupt, or query these animations. Use `animate` if you need any of those.
+
+📖 See [Triggering Animations](../workflow/trigger.md) for more info.
+
+### Mid-Flight Interruptions
+
+WAAPI keeps runtime animation state, so interrupting a running animation continues smoothly from the current in-flight position.
+
+📖 See [Interrupting Animations](../concepts/interrupting-animations.md) for more info.
+
+### OnLoad Animations
+
+For on-load animations, trigger `animate` when the page initializes, the animation runs immediately.
+
+### Update
+
+Use `update` to process incoming WAAPI messages. It returns the updated `AnimState` and a `Maybe AnimEvent`.
+
+??? example "View Source Code"
+
+    ```elm
+    GotAnimMsg animMsg ->
+        let
+            ( animState, maybeEvent ) =
+                WAAPI.update animMsg model.animState
+        in
+        handleEvent maybeEvent { model | animState = animState }
+    ```
 
 ### Events
 
-`update` returns a `Maybe AnimEvent` per call — `Nothing` means no event occurred this message. Some events carry additional values:
+The WAAPI, ScrollTimeline and ViewTimeline Engines all utilize the JavaScript Web Animations API, and they all use the same ports to communicate with the JS companion. If you use two or more of these engines in your Elm App, depending on your setup, there is the potential for them all to receive the same messages from JS at the same time, which could be confusing.
+
+The library has you covered here though, all incoming messages are gated by each Engine, which is why `update` returns a `Maybe AnimEvent` - `Nothing` means the message was not for this Engine.
+
+Every event carries the animation group name. Some events carry an additional value:
 
 - `Cancelled` and `Paused` include the progress at the moment of cancellation/pause (`Float`, 0.0–1.0)
 - `Iteration` includes the iteration count (`Int`)
@@ -241,20 +265,17 @@ Because there is no state tracking, explicit `from` and `to` values are required
                 ( model, Cmd.none )
     ```
 
-### Update
-
-Use `update` to process incoming WAAPI messages. It returns the updated `AnimState` and a `Maybe AnimEvent`.
-
-??? example "View Source Code"
-
-    ```elm
-    GotAnimMsg animMsg ->
-        let
-            ( animState, maybeEvent ) =
-                WAAPI.update animMsg model.animState
-        in
-        handleEvent maybeEvent { model | animState = animState }
-    ```
+| Event | Fires when... |
+| ----- | ------------- |
+| `Started` | Animation begins playing |
+| `Ended` | Animation completes |
+| `Cancelled` | Animation is cancelled before completing |
+| `Iteration` | Each iteration completes (looping or alternating) |
+| `Progress` | Every frame while the animation is running |
+| `Paused` | `pause` is called on a running animation |
+| `Resumed` | `resume` is called on a paused animation |
+| `Restarted` | `restart` is called |
+| `AnimError` | The JavaScript layer reports an error |
 
 ### Subscriptions
 
@@ -268,9 +289,11 @@ The WAAPI engine requires a subscription to receive animation events from JavaSc
         WAAPI.subscriptions GotAnimMsg model.animState
     ```
 
+📖 See [React](../workflow/react.md) for more info.
+
 ### View
 
-Apply `attributes` to the animated element to set its initial inline styles.
+Apply `attributes` to the animated element.
 
 ??? example "View Source Code"
 
@@ -278,13 +301,14 @@ Apply `attributes` to the animated element to set its initial inline styles.
     div (WAAPI.attributes "card" model.animState) [ text "Animated card" ]
     ```
 
+📖 See [Render](../workflow/render.md) for more info.
+
 ### Responsive Strategy
 
 Use relative CSS units whenever the motion can be defined in layout-relative terms.
 
-For measured pixel targets:
+For measured pixel targets, WAAPI supports proportional remap for resize updates.
 
-- WAAPI supports proportional remap for resize updates.
 - On resize, update bounds with `onResize` and `Anim.Resize.bounds`.
 - Running animations remap to the equivalent relative position inside the updated bounds.
 - Idle animations also re-position proportionally inside the updated bounds.
@@ -299,70 +323,70 @@ Set `iterations`, `loopForever`, and `alternate` in the animation builder.
 
     ```elm
     spinForever =
-        Rotate.for "icon"
+        WAAPI.loopForever
+            >> WAAPI.alternate
+            >> Rotate.for "icon"
             >> Rotate.toZ 360
             >> Rotate.duration 1000
-            >> WAAPI.loopForever
-            >> WAAPI.alternate
             >> Rotate.build
     ```
 
+📖 See [Playback](../concepts/playback.md) for the full looping, iterations, and alternate API with live examples.
+
 ### Timing
 
-Set `duration`, `speed`, and `delay` in the animation builder.
+Set the default `duration`, `speed`, and `delay`. Inherited by every property that doesn't override them.
 
 - `duration` — animation length in milliseconds.
 - `speed` — alternative to `duration`; set a rate in property units per second.
 - `delay` — wait before the animation begins, in milliseconds.
 
+??? example "View Source Code"
+
+    ```elm
+    fadeIn =
+        WAAPI.delay 500
+            >> WAAPI.duration 800
+            >> Opacity.for "card"
+            >> Opacity.to 1
+            >> Opacity.build
+    ```
+
+📖 See [Timing](../concepts/timing.md) for more info.
+
 ### Easing
 
-WAAPI animations use the full Easing library with exact mathematical curves — including bounce and elastic.
+WAAPI animations support the full Easing library, including bounce and elastic. Simple curves (sine, quad, cubic, quart, quint, expo) are handed to the browser as native easing functions. Complex curves (bounce, elastic, springs) are sampled into densely-spaced stops, and the browser interpolates linearly between them — visually faithful to the source curve.
+
+Set the default easing for all properties that don't override it.
+
+??? example "View Source Code"
+
+    ```elm
+    fadeIn =
+        WAAPI.easing CubicInOut
+            >> Opacity.for "card"
+            >> Opacity.to 1
+            >> Opacity.duration 300
+            >> Opacity.delay 50
+            >> Opacity.build
+    ```
 
 📖 See [Easing](../concepts/easing.md) for all available easing functions.
 
 ### Controls
 
-WAAPI control functions return `( AnimState msg, Cmd msg )` — the `Cmd` sends the command to JavaScript.
+All WAAPI control functions return `( AnimState msg, Cmd msg )` — the `Cmd` is dispatched to JavaScript to drive the underlying Web Animation.
 
-??? example "View Source Code"
+| Function | Description |
+| -------- | ----------- |
+| `stop` | Jump to end state |
+| `reset` | Jump to start state |
+| `restart` | Reset and begin playing again |
+| `pause` | Freeze at current position |
+| `resume` | Continue from paused position |
 
-    ```elm
-    Pause ->
-        let
-            ( animState, cmd ) =
-                WAAPI.pause "box" model.animState
-        in
-        ( { model | animState = animState }, cmd )
-
-    Resume ->
-        let
-            ( animState, cmd ) =
-                WAAPI.resume "box" model.animState
-        in
-        ( { model | animState = animState }, cmd )
-
-    Stop ->
-        let
-            ( animState, cmd ) =
-                WAAPI.stop "box" model.animState
-        in
-        ( { model | animState = animState }, cmd )
-
-    Reset ->
-        let
-            ( animState, cmd ) =
-                WAAPI.reset "box" model.animState
-        in
-        ( { model | animState = animState }, cmd )
-
-    Restart ->
-        let
-            ( animState, cmd ) =
-                WAAPI.restart "box" model.animState
-        in
-        ( { model | animState = animState }, cmd )
-    ```
+📖 See [Controlling Animations](../concepts/controlling-animations.md) for more info.
 
 ### Discrete Properties
 
@@ -408,9 +432,11 @@ Freeze individual axes of transform properties so they remain fixed during an an
 
 Call `unfreezeY` (or the matching `unfreeze*` variant) in a subsequent animation to release the frozen axis.
 
+📖 See [Freezing Axes with `freeze*`](../concepts/interrupting-animations.md#freezing-axes-with-freeze) for more info.
+
 ### State Queries
 
-Query animation state at any time without waiting for events.
+Query animation state.
 
 ??? example "View Source Code"
 
@@ -446,7 +472,6 @@ Choose WAAPI when you want browser-native playback with the broadest state-track
 
 - Best for: production animations that need strong control, events, and current-value queries.
 - Avoid when: you do not want JavaScript ports or companion setup.
-- Prefer: [Sub](sub.md) for pure Elm frame-loop control, or timeline engines for fire-and-forget scroll-driven playback.
 
 ### API Quick Reference
 

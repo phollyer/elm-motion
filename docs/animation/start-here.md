@@ -43,7 +43,7 @@ The library codebase, and all the examples use function composition extensively.
 
 ## Examples
 
-Throughout the documentation you will find examples demonstrating features or concepts. The vast majority are for animations on the Document timeline, therefore all these examples will show the exact same animation for each of the Document timeline Engines.
+Throughout the documentation you will find examples demonstrating features or concepts. The vast majority are for animations on the Document timeline, therefore all these examples will show the exact same animation for each of the Document Timeline Engines.
 
 !!! info "Responsive by default"
 

@@ -198,7 +198,7 @@ To animate immediately when the page loads, you need to trigger in `init`. For m
         
         ❌ **Behaviour**: The element appears at the final state, with no animation.
 
-        📖 See [Transition Engine - How CSS Transition Work](../engines/transition.md#how-css-transitions-work) for more info.        
+        📖 See [Transition Engine - How CSS Transitions Work](../engines/transition.md#how-css-transitions-work) for more info.        
 
         ```elm
         init =
@@ -213,7 +213,7 @@ To animate immediately when the page loads, you need to trigger in `init`. For m
 
     === "Keyframe"
 
-        ✅ **Behaviour**: The `@keyframes` rules are added to the DOM on first render when you apply the `styleNode` function in your view, the browser will then run them immediately.
+        ✅ **Behaviour**: The `@keyframes` rules are added to the DOM on first render when you apply the `styleNode` function in your view, and connect to your element when you add the `attributes` to it; the browser will then run them immediately.
 
         ```elm
         init =

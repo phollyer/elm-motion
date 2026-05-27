@@ -250,6 +250,11 @@ iterations =
             >> liftCard
             >> glowCardBorder
 
+`alternate` only has a visible effect when the animation runs more than once,
+so calling it when `iterations` is unset or `1` automatically bumps
+`iterations` to `2`. An explicit `iterations` count (or `loopForever`) set
+before or after `alternate` is preserved.
+
 -}
 alternate : AnimBuilder mode -> AnimBuilder mode
 alternate =

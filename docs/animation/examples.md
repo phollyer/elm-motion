@@ -14,6 +14,16 @@ Each example uses the exact same animation for each of the Engines - quickly com
 
 ---
 
+## Pulsing Dot
+
+--8<-- "docs/animation/first-animations/pulsing-dot.md:desc"
+
+--8<-- "docs/animation/first-animations/pulsing-dot.md:examples"
+
+[Go to page](concepts/playback.md#example-pulsing-dot){ .md-button .md-button--primary }
+
+---
+
 ## Fade In/Out
 
 --8<-- "docs/animation/first-animations/fade-in-out.md:desc"

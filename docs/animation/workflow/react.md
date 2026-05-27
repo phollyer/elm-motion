@@ -24,18 +24,20 @@ or port messages depending on the engine.
                         ( animState, animEvent ) =
                             Transition.update animMsg model.animState
                     in
-                    reactToAnimEvent animEvent { model | animState = animState }
+                    (reactToAnimEvent animEvent { model | animState = animState }
+                    , Cmd.none
+                    )
 
                 ...
 
-        reactToAnimEvent : AnimEvent -> Model -> (Model, Cmd Msg)
-        reactToAnimEvent animEvent =
+        reactToAnimEvent : AnimEvent -> Model -> Model
+        reactToAnimEvent animEvent model =
             case animEvent of 
                 Ended _ _ "introAnim" ->
-                    ( { model | animState = Transition.animate model.animState nextAnimation }, Cmd.none )
+                    { model | animState = Transition.animate model.animState nextAnimation }
 
                 _ ->
-                    (model, Cmd.none)
+                    model
         ```
 
         Returns a single `animEvent` from `update`.
@@ -55,18 +57,20 @@ or port messages depending on the engine.
                         ( animState, animEvent ) =
                             Keyframe.update animMsg model.animState
                     in
-                    reactToAnimEvent animEvent { model | animState = animState }
+                    (reactToAnimEvent animEvent { model | animState = animState }
+                    , Cmd.none
+                    )
 
                 ...
 
-        reactToAnimEvent : AnimEvent -> Model -> (Model, Cmd Msg)
-        reactToAnimEvent animEvent =
+        reactToAnimEvent : AnimEvent -> Model -> Model
+        reactToAnimEvent animEvent model =
             case animEvent of 
                 Ended _ _ "introAnim" ->
-                    ( { model | animState = Keyframe.animate model.animState nextAnimation }, Cmd.none )
+                    { model | animState = Keyframe.animate model.animState nextAnimation }
 
                 _ ->
-                    (model, Cmd.none)
+                    model
         ```
 
         Returns a single `animEvent` from `update`.
@@ -86,18 +90,20 @@ or port messages depending on the engine.
                         ( animState, animEvents ) =
                             Sub.update animMsg model.animState
                     in
-                    List.foldl reactToAnimEvent ( { model | animState = animState }, Cmd.none ) animEvents
+                    (List.foldl reactToAnimEvent { model | animState = animState } animEvents
+                    , Cmd.none
+                    )
 
                 ...
             
-        reactToAnimEvent : AnimEvent -> (Model, Cmd Msg) -> (Model, Cmd Msg)
-        reactToAnimEvent animEvent (model, cmd) =
+        reactToAnimEvent : AnimEvent -> Model -> Model
+        reactToAnimEvent animEvent model =
             case animEvent of
-                Ended "introAnim ->
-                    ( { model | animState = Sub.animate model.animState nextAnimation } , cmd )
+                Ended "introAnim" ->
+                    { model | animState = Sub.animate model.animState nextAnimation }
 
                 _ ->
-                    ( model, cmd )
+                    model
         ```
         
         Returns a list of `animEvent`s from `update`.
@@ -127,19 +133,19 @@ or port messages depending on the engine.
                 ...
 
         reactToAnimEvent : Maybe AnimEvent -> Model -> (Model, Cmd Msg)
-        reactToAnimEvent maybeAnimEvent =
+        reactToAnimEvent maybeAnimEvent model =
             case maybeAnimEvent of
                 Nothing ->
                     (model, Cmd.none)
 
-                Just animEvent ->
-                    case animEvent of
-                        Ended "introAnim" ->
-                            let
-                                ( animState, cmd ) =
-                                    WAAPI.animate model.animState nextAnimation
-                            in
-                            ( { model | animState = animState }, cmd )
+                Just (Ended "introAnim") ->
+                    let
+                        ( animState, cmd ) =
+                            WAAPI.animate model.animState nextAnimation
+                    in
+                    ( { model | animState = animState }, cmd )
+
+                ...
 
         ```
 
@@ -158,20 +164,23 @@ or port messages depending on the engine.
         update msg model =
             case msg of
                 GotScrollMsg animMsg ->
-                    reactToScrollEvent (ScrollTimeline.update animMsg) model
+                    (model
+                    , reactToScrollEvent <|
+                        ScrollTimeline.update animMsg
+                    )
 
                 ...
 
-        reactToScrollEvent : Maybe AnimEvent -> Model -> (Model, Cmd Msg)
-        reactToScrollEvent maybeAnimEvent model =
+        reactToScrollEvent : Maybe AnimEvent -> (Cmd Msg)
+        reactToScrollEvent maybeAnimEvent =
             case maybeAnimEvent of
                 Nothing ->
-                    ( model, Cmd.none )
+                    Cmd.none
 
-                Just animEvent ->
-                    case animEvent of
-                        Ended "introAnim" ->
-                            ( model, triggerNextPhase model )
+                Just (Ended "introAnim") ->
+                    ScrollTimeline.animate motionCmd Document nextAnimation
+
+                ...
 
         ```
 
@@ -192,20 +201,23 @@ or port messages depending on the engine.
         update msg model =
             case msg of
                 GotViewMsg animMsg ->
-                    reactToViewEvent (ViewTimeline.update animMsg) model
+                    (model
+                    , reactToViewEvent <|
+                        ViewTimeline.update animMsg
+                    )
 
                 ...
 
-        reactToViewEvent : Maybe AnimEvent -> Model -> (Model, Cmd Msg)
-        reactToViewEvent maybeAnimEvent model =
+        reactToViewEvent : Maybe AnimEvent ->  Cmd Msg
+        reactToViewEvent maybeAnimEvent =
             case maybeAnimEvent of
                 Nothing ->
-                    ( model, Cmd.none )
+                    Cmd.none
                 
-                Just animEvent ->
-                    case animEvent of                            
-                        Ended "heroCard" ->
-                            ( model, triggerNextPhase model )
+                Just (Ended "heroCard") ->
+                    ViewTimeline.animate motionCmd nextAnimation
+
+                ...
 
         ```
 
@@ -244,7 +256,7 @@ Add the `events` function to your animated elements:
         view model =
             div 
                 (Transition.attributes "box" model.animState
-                    ++ Transition.events "box" GotAnimMsg
+                    ++ Transition.events GotAnimMsg
                 )
                 [ text "Animated box" ]
         ```
@@ -256,7 +268,7 @@ Add the `events` function to your animated elements:
         view model =
             div 
                 (Keyframe.attributes "box" model.animState
-                    ++ Keyframe.events "box" GotAnimMsg
+                    ++ Keyframe.events GotAnimMsg
                 )
                 [ text "Animated box" ]
         ```

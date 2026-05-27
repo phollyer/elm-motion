@@ -2,7 +2,7 @@
 
 This page compares the engines side by side.
 
-Use this page to choose an engine, compare featuress, and plan migrations.
+Use this page to compare features and choose an engine.
 For implementation details, each engine page includes the complete usage flow for that engine.
 
 - [Transition](transition.md) - CSS transitions, simplest setup
@@ -11,25 +11,6 @@ For implementation details, each engine page includes the complete usage flow fo
 - [WAAPI](waapi.md) - Web Animations API, browser-native with JS
 - [Scroll Timeline](scroll-timeline.md) - fire-and-forget, progress tied to container scroll
 - [View Timeline](view-timeline.md) - fire-and-forget, progress tied to viewport position
-
-## One Mental Model
-
-All engines use the same animation builder pipeline and property modules.
-
-You define animations the same way regardless of engine:
-
-??? example "Shared Builder Pattern"
-
-    ```elm
-    myAnimation : AnimBuilder mode -> AnimBuilder mode
-    myAnimation =
-        Opacity.for "card"
-            >> Opacity.to 1
-            >> Opacity.duration 400
-            >> Opacity.build
-    ```
-
-What changes per engine is runtime behavior: how animations are triggered, updated, and controlled.
 
 ## Choosing an Engine
 
@@ -54,7 +35,7 @@ What changes per engine is runtime behavior: how animations are triggered, updat
 | JavaScript required | | | | ✓ | ✓ | ✓ |
 | **Playback** |
 | Iterations | | ✓ | ✓ | ✓ | ✓ | ✓ |
-| Loop forever | | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Looping | | ✓ | ✓ | ✓ | ✓ | ✓ |
 | Alternate (ping-pong) | | ✓ | ✓ | ✓ | ✓ | ✓ |
 | **Animation Control** |
 | Stop | ✓ | ✓ | ✓ | ✓ | | |
@@ -73,8 +54,8 @@ What changes per engine is runtime behavior: how animations are triggered, updat
 | Iteration | | ✓ | ✓ | ✓ | ✓ | ✓ |
 | Progress | | | ✓ | ✓ | | |
 | **Responsive** |
-| When Idle | ✓ | ✓ | ✓ | ✓ | | |
-| When Animating | * | * | ✓ | ✓ | | |
+| When Idle | ✓ | ✓ | ✓ | ✓ | ✓ † | ✓ † |
+| When Animating | ✓ † | ✓ † | ✓ | ✓ | ✓ † | ✓ † |
 | **Mid-Flight Access** |
 | Query current values | | | ✓ | ✓ | | |
 | Dynamic redirects | ✓ | | ✓ | ✓ | | |
@@ -82,7 +63,7 @@ What changes per engine is runtime behavior: how animations are triggered, updat
 | Custom transform order | | ✓ | ✓ | ✓ | ✓ | ✓ |
 | Discrete properties | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 
-\* Animations jump to their end target and stop.
+† Via [relative CSS units](../concepts/responsive-animations.md#path-2---using-relative-units) - the browser re-evaluates values on resize automatically. `Sub` and `WAAPI` additionally support measured-pixel resize updates via [`onResize`](../concepts/responsive-animations.md#path-1---measured-pixel-values).
 
 ## Engine Families
 
@@ -108,19 +89,6 @@ In most migrations, you primarily change:
 - engine function calls
 - return-type handling in `update`
 - WAAPI/timeline ports when applicable
-
-The same animation definition can be reused:
-
-??? example "Portable Animation Builder"
-
-    ```elm
-    myAnimation : AnimBuilder mode -> AnimBuilder mode
-    myAnimation =
-        Translate.for "box"
-            >> Translate.toXY 100 200
-            >> Translate.duration 500
-            >> Translate.build
-    ```
 
 ## Next Steps
 

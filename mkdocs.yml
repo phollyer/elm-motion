@@ -116,6 +116,7 @@ nav:
       - Controlling Animations: animation/concepts/controlling-animations.md
       - Timing: animation/concepts/timing.md
       - Easing: animation/concepts/easing.md
+      - Playback: animation/concepts/playback.md
       - Transform Order: animation/concepts/transform-order.md
       - 3D Animations: animation/concepts/3d.md
     - Examples: animation/examples.md

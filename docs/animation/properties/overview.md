@@ -9,15 +9,15 @@ Every property uses the same pattern: target an animation group, set values, con
 ??? example "View Source Code"
 
     ```elm
-    myAnimation : AnimBuilder mode -> AnimBuilder mode
-    myAnimation =
-        Property.for "myGroup"
-            >> Property.from 0              -- rarely used
-            >> Property.to 100
-            >> Property.delay 50
-            >> Property.duration 500        -- or, Property.speed
-            >> Property.easing BounceOut
-            >> Property.build
+    animationFunction : AnimBuilder mode -> AnimBuilder mode
+    animationFunction =
+        Property.for animGroup              -- Animation group name (required)
+            >> Property.from startValue     -- Optional starting value
+            >> Property.to endValue         -- Property specific alternatives to `to` are available
+            >> Property.delay 100           -- ms
+            >> Property.duration 500        -- ms, or `Property.speed 50` (units per second)
+            >> Property.easing BounceOut    -- or `Property.spring wobbly`
+            >> Property.build               -- Finalize (required)
     ```
 
 📖 See [The Builder Pattern](../workflow/build.md#the-builder-pattern) for more information.
@@ -26,7 +26,7 @@ Every property uses the same pattern: target an animation group, set values, con
 
 These are important. An animation group is a group of properties that animate on an element together.
 
-Properties are added to an animation group by providing the group name as a string when starting an animation pipeline. This is done with the `for` function; under the hood, the animation groups are stored as a `Dict` with the group name as the `key`, and the list of property animations the `value`.
+Properties are added to an animation group by providing the group name as a string when starting an animation pipeline. This is done with the `for` function:
 
 ??? example "View Source Code"
 

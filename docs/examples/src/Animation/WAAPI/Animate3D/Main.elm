@@ -268,33 +268,10 @@ bottomFace =
 
 
 
----8<-- [start:selectAnimation]
-
-
-selectAnimation : Float -> State -> AnimBuilder mode -> AnimBuilder mode
-selectAnimation targetAmount state =
-    case state of
-        Opening ->
-            moveSidesOut targetAmount
-                >> moveTextsOut
-
-        Closing ->
-            moveSidesIn targetAmount
-                >> moveTextsIn
-
-        RotatingOpen ->
-            rotateCubeClockwise
-
-        RotatingClosed ->
-            rotateCubeAntiClockwise
-
-
-
----8<-- [end:selectAnimation]
 -- ANIMATIONS
 --
 ---8<-- [start:animationFunctions]
--- CUBE - 1st level of 3D animation
+-- CUBE
 --
 -- We only rotate the cube, not individual faces, they maintain their
 -- position in 3D space because we use `View3D.transformStyle View3D.Preserve3D`
@@ -321,10 +298,7 @@ rotateCubeAntiClockwise =
 
 
 
--- SIDES - 2nd level of 3D animation
---
--- For the side movement animations, we build complex animations out of
--- smaller pieces.
+-- SIDES
 
 
 moveSidesOut : Float -> AnimBuilder mode -> AnimBuilder mode
@@ -450,7 +424,7 @@ moveBottomFaceIn toY =
 
 
 
--- TEXT - 3rd level of 3D animation
+-- TEXT
 --
 -- Text moves forward (Z+4cqmin) and rotates (to Z=360deg) when sides expand,
 -- and then moves back (to Z=0cqmin) and rotates back (to Z=0deg) when sides close
@@ -495,6 +469,29 @@ moveTextsIn =
 
 
 ---8<-- [end:animationFunctions]
+---8<-- [start:selectAnimation]
+
+
+selectAnimation : Float -> State -> AnimBuilder mode -> AnimBuilder mode
+selectAnimation targetAmount state =
+    case state of
+        Opening ->
+            moveSidesOut targetAmount
+                >> moveTextsOut
+
+        Closing ->
+            moveSidesIn targetAmount
+                >> moveTextsIn
+
+        RotatingOpen ->
+            rotateCubeClockwise
+
+        RotatingClosed ->
+            rotateCubeAntiClockwise
+
+
+
+---8<-- [end:selectAnimation]
 -- UPDATE
 
 

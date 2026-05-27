@@ -1,13 +1,16 @@
 # Initialize
 
-All animations should be initialized ready for rendering and triggering.
+This page relates to Document Timeline Engines only (Transition, Keyframe, Sub and WAAPI). ScrollTimeline and ViewTimeline Engines do not require initializing, and have no `AnimState` - scroll position drives them directly, so there is nothing to track between frames.
+
+All Document Timeline Engines should be initialized ready for rendering and triggering.
 
 ## Why Initialize?
 
-Initialization sets the starting property values so that:
+Initialization performs three functions:
 
-- your elements render correctly on first load - before any animation runs
-- the Engine knows where to start the element's first animation from
+- It sets initial values for first render
+- It gives the Engine starting values to use for the first time the `animGroup` is animated
+- It ensures the Engine and your view are in sync
 
 ## The Init Pattern
 
@@ -22,7 +25,7 @@ Refer to each property's documentation for specifics.
 
 ### Engine Init Functions
 
-Every animation Engine provides an `init` function that creates an `AnimState` with initial property values:
+The `init` function is available for all Document timeline Egnines. It creates an `AnimState` with initial property values:
 
 ??? example "View Source Code"
 
@@ -76,6 +79,9 @@ Every animation Engine provides an `init` function that creates an `AnimState` w
 
         The WAAPI Engine also requires it's port functions [`motionCmd` & `motionMsg`] so that it can talk to JS. 
         [More on these](../engines/waapi.md#3-define-ports-in-elm) later.
+    
+    These properties are rendered in your view with the values set here.
+
 
 ### Store it in Your Model
 

@@ -1,6 +1,6 @@
 # Sub Engine
 
-This page is a practical guide to using the Sub engine from setup through advanced usage.
+This page is a practical guide to using the Sub engine.
 Read [Engines Overview](overview.md) when you want side-by-side comparisons and tradeoffs.
 
 The Sub Engine uses Elm subscriptions to update animation state on every frame. This provides full programmatic control over animations, including mid-flight queries and mid-flight redirections.
@@ -10,16 +10,20 @@ The Sub Engine uses Elm subscriptions to update animation state on every frame. 
 Animation control - use the buttons to control the bouncing ball animation.
 
 ??? example "View Example"
+
     --8<-- "docs/animation/concepts/controlling-animations/drop-the-ball/sub.md:example"
 
 ??? example "View Source Code"
+
     --8<-- "docs/animation/concepts/controlling-animations/drop-the-ball/sub.md:code"
+
+
 
 ---
 
 ## Quick Walkthrough
 
-Get up and running in minutes.
+Here's the general workflow to get up an running quickly.
 
 ### 1. Build
 
@@ -27,15 +31,15 @@ Get up and running in minutes.
 
     ```elm
     import Anim.Engine.Sub as Sub
-    import Anim.Property.Translate as Translate
+    import Anim.Property.Opacity as Opacity
 
 
-    drop : Sub.AnimBuilder mode -> Sub.AnimBuilder mode
-    drop =
-        Translate.for "ball"
-            >> Translate.toY 240
-            >> Translate.duration 450
-            >> Translate.build
+    fadeIn : Sub.AnimBuilder mode -> Sub.AnimBuilder mode
+    fadeIn =
+        Opacity.for "card"
+            >> Opacity.to 1
+            >> Opacity.duration 350
+            >> Opacity.build
     ```
 
 ### 2. Initialize
@@ -49,7 +53,7 @@ Get up and running in minutes.
 
     init : ( Model, Cmd Msg )
     init =
-        ( { animState = Sub.init [ Translate.initY "ball" 0 ] }
+        ( { animState = Sub.init [ Opacity.init "card" 0 ] }
         , Cmd.none
         )
     ```
@@ -64,8 +68,8 @@ Render animation attributes on the element being animated.
     view : Model -> Html Msg
     view model =
         div []
-            [ button [ onClick TriggerDrop ] [ text "Drop" ]
-            , div (Sub.attributes "ball" model.animState) [ text "Ball" ]
+            [ button [ onClick TriggerFadeIn ] [ text "Fade In" ]
+            , div (Sub.attributes "card" model.animState) [ text "Animated card" ]
             ]
     ```
 
@@ -76,28 +80,23 @@ Call `animate` to apply the animation config to the current `AnimState`.
 ??? example "View Source Code"
 
     ```elm
-    TriggerDrop ->
-        ( { model | animState = Sub.animate model.animState drop }
+    TriggerFadeIn ->
+        ( { model | animState = Sub.animate model.animState fadeIn }
         , Cmd.none
         )
     ```
 
 ### 5. React
 
-Subscribe to frame messages, then process them with `update`. See [Subscriptions](#subscriptions) and [Update](#update) for full details.
+
+Use `update` for incoming Sub events.
 
 ??? example "View Source Code"
 
     ```elm
     type Msg
-        = TriggerDrop
+        = TriggerFadeIn
         | GotAnimMsg Sub.AnimMsg
-
-
-    subscriptions : Model -> Sub Msg
-    subscriptions model =
-        Sub.subscriptions GotAnimMsg model.animState
-
 
     update : Msg -> Model -> ( Model, Cmd Msg )
     update msg model =
@@ -107,10 +106,27 @@ Subscribe to frame messages, then process them with `update`. See [Subscriptions
                     ( animState, events ) =
                         Sub.update animMsg model.animState
                 in
-                List.foldl handleAnimEvent ( { model | animState = animState }, Cmd.none ) events
+                ( List.foldl handleAnimEvent { model | animState = animState } events
+                , Cmd.none 
+                )
 
             _ ->
                 ( model, Cmd.none )
+
+
+    handleAnimEvent : Sub.AnimEvent -> Model -> ( Model, Cmd Msg )
+    handleAnimEvent event model =
+        case event of
+            Sub.Ended "card" ->
+                ( model, Cmd.none )
+
+            _ ->
+                ( model, Cmd.none )
+
+    subscriptions : Model -> Sub Msg
+    subscriptions model =
+        Sub.subscriptions GotAnimMsg model.animState
+
     ```
 ---
 
@@ -130,9 +146,11 @@ Pass a list of property initializers to `init`. Each registers an animation grou
         )
     ```
 
+📖 See [Initialize](../workflow/init.md) for more info.
+
 ### Trigger
 
-Call `animate` to apply an animation to the current `AnimState`. Triggering a new animation while one is already running smoothly transitions from the current mid-flight position to the new end values.
+Call `animate` to apply an animation to the current `AnimState`.
 
 ??? example "View Source Code"
 
@@ -143,21 +161,38 @@ Call `animate` to apply an animation to the current `AnimState`. Triggering a ne
         )
     ```
 
-📖 See [Interrupting Animations](../concepts/interrupting-animations.md) for more info.
+📖 See [Triggering Animations](../workflow/trigger.md) for more info.
 
 ### Mid-Flight Interruptions
 
-Sub keeps frame-by-frame runtime state, so interrupting with a new `animate` (or `retarget`) continues smoothly from the current in-flight position.
+Sub keeps frame-by-frame runtime state, so interrupting with a new animation continues smoothly from the current in-flight position.
+
+📖 See [Interrupting Animations](../concepts/interrupting-animations.md) for more info.
 
 ### OnLoad Animations
 
 For on-load animations, trigger `animate` when the page initializes, the animation runs immediately.
 
+### Update
+
+Use `update` to process incoming animation messages. It returns the updated `AnimState` and a list of any events that occurred during that frame.
+
+??? example "View Source Code"
+
+    ```elm
+    GotAnimMsg animMsg ->
+        let
+            ( animState, events ) =
+                Sub.update animMsg model.animState
+        in
+        List.foldl handleAnimEvent ( { model | animState = animState }, Cmd.none ) events
+    ```
+
 ### Events
 
 `update` returns a `List AnimEvent` per call — multiple events can occur in a single frame. Use `List.foldl` to process them.
 
-Each event carries the animation group name, and some carry an additional value:
+Every event carries the animation group name. Some events carry an additional value:
 
 - `Cancelled` and `Paused` include the progress at the moment of cancellation/pause (`Float`, 0.0–1.0)
 - `Iteration` includes the iteration count (`Int`)
@@ -185,20 +220,16 @@ Each event carries the animation group name, and some carry an additional value:
                 ( model, cmd )
     ```
 
-### Update
-
-Use `update` to process incoming animation messages. It returns the updated `AnimState` and a list of any events that occurred during that frame.
-
-??? example "View Source Code"
-
-    ```elm
-    GotAnimMsg animMsg ->
-        let
-            ( animState, events ) =
-                Sub.update animMsg model.animState
-        in
-        List.foldl handleAnimEvent ( { model | animState = animState }, Cmd.none ) events
-    ```
+| Event | Fires when... |
+| ----- | ------------- |
+| `Started` | Animation begins playing |
+| `Ended` | Animation completes |
+| `Cancelled` | Animation is cancelled before completing |
+| `Iteration` | Each iteration completes (looping or alternating) |
+| `Progress` | Every frame while the animation is running |
+| `Paused` | `pause` is called on a running animation |
+| `Resumed` | `resume` is called on a paused animation |
+| `Restarted` | `restart` is called |
 
 ### Subscriptions
 
@@ -212,6 +243,8 @@ The Sub engine requires a subscription to receive animation frame updates. The s
         Sub.subscriptions GotAnimMsg model.animState
     ```
 
+📖 See [React](../workflow/react.md) for more info.
+
 ### View
 
 Apply `attributes` to the animated element to apply the current inline styles on each frame.
@@ -222,14 +255,14 @@ Apply `attributes` to the animated element to apply the current inline styles on
     div (Sub.attributes "ball" model.animState) [ text "Ball" ]
     ```
 
+📖 See [Render](../workflow/render.md) for more info.
 
 ### Responsive Strategy
 
 Use relative CSS units whenever the motion can be defined in layout-relative terms.
 
-For measured pixel targets:
+For measured pixel targets, Sub supports proportional remap for resize updates. Therefore:
 
-- Sub supports proportional remap for resize updates.
 - On resize, update bounds with `onResize` and `Anim.Resize.bounds`.
 - Running animations remap to the equivalent relative position inside the updated bounds.
 - Idle animations also re-position proportionally inside the updated bounds.
@@ -244,50 +277,87 @@ Set `iterations`, `loopForever`, and `alternate` in the animation builder.
 
     ```elm
     spinForever =
-        Rotate.for "icon"
+        Sub.loopForever
+            >> Sub.alternate
+            >> Rotate.for "icon"
             >> Rotate.toZ 360
             >> Rotate.duration 1000
-            >> Sub.loopForever
-            >> Sub.alternate
             >> Rotate.build
     ```
 
+📖 See [Playback](../concepts/playback.md) for the full `looping`, `iterations`, and `alternate` API with live examples.
+
 ### Timing
 
-Set `duration`, `speed`, and `delay` in the animation builder.
+Set the default `duration`, `speed`, and `delay`. Inherited by every property that doesn't override them.
 
 - `duration` — animation length in milliseconds.
 - `speed` — alternative to `duration`; set a rate in property units per second.
 - `delay` — wait before the animation begins, in milliseconds.
 
+??? example "View Source Code"
+
+    ```elm
+    fadeIn =
+        Sub.delay 500
+            >> Sub.duration 800
+            >> Opacity.for "card"
+            >> Opacity.to 1
+            >> Opacity.build
+    ```
+
+📖 See [Timing](../concepts/timing.md) for more info.
+
 ### Easing
 
 Sub animations use the full Easing library with exact mathematical curves — including bounce and elastic.
+
+Set the default easing for all properties that don't override it.
+
+??? example "View Source Code"
+
+    ```elm
+    fadeIn =
+        Sub.easing CubicInOut
+            >> Opacity.for "card"
+            >> Opacity.to 1
+            >> Opacity.duration 300
+            >> Opacity.delay 50
+            >> Opacity.build
+    ```
 
 📖 See [Easing](../concepts/easing.md) for all available easing functions.
 
 ### Controls
 
-All Sub control functions return `AnimState` directly — no `Cmd` needed, unlike Keyframe.
+| Function | Description |
+| -------- | ----------- |
+| `stop` | Jump to end state |
+| `reset` | Jump to start state |
+| `restart` | Reset and begin playing again |
+| `pause` | Freeze at current position |
+| `resume` | Continue from paused position |
 
 ??? example "View Source Code"
 
     ```elm
-    Pause ->
-        ( { model | animState = Sub.pause "ball" model.animState }, Cmd.none )
-
-    Resume ->
-        ( { model | animState = Sub.resume "ball" model.animState }, Cmd.none )
-
-    Restart ->
-        ( { model | animState = Sub.restart "ball" model.animState }, Cmd.none )
-
     Stop ->
-        ( { model | animState = Sub.stop "ball" model.animState }, Cmd.none )
+        ( { model | animState = Sub.stop "card" model.animState }, Cmd.none )
 
     Reset ->
-        ( { model | animState = Sub.reset "ball" model.animState }, Cmd.none )
+        ( { model | animState = Sub.reset "card" model.animState }, Cmd.none )
+    Restart ->
+        ( { model | animState = Sub.restart "card" model.animState }, Cmd.none )
+
+    Pause ->
+        ( { model | animState = Sub.pause "card" model.animState }, Cmd.none )
+    Resume ->
+        ( { model | animState = Sub.resume "card" model.animState }, Cmd.none )
+
     ```
+
+
+📖 See [Controlling Animations](../concepts/controlling-animations.md) for more info.
 
 ### Discrete Properties
 
@@ -319,16 +389,18 @@ Freeze one or more transform axes so they stop updating during subsequent frames
 ??? example "View Source Code"
 
     ```elm
-    -- Freeze translate and rotate axes
-    Sub.freeze "ball" [ Translate, Rotate ] model.animState
-
-    -- Unfreeze all axes
-    Sub.unfreeze "ball" [ Translate, Rotate, Scale, Skew ] model.animState
+    Sub.animate model.animState <|
+        Sub.freezeX [ Sub.translate ]
+            >> Translate.for "box"
+            >> Translate.toY 0
+            >> Translate.build
     ```
+
+📖 See [Freezing Axes with `freeze*`](../concepts/interrupting-animations.md#freezing-axes-with-freeze) for more info.
 
 ### State Queries
 
-Query animation state at any time without waiting for events.
+Query animation state.
 
 ??? example "View Source Code"
 
@@ -347,13 +419,21 @@ Query animation state at any time without waiting for events.
 
 Because the Sub engine updates on every frame, current values are always accessible.
 
+All query functions follow the same pattern:
+
+- `get[Property]Start`, and return `Maybe [PropertyValue]`.
+- `get[Property]Current`, and return `Maybe [PropertyValue]`.
+- `get[Property]End`, and return `Maybe [PropertyValue]`
+
 ??? example "View Source Code"
 
     ```elm
-    Sub.getOpacityStart "ball" model.animState    -- Maybe Float
-    Sub.getOpacityEnd "ball" model.animState      -- Maybe Float
-    Sub.getOpacityCurrent "ball" model.animState  -- Maybe Float
-    Sub.getTranslateCurrent "ball" model.animState -- Maybe { x, y, z }
+    Sub.getOpacityStart "ball" model.animState      -- Maybe Float
+    Sub.getOpacityCurrent "ball" model.animState    -- Maybe Float
+    Sub.getOpacityEnd "ball" model.animState        -- Maybe Float
+    Sub.getTranslateStart "ball" model.animState    -- Maybe { x, y, z }
+    Sub.getTranslateCurrent "ball" model.animState  -- Maybe { x, y, z }
+    Sub.getTranslateEnd "ball" model.animState      -- Maybe { x, y, z }
     ```
 
 `Nothing` is returned when no animation exists for the given group.
@@ -364,7 +444,6 @@ Choose Sub when you want maximum Elm-side control with per-frame updates and cur
 
 - Best for: gameplay-style interactions, simulation-like motion, and logic that reacts continuously to animation progress.
 - Avoid when: you prefer browser-native animation execution with less Elm runtime work.
-- Prefer: [WAAPI](waapi.md) for browser-native playback with rich controls.
 
 ### API Quick Reference
 

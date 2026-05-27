@@ -49,7 +49,7 @@ view model =
         [ Keyframe.styleNode model.animState
         , div
             (Keyframe.attributes "boxAnim" model.animState
-                ++ Keyframe.events "boxAnim" GotAnimMsg
+                ++ Keyframe.events GotAnimMsg
             )
             [ text "Content" ]
         ]

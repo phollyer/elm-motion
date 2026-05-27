@@ -1,9 +1,9 @@
 # CSS Transition Engine
 
-This page is a practical guide to using the Transition engine from setup through advanced usage.
+This page is a practical guide to using the Transition engine.
 Read [Engines Overview](overview.md) when you want side-by-side comparisons and tradeoffs.
 
-This Engine uses native browser CSS transitions for simple A→B property animations. The browser handles all rendering, providing excellent performance with minimal setup.
+This Engine builds native browser CSS transitions for simple A→B property animations. The browser handles all rendering, providing excellent performance with minimal setup.
 
 ## Example
 
@@ -17,11 +17,13 @@ Simple A→B button hover animations.
 
     --8<-- "docs/animation/first-animations/button-hovers/transition.md:code"
 
+
+
 ---
 
 ## Quick Walkthrough
 
-Get up and running in minutes.
+Here's the general workflow to get up an running quickly.
 
 ### 1. Build
 
@@ -58,7 +60,7 @@ Get up and running in minutes.
 
 ### 3. Render
 
-Render both engine attributes and event listeners on the animated node.
+Render both engine attributes and event listeners on the animated element.
 
 ??? example "View Source Code"
 
@@ -90,7 +92,7 @@ Call `animate` to apply the animation config to the current `AnimState`.
 
 ### 5. React
 
-Use `update` for incoming transition events.
+Use `update` for incoming Transition events.
 
 ??? example "View Source Code"
 
@@ -142,19 +144,34 @@ Pass a list of property initializers to `init`. Each registers an animation grou
         )
     ```
 
+📖 See [Initialize](../workflow/init.md) for more info.
+
 ### Trigger
 
 Call `animate` to apply an animation to the current `AnimState`. The browser transitions from its current computed style to the values provided.
 
-Starting values in the builder config are ignored — the browser always starts from the element's current computed style.
+Starting values in the builder config are ignored — the browser **always** starts CSS Transitions from the element's current computed style, and the Engine cannot override this.
+
+??? example "View Source Code"
+
+    ```elm
+    ShowCard ->
+        ( { animState = Transition.animate model.animState cardFadeIn }
+        , Cmd.none
+        )
+    ```
+
+📖 See [Triggering Animations](../workflow/trigger.md) for more info.
 
 ### Mid-Flight Interruptions
 
 Because the browser starts from current computed style, interrupting an animation mid-flight automatically transitions smoothly from wherever the element is — just provide a new end value and re-trigger with `animate`.
 
+📖 See [Interrupting Animations](../concepts/interrupting-animations.md) for more info.
+
 ### OnLoad Animations
 
-If a transition must run immediately on page load, use `Process.sleep 0` before triggering. Without the delay, the browser has no prior state and the property jumps instantly to the end value.
+If a transition must run immediately on page load, defer triggering to the next event loop tick with `Process.sleep 0`. This lets the initial render commit first so the browser has a starting computed style to transition from. Without it, the browser sees only the end value on first paint and moves immediately to it, with no animation.
 
 ??? example "View Source Code"
 
@@ -166,9 +183,30 @@ If a transition must run immediately on page load, use `Process.sleep 0` before 
         )
     ```
 
+### Update
+
+Use `update` to process incoming transition messages. It returns the updated `AnimState` and the corresponding `AnimEvent`.
+
+??? example "View Source Code"
+
+    ```elm
+    GotAnimMsg animMsg ->
+        let
+            ( animState, event ) =
+                Transition.update animMsg model.animState
+        in
+        handleAnimEvent event { model | animState = animState }
+    ```
+
 ### Events
 
-`update` returns a single `AnimEvent` per call. Each Transition event carries three values: the element that fired the event (`CurrentTargetId`), the element that owns the listener (`TargetId`), and the animation group name. In most cases only the group name is needed.
+`update` returns a single `AnimEvent` per call. Each event carries three values:
+
+- the `id` (if one exists) of the element that fired the event (`CurrentTargetId`),
+- the `id` (if one exists) of the element that owns the listener (`TargetId`), and,
+- the animation group name.
+
+In most cases only the group name is needed. `CurrentTargetId` and `TargetId` may or may not be the same depending on whether the event has bubbled up.
 
 ??? example "View Source Code"
 
@@ -190,20 +228,7 @@ If a transition must run immediately on page load, use `Process.sleep 0` before 
 | `Ended` | Transition completes |
 | `Cancelled` | Transition is cancelled before completing |
 
-### Update
-
-Use `update` to process incoming transition messages. It returns the updated `AnimState` and the corresponding `AnimEvent`.
-
-??? example "View Source Code"
-
-    ```elm
-    GotAnimMsg animMsg ->
-        let
-            ( animState, event ) =
-                Transition.update animMsg model.animState
-        in
-        handleAnimEvent event { model | animState = animState }
-    ```
+📖 See [React](../workflow/react.md) for more info.
 
 ### View
 
@@ -231,13 +256,14 @@ Apply `events` alongside `attributes` to attach the DOM transition event listene
 
 Use `eventsStopPropagation` to prevent events from bubbling to parent elements.
 
+📖 See [Render](../workflow/render.md) for more info.
+
 ### Responsive Strategy
 
 Use relative CSS units whenever the motion can be defined in layout-relative terms.
 
-For measured pixel targets:
+For measured pixel targets, Transition has no proportional remap API for resize updates. Therefore:
 
-- Transition has no proportional remap API for resize updates.
 - On resize, recompute pixel targets and re-trigger with `animate`.
 - Running animations then continue smoothly from current computed style to the new target.
 - Idle animations stay at their last resolved value until you trigger a new target.
@@ -246,22 +272,24 @@ For measured pixel targets:
 
 ### Timing
 
-Set `duration`, `speed`, and `delay` in the animation builder.
+Set the default `duration`, `speed`, and `delay`. Inherited by every property that doesn't override them.
 
 - `duration` — animation length in milliseconds.
-- `speed` — alternative to `duration`; set a rate in property units per second and the engine calculates duration from the distance to the end value.
+- `speed` — alternative to `duration`; set a rate in property units per second.
 - `delay` — wait before the transition begins, in milliseconds.
 
 ??? example "View Source Code"
 
     ```elm
     fadeIn =
-        Opacity.for "card"
+        Transition.delay 500
+            >> Transition.duration 800
+            >> Opacity.for "card"
             >> Opacity.to 1
-            >> Opacity.duration 300
-            >> Opacity.delay 50
             >> Opacity.build
     ```
+
+📖 See [Timing](../concepts/timing.md) for more info.
 
 ### Easing
 
@@ -271,9 +299,24 @@ Most standard easings (sine, quad, cubic, quart, quint, expo) convert accurately
 
 For accurate complex easing curves, use the [Keyframe](keyframes.md), [Sub](sub.md), or [WAAPI](waapi.md) engine instead.
 
+Set the default easing for all properties that don't override it.
+??? example "View Source Code"
+
+    ```elm
+    fadeIn =
+        Transition.easing CubicInOut
+            >> Opacity.for "card"
+            >> Opacity.to 1
+            >> Opacity.duration 300
+            >> Opacity.delay 50
+            >> Opacity.build
+    ```
+
+📖 See [Easing](../concepts/easing.md) for all available easing functions.
+
 ### Controls
 
-`stop` jumps the animation to its end state. `reset` jumps to the start state. Neither returns a `Cmd`.
+`stop` jumps the animation to its end state. `reset` jumps to the start state.
 
 ??? example "View Source Code"
 
@@ -285,6 +328,7 @@ For accurate complex easing curves, use the [Keyframe](keyframes.md), [Sub](sub.
         ( { model | animState = Transition.reset "card" model.animState }, Cmd.none )
     ```
 
+📖 See [Controlling Animations](../concepts/controlling-animations.md) for more info.
 
 ### Discrete Properties
 
@@ -299,17 +343,34 @@ For entry animations, include `startingStyleNode` in your view. This generates `
     ```elm
     fadeIn : AnimBuilder mode -> AnimBuilder mode
     fadeIn =
-        Transition.discreteEntry "display" "block"
-            >> Opacity.for "box"
+        Opacity.for "box"
             >> Opacity.to 1
             >> Opacity.build
 
     fadeOut : AnimBuilder mode -> AnimBuilder mode
     fadeOut =
-        Transition.discreteExit "display" "block" "none"
-            >> Opacity.for "box"
+        Opacity.for "box"
             >> Opacity.to 0
             >> Opacity.build
+
+    update : Msg -> Model -> (Model, Cmd Msg)
+    update msg model =
+        case msg of
+            FadeBoxIn ->
+                ({ model | animState = Transition.animate model.animState <|
+                        Transition.discreteEntry "display" "block"
+                            >> fadeIn                    
+                }
+                , Cmd.none
+                )
+
+            FadeBoxOut ->
+                ({ model | animState = Transition.animate model.animState <|
+                        Transition.discreteEntry "display" "block" "none"
+                            >> fadeOut                    
+                }
+                , Cmd.none
+                )
 
     view : Model -> Html Msg
     view model =
@@ -331,48 +392,43 @@ For entry animations, include `startingStyleNode` in your view. This generates `
 
 ### State Queries
 
-Query animation state at any time without waiting for events.
+Query animation state.
 
 ??? example "View Source Code"
 
     ```elm
     Transition.anyRunning model.animState            -- Maybe Bool
-    Transition.isRunning "card" model.animState      -- Maybe Bool
     Transition.allComplete model.animState           -- Maybe Bool
+    Transition.isRunning "card" model.animState      -- Maybe Bool
     Transition.isComplete "card" model.animState     -- Maybe Bool
     Transition.isCancelled "card" model.animState    -- Maybe Bool
     ```
 
-`Nothing` is returned when no animation exists for the given group.
+`Nothing` is returned when no animation exists.
 
 ### Property Queries
 
-CSS transitions track only end values — the start is always the browser's current computed style.
+No start or current values are queryable for CSS Transitions, so all that is available are the end values provided in the animation builders.
+
+All query functions follow the same pattern: `get[Property]End`, and return `Maybe [PropertyValue]`.
+
 
 ??? example "View Source Code"
 
     ```elm
-    Transition.getOpacityEnd "card" model.animState                          -- Maybe Float
-    Transition.getTranslateEnd "card" model.animState                        -- Maybe { x, y, z }
-    Transition.getRotateEnd "card" model.animState                           -- Maybe { x, y, z }
-    Transition.getScaleEnd "card" model.animState                            -- Maybe { x, y, z }
-    Transition.getSizeEnd "card" model.animState                             -- Maybe { width, height }
-    Transition.getSkewEnd "card" model.animState                             -- Maybe { x, y }
-    Transition.getPropertyEnd "card" "font-size" model.animState             -- Maybe Float
-    Transition.getColorPropertyEnd "card" "background-color" model.animState -- Maybe Color
+    Transition.getOpacityEnd "card" model.animState     -- Maybe Float
+    Transition.getTranslateEnd "card" model.animState   -- Maybe { x, y, z }
+    ...
     ```
-
-For start values and mid-flight current values, use the [Keyframe](keyframes.md), [Sub](sub.md), or [WAAPI](waapi.md) engine.
 
 `Nothing` is returned when no animation exists for the given group.
 
 ## When to Choose This Engine
 
-Choose Transition when you want minimal setup and smooth state-tracked A to B animations.
+Choose Transition when you want minimal setup and smooth A→B animations.
 
 - Best for: UI interactions, hovers, toggles, and small component transitions.
-- Avoid when: you need custom transform ordering, pause/resume/restart, or mid-flight value queries.
-- Prefer: [Keyframe](keyframes.md) for native looping controls, [Sub](sub.md) for full Elm control, or [WAAPI](waapi.md) for browser-native rich controls.
+- Avoid when: you need richer playback control or mid-flight visibility.
 
 ## API Quick Reference
 
@@ -482,8 +538,6 @@ CSS transitions track only end values.
 | `getSkewEnd` | `AnimGroupName -> AnimState -> Maybe { x, y }` | Get end skew |
 | `getPropertyEnd` | `AnimGroupName -> String -> AnimState -> Maybe Float` | Get end value for a custom numeric property |
 | `getColorPropertyEnd` | `AnimGroupName -> String -> AnimState -> Maybe Color` | Get end value for a custom color property |
-
-`Nothing` is returned when no animation exists for the given group.
 
 For complete API details, see the [Anim.Engine.Transition](https://package.elm-lang.org/packages/phollyer/elm-motion/latest/Anim-Engine-Transition) documentation.
 

@@ -23,7 +23,7 @@ The Scroll Sub Engine uses Elm subscriptions to update scroll state on every fra
 
 ## Quick Walkthrough
 
-Get up and running in minutes.
+Here's the general workflow to get up an running quickly.
 
 ### 1. Initialize
 

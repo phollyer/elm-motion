@@ -22,7 +22,7 @@ The Scroll Task Engine provides composable scrolling with typed error handling. 
 
 ## Quick Walkthrough
 
-Get up and running in minutes.
+Here's the general workflow to get up an running quickly.
 
 ### 1. Build
 

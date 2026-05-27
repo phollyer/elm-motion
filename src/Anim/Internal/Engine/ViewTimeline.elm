@@ -202,17 +202,8 @@ iterations =
 
 
 alternate : TimelineBuilder -> TimelineBuilder
-alternate builder =
-    let
-        withIterations =
-            case Builder.getIterations builder of
-                Builder.Once ->
-                    Builder.iterations 2 builder
-
-                _ ->
-                    builder
-    in
-    Builder.alternate withIterations
+alternate =
+    Builder.alternate
 
 
 

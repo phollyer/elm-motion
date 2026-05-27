@@ -177,7 +177,7 @@ Use different group names when you want separate animation sets for different el
 
 ## Next Steps
 
-Now that you've defined your animations, the next step is initializing your animation state.
+After building your animations the next step is to initialize your animation state ready for rendering and triggering.
 
 [Initialize →](init.md){ .md-button .md-button--primary }
 

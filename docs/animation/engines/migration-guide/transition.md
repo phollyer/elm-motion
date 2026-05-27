@@ -47,7 +47,7 @@ view : Model -> Html Msg
 view model =
     div
         (Transition.attributes "boxAnim" model.animState
-            ++ Transition.events "boxAnim" GotAnimMsg
+            ++ Transition.events GotAnimMsg
         )
         [ text "Content" ]
 ```

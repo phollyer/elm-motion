@@ -1,6 +1,8 @@
 # Render
 
-In order to play an animation, it needs to be rendered in your `view`. All engines provide an `attributes` function for this.
+Rendering an animation with Elm Motion is very simple; it does not pollute your view, or require you to change anything about it, and is probably the simplest part of the library to use.
+
+All you need is a single, drop-in function; the `attributes` function, which is exposed by every animation Engine. Simply add `attributes` to your view and you're done.
 
 ## Using `attributes`
 
@@ -65,9 +67,7 @@ The `attributes` function generates HTML attributes for your element.
 
 ## Engine-Specific Requirements
 
-While the `attributes` pattern is consistent across all engines, the Keyframe Engine has an additional requirement.
-
-### CSS Keyframe Engine
+While the `attributes` pattern is consistent across all engines, the Keyframe Engine has just one additional requirement.
 
 Keyframe animations require a `<style>` node in the DOM containing the generated `@keyframes` rules:
 

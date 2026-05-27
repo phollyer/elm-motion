@@ -833,8 +833,23 @@ alternate (AnimBuilder data) =
     let
         pb =
             data.playback
+
+        bumpedIterations =
+            case pb.iterations of
+                Once ->
+                    Times 2
+
+                _ ->
+                    pb.iterations
     in
-    AnimBuilder { data | playback = { pb | animationDirection = Alternate } }
+    AnimBuilder
+        { data
+            | playback =
+                { pb
+                    | animationDirection = Alternate
+                    , iterations = bumpedIterations
+                }
+        }
 
 
 discreteTransitionsEnabled : AnimBuilder mode -> Bool
