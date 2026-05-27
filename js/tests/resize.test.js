@@ -309,7 +309,10 @@ describe('resizeTransformAnimation', () => {
         installDom({ element: element, targetId: 'box' });
 
         const resolved = defaultResolved();
-        resolved.translate.easingKeyframes = Array.from({ length: 60 }, (_, i) => i / 59);
+        resolved.translate.easingKeyframes = Array.from({ length: 60 }, (_, i) => {
+            const offset = i / 59;
+            return { offset, value: offset };
+        });
 
         const elementAnims = new Map();
         elementAnims.set('transform', {

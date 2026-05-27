@@ -1,5 +1,6 @@
 module Shared.Easing.Keyframes exposing
-    ( defaultKeyframeCount
+    ( KeyframeSample
+    , defaultKeyframeCount
     , generateKeyframes
     )
 
@@ -9,13 +10,26 @@ represent with a single CSS easing string.
 The Web Animations API's `easing` field accepts CSS easing keywords or a
 `cubic-bezier(...)`. Bounce and Elastic curves cannot be approximated by
 a single cubic bezier, so the WAAPI engine falls back to a pre-computed
-`easingKeyframes` array. The Keyframe engine samples its `@keyframes`
-stops at the same density to keep the two engines visually consistent.
+`easingKeyframes` array. Each sample carries both its time offset
+(`0..1`) and its eased value so the JS runtime can place keyframes at
+their true times rather than assuming uniform spacing.
+
+The Keyframe engine samples its `@keyframes` stops at the same density
+to keep the two engines visually consistent.
 
 -}
 
 import Ease as E
 import Motion.Easing exposing (Easing(..))
+
+
+{-| A single easing keyframe sample: the time offset along the animation
+(`0..1`) and the eased progress at that offset.
+-}
+type alias KeyframeSample =
+    { offset : Float
+    , value : Float
+    }
 
 
 
@@ -44,17 +58,19 @@ defaultKeyframeCount =
 -- ============================================================
 
 
-{-| Generate keyframe progress values for an `Easing` over a given duration.
+{-| Generate keyframe samples for an `Easing` over a given duration.
 
-Returns a list of progress values (0.0 to 1.0) sampled densely enough to
-reproduce complex easings via linear interpolation between samples.
+Returns a list of `{ offset, value }` records sampled densely enough to
+reproduce complex easings via linear interpolation between samples. The
+`offset` is the sample's true time on `[0, 1]`; the `value` is the
+eased progress at that offset.
 
 For non-complex easings the WAAPI encoder routes through CSS `easing`
 strings instead of calling this function; a defensive 2-point linear
 ramp is returned if anything else falls through.
 
 -}
-generateKeyframes : Easing -> Float -> List Float
+generateKeyframes : Easing -> Float -> List KeyframeSample
 generateKeyframes easing _ =
     case easing of
         BounceIn ->
@@ -76,16 +92,18 @@ generateKeyframes easing _ =
             uniformSamples E.inOutElastic defaultKeyframeCount
 
         _ ->
-            [ 0.0, 1.0 ]
+            [ { offset = 0.0, value = 0.0 }
+            , { offset = 1.0, value = 1.0 }
+            ]
 
 
 {-| Sample a function using both the base uniform density and additional
 critical time points where bounce curves hit piece boundaries or extrema.
 -}
-sampleWithCriticalPoints : (Float -> Float) -> Int -> List Float -> List Float
+sampleWithCriticalPoints : (Float -> Float) -> Int -> List Float -> List KeyframeSample
 sampleWithCriticalPoints f n criticalTimes =
     mergeSampleTimes n criticalTimes
-        |> List.map f
+        |> List.map (\t -> { offset = t, value = f t })
 
 
 {-| Merge uniform sample times with explicit critical times and normalize
@@ -203,15 +221,22 @@ bounceInOutCriticalTimes =
 {-| Sample a `0..1 -> Float` function at `n` evenly spaced points across
 [0, 1] (inclusive on both ends).
 -}
-uniformSamples : (Float -> Float) -> Int -> List Float
+uniformSamples : (Float -> Float) -> Int -> List KeyframeSample
 uniformSamples f n =
     if n <= 1 then
         if n == 1 then
-            [ f 0 ]
+            [ { offset = 0, value = f 0 } ]
 
         else
             []
 
     else
         List.range 0 (n - 1)
-            |> List.map (\i -> f (toFloat i / toFloat (n - 1)))
+            |> List.map
+                (\i ->
+                    let
+                        t =
+                            toFloat i / toFloat (n - 1)
+                    in
+                    { offset = t, value = f t }
+                )

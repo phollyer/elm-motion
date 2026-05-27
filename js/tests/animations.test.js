@@ -203,7 +203,10 @@ describe('processAnimationData (WAAPI engine)', () => {
                             endX: 100, endY: 0, endZ: 0,
                             duration: 600,
                             easing: 'linear',
-                            easingKeyframes: Array.from({ length: 60 }, (_, i) => i / 59),
+                            easingKeyframes: Array.from({ length: 60 }, (_, i) => {
+                                const offset = i / 59;
+                                return { offset, value: offset };
+                            }),
                             version: 1
                         },
                         {

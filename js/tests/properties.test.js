@@ -140,65 +140,77 @@ describe('buildComplexPropertyKeyframes', () => {
     it('emits one keyframe per easing keyframe entry for opacity', () => {
         const k = buildComplexPropertyKeyframes(
             { type: 'opacity', startValue: 0, endValue: 1 },
-            [0, 0.5, 1]
+            [{ offset: 0, value: 0 }, { offset: 0.5, value: 0.5 }, { offset: 1, value: 1 }]
         );
         expect(k).toEqual([
-            { opacity: '0' },
-            { opacity: '0.5' },
-            { opacity: '1' }
+            { offset: 0, opacity: '0' },
+            { offset: 0.5, opacity: '0.5' },
+            { offset: 1, opacity: '1' }
         ]);
     });
 
     it('emits per-keyframe size values', () => {
         const k = buildComplexPropertyKeyframes(
             { type: 'size', startWidth: 0, startHeight: 0, endWidth: 100, endHeight: 100 },
-            [0, 0.5, 1]
+            [{ offset: 0, value: 0 }, { offset: 0.5, value: 0.5 }, { offset: 1, value: 1 }]
         );
         expect(k).toEqual([
-            { width: '0px', height: '0px' },
-            { width: '50px', height: '50px' },
-            { width: '100px', height: '100px' }
+            { offset: 0, width: '0px', height: '0px' },
+            { offset: 0.5, width: '50px', height: '50px' },
+            { offset: 1, width: '100px', height: '100px' }
         ]);
     });
 
     it('emits per-keyframe customProperty values with unit', () => {
         const k = buildComplexPropertyKeyframes(
             { type: 'customProperty', cssProperty: 'border-width', startValue: 0, endValue: 10, unit: 'px' },
-            [0, 0.25, 1]
+            [{ offset: 0, value: 0 }, { offset: 0.25, value: 0.25 }, { offset: 1, value: 1 }]
         );
         expect(k).toEqual([
-            { borderWidth: '0px' },
-            { borderWidth: '2.5px' },
-            { borderWidth: '10px' }
+            { offset: 0, borderWidth: '0px' },
+            { offset: 0.25, borderWidth: '2.5px' },
+            { offset: 1, borderWidth: '10px' }
         ]);
     });
 
     it('emits per-keyframe interpolated colors for customColorProperty', () => {
         const k = buildComplexPropertyKeyframes(
             { type: 'customColorProperty', cssProperty: 'color', startColor: 'rgb(0, 0, 0)', endColor: 'rgb(100, 100, 100)' },
-            [0, 0.5, 1]
+            [{ offset: 0, value: 0 }, { offset: 0.5, value: 0.5 }, { offset: 1, value: 1 }]
         );
         expect(k).toEqual([
-            { color: 'rgba(0, 0, 0, 1)' },
-            { color: 'rgba(50, 50, 50, 1)' },
-            { color: 'rgba(100, 100, 100, 1)' }
+            { offset: 0, color: 'rgba(0, 0, 0, 1)' },
+            { offset: 0.5, color: 'rgba(50, 50, 50, 1)' },
+            { offset: 1, color: 'rgba(100, 100, 100, 1)' }
         ]);
     });
 
     it('emits per-keyframe perspectiveOrigin values', () => {
         const k = buildComplexPropertyKeyframes(
             { type: 'perspectiveOrigin', startX: 0, startY: 0, endX: 100, endY: 100, unitX: '%', unitY: '%' },
-            [0, 0.5, 1]
+            [{ offset: 0, value: 0 }, { offset: 0.5, value: 0.5 }, { offset: 1, value: 1 }]
         );
         expect(k).toEqual([
-            { perspectiveOrigin: '0% 0%' },
-            { perspectiveOrigin: '50% 50%' },
-            { perspectiveOrigin: '100% 100%' }
+            { offset: 0, perspectiveOrigin: '0% 0%' },
+            { offset: 0.5, perspectiveOrigin: '50% 50%' },
+            { offset: 1, perspectiveOrigin: '100% 100%' }
+        ]);
+    });
+
+    it('uses the sample offset (not the index) when offsets are non-uniform', () => {
+        const k = buildComplexPropertyKeyframes(
+            { type: 'opacity', startValue: 0, endValue: 1 },
+            [{ offset: 0, value: 0 }, { offset: 0.3636, value: 0.75 }, { offset: 1, value: 1 }]
+        );
+        expect(k).toEqual([
+            { offset: 0, opacity: '0' },
+            { offset: 0.3636, opacity: '0.75' },
+            { offset: 1, opacity: '1' }
         ]);
     });
 
     it('returns null for unknown property types', () => {
-        expect(buildComplexPropertyKeyframes({ type: 'translate' }, [0, 1])).toBeNull();
+        expect(buildComplexPropertyKeyframes({ type: 'translate' }, [{ offset: 0, value: 0 }, { offset: 1, value: 1 }])).toBeNull();
     });
 });
 
@@ -222,16 +234,20 @@ describe('buildPropertyKeyframes', () => {
     it('builds complex keyframes and forces linear easing when easingKeyframes are given', () => {
         const r = buildPropertyKeyframes(
             { type: 'opacity', startValue: 0, endValue: 1 },
-            [0, 0.5, 1],
+            [{ offset: 0, value: 0 }, { offset: 0.5, value: 0.5 }, { offset: 1, value: 1 }],
             'ease-in'
         );
-        expect(r.keyframes).toEqual([{ opacity: '0' }, { opacity: '0.5' }, { opacity: '1' }]);
+        expect(r.keyframes).toEqual([
+            { offset: 0, opacity: '0' },
+            { offset: 0.5, opacity: '0.5' },
+            { offset: 1, opacity: '1' }
+        ]);
         expect(r.animationEasing).toBe('linear');
     });
 
     it('falls back to simple keyframes when complex builder returns null', () => {
         // 'translate' has no SIMPLE_KEYFRAME_BUILDERS entry, so simple build also returns null
-        const r = buildPropertyKeyframes({ type: 'translate' }, [0, 1], 'linear');
+        const r = buildPropertyKeyframes({ type: 'translate' }, [{ offset: 0, value: 0 }, { offset: 1, value: 1 }], 'linear');
         expect(r.keyframes).toBeNull();
         expect(r.animationEasing).toBe('linear');
     });

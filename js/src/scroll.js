@@ -230,8 +230,11 @@ function applyScrollDrivenAnimation(animGroup, element, elementConfig, timeline,
 
         let transformKeyframes;
         if (firstTransform.easingKeyframes && Array.isArray(firstTransform.easingKeyframes)) {
-            transformKeyframes = firstTransform.easingKeyframes.map(function (p) {
+            transformKeyframes = firstTransform.easingKeyframes.map(function (sample) {
+                const offset = sample.offset;
+                const p = sample.value;
                 return {
+                    offset: offset,
                     transform: buildTransformString(
                         sv.x + (ev.x - sv.x) * p,
                         sv.y + (ev.y - sv.y) * p,
