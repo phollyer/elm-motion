@@ -230,7 +230,10 @@ describe('translatePositionAnimation', () => {
         const element = makeElement('box');
         installDom({ element: element, targetId: 'box' });
         const resolved = defaultResolved({ startX: 0, endX: 500, startY: 0, endY: 0 });
-        resolved.translate.easingKeyframes = Array.from({ length: 60 }, (_, i) => i / 59);
+        resolved.translate.easingKeyframes = Array.from({ length: 60 }, (_, i) => {
+            const offset = i / 59;
+            return { offset, value: offset };
+        });
         const anim = seedTransformAnimation('box', resolved);
 
         translatePositionAnimation({

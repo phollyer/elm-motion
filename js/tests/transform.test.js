@@ -403,23 +403,55 @@ describe('interpolateSubProperty', () => {
     });
 
     it('uses easingKeyframes when provided', () => {
-        const sub = { ...linearSubProp, easingKeyframes: [0, 0.25, 1] };
-        // At globalProgress 0.5, len=3, rawIdx = 1, idx=1, fraction=0
-        // easedProgress = easingKeyframes[1] = 0.25
+        const sub = {
+            ...linearSubProp,
+            easingKeyframes: [
+                { offset: 0, value: 0 },
+                { offset: 0.5, value: 0.25 },
+                { offset: 1, value: 1 }
+            ]
+        };
+        // localProgress 0.5 lands exactly on the middle sample -> value 0.25
         const r = interpolateSubProperty(sub, 0.5, 1000);
         expect(r.x).toBe(25);
     });
 
     it('linearly interpolates between easingKeyframes entries', () => {
-        const sub = { ...linearSubProp, easingKeyframes: [0, 0.5, 1] };
-        // globalProgress 0.25, rawIdx = 0.5, idx=0, fraction=0.5
+        const sub = {
+            ...linearSubProp,
+            easingKeyframes: [
+                { offset: 0, value: 0 },
+                { offset: 0.5, value: 0.5 },
+                { offset: 1, value: 1 }
+            ]
+        };
+        // localProgress 0.25 -> halfway between offset 0 and 0.5
         // easedProgress = 0 + (0.5 - 0) * 0.5 = 0.25
         const r = interpolateSubProperty(sub, 0.25, 1000);
         expect(r.x).toBe(25);
     });
 
+    it('honours non-uniform offsets when interpolating', () => {
+        const sub = {
+            ...linearSubProp,
+            easingKeyframes: [
+                { offset: 0, value: 0 },
+                { offset: 0.25, value: 0.9 },
+                { offset: 1, value: 1 }
+            ]
+        };
+        // localProgress 0.25 hits the middle sample exactly -> 0.9
+        const exact = interpolateSubProperty(sub, 0.25, 1000);
+        expect(exact.x).toBeCloseTo(90, 10);
+
+        // localProgress 0.625 is halfway between offsets 0.25 and 1
+        // easedProgress = 0.9 + (1 - 0.9) * 0.5 = 0.95
+        const mid = interpolateSubProperty(sub, 0.625, 1000);
+        expect(mid.x).toBeCloseTo(95, 10);
+    });
+
     it('falls back to linear when easingKeyframes has 0 or 1 entries', () => {
-        const sub = { ...linearSubProp, easingKeyframes: [0.5] };
+        const sub = { ...linearSubProp, easingKeyframes: [{ offset: 0.5, value: 0.5 }] };
         const r = interpolateSubProperty(sub, 0.5, 1000);
         expect(r.x).toBe(50);
     });

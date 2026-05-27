@@ -15,10 +15,12 @@ suite =
                     samples =
                         Keyframes.generateKeyframes BounceOut 300
 
-                    interiorSamples =
-                        dropLast samples
+                    interiorValues =
+                        samples
+                            |> List.map .value
+                            |> dropLast
                 in
-                containsNear 1 0.0000001 interiorSamples
+                containsNear 1 0.0000001 interiorValues
                     |> Expect.equal True
         , test "bounce keyframes include extra critical-point samples" <|
             \_ ->
@@ -40,6 +42,24 @@ suite =
                 Keyframes.generateKeyframes ElasticOut 300
                     |> List.length
                     |> Expect.equal Keyframes.defaultKeyframeCount
+        , test "samples carry their true time offsets, sorted on [0, 1]" <|
+            \_ ->
+                let
+                    offsets =
+                        Keyframes.generateKeyframes BounceOut 300
+                            |> List.map .offset
+                in
+                ( List.head offsets
+                , List.head (List.reverse offsets)
+                , isSorted offsets
+                )
+                    |> Expect.equal ( Just 0, Just 1, True )
+        , test "BounceOut samples include the 1/2.75 piece boundary as an offset" <|
+            \_ ->
+                Keyframes.generateKeyframes BounceOut 300
+                    |> List.map .offset
+                    |> containsNear (1 / 2.75) 0.0000001
+                    |> Expect.equal True
         ]
 
 
@@ -54,3 +74,19 @@ dropLast list =
         |> List.reverse
         |> List.drop 1
         |> List.reverse
+
+
+isSorted : List Float -> Bool
+isSorted xs =
+    case xs of
+        [] ->
+            True
+
+        first :: rest ->
+            List.foldl
+                (\next ( prev, ok ) ->
+                    ( next, ok && next >= prev )
+                )
+                ( first, True )
+                rest
+                |> Tuple.second

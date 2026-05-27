@@ -787,23 +787,39 @@ encodeEasingWithKeyframes durationMs easingValue maybeSpring =
     case maybeSpring of
         Just s ->
             [ ( "easing", Encode.string "linear" )
-            , ( "easingKeyframes", Encode.list Encode.float (springKeyframes s (toFloat durationMs)) )
+            , ( "easingKeyframes", encodeKeyframeSamples (springKeyframes s (toFloat durationMs)) )
             ]
 
         Nothing ->
             if isComplexEasing easingValue then
                 [ ( "easing", Encode.string "linear" )
-                , ( "easingKeyframes", Encode.list Encode.float (EasingKeyframes.generateKeyframes easingValue (toFloat durationMs)) )
+                , ( "easingKeyframes", encodeKeyframeSamples (EasingKeyframes.generateKeyframes easingValue (toFloat durationMs)) )
                 ]
 
             else
                 [ ( "easing", Encode.string (Easing.toWebAnimations easingValue) ) ]
 
 
-{-| Sample a spring across `[0, durationMs]` into a list of progress
-fractions, suitable as `easingKeyframes` for WAAPI playback.
+{-| Encode a list of `KeyframeSample` records as a JSON array of
+`{ offset, value }` objects.
 -}
-springKeyframes : Spring -> Float -> List Float
+encodeKeyframeSamples : List EasingKeyframes.KeyframeSample -> Encode.Value
+encodeKeyframeSamples samples =
+    samples
+        |> Encode.list
+            (\sample ->
+                Encode.object
+                    [ ( "offset", Encode.float sample.offset )
+                    , ( "value", Encode.float sample.value )
+                    ]
+            )
+
+
+{-| Sample a spring across `[0, durationMs]` into a list of
+`KeyframeSample` records (uniformly spaced offsets), suitable as
+`easingKeyframes` for WAAPI playback.
+-}
+springKeyframes : Spring -> Float -> List EasingKeyframes.KeyframeSample
 springKeyframes s durationMs =
     let
         motion =
@@ -819,10 +835,12 @@ springKeyframes s durationMs =
         |> List.map
             (\i ->
                 let
-                    t =
-                        toFloat i / toFloat (n - 1) * durationMs
+                    offset =
+                        toFloat i / toFloat (n - 1)
                 in
-                SpringSolver.valueAt motion t
+                { offset = offset
+                , value = SpringSolver.valueAt motion (offset * durationMs)
+                }
             )
 
 

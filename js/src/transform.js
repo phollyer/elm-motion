@@ -386,16 +386,13 @@ export function interpolateSubProperty(subProp, globalProgress, maxDuration) {
     // Apply easing
     let easedProgress;
     if (subProp.easingKeyframes && Array.isArray(subProp.easingKeyframes) && subProp.easingKeyframes.length > 1) {
-        // Complex easing (bounce, elastic): linearly interpolate between
-        // pre-computed keyframes to match the browser's linear interpolation
-        // within the WAAPI animation. Sample count is whatever the Elm side
-        // emitted (see Shared.Easing.Keyframes.defaultKeyframeCount).
-        const len = subProp.easingKeyframes.length;
-        const rawIdx = localProgress * (len - 1);
-        const idx = Math.min(Math.floor(rawIdx), len - 2);
-        const fraction = rawIdx - idx;
-        easedProgress = subProp.easingKeyframes[idx] +
-            (subProp.easingKeyframes[idx + 1] - subProp.easingKeyframes[idx]) * fraction;
+        // Complex easing (bounce, elastic, spring): pre-baked samples arrive
+        // as `[{ offset, value }, ...]` where `offset` is the sample's true
+        // time on `[0, 1]`. Linearly interpolate `value` between the two
+        // samples that bracket `localProgress` so this mirrors how the
+        // browser will render the corresponding WAAPI keyframes (which carry
+        // explicit `offset`s, see properties.js COMPLEX_KEYFRAME_BUILDERS).
+        easedProgress = sampleAtOffset(subProp.easingKeyframes, localProgress);
     } else {
         // Simple easing: the browser handles easing via CSS animation-timing-function.
         // Use linear here since the CSS easing is applied by the browser, not by us.
@@ -407,6 +404,39 @@ export function interpolateSubProperty(subProp, globalProgress, maxDuration) {
         y: subProp.startY + (subProp.endY - subProp.startY) * easedProgress,
         z: subProp.startZ + (subProp.endZ - subProp.startZ) * easedProgress
     };
+}
+
+/**
+ * Find the eased value at `t` (in [0, 1]) within a list of pre-baked
+ * `{ offset, value }` samples by linear interpolation between the two
+ * samples whose `offset`s bracket `t`. Samples must be sorted by `offset`.
+ */
+export function sampleAtOffset(samples, t) {
+    const len = samples.length;
+    if (t <= samples[0].offset) {
+        return samples[0].value;
+    }
+    if (t >= samples[len - 1].offset) {
+        return samples[len - 1].value;
+    }
+
+    // Linear scan is fine: keyframe arrays are short (~60 entries) and
+    // callers walk `t` monotonically. A binary search would add complexity
+    // without measurable benefit.
+    for (let i = 1; i < len; i++) {
+        const next = samples[i];
+        if (t <= next.offset) {
+            const prev = samples[i - 1];
+            const span = next.offset - prev.offset;
+            if (span <= 0) {
+                return next.value;
+            }
+            const fraction = (t - prev.offset) / span;
+            return prev.value + (next.value - prev.value) * fraction;
+        }
+    }
+
+    return samples[len - 1].value;
 }
 
 /**

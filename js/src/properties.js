@@ -285,36 +285,49 @@ const SIMPLE_KEYFRAME_BUILDERS = {
     }
 };
 
+/**
+ * Pre-baked easing samples arrive from Elm as `[{ offset, value }, ...]`
+ * where `offset` is the sample's true time on `[0, 1]` and `value` is the
+ * eased progress at that offset. The browser will place each keyframe at
+ * its `offset` (rather than uniformly distributing them), so the rendered
+ * curve faithfully follows the original easing — even when samples are
+ * non-uniformly spaced in time (e.g. bounce critical-point samples).
+ */
 const COMPLEX_KEYFRAME_BUILDERS = {
     opacity(resolved, easingKeyframes) {
-        return easingKeyframes.map(p => ({
-            opacity: String(resolved.startValue + (resolved.endValue - resolved.startValue) * p)
+        return easingKeyframes.map(({ offset, value }) => ({
+            offset,
+            opacity: String(resolved.startValue + (resolved.endValue - resolved.startValue) * value)
         }));
     },
     size(resolved, easingKeyframes) {
         const uW = resolved.unitWidth || 'px';
         const uH = resolved.unitHeight || 'px';
-        return easingKeyframes.map(p => ({
-            width: (resolved.startWidth + (resolved.endWidth - resolved.startWidth) * p) + uW,
-            height: (resolved.startHeight + (resolved.endHeight - resolved.startHeight) * p) + uH
+        return easingKeyframes.map(({ offset, value }) => ({
+            offset,
+            width: (resolved.startWidth + (resolved.endWidth - resolved.startWidth) * value) + uW,
+            height: (resolved.startHeight + (resolved.endHeight - resolved.startHeight) * value) + uH
         }));
     },
     customProperty(resolved, easingKeyframes) {
-        return easingKeyframes.map(p => ({
-            [camelCase(resolved.cssProperty)]: (resolved.startValue + (resolved.endValue - resolved.startValue) * p) + resolved.unit
+        return easingKeyframes.map(({ offset, value }) => ({
+            offset,
+            [camelCase(resolved.cssProperty)]: (resolved.startValue + (resolved.endValue - resolved.startValue) * value) + resolved.unit
         }));
     },
     customColorProperty(resolved, easingKeyframes) {
-        return easingKeyframes.map(p => ({
-            [camelCase(resolved.cssProperty)]: interpolateColor(resolved.startColor, resolved.endColor, p)
+        return easingKeyframes.map(({ offset, value }) => ({
+            offset,
+            [camelCase(resolved.cssProperty)]: interpolateColor(resolved.startColor, resolved.endColor, value)
         }));
     },
     perspectiveOrigin(resolved, easingKeyframes) {
         const uX = resolved.unitX || '%';
         const uY = resolved.unitY || '%';
-        return easingKeyframes.map(p => ({
-            perspectiveOrigin: (resolved.startX + (resolved.endX - resolved.startX) * p) + uX
-                + ' ' + (resolved.startY + (resolved.endY - resolved.startY) * p) + uY
+        return easingKeyframes.map(({ offset, value }) => ({
+            offset,
+            perspectiveOrigin: (resolved.startX + (resolved.endX - resolved.startX) * value) + uX
+                + ' ' + (resolved.startY + (resolved.endY - resolved.startY) * value) + uY
         }));
     }
 };
