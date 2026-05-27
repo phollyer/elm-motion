@@ -11,9 +11,6 @@ lifecycle events.
 
 ## Example
 
-Scroll the page, and the different sections will fade in and slide
-up as they are scrolled into view.
-
 --8<-- "docs/animation/engines/waapi/timeline-animations.md:view-timeline-example"
 
 ---

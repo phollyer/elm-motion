@@ -108,16 +108,6 @@ Trigger an animation, then interrupt it mid-flight.
 
 ---
 
-## Responsive Animations
-
---8<-- "docs/animation/concepts/responsive-animations.md:desc"
-
---8<-- "docs/animation/concepts/responsive-animations.md:examples"
-
-[Go to page](concepts/responsive-animations.md){ .md-button .md-button--primary }
-
----
-
 ## Custom Properties
 
 ### Border Radius
@@ -140,7 +130,14 @@ Animate `border-color` using the generic `Anim.Property.CustomColor` module.
 
 Scroll-driven animation examples using the dedicated timeline engines.
 
---8<-- "docs/animation/engines/waapi/timeline-animations.md:page"
+### ScrollTimeline Engine
+
+--8<-- "docs/animation/engines/waapi/timeline-animations.md:scroll-timeline-example"
+
+### ViewTimeline Engine
+
+--8<-- "docs/animation/engines/waapi/timeline-animations.md:view-timeline-example"
+
 
 [Scroll Timeline Engine](engines/scroll-timeline.md){ .md-button .md-button--primary }
 or

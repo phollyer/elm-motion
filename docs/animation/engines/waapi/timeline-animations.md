@@ -6,11 +6,9 @@
 
 ### Scroll Timeline
 
-A `ScrollTimeline` ties animation progress to the scroll position of a container element. When the scroller is at the top, progress is 0%; at the bottom, 100%.
-
-Use `ScrollTimeline.animate` from the `Anim.Engine.ScrollTimeline` module. Pass the port function, a `Container` value (`Document` or `Container "element-id"`), and the animation pipeline:
-
 --8<-- [start:scroll-timeline-example]
+
+Scroll the page, and the progress bar will animate in response.
 
 ??? example "View Example"
 
@@ -31,9 +29,10 @@ Use `ScrollTimeline.animate` from the `Anim.Engine.ScrollTimeline` module. Pass 
 
 ### View Timeline
 
-A `ViewTimeline` ties animation progress to an element's position within the viewport — each element animates as it scrolls into (or out of) view.
-
 --8<-- [start:view-timeline-example]
+
+Scroll the page, and the different sections will fade in and slide
+up as they are scrolled into view.
 
 ??? example "View Example"
 

@@ -10,8 +10,6 @@ needed if you want to react to lifecycle events.
 
 ## Example
 
-Scroll the page, and the progress bar will animate in response.
-
 --8<-- "docs/animation/engines/waapi/timeline-animations.md:scroll-timeline-example"
 
 ---
