@@ -41,11 +41,12 @@ Set a rate of change per second:
 
 Moving 100 pixels at 200px/s takes 500ms. Moving 400 pixels takes 2000ms.
 
+!!! warning "Units of Speed"
+    Speed is calculated in 'property specific units per second'. Exactly what 'units' represents differs by property type - details of which are on each Property page.
+
 !!! tip "When to use speed"
     Speed shines for **Translate** animations where elements travel different distances. A short move feels snappy while a long move takes appropriately longer — matching how physical objects behave.
 
-!!! warning "Units of Speed"
-    Speed is calculated in 'property specific units per second'. Exactly what 'units' represents differs by property type - details of which are on each Property page.
 
 ## Which to Use?
 

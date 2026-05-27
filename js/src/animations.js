@@ -255,6 +255,41 @@ function fillMissingTransformStarts(property, currentState) {
     });
 }
 
+// For each axis Elm has declared frozen on this property, override both
+// the start and end values with the live mid-flight transform reading
+// from the running WAAPI animation. Elm's `runtimeBaseline` is updated
+// asynchronously via the `motionMsg` port and is therefore one or more
+// frames behind the actual rendered position; using its (stale) snapshot
+// as both endpoints of a "frozen" axis produces a visible backward jump
+// when the user retargets a sibling axis mid-flight. The live transform
+// computed from the in-flight animation is the only source of truth.
+const FROZEN_AXIS_LIVE_FIELDS = {
+    translate: { x: 'x', y: 'y', z: 'z' },
+    scale: { x: 'scaleX', y: 'scaleY', z: 'scaleZ' },
+    rotate: { x: 'rotateX', y: 'rotateY', z: 'rotateZ' },
+    skew: { x: 'skewX', y: 'skewY' }
+};
+
+function applyFrozenAxesFromLive(property, currentState) {
+    const axes = property.frozenAxes;
+    if (!Array.isArray(axes) || axes.length === 0) {
+        return;
+    }
+    const fieldMap = FROZEN_AXIS_LIVE_FIELDS[property.type];
+    if (!fieldMap) {
+        return;
+    }
+    for (const axis of axes) {
+        const stateKey = fieldMap[axis];
+        if (!stateKey) continue;
+        const liveValue = currentState[stateKey];
+        if (!Number.isFinite(liveValue)) continue;
+        const suffix = axis.toUpperCase();
+        property[`start${suffix}`] = liveValue;
+        property[`end${suffix}`] = liveValue;
+    }
+}
+
 function patchTransformStartsFromAnimation(existingTransform, mergedTransformProperties) {
     if (!existingTransform.resolvedValues || !existingTransform.animation) {
         return;
@@ -271,22 +306,40 @@ function patchTransformStartsFromAnimation(existingTransform, mergedTransformPro
     const currentState = computeTransformFromResolved(existingTransform.resolvedValues, progress, duration);
     mergedTransformProperties.forEach(property => {
         fillMissingTransformStarts(property, currentState);
+        applyFrozenAxesFromLive(property, currentState);
     });
 }
 
-function buildRetainedTransformProperty(oldProp, currentTransform, duration) {
+function buildRetainedTransformProperty(oldProp, currentTransform, elapsedMs) {
     const keys = TRANSFORM_STATE_KEYS[oldProp.type];
+    const originalDuration = oldProp.duration || 0;
+    const remainingDuration = Math.max(0, originalDuration - elapsedMs);
     return {
         type: oldProp.type,
+        // Start from the live mid-flight value so the axis continues smoothly
+        // from where it currently is on screen.
         startX: currentTransform[keys.x],
         startY: currentTransform[keys.y],
         startZ: keys.z ? currentTransform[keys.z] : undefined,
-        endX: currentTransform[keys.x],
-        endY: currentTransform[keys.y],
-        endZ: keys.z ? currentTransform[keys.z] : undefined,
+        // Continue toward the ORIGINAL target rather than freezing at the
+        // current value. Combined with remainingDuration below, this lets
+        // untouched in-flight axes carry on toward their goal while a sibling
+        // axis is re-animated.
+        endX: oldProp.endX,
+        endY: oldProp.endY,
+        endZ: keys.z ? oldProp.endZ : undefined,
+        // Easing approximation: applying the same easing function over the
+        // remainder of the curve is exact for `linear` and a perceptual
+        // approximation for non-linear curves (the true tail of e.g. an
+        // `ease-out` curve is a different bezier, but the visual difference
+        // is typically imperceptible). Complex pre-baked easingKeyframes
+        // (bounce / elastic / spring) are dropped here because the array
+        // covers 0..1 of the FULL animation and replaying it across the
+        // remainder would produce visible artifacts. A future improvement
+        // could slice the keyframe tail and rescale.
         easing: oldProp.easing || 'linear',
         easingKeyframes: null,
-        duration: duration,
+        duration: remainingDuration,
         version: oldProp.version || 1
     };
 }
@@ -381,12 +434,24 @@ function carryForwardMissingTransformProperties(animGroup, element, existingTran
     }
 
     const newPropTypes = new Set(mergedTransformProperties.map(property => property.type));
-    const currentTransform = getTransformState(animGroup, element);
-    const duration = mergedTransformProperties[0]?.duration || 0;
+
+    // Compute the live mid-flight transform from the running animation so
+    // retained axes can continue from where they actually are on screen at
+    // this exact moment. Falls back to the cached transform state if the
+    // running animation has no resolved values yet.
+    let liveTransform = null;
+    const timing = existingTransform.animation?.effect?.getTiming();
+    const animationDuration = timing?.duration || 0;
+    const currentTime = existingTransform.animation?.currentTime || 0;
+    if (existingTransform.resolvedValues && animationDuration > 0) {
+        const progress = Math.min(1.0, Math.max(0.0, currentTime / animationDuration));
+        liveTransform = computeTransformFromResolved(existingTransform.resolvedValues, progress, animationDuration);
+    }
+    const currentTransform = liveTransform || getTransformState(animGroup, element);
 
     existingTransform.transformProperties.forEach(oldProp => {
         if (!newPropTypes.has(oldProp.type)) {
-            mergedTransformProperties.push(buildRetainedTransformProperty(oldProp, currentTransform, duration));
+            mergedTransformProperties.push(buildRetainedTransformProperty(oldProp, currentTransform, currentTime));
         }
     });
 }

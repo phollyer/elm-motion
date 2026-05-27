@@ -51,8 +51,8 @@ type alias AnimGroupName =
 -- ============================================================
 
 
-encode : AnimGroups AnimGroup -> Builder.ProcessedAnimationData -> Encode.Value
-encode animGroups processed =
+encode : AnimGroups AnimGroup -> Dict.Dict String (List String) -> Builder.ProcessedAnimationData -> Encode.Value
+encode animGroups frozenAxes processed =
     let
         elementsWithVersions =
             processed.groups
@@ -85,6 +85,7 @@ encode animGroups processed =
                             (Just propertyStatesGroup)
                             (Just animTransformOrder)
                             (encodeTransformBaseline snapshot)
+                            frozenAxes
                             config.properties
                         )
                     )
@@ -131,6 +132,7 @@ encodeRestart iterationsConfig directionConfig animGroup configGroup =
                             (Just elementProps)
                             (Just elemTransformOrder)
                             (encodeTransformBaseline snapshot)
+                            Dict.empty
                             config.properties
                         )
                     )
@@ -159,6 +161,7 @@ encodeProcessedData data =
                             Nothing
                             Nothing
                             Nothing
+                            Dict.empty
                             config.properties
                         )
                     )
@@ -347,12 +350,13 @@ encodeProcessedAnimGroupConfig :
     -> Maybe (AnimGroups PropertyState)
     -> Maybe (List TransformProperty)
     -> Maybe Encode.Value
+    -> Dict.Dict String (List String)
     -> List Builder.ProcessedPropertyConfig
     -> Encode.Value
-encodeProcessedAnimGroupConfig animGroupName targetId propertyState transformOrder_ transformBaseline propertyConfigs =
+encodeProcessedAnimGroupConfig animGroupName targetId propertyState transformOrder_ transformBaseline frozenAxes propertyConfigs =
     let
         baseFields =
-            [ ( "properties", Encode.list (encodeProcessedPropertyConfig propertyState) propertyConfigs )
+            [ ( "properties", Encode.list (encodeProcessedPropertyConfig propertyState frozenAxes) propertyConfigs )
             , ( "animGroup", Encode.string animGroupName )
             , ( "target", Encode.string targetId )
             ]
@@ -517,9 +521,17 @@ encodeTransformOrder order =
         order
 
 
-encodeProcessedPropertyConfig : Maybe (AnimGroups PropertyState) -> Builder.ProcessedPropertyConfig -> Encode.Value
-encodeProcessedPropertyConfig maybeVersions property =
+encodeProcessedPropertyConfig : Maybe (AnimGroups PropertyState) -> Dict.Dict String (List String) -> Builder.ProcessedPropertyConfig -> Encode.Value
+encodeProcessedPropertyConfig maybeVersions frozenAxes property =
     let
+        frozenAxesField propName =
+            case Dict.get propName frozenAxes |> Maybe.withDefault [] of
+                [] ->
+                    []
+
+                axes ->
+                    [ ( "frozenAxes", Encode.list Encode.string axes ) ]
+
         versionFields =
             case maybeVersions of
                 Just propertyVersions ->
@@ -662,6 +674,7 @@ encodeProcessedPropertyConfig maybeVersions property =
                        , ( "endZ", Encode.float endZ )
                        , ( "duration", Encode.int config.duration )
                        ]
+                    ++ frozenAxesField "scale"
                     ++ encodeEasingWithKeyframes config.duration config.easing config.spring
                 )
 
@@ -679,6 +692,7 @@ encodeProcessedPropertyConfig maybeVersions property =
                        , ( "endZ", Encode.float endZ )
                        , ( "duration", Encode.int config.duration )
                        ]
+                    ++ frozenAxesField "rotate"
                     ++ encodeEasingWithKeyframes config.duration config.easing config.spring
                 )
 
@@ -724,6 +738,7 @@ encodeProcessedPropertyConfig maybeVersions property =
                        , ( "endY", Encode.float endY )
                        , ( "duration", Encode.int config.duration )
                        ]
+                    ++ frozenAxesField "skew"
                     ++ encodeEasingWithKeyframes config.duration config.easing config.spring
                 )
 
@@ -768,6 +783,7 @@ encodeProcessedPropertyConfig maybeVersions property =
                        , ( "unitZ", Encode.string (InternalUnit.toCssSuffix config.cssUnit.z) )
                        , ( "duration", Encode.int config.duration )
                        ]
+                    ++ frozenAxesField "translate"
                     ++ encodeEasingWithKeyframes config.duration config.easing config.spring
                 )
 
@@ -899,6 +915,7 @@ encodeScroll builder =
                             Nothing
                             config.transformOrder
                             Nothing
+                            Dict.empty
                             config.properties
                         )
                     )
@@ -966,6 +983,7 @@ encodeView builder =
                             Nothing
                             config.transformOrder
                             Nothing
+                            Dict.empty
                             config.properties
                         )
                     )

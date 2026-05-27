@@ -227,6 +227,9 @@ animate (AnimState state animGroups) build =
         processed =
             Builder.process builder
 
+        frozenAxes =
+            Builder.getAllFrozenAxes builder
+
         generateAnimGroup : AnimGroupName -> Builder.ProcessedAnimGroupConfig -> AnimGroup
         generateAnimGroup animGroupName config =
             Generator.generateAnimation
@@ -268,7 +271,7 @@ animate (AnimState state animGroups) build =
 
         animateCmd =
             state.commandPort <|
-                encode processedAnimGroups processed
+                encode processedAnimGroups frozenAxes processed
     in
     ( nextState, animateCmd )
 

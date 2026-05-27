@@ -51,22 +51,14 @@ In the examples below, try the same sequence — click "Move Right" then "Move U
 
 ## Re-Anchoring with `retarget`
 
-If an animation needs its end value updated mid-flight (resize handlers, drag interactions, container measurement), use `retarget` rather than `animate`. Behaviour differs by engine — Sub and WAAPI continue smoothly from the current rendered value, while Transition and Keyframe move the element instantly to the new target.
+When an animation just needs its end value updated mid-flight, after maybe an orientation switch from portrait to landscape, use `retarget` rather than `animate`. You only supply the new target — the existing motion's timing is reused where possible, instead of being re-specified on every call.
+
+How that reuse plays out depends on whether the engine keeps a runtime snapshot of the currently rendered value:
+
+- **Sub** and **WAAPI** keep a live snapshot, so `retarget` inherits the in-flight duration, easing, and delay for any property currently `Running` and interpolates smoothly from where it is. Idle properties snap (`for`-style).
+- **Transition** and **Keyframe** have no runtime snapshot — the browser owns the in-flight value and Elm cannot read it back — so `retarget` clears the running animation and writes the new end value inline. The element ends up exactly where the new builder placed it, safely repeatable during a drag or resize without accumulating partial animations.
 
 📖 See [Responsive Animations](responsive-animations.md) for the full breakdown.
-
----
-
-## Why This Matters
-
-Mid-flight interruption is critical for responsive interfaces. Without it:
-
-- Toggle buttons feel sluggish (must wait for animation to complete)
-- Hover effects can't respond to rapid mouse movement
-- Drag interactions feel disconnected from user input
-
-With proper interruption support, animations feel directly connected to user actions.
-
 
 ## Next Steps
 
