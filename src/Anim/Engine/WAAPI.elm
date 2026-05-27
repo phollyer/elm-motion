@@ -376,17 +376,14 @@ animate =
     Internal.animate
 
 
-{-| Change the targeted properties instantly to their new values.
+{-| Change the targeted properties instantly to their new values. If currently animating,
+stop.
 
 Only the properties included in the new builder are affected, any other properties
 in the group will be left untouched.
 
-A `Cancelled` event is emitted from JS for every property whose
-animation was previously playing and is touched by the build. No
-`Started` events are emitted.
-
-📖 For responsive and resize patterns, see
-[Responsive Animations](https://phollyer.github.io/elm-motion/animation/concepts/responsive-animations/).
+A `Cancelled` event is emitted for every property whose
+animation was previously playing and is retargeted.
 
     import Anim.Engine.WAAPI as WAAPI
     import Anim.Property.Translate as Translate
