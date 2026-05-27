@@ -96,5 +96,3 @@ The engine modules also export shorter aliases, for example:
 Learn about Interrupting Animations mid-flight.
 
 [Interrupting Animations →](../concepts/interrupting-animations.md){ .md-button .md-button--primary }
-
-Or go back to [Build](../workflow/build.md) to continue the core animation workflow.
