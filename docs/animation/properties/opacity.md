@@ -4,7 +4,7 @@ Fade elements in and out by animating their opacity value.
 
 **Module:** `Anim.Property.Opacity`
 
-**GPU Accelerated:** ✅ Usually — typically compositor / GPU accelerated, but browser and scene dependent.
+**GPU Accelerated:** ✅
 
 ## Basic Usage
 

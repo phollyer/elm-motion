@@ -6,16 +6,24 @@ Animate any numeric CSS property with a unit. This is an escape hatch for CSS pr
 
 **GPU Accelerated:** No — the only GPU-accelerated numeric property is opacity, which has its own [first-class module](opacity.md).
 
+## Example
+
+--8<-- "docs/animation/properties/custom-property/border-radius.md:examples"
+
+--8<-- "docs/animation/properties/custom-property/border-radius.md:code"
+
+
 ## Basic Usage
 
 ??? example "View Source Code"
 
     ```elm
-    import Anim.Property.Custom as Property
+    import Anim.Property.Custom as Property exposing (Property(..))
+    import Anim.Unit exposing (Unit(..))
 
     borderRadiusAnimation : AnimBuilder mode -> AnimBuilder mode
     borderRadiusAnimation =
-        Property.for "animGroup" (BorderRadius "px")
+        Property.for "animGroup" (BorderRadius Px)
             >> Property.to 24
             >> Property.duration 500
             >> Property.build
@@ -34,7 +42,7 @@ See the [Properties Overview](overview.md) page for the shared usage patterns.
 | -------- | ----------- |
 | `Builder` | Alias for the Internal builder used to configure the animation |
 | `AnimGroupName` | Alias for the animation group name |
-| `Property` | Typed property names (`BorderRadius`, `BorderTopLeftRadius`, `BorderTopRightRadius`, `BorderBottomLeftRadius`, `BorderBottomRightRadius`, `BorderWidth`, `BorderTopWidth`, `BorderRightWidth`, `BorderBottomWidth`, `BorderLeftWidth`, `MinWidth`, `MinHeight`, `MaxWidth`, `MaxHeight`, `Top`, `Right`, `Bottom`, `Left`, `Inset`, `Margin`, `MarginTop`, `MarginRight`, `MarginBottom`, `MarginLeft`, `Padding`, `PaddingTop`, `PaddingRight`, `PaddingBottom`, `PaddingLeft`, `OutlineWidth`, `OutlineOffset`, `FontSize`, `LineHeight`, `LetterSpacing`, `WordSpacing`, `TextIndent`, `Gap`, `RowGap`, `ColumnGap`, `ColumnWidth`, `Perspective`, `TabSize`, `FlexBasis`, `FlexGrow`, `FlexShrink`, `Cx`, `Cy`, `R`, `Rx`, `Ry`, `StrokeDashoffset`, `StrokeWidth`, `Custom String`) |
+| `Property` | Typed property names |
 
 ### Initialization
 
@@ -74,13 +82,6 @@ See the [Properties Overview](overview.md) page for the shared usage patterns.
 | Function | Signature | Description |
 | -------- | --------- | ----------- |
 | `easing` | `Easing -> Builder -> Builder` | Add natural motion |
-
-
-## Example
-
---8<-- "docs/animation/properties/custom-property/border-radius.md:examples"
-
---8<-- "docs/animation/properties/custom-property/border-radius.md:code"
 
 
 ## Next Steps

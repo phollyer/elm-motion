@@ -7,7 +7,7 @@ Animate the width and height of elements.
 **GPU Accelerated:** ❌ No — triggers browser reflows and repaints.
 
 !!! warning "Performance Impact"
-    Size changes trigger browser reflows. The scope depends on layout context—a fixed-size container with `overflow: hidden` limits reflow to its subtree. In unbounded layouts, reflow can propagate widely. Consider using `Scale` transforms when you don't need actual layout changes.
+    Size changes trigger browser reflows. The scope depends on layout context - a fixed-size container with `overflow: hidden` limits reflow to its subtree. In unbounded layouts, reflow can propagate widely. Consider using `Scale` transforms when you don't need actual layout changes.
 
 ## Basic Usage
 

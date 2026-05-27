@@ -23,7 +23,7 @@ Animation control - use the buttons to control the bouncing ball animation.
 
 ## Quick Walkthrough
 
-Here's the general workflow to get up an running quickly.
+Here's a general workflow to get up an running quickly.
 
 ### 1. Build
 

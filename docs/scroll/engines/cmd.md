@@ -23,7 +23,7 @@ The Scroll Cmd Engine provides fire-and-forget scrolling. Call `scroll` and the 
 
 ## Quick Walkthrough
 
-Here's the general workflow to get up an running quickly.
+Here's a general workflow to get up an running quickly.
 
 ### 1. Build
 

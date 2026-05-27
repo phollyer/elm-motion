@@ -4,7 +4,7 @@ Rotate elements around the X, Y, and Z axes.
 
 **Module:** `Anim.Property.Rotate`
 
-**GPU Accelerated:** ✅ Usually — typically compositor / GPU accelerated, but browser and scene dependent.
+**GPU Accelerated:** ✅
 
 ## Basic Usage
 

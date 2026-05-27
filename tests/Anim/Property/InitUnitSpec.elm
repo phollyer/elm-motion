@@ -151,13 +151,13 @@ sizeTests =
                     , \_ -> rendered |> Query.has [ Selector.style "width" "120cqmin" ]
                     ]
                     ()
-        , test "initUnitWidth overrides initUnit on width only" <|
+        , test "initUnitW overrides initUnit on width only" <|
             \_ ->
                 let
                     rendered =
                         initWith
                             [ Size.initUnit Cqmin
-                                >> Size.initUnitWidth Vw
+                                >> Size.initUnitW Vw
                                 >> Size.initHW "el" 80 120
                             ]
                             |> query
@@ -167,13 +167,13 @@ sizeTests =
                     , \_ -> rendered |> Query.has [ Selector.style "width" "120vw" ]
                     ]
                     ()
-        , test "initUnitHeight overrides initUnit on height only" <|
+        , test "initUnitH overrides initUnit on height only" <|
             \_ ->
                 let
                     rendered =
                         initWith
                             [ Size.initUnit Cqmin
-                                >> Size.initUnitHeight Vh
+                                >> Size.initUnitH Vh
                                 >> Size.initHW "el" 80 120
                             ]
                             |> query

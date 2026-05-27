@@ -5,7 +5,7 @@ Elm Motion provides built-in support for some of the most common animatable CSS 
 
 ## GPU-Accelerated Properties
 
-These properties are typically compositor-accelerated (usually GPU-backed) for smooth performance with minimal battery impact. This is highly reliable in practice, but not guaranteed in every browser, device, or rendering context.
+These properties are compositor-accelerated (GPU-backed) for smooth performance with minimal battery impact.
 
 They also operate outside the normal document flow — animating them does not trigger reflow or repaint, so surrounding elements are unaffected.
 
@@ -33,15 +33,15 @@ These properties trigger browser repaints and/or reflows. Use them when needed, 
 ??? example "View Source Code"
 
     ```elm
-    import Anim.Property.Custom as Property exposing (Property(..))
+    import Anim.Property.Custom as CustomProperty exposing (Property(..))
     import Anim.Property.CustomColor as CustomColor exposing (ColorProperty(..))
     import Anim.Extra.Color as Color
 
     borderRadiusAnimation : AnimBuilder mode -> AnimBuilder mode
     borderRadiusAnimation =
-        Property.for "box" (BorderRadius "px")
-            >> Property.to 24
-            >> Property.build
+        CustomProperty.for "box" (BorderRadius "px")
+            >> CustomProperty.to 24
+            >> CustomProperty.build
 
     borderColorAnimation : AnimBuilder mode -> AnimBuilder mode
     borderColorAnimation =

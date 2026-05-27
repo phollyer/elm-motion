@@ -18,7 +18,7 @@ Scroll the page, and the progress bar will animate in response.
 
 ## Quick Walkthrough
 
-Here's the general workflow to get up an running quickly.
+Here's a general workflow to get up an running quickly.
 
 ### 1. Build
 
@@ -38,7 +38,7 @@ Here's the general workflow to get up an running quickly.
 
 ### 2. Render
 
-Render attributes on the element being animated. See [View](#view) for full details.
+Render attributes on the element being animated.
 
 ??? example "View Source Code"
 
@@ -50,7 +50,7 @@ Render attributes on the element being animated. See [View](#view) for full deta
 
 ### 3. Trigger with `animate`
 
-Call `animate` to send a fire-and-forget scroll-driven animation command. See [Trigger](#trigger) for JavaScript companion install instructions and choosing the scroll container.
+Call `animate` to send a fire-and-forget scroll-driven animation command.
 
 ??? example "View Source Code"
 
@@ -109,7 +109,7 @@ Subscribe only when you need lifecycle events in Elm. See [Subscriptions](#subsc
 
 ### Trigger
 
-This engine uses the same JavaScript companion as the WAAPI engine. Only the outgoing port is needed.
+This engine uses the same JavaScript companion as the WAAPI engine, but only the outgoing port is needed, the incoming port is optional.
 
 📖 See [WAAPI JavaScript](../../installation.md#waapi-javascript) for CDN and NPM install instructions.
 
@@ -135,7 +135,7 @@ Fire-and-forget. Returns a `Cmd msg` with no state to store.
 
 ### Update
 
-If subscribing to events, handle animation messages in your update function. `update` returns `Maybe AnimEvent`.
+Use `update` to process incoming messages and return a `Maybe AnimEvent`.
 
 ??? example "View Source Code"
 
@@ -154,7 +154,9 @@ If subscribing to events, handle animation messages in your update function. `up
 
 ### Events
 
-`update` returns a `Maybe AnimEvent` per call — `Nothing` means no event occurred this message.
+The ScrollTimeline, ViewTimeline and WAAPI Engines all utilize the JavaScript Web Animations API, and they all use the same ports to communicate with the JS companion. If you use two or more of these engines in your Elm App, depending on your setup, there is the potential for them all to receive the same messages from JS at the same time, which could be confusing.
+
+The library has you covered here though, all incoming messages are gated by each Engine, which is why `update` returns a `Maybe AnimEvent` - `Nothing` means the message was not for this Engine.
 
 Every event carries the animation group name. Some events carry an additional value:
 
@@ -220,7 +222,7 @@ Apply `attributes` to the animated element to attach the required animation grou
 
 ### Axis
 
-Vertical scroll is the default. Call `horizontal` in the animation pipeline when the container scrolls left and right.
+Vertical scroll is the default. Use `horizontal` in the animation pipeline when the container scrolls left and right.
 
 ??? example "View Source Code"
 
@@ -235,9 +237,9 @@ Vertical scroll is the default. Call `horizontal` in the animation pipeline when
 
 ### Playback
 
-`iterations` and `alternate` work the same as in other engines. Calling `alternate` when `iterations` is unset or `1` automatically bumps `iterations` to `2`.
+`iterations` and `alternate` work the same as in other engines, but `loopForever` is not supported - it makes no sense for a scroll driven timeline.
 
-📖 See [Playback](../concepts/playback.md) for the full looping, iterations, and alternate API with live examples.
+📖 See [Playback](../concepts/playback.md) for `iterations` and `alternate` APIs with live examples.
 
 ### Easing
 
@@ -257,7 +259,7 @@ Set the default easing for all properties that don't override it.
 
 ### Discrete Properties
 
-The ScrollTimeline engine manages discrete properties as inline styles. `discreteEntry` values are applied from the first animation frame, and `discreteExit` values flip on the last frame. No additional view setup is needed.
+The ScrollTimeline engine manages discrete properties as inline styles. `discreteEntry` values are applied immediately when the animation starts, and `discreteExit` values flip when the animation completes. No additional view setup is needed.
 
 📖 See [Discrete Properties](../concepts/discrete-properties.md) for the full API, live examples, and source code.
 
@@ -280,10 +282,10 @@ Use `transformOrder` to set the order in which transform properties are applied.
 
 ### When to Choose This Engine
 
-Choose ScrollTimeline when progress should be directly tied to scroll position.
+Choose ScrollTimeline when animation progress should be directly tied to scroll position.
 
 - Best for: progress bars, scroll-driven reveals, and container-linked choreography.
-- Avoid when: you need pause/resume/stop/reset controls or AnimState queries.
+- Avoid when: you need a time based Engine with related behaviour.
 
 
 ### API Quick Reference

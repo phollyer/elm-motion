@@ -85,7 +85,7 @@ Any time the pixel range changes, tell the engine the new range for every affect
 
 Follow this path when your targets use relative positioning inside their parent container. This is the quickest and simplest path, but it helps to have a good understanding of the various [CSS relative length units](https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/Values/length).
 
-Elm Motion supports a broad set of relative units through [`Anim.Unit`](https://package.elm-lang.org/packages/phollyer/elm-animate/latest/Anim-Unit), including element/font units (`Percent`, `Em`, `Rem`, `Lh`, `Ch`, etc.), viewport units (`Vw`, `Vh`, `Vi`, `Vb`, `Vmin`, `Vmax` plus `Sv*`/`Lv*`/`Dv*` variants), and container units (`Cqi`, `Cqb`, `Cqw`, `Cqh`, `Cqmin`, `Cqmax`).
+Elm Motion supports a broad set of relative units through [`Anim.Unit`](https://package.elm-lang.org/packages/phollyer/elm-motion/latest/Anim-Unit), including element/font units (`Percent`, `Em`, `Rem`, `Lh`, `Ch`, etc.), viewport units (`Vw`, `Vh`, `Vi`, `Vb`, `Vmin`, `Vmax` plus `Sv*`/`Lv*`/`Dv*` variants), and container units (`Cqi`, `Cqb`, `Cqw`, `Cqh`, `Cqmin`, `Cqmax`).
 
 When your animation can be expressed in those units, the browser re-evaluates values as layout changes. That means the animation stays responsive without resize subscriptions, DOM measurement, or remapping logic.
 
@@ -131,7 +131,7 @@ Most animations only need one of the two paths above. If you need more control, 
 | --- | --- | --- |
 | `retarget` | [Sub](../engines/sub.md), [WAAPI](../engines/waapi.md), [Transition](../engines/transition.md), [Keyframe](../engines/keyframes.md) | Change target while an animation is running. Sub and WAAPI continue smoothly; Transition and Keyframe move the element instantly to the new end value. |
 | `onResize` | [Sub](../engines/sub.md), [WAAPI](../engines/waapi.md) | Apply resize updates to active animations. |
-| `bounds` | [Anim.Resize](https://package.elm-lang.org/packages/phollyer/elm-animate/latest/Anim-Resize#bounds), [Translate](../properties/translate.md), [Scale](../properties/scale.md) | Set min/max movement ranges after a resize. |
+| `bounds` | [Anim.Resize](https://package.elm-lang.org/packages/phollyer/elm-motion/latest/Anim-Resize#bounds), [Translate](../properties/translate.md), [Scale](../properties/scale.md) | Set min/max movement ranges after a resize. |
 | `position` | [Translate](../properties/translate.md) | Set explicit x/y/z positions after a resize. |
 | `clampX`, `clampY`, `clampZ` | [Translate](../properties/translate.md), [Rotate](../properties/rotate.md), [Scale](../properties/scale.md), [Skew](../properties/skew.md) | Keep animated values inside safe limits. |
 | `clampWidth`, `clampHeight` | [Size](../properties/size.md) | Keep animated width and height inside safe limits. |
@@ -147,7 +147,7 @@ Start simple with relative units or measured pixels. Reach for these tools only 
 ## Engine Guidance
 
 - [Transition](../engines/transition.md) and [Keyframe](../engines/keyframes.md): use relative units for responsive behavior.
-- [Sub](../engines/sub.md) and [WAAPI](../engines/waapi.md): use relative units when you can, and use `onResize` with [`Anim.Resize.bounds`](https://package.elm-lang.org/packages/phollyer/elm-animate/latest/Anim-Resize#bounds) when you need measured pixel targets.
+- [Sub](../engines/sub.md) and [WAAPI](../engines/waapi.md): use relative units when you can, and use `onResize` with [`Anim.Resize.bounds`](https://package.elm-lang.org/packages/phollyer/elm-motion/latest/Anim-Resize#bounds) when you need measured pixel targets.
 - [ScrollTimeline](../engines/scroll-timeline.md) and [ViewTimeline](../engines/view-timeline.md): relative units are the responsive path.
 
 ---

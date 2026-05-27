@@ -20,11 +20,11 @@ up as they are scrolled into view.
 
 ## Quick Walkthrough
 
-Here's the general workflow to get up an running quickly.
+Here's a general workflow to get up an running quickly.
 
 ### 1. Build
 
-Set `rangeStart` and `rangeEnd` to control when the animation begins and ends. See [Range](#range) for all available `Range` constructors.
+Set `rangeStart` and `rangeEnd` to control when the animation begins and ends.
 
 ??? example "View Source Code"
 
@@ -44,7 +44,7 @@ Set `rangeStart` and `rangeEnd` to control when the animation begins and ends. S
 
 ### 2. Render
 
-Render attributes on the element being tracked by the view timeline. See [View](#view) for full details.
+Render attributes on the element being tracked by the view timeline.
 
 ??? example "View Source Code"
 
@@ -56,7 +56,7 @@ Render attributes on the element being tracked by the view timeline. See [View](
 
 ### 3. Trigger with `animate`
 
-Call `animate` to send a fire-and-forget view-driven animation command. See [Trigger](#trigger) for JavaScript companion install instructions and full details.
+Call `animate` to send a fire-and-forget view-driven animation command.
 
 ??? example "View Source Code"
 
@@ -77,7 +77,7 @@ Call `animate` to send a fire-and-forget view-driven animation command. See [Tri
 
 ### 4. Optional React
 
-Subscribe only when you need lifecycle events in Elm. See [Subscriptions](#subscriptions) and [Update](#update) for full event handling.
+Subscribe only when you need lifecycle events in Elm.
 
 ??? example "View Source Code"
 
@@ -115,7 +115,7 @@ Subscribe only when you need lifecycle events in Elm. See [Subscriptions](#subsc
 
 ### Trigger
 
-This engine uses the same JavaScript companion as the WAAPI engine. Only the outgoing port is needed.
+This engine uses the same JavaScript companion as the WAAPI engine, but only the outgoing port is needed, the incoming port is optional.
 
 📖 See [WAAPI JavaScript](../../installation.md#waapi-javascript) for CDN and NPM install instructions.
 
@@ -141,7 +141,7 @@ Fire-and-forget, returns a `Cmd msg` with no state to store.
 
 ### Update
 
-If subscribing to events, handle animation messages in your update function. `update` returns `Maybe AnimEvent`.
+Use `update` to process incoming messages and return a `Maybe AnimEvent`.
 
 ??? example "View Source Code"
 
@@ -160,7 +160,9 @@ If subscribing to events, handle animation messages in your update function. `up
 
 ### Events
 
-`update` returns a `Maybe AnimEvent` per call — `Nothing` means no event occurred this message.
+The ViewTimeline, ScrollTimeline and WAAPI Engines all utilize the JavaScript Web Animations API, and they all use the same ports to communicate with the JS companion. If you use two or more of these engines in your Elm App, depending on your setup, there is the potential for them all to receive the same messages from JS at the same time, which could be confusing.
+
+The library has you covered here though, all incoming messages are gated by each Engine, which is why `update` returns a `Maybe AnimEvent` - `Nothing` means the message was not for this Engine.
 
 Every event carries the animation group name. Some events carry an additional value:
 
@@ -226,7 +228,7 @@ Apply `attributes` to the animated element to attach the required animation grou
 
 ### Axis
 
-Vertical tracking is the default. Call `horizontal` in the animation pipeline when the element is inside a container that scrolls left and right.
+Vertical tracking is the default. Use `horizontal` in the animation pipeline when the element is inside a container that scrolls left and right.
 
 ??? example "View Source Code"
 
@@ -264,13 +266,13 @@ Use `rangeStart` and `rangeEnd` with `Range` constructor values. Both are option
 | `ExitCrossing` | Element's leading edge starts to leave the viewport | Element has fully left the viewport |
 | `Scroll` | Scroll container is at its very start | Scroll container is at its very end |
 
-For nuanced differences between `Entry`/`EntryCrossing` and `Exit`/`ExitCrossing` depending on element size, see this [interactive tool](https://scroll-driven-animations.style/tools/view-timeline/ranges).
+Try this [interactive tool](https://scroll-driven-animations.style/tools/view-timeline/ranges) to see the different `Range`s in action.
 
 ### Playback
 
-`iterations` and `alternate` work the same as in other engines. Calling `alternate` when `iterations` is unset or `1` automatically bumps `iterations` to `2`.
+`iterations` and `alternate` work the same as in other engines, but `loopForever` is not supported - it makes no sense for a scroll driven timeline.
 
-📖 See [Playback](../concepts/playback.md) for the full looping, iterations, and alternate API with live examples.
+📖 See [Playback](../concepts/playback.md) for `iterations` and `alternate` APIs with live examples.
 
 ### Easing
 
@@ -290,7 +292,7 @@ Set the default easing for all properties that don't override it.
 
 ### Discrete Properties
 
-The ViewTimeline engine manages discrete properties as inline styles. `discreteEntry` values are applied from the first animation frame, and `discreteExit` values flip on the last frame. No additional view setup is needed.
+The ViewTimeline engine manages discrete properties as inline styles. `discreteEntry` values are applied immediately when the animation starts, and `discreteExit` values flip when the animation completes. No additional view setup is needed.
 
 📖 See [Discrete Properties](../concepts/discrete-properties.md) for the full API, live examples, and source code.
 
@@ -317,7 +319,7 @@ Use `transformOrder` to set the order in which transform properties are applied.
 Choose ViewTimeline when playback should follow how an element moves through the viewport.
 
 - Best for: section reveals, scroll storytelling, and enter/exit viewport choreography.
-- Avoid when: you need pause/resume/stop/reset controls or AnimState queries.
+- Avoid when: you need a time based Engine with related behaviour.
 
 ### API Quick Reference
 
@@ -418,10 +420,7 @@ For complete API details, see the [Anim.Engine.ViewTimeline](https://package.elm
 
 ### Next Steps
 
-Compare timeline engines and migration paths:
+Get started with Properties.
 
-- [Scroll Timeline Engine](scroll-timeline.md)
-- [WAAPI Engine](waapi.md)
-- [Migration Guide](migration-guide.md)
+[Properties →](../properties/getting-started.md){ .md-button .md-button--primary }
 
-[Migration Guide ->](migration-guide.md){ .md-button .md-button--primary }

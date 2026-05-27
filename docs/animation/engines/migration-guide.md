@@ -132,9 +132,3 @@ Use engine specific pages for complete references:
 - [View Timeline](view-timeline.md)
 
 For end to end code, see [Examples](../examples.md).
-
-## Next Steps
-
-Now that you know how to migrate engine integration, continue with property APIs.
-
-[Properties →](../properties/getting-started.md){ .md-button .md-button--primary }

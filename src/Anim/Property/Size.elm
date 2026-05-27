@@ -1,7 +1,7 @@
 module Anim.Property.Size exposing
     ( Builder, AnimGroupName
     , init, initHW, initW, initH
-    , initUnit, initUnitWidth, initUnitHeight
+    , initUnit, initUnitW, initUnitH
     , for, build
     , fromHW, fromH, fromW, from
     , toHW, toH, toW
@@ -57,15 +57,15 @@ the pipeline. Defaults to `Px`.
     init _ =
         ( { animState =
                 Engine.init
-                    [ Size.initUnitWidth Cqw
-                        >> Size.initUnitHeight Cqh
+                    [ Size.initUnitW Cqw
+                        >> Size.initUnitH Cqh
                         >> Size.initHW "btn" 8 25
                     ]
           }
         , Cmd.none
         )
 
-@docs initUnit, initUnitWidth, initUnitHeight
+@docs initUnit, initUnitW, initUnitH
 
 
 # Build
@@ -255,8 +255,8 @@ for `Size` values. Defaults to `Px`.
 
 Order matters - only `init*` calls downstream of this setter in the pipeline
 are affected; calls upstream keep their previously selected unit (or `Px`).
-Later per-axis setters ([`initUnitWidth`](#initUnitWidth),
-[`initUnitHeight`](#initUnitHeight)) override this setting on the relevant axis.
+Later per-axis setters ([`initUnitW`](#initUnitW),
+[`initUnitH`](#initUnitH)) override this setting on the relevant axis.
 
     import Anim.Unit exposing (Unit(..))
 
@@ -274,16 +274,16 @@ initUnit =
 {-| Set the width-axis unit used by every subsequent `init*` call for `Size`
 values. Overrides any unit set by [`initUnit`](#initUnit) on the width axis.
 -}
-initUnitWidth : Unit -> AnimBuilder mode -> AnimBuilder mode
-initUnitWidth =
+initUnitW : Unit -> AnimBuilder mode -> AnimBuilder mode
+initUnitW =
     IB.setSizeInitCssUnitWidth
 
 
 {-| Set the height-axis unit used by every subsequent `init*` call for `Size`
 values. Overrides any unit set by [`initUnit`](#initUnit) on the height axis.
 -}
-initUnitHeight : Unit -> AnimBuilder mode -> AnimBuilder mode
-initUnitHeight =
+initUnitH : Unit -> AnimBuilder mode -> AnimBuilder mode
+initUnitH =
     IB.setSizeInitCssUnitHeight
 
 

@@ -23,7 +23,7 @@ The WAAPI Engine uses the Web Animations API via Elm ports and a JavaScript comp
 
 ## Quick Walkthrough
 
-Here's the general workflow to get up an running quickly.
+Here's a general workflow to get up an running quickly.
 
 ### 1. Build
 
@@ -390,7 +390,7 @@ All WAAPI control functions return `( AnimState msg, Cmd msg )` — the `Cmd` is
 
 ### Discrete Properties
 
-The WAAPI engine manages discrete properties as inline styles. `discreteEntry` values are applied from the first animation frame, and `discreteExit` values flip on the last frame. No additional view setup is needed.
+The WAAPI engine manages discrete properties as inline styles. `discreteEntry` values are applied immediately when the animation starts, and `discreteExit` values flip when the animation completes. No additional view setup is needed.
 
 📖 See [Discrete Properties](../concepts/discrete-properties.md) for the full API, live examples, and source code.
 

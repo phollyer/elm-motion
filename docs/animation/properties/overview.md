@@ -203,16 +203,16 @@ All properties have a `speed` function which takes a `Float`. The unit depends o
 
 ## Quick Reference
 
-| Property | Module | GPU | Dimensions | Units |
-| -------- | ------ | :-: | ---------- | ----- |
-| [Opacity](opacity.md) | `Anim.Property.Opacity` | ✓ | Single value | 0.0 – 1.0 |
-| [Rotate](rotate.md) | `Anim.Property.Rotate` | ✓ | X, Y, Z | Degrees |
-| [Scale](scale.md) | `Anim.Property.Scale` | ✓ | X, Y, Z | Multiplier (1.0 = 100%) |
-| [Skew](skew.md) | `Anim.Property.Skew` | ✓ | X, Y | Degrees |
-| [Size](size.md) | `Anim.Property.Size` | | W, H | Pixels |
-| [Translate](translate.md) | `Anim.Property.Translate` | ✓ | X, Y, Z | Pixels |
-| [Custom Property](custom-property.md) | `Anim.Property.Custom` | | Single value | Any unit |
-| [Custom Color Property](custom-color-property.md) | `Anim.Property.CustomColor` | | Single value | Color |
+| Property | Module | GPU | Dimensions | Values |
+| -------- | ------ | :-: | ---------- | ------ |
+| [Opacity](opacity.md) | `Anim.Property.Opacity` | ✓ | Single value | `Float` (0.0 – 1.0) |
+| [Rotate](rotate.md) | `Anim.Property.Rotate` | ✓ | X, Y, Z | `Float` degrees |
+| [Scale](scale.md) | `Anim.Property.Scale` | ✓ | X, Y, Z | `Float` multiplier (1.0 = 100%) |
+| [Skew](skew.md) | `Anim.Property.Skew` | ✓ | X, Y | `Float` degrees |
+| [Size](size.md) | `Anim.Property.Size` | | W, H | `Float` with any [`Unit`](https://package.elm-lang.org/packages/phollyer/elm-motion/latest/Anim-Unit) (default `Px`) |
+| [Translate](translate.md) | `Anim.Property.Translate` | ✓ | X, Y, Z | `Float` with any [`Unit`](https://package.elm-lang.org/packages/phollyer/elm-motion/latest/Anim-Unit) (default `Px`) |
+| [Custom Property](custom-property.md) | `Anim.Property.Custom` | | Single value | `Float` with any [`Unit`](https://package.elm-lang.org/packages/phollyer/elm-motion/latest/Anim-Unit) |
+| [Custom Color Property](custom-color-property.md) | `Anim.Property.CustomColor` | | Single value | `Color` |
 
 
 ## Next Steps

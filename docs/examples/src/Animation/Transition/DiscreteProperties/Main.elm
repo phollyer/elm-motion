@@ -35,8 +35,8 @@ init : ( Model, Cmd Msg )
 init =
     ( { animState =
             Transition.init
-                [ Transition.discreteEntry "display" "flex"
-                    >> Opacity.init animGroup 1
+                [ Transition.discreteEntry "display" "none"
+                    >> Opacity.init animGroup 0
                 ]
       }
     , Cmd.none

@@ -64,8 +64,8 @@ suite =
                 let
                     q =
                         Sub.init
-                            [ Size.initUnitWidth Unit.Cqw
-                                >> Size.initUnitHeight Unit.Cqh
+                            [ Size.initUnitW Unit.Cqw
+                                >> Size.initUnitH Unit.Cqh
                                 >> Size.initHW "el" 80 120
                             ]
                             |> rendered

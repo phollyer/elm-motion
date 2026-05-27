@@ -1,10 +1,18 @@
 # Custom Color Property
 
-Animate any color CSS property. This is an escape hatch for color CSS properties not covered by the first-class property modules.
+Animate any color CSS property.
 
 **Module:** `Anim.Property.CustomColor`
 
 **GPU Accelerated:** No
+
+
+## Example
+
+--8<-- "docs/animation/properties/custom-color-property/border-color.md:examples"
+
+--8<-- "docs/animation/properties/custom-color-property/border-color.md:code"
+
 
 ## Basic Usage
 
@@ -24,9 +32,6 @@ Animate any color CSS property. This is an escape hatch for color CSS properties
 
 See the [Properties Overview](overview.md) page for the shared usage patterns.
 
-!!! tip "When to use `Anim.Property.CustomColor`"
-    Use this module when Elm Motion doesn't provide a first-class module for the color CSS property you need to animate. For numeric properties with units, use [`Anim.Property.Custom`](custom-property.md) instead.
-
 ## API
 
 ### Types
@@ -35,7 +40,7 @@ See the [Properties Overview](overview.md) page for the shared usage patterns.
 | -------- | ----------- |
 | `Builder` | Alias for the Internal builder used to configure the animation |
 | `AnimGroupName` | Alias for the animation group name |
-| `ColorProperty` | Typed property names (`BackgroundColor`, `AccentColor`, `TextColor`, `BorderColor`, `BorderTopColor`, `BorderRightColor`, `BorderBottomColor`, `BorderLeftColor`, `BorderBlockColor`, `BorderBlockStartColor`, `BorderBlockEndColor`, `BorderInlineColor`, `BorderInlineStartColor`, `BorderInlineEndColor`, `OutlineColor`, `TextDecorationColor`, `TextEmphasisColor`, `CaretColor`, `Fill`, `Stroke`, `StopColor`, `FloodColor`, `LightingColor`, `ColumnRuleColor`, `Custom String`) |
+| `ColorProperty` | Typed property names |
 
 ### Initialization
 
@@ -75,13 +80,6 @@ See the [Properties Overview](overview.md) page for the shared usage patterns.
 | Function | Signature | Description |
 | -------- | --------- | ----------- |
 | `easing` | `Easing -> Builder -> Builder` | Add natural motion |
-
-
-## Example
-
---8<-- "docs/animation/properties/custom-color-property/border-color.md:examples"
-
---8<-- "docs/animation/properties/custom-color-property/border-color.md:code"
 
 
 ## Next Steps

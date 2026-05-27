@@ -23,7 +23,7 @@ A dot in the middle of the screen that pulses by scaling and fading in and out -
 
 ## Quick Walkthrough
 
-Here's the general workflow to get up an running quickly.
+Here's a general workflow to get up an running quickly.
 
 ### 1. Build
 
