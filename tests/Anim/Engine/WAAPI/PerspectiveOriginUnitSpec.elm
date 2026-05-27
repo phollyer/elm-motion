@@ -14,6 +14,7 @@ import Anim.Property.PerspectiveOrigin as PerspectiveOrigin
 import Anim.Unit as Unit
 import Expect
 import Json.Decode as Decode
+import Dict
 import Json.Encode as Encode
 import Test exposing (Test, describe, test)
 
@@ -69,7 +70,7 @@ unitTest description maybeUnit expected =
                     Builder.init [ originBuilder ] |> Builder.process
 
                 json =
-                    Encoder.encode animGroups processed |> Encode.encode 0
+                    Encoder.encode animGroups Dict.empty processed |> Encode.encode 0
             in
             json
                 |> decodePerspectiveOriginUnit "card"

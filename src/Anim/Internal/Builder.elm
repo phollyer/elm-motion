@@ -58,6 +58,7 @@ module Anim.Internal.Builder exposing
     , getDelayWithDefault
     , getDiscreteEntryProperties
     , getDiscreteExitProperties
+    , getAllFrozenAxes
     , getEasing
     , getEasingWithDefault
     , getFrozenAxes
@@ -998,6 +999,16 @@ unfreezeAxes axes properties (AnimBuilder data) =
 getFrozenAxes : String -> AnimBuilder mode -> List String
 getFrozenAxes propName (AnimBuilder data) =
     Dict.get propName data.animation.frozenAxes |> Maybe.withDefault []
+
+
+{-| Get the full frozen-axes dictionary keyed by property name. Used by
+engines that need to forward freeze information to a downstream consumer
+(e.g. the WAAPI JS layer, which overrides frozen axes with live-rendered
+values to avoid snap-back from stale Elm snapshots).
+-}
+getAllFrozenAxes : AnimBuilder mode -> Dict String (List String)
+getAllFrozenAxes (AnimBuilder data) =
+    data.animation.frozenAxes
 
 
 addIfMissing : a -> List a -> List a

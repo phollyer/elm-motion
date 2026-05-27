@@ -280,6 +280,85 @@ describe('processAnimationData (WAAPI engine)', () => {
         expect(element.animate).toHaveBeenCalledTimes(2);
     });
 
+    // When `animate` lands for one transform sub-property (translate) while
+    // a DIFFERENT sub-property (rotate) is mid-flight as part of the same
+    // merged transform animation, the untouched axis must continue toward
+    // its ORIGINAL target on its own remaining timeline. It must not freeze
+    // at the snapshot value. See `buildRetainedTransformProperty` and
+    // `carryForwardMissingTransformProperties` for the implementation.
+    it('continues an untouched in-flight transform sub-property toward its original target', () => {
+        const animGroup = 'box-cross-subprop';
+        const firstAnim = createFakeAnimation({ duration: 300 });
+        const secondAnim = createFakeAnimation({ duration: 300 });
+        const element = makeElement({ animGroup, animations: [firstAnim, secondAnim] });
+        installDom({ element, targetId: animGroup });
+
+        // First: translate 0→100px and rotate 0→90deg, merged into one anim.
+        processAnimationData({
+            elements: {
+                [animGroup]: {
+                    properties: [
+                        {
+                            type: 'translate',
+                            startX: 0, startY: 0, startZ: 0,
+                            endX: 100, endY: 0, endZ: 0,
+                            duration: 300, easing: 'linear', version: 1
+                        },
+                        {
+                            type: 'rotate',
+                            startX: 0, startY: 0, startZ: 0,
+                            endX: 0, endY: 0, endZ: 90,
+                            duration: 300, easing: 'linear', version: 1
+                        }
+                    ]
+                }
+            }
+        });
+
+        // Advance the merged animation to 50% (rotate at ~45deg of its 0→90
+        // path, with 150ms of remaining time on its own timeline).
+        firstAnim.currentTime = 150;
+        firstAnim.playState = 'running';
+
+        // Second: animate ONLY translate. Rotate is untouched and must
+        // continue toward its original 90deg target over its remaining
+        // 150ms, NOT freeze at 45deg for the duration of the new animation.
+        processAnimationData({
+            elements: {
+                [animGroup]: {
+                    properties: [
+                        {
+                            type: 'translate',
+                            startX: 50, startY: 0, startZ: 0,
+                            endX: 200, endY: 0, endZ: 0,
+                            duration: 300, easing: 'linear', version: 2
+                        }
+                    ]
+                }
+            }
+        });
+
+        expect(element.animate).toHaveBeenCalledTimes(2);
+
+        const secondKeyframes = element.animate.mock.calls[1][0];
+        expect(Array.isArray(secondKeyframes)).toBe(true);
+        expect(secondKeyframes.length).toBeGreaterThanOrEqual(2);
+
+        const extractRotateZ = (transformString) => {
+            const match = /rotateZ\(([-\d.]+)deg\)/.exec(transformString || '');
+            return match ? parseFloat(match[1]) : 0;
+        };
+
+        const startRotateZ = extractRotateZ(secondKeyframes[0].transform);
+        const endRotateZ = extractRotateZ(secondKeyframes[secondKeyframes.length - 1].transform);
+
+        // First keyframe: rotate starts from its current mid-flight value.
+        expect(startRotateZ).toBeCloseTo(45, 1);
+        // Last keyframe: rotate has reached its original 90deg target (and
+        // holds there for the remainder of the new translate animation).
+        expect(endRotateZ).toBeCloseTo(90, 1);
+    });
+
     it('cancels a non-transform animation when restarted with a new version', () => {
         const animGroup = 'box-opacity-restart';
         const firstAnim = createFakeAnimation({ duration: 200 });

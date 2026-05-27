@@ -111,7 +111,7 @@ Resets to the start state, then immediately begins playing the animation again.
         --8<-- "docs/examples/src/Animation/WAAPI/ControllingAnimations/Main.elm:restart"
         ```
 
-    CSS Transition don't support restart.
+    Transition doesn't support restart.
 
 
 ### Pause
@@ -138,7 +138,7 @@ Freezes the animation at its current position. The animation can be resumed late
         --8<-- "docs/examples/src/Animation/WAAPI/ControllingAnimations/Main.elm:pause"
         ```
 
-    CSS Transition don't support pause.
+    Transition doesn't support pause.
 
 ### Resume
 
@@ -164,7 +164,7 @@ Continues a paused animation from exactly where it was frozen.
         --8<-- "docs/examples/src/Animation/WAAPI/ControllingAnimations/Main.elm:resume"
         ```
 
-    CSS Transition don't support resume.
+    Transition doesn't support resume.
 
 ---
 

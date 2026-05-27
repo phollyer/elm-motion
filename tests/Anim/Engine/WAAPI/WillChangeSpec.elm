@@ -28,6 +28,7 @@ import Anim.Property.Translate as Translate
 import Anim.Unit as Unit
 import Expect
 import Json.Decode as Decode
+import Dict
 import Json.Encode as Encode
 import Test exposing (Test, describe, test)
 
@@ -141,7 +142,7 @@ encodeAnimate steps =
         processed =
             Builder.init [ steps ] |> Builder.process
     in
-    Encoder.encode AnimGroups.init processed
+    Encoder.encode AnimGroups.init Dict.empty processed
         |> Encode.encode 0
 
 
