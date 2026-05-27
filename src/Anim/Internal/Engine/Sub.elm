@@ -115,7 +115,6 @@ import Html
 import Html.Attributes
 import Motion.Easing exposing (Easing(..))
 import Motion.Spring exposing (Spring)
-import Set exposing (Set)
 import Shared.TimeSpec exposing (TimeSpec(..))
 
 
@@ -265,14 +264,143 @@ setSnapshot anims =
     AnimGroups.map (\_ anim -> { propertySnapshot = extractElementCurrentStates anim }) anims
 
 
-{-| Like [animate](#animate), but inherits in-flight timing for any property
-that is currently mid-animation; idle properties fall back to `for`-style
-snap behaviour.
+{-| Snap the named anim groups to the targets described by `build`, with no
+animation.
+
+For every property mentioned in `build`, the engine cancels any in-flight
+animation on that animGroup, writes the target value as the new current
+position, and leaves the group in a non-running state. Builder timing
+fields (`duration`, `delay`, `easing`, `spring`) are accepted but ignored —
+there is no animation to apply them to.
+
+Emits a `Cancelled` [ControlEvent](#ControlEvent) for every animGroup that
+was previously `Running` and is touched by the build. No `Started` events
+are emitted.
+
+Use `retarget` to instantly reposition an element — e.g. after a layout
+change, a teleport, or to seed a new starting position before a follow-up
+`animate` call. For a smooth redirect from the current position toward a
+new target, use [animate](#animate) with a factored builder instead.
+
 -}
 retarget : AnimState -> (EngineBuilder -> EngineBuilder) -> AnimState
-retarget ((AnimState _ animGroups) as animState) build =
-    animate animState
-        (Builder.injectRunningProperties (extractRunningProperties animGroups) >> build)
+retarget (AnimState state animGroups) build =
+    let
+        builder =
+            state.builder
+                |> Builder.injectCurrentStates (setSnapshot animGroups)
+                |> build
+
+        processed =
+            Builder.process builder
+
+        touchedNames =
+            AnimGroups.names processed.groups
+
+        cancelledEvents =
+            touchedNames
+                |> List.filterMap
+                    (\animGroupName ->
+                        AnimGroups.get animGroupName animGroups
+                            |> Maybe.andThen
+                                (\existing ->
+                                    if AnimGroup.isRunning existing then
+                                        Just (Cancelled animGroupName (overallProgress existing))
+
+                                    else
+                                        Nothing
+                                )
+                    )
+
+        snapAnimations : AnimGroup -> Animations.Animations
+        snapAnimations animGroup =
+            AnimGroup.getAnimations animGroup
+                |> Animations.map (\_ -> Animation.stop)
+
+        generateAnimGroup : AnimGroupName -> Builder.ProcessedAnimGroupConfig -> AnimGroup
+        generateAnimGroup animGroupName config =
+            Generator.generateAnimation
+                processed.iterations
+                processed.animationDirection
+                config.transformOrder
+                (Builder.getDiscreteEntryProperties builder)
+                (Builder.getDiscreteExitProperties builder)
+                (AnimGroups.get animGroupName animGroups)
+                config.properties
+
+        insertSnap : AnimGroupName -> AnimGroup -> AnimGroups AnimGroup -> AnimGroups AnimGroup
+        insertSnap animGroupName freshAnimGroup acc =
+            let
+                snapped =
+                    AnimGroup.setAnimations (snapAnimations freshAnimGroup) freshAnimGroup
+            in
+            case AnimGroups.get animGroupName acc of
+                Nothing ->
+                    AnimGroups.insert animGroupName
+                        (AnimGroup.setPlayState PlayState.Complete snapped)
+                        acc
+
+                Just existing ->
+                    -- Merge existing animations into the snapped group, so
+                    -- untouched properties (other in-flight animations) carry
+                    -- over but the touched ones get their snapped versions.
+                    -- Dict.union biases toward the group's own animations on
+                    -- key collision, so the snapped values win for properties
+                    -- mentioned in the build. Recompute playState from the
+                    -- merged animations: if any untouched animation is still
+                    -- in flight the group stays Running, otherwise Complete.
+                    -- A Paused group stays Paused.
+                    let
+                        merged =
+                            snapped
+                                |> AnimGroup.addAnimation (AnimGroup.getAnimations existing)
+                    in
+                    AnimGroups.insert animGroupName
+                        (AnimGroup.setPlayState
+                            (mergedPlayState (AnimGroup.getPlayState existing) merged)
+                            merged
+                        )
+                        acc
+
+        mergedPlayState : PlayState.PlayState -> AnimGroup -> PlayState.PlayState
+        mergedPlayState existingPlayState merged =
+            if PlayState.isPaused existingPlayState then
+                PlayState.Paused
+
+            else if hasIncompleteAnimation merged then
+                PlayState.Running
+
+            else
+                PlayState.Complete
+
+        hasIncompleteAnimation : AnimGroup -> Bool
+        hasIncompleteAnimation animGroup =
+            AnimGroup.getAnimations animGroup
+                |> Animations.foldl
+                    (\_ anim acc -> acc || not (Animation.foldTiming .isComplete anim))
+                    False
+
+        nextAnimGroups =
+            processed.groups
+                |> AnimGroups.map generateAnimGroup
+                |> AnimGroups.foldl insertSnap animGroups
+
+        nextSubscriptionsActive =
+            nextAnimGroups
+                |> AnimGroups.groups
+                |> List.any AnimGroup.isRunning
+    in
+    AnimState
+        { subscriptionsActive = nextSubscriptionsActive
+        , builder =
+            builder
+                |> Builder.addAnimationToHistory processed
+                |> Builder.mergeBaselines
+                |> Builder.clearAnimData
+        , pendingControlEvents = state.pendingControlEvents ++ cancelledEvents
+        , lastResize = state.lastResize
+        }
+        nextAnimGroups
 
 
 
@@ -1078,36 +1206,6 @@ resizePerspectiveOrigin units previousBounds bounds isLooping isPaused cfg =
             , oldDistance = oldDistance
             , newLegDistance = newLegDistance
             }
-
-
-extractRunningProperties : AnimGroups AnimGroup -> Dict.Dict String (Set String)
-extractRunningProperties =
-    AnimGroups.foldl
-        (\animGroupName animGroup acc ->
-            if not (AnimGroup.isRunning animGroup) then
-                acc
-
-            else
-                let
-                    running =
-                        AnimGroup.getAnimations animGroup
-                            |> Animations.foldl
-                                (\_ anim s ->
-                                    if Animation.foldTiming .isComplete anim then
-                                        s
-
-                                    else
-                                        Set.insert (Animation.toPropertyKey anim) s
-                                )
-                                Set.empty
-                in
-                if Set.isEmpty running then
-                    acc
-
-                else
-                    Dict.insert animGroupName running acc
-        )
-        Dict.empty
 
 
 extractElementCurrentStates : AnimGroup -> PropertyBaselines
