@@ -97,12 +97,28 @@ animate =
     let
         generateAnimGroup : Maybe (List TransformProperty) -> EngineBuilder -> AnimGroupName -> { a | properties : List Builder.ProcessedPropertyConfig } -> AnimGroup
         generateAnimGroup _ builder _ { properties } =
+            let
+                freshEntry =
+                    Builder.getDiscreteEntryProperties builder
+
+                -- `@starting-style` is only useful for ENTRY transitions
+                -- (element becoming rendered). Only emit starting styles
+                -- on the animate call that freshly set `discreteEntry`;
+                -- on exit (Hide) or plain animates we skip them so we
+                -- don't pollute the stylesheet with dead rules.
+                startingStylesForThisAnimate =
+                    if Dict.isEmpty freshEntry then
+                        []
+
+                    else
+                        extractStartingStyles properties
+            in
             Generator.generateAnimation
                 (Builder.discreteTransitionsEnabled builder)
-                (Builder.getDiscreteEntryProperties builder)
+                freshEntry
                 (Builder.getDiscreteExitProperties builder)
                 properties
-                |> AnimGroup.setStartingStyles (extractStartingStyles properties)
+                |> AnimGroup.setStartingStyles startingStylesForThisAnimate
 
         insertAnimGroup : AnimGroups Builder.ProcessedAnimGroupConfig -> AnimGroupName -> AnimGroup -> AnimGroups AnimGroup -> AnimGroups AnimGroup
         insertAnimGroup animGroupsConfig animGroupName newAnimGroup acc =
@@ -112,11 +128,20 @@ animate =
 
                 Just currentGroup ->
                     let
-                        styles =
+                        animatedCssProps =
                             AnimGroups.get animGroupName animGroupsConfig
                                 |> Maybe.map (.properties >> toCssPropertyNames)
                                 |> Maybe.withDefault []
-                                |> AnimGroup.mergeStyles newAnimGroup currentGroup
+
+                        -- Include discrete property names so old `display Xms`
+                        -- entries are evicted from the merged transition list
+                        -- when this animate retouches the discrete property.
+                        discreteCssProps =
+                            Dict.keys (AnimGroup.getDiscreteEntry newAnimGroup)
+                                ++ Dict.keys (AnimGroup.getDiscreteExit newAnimGroup)
+
+                        styles =
+                            AnimGroup.mergeStyles newAnimGroup currentGroup (animatedCssProps ++ discreteCssProps)
                     in
                     AnimGroups.insert animGroupName styles acc
     in
@@ -346,18 +371,6 @@ attributes animGroupName ((AnimState _ data) as animState) =
                 isComplete =
                     AnimGroup.isComplete animGroup
 
-                discreteExitAttrs =
-                    AnimGroup.getDiscreteExit animGroup
-                        |> Dict.toList
-                        |> List.map
-                            (\( prop, { from, to } ) ->
-                                if isComplete then
-                                    Html.Attributes.style prop to
-
-                                else
-                                    Html.Attributes.style prop from
-                            )
-
                 willChangeAttrs =
                     -- `will-change` promotes the animated properties to
                     -- their own compositor layer ahead of the transition
@@ -375,57 +388,141 @@ attributes animGroupName ((AnimState _ data) as animState) =
                             value ->
                                 [ Html.Attributes.style "will-change" value ]
             in
-            CSS.attributes
-                []
-                AnimGroup.getStyles
-                animGroupName
-                animState
-                ++ discreteExitAttrs
-                ++ willChangeAttrs
+            if AnimGroup.usesDiscrete animGroup then
+                -- Selector-driven mode: all animated styles live in the
+                -- stylesheet rule emitted by `startingStyleNode`, scoped
+                -- by `[data-anim-group-name="X"][data-anim-state="sN"]`.
+                -- The element only needs the data attributes (so the
+                -- selector matches change on each animate, triggering
+                -- `@starting-style` for entry transitions) plus the
+                -- in-flight `will-change` hint.
+                Html.Attributes.attribute "data-anim-group-name" animGroupName
+                    :: Html.Attributes.attribute "data-anim-state" (stateAttrValue animGroup)
+                    :: willChangeAttrs
+
+            else
+                let
+                    discreteExitAttrs =
+                        AnimGroup.getDiscreteExit animGroup
+                            |> Dict.toList
+                            |> List.map
+                                (\( prop, { from, to } ) ->
+                                    if isComplete then
+                                        Html.Attributes.style prop to
+
+                                    else
+                                        Html.Attributes.style prop from
+                                )
+                in
+                CSS.attributes
+                    []
+                    AnimGroup.getStyles
+                    animGroupName
+                    animState
+                    ++ discreteExitAttrs
+                    ++ willChangeAttrs
+
+
+stateAttrValue : AnimGroup -> String
+stateAttrValue animGroup =
+    "s" ++ String.fromInt (AnimGroup.getStateId animGroup)
 
 
 startingStyleNode : AnimState -> Html.Html msg
 startingStyleNode ((AnimState _ animGroups) as animState) =
     let
-        startingStyles =
+        css =
             animGroups
                 |> AnimGroups.names
-                |> List.filterMap (\id -> generateStartingStyle id animState)
+                |> List.filterMap (\id -> generateGroupCss id animState)
                 |> String.join "\n"
     in
-    if String.isEmpty startingStyles then
+    if String.isEmpty css then
         Html.text ""
 
     else
-        Html.node "style" [] <|
-            [ Html.text ("@starting-style {\n" ++ startingStyles ++ "\n}") ]
+        Html.node "style" [] [ Html.text css ]
 
 
 startingStyleNodeFor : AnimGroupName -> AnimState -> Html msg
 startingStyleNodeFor animGroupName animState =
-    case generateStartingStyle animGroupName animState of
+    case generateGroupCss animGroupName animState of
         Just css ->
-            Html.node "style" [] <|
-                [ Html.text ("@starting-style {\n" ++ css ++ "\n}") ]
+            Html.node "style" [] [ Html.text css ]
 
         Nothing ->
             Html.text ""
 
 
-generateStartingStyle : AnimGroupName -> AnimState -> Maybe String
-generateStartingStyle animGroupName (AnimState _ animGroups) =
+{-| For a discrete-mode group, render the full per-animate stylesheet:
+
+  - A destination rule scoped by `[data-anim-group-name][data-anim-state]`
+    containing all the styles that drive the transition (including
+    `transition`, `transition-behavior`, the animated property values,
+    and the resolved entry / exit destinations).
+  - An `@starting-style` block scoped by the same selector when this
+    animate freshly set `discreteEntry` (i.e. it's an entry transition).
+
+For non-discrete groups this returns `Nothing` - their styles continue
+to flow through the inline `style` attribute via `attributes`, the same
+as before.
+
+-}
+generateGroupCss : AnimGroupName -> AnimState -> Maybe String
+generateGroupCss animGroupName (AnimState _ animGroups) =
     AnimGroups.get animGroupName animGroups
         |> Maybe.andThen
             (\animGroup ->
-                let
-                    allStyles =
-                        AnimGroup.getStartingStyles animGroup
-                in
-                if List.isEmpty allStyles then
-                    Nothing
+                if AnimGroup.usesDiscrete animGroup then
+                    let
+                        selector =
+                            "[data-anim-group-name=\""
+                                ++ animGroupName
+                                ++ "\"][data-anim-state=\"s"
+                                ++ String.fromInt (AnimGroup.getStateId animGroup)
+                                ++ "\"]"
+
+                        destinationDecls =
+                            AnimGroup.getStylesheetRule animGroup
+                                |> Styles.toList
+                                |> List.map (\( k, v ) -> "    " ++ k ++ ": " ++ v ++ ";")
+
+                        destinationRule =
+                            if List.isEmpty destinationDecls then
+                                ""
+
+                            else
+                                selector ++ " {\n" ++ String.join "\n" destinationDecls ++ "\n}"
+
+                        startingStyles =
+                            AnimGroup.getStartingStyles animGroup
+
+                        startingStyleBlock =
+                            if List.isEmpty startingStyles then
+                                ""
+
+                            else
+                                "@starting-style {\n  "
+                                    ++ selector
+                                    ++ " {\n"
+                                    ++ String.join "\n" (List.map (\s -> "    " ++ s) startingStyles)
+                                    ++ "\n  }\n}"
+                    in
+                    case ( destinationRule, startingStyleBlock ) of
+                        ( "", "" ) ->
+                            Nothing
+
+                        ( d, "" ) ->
+                            Just d
+
+                        ( "", s ) ->
+                            Just s
+
+                        ( d, s ) ->
+                            Just (d ++ "\n" ++ s)
 
                 else
-                    Just ("  [data-anim-group-name=\"" ++ animGroupName ++ "\"] {\n" ++ String.join "\n" (List.map (\s -> "    " ++ s) allStyles) ++ "\n  }")
+                    Nothing
             )
 
 

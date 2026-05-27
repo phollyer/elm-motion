@@ -4,7 +4,9 @@ module Anim.Internal.Engine.Transition.AnimGroup exposing
     , getDiscreteExit
     , getPropertyKeys
     , getStartingStyles
+    , getStateId
     , getStyles
+    , getStylesheetRule
     , getWillChange
     , init
     , isActive
@@ -19,6 +21,7 @@ module Anim.Internal.Engine.Transition.AnimGroup exposing
     , setStartingStyles
     , setStyles
     , setWillChange
+    , usesDiscrete
     )
 
 import Anim.Internal.Builder as Builder
@@ -43,6 +46,7 @@ type AnimGroup
         , startingStyles : List String
         , propertyKeys : Set String
         , willChange : String
+        , stateId : Int
         }
 
 
@@ -62,6 +66,7 @@ init =
         , startingStyles = []
         , propertyKeys = Set.empty
         , willChange = ""
+        , stateId = 0
         }
 
 
@@ -74,6 +79,36 @@ init =
 getStyles : AnimGroup -> Styles
 getStyles (AnimGroup animGroup) =
     Dict.foldl Styles.insert animGroup.styles animGroup.discreteEntry
+
+
+{-| Compute the destination CSS for a selector-driven stylesheet rule:
+base styles, with the entry value layered on top for any `discreteEntry`
+property, and the exit's `to` value layered on top of that for any
+property currently in `discreteExit`. The exit destination wins on the
+animate call where it was freshly set; subsequent animates clear
+`discreteExit` (see `mergeStyles`).
+-}
+getStylesheetRule : AnimGroup -> Styles
+getStylesheetRule (AnimGroup animGroup) =
+    animGroup.styles
+        |> (\s -> Dict.foldl Styles.insert s animGroup.discreteEntry)
+        |> (\s ->
+                Dict.foldl
+                    (\key { to } acc -> Styles.insert key to acc)
+                    s
+                    animGroup.discreteExit
+           )
+
+
+{-| True when this group uses the discrete-transition pattern
+(`discreteEntry` or `discreteExit` has ever been set). The Transition
+engine uses this to switch to selector-driven styling (data attribute +
+stylesheet rule) so `@starting-style` triggers correctly on entry.
+-}
+usesDiscrete : AnimGroup -> Bool
+usesDiscrete (AnimGroup animGroup) =
+    not (Dict.isEmpty animGroup.discreteEntry)
+        || not (Dict.isEmpty animGroup.discreteExit)
 
 
 getDiscreteEntry : AnimGroup -> Dict String String
@@ -104,6 +139,17 @@ inline style of the animated element while the animation is in flight
 getWillChange : AnimGroup -> String
 getWillChange (AnimGroup animGroup) =
     animGroup.willChange
+
+
+{-| Monotonic counter that bumps on every `mergeStyles` call (i.e. on every
+`animate` after init). Used to generate a unique `data-anim-state` selector
+value per render so the browser sees a selector-match change and fires
+`@starting-style` rules for groups that use `discreteEntry`. See
+[`Anim.Internal.Engine.Transition.attributes`](Anim-Internal-Engine-Transition#attributes).
+-}
+getStateId : AnimGroup -> Int
+getStateId (AnimGroup animGroup) =
+    animGroup.stateId
 
 
 
@@ -226,7 +272,12 @@ mergeStyles (AnimGroup newGroup) (AnimGroup existingGroup) newCssProps =
             Dict.union newGroup.discreteEntry existingGroup.discreteEntry
 
         mergedDiscreteExit =
-            Dict.union newGroup.discreteExit existingGroup.discreteExit
+            -- discreteExit is per-animate. The new group's exit dict is
+            -- whatever was freshly set on this animate call (the builder
+            -- clears it between animates). We do NOT carry forward the
+            -- previous group's exit, so a Hide → Show cycle correctly
+            -- drops the `to: none` once the next animate runs.
+            newGroup.discreteExit
     in
     AnimGroup
         { styles = styles
@@ -236,6 +287,7 @@ mergeStyles (AnimGroup newGroup) (AnimGroup existingGroup) newCssProps =
         , startingStyles = newGroup.startingStyles
         , propertyKeys = Set.union newGroup.propertyKeys existingGroup.propertyKeys
         , willChange = mergeWillChange existingGroup.willChange newGroup.willChange
+        , stateId = existingGroup.stateId + 1
         }
 
 

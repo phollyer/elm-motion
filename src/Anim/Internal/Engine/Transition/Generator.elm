@@ -39,7 +39,7 @@ init discreteTransitions discreteEntry discreteExit properties =
         |> AnimGroup.setWillChange (Builder.willChangeIndividual processedProps)
         |> AnimGroup.setStyles
             (TransitionStyles.fromProcessedProperties
-                (baseStyles discreteTransitions processedProps)
+                (baseStyles discreteTransitions discreteEntry discreteExit processedProps)
                 processedProps
             )
 
@@ -59,7 +59,7 @@ generateAnimation discreteTransitions discreteEntry discreteExit processedProps 
         |> AnimGroup.setWillChange (Builder.willChangeIndividual processedProps)
         |> AnimGroup.setStyles
             (TransitionStyles.fromProcessedProperties
-                (baseStyles discreteTransitions processedProps)
+                (baseStyles discreteTransitions discreteEntry discreteExit processedProps)
                 processedProps
             )
 
@@ -69,8 +69,8 @@ propertyKeysOf =
     List.foldl (Builder.processedPropertyType >> Set.insert) Set.empty
 
 
-baseStyles : Bool -> List Builder.ProcessedPropertyConfig -> List ( String, String )
-baseStyles discreteTransitions processedProps =
+baseStyles : Bool -> Dict String String -> Dict String Builder.DiscreteExitProperty -> List Builder.ProcessedPropertyConfig -> List ( String, String )
+baseStyles discreteTransitions discreteEntry discreteExit processedProps =
     let
         transitionBehavior =
             if discreteTransitions then
@@ -79,7 +79,7 @@ baseStyles discreteTransitions processedProps =
             else
                 []
     in
-    ( "transition", generate processedProps ) :: transitionBehavior
+    ( "transition", generate discreteTransitions discreteEntry discreteExit processedProps ) :: transitionBehavior
 
 
 
@@ -88,8 +88,8 @@ baseStyles discreteTransitions processedProps =
 -- ============================================================
 
 
-generate : List Builder.ProcessedPropertyConfig -> String
-generate properties =
+generate : Bool -> Dict String String -> Dict String Builder.DiscreteExitProperty -> List Builder.ProcessedPropertyConfig -> String
+generate discreteTransitions discreteEntry discreteExit properties =
     let
         allDurationsZero =
             properties
@@ -123,9 +123,24 @@ generate properties =
                             Builder.ProcessedTranslateConfig config ->
                                 config.duration == 0
                     )
+
+        discretePropNames =
+            if discreteTransitions then
+                discretePropertyNames discreteEntry discreteExit
+
+            else
+                []
     in
     if allDurationsZero then
-        "none"
+        case discretePropNames of
+            [] ->
+                "none"
+
+            _ ->
+                -- Discrete properties only - they participate via
+                -- `transition-behavior: allow-discrete`. Duration 0 means
+                -- the discrete flip happens immediately at start.
+                String.join ", " (List.map (\n -> n ++ " 0ms") discretePropNames)
 
     else
         let
@@ -135,15 +150,85 @@ generate properties =
             nonTransformTransitions =
                 List.filterMap nonTransformTransitionFromProcessed properties
 
+            mainDuration =
+                maxAnimationDuration properties
+
+            discreteTransitions_ =
+                List.map
+                    (\n -> n ++ " " ++ String.fromInt mainDuration ++ "ms")
+                    discretePropNames
+
             allTransitions =
                 case transformTransition of
                     Just t ->
-                        t :: nonTransformTransitions
+                        t :: nonTransformTransitions ++ discreteTransitions_
 
                     Nothing ->
-                        nonTransformTransitions
+                        nonTransformTransitions ++ discreteTransitions_
         in
         String.join ", " allTransitions
+
+
+{-| Collect the distinct CSS property names that appear in `discreteEntry`
+or `discreteExit`. These need to be added to `transition-property` so the
+browser will respect `transition-behavior: allow-discrete` when flipping
+them (otherwise the discrete change happens immediately and cancels any
+co-animating opacity / transform on exit).
+-}
+discretePropertyNames : Dict String String -> Dict String Builder.DiscreteExitProperty -> List String
+discretePropertyNames discreteEntry discreteExit =
+    let
+        entryKeys =
+            Dict.keys discreteEntry
+
+        exitKeys =
+            Dict.keys discreteExit
+    in
+    entryKeys ++ List.filter (\k -> not (List.member k entryKeys)) exitKeys
+
+
+{-| The longest animation duration across the processed properties, used
+to time discrete property flips so they finish in lockstep with the
+animatable properties (e.g. opacity fades to 0 before `display: none`
+takes effect on exit).
+-}
+maxAnimationDuration : List Builder.ProcessedPropertyConfig -> Int
+maxAnimationDuration =
+    List.foldl
+        (\prop acc ->
+            let
+                d =
+                    case prop of
+                        Builder.ProcessedCustomPropertyConfig _ _ config ->
+                            config.duration
+
+                        Builder.ProcessedCustomColorPropertyConfig _ config ->
+                            config.duration
+
+                        Builder.ProcessedOpacityConfig config ->
+                            config.duration
+
+                        Builder.ProcessedPerspectiveOriginConfig config ->
+                            config.duration
+
+                        Builder.ProcessedRotateConfig config ->
+                            config.duration
+
+                        Builder.ProcessedScaleConfig config ->
+                            config.duration
+
+                        Builder.ProcessedSizeConfig config ->
+                            config.duration
+
+                        Builder.ProcessedSkewConfig config ->
+                            config.duration
+
+                        Builder.ProcessedTranslateConfig config ->
+                            config.duration
+            in
+            max acc d
+        )
+        0
 
 
 

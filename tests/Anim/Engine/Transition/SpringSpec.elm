@@ -16,6 +16,7 @@ import Anim.Internal.Engine.Shared.AnimGroups as AnimGroups
 import Anim.Internal.Engine.Transition.Generator as Generator
 import Anim.Internal.Property.Opacity as InternalOpacity
 import Anim.Property.Opacity as Opacity
+import Dict
 import Expect
 import Motion.Easing exposing (Easing(..))
 import Motion.Spring as Spring
@@ -104,7 +105,7 @@ generatedTransition builder =
     in
     case firstGroup of
         Just group ->
-            Generator.generate group.properties
+            Generator.generate False Dict.empty Dict.empty group.properties
 
         Nothing ->
             ""
