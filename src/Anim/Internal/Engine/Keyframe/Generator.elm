@@ -114,6 +114,8 @@ generate name counter maybeOrder iterationCount direction maybeTargetValues disc
         |> AnimGroup.setRestartCounter counter
         |> AnimGroup.setIterationCount 0
         |> AnimGroup.setWillChange (Builder.willChangeComposite properties)
+        |> AnimGroup.setDiscreteEntry discrete.entry
+        |> AnimGroup.setDiscreteExit discrete.exit
         |> (\animGroup ->
                 if List.isEmpty properties && Dict.isEmpty discrete.entry && Dict.isEmpty discrete.exit then
                     animGroup

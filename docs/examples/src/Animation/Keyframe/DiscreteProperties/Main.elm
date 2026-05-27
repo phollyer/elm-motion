@@ -35,8 +35,6 @@ type alias Model =
 init : ( Model, Cmd Msg )
 init =
     ( { animState =
-            -- TODO: Discrete Entry is not having any effect on first render
-            -- This needs fixing, and is a release blocker for 1.0.0
             Keyframe.init
                 [ Keyframe.discreteEntry "display" "none"
                     >> Opacity.init animGroup 0

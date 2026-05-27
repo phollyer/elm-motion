@@ -3,6 +3,8 @@ module Anim.Internal.Engine.Keyframe.AnimGroup exposing
     , addStyle
     , clearAnimation
     , getAnimation
+    , getDiscreteEntry
+    , getDiscreteExit
     , getIterationCount
     , getRestartCounter
     , getStyles
@@ -16,6 +18,8 @@ module Anim.Internal.Engine.Keyframe.AnimGroup exposing
     , isRunning
     , mergeStyles
     , setAnimation
+    , setDiscreteEntry
+    , setDiscreteExit
     , setIterationCount
     , setPlayState
     , setRestartCounter
@@ -23,9 +27,11 @@ module Anim.Internal.Engine.Keyframe.AnimGroup exposing
     , setWillChange
     )
 
+import Anim.Internal.Builder exposing (DiscreteExitProperty)
 import Anim.Internal.Engine.CSS.Styles as Styles exposing (Styles)
 import Anim.Internal.Engine.Keyframe.Animation exposing (Animation)
 import Anim.Internal.Engine.Shared.PlayState as PlayState exposing (PlayState)
+import Dict exposing (Dict)
 
 
 
@@ -42,6 +48,8 @@ type AnimGroup
         , iterationCount : Int
         , maybeAnimation : Maybe Animation
         , willChange : String
+        , discreteEntry : Dict String String
+        , discreteExit : Dict String DiscreteExitProperty
         }
 
 
@@ -54,6 +62,8 @@ init =
         , iterationCount = 0
         , maybeAnimation = Nothing
         , willChange = ""
+        , discreteEntry = Dict.empty
+        , discreteExit = Dict.empty
         }
 
 
@@ -204,3 +214,29 @@ mergeStyles (AnimGroup new) (AnimGroup existing) =
 setStyles : Styles -> AnimGroup -> AnimGroup
 setStyles styles (AnimGroup animGroup) =
     AnimGroup { animGroup | styles = styles }
+
+
+
+-- ============================================================
+-- DISCRETE PROPERTIES
+-- ============================================================
+
+
+getDiscreteEntry : AnimGroup -> Dict String String
+getDiscreteEntry (AnimGroup animGroup) =
+    animGroup.discreteEntry
+
+
+getDiscreteExit : AnimGroup -> Dict String DiscreteExitProperty
+getDiscreteExit (AnimGroup animGroup) =
+    animGroup.discreteExit
+
+
+setDiscreteEntry : Dict String String -> AnimGroup -> AnimGroup
+setDiscreteEntry entry (AnimGroup animGroup) =
+    AnimGroup { animGroup | discreteEntry = entry }
+
+
+setDiscreteExit : Dict String DiscreteExitProperty -> AnimGroup -> AnimGroup
+setDiscreteExit exit (AnimGroup animGroup) =
+    AnimGroup { animGroup | discreteExit = exit }
