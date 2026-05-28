@@ -1,18 +1,31 @@
 # Start Here
 
-## Choosing a Scroll Engine
+## What is a Scroll Animation?
 
-Elm Motion provides three scroll engines with one shared builder API.
+When the user clicks "Back to top" and the page glides up smoothly instead of jumping, that's a scroll animation. The browser already knows how to *jump* an element to a new scroll position - this library knows how to *animate* it there.
 
-- `Cmd` - fire-and-forget scrolls with the smallest setup
-- `Task` - composable scrolls with typed success/failure results
-- `Sub` - state-tracked scrolls with events, controls, and live queries
+Elm Motion lets you animate the scroll position of:
 
-All three use the same `Scroll.Builder` pipeline, so you can switch engines without rewriting scroll definitions.
+- the whole **document** (the page itself), or
+- any **scrollable container** in your view (a sidebar, a film strip, a spreadsheet).
+
+You describe *what* to scroll to using a shared builder pipeline, then pick the engine that gives you the level of control you need.
+
+## The Three Scroll Engines
+
+| Engine | One-liner |
+| ------ | --------- |
+| [`Scroll.Cmd`](engines/cmd.md) | Fire-and-forget. The simplest possible setup. |
+| [`Scroll.Task`](engines/task.md) | Like `Cmd`, but returns a `Task` so you get typed success/failure results. |
+| [`Scroll.Sub`](engines/sub.md) | Stateful. Subscribes for frame updates. Lets you pause, resume, stop, query position, react to progress events, and interrupt scrolls mid-flight. |
+
+All three share the same `Scroll.Builder` pipeline, so the way you *describe* a scroll never changes. Only the way you *run* it does.
+
+📖 See [Scroll Engines Overview](engines/overview.md) for a side-by-side comparison.
 
 ## Coding Style
 
-The library codebase, and all the examples, use function composition extensively.
+The library codebase and all the examples use function composition (`>>`) extensively.
 
 ??? note "New to function composition (`>>`)?"
 
@@ -45,7 +58,11 @@ The library codebase, and all the examples, use function composition extensively
 
 ## Examples
 
-Here are a few examples to get started with.
+The examples below show the **same scroll** built with each of the three engines, so you can see how the engine choice affects the surrounding code without changing what the scroll does.
+
+!!! info "Responsive by default"
+
+    All examples in this documentation are responsive - they adapt smoothly when the viewport is resized.
 
 ### 1. Vertical Scrolling
 
@@ -83,6 +100,6 @@ Here are a few examples to get started with.
 
 ## Next Steps
 
-Now that you can create a simple scroll, continue with the scroll workflow.
+Now that you've seen what a scroll animation looks like, walk through the scroll workflow step by step.
 
-[Scroll Workflow ->](workflow/build.md){ .md-button .md-button--primary }
+[Scroll Workflow →](workflow/build.md){ .md-button .md-button--primary }

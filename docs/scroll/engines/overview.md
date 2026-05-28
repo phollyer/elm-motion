@@ -1,19 +1,18 @@
 # Scroll Engines Overview
 
-This page compares the scroll engines side by side.
+Three engines, one shared builder API. This page lays them out side by side so you can pick the right one for the job.
 
-Use this page to choose an engine, compare features, and plan migrations.
-For implementation details, each engine page includes the complete usage flow for that engine.
+For implementation details, each engine page is a complete walkthrough:
 
-- [Cmd](cmd.md) - fire-and-forget scrolling, simplest setup
-- [Task](task.md) - task-based scrolling with typed errors
-- [Sub](sub.md) - state-tracked scrolling with full Elm-side control
+- [`Scroll.Cmd`](cmd.md) - fire-and-forget. Simplest setup. No state.
+- [`Scroll.Task`](task.md) - a `Task` you can compose, with typed success/failure results.
+- [`Scroll.Sub`](sub.md) - state-tracked. Pause, resume, stop, query position, react to live progress, interrupt mid-flight.
 
 ## One Mental Model
 
-All scroll engines use the same scroll builder pipeline from `Scroll.Builder`.
+All three engines build scrolls from the same `Scroll.Builder` pipeline.
 
-You define scrolls the same way regardless of engine:
+You describe *what* to scroll to once, and the same builder works in every engine:
 
 ??? example "Shared Builder Pattern"
 
@@ -26,7 +25,7 @@ You define scrolls the same way regardless of engine:
             >> Scroll.build
     ```
 
-What changes per engine is runtime behavior: how scrolls are triggered, how results are returned, and how much control you have mid-scroll.
+What changes per engine is *how* you run that builder: how the scroll is triggered, how results come back, and how much you can do mid-scroll.
 
 ## Choosing an Engine
 
@@ -34,70 +33,75 @@ What changes per engine is runtime behavior: how scrolls are triggered, how resu
 
 | Use Case | Recommended Engine |
 | -------- | ------------------ |
-| Simple jump/scroll interactions | Cmd |
-| Task composition and typed error handling | Task |
-| Mid-scroll control, events, and state queries | Sub |
+| "Scroll to here, I don't need to know when it's done" | [Cmd](cmd.md) |
+| "Scroll to here, tell me if it succeeded or failed" | [Task](task.md) |
+| "Scroll to here, and let me change my mind mid-flight" | [Sub](sub.md) |
+| Live progress (e.g. driving a scrollbar indicator) | [Sub](sub.md) |
+| Pause / resume / restart while scrolling | [Sub](sub.md) |
+| Composing a scroll with another `Task` (e.g. fetch then scroll) | [Task](task.md) |
+| Smooth redirect when the user clicks a different target mid-scroll | [Sub](sub.md) |
 
 ### Feature Comparison
 
 | Feature | Cmd | Task | Sub |
 | ------- | :-: | :--: | :-: |
-| **Execution** |
+| **Trigger return type** |
 | Fire-and-forget `Cmd` | ✓ | | |
-| Returns `Task` | | ✓ | |
-| Requires state in model | | | ✓ |
-| **Error Handling** |
-| Typed errors | | ✓ | |
+| Composable `Task` | | ✓ | |
+| `( ScrollState, Cmd msg )` | | | ✓ |
+| **State** |
+| Stateless | ✓ | ✓ | |
+| Stored in your model | | | ✓ |
+| **Result handling** |
+| Completion message | ✓ | | |
+| Typed `Result` | | ✓ | |
+| Lifecycle events stream | | | ✓ |
 | Continue-through-failure mode | | ✓ | |
-| **Control** |
+| **Mid-Scroll Control** |
 | Stop | | | ✓ |
 | Pause / Resume | | | ✓ |
 | Reset / Restart | | | ✓ |
-| **Events** |
-| Started | | | ✓ |
-| Ended | | | ✓ |
-| Progress | | | ✓ |
-| Stopped | | | ✓ |
-| Paused / Resumed | | | ✓ |
-| Restarted | | | ✓ |
+| Interrupt and redirect | | | ✓ |
+| **Live Events** |
+| Started / Ended | | | ✓ |
+| Stopped / Paused / Resumed / Restarted | | | ✓ |
+| Progress (per-frame position + percentage) | | | ✓ |
 | **Queries** |
-| Current position | | | ✓ |
-| Running state | | | ✓ |
+| Current scroll position | | | ✓ |
+| Is a scroll running? | | | ✓ |
+
+📖 See [Interrupting Scrolls](../concepts/interrupting-scrolls.md) for a live, side-by-side demonstration of what happens when each engine is re-triggered mid-flight.
 
 ## Engine Families
 
-### Fire-and-Forget Engines
+### Fire-and-forget engines
 
-`Cmd` and `Task` are stateless at runtime.
+`Cmd` and `Task` keep no state at runtime. You describe a scroll, hand it to the engine, and the scroll happens. Once dispatched, you cannot cancel or redirect it.
 
-You define a scroll builder and trigger it. `Cmd` returns a command directly, while `Task` returns a `Task` you can compose and convert to `Cmd`.
+- `Cmd` returns a `Cmd msg` directly. You optionally hear back via a completion message.
+- `Task` returns a `Task` you can compose with other `Task`s before turning it into a `Cmd`. You get a typed `Result` when it finishes.
 
-### State-Tracked Engine
+### State-tracked engine
 
-`Sub` stores `ScrollState` in your model.
+`Sub` stores `ScrollState` in your model. The engine subscribes for animation-frame updates while a scroll is in progress and emits lifecycle events you can react to. Because the engine sees every frame, it can pause, resume, redirect, and answer questions like "where is the scroll right now?" - none of which are possible with `Cmd` or `Task`.
 
-You subscribe for frame updates, process scroll messages in `update`, and can control or query scrolls while they are running.
+## Timing
 
-## Timing Model
+`Cmd` and `Task` pre-calculate every frame of the scroll up front, then write them out as a chain of DOM updates. On busy pages or high-refresh-rate displays, the *perceived* duration can drift from the configured duration.
 
-`Cmd` and `Task` pre-calculate frame steps and execute DOM writes sequentially. In busy UIs or on high-refresh displays, perceived duration can drift from the nominal duration.
+`Sub` advances each frame using a real delta-time, so timing stays close to what you configured regardless of frame rate.
 
-`Sub` uses frame updates (`onAnimationFrameDelta`) with delta-time interpolation, so timing is frame-rate independent and closely matches configured duration.
-
-If timing precision matters, prefer [Sub](sub.md).
+If timing precision matters, use [Sub](sub.md).
 
 [Check your display's refresh rate](../../tools/fps-test.html){ target="_blank" }
 
 ## Switching Engines
 
-Scroll builders are portable because the builder API is shared.
-In most migrations, you primarily change:
+Because the builder API is shared, the *scroll definition* stays the same when you move between engines. What changes is the wiring around it:
 
 - imports
-- trigger function and return handling (`Cmd`, `Task`, or `( ScrollState, Cmd msg )`)
-- `update` / `subscriptions` wiring (for `Sub`)
-
-The same builder can be reused:
+- the trigger call (`Cmd` returns `Cmd msg`, `Task` returns a `Task`, `Sub` returns `( ScrollState, Cmd msg )`)
+- whether you wire `update` and `subscriptions` for engine messages (only `Sub`)
 
 ??? example "Portable Scroll Builder"
 
@@ -110,12 +114,10 @@ The same builder can be reused:
             >> Scroll.build
     ```
 
+    This single definition is valid input for `Cmd.scroll`, `Task.scroll`, and `Sub.scroll`.
+
 ## Next Steps
 
-Explore each engine page for complete usage flows:
+Start with the simplest engine and work up only when you need more.
 
-- [Cmd](cmd.md)
-- [Task](task.md)
-- [Sub](sub.md)
-
-[Cmd Engine ->](cmd.md){ .md-button .md-button--primary }
+[Cmd Engine →](cmd.md){ .md-button .md-button--primary }
