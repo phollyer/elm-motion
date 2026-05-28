@@ -1,8 +1,8 @@
 # Scroll Examples
 
-Interactive examples demonstrating Elm Motion scroll capabilities.
+A gallery of every scroll example in the docs. Each entry runs the same scroll across all three engines so you can flip between tabs and compare the behaviour without re-reading anything.
 
-Each example uses the same scroll behavior across all Scroll engines, so you can quickly compare runtime behavior and tradeoffs.
+Click **Go to page** on any example to see its full breakdown - builder, trigger, react wiring, and per-engine notes.
 
 ## Vertical Scrolling
 
@@ -36,7 +36,7 @@ Each example uses the same scroll behavior across all Scroll engines, so you can
 
 ## Controlling Scrolls
 
-Pause, resume, restart, stop, and reset scrolls while they run.
+Pause, resume, restart, stop, and reset a scroll while it's running. Sub engine only.
 
 ??? example "View Example"
 
@@ -48,6 +48,18 @@ Pause, resume, restart, stop, and reset scrolls while they run.
 
 ## Interrupting Scrolls
 
-Trigger a scroll, then trigger again mid-flight to compare interruption behavior across engines.
+The same scroll, re-triggered mid-flight in all three engines. Shows the cost of fire-and-forget vs the smoothness of state-tracked redirection.
+
+??? example "View Example - Cmd"
+
+    <iframe src="../../examples/src/Scroll/Cmd/Interrupting/index.html" class="example-iframe" loading="lazy"></iframe>
+
+??? example "View Example - Task"
+
+    <iframe src="../../examples/src/Scroll/Task/Interrupting/index.html" class="example-iframe" loading="lazy"></iframe>
+
+??? example "View Example - Sub"
+
+    <iframe src="../../examples/src/Scroll/Sub/Interrupting/index.html" class="example-iframe" loading="lazy"></iframe>
 
 [Go to page](concepts/interrupting-scrolls.md){ .md-button .md-button--primary }
