@@ -18,14 +18,12 @@ If you call `scroll` again while the first scroll is still running, both `Task` 
 
 If the second scroll is a duplicate of the first, they will both finish correctly. If the second scroll is to a different target in the same element, both scrolls will compete - with the longest scroll winning.
 
+??? example "View Example"
+    <iframe src="../../../examples/src/Scroll/Cmd/Interrupting/index.html" class="example-iframe" loading="lazy"></iframe>
+
 ??? example "View Source Code"
     ```elm
-    -- First scroll starts
-    ( model, Scroll.scroll ScrollComplete scrollToSection )
-
-    -- User clicks again before it finishes — the second scroll
-    -- starts as well, but does not replace the first one
-    ( model, Scroll.scroll ScrollComplete scrollToSection )
+    --8<-- "docs/examples/src/Scroll/Cmd/Interrupting/Main.elm"
     ```
 
 There is no way to cancel a `Cmd` scroll once it has been dispatched.
@@ -44,16 +42,12 @@ If you need a second trigger to immediately replace the running scroll and still
 
 `Scroll.Task` has the same pre-calculation behaviour as `Scroll.Cmd`. If a second task is dispatched mid-flight, it starts another independent scroll sequence rather than replacing the one that is already running.
 
+??? example "View Example"
+    <iframe src="../../../examples/src/Scroll/Task/Interrupting/index.html" class="example-iframe" loading="lazy"></iframe>
+
 ??? example "View Source Code"
     ```elm
-    -- First scroll dispatched
-    ( model
-    , Scroll.scroll scrollToSection
-        |> Task.attempt ScrollResult
-    )
-
-    -- Dispatching again before it finishes starts another
-    -- scroll sequence instead of replacing the first
+    --8<-- "docs/examples/src/Scroll/Task/Interrupting/Main.elm"
     ```
 
 There is no way to cancel a `Task` scroll once it has been dispatched.
@@ -74,22 +68,12 @@ Like `Cmd`, `Task` cannot replace an already-running scroll once it has been tri
 
 This means the scroll redirects smoothly from its current position, regardless of how far through the previous animation it was:
 
+??? example "View Example"
+    <iframe src="../../../examples/src/Scroll/Sub/Interrupting/index.html" class="example-iframe" loading="lazy"></iframe>
+
 ??? example "View Source Code"
     ```elm
-    update : Msg -> Model -> ( Model, Cmd Msg )
-    update msg model =
-        case msg of
-            ScrollTo targetId ->
-                -- Calling this while a scroll is running safely
-                -- redirects from the current scroll position
-                let
-                    ( newState, cmd ) =
-                        Sub.scroll ScrollMsg model.scrollState <|
-                            Scroll.forContainer "scroll-container"
-                                >> Scroll.toElement targetId
-                                >> Scroll.build
-                in
-                ( { model | scrollState = newState }, cmd )
+    --8<-- "docs/examples/src/Scroll/Sub/Interrupting/Main.elm"
     ```
 
 The replaced scroll fires a `Stopped` event for the interrupted container before the new scroll begins.
