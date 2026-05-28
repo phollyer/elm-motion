@@ -557,8 +557,20 @@ stop containerId toMsg (ScrollState scrollData) =
 
                             cid =
                                 containerToString scrollAnim.config.containerId
+
+                            stoppedScroll =
+                                { scrollAnim
+                                    | currentX = scrollAnim.config.targetX
+                                    , currentY = scrollAnim.config.targetY
+                                    , progress = 1.0
+                                    , elapsedMs = scrollAnim.durationMs
+                                    , isPaused = True
+                                }
                         in
-                        ( accScrolls, scrollCmd :: accCmds, accEvents ++ [ Stopped cid ] )
+                        ( Dict.insert scrollId stoppedScroll accScrolls
+                        , scrollCmd :: accCmds
+                        , accEvents ++ [ Stopped cid ]
+                        )
 
                     else
                         ( Dict.insert scrollId scrollAnim accScrolls, accCmds, accEvents )
@@ -765,5 +777,6 @@ isRunning containerId (ScrollState scrollData) =
     else
         scrollData.scrolls
             |> Dict.values
-            |> List.any (\scrollAnim -> containerMatches containerId scrollAnim.config.containerId)
+            |> List.filter (\scrollAnim -> containerMatches containerId scrollAnim.config.containerId)
+            |> List.any (\scrollAnim -> not scrollAnim.isPaused)
             |> Just
