@@ -187,6 +187,36 @@ scoping =
                     |> WAAPI.getTranslateCurrent "b"
                     |> Maybe.map .x
                     |> Expect.equal (Just 250)
+        , test "retarget on Y preserves the in-flight X end value in the snapshot" <|
+            \_ ->
+                initState
+                    |> startTranslate "a" 500
+                    |> (\state ->
+                            WAAPI.retarget state
+                                (Translate.for "a"
+                                    >> Translate.toY 250
+                                    >> Translate.build
+                                )
+                                |> Tuple.first
+                       )
+                    |> WAAPI.getTranslateCurrent "a"
+                    |> Maybe.map .x
+                    |> Expect.equal (Just 500)
+        , test "retarget on Y snaps Y to the new target in the snapshot" <|
+            \_ ->
+                initState
+                    |> startTranslate "a" 500
+                    |> (\state ->
+                            WAAPI.retarget state
+                                (Translate.for "a"
+                                    >> Translate.toY 250
+                                    >> Translate.build
+                                )
+                                |> Tuple.first
+                       )
+                    |> WAAPI.getTranslateCurrent "a"
+                    |> Maybe.map .y
+                    |> Expect.equal (Just 250)
         ]
 
 

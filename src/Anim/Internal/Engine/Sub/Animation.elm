@@ -4,6 +4,7 @@ module Anim.Internal.Engine.Sub.Animation exposing
     , Timing
     , foldTiming
     , mapTiming
+    , replaceAxes
     , reset
     , reverse
     , stop
@@ -18,8 +19,9 @@ import Anim.Internal.Property.Rotate exposing (Rotate)
 import Anim.Internal.Property.Scale exposing (Scale)
 import Anim.Internal.Property.Size exposing (Size)
 import Anim.Internal.Property.Skew exposing (Skew)
-import Anim.Internal.Property.Translate exposing (Translate)
+import Anim.Internal.Property.Translate as Translate exposing (Translate)
 import Anim.Internal.Unit exposing (ResolvedCssUnitAxes)
+import Set exposing (Set)
 
 
 
@@ -257,3 +259,87 @@ foldTiming f anim =
 
         Translate _ a ->
             f (toTiming a)
+
+
+
+-- ============================================================
+-- PER-AXIS MERGE
+-- ============================================================
+
+
+{-| Replace only the touched axes of the existing animation with the
+snapped animation's target value on those axes. Untouched axes keep the
+existing animation's `start` / `end` so they continue interpolating with
+the original timing and easing curve.
+
+If the merged `start` equals the merged `end` across every axis the
+existing animation had no work left to do on untouched axes, so the
+fully stopped `snapped` animation is returned instead. The group's play
+state will then collapse to `Complete`.
+
+Only `Translate` participates in per-axis merging today. For every other
+property type the snapped animation is returned unchanged, matching the
+whole-property scoping the engine already applies.
+
+-}
+replaceAxes : Set String -> Animation -> Animation -> Animation
+replaceAxes touchedAxes snapped existing =
+    case ( snapped, existing ) of
+        ( Translate _ snappedAnim, Translate units existingAnim ) ->
+            let
+                target =
+                    Translate.toRecord snappedAnim.end
+
+                existingStart =
+                    Translate.toRecord existingAnim.start
+
+                existingEnd =
+                    Translate.toRecord existingAnim.end
+
+                pick axis fallback =
+                    if Set.member axis touchedAxes then
+                        axisValue axis target
+
+                    else
+                        fallback
+
+                mergedStartRec =
+                    { x = pick "x" existingStart.x
+                    , y = pick "y" existingStart.y
+                    , z = pick "z" existingStart.z
+                    }
+
+                mergedEndRec =
+                    { x = pick "x" existingEnd.x
+                    , y = pick "y" existingEnd.y
+                    , z = pick "z" existingEnd.z
+                    }
+            in
+            if mergedStartRec == mergedEndRec then
+                snapped
+
+            else
+                Translate units
+                    { existingAnim
+                        | start = Translate.fromRecord mergedStartRec
+                        , end = Translate.fromRecord mergedEndRec
+                    }
+
+        _ ->
+            snapped
+
+
+axisValue : String -> { x : Float, y : Float, z : Float } -> Float
+axisValue axis record =
+    case axis of
+        "x" ->
+            record.x
+
+        "y" ->
+            record.y
+
+        "z" ->
+            record.z
+
+        _ ->
+            0

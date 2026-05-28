@@ -119,6 +119,7 @@ import Json.Decode as Decode exposing (Decoder)
 import Json.Encode as Encode
 import Motion.Easing exposing (Easing(..))
 import Motion.Spring exposing (Spring)
+import Set exposing (Set)
 
 
 
@@ -335,11 +336,30 @@ retarget (AnimState state animGroups) build =
         -- puts the property at its target with no animation pending. The
         -- JS side will emit Cancelled for any previously-Running animation
         -- when it cancels the WAAPI handle.
-        snapPropertyStates : AnimGroup -> AnimGroup
-        snapPropertyStates freshAnimGroup =
+        --
+        -- For per-axis-aware properties (translate), axes not mentioned in
+        -- the retarget build keep the previously-running animation's end
+        -- value rather than collapsing to the live mid-flight position.
+        -- We patch both:
+        --
+        --   1. The new translate `PropertyState.config` so every
+        --      `propertyUpdate` event from JS interpolates with
+        --      `start.untouched = end.untouched = previousEnd.untouched`
+        --      and snapshot.translate.untouched stays at previousEnd.
+        --   2. The initial snapshot so the value is correct before the
+        --      first `propertyUpdate` arrives.
+        --
+        -- That matches the JS continuation animation's final keyframe so
+        -- the inline style Elm renders after `finish` agrees with the
+        -- value WAAPI's `commitStyles` left on the element.
+        snapPropertyStates : AnimGroupName -> Maybe AnimGroup -> AnimGroup -> AnimGroup
+        snapPropertyStates groupName maybeExisting freshAnimGroup =
             let
+                patchedGroup =
+                    preserveUntouchedTranslateConfig groupName maybeExisting freshAnimGroup
+
                 touchedStates =
-                    AnimGroup.getPropertyStates freshAnimGroup
+                    AnimGroup.getPropertyStates patchedGroup
 
                 fullProgress =
                     touchedStates
@@ -348,21 +368,122 @@ retarget (AnimState state animGroups) build =
                         |> Dict.fromList
 
                 snappedSnapshot =
-                    freshAnimGroup
+                    patchedGroup
                         |> AnimGroup.getPropertySnapshot
                         |> ProgressApply.applyPropertyProgress fullProgress touchedStates
             in
-            freshAnimGroup
+            patchedGroup
                 |> AnimGroup.setSnapshot snappedSnapshot
                 |> AnimGroup.setStatus AnimGroup.Complete
+
+        translateTouchedAxesFor : AnimGroupName -> Set String
+        translateTouchedAxesFor groupName =
+            Dict.get ( groupName, "translate" ) touchedAxes
+                |> Maybe.withDefault Set.empty
+
+        preserveUntouchedTranslateConfig : AnimGroupName -> Maybe AnimGroup -> AnimGroup -> AnimGroup
+        preserveUntouchedTranslateConfig groupName maybeExisting freshAnimGroup =
+            let
+                touched =
+                    translateTouchedAxesFor groupName
+
+                isFullyTouched =
+                    Set.member "x" touched && Set.member "y" touched && Set.member "z" touched
+            in
+            if isFullyTouched then
+                freshAnimGroup
+
+            else
+                case Maybe.andThen translateEnd maybeExisting of
+                    Nothing ->
+                        freshAnimGroup
+
+                    Just previousEnd ->
+                        overrideTranslateConfigEnds touched previousEnd freshAnimGroup
+
+        overrideTranslateConfigEnds : Set String -> Translate.Translate -> AnimGroup -> AnimGroup
+        overrideTranslateConfigEnds touched previousEnd group =
+            let
+                previousRec =
+                    Translate.toRecord previousEnd
+
+                states =
+                    AnimGroup.getPropertyStates group
+
+                patched =
+                    AnimGroups.map
+                        (\propType propState ->
+                            if propType == "translate" then
+                                case propState.config of
+                                    Builder.ProcessedTranslateConfig cfg ->
+                                        let
+                                            newEnd =
+                                                mergeTranslate touched previousRec cfg.end
+
+                                            newStart =
+                                                cfg.start
+                                                    |> Maybe.map (mergeTranslate touched previousRec)
+                                                    |> Maybe.withDefault newEnd
+                                        in
+                                        { propState
+                                            | config =
+                                                Builder.ProcessedTranslateConfig
+                                                    { cfg | start = Just newStart, end = newEnd }
+                                        }
+
+                                    _ ->
+                                        propState
+
+                            else
+                                propState
+                        )
+                        states
+            in
+            AnimGroup.setPropertyStates patched group
+
+        mergeTranslate : Set String -> { x : Float, y : Float, z : Float } -> Translate.Translate -> Translate.Translate
+        mergeTranslate touched previousRec t =
+            let
+                rec =
+                    Translate.toRecord t
+
+                pick axis cur prev =
+                    if Set.member axis touched then
+                        cur
+
+                    else
+                        prev
+            in
+            Translate.fromRecord
+                { x = pick "x" rec.x previousRec.x
+                , y = pick "y" rec.y previousRec.y
+                , z = pick "z" rec.z previousRec.z
+                }
+
+        translateEnd : AnimGroup -> Maybe Translate.Translate
+        translateEnd group =
+            AnimGroup.getPropertyStates group
+                |> AnimGroups.get "translate"
+                |> Maybe.andThen
+                    (\propState ->
+                        case propState.config of
+                            Builder.ProcessedTranslateConfig cfg ->
+                                Just cfg.end
+
+                            _ ->
+                                Nothing
+                    )
 
         insertSnap : AnimGroupName -> AnimGroup -> AnimGroups AnimGroup -> AnimGroups AnimGroup
         insertSnap animGroupName freshAnimGroup acc =
             let
+                maybeExisting =
+                    AnimGroups.get animGroupName acc
+
                 snapped =
-                    snapPropertyStates freshAnimGroup
+                    snapPropertyStates animGroupName maybeExisting freshAnimGroup
             in
-            case AnimGroups.get animGroupName acc of
+            case maybeExisting of
                 Nothing ->
                     AnimGroups.insert animGroupName snapped acc
 
