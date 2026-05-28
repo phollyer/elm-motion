@@ -1,94 +1,92 @@
 # Scroll Timing
 
-Control how long scroll animations take with either fixed durations or distance-based speeds.
+How long should a scroll take? Elm Motion gives you two ways to answer that, and you only pick one.
 
-## Duration vs Speed
+| Approach | What it means | Best for |
+| -------- | ------------- | -------- |
+| `duration` | "Take exactly this many milliseconds, no matter how far we're scrolling." | All targets are at roughly the same distance, or you want consistent rhythm. |
+| `speed` | "Move at this many pixels per second; let the distance decide the duration." | Most scrolling. Distances vary, and a constant feel is what users expect. |
 
-Elm Motion offers two approaches to timing:
+!!! tip "`speed` is almost always the right default for scrolling"
+    A 100px scroll at a fixed 600ms duration crawls. A 2400px scroll at the same 600ms races. `speed` gives you the same *feel* no matter how far the user is jumping.
 
-| Approach | Behavior | Best For |
-| -------- | -------- | -------- |
-| `duration` | Fixed time regardless of distance | Predictable, consistent scroll times |
-| `speed` | Time varies based on distance | Most scrolling — distance varies naturally |
+## `duration`
 
-Since scroll distances vary based on where the user is on the page and where the target is, **speed** is usually the better choice.
-
-!!! tip "Speed feels more natural for scrolling"
-    With `speed`, a short scroll (100px) feels snappy while a long scroll (2000px) takes appropriately longer. With `duration`, a short scroll crawls while a long scroll races — neither feels right.
-
-## Duration
-
-Set a fixed scroll time in milliseconds:
+Fixed milliseconds, regardless of distance:
 
 ??? example "View Source Code"
 
     ```elm
     Scroll.forDocument
         >> Scroll.toElement "section-id"
-        >> Scroll.duration 600  -- Always 600ms regardless of distance
+        >> Scroll.duration 600
         >> Scroll.build
     ```
 
-Duration can work well when all your scroll targets are at similar distances, or when you want a consistent, predictable feel regardless of position.
+## `speed`
 
-## Speed
-
-Set a scroll rate in pixels per second:
+Pixels per second; the engine works out the duration from the distance to travel:
 
 ??? example "View Source Code"
 
     ```elm
     Scroll.forDocument
         >> Scroll.toElement "section-id"
-        >> Scroll.speed 800  -- 800 pixels per second
+        >> Scroll.speed 800
         >> Scroll.build
     ```
 
-Scrolling 200px at 800px/s takes 250ms. Scrolling 2400px takes 3000ms.
+At 800 px/s a 200px scroll takes 250ms; a 2400px scroll takes 3 seconds.
 
-## Global vs Per-Scroll Timing
+## `delay`
 
-Set timing once as a default for all scroll targets in a pipeline, or override it on individual targets:
+Wait before starting the scroll, in milliseconds. Handy for staggering scrolls or letting other UI settle first:
 
 ??? example "View Source Code"
 
     ```elm
-    -- Global default applied to all scroll targets in the pipeline
-    Sub.scroll ScrollMsg model.scrollState <|
-        Sub.speed 800
-            >> Sub.easing QuintOut
-            >> Scroll.forDocument
-            >> Scroll.toElement "section-1"
-            >> Scroll.build
-            >> Scroll.forDocument
-            >> Scroll.toElement "section-2"
-            >> Scroll.build
-
-    -- Per-scroll override on a specific target
     Scroll.forDocument
+        >> Scroll.toElement "section-id"
+        >> Scroll.delay 150
+        >> Scroll.speed 800
+        >> Scroll.build
+    ```
+
+## Defaults vs Per-Target
+
+In a single builder pipeline you can set defaults that apply to every scroll, then override them on individual targets:
+
+??? example "View Source Code"
+
+    ```elm
+    Scroll.speed 800
+        >> Scroll.easing QuintOut
+        >> Scroll.forDocument
+        >> Scroll.toElement "section-1"
+        >> Scroll.build
+        >> Scroll.forDocument
         >> Scroll.toElement "hero"
-        >> Scroll.duration 400  -- overrides the global 800px/s
+        >> Scroll.duration 400      -- overrides the 800 px/s default just for this target
         >> Scroll.build
     ```
+
+## Gotchas
+
+!!! warning "Pick one - `duration` or `speed`"
+    If both are set on the same target, the last one wins. Be explicit about which you actually want.
+
+!!! warning "No `duration` and no `speed` = an instant jump"
+    With neither set, the engine treats the duration as `0ms` and snaps to the target. Always set at least one.
 
 ## Timing Accuracy
 
 !!! warning "Cmd and Task timing is approximate"
-    The Cmd and Task engines pre-calculate animation frames and execute them sequentially. Because they lack access to the browser's vsync signal, the actual scroll duration can vary by machine speed and display refresh rate.
+    [Cmd](../engines/cmd.md) and [Task](../engines/task.md) pre-calculate every frame up front and then write them out. They have no access to the browser's vsync signal, so the *actual* time the scroll takes can drift depending on machine load and display refresh rate.
 
-    If accurate timing matters, use the **[Sub Engine](../engines/sub.md)** — it uses `onAnimationFrameDelta` to produce frame-rate independent animations that match the specified duration precisely.
-
-## Important Notes
-
-!!! warning "Choose one"
-    Use either `duration` or `speed`, not both. If both are set, the last one wins.
-
-!!! warning "Default behavior"
-    If no `duration` or `speed` is set, a duration of 0ms is used and the page instantly jumps to the target.
-
+    If timing precision matters, use [Sub](../engines/sub.md) - it advances each frame with a real delta-time, so the configured duration stays close to what users perceive.
 
 ## Next Steps
 
-Learn how easing changes the feel of scrolling.
+Now that you can control *how long*, learn how to control *how it feels*.
 
 [Easing →](easing.md){ .md-button .md-button--primary }

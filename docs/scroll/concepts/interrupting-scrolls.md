@@ -1,85 +1,90 @@
 # Interrupting Scrolls
 
-When a scroll animation is running and you trigger another scroll to the same container, the result depends on which engine is handling the scroll.
+What happens if a scroll is already in flight and you trigger another one? The answer depends entirely on which engine you're using.
 
-## Engine Summary
+## At a Glance
 
-| Engine | Interrupted Scroll |
-| ------ | ------------------ |
-| Cmd | ⚠️ Runs in parallel — later scroll does not replace earlier scroll |
-| Task | ⚠️ Runs in parallel — later scroll does not replace earlier scroll |
-| Sub | ✅ Replaces the running scroll from current position |
+| Engine | What happens on re-trigger |
+| ------ | -------------------------- |
+| [Cmd](../engines/cmd.md) | ⚠️ Both scrolls run in parallel. The new one does **not** replace the old. |
+| [Task](../engines/task.md) | ⚠️ Both scrolls run in parallel. The new one does **not** replace the old. |
+| [Sub](../engines/sub.md) | ✅ The new scroll **replaces** the old, picking up smoothly from the current position. |
 
-## Scroll.Cmd
+The three examples below all do the same thing - two big buttons that scroll a container to top and bottom - and let you mash them rapidly to see each engine's natural behaviour.
 
-`Scroll.Cmd` is fire-and-forget. Each call to `scroll` pre-calculates all its frame steps from the DOM scroll position at the moment the `Cmd` runs, then sequences them as a `Task` chain.
+## `Scroll.Cmd`
 
-If you call `scroll` again while the first scroll is still running, both `Task` chains execute independently. The new scroll does not cancel or replace the old one, so both chains can keep writing viewport positions until they finish.
+`Scroll.Cmd` pre-calculates every frame of the scroll at dispatch time. Re-triggering doesn't cancel the running scroll - it dispatches a **second** scroll alongside it.
 
-If the second scroll is a duplicate of the first, they will both finish correctly. If the second scroll is to a different target in the same element, both scrolls will compete - with the longest scroll winning.
+What you'll see in the example:
+
+- click rapidly to the **same** target: scrolls overlap, but they're aiming at the same place, so the result is correct.
+- click to a **different** target while one is running: both scrolls fight for the container. Usually the longer one wins, often finishing short of its real target.
 
 ??? example "View Example"
+
     <iframe src="../../../examples/src/Scroll/Cmd/Interrupting/index.html" class="example-iframe" loading="lazy"></iframe>
 
 ??? example "View Source Code"
+
     ```elm
     --8<-- "docs/examples/src/Scroll/Cmd/Interrupting/Main.elm"
     ```
 
-There is no way to cancel a `Cmd` scroll once it has been dispatched.
+A dispatched `Cmd` scroll cannot be cancelled.
 
-### Can You Combat This in Cmd?
+### Working Around It
 
-You can avoid this if you:
+If you have to stay on `Cmd`, the only options are to prevent the overlap in your own code:
 
-- ignore new triggers while a scroll is active
-- debounce rapid input before starting a scroll
-- queue the latest target and only dispatch it after `ScrollComplete`
+- ignore new triggers while a scroll is active (track an `isScrolling` flag),
+- debounce or throttle rapid input,
+- queue the latest target and only dispatch it after `ScrollComplete`.
 
-If you need a second trigger to immediately replace the running scroll and still finish correctly, use `Scroll.Sub`.
+If you need clean redirection, switch to [`Scroll.Sub`](../engines/sub.md).
 
-## Scroll.Task
+## `Scroll.Task`
 
-`Scroll.Task` has the same pre-calculation behaviour as `Scroll.Cmd`. If a second task is dispatched mid-flight, it starts another independent scroll sequence rather than replacing the one that is already running.
+`Scroll.Task` behaves identically to `Cmd` here - same pre-calculation, same parallel behaviour. The difference is that you also get an `Err` if the second scroll fails (e.g. target missing), but the **running** scroll still can't be cancelled.
 
 ??? example "View Example"
+
     <iframe src="../../../examples/src/Scroll/Task/Interrupting/index.html" class="example-iframe" loading="lazy"></iframe>
 
 ??? example "View Source Code"
+
     ```elm
     --8<-- "docs/examples/src/Scroll/Task/Interrupting/Main.elm"
     ```
 
-There is no way to cancel a `Task` scroll once it has been dispatched.
+### Working Around It
 
-### Can You Combat This in Task?
+The same workarounds as `Cmd` apply, with one extra option that `Task`'s `Result` makes natural:
 
-You can make `Task` flows safe if you do not allow overlap:
+- serialize: start the next scroll only after the previous `Task` resolves,
+- keep a `pendingTarget` in the model and launch it from `ScrollResult`,
+- throttle or debounce repeated triggers before launching the next `Task`.
 
-- Serialize requests: start the next scroll only after the previous `Task` resolves.
-- Keep a `pendingTarget` in the model and launch it when the current scroll completes.
-- Throttle, debounce, or coalesce repeated triggers before launching the next `Task`.
+## `Scroll.Sub`
 
-Like `Cmd`, `Task` cannot replace an already-running scroll once it has been triggered.
+`Scroll.Sub` is the engine that handles this gracefully. Because it keeps live `ScrollState`, calling `scroll` again for a container that's already scrolling **replaces** the running scroll - the engine reads the current DOM position on the next frame and re-targets from wherever it actually is.
 
-## Scroll.Sub
-
-`Scroll.Sub` is stateful. Each call to `scroll` replaces the running animation in the `ScrollState`. On the next frame, the engine reads the current DOM scroll position and re-calculates toward the new target from wherever the container actually is.
-
-This means the scroll redirects smoothly from its current position, regardless of how far through the previous animation it was:
+The visible result: the scroll smoothly bends toward the new target without jumping, jittering, or fighting itself.
 
 ??? example "View Example"
+
     <iframe src="../../../examples/src/Scroll/Sub/Interrupting/index.html" class="example-iframe" loading="lazy"></iframe>
 
 ??? example "View Source Code"
+
     ```elm
     --8<-- "docs/examples/src/Scroll/Sub/Interrupting/Main.elm"
     ```
 
-The replaced scroll fires a `Stopped` event for the interrupted container before the new scroll begins.
+The replaced scroll fires a `Stopped` event for the interrupted container before the new scroll begins, so you can react in `update` if you need to.
 
 ## Next Steps
 
-Now that you understand how scrolls handle interruptions, learn how to control them.
+You've covered every scroll concept. Now build your first scroll from scratch.
 
-[Controlling Scrolls →](controlling-scroll.md){ .md-button .md-button--primary }
+[Your First Scrolls →](../first-scrolls/vertical-scrolling.md){ .md-button .md-button--primary }

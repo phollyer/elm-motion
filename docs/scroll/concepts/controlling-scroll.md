@@ -1,33 +1,31 @@
 # Controlling Scroll Animations
 
-!!! note "Stateful Scrolling Only"
-    Control functions are only available when using the [`Scroll.Sub`](../engines/sub.md) engine for stateful subscription-based scrolling. Fire-and-forget [`Scroll.Cmd`](../engines/cmd.md) and task-based [`Scroll.Task`](../engines/task.md) scrolling cannot be controlled after they begin.
+Once a scroll is running, you may want to stop it, pause it, or send it back to the start. That's only possible with the [`Scroll.Sub`](../engines/sub.md) engine - because only `Sub` keeps state about the scroll while it's in flight.
 
-The Sub Engine provides full programmatic control over running scroll animations. You can `stop`, `reset`, `restart`, `pause` and `resume` scroll animations at any time.
+!!! note "Stateful scrolling only"
+    [`Scroll.Cmd`](../engines/cmd.md) and [`Scroll.Task`](../engines/task.md) are fire-and-forget. Once dispatched, they can't be controlled. If you need any of the controls below, reach for `Scroll.Sub`.
 
+## The Five Controls
 
-## Available Controls
+| Control | Behaviour |
+| ------- | --------- |
+| `stop` | Jump to the **target** position and finish. |
+| `pause` | Freeze at the current position. |
+| `resume` | Continue from where `pause` froze. |
+| `reset` | Jump to the **start** position and finish. |
+| `restart` | Jump to start, then replay. |
 
-| Document | Container | Behavior |
-| -------- | --------- | -------- |
-| `stop` | `stopContainer` | Jump instantly to the scroll **target position** and complete |
-| `pause` | `pauseContainer` | Freeze the scroll at its current position |
-| `resume` | `resumeContainer` | Continue a paused scroll from where it was frozen |
-| `reset` | `resetContainer` | Jump instantly to the **start position** and stop |
-| `restart` | `restartContainer` | Reset to start position, then begin scrolling again |
+All five take a `Container` (either `Sub.Document` or `Sub.Container "id"`) so you can target a specific scroll - useful when several containers are scrolling at the same time.
 
 --8<-- "docs/scroll/concepts/controlling-scrolls/scroll-to-section.md"
 
-## Using Control Functions
+## Wiring the Controls
 
-Control functions follow two patterns:
+There are two shapes of control function depending on whether they need to issue a command.
 
-- **Stop/Reset/Restart** - Require a message wrapper and return `(ScrollState, Cmd msg)` to issue immediate scroll commands
-- **Pause/Resume** - Take the current `ScrollState` and return an updated state
+### Commands - `stop`, `reset`, `restart`
 
-### Stop
-
-Immediately jumps to the target scroll position and completes the animation:
+These actively move the scroll position, so they return `( ScrollState, Cmd msg )`:
 
 ??? example "View Source Code"
 
@@ -35,9 +33,7 @@ Immediately jumps to the target scroll position and completes the animation:
     --8<-- "docs/examples/src/Scroll/Sub/ControllingScrolls/Main.elm:stop"
     ```
 
-### Reset
-
-Immediately jumps back to the starting scroll position and stops:
+`reset` and `restart` follow the exact same shape:
 
 ??? example "View Source Code"
 
@@ -45,20 +41,15 @@ Immediately jumps back to the starting scroll position and stops:
     --8<-- "docs/examples/src/Scroll/Sub/ControllingScrolls/Main.elm:reset"
     ```
 
-### Restart
-
-Resets to the start position, then immediately begins scrolling again:
-
 ??? example "View Source Code"
 
     ```elm
     --8<-- "docs/examples/src/Scroll/Sub/ControllingScrolls/Main.elm:restart"
     ```
 
+### State-only - `pause`, `resume`
 
-### Pause
-
-Freezes the scroll at its current position. The scroll can be resumed later:
+These only flip a flag in `ScrollState`, so they return just the updated state - no `Cmd` needed:
 
 ??? example "View Source Code"
 
@@ -66,19 +57,28 @@ Freezes the scroll at its current position. The scroll can be resumed later:
     --8<-- "docs/examples/src/Scroll/Sub/ControllingScrolls/Main.elm:pause"
     ```
 
-### Resume
-
-Continues a paused scroll from exactly where it was frozen:
-
 ??? example "View Source Code"
 
     ```elm
     --8<-- "docs/examples/src/Scroll/Sub/ControllingScrolls/Main.elm:resume"
     ```
 
+## Events Fired by Controls
+
+When a control runs, the engine emits a matching `ScrollEvent` on the next frame so you can react (update UI, flip status indicators, etc.):
+
+| Control | Event |
+| ------- | ----- |
+| `stop` | `Stopped` |
+| `pause` | `Paused` |
+| `resume` | `Resumed` |
+| `reset` | `Stopped` |
+| `restart` | `Restarted` |
+
+📖 See [Sub Engine - Events](../engines/sub.md#events) for the full event list.
+
 ## Next Steps
 
-Learn about Timing for scrolls.
+Learn what happens when you trigger a *new* scroll for a container that's already scrolling.
 
-[Timing →](../concepts/timing.md){ .md-button .md-button--primary }
-
+[Interrupting Scrolls →](interrupting-scrolls.md){ .md-button .md-button--primary }
