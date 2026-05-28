@@ -2,7 +2,7 @@ module Scroll.Cmd.Spreadsheet.Main exposing (main)
 
 import Browser
 import Html exposing (Html, button, div, text)
-import Html.Attributes exposing (id, style)
+import Html.Attributes exposing (class, id, style)
 import Html.Events exposing (onClick)
 import Motion.Easing as Easing exposing (Easing(..))
 import Scroll.Builder as ScrollTo
@@ -123,12 +123,7 @@ findRegion col row =
 
 view : Model -> Html Msg
 view model =
-    div
-        [ style "display" "flex"
-        , style "flex-direction" "column"
-        , style "gap" "16px"
-        , style "padding" "20px"
-        ]
+    div [ class "example-stage" ]
         [ navButtons
         , statusBar model.status
         , spreadsheet
@@ -150,24 +145,21 @@ statusBar status =
                     ( "#22c55e", "✓ Arrived" )
     in
     div
-        [ style "padding" "8px 16px"
+        [ style "padding" "6px 14px"
         , style "border-radius" "6px"
         , style "background-color" color
         , style "color" "white"
-        , style "font-size" "14px"
+        , style "font-size" "clamp(11px, 1.8vmin, 14px)"
         , style "font-weight" "500"
         , style "font-family" "monospace"
+        , style "flex" "0 0 auto"
         ]
         [ text message ]
 
 
 navButtons : Html Msg
 navButtons =
-    div
-        [ style "display" "flex"
-        , style "flex-wrap" "wrap"
-        , style "gap" "8px"
-        ]
+    div [ class "example-controls" ]
         (List.map regionButton regions)
 
 
@@ -175,14 +167,8 @@ regionButton : Region -> Html Msg
 regionButton region =
     button
         [ onClick (NavigateTo region.id)
-        , style "padding" "8px 14px"
-        , style "border" "none"
-        , style "border-radius" "6px"
+        , class "ui-action-button"
         , style "background-color" region.color
-        , style "color" "white"
-        , style "cursor" "pointer"
-        , style "font-size" "13px"
-        , style "font-weight" "600"
         ]
         [ text (region.emoji ++ " " ++ region.label) ]
 
@@ -193,7 +179,10 @@ spreadsheet =
     div
         [ id "spreadsheet"
         , style "overflow" "auto"
-        , style "height" "360px"
+        , style "width" "100%"
+        , style "flex" "1 1 auto"
+        , style "min-height" "0"
+        , style "box-sizing" "border-box"
         , style "border" "1px solid #ccc"
         , style "border-radius" "8px"
         ]

@@ -2,7 +2,7 @@ module Scroll.Cmd.FirstScroll.Main exposing (main)
 
 import Browser
 import Html exposing (Html, button, div, text)
-import Html.Attributes exposing (id, style)
+import Html.Attributes exposing (class, id, style)
 import Html.Events exposing (onClick)
 import Motion.Easing as Easing exposing (Easing(..))
 import Scroll.Builder as ScrollTo
@@ -85,13 +85,8 @@ scrollToElement targetId =
 
 view : Model -> Html Msg
 view model =
-    div
-        [ style "display" "flex"
-        , style "flex-direction" "column"
-        , style "gap" "20px"
-        , style "padding" "20px"
-        ]
-        [ div [ style "display" "flex", style "gap" "10px", style "flex-wrap" "wrap" ]
+    div [ class "example-stage" ]
+        [ div [ class "example-controls" ]
             [ styledButton (ScrollTo "top-element") "Scroll to Top"
             , styledButton (ScrollTo "middle-element") "Scroll to Middle"
             , styledButton (ScrollTo "bottom-element") "Scroll to Bottom"
@@ -100,7 +95,10 @@ view model =
         , ---8<-- [start:container]
           div
             [ id "scroll-container"
-            , style "height" "300px"
+            , style "width" "100%"
+            , style "flex" "1 1 auto"
+            , style "min-height" "0"
+            , style "box-sizing" "border-box"
             , style "overflow-y" "auto"
             , style "border" "2px solid #333"
             , style "border-radius" "8px"
@@ -126,12 +124,13 @@ statusBar status =
                     ( "#22c55e", "✓ Scroll complete" )
     in
     div
-        [ style "padding" "8px 16px"
+        [ style "padding" "6px 14px"
         , style "border-radius" "6px"
         , style "background-color" color
         , style "color" "white"
-        , style "font-size" "14px"
+        , style "font-size" "clamp(11px, 1.8vmin, 14px)"
         , style "font-weight" "500"
+        , style "flex" "0 0 auto"
         ]
         [ text message ]
 
@@ -140,15 +139,8 @@ styledButton : Msg -> String -> Html Msg
 styledButton msg label =
     button
         [ onClick msg
-        , style "padding" "10px 20px"
-        , style "border" "none"
-        , style "border-radius" "6px"
+        , class "ui-action-button"
         , style "background-color" "#6366f1"
-        , style "color" "white"
-        , style "cursor" "pointer"
-        , style "font-size" "14px"
-        , style "font-weight" "600"
-        , style "box-shadow" "0 2px 4px rgba(0,0,0,0.2)"
         ]
         [ text label ]
 

@@ -2,7 +2,7 @@ module Scroll.Cmd.HorizontalGallery.Main exposing (main)
 
 import Browser
 import Html exposing (Html, button, div, text)
-import Html.Attributes exposing (id, style)
+import Html.Attributes exposing (class, id, style)
 import Html.Events exposing (onClick)
 import Motion.Easing as Easing exposing (Easing(..))
 import Scroll.Builder as ScrollTo
@@ -86,12 +86,7 @@ photos =
 
 view : Model -> Html Msg
 view _ =
-    div
-        [ style "display" "flex"
-        , style "flex-direction" "column"
-        , style "gap" "16px"
-        , style "padding" "20px"
-        ]
+    div [ class "example-stage" ]
         [ buttonRow
         , filmStrip
         ]
@@ -99,11 +94,7 @@ view _ =
 
 buttonRow : Html Msg
 buttonRow =
-    div
-        [ style "display" "flex"
-        , style "flex-wrap" "wrap"
-        , style "gap" "8px"
-        ]
+    div [ class "example-controls" ]
         (List.map navButton photos)
 
 
@@ -111,14 +102,8 @@ navButton : { id : String, label : String, color : String, emoji : String } -> H
 navButton photo =
     button
         [ onClick (ScrollTo photo.id)
-        , style "padding" "8px 14px"
-        , style "border" "none"
-        , style "border-radius" "6px"
+        , class "ui-action-button"
         , style "background-color" photo.color
-        , style "color" "white"
-        , style "cursor" "pointer"
-        , style "font-size" "13px"
-        , style "font-weight" "600"
         ]
         [ text (photo.emoji ++ " " ++ photo.label) ]
 
@@ -135,6 +120,10 @@ filmStrip =
         , style "padding" "12px"
         , style "border" "2px solid #333"
         , style "border-radius" "8px"
+        , style "width" "100%"
+        , style "flex" "1 1 auto"
+        , style "min-height" "0"
+        , style "box-sizing" "border-box"
         ]
         (List.map photoCard photos)
 
@@ -147,8 +136,8 @@ photoCard : { id : String, label : String, color : String, emoji : String } -> H
 photoCard photo =
     div
         [ id photo.id
-        , style "min-width" "220px"
-        , style "height" "260px"
+        , style "min-width" "clamp(140px, 35vmin, 220px)"
+        , style "height" "100%"
         , style "background-color" photo.color
         , style "border-radius" "8px"
         , style "display" "flex"
@@ -158,9 +147,9 @@ photoCard photo =
         , style "color" "white"
         , style "flex-shrink" "0"
         ]
-        [ div [ style "font-size" "64px" ] [ text photo.emoji ]
+        [ div [ style "font-size" "clamp(36px, 9vmin, 64px)" ] [ text photo.emoji ]
         , div
-            [ style "font-size" "18px"
+            [ style "font-size" "clamp(13px, 2.2vmin, 18px)"
             , style "font-weight" "700"
             , style "margin-top" "12px"
             , style "letter-spacing" "0.5px"

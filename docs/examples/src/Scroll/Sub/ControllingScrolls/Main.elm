@@ -172,14 +172,8 @@ subscriptions model =
 
 view : Model -> Html Msg
 view model =
-    div
-        [ style "display" "flex"
-        , style "flex-direction" "column"
-        , style "align-items" "center"
-        , style "gap" "24px"
-        , style "padding" "20px"
-        ]
-        [ div [ class "ui-wrapped-row" ]
+    div [ class "example-stage" ]
+        [ div [ class "example-controls" ]
             [ button [ onClick ScrollAnimate, class "ui-action-button primary" ] [ text "📜 Scroll" ]
             , button [ onClick Stop, class "ui-action-button warning" ] [ text "⏹️ Stop" ]
             , button [ onClick Pause, class "ui-action-button success" ] [ text "⏸️ Pause" ]
@@ -194,21 +188,18 @@ view model =
 scrollableContainer : Html msg
 scrollableContainer =
     div
-        [ style "width" "100%"
-        , style "max-width" "500px"
+        [ id containerId
+        , style "width" "100%"
+        , style "flex" "1 1 auto"
+        , style "min-height" "0"
+        , style "box-sizing" "border-box"
+        , style "border" "2px solid #cbd5e1"
+        , style "border-radius" "12px"
+        , style "background" "white"
+        , style "box-shadow" "0 4px 20px rgba(0, 0, 0, 0.1)"
+        , style "overflow-y" "auto"
         ]
-        [ div
-            [ id containerId
-            , style "width" "100%"
-            , style "height" "350px"
-            , style "border" "2px solid #cbd5e1"
-            , style "border-radius" "12px"
-            , style "background" "white"
-            , style "box-shadow" "0 4px 20px rgba(0, 0, 0, 0.1)"
-            , style "overflow-y" "auto"
-            ]
-            [ contentSections ]
-        ]
+        [ contentSections ]
 
 
 contentSections : Html msg
