@@ -332,6 +332,24 @@ Set the default easing for all properties that don't override it.
 
 📖 See [Easing](../concepts/easing.md) for all available easing functions.
 
+### Spring
+
+Keyframe animations support springs. The spring's motion is pre-baked into densely-spaced `@keyframes` stops, and the browser interpolates linearly between them — visually faithful to the analytic solution.
+
+Set the default spring for all properties that don't override it. The motion ends when each value has settled at the target — there is no explicit duration.
+
+??? example "View Source Code"
+
+    ```elm
+    bouncyReveal =
+        Keyframe.spring Spring.wobbly
+            >> Opacity.for "card"
+            >> Opacity.to 1
+            >> Opacity.build
+    ```
+
+📖 See [Spring](../concepts/spring.md) for the full preset list and tuning guidance.
+
 ### Controls
 
 | Function | Returns | Notes |
@@ -525,6 +543,12 @@ Choose Keyframe when you want browser-native keyframes with state-tracked lifecy
 | Function | Type | Description |
 | -------- | ---- | ----------- |
 | `easing` | `Easing -> AnimBuilder mode -> AnimBuilder mode` | Set easing function |
+
+### Spring
+
+| Function | Type | Description |
+| -------- | ---- | ----------- |
+| `spring` | `Spring -> AnimBuilder mode -> AnimBuilder mode` | Set spring physics |
 
 ### Controls
 

@@ -287,6 +287,22 @@ Set the default easing for all properties that don't override it.
 
 📖 See [Easing](../concepts/easing.md) for available easing functions.
 
+### Spring
+
+Set the default spring for all properties that don't override it. The spring's motion is pre-baked into densely-spaced keyframe stops driven by the view timeline.
+
+??? example "View Source Code"
+
+    ```elm
+    bouncyReveal =
+        ViewTimeline.spring Spring.wobbly
+            >> Opacity.for "card"
+            >> Opacity.to 1
+            >> Opacity.build
+    ```
+
+📖 See [Spring](../concepts/spring.md) for the full preset list and tuning guidance.
+
 ### Discrete Properties
 
 The ViewTimeline engine manages discrete properties as inline styles. `discreteEntry` values are applied immediately when the animation starts, and `discreteExit` values flip when the animation completes. No additional view setup is needed.
@@ -399,6 +415,12 @@ Choose ViewTimeline when playback should follow how an element moves through the
 | Function | Type | Description |
 | -------- | ---- | ----------- |
 | `easing` | `Easing -> AnimBuilder mode -> AnimBuilder mode` | Set the easing function |
+
+### Spring
+
+| Function | Type | Description |
+| -------- | ---- | ----------- |
+| `spring` | `Spring -> AnimBuilder mode -> AnimBuilder mode` | Set spring physics |
 
 ### Discrete Properties
 

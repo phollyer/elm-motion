@@ -24,6 +24,6 @@ Easing controls how property values accelerate and decelerate during animation.
 
 ## Next Steps
 
-Continue to transform composition.
+For physics-based motion — where the spring's stiffness, damping, and mass decide how long the motion takes — see Spring.
 
-[Transform Order →](../concepts/transform-order.md){ .md-button .md-button--primary }
+[Spring →](../concepts/spring.md){ .md-button .md-button--primary }

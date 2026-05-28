@@ -356,7 +356,7 @@ Set the default `duration`, `speed`, and `delay`. Inherited by every property th
 
 ### Easing
 
-WAAPI animations support the full Easing library, including bounce and elastic. Simple curves (sine, quad, cubic, quart, quint, expo) are handed to the browser as native easing functions. Complex curves (bounce, elastic, springs) are sampled into densely-spaced stops, and the browser interpolates linearly between them — visually faithful to the source curve.
+WAAPI animations support the full Easing library, including bounce and elastic. Simple curves (sine, quad, cubic, quart, quint, expo) are handed to the browser as native easing functions. Complex curves (bounce, elastic) are sampled into densely-spaced stops, and the browser interpolates linearly between them — visually faithful to the source curve.
 
 Set the default easing for all properties that don't override it.
 
@@ -373,6 +373,24 @@ Set the default easing for all properties that don't override it.
     ```
 
 📖 See [Easing](../concepts/easing.md) for all available easing functions.
+
+### Spring
+
+WAAPI animations support springs. The spring's motion is pre-baked into densely-spaced keyframe stops on the Elm side, and the browser interpolates linearly between them — visually faithful to the analytic solution.
+
+Set the default spring for all properties that don't override it. The motion ends when each value has settled at the target — there is no explicit duration.
+
+??? example "View Source Code"
+
+    ```elm
+    bouncyReveal =
+        WAAPI.spring Spring.wobbly
+            >> Opacity.for "card"
+            >> Opacity.to 1
+            >> Opacity.build
+    ```
+
+📖 See [Spring](../concepts/spring.md) for the full preset list and tuning guidance.
 
 ### Controls
 
@@ -553,6 +571,12 @@ Choose WAAPI when you want browser-native playback with the broadest state-track
 | Function | Type | Description |
 | -------- | ---- | ----------- |
 | `easing` | `Easing -> AnimBuilder mode -> AnimBuilder mode` | Set easing function |
+
+### Spring
+
+| Function | Type | Description |
+| -------- | ---- | ----------- |
+| `spring` | `Spring -> AnimBuilder mode -> AnimBuilder mode` | Set spring physics |
 
 ### Controls
 

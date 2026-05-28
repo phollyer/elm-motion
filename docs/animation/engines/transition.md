@@ -314,6 +314,22 @@ Set the default easing for all properties that don't override it.
 
 📖 See [Easing](../concepts/easing.md) for all available easing functions.
 
+### Spring
+
+Set the default spring for all properties that don't override it. The motion ends when each value has settled at the target — there is no explicit duration.
+
+??? example "View Source Code"
+
+    ```elm
+    bouncyReveal =
+        Transition.spring Spring.wobbly
+            >> Opacity.for "card"
+            >> Opacity.to 1
+            >> Opacity.build
+    ```
+
+📖 See [Spring](../concepts/spring.md) for the full preset list and tuning guidance.
+
 ### Controls
 
 `stop` jumps the animation to its end state. `reset` jumps to the start state.
@@ -497,6 +513,12 @@ Choose Transition when you want minimal setup and smooth A→B animations.
 | Function | Type | Description |
 | -------- | ---- | ----------- |
 | `easing` | `Easing -> AnimBuilder mode -> AnimBuilder mode` | Set easing function |
+
+### Spring
+
+| Function | Type | Description |
+| -------- | ---- | ----------- |
+| `spring` | `Spring -> AnimBuilder mode -> AnimBuilder mode` | Set spring physics |
 
 ### Controls
 

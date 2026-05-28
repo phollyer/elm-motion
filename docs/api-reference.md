@@ -44,6 +44,7 @@ The complete API documentation is available on the official Elm package reposito
 | Module | Description |
 | -------- | ------------- |
 | [Motion.Easing](https://package.elm-lang.org/packages/phollyer/elm-motion/latest/Motion-Easing) | Easing functions |
+| [Motion.Spring](https://package.elm-lang.org/packages/phollyer/elm-motion/latest/Motion-Spring) | Spring physics presets and custom configuration |
 | [Anim.Extra.Color](https://package.elm-lang.org/packages/phollyer/elm-motion/latest/Anim-Extra-Color) | Color utilities |
 | [Anim.Extra.View3D](https://package.elm-lang.org/packages/phollyer/elm-motion/latest/Anim-Extra-View3D) | 3D perspective helpers |
 

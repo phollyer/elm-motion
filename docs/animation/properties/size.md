@@ -81,6 +81,12 @@ See the [Properties Overview](overview.md) page for the shared usage patterns.
 | -------- | --------- | ----------- |
 | `easing` | `Easing -> Builder -> Builder` | Add natural motion |
 
+### Spring
+
+| Function | Signature | Description |
+| -------- | --------- | ----------- |
+| `spring` | `Spring -> Builder -> Builder` | Use spring physics instead of easing |
+
 ## Next Steps
 
 Now you've learnt about the first-class properties supported by Elm Motion, learn how to use the Custom Properties modules in order to animate any other CSS Property.

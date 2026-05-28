@@ -116,6 +116,27 @@ All properties have an `easing` function which takes an `Easing` type variant. T
 
 📖 See [Easing Type](../concepts/easing.md) for more information.
 
+## Spring
+
+Use physics-based motion instead of time-and-curve. The motion ends when the value has settled — there is no explicit duration.
+
+All properties have a `spring` function which takes a `Spring`. This will override any default spring or easing set by the Engine.
+
+??? example "View Source"
+
+    ```elm
+    import Motion.Spring as Spring
+
+    bouncyReveal : AnimBuilder mode -> AnimBuilder mode
+    bouncyReveal =
+        Translate.for "panel"
+            >> Translate.toX 0
+            >> Translate.spring Spring.wobbly
+            >> ... -- Continue configuring the animation
+    ```
+
+📖 See [Spring](../concepts/spring.md) for the full preset list and tuning guidance.
+
 ## Delay
 
 Add a delay before the animation starts.
