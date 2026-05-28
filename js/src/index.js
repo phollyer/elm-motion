@@ -13,7 +13,7 @@
  *   scroll.js     – scroll-driven and view-driven timeline engine
  *   errors.js     – opt-in error reporting (onError, useConsoleReporter)
  */
-import { processAnimationData, resizeTransformAnimation, translatePositionAnimation, perspectiveOriginPositionAnimation } from './animations.js';
+import { processAnimationData, resizeTransformAnimation, translatePositionAnimation, perspectiveOriginPositionAnimation, retargetAnimation } from './animations.js';
 import {
     stopAnimation,
     resetAnimation,
@@ -60,6 +60,9 @@ function validateCommand(commandData) {
 const COMMAND_HANDLERS = {
     animate: function (commandData) {
         processAnimationData(commandData);
+    },
+    retarget: function (commandData) {
+        retargetAnimation(commandData);
     },
     resize: function (commandData) {
         resizeTransformAnimation(commandData);

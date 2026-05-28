@@ -5,6 +5,7 @@ module Anim.Internal.Engine.WAAPI.Encoder exposing
     , encodeProcessedData
     , encodeResize
     , encodeRestart
+    , encodeRetarget
     , encodeScroll
     , encodeTranslatePosition
     , encodeView
@@ -30,6 +31,7 @@ import Json.Encode as Encode
 import Motion.Easing as Easing exposing (Easing(..))
 import Motion.Internal.Spring as SpringInt
 import Motion.Spring exposing (Spring)
+import Set exposing (Set)
 import Shared.Easing as Easing
 import Shared.Easing.Keyframes as EasingKeyframes
 import Shared.Spring as SpringSolver
@@ -53,6 +55,44 @@ type alias AnimGroupName =
 
 encode : AnimGroups AnimGroup -> Dict.Dict String (List String) -> Builder.ProcessedAnimationData -> Encode.Value
 encode animGroups frozenAxes processed =
+    encodeAnimateLike "animate" animGroups frozenAxes Dict.empty processed
+
+
+{-| Encode a snap-to-target retarget command. The JSON payload is the
+same shape as `encode` (keyframes, timing, frozen axes) so the JS
+handler can reuse the keyframe machinery, but `type` is `"retarget"`.
+The JS side cancels any in-flight WAAPI animation on the named
+properties and writes the final keyframe's value as inline style; timing
+fields are ignored by the JS handler.
+
+The `touchedAxes` dict is keyed by `(animGroupName, propertyName)`
+and contains the subset of axes the user explicitly retargeted via
+the builder pipeline (e.g. `Translate.toY 0` records `{"y"}`). The
+JS handler snaps touched axes to the new target and lets untouched
+axes of bundled transform properties continue their in-flight
+animation toward their existing end target. If no entry exists for
+a property, JS treats every axis as touched (full snap, current
+behaviour for callers that retarget every axis at once).
+
+-}
+encodeRetarget :
+    AnimGroups AnimGroup
+    -> Dict.Dict String (List String)
+    -> Dict.Dict ( String, String ) (Set String)
+    -> Builder.ProcessedAnimationData
+    -> Encode.Value
+encodeRetarget =
+    encodeAnimateLike "retarget"
+
+
+encodeAnimateLike :
+    String
+    -> AnimGroups AnimGroup
+    -> Dict.Dict String (List String)
+    -> Dict.Dict ( String, String ) (Set String)
+    -> Builder.ProcessedAnimationData
+    -> Encode.Value
+encodeAnimateLike typeTag animGroups frozenAxes touchedAxes processed =
     let
         elementsWithVersions =
             processed.groups
@@ -86,16 +126,34 @@ encode animGroups frozenAxes processed =
                             (Just animTransformOrder)
                             (encodeTransformBaseline snapshot)
                             frozenAxes
+                            (touchedAxesForGroup animGroupName touchedAxes)
                             config.properties
                         )
                     )
     in
     Encode.object
-        [ ( "type", Encode.string "animate" )
+        [ ( "type", Encode.string typeTag )
         , ( "elements", Encode.object elementsWithVersions )
         , ( "iterations", encodeIterations processed.iterations )
         , ( "direction", encodeAnimationDirection processed.animationDirection )
         ]
+
+
+{-| Extract per-property touched-axis sets for a single animGroup
+from the global `(animGroupName, propertyName) -> Set axis` dict.
+-}
+touchedAxesForGroup : AnimGroupName -> Dict.Dict ( String, String ) (Set String) -> Dict.Dict String (Set String)
+touchedAxesForGroup animGroupName touchedAxes =
+    Dict.foldl
+        (\( group, propName ) axisSet acc ->
+            if group == animGroupName then
+                Dict.insert propName axisSet acc
+
+            else
+                acc
+        )
+        Dict.empty
+        touchedAxes
 
 
 encodeRestart : Builder.Iterations -> Builder.AnimationDirection -> AnimGroups AnimGroup -> AnimGroups Builder.ProcessedAnimGroupConfig -> Encode.Value
@@ -133,6 +191,7 @@ encodeRestart iterationsConfig directionConfig animGroup configGroup =
                             (Just elemTransformOrder)
                             (encodeTransformBaseline snapshot)
                             Dict.empty
+                            Dict.empty
                             config.properties
                         )
                     )
@@ -161,6 +220,7 @@ encodeProcessedData data =
                             Nothing
                             Nothing
                             Nothing
+                            Dict.empty
                             Dict.empty
                             config.properties
                         )
@@ -351,12 +411,13 @@ encodeProcessedAnimGroupConfig :
     -> Maybe (List TransformProperty)
     -> Maybe Encode.Value
     -> Dict.Dict String (List String)
+    -> Dict.Dict String (Set String)
     -> List Builder.ProcessedPropertyConfig
     -> Encode.Value
-encodeProcessedAnimGroupConfig animGroupName targetId propertyState transformOrder_ transformBaseline frozenAxes propertyConfigs =
+encodeProcessedAnimGroupConfig animGroupName targetId propertyState transformOrder_ transformBaseline frozenAxes touchedAxes propertyConfigs =
     let
         baseFields =
-            [ ( "properties", Encode.list (encodeProcessedPropertyConfig propertyState frozenAxes) propertyConfigs )
+            [ ( "properties", Encode.list (encodeProcessedPropertyConfig propertyState frozenAxes touchedAxes) propertyConfigs )
             , ( "animGroup", Encode.string animGroupName )
             , ( "target", Encode.string targetId )
             ]
@@ -521,8 +582,8 @@ encodeTransformOrder order =
         order
 
 
-encodeProcessedPropertyConfig : Maybe (AnimGroups PropertyState) -> Dict.Dict String (List String) -> Builder.ProcessedPropertyConfig -> Encode.Value
-encodeProcessedPropertyConfig maybeVersions frozenAxes property =
+encodeProcessedPropertyConfig : Maybe (AnimGroups PropertyState) -> Dict.Dict String (List String) -> Dict.Dict String (Set String) -> Builder.ProcessedPropertyConfig -> Encode.Value
+encodeProcessedPropertyConfig maybeVersions frozenAxes touchedAxes property =
     let
         frozenAxesField propName =
             case Dict.get propName frozenAxes |> Maybe.withDefault [] of
@@ -531,6 +592,18 @@ encodeProcessedPropertyConfig maybeVersions frozenAxes property =
 
                 axes ->
                     [ ( "frozenAxes", Encode.list Encode.string axes ) ]
+
+        touchedAxesFields propName axisNames =
+            case Dict.get propName touchedAxes of
+                Nothing ->
+                    []
+
+                Just axisSet ->
+                    List.map
+                        (\( axis, field ) ->
+                            ( field, Encode.bool (Set.member axis axisSet) )
+                        )
+                        axisNames
 
         versionFields =
             case maybeVersions of
@@ -784,6 +857,7 @@ encodeProcessedPropertyConfig maybeVersions frozenAxes property =
                        , ( "duration", Encode.int config.duration )
                        ]
                     ++ frozenAxesField "translate"
+                    ++ touchedAxesFields "translate" [ ( "x", "touchedX" ), ( "y", "touchedY" ), ( "z", "touchedZ" ) ]
                     ++ encodeEasingWithKeyframes config.duration config.easing config.spring
                 )
 
@@ -934,6 +1008,7 @@ encodeScroll builder =
                             config.transformOrder
                             Nothing
                             Dict.empty
+                            Dict.empty
                             config.properties
                         )
                     )
@@ -1001,6 +1076,7 @@ encodeView builder =
                             Nothing
                             config.transformOrder
                             Nothing
+                            Dict.empty
                             Dict.empty
                             config.properties
                         )

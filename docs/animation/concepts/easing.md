@@ -1,25 +1,10 @@
-# Animation Easing
+# Easing
 
 Easing controls how property values accelerate and decelerate during animation.
 
-## Animation Example
-
-??? example "View Source Code"
-
-    ```elm
-    Translate.for "cardAnim"
-        >> Translate.toX 320
-        >> Translate.duration 450
-        >> Translate.easing QuintOut
-        >> Translate.build
-    ```
-
-!!! tip "Default pick"
-    For most UI animations, start with `QuintOut` or `CubicOut`.
-
 --8<-- "docs/shared/easing-reference.md"
 
-## Choosing an Easing for Animation
+## Choosing an Easing
 
 | Use Case | Recommended Easing | Why |
 | -------- | ------------------ | --- |

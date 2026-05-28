@@ -376,6 +376,20 @@ export function setupAnimationEvents(animGroup, propertyType, element, animation
     let rafId = null;
 
     function sendAnimationUpdate() {
+        // The entry can be cleared out from under this RAF when a snap
+        // (`WAAPI.retarget`) or restart deletes it from `activeAnimations`
+        // before our queued frame runs. Sending a stale mid-flight
+        // `propertyUpdate` after a snap would race the snap and regress
+        // Elm's snapshot back toward the cancelled position. Bail out and
+        // do not reschedule — `animation.playState` is no longer
+        // `running` after the cancel, so the loop would have died on its
+        // own next frame anyway.
+        const currentEntry = getEntry();
+        if (!currentEntry || currentEntry.version !== version) {
+            rafId = null;
+            return;
+        }
+
         const now = performance.now();
         const playStateAtTick = animation.playState;
         if (propertyUpdateIntervalMs <= 0 || now - lastTime >= propertyUpdateIntervalMs) {

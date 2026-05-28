@@ -3,9 +3,14 @@ module Anim.Engine.Sub.RetargetSpec exposing (suite)
 {-| End-to-end tests for `Sub.retarget`.
 
 `Sub.retarget` snaps the named anim groups to the targets in the build with
-no animation. Any in-flight animation on a touched group is cancelled and
-its `Running` state replaced with `Complete`. Builder timing fields
-(`duration`, `delay`, `easing`, `spring`) are accepted but ignored.
+no animation. For each touched property the in-flight animation is stopped
+and replaced with the snapped target; properties not mentioned in the build
+keep running with their existing state. `Translate` retargets per-axis: only
+the touched axes snap, untouched axes continue along the existing easing
+curve toward their existing end value.
+
+Builder timing fields (`duration`, `delay`, `easing`, `spring`) are accepted
+but ignored.
 
 A `Cancelled` event is emitted for every group that was `Running` and is
 touched by the build. No `Started` event is emitted.
@@ -52,6 +57,15 @@ snapTranslate groupName target state =
     Sub.retarget state <|
         (Translate.for groupName
             >> Translate.toX target
+            >> Translate.build
+        )
+
+
+snapTranslateY : String -> Float -> Sub.AnimState -> Sub.AnimState
+snapTranslateY groupName target state =
+    Sub.retarget state <|
+        (Translate.for groupName
+            >> Translate.toY target
             >> Translate.build
         )
 
@@ -190,6 +204,37 @@ scoping =
                     |> snapTranslate "a" 250
                     |> Sub.isRunning "a"
                     |> Expect.equal (Just True)
+        , test "retarget on Y leaves the in-flight X axis still animating" <|
+            \_ ->
+                initState
+                    |> startTranslate "a" 500
+                    |> snapTranslateY "a" 250
+                    |> Sub.isRunning "a"
+                    |> Expect.equal (Just True)
+        , test "retarget on Y pins Y on the running translate animation to the new target" <|
+            \_ ->
+                initState
+                    |> startTranslate "a" 500
+                    |> snapTranslateY "a" 250
+                    |> Sub.getTranslateCurrent "a"
+                    |> Maybe.map .y
+                    |> Expect.equal (Just 250)
+        , test "retarget on Y leaves the in-flight X end value untouched" <|
+            \_ ->
+                initState
+                    |> startTranslate "a" 500
+                    |> snapTranslateY "a" 250
+                    |> Sub.getTranslateEnd "a"
+                    |> Maybe.map .x
+                    |> Expect.equal (Just 500)
+        , test "retarget on Y sets the translate end Y value to the new target" <|
+            \_ ->
+                initState
+                    |> startTranslate "a" 500
+                    |> snapTranslateY "a" 250
+                    |> Sub.getTranslateEnd "a"
+                    |> Maybe.map .y
+                    |> Expect.equal (Just 250)
         ]
 
 

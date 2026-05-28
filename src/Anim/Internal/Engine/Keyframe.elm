@@ -35,7 +35,9 @@ import Anim.Internal.Engine.Shared.PlayState as PlayState
 import Anim.Internal.Extra.Color exposing (Color(..))
 import Anim.Internal.Property.Opacity exposing (Opacity(..))
 import Anim.Internal.Property.Size exposing (Size(..))
+import Dict
 import Html exposing (Html)
+import Html.Attributes
 import Shared.TimeSpec exposing (TimeSpec(..))
 import Task
 
@@ -343,6 +345,29 @@ attributes animGroupName ((AnimState _ animGroups) as animState) =
                 AnimGroup.getStyles
                 animGroupName
                 animState
+                ++ discreteEntryStyles animGroup
+                ++ discreteExitStyles animGroup
+
+
+discreteEntryStyles : AnimGroup -> List (Html.Attribute msg)
+discreteEntryStyles =
+    AnimGroup.getDiscreteEntry
+        >> Dict.toList
+        >> List.map (\( prop, value ) -> Html.Attributes.style prop value)
+
+
+discreteExitStyles : AnimGroup -> List (Html.Attribute msg)
+discreteExitStyles animGroup =
+    AnimGroup.getDiscreteExit animGroup
+        |> Dict.toList
+        |> List.map
+            (\( prop, { from, to } ) ->
+                if AnimGroup.isComplete animGroup then
+                    Html.Attributes.style prop to
+
+                else
+                    Html.Attributes.style prop from
+            )
 
 
 styleNode : AnimState -> Html msg

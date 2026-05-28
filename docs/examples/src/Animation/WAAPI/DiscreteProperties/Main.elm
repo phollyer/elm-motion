@@ -47,8 +47,8 @@ init : ( Model, Cmd Msg )
 init =
     ( { animState =
             WAAPI.init motionCmd motionMsg <|
-                [ WAAPI.discreteEntry "display" "flex"
-                    >> Opacity.init animGroup 1
+                [ WAAPI.discreteEntry "display" "none"
+                    >> Opacity.init animGroup 0
                 ]
       }
     , Cmd.none

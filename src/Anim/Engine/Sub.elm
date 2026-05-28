@@ -365,10 +365,16 @@ animate =
     Internal.animate
 
 
-{-| Continue a running animation toward a new target.
+{-| Change the targeted properties instantly to their new values. If
+currently animating, stop. Only the properties included in the new builder
+are affected, any other properties in the group will be left untouched.
 
-Use this when the target changed and you want motion to keep going smoothly.
-If nothing is running, the new value is applied as the next target.
+For `Translate`, only the axes mentioned in the builder snap — the other
+axes continue along their original easing curve toward their original end
+value. Other property types snap as a whole.
+
+A `Cancelled` event is emitted for every property whose animation was
+previously playing and is retargeted.
 
 📖 For responsive and resize patterns, see
 [Responsive Animations](https://phollyer.github.io/elm-motion/animation/concepts/responsive-animations/).

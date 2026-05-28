@@ -115,6 +115,7 @@ import Html
 import Html.Attributes
 import Motion.Easing exposing (Easing(..))
 import Motion.Spring exposing (Spring)
+import Set exposing (Set)
 import Shared.TimeSpec exposing (TimeSpec(..))
 
 
@@ -267,11 +268,18 @@ setSnapshot anims =
 {-| Snap the named anim groups to the targets described by `build`, with no
 animation.
 
-For every property mentioned in `build`, the engine cancels any in-flight
-animation on that animGroup, writes the target value as the new current
-position, and leaves the group in a non-running state. Builder timing
-fields (`duration`, `delay`, `easing`, `spring`) are accepted but ignored —
-there is no animation to apply them to.
+For every property mentioned in `build`, the engine writes the target
+value as the new current position and stops that property's interpolation.
+Builder timing fields (`duration`, `delay`, `easing`, `spring`) are
+accepted but ignored — there is no animation to apply them to.
+
+For `Translate`, only the axes mentioned in `build` are snapped. Untouched
+axes keep their in-flight start / end and continue interpolating along the
+original easing curve, so a per-axis retarget redirects one axis while the
+others carry on. Other property types are snapped as a whole.
+
+Properties on the same anim group that are not mentioned in `build` keep
+running with their existing state.
 
 Emits a `Cancelled` [ControlEvent](#ControlEvent) for every animGroup that
 was previously `Running` and is touched by the build. No `Started` events
@@ -293,6 +301,22 @@ retarget (AnimState state animGroups) build =
 
         processed =
             Builder.process builder
+
+        touchedAxesByGroup =
+            Builder.getAllTouchedAxes builder
+
+        touchedAxesFor : AnimGroupName -> Dict.Dict String (Set String)
+        touchedAxesFor groupName =
+            Dict.foldl
+                (\( g, propName ) axes acc ->
+                    if g == groupName then
+                        Dict.insert propName axes acc
+
+                    else
+                        acc
+                )
+                Dict.empty
+                touchedAxesByGroup
 
         touchedNames =
             AnimGroups.names processed.groups
@@ -341,19 +365,47 @@ retarget (AnimState state animGroups) build =
                         acc
 
                 Just existing ->
-                    -- Merge existing animations into the snapped group, so
-                    -- untouched properties (other in-flight animations) carry
-                    -- over but the touched ones get their snapped versions.
-                    -- Dict.union biases toward the group's own animations on
-                    -- key collision, so the snapped values win for properties
-                    -- mentioned in the build. Recompute playState from the
-                    -- merged animations: if any untouched animation is still
-                    -- in flight the group stays Running, otherwise Complete.
-                    -- A Paused group stays Paused.
+                    -- Per touched property: if the existing animation is
+                    -- still in flight, keep its timing / easing curve and
+                    -- pin only the touched axes to the new target. Untouched
+                    -- axes carry on toward their original end. Properties
+                    -- not mentioned in the build keep running as-is. A Paused
+                    -- group stays Paused; otherwise the merged group is
+                    -- Running while any animation has work left, else
+                    -- Complete.
                     let
+                        groupTouchedAxes =
+                            touchedAxesFor animGroupName
+
+                        existingAnimations =
+                            AnimGroup.getAnimations existing
+
+                        mergedTouched =
+                            AnimGroup.getAnimations snapped
+                                |> Animations.map
+                                    (\propName snappedAnim ->
+                                        case Animations.get propName existingAnimations of
+                                            Just existingAnim ->
+                                                if Animation.foldTiming .isComplete existingAnim then
+                                                    snappedAnim
+
+                                                else
+                                                    case Dict.get propName groupTouchedAxes of
+                                                        Just axes ->
+                                                            Animation.replaceAxes axes snappedAnim existingAnim
+
+                                                        Nothing ->
+                                                            snappedAnim
+
+                                            Nothing ->
+                                                snappedAnim
+                                    )
+
+                        mergedAnimations =
+                            Animations.add existingAnimations mergedTouched
+
                         merged =
-                            snapped
-                                |> AnimGroup.addAnimation (AnimGroup.getAnimations existing)
+                            AnimGroup.setAnimations mergedAnimations snapped
                     in
                     AnimGroups.insert animGroupName
                         (AnimGroup.setPlayState
