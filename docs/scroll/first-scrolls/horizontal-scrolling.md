@@ -46,7 +46,7 @@ A horizontally-scrolling image gallery. The buttons jump between named cards, an
 
 ??? example "Breaking It Down"
 
-    Same six-step workflow as [Vertical Scrolling](vertical-scrolling.md). The only meaningful difference is in the builder - `onXAxis` tells the engine to scroll horizontally only.
+    Same six-step workflow as the vertical scrolling example. The only meaningful difference is in the builder - `onXAxis` tells the engine to scroll horizontally only.
 
     ### 1. Build
 

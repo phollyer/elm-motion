@@ -57,7 +57,7 @@ Store a `ScrollState` in your model and seed it with `Sub.init`:
 
 ### 2. Subscribe
 
-Wire the engine into `subscriptions`. The subscription is dormant when no scrolls are running and only activates while something is in flight:
+Wire the engine into `subscriptions`. The subscription is dormant when no scrolls are running and only activates while something is in flight - so there's no runtime cost from leaving it permanently wired in:
 
 ??? example "View Source Code"
 
@@ -67,7 +67,19 @@ Wire the engine into `subscriptions`. The subscription is dormant when no scroll
         Sub.subscriptions ScrollMsg model.scrollState
     ```
 
-📖 See [Subscribe](../workflow/subscribe.md) for more info.
+!!! tip "Multiple `ScrollState`s"
+
+    If you keep more than one `ScrollState` in your model, combine their subscriptions with `Sub.batch`:
+
+    ```elm
+    subscriptions model =
+        Sub.batch
+            [ Sub.subscriptions GotMainScrollMsg model.mainScrollState
+            , Sub.subscriptions GotSidebarScrollMsg model.sidebarScrollState
+            ]
+    ```
+
+    Each `ScrollState` tracks its scrolls independently, fires its own events, and can be controlled and queried on its own.
 
 ### 3. Trigger
 
@@ -121,8 +133,6 @@ Forward engine messages into `Sub.update`. It returns the new state, a list of e
     ```
 
 If you want to react to events, fold over the list - see [Events](#events) below.
-
-📖 See [React](../workflow/react.md) for more info.
 
 ---
 

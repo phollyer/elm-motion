@@ -1,10 +1,10 @@
-# Build
+# The Scroll Builder
 
-Every scroll starts as a **builder** - a small chain of functions that describes *what* to scroll, *how far*, and *how fast*. This page walks through the builder API.
+Almost everything you'll ever write for scrolling lives in the **builder**: a small chain of functions that describes *what* to scroll, *how far*, and *how fast*.
 
-The builder is the same in every engine. Once you've written it, you decide whether to run it with [Cmd](../engines/cmd.md), [Task](../engines/task.md), or [Sub](../engines/sub.md).
+The builder doesn't actually scroll anything on its own. It produces a value that one of the three engines ([Cmd](engines/cmd.md), [Task](engines/task.md), [Sub](engines/sub.md)) can run. The same builder works in every engine - only the wiring around it changes.
 
-## Anatomy of a Builder
+## Anatomy
 
 Every scroll has the same shape:
 
@@ -21,6 +21,8 @@ Every scroll has the same shape:
     ```
 
 Only steps 1 and 5 (`forContainer`/`forDocument` and `build`) are mandatory. Everything in between is optional - but without a target, the scroll has nowhere to go.
+
+---
 
 ## 1. Pick a Surface
 
@@ -58,6 +60,8 @@ Scrolls a specific element identified by its `id`. Use this for sidebars, panels
 
 The element with `id="results-panel"` must actually be scrollable in CSS (`overflow: auto` / `overflow: scroll`).
 
+---
+
 ## 2. Pick a Target
 
 | Function | Scrolls to... |
@@ -70,7 +74,7 @@ The element with `id="results-panel"` must actually be scrollable in CSS (`overf
 | `toX n` / `toY n` / `toXY x y` | Exact pixel coordinates. |
 | `toPercentageX n` / `toPercentageY n` / `toPercentageXY x y` | A `0`–`100` percentage of the scrollable area. |
 
-### Restricting to One Axis
+### Restrict to One Axis
 
 `toElement` scrolls both axes by default. Add `onXAxis` or `onYAxis` to restrict it:
 
@@ -86,7 +90,9 @@ The element with `id="results-panel"` must actually be scrollable in CSS (`overf
             >> Scroll.build
     ```
 
-### Offsetting the Landing Position
+Useful if the container scrolls in both directions, but you just want to scroll to the vertical or horizontal position of the target.
+
+### Offset the Landing Position
 
 `withOffsetX`, `withOffsetY`, and `withOffsetXY` shift the final scroll position. Useful for keeping sticky headers clear of the target:
 
@@ -102,18 +108,45 @@ The element with `id="results-panel"` must actually be scrollable in CSS (`overf
             >> Scroll.build
     ```
 
-## 3. Pick Timing and Easing
+---
 
-📖 See [Timing](../concepts/timing.md) and [Easing](../concepts/easing.md) for the full rundown.
+## 3. Timing
 
-The short version:
+Pick **one** of `speed` or `duration` - `speed` is the better default for most scrolling.
 
-- `speed n` - pixels per second. Best default for most scrolling.
-- `duration n` - milliseconds. Useful when distances are all similar.
-- `delay n` - milliseconds to wait before starting.
-- `easing e` - any easing curve from `Motion.Easing`.
+| Function | What it means |
+| -------- | ------------- |
+| `speed n` | Move at `n` pixels per second. The duration depends on how far we have to scroll. |
+| `duration n` | Take exactly `n` ms, regardless of distance. |
+| `delay n` | Wait `n` ms before starting the scroll. |
 
-## 4. Multiple Scrolls in One Builder
+If you set neither `speed` nor `duration`, the engine treats the duration as `0ms` and snaps instantly to the target.
+
+📖 See [Timing](concepts/timing.md) for the full rundown, including why `speed` usually feels better.
+
+---
+
+## 4. Easing
+
+Easing controls the *shape* of the motion - whether the scroll whooshes off and glides to a halt, ramps up gradually, or bounces past before settling.
+
+??? example "View Source Code"
+
+    ```elm
+    Scroll.forDocument
+        >> Scroll.toElement "features"
+        >> Scroll.speed 800
+        >> Scroll.easing QuintOut
+        >> Scroll.build
+    ```
+
+Defaults to `Linear` if you don't set one.
+
+📖 See [Easing](concepts/easing.md) for the full list and recommendations.
+
+---
+
+## Multiple Scrolls in One Builder
 
 You can chain several `build` calls into a single pipeline. Each one becomes a separate scroll - they can target different surfaces and have different settings:
 
@@ -132,7 +165,13 @@ You can chain several `build` calls into a single pipeline. Each one becomes a s
             >> Scroll.build
     ```
 
-How that runs depends on the engine: [Cmd](../engines/cmd.md) fires both at once, [Task](../engines/task.md) runs them in pipeline order, [Sub](../engines/sub.md) tracks each independently.
+How that runs depends on the engine:
+
+- [`Cmd`](engines/cmd.md) fires both at once.
+- [`Task`](engines/task.md) runs them in pipeline order, fail-fast.
+- [`Sub`](engines/sub.md) tracks each container independently.
+
+---
 
 ## Reusable Helpers
 
@@ -155,8 +194,59 @@ Extract recurring settings into a small helper and compose it into other builder
             >> Scroll.build
     ```
 
+---
+
+## Running a Builder
+
+A builder is just a description. To actually make something move, hand it to one of the engines from `update`. Same builder, three wirings:
+
+??? example "View Source Code"
+
+    === "Cmd"
+
+        ```elm
+        import Scroll.Engine.Cmd as Cmd
+
+
+        ScrollTo targetId ->
+            ( model
+            , Cmd.scroll ScrollComplete <|
+                scrollToSection targetId
+            )
+        ```
+
+    === "Task"
+
+        ```elm
+        import Scroll.Engine.Task as Task
+        import Task as TaskCore
+
+
+        ScrollTo targetId ->
+            ( model
+            , scrollToSection targetId
+                |> Task.scroll
+                |> TaskCore.attempt GotScrollResult
+            )
+        ```
+
+    === "Sub"
+
+        ```elm
+        import Scroll.Engine.Sub as Sub
+
+
+        ScrollTo targetId ->
+            let
+                ( newScrollState, scrollCmd ) =
+                    Sub.scroll GotScrollMsg model.scrollState <|
+                        scrollToSection targetId
+            in
+            ( { model | scrollState = newScrollState }, scrollCmd )
+        ```
+
 ## Next Steps
 
-The builder doesn't *do* anything on its own - it just describes the scroll. Next, hand it to an engine to run it.
+You've seen what the builder can describe. Next, pick the engine that fits your case.
 
-[Trigger →](trigger.md){ .md-button .md-button--primary }
+[Engines Overview →](engines/overview.md){ .md-button .md-button--primary }

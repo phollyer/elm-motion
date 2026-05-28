@@ -100,6 +100,6 @@ The examples below show the **same scroll** built with each of the three engines
 
 ## Next Steps
 
-Now that you've seen what a scroll animation looks like, walk through the scroll workflow step by step.
+Now that you've seen what a scroll animation looks like, dig into the builder - the small composable API every scroll is described with.
 
-[Scroll Workflow →](workflow/build.md){ .md-button .md-button--primary }
+[The Scroll Builder →](builder.md){ .md-button .md-button--primary }

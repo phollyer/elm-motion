@@ -1,19 +1,21 @@
-# Scroll Task Engine
+# `Scroll.Task`
 
-This page is a practical guide to using the Task engine.
-Read [Scroll Engines Overview](overview.md) when you want side-by-side comparisons and tradeoffs.
+This is everything `Scroll.Task` offers:
 
-`Scroll.Task` is `Scroll.Cmd` with a typed result attached. It returns a `Task` instead of a `Cmd`, which means you can:
+| Function | Type |
+| -------- | ---- |
+| `scroll` | `(ScrollBuilder -> ScrollBuilder) -> Task ScrollError (List ScrollOk)` |
+| `scrollEach` | `(ScrollBuilder -> ScrollBuilder) -> Task Never (List (Result ScrollError ScrollOk))` |
+
+Two functions. Same fire-and-forget mental model as [`Cmd`](cmd.md), but the result is typed - so you can:
 
 - find out whether the scroll succeeded or failed,
-- chain it with other `Task`s (load data, then scroll to the new content),
-- run a sequence of scrolls and decide what to do if one fails partway through.
+- chain a scroll with other `Task`s (e.g. fetch data, then scroll to it),
+- decide what to do when one scroll in a sequence fails.
 
-If you don't need any of that, [Cmd](cmd.md) is simpler. If you need pause / resume / live progress, you want [Sub](sub.md).
+If you don't need any of those, [`Cmd`](cmd.md) is simpler. If you need pause / resume / mid-flight redirect / per-frame progress, you want [`Sub`](sub.md).
 
 ## Example
-
-A vertical scroll between three named sections, with `Ok` / `Err` handling.
 
 ??? example "View Example"
 
@@ -25,48 +27,20 @@ A vertical scroll between three named sections, with `Ok` / `Err` handling.
     --8<-- "docs/examples/src/Scroll/Task/FirstScroll/Main.elm"
     ```
 
-📖 See [Vertical Scrolling](../first-scrolls/vertical-scrolling.md) for a step-by-step breakdown.
-
----
-
-## Quick Walkthrough
-
-### 1. Build
-
-Same builder API as every other scroll engine:
-
-??? example "View Source Code"
-
-    ```elm
-    import Scroll.Builder as Scroll
-    import Scroll.Engine.Task as Task exposing (ScrollBuilder, ScrollOk, ScrollError)
-    import Motion.Easing exposing (Easing(..))
-
-
-    scrollToElement : String -> ScrollBuilder -> ScrollBuilder
-    scrollToElement targetId =
-        Scroll.forContainer "scroll-container"
-            >> Scroll.toElement targetId
-            >> Scroll.speed 400
-            >> Scroll.easing BounceOut
-            >> Scroll.build
-    ```
-
-📖 See [Build](../workflow/build.md) for the full builder API.
-
-### 2. Trigger
+## Trigger
 
 `Task.scroll` returns a `Task ScrollError (List ScrollOk)`. Turn it into a `Cmd` with `Task.attempt`:
 
 ??? example "View Source Code"
 
     ```elm
-    import Task
+    import Scroll.Engine.Task as Task
+    import Task as TaskCore
 
 
     type Msg
         = ScrollTo String
-        | ScrollResult (Result ScrollError (List ScrollOk))
+        | GotScrollResult (Result Task.ScrollError (List Task.ScrollOk))
 
 
     update : Msg -> Model -> ( Model, Cmd Msg )
@@ -74,73 +48,33 @@ Same builder API as every other scroll engine:
         case msg of
             ScrollTo targetId ->
                 ( model
-                , scrollToElement targetId
+                , scrollToSection targetId
                     |> Task.scroll
-                    |> Task.attempt ScrollResult
+                    |> TaskCore.attempt GotScrollResult
                 )
-    ```
 
-### 3. Handle the Result
-
-`Ok` carries one `ScrollOk` per scroll that completed; `Err` carries a typed `ScrollError`:
-
-??? example "View Source Code"
-
-    ```elm
-            ScrollResult (Ok _) ->
+            GotScrollResult (Ok _) ->
                 ( { model | status = "Arrived" }, Cmd.none )
 
-            ScrollResult (Err _) ->
+            GotScrollResult (Err _) ->
                 ( { model | status = "Scroll failed" }, Cmd.none )
     ```
 
-📖 See [React](../workflow/react.md) for more info.
+## `ScrollOk` and `ScrollError`
 
----
+| Type | Field | Description |
+| ---- | ----- | ----------- |
+| `ScrollOk` | `container` | The container that was scrolled |
+| `ScrollOk` | `targetElementId` | The element ID, if `toElement` was used |
+| `ScrollError` | `container` | The container that was being scrolled |
+| `ScrollError` | `targetElementId` | The element ID, if one was specified |
+| `ScrollError` | `domError` | The underlying [`Dom.Error`](https://package.elm-lang.org/packages/elm/browser/latest/Browser-Dom#Error) |
 
-## In Detail
-
-### Success - `ScrollOk`
-
-`ScrollOk` represents one successfully completed scroll:
-
-| Field | Type | Description |
-| ----- | ---- | ----------- |
-| `container` | `Container` | The container that was scrolled |
-| `targetElementId` | `Maybe String` | The target element ID, if one was set with `toElement` |
-
-### Failure - `ScrollError`
-
-`ScrollError` represents a scroll that couldn't complete - most commonly because the target element wasn't in the DOM:
-
-| Field | Type | Description |
-| ----- | ---- | ----------- |
-| `container` | `Container` | The container that was being scrolled |
-| `targetElementId` | `Maybe String` | The target element ID, if one was set |
-| `domError` | `Dom.Error` | The underlying [`Dom.Error`](https://package.elm-lang.org/packages/elm/browser/latest/Browser-Dom#Error) |
-
-### Sequential Scrolls in One Builder
-
-Chain several `build` calls into one builder pipeline. The scrolls run one after another, in pipeline order:
-
-??? example "View Source Code"
-
-    ```elm
-    scrollSequence : ScrollBuilder -> ScrollBuilder
-    scrollSequence =
-        Scroll.forDocument
-            >> Scroll.toElement "section-1"
-            >> Scroll.build
-            >> Scroll.forDocument
-            >> Scroll.toElement "section-2"
-            >> Scroll.build
-    ```
+## `scroll` vs `scrollEach`
 
 `Task.scroll` is **fail-fast**: the first scroll to fail ends the task immediately, and later scrolls in the same builder are skipped. The `Ok` payload lists every scroll that *did* complete, in order.
 
-### Continue Through Failures
-
-If you'd rather get a result for **every** scroll target - failures included - use `Task.scrollEach`:
+If you'd rather get a result for **every** target - failures included - use `Task.scrollEach`:
 
 ??? example "View Source Code"
 
@@ -153,15 +87,15 @@ If you'd rather get a result for **every** scroll target - failures included - u
         ( model
         , scrollSequence
             |> Task.scrollEach
-            |> Task.perform ScrollAttempts
+            |> TaskCore.perform ScrollAttempts
         )
     ```
 
-`scrollEach` always completes (its error type is `Never`) and returns one `Result` per target, in pipeline order.
+`scrollEach` always completes (its error type is `Never`) and returns one `Result` per target.
 
-### Parallel Scrolls
+## Parallel Scrolls
 
-To run independent scrolls in parallel (each with its own success/failure handling), build them separately and batch the resulting `Cmd`s:
+To run independent scrolls in parallel - each with its own success/failure handling - build them separately and batch the resulting `Cmd`s:
 
 ??? example "View Source Code"
 
@@ -169,93 +103,36 @@ To run independent scrolls in parallel (each with its own success/failure handli
     ( model
     , Cmd.batch
         [ Task.scroll scrollSidebar
-            |> Task.attempt SidebarResult
+            |> TaskCore.attempt SidebarResult
         , Task.scroll scrollMain
-            |> Task.attempt MainResult
+            |> TaskCore.attempt MainResult
         ]
     )
     ```
 
-### Task Composition
+## Task Composition
 
-Because `Task.scroll` is a `Task`, you can compose it with anything else returning a `Task`. Classic example - fetch some data, then scroll to whatever the response pointed at:
+Because `Task.scroll` is a regular `Task`, you can compose it with anything else that returns a `Task`. Classic example - fetch data, then scroll to wherever the response points:
 
 ??? example "View Source Code"
 
     ```elm
     fetchArticle "article-123"
-        |> Task.andThen
+        |> TaskCore.andThen
             (Task.scroll << scrollToSection << .anchorId)
-        |> Task.attempt GotResult
+        |> TaskCore.attempt GotResult
     ```
 
-### Re-Triggering Mid-Scroll
+## Caveats
 
-Like [Cmd](cmd.md), the Task engine doesn't cancel an in-flight scroll when you trigger another one. Each call runs independently. If the new scroll has a different target, the two will fight for control of the container.
+`Task` inherits the two pre-calculation trade-offs from [`Cmd`](cmd.md#caveats):
 
-If you need clean redirection mid-flight, use [Sub](sub.md).
+- **Timing drift** on busy pages or high-refresh-rate displays.
+- **Re-triggering doesn't cancel** - parallel scrolls compete for the container, longest wins.
 
-📖 See [Interrupting Scrolls](../concepts/interrupting-scrolls.md) for a live demonstration.
+Both are fixed by [`Sub`](sub.md) if they matter to you. The `Task` shape does give you one extra workaround for the re-trigger case that `Cmd` doesn't have: serialize. Trigger the next scroll only after the previous `Task` resolves (or chain them with `Task.andThen`).
 
-### Timing
-
-Same model as [Cmd](cmd.md): `Task` pre-calculates every frame and dispatches them. On busy pages or high-refresh-rate displays, the actual duration may drift from what you configured.
-
-If timing precision matters, use [Sub](sub.md).
-
-📖 See [Timing](../concepts/timing.md) for more info.
-
-### Easing
-
-Defaults to `Linear`. Any easing from `Motion.Easing` works via `Scroll.easing`.
-
-📖 See [Easing](../concepts/easing.md) for the full list and live previews.
-
-## When to Choose This Engine
-
-Choose `Task` when:
-
-- you need typed `Ok` / `Err` results,
-- you want to compose a scroll with other tasks (e.g. fetch then scroll),
-- you have a sequence of scrolls and need explicit failure semantics (fail-fast vs continue-through-failure).
-
-Use [Cmd](cmd.md) if you don't need any of the above.
-
-Use [Sub](sub.md) when you need state - pausing, redirecting, querying position, or reacting to live progress.
-
-## API Quick Reference
-
-### Types
-
-| Type | Description |
-| ---- | ----------- |
-| `ScrollBuilder` | Carries scroll configuration through the builder pipeline |
-| `Container` | Scroll surface (`Document` or `Container "element-id"`) |
-| `ScrollOk` | Success payload (`container`, `targetElementId`) |
-| `ScrollError` | Failure payload (`container`, `targetElementId`, `domError`) |
-
-### Trigger
-
-| Function | Type | Description |
-| -------- | ---- | ----------- |
-| `scroll` | `(ScrollBuilder -> ScrollBuilder) -> Task ScrollError (List ScrollOk)` | Fail-fast scroll task |
-| `scrollEach` | `(ScrollBuilder -> ScrollBuilder) -> Task Never (List (Result ScrollError ScrollOk))` | One `Result` per target |
-
-### Timing
-
-| Function | Type | Description |
-| -------- | ---- | ----------- |
-| `delay` | `Int -> ScrollBuilder -> ScrollBuilder` | Wait before scrolling (ms) |
-| `duration` | `Int -> ScrollBuilder -> ScrollBuilder` | Total scroll time (ms) |
-| `speed` | `Float -> ScrollBuilder -> ScrollBuilder` | Scroll rate (px/sec) |
-
-### Easing
-
-| Function | Type | Description |
-| -------- | ---- | ----------- |
-| `easing` | `Easing -> ScrollBuilder -> ScrollBuilder` | Set the easing curve |
-
-For complete API details, see the [Scroll.Engine.Task](https://package.elm-lang.org/packages/phollyer/elm-motion/latest/Scroll-Engine-Task) documentation.
+📖 See [Interrupting Scrolls](../concepts/interrupting-scrolls.md) for a live side-by-side demonstration.
 
 ## Next Steps
 

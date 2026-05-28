@@ -46,7 +46,7 @@ A spreadsheet-style grid with sticky row and column headers. Region buttons jump
 
 ??? example "Breaking It Down"
 
-    Same six-step workflow as [Vertical Scrolling](vertical-scrolling.md). The two new ingredients are both in the builder: `toElement` naturally scrolls *both* axes, and `withOffsetXY` shifts the final position so the cell isn't hidden behind the sticky headers.
+    Same six-step workflow as the vertical scrolling example. The two new ingredients are both in the builder: `toElement` naturally scrolls *both* axes, and `withOffsetXY` shifts the final position so the cell isn't hidden behind the sticky headers.
 
     ### 1. Build
 

@@ -122,15 +122,12 @@ nav:
     - Examples: animation/examples.md
   - Scroll:
     - Start Here: scroll/start-here.md
-    - Workflow:
-      - 1. Build: scroll/workflow/build.md
-      - 2. Trigger: scroll/workflow/trigger.md
-      - 3. React: scroll/workflow/react.md
+    - Builder: scroll/builder.md
     - Engines:
       - Overview: scroll/engines/overview.md
-      - Cmd Engine: scroll/engines/cmd.md
-      - Task Engine: scroll/engines/task.md
-      - Sub Engine: scroll/engines/sub.md
+      - Cmd: scroll/engines/cmd.md
+      - Task: scroll/engines/task.md
+      - Sub: scroll/engines/sub.md
     - Concepts:
       - Interrupting Scrolls: scroll/concepts/interrupting-scrolls.md
       - Controlling Scroll: scroll/concepts/controlling-scroll.md
