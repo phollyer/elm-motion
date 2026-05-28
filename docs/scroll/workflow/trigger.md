@@ -1,27 +1,32 @@
 # Trigger
 
-Once you've [built](build.md) your scroll, you need to trigger it. Triggering is where the engine processes your configuration and computes the scroll data.
+You've [built](build.md) the scroll - that builder is just a description, not a running scroll. To actually make something move, you hand the builder to one of the three engines from your `update` function.
 
-## Using `scroll`
+The three engines have three different shapes of trigger function. Same builder, different wiring.
+
+## From `update`
 
 ??? example "View Source Code"
+
     === "Cmd"
 
-        `Scroll.scroll` takes a completion message and the scroll builder, and returns a `Cmd`:
+        `Cmd.scroll` takes a completion message and the builder, and returns a `Cmd`. No model state, no subscriptions.
 
         ```elm
-        import Scroll.Engine.Cmd as Scroll
+        import Scroll.Engine.Cmd as Cmd
+
 
         type Msg
             = ScrollTo String
             | ScrollComplete
+
 
         update : Msg -> Model -> ( Model, Cmd Msg )
         update msg model =
             case msg of
                 ScrollTo targetId ->
                     ( model
-                    , Scroll.scroll ScrollComplete <|
+                    , Cmd.scroll ScrollComplete <|
                         scrollToSection targetId
                     )
 
@@ -29,50 +34,50 @@ Once you've [built](build.md) your scroll, you need to trigger it. Triggering is
                     ( model, Cmd.none )
         ```
 
-        - No model state is needed - the engine manages everything internally.
-        - `ScrollComplete` fires when the scroll finishes, regardless of success or failure.
-        - The completion message carries no information about the outcome. Use the Task Engine if you need to know whether the scroll succeeded.
+        `ScrollComplete` fires when the scroll finishes - it carries no information about success or failure. If you need to know whether the scroll worked, use Task.
 
     === "Task"
 
-        `Scroll.scroll` returns a `Task ScrollError (List ScrollOk)`. Use `Task.attempt` to convert it into a `Cmd`:
+        `Task.scroll` returns a `Task ScrollError (List ScrollOk)`. Turn it into a `Cmd` with `Task.attempt`:
 
         ```elm
-        import Scroll.Engine.Task as Scroll
-        import Task
+        import Scroll.Engine.Task as Task
+        import Task as TaskCore
+
 
         type Msg
             = ScrollTo String
-            | GotScrollResult (Result Scroll.ScrollError (List Scroll.ScrollOk))
+            | GotScrollResult (Result Task.ScrollError (List Task.ScrollOk))
+
 
         update : Msg -> Model -> ( Model, Cmd Msg )
         update msg model =
             case msg of
                 ScrollTo targetId ->
                     ( model
-                    , Task.attempt GotScrollResult <|
-                        Scroll.scroll <|
-                            scrollToSection targetId
-                        
+                    , scrollToSection targetId
+                        |> Task.scroll
+                        |> TaskCore.attempt GotScrollResult
                     )
 
-                GotScrollResult result ->
-                    ...
+                GotScrollResult _ ->
+                    ( model, Cmd.none )
         ```
 
-        - Returns a `Task` so you can compose multiple scrolls with `Task.andThen`.
-        - The result delivers all completed `ScrollOk` values on success or a `ScrollError` on failure. 📖 See [React - Task Engine](react.md#task-engine) for handling both.
+        Because it's a `Task`, you can compose it with other tasks (e.g. fetch data first, then scroll to the result) before turning the whole chain into a `Cmd`.
 
     === "Sub"
 
-        `Sub.scroll` takes a message wrapper, the current `ScrollState`, and the scroll builder. It returns the updated state and a `Cmd` together:
+        `Sub.scroll` takes a tagger, the current `ScrollState`, and the builder. It returns the new state and a `Cmd` together:
 
         ```elm
         import Scroll.Engine.Sub as Sub
 
+
         type Msg
             = ScrollTo String
             | GotScrollMsg Sub.ScrollMsg
+
 
         update : Msg -> Model -> ( Model, Cmd Msg )
         update msg model =
@@ -85,17 +90,17 @@ Once you've [built](build.md) your scroll, you need to trigger it. Triggering is
                     in
                     ( { model | scrollState = newScrollState }, scrollCmd )
 
-                GotScrollMsg scrollMsg ->
-                    ...
+                GotScrollMsg _ ->
+                    ( model, Cmd.none )
         ```
 
-        - Store `Sub.ScrollState` in your model and initialize it with `Sub.init`.
-        - Triggering a new scroll while one is in flight safely replaces the running animation.
-        - The Sub Engine requires [subscriptions](subscribe.md) to drive the animation frame-by-frame.
+        - Store `Sub.ScrollState` in your model and seed it with `Sub.init`.
+        - Triggering for a container that's already scrolling **replaces** the running scroll - smoothly carrying on from the current position.
+        - Sub also needs a [subscription](subscribe.md) wired up to drive frame-by-frame updates.
 
-## Triggering on Page Load
+## From `init`
 
-All three engines can trigger a scroll in `init`:
+All three engines can fire a scroll on page load - just trigger from `init`:
 
 ??? example "View Source Code"
 
@@ -105,7 +110,7 @@ All three engines can trigger a scroll in `init`:
         init : () -> ( Model, Cmd Msg )
         init _ =
             ( {}
-            , Scroll.scroll ScrollComplete <|
+            , Cmd.scroll ScrollComplete <|
                 scrollToSection "intro"
             )
         ```
@@ -116,10 +121,9 @@ All three engines can trigger a scroll in `init`:
         init : () -> ( Model, Cmd Msg )
         init _ =
             ( { status = Scrolling }
-            , Task.attempt GotScrollResult <|
-                Scroll.scroll <|
-                    scrollToSection "intro"
-                
+            , scrollToSection "intro"
+                |> Task.scroll
+                |> TaskCore.attempt GotScrollResult
             )
         ```
 
@@ -140,6 +144,6 @@ All three engines can trigger a scroll in `init`:
 
 ## Next Steps
 
-Handle scroll completion and errors in your update function.
+A scroll has been triggered - now handle whatever the engine sends back.
 
 [React →](react.md){ .md-button .md-button--primary }

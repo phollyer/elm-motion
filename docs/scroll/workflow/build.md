@@ -1,38 +1,34 @@
 # Build
 
-## The Builder Pattern
+Every scroll starts as a **builder** - a small chain of functions that describes *what* to scroll, *how far*, and *how fast*. This page walks through the builder API.
 
-Elm Motion uses a fluent builder pattern for defining scrolls.
-This approach provides a consistent, composable API across all engines that reads naturally
-and is easy to reason about — you can see at a glance what a scroll does and how it behaves.
+The builder is the same in every engine. Once you've written it, you decide whether to run it with [Cmd](../engines/cmd.md), [Task](../engines/task.md), or [Sub](../engines/sub.md).
 
-## Basic Structure
+## Anatomy of a Builder
 
-Every scroll follows this pattern:
+Every scroll has the same shape:
 
 ??? example "View Source Code"
 
     ```elm
     scrollToSection : ScrollBuilder -> ScrollBuilder
     scrollToSection =
-        Scroll.forContainer "container-id"   -- Scrollable element, or `Scroll.forDocument`, (required)
-            >> Scroll.toElement "target-id"  -- Alternative targeting functions are available
-            >> Scroll.speed 300              -- px/s, or `Scroll.duration 500` (ms)
-            >> Scroll.easing QuintOut        -- Make the scroll feel natural
-            >> Scroll.build                  -- Finalize (required)
+        Scroll.forContainer "container-id"   -- 1. What surface to scroll       (required)
+            >> Scroll.toElement "target-id"  -- 2. Where to scroll to
+            >> Scroll.speed 300              -- 3. How fast (or use `duration`)
+            >> Scroll.easing QuintOut        -- 4. How it should feel
+            >> Scroll.build                  -- 5. Finalize                     (required)
     ```
 
-    Either `forContainer` or `forDocument` are required to start the builder chain along with `build` to complete it.
-    All other configurations are optional, although without a target the scroll won't have anywhere to go!!
+Only steps 1 and 5 (`forContainer`/`forDocument` and `build`) are mandatory. Everything in between is optional - but without a target, the scroll has nowhere to go.
 
-## Container Selection
+## 1. Pick a Surface
 
-Use `forDocument` when you want to scroll the page itself (the browser viewport / document).
-Use `forContainer` when you want to scroll a specific element.
+A scroll runs against either the whole document or a specific scrollable element.
 
 ### `forDocument`
 
-`forDocument` targets the main page scroll position. This is useful for jumping between sections in long pages.
+Scrolls the page itself - the browser viewport. Use this for "jump to section" links inside a long article or single-page-app screen.
 
 ??? example "View Source Code"
 
@@ -47,7 +43,7 @@ Use `forContainer` when you want to scroll a specific element.
 
 ### `forContainer`
 
-`forContainer` targets a specific scrollable element by its `id`. This is useful for cards, panels, tables, and any nested scroll region.
+Scrolls a specific element identified by its `id`. Use this for sidebars, panels, tables, image galleries, modals - anything with its own scrollbar.
 
 ??? example "View Source Code"
 
@@ -60,15 +56,72 @@ Use `forContainer` when you want to scroll a specific element.
             >> Scroll.build
     ```
 
-### Multiple Scrolls
+The element with `id="results-panel"` must actually be scrollable in CSS (`overflow: auto` / `overflow: scroll`).
 
-Scroll multiple containers at once:
+## 2. Pick a Target
+
+| Function | Scrolls to... |
+| -------- | ------------- |
+| `toElement id` | The element with the given `id` (both axes, by default). |
+| `toTop` / `toBottom` | The top or bottom edge of the surface. |
+| `toLeft` / `toRight` | The left or right edge of the surface. |
+| `toTopLeft` / `toTopRight` / `toBottomLeft` / `toBottomRight` | The named corner. |
+| `toCenter` | The centre of the surface. |
+| `toX n` / `toY n` / `toXY x y` | Exact pixel coordinates. |
+| `toPercentageX n` / `toPercentageY n` / `toPercentageXY x y` | A `0`–`100` percentage of the scrollable area. |
+
+### Restricting to One Axis
+
+`toElement` scrolls both axes by default. Add `onXAxis` or `onYAxis` to restrict it:
 
 ??? example "View Source Code"
 
     ```elm
-    resetContainers : ScrollBuilder -> ScrollBuilder
-    resetContainers =
+    scrollGalleryToCard : String -> ScrollBuilder -> ScrollBuilder
+    scrollGalleryToCard cardId =
+        Scroll.forContainer "gallery"
+            >> Scroll.toElement cardId
+            >> Scroll.onXAxis            -- only move horizontally
+            >> Scroll.speed 600
+            >> Scroll.build
+    ```
+
+### Offsetting the Landing Position
+
+`withOffsetX`, `withOffsetY`, and `withOffsetXY` shift the final scroll position. Useful for keeping sticky headers clear of the target:
+
+??? example "View Source Code"
+
+    ```elm
+    scrollToCell : String -> ScrollBuilder -> ScrollBuilder
+    scrollToCell cellId =
+        Scroll.forContainer "spreadsheet"
+            >> Scroll.toElement cellId
+            >> Scroll.withOffsetXY -80 -40   -- leave room for sticky row + column
+            >> Scroll.speed 800
+            >> Scroll.build
+    ```
+
+## 3. Pick Timing and Easing
+
+📖 See [Timing](../concepts/timing.md) and [Easing](../concepts/easing.md) for the full rundown.
+
+The short version:
+
+- `speed n` - pixels per second. Best default for most scrolling.
+- `duration n` - milliseconds. Useful when distances are all similar.
+- `delay n` - milliseconds to wait before starting.
+- `easing e` - any easing curve from `Motion.Easing`.
+
+## 4. Multiple Scrolls in One Builder
+
+You can chain several `build` calls into a single pipeline. Each one becomes a separate scroll - they can target different surfaces and have different settings:
+
+??? example "View Source Code"
+
+    ```elm
+    resetBothPanels : ScrollBuilder -> ScrollBuilder
+    resetBothPanels =
         Scroll.forContainer "results-panel"
             >> Scroll.toTop
             >> Scroll.speed 300
@@ -79,32 +132,31 @@ Scroll multiple containers at once:
             >> Scroll.build
     ```
 
-## Best Practices
+How that runs depends on the engine: [Cmd](../engines/cmd.md) fires both at once, [Task](../engines/task.md) runs them in pipeline order, [Sub](../engines/sub.md) tracks each independently.
 
-!!! tip "Prefer speed for consistent feel"
-    `Scroll.speed` usually gives a more consistent user experience across short and long distances than fixed `duration`.
+## Reusable Helpers
 
-!!! tip "Extract common patterns"
-    If you use the same configurations often, create reusable builder functions.
+Extract recurring settings into a small helper and compose it into other builders:
 
-    ??? example "View Source Code"
+??? example "View Source Code"
 
-        ```elm
-        withStandardTiming : ScrollBuilder -> ScrollBuilder
-        withStandardTiming =
-            Engine.speed 300
-                >> Engine.easing QuintOut
+    ```elm
+    withStandardTiming : ScrollBuilder -> ScrollBuilder
+    withStandardTiming =
+        Scroll.speed 300
+            >> Scroll.easing QuintOut
 
-        scrollToSection : String -> ScrollBuilder -> ScrollBuilder
-        scrollToSection sectionId =
-            withStandardTiming
-                >> Scroll.forContainer "page"
-                >> Scroll.toElement sectionId
-                >> Scroll.build
-        ```
+
+    scrollToSection : String -> ScrollBuilder -> ScrollBuilder
+    scrollToSection sectionId =
+        withStandardTiming
+            >> Scroll.forDocument
+            >> Scroll.toElement sectionId
+            >> Scroll.build
+    ```
 
 ## Next Steps
 
-Now that you've defined your scroll, you need to trigger it.
+The builder doesn't *do* anything on its own - it just describes the scroll. Next, hand it to an engine to run it.
 
 [Trigger →](trigger.md){ .md-button .md-button--primary }

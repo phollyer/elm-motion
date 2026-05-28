@@ -1,28 +1,28 @@
 # Subscribe
 
-## Sub Engine Only
+!!! note "Sub engine only"
+    [Cmd](../engines/cmd.md) and [Task](../engines/task.md) handle their own timing internally - no subscription needed. This page applies only to [`Scroll.Sub`](../engines/sub.md).
 
-The Cmd and Task engines manage their own internal timing and do not need subscriptions. The Sub Engine drives animation frame-by-frame, so it relies on subscriptions to receive the updates that keep the scroll moving.
+The Sub engine advances each scroll frame-by-frame using `Browser.Events.onAnimationFrameDelta`. That means it needs to be wired into your app's `subscriptions` function so the runtime can deliver those frame events.
 
-## Wiring Up Subscriptions
+## The One-Liner
 
-Pass your `ScrollMsg` wrapper and the current `ScrollState` to `Sub.subscriptions`:
+Pass your tagger and the current `ScrollState` to `Sub.subscriptions`:
 
 ??? example "View Source Code"
 
     ```elm
     import Scroll.Engine.Sub as Sub
 
+
     subscriptions : Model -> Sub Msg
     subscriptions model =
         Sub.subscriptions GotScrollMsg model.scrollState
     ```
 
-This produces a `Sub` that fires on every animation frame while a scroll is running, and is idle when nothing is animating - so there is no unnecessary overhead when no scroll is active.
+The subscription is **dormant when nothing is scrolling** - it only listens for frames while a scroll is actually in flight. So there's no runtime cost from leaving it permanently wired in.
 
-## Connecting to Your App
-
-Wire it in via `Browser.element` or `Browser.application`:
+## Wiring it into `main`
 
 ??? example "View Source Code"
 
@@ -35,16 +35,11 @@ Wire it in via `Browser.element` or `Browser.application`:
             , update = update
             , subscriptions = subscriptions
             }
-
-
-    subscriptions : Model -> Sub Msg
-    subscriptions model =
-        Sub.subscriptions GotScrollMsg model.scrollState
     ```
 
-## Multiple Scroll States
+## Multiple `ScrollState`s
 
-If you have more than one `ScrollState` in your model, combine their subscriptions with `Sub.batch`:
+If you keep more than one `ScrollState` in your model - say one for the main page and one for a sidebar - combine their subscriptions with `Sub.batch`:
 
 ??? example "View Source Code"
 
@@ -57,5 +52,11 @@ If you have more than one `ScrollState` in your model, combine their subscriptio
             ]
     ```
 
-!!! tip "Each ScrollState is independent"
-    Each `ScrollState` tracks its own scroll and fires its own events. Use separate states and message wrappers when you need to scroll multiple containers independently.
+!!! tip "Each `ScrollState` is independent"
+    Separate states each track their own scrolls, fire their own events, and can be controlled and queried independently. Use separate states (and separate message wrappers) whenever you want isolated scroll behaviour.
+
+## Next Steps
+
+You've covered the whole scroll workflow. Now compare the engines side by side and pick the one that fits your case.
+
+[Engines Overview →](../engines/overview.md){ .md-button .md-button--primary }

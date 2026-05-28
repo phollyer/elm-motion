@@ -1,12 +1,22 @@
 # React
 
-After triggering a scroll, you'll want to react to its outcome - update UI state, handle errors, chain follow-up actions, or track live progress.
+Once you've [triggered](trigger.md) a scroll, you'll usually want to do something when it finishes - update a status bar, fire a follow-up action, mark a step complete, or track live progress.
+
+How you react depends entirely on which engine you used.
+
+## What Each Engine Sends Back
+
+| Engine | What you handle in `update` |
+| ------ | --------------------------- |
+| [Cmd](../engines/cmd.md) | A single completion message. No payload. |
+| [Task](../engines/task.md) | A `Result ScrollError (List ScrollOk)`. |
+| [Sub](../engines/sub.md) | A stream of `ScrollEvent`s - `Started`, `Progress`, `Ended`, etc. |
 
 ??? example "View Source Code"
 
     === "Cmd"
 
-        The Cmd Engine delivers a single completion message when the scroll finishes. The message carries no result information - it is purely a signal that the scroll has ended:
+        The completion message is purely a signal that the scroll has ended - success and failure both look the same:
 
         ```elm
         update : Msg -> Model -> ( Model, Cmd Msg )
@@ -14,48 +24,48 @@ After triggering a scroll, you'll want to react to its outcome - update UI state
             case msg of
                 ScrollTo targetId ->
                     ( model
-                    , Scroll.scroll ScrollComplete <|
+                    , Cmd.scroll ScrollComplete <|
                         scrollToSection targetId
                     )
 
                 ScrollComplete ->
-                    -- The scroll has finished - update UI state, trigger a follow-up, etc.
                     ( { model | status = Arrived }, Cmd.none )
         ```
 
+        Use Task instead if you need to know whether the scroll actually succeeded.
+
     === "Task"
 
-        `Scroll.scroll` returns a `Task ScrollError (List ScrollOk)`. Handle both outcomes in your `update` function:
-
+        `Task.scroll` resolves to a typed `Result`. Pattern-match on `Ok` and `Err` in your `update`:
 
         ```elm
-        type Msg 
-            = GotScrollResult (Result ScrollError (List ScrollOk))
-            | ...
+        type Msg
+            = ScrollTo String
+            | GotScrollResult (Result ScrollError (List ScrollOk))
+
 
         update : Msg -> Model -> ( Model, Cmd Msg )
         update msg model =
             case msg of
                 ScrollTo targetId ->
                     ( { model | status = Scrolling }
-                    , Scroll.scroll (scrollToSection targetId)
-                        |> Task.attempt GotScrollResult
+                    , scrollToSection targetId
+                        |> Task.scroll
+                        |> TaskCore.attempt GotScrollResult
                     )
 
-                GotScrollResult (Ok scrollsOk) ->
+                GotScrollResult (Ok _) ->
                     ( { model | status = Arrived }, Cmd.none )
 
-                GotScrollResult (Err (Scroll.ScrollError err)) ->
-                    ( { model | status = Failed err.containerId }, Cmd.none )
+                GotScrollResult (Err _) ->
+                    ( { model | status = Failed }, Cmd.none )
         ```
 
-        For full `ScrollOk`/`ScrollError` field reference and Task composition patterns,
-        see the [Scroll Task Engine docs](../engines/task.md#3-handle-the-result)
-        and [Task Composition](../engines/task.md#task-composition).
+        📖 See [Task Engine - Success / Failure](../engines/task.md#success-scrollok) for the full `ScrollOk` and `ScrollError` field reference.
 
     === "Sub"
 
-        The Sub Engine returns a list of events from `Sub.update`. Each event represents something that happened during that animation frame:
+        `Sub.update` returns the new state, a list of events that fired on this frame, and any `Cmd` the engine needs to issue. Fold over the events to fan them out into your own model updates:
 
         ```elm
         update : Msg -> Model -> ( Model, Cmd Msg )
@@ -67,48 +77,39 @@ After triggering a scroll, you'll want to react to its outcome - update UI state
                             Sub.update GotScrollMsg scrollMsg model.scrollState
 
                         updatedModel =
-                            handleEvents { model | scrollState = newScrollState } events
+                            List.foldl handleEvent
+                                { model | scrollState = newScrollState }
+                                events
                     in
                     ( updatedModel, scrollCmd )
 
 
-        handleEvents : Model -> List Sub.ScrollEvent -> Model
-        handleEvents =
-            List.foldl handleEvent
-
-
         handleEvent : Sub.ScrollEvent -> Model -> Model
         handleEvent event model =
-            { model
-                | status =
-                    case event of
-                        Sub.Started _ ->
-                            Scrolling
+            case event of
+                Sub.Started _ ->
+                    { model | status = Scrolling }
 
-                        Sub.Ended _ ->
-                            Arrived
+                Sub.Ended _ ->
+                    { model | status = Arrived }
 
-                        Sub.Progress _ position progress ->
-                            ShowingProgress position progress
+                Sub.Progress _ position progress ->
+                    { model
+                        | scrollX = position.x
+                        , scrollY = position.y
+                        , percent = round (progress * 100)
+                    }
 
-                        _ ->
-                            model.status
-            }
-
-        subscriptions : Model -> Sub Msg
-        subscriptions model =
-            Sub.subscriptions GotScrollMsg model.scrollState
+                _ ->
+                    model
         ```
 
-        **`update` returns a list** because multiple scrolls can produce events in the same frame. Use `List.foldl` to process them all.
+        **Why a list?** Multiple scrolls in the same `ScrollState` can each emit events on the same frame, so they all arrive together.
 
-        For full `ScrollEvent` payload reference and live progress patterns,
-        see [Events](../engines/sub.md#events),
-        and [Tracking Live Progress](../engines/sub.md#tracking-live-progress)
-        in the Scroll Sub Engine docs.
+        📖 See [Sub Engine - Events](../engines/sub.md#events) for the complete event reference and [Live Progress](../engines/sub.md#live-progress) for richer examples.
 
 ## Next Steps
 
-Now that you understand the full scroll workflow, learn about the different Scroll Engines and what they can do.
+The Sub engine also needs a subscription wired into your app so it can receive frame updates while scrolls are running.
 
-[Engines Overview →](../engines/overview.md){ .md-button .md-button--primary }
+[Subscribe →](subscribe.md){ .md-button .md-button--primary }
