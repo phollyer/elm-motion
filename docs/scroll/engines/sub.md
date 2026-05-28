@@ -1,41 +1,54 @@
 # Scroll Sub Engine
 
-This page is a practical guide to using the Sub engine from setup through advanced usage.
+This page is a practical guide to using the Sub engine.
 Read [Scroll Engines Overview](overview.md) when you want side-by-side comparisons and tradeoffs.
 
-The Scroll Sub Engine uses Elm subscriptions to update scroll state on every frame. This provides full programmatic control over scroll animations, including mid-scroll queries, events, and interruption controls.
+`Scroll.Sub` is the full-featured scroll engine. Instead of pre-calculating a scroll and firing it as a `Cmd`, it stores `ScrollState` in your model and updates it on every animation frame via a subscription.
 
+That extra wiring buys you a lot:
+
+- pause, resume, stop, reset, restart at any time,
+- redirect the scroll to a new target mid-flight,
+- read the current scroll position any time,
+- react to `Started`, `Ended`, `Progress`, `Paused`, `Resumed`, `Stopped`, `Restarted` events.
+
+If you don't need any of those, [Cmd](cmd.md) or [Task](task.md) are simpler.
 
 ## Example
+
+A vertical scroll with full state and event handling.
 
 ??? example "View Example"
 
     <iframe src="../../../examples/src/Scroll/Sub/FirstScroll/index.html" class="example-iframe" loading="lazy"></iframe>
 
-??? example "View Full Source Code"
+??? example "View Source Code"
 
     ```elm
     --8<-- "docs/examples/src/Scroll/Sub/FirstScroll/Main.elm"
     ```
 
-📖 See [Your First Scrolls](../start-here.md) for a step-by-step breakdown.
+📖 See [Vertical Scrolling](../first-scrolls/vertical-scrolling.md) for a step-by-step breakdown.
 
+---
 
 ## Quick Walkthrough
 
-Here's a general workflow to get up an running quickly.
+There are four moving parts to wire up: a piece of state in your model, a subscription, an `update` handler, and the trigger.
 
 ### 1. Initialize
 
-Store the `ScrollState` in your model and initialize it with `Sub.init`:
+Store a `ScrollState` in your model and seed it with `Sub.init`:
 
 ??? example "View Source Code"
 
     ```elm
     import Scroll.Engine.Sub as Sub
 
+
     type alias Model =
         { scrollState : Sub.ScrollState }
+
 
     init : ( Model, Cmd Msg )
     init =
@@ -44,7 +57,7 @@ Store the `ScrollState` in your model and initialize it with `Sub.init`:
 
 ### 2. Subscribe
 
-Wire up subscriptions so the engine receives animation frame updates:
+Wire the engine into `subscriptions`. The subscription is dormant when no scrolls are running and only activates while something is in flight:
 
 ??? example "View Source Code"
 
@@ -54,21 +67,23 @@ Wire up subscriptions so the engine receives animation frame updates:
         Sub.subscriptions ScrollMsg model.scrollState
     ```
 
-The subscription only activates while a scroll animation is running — it does nothing when idle.
+📖 See [Subscribe](../workflow/subscribe.md) for more info.
 
 ### 3. Trigger
 
-Call `scroll` from your `update` function. It returns the updated `ScrollState` and a `Cmd`:
+`Sub.scroll` takes a tagger, the current state, and a builder. It returns `( ScrollState, Cmd msg )`:
 
 ??? example "View Source Code"
 
     ```elm
     import Scroll.Builder as Scroll
-    import Motion.Easing as Easing exposing (Easing(..))
+    import Motion.Easing exposing (Easing(..))
+
 
     type Msg
         = ScrollTo String
         | ScrollMsg Sub.ScrollMsg
+
 
     update : Msg -> Model -> ( Model, Cmd Msg )
     update msg model =
@@ -79,18 +94,18 @@ Call `scroll` from your `update` function. It returns the updated `ScrollState` 
                         Sub.scroll ScrollMsg model.scrollState <|
                             Scroll.forContainer "scroll-container"
                                 >> Scroll.toElement targetId
-                                >> Scroll.easing BounceOut
                                 >> Scroll.speed 400
+                                >> Scroll.easing BounceOut
                                 >> Scroll.build
                 in
                 ( { model | scrollState = newState }, cmd )
     ```
 
-Sub-driven scrolls advance on each animation frame, so configured speed and duration are applied consistently.
+If a scroll for the same container is already running, this **replaces** it - the new scroll picks up from the current position. That's how mid-flight redirection works.
 
-### 4. Update
+### 4. React
 
-Handle the engine's internal messages to advance the animation each frame:
+Forward engine messages into `Sub.update`. It returns the new state, a list of events that happened on this frame, and any `Cmd` the engine needs to issue:
 
 ??? example "View Source Code"
 
@@ -100,11 +115,14 @@ Handle the engine's internal messages to advance the animation each frame:
                     ( newState, events, cmd ) =
                         Sub.update ScrollMsg scrollMsg model.scrollState
                 in
-                ( { model | scrollState = newState }, cmd )
+                ( { model | scrollState = newState }
+                , cmd
+                )
     ```
 
-The `events` list lets you react to scroll lifecycle — see [Events](#events) below.
+If you want to react to events, fold over the list - see [Events](#events) below.
 
+📖 See [React](../workflow/react.md) for more info.
 
 ---
 
@@ -112,179 +130,231 @@ The `events` list lets you react to scroll lifecycle — see [Events](#events) b
 
 ### Events
 
-The `update` function returns a list of `ScrollEvent`s.
-Each event includes a `Container` identifying the scroll surface (`Document` or `Container "element-id"`).
+`Sub.update` returns a `List ScrollEvent`. Multiple events can fire on the same frame.
 
-| Event | Payload | Meaning |
-| ----- | ------- | ------- |
-| `Started` | `Container` | The scroll has begun. |
-| `Ended` | `Container` | The scroll completed naturally. |
-| `Progress` | `Container`, `{ x : Float, y : Float }`, `Float` | Live scroll update with container, current position, and overall progress from `0.0` to `1.0`. |
-| `Stopped` | `Container` | The scroll was stopped before completion. |
-| `Paused` | `Container` | The scroll paused at its current position. |
-| `Resumed` | `Container` | The scroll resumed after a pause. |
-| `Restarted` | `Container` | The scroll reset to start and began again. |
+Every event carries a `Container` so you know which scroll surface (`Sub.Document` or `Sub.Container "id"`) it belongs to.
 
-### Tracking Live Progress
+| Event | Payload | Fires when... |
+| ----- | ------- | ------------- |
+| `Started` | `Container` | A scroll begins. |
+| `Ended` | `Container` | A scroll completes naturally. |
+| `Progress` | `Container`, `{ x, y }`, `Float` | Every frame while running. The `Float` is `0.0`–`1.0` progress. |
+| `Stopped` | `Container` | A scroll was stopped before completing. |
+| `Paused` | `Container` | A scroll was paused. |
+| `Resumed` | `Container` | A paused scroll resumed. |
+| `Restarted` | `Container` | A scroll was reset and replayed. |
 
-The `Progress` event makes it straightforward to build position indicators, scrollbars, or percentage readouts:
+??? example "Handling events"
+
+    ```elm
+    ScrollMsg scrollMsg ->
+        let
+            ( newState, events, cmd ) =
+                Sub.update ScrollMsg scrollMsg model.scrollState
+        in
+        ( List.foldl handleEvent { model | scrollState = newState } events
+        , cmd
+        )
+
+
+    handleEvent : Sub.ScrollEvent -> Model -> Model
+    handleEvent event model =
+        case event of
+            Sub.Progress _ _ progress ->
+                { model | percent = round (progress * 100) }
+
+            Sub.Ended _ ->
+                { model | status = "Arrived" }
+
+            _ ->
+                model
+    ```
+
+### Live Progress
+
+Because `Progress` fires every frame with the current `{ x, y }` position and a `0.0`–`1.0` progress value, you can drive scrollbars, percentage readouts, and parallax effects directly from scroll state:
 
 ??? example "View Source Code"
 
     ```elm
-    handleEvent event model =
+    Sub.Progress _ position progress ->
         { model
-            | status =
-                case event of
-                    Sub.Progress _ position progress ->
-                        ShowingProgress position <|
-                            round (progress * 100)
-
-                    _ ->
-                        model.status
+            | scrollX = position.x
+            , scrollY = position.y
+            , percent = round (progress * 100)
         }
     ```
 
-
 ### Controls
 
-Control scroll animations at any time by passing a `Container` value.
+Each control takes a `Container` so you can target a specific scroll.
 
-| Function | Behavior |
-| -------- | -------- |
-| `stop` | Jump instantly to the scroll **target position** and complete |
-| `pause` | Freeze the scroll at its current position |
-| `resume` | Continue a paused scroll from where it was frozen |
-| `reset` | Jump instantly to the **start position** and stop |
-| `restart` | Reset to start position, then begin scrolling again |
+| Function | Behaviour |
+| -------- | --------- |
+| `stop` | Jump to the **target** position and finish |
+| `pause` | Freeze at the current position |
+| `resume` | Continue from where `pause` froze |
+| `reset` | Jump to the **start** position and finish |
+| `restart` | Reset to start, then play again |
 
-**Stop/Reset/Restart** return `( ScrollState, Cmd msg )` because they issue immediate scroll commands:
-
-??? example "View Source Code"
-
-    ```elm
-            StopScroll ->
-                let
-                    ( newState, cmd ) =
-                        Sub.stop Sub.Document ScrollMsg model.scrollState
-                in
-                ( { model | scrollState = newState }, cmd )
-    ```
-
-**Pause/Resume** return just `ScrollState` — no commands needed:
+`stop`, `reset`, and `restart` issue commands, so they return `( ScrollState, Cmd msg )`:
 
 ??? example "View Source Code"
 
     ```elm
-            PauseScroll ->
-                ( { model | scrollState = Sub.pause (Sub.Container "sidebar") model.scrollState }, Cmd.none )
-
-            ResumeScroll ->
-                ( { model | scrollState = Sub.resume (Sub.Container "sidebar") model.scrollState }, Cmd.none )
+    StopScroll ->
+        let
+            ( newState, cmd ) =
+                Sub.stop Sub.Document ScrollMsg model.scrollState
+        in
+        ( { model | scrollState = newState }, cmd )
     ```
 
-📖 See [Controlling Scrolls](../concepts/controlling-scroll.md) for live examples and complete code patterns.
+`pause` and `resume` are state-only - they return just `ScrollState`:
 
+??? example "View Source Code"
+
+    ```elm
+    PauseScroll ->
+        ( { model | scrollState = Sub.pause (Sub.Container "sidebar") model.scrollState }
+        , Cmd.none
+        )
+    ```
+
+📖 See [Controlling Scrolls](../concepts/controlling-scroll.md) for live examples.
 
 ### Querying State
 
-Query scroll state and position during execution:
+You can ask the engine what's happening at any moment - useful for showing UI ("Scrolling..."), conditionally enabling controls, or making decisions before triggering the next scroll.
 
 ??? example "View Source Code"
 
     ```elm
-    -- Is any scroll animation running?
-    Sub.anyRunning model.scrollState  -- Maybe Bool
+    -- Is any scroll currently running?
+    Sub.anyRunning model.scrollState
+        -- Maybe Bool
 
-    -- Is a specific container's scroll running?
-    Sub.isRunning Sub.Document model.scrollState  -- Maybe Bool
+    -- Is a specific container scrolling?
+    Sub.isRunning Sub.Document model.scrollState
+        -- Maybe Bool
 
-    -- Get current scroll position
-    Sub.getPosition Sub.Document model.scrollState  -- Maybe { x : Float, y : Float }
+    -- Current scroll position
+    Sub.getPosition Sub.Document model.scrollState
+        -- Maybe { x : Float, y : Float }
 
-    -- Get individual axis positions
-    Sub.getPositionX Sub.Document model.scrollState  -- Maybe Float
-    Sub.getPositionY Sub.Document model.scrollState  -- Maybe Float
+    -- Single-axis variants
+    Sub.getPositionX Sub.Document model.scrollState
+    Sub.getPositionY Sub.Document model.scrollState
     ```
 
-All query functions return `Maybe` — `Nothing` means no scroll exists for that container.
+All queries return `Maybe` because the container in question might never have been scrolled.
 
-Multiple scroll targets can run at the same time inside the same `ScrollState`. They remain independently queryable, emit their own events, and complete separately.
+### Multiple Concurrent Scrolls
 
+You can have several scrolls running at once inside a single `ScrollState` - for example a sidebar and a main panel scrolling independently. Each container is tracked separately, fires its own events, and can be controlled and queried on its own.
 
-### API Quick Reference
+### Mid-Flight Redirection
 
-#### Types
+This is the headline feature. Trigger `Sub.scroll` for the same container while a scroll is in flight, and the engine replaces it - smoothly carrying on from the current position to the new target instead of fighting with the old animation.
+
+📖 See [Interrupting Scrolls](../concepts/interrupting-scrolls.md) for a live side-by-side demonstration of all three engines.
+
+### Timing
+
+`Sub` advances each frame with a real animation-frame delta-time, so the configured `duration` / `speed` stays close to actual perceived time, even on high-refresh-rate displays.
+
+If you need timing precision, this is the engine to pick.
+
+[Check your display's refresh rate](../../tools/fps-test.html){ target="_blank" }
+
+📖 See [Timing](../concepts/timing.md) for more info.
+
+### Easing
+
+Defaults to `Linear`. Any easing from `Motion.Easing` works via `Scroll.easing`.
+
+📖 See [Easing](../concepts/easing.md) for the full list and live previews.
+
+## When to Choose This Engine
+
+Choose `Sub` when you need any of:
+
+- pause / resume / stop / reset / restart,
+- mid-flight redirection,
+- live progress events (scrollbars, percentage readouts, parallax),
+- queries for current scroll position or "is a scroll running?",
+- precise timing that doesn't drift with frame rate.
+
+For everything else, [Cmd](cmd.md) or [Task](task.md) are simpler.
+
+## API Quick Reference
+
+### Types
 
 | Type | Description |
 | ---- | ----------- |
-| `ScrollState` | Scroll state stored in your model |
-| `ScrollMsg` | Internal message type handled by `update` |
-| `ScrollEvent` | Event type: `Started`, `Ended`, `Progress`, `Stopped`, `Paused`, `Resumed`, `Restarted` |
-| `Container` | Scroll surface (`Document` or `Container "element-id"`) |
+| `ScrollState` | Lives in your model |
+| `ScrollMsg` | Internal message handled by `update` and `subscriptions` |
+| `ScrollEvent` | `Started` / `Ended` / `Progress` / `Stopped` / `Paused` / `Resumed` / `Restarted` |
+| `Container` | `Document` or `Container "element-id"` |
 
-#### Initialize
-
-| Function | Type | Description |
-| -------- | ---- | ----------- |
-| `init` | `ScrollState` | Create initial state |
-
-#### Trigger
+### Initialize
 
 | Function | Type | Description |
 | -------- | ---- | ----------- |
-| `scroll` | `(ScrollMsg -> msg) -> ScrollState -> (ScrollBuilder -> ScrollBuilder) -> ( ScrollState, Cmd msg )` | Trigger a stateful scroll |
+| `init` | `ScrollState` | Empty initial state |
 
-#### Update
-
-| Function | Type | Description |
-| -------- | ---- | ----------- |
-| `update` | `(ScrollMsg -> msg) -> ScrollMsg -> ScrollState -> ( ScrollState, List ScrollEvent, Cmd msg )` | Advance the scroll and emit events |
-
-#### Subscriptions
+### Trigger
 
 | Function | Type | Description |
 | -------- | ---- | ----------- |
-| `subscriptions` | `(ScrollMsg -> msg) -> ScrollState -> Sub msg` | Animation frame subscription while scrolls are running |
+| `scroll` | `(ScrollMsg -> msg) -> ScrollState -> (ScrollBuilder -> ScrollBuilder) -> ( ScrollState, Cmd msg )` | Start or redirect a scroll |
 
-#### Timing
-
-| Function | Type | Description |
-| -------- | ---- | ----------- |
-| `delay` | `Int -> ScrollBuilder -> ScrollBuilder` | Set default delay (ms) |
-| `duration` | `Int -> ScrollBuilder -> ScrollBuilder` | Set default duration (ms) |
-| `speed` | `Float -> ScrollBuilder -> ScrollBuilder` | Set default speed (px/sec) |
-
-#### Easing
+### Update / Subscribe
 
 | Function | Type | Description |
 | -------- | ---- | ----------- |
-| `easing` | `Easing -> ScrollBuilder -> ScrollBuilder` | Set default easing |
+| `update` | `(ScrollMsg -> msg) -> ScrollMsg -> ScrollState -> ( ScrollState, List ScrollEvent, Cmd msg )` | Advance state and emit events |
+| `subscriptions` | `(ScrollMsg -> msg) -> ScrollState -> Sub msg` | Animation-frame subscription |
 
-#### Controls
+### Timing
 
 | Function | Type | Description |
 | -------- | ---- | ----------- |
-| `stop` | `Container -> (ScrollMsg -> msg) -> ScrollState -> ( ScrollState, Cmd msg )` | Jump to target position |
+| `delay` | `Int -> ScrollBuilder -> ScrollBuilder` | Wait before scrolling (ms) |
+| `duration` | `Int -> ScrollBuilder -> ScrollBuilder` | Total scroll time (ms) |
+| `speed` | `Float -> ScrollBuilder -> ScrollBuilder` | Scroll rate (px/sec) |
+
+### Easing
+
+| Function | Type | Description |
+| -------- | ---- | ----------- |
+| `easing` | `Easing -> ScrollBuilder -> ScrollBuilder` | Set the easing curve |
+
+### Controls
+
+| Function | Type | Description |
+| -------- | ---- | ----------- |
+| `stop` | `Container -> (ScrollMsg -> msg) -> ScrollState -> ( ScrollState, Cmd msg )` | Jump to target and finish |
 | `pause` | `Container -> ScrollState -> ScrollState` | Freeze at current position |
-| `resume` | `Container -> ScrollState -> ScrollState` | Continue paused scroll |
-| `reset` | `Container -> (ScrollMsg -> msg) -> ScrollState -> ( ScrollState, Cmd msg )` | Jump to start position |
-| `restart` | `Container -> (ScrollMsg -> msg) -> ScrollState -> ( ScrollState, Cmd msg )` | Reset and replay |
+| `resume` | `Container -> ScrollState -> ScrollState` | Continue a paused scroll |
+| `reset` | `Container -> (ScrollMsg -> msg) -> ScrollState -> ( ScrollState, Cmd msg )` | Jump to start and finish |
+| `restart` | `Container -> (ScrollMsg -> msg) -> ScrollState -> ( ScrollState, Cmd msg )` | Reset, then replay |
 
-#### Queries
+### Queries
 
 | Function | Type | Description |
 | -------- | ---- | ----------- |
-| `anyRunning` | `ScrollState -> Maybe Bool` | Check if any scrolls are running |
-| `isRunning` | `Container -> ScrollState -> Maybe Bool` | Check a specific container |
-| `getPosition` | `Container -> ScrollState -> Maybe { x : Float, y : Float }` | Current scroll position |
-| `getPositionX` | `Container -> ScrollState -> Maybe Float` | Current X position |
-| `getPositionY` | `Container -> ScrollState -> Maybe Float` | Current Y position |
+| `anyRunning` | `ScrollState -> Maybe Bool` | Any scroll running? |
+| `isRunning` | `Container -> ScrollState -> Maybe Bool` | This container scrolling? |
+| `getPosition` | `Container -> ScrollState -> Maybe { x : Float, y : Float }` | Current position |
+| `getPositionX` | `Container -> ScrollState -> Maybe Float` | Current X |
+| `getPositionY` | `Container -> ScrollState -> Maybe Float` | Current Y |
 
 For complete API details, see the [Scroll.Engine.Sub](https://package.elm-lang.org/packages/phollyer/elm-motion/latest/Scroll-Engine-Sub) documentation.
 
-### Next Steps
+## Next Steps
 
-Now that you've learnt about the Scroll Engines, learn about interrupting your scrolls mid-flight.
+Now that you know the engines, learn how the same scroll behaves differently when interrupted mid-flight.
 
 [Interrupting Scrolls →](../concepts/interrupting-scrolls.md){ .md-button .md-button--primary }
