@@ -6,8 +6,12 @@ This is everything `Scroll.Task` offers:
 | -------- | ---- |
 | `scroll` | `(ScrollBuilder -> ScrollBuilder) -> Task ScrollError (List ScrollOk)` |
 | `scrollEach` | `(ScrollBuilder -> ScrollBuilder) -> Task Never (List (Result ScrollError ScrollOk))` |
+| `delay` | `Float -> ScrollBuilder -> ScrollBuilder` |
+| `duration` | `Float -> ScrollBuilder -> ScrollBuilder` |
+| `speed` | `Float -> ScrollBuilder -> ScrollBuilder` |
+| `easing` | `Easing -> ScrollBuilder -> ScrollBuilder` |
 
-Two functions. Same fire-and-forget mental model as [`Cmd`](cmd.md), but the result is typed - so you can:
+Two triggers, plus timing and easing. Same fire-and-forget mental model as [`Cmd`](cmd.md), but the result is typed - so you can:
 
 - find out whether the scroll succeeded or failed,
 - chain a scroll with other `Task`s (e.g. fetch data, then scroll to it),
@@ -60,19 +64,61 @@ If you don't need any of those, [`Cmd`](cmd.md) is simpler. If you need pause / 
                 ( { model | status = "Scroll failed" }, Cmd.none )
     ```
 
-## `ScrollOk` and `ScrollError`
+## Handling Results
 
-| Type | Field | Description |
-| ---- | ----- | ----------- |
-| `ScrollOk` | `container` | The container that was scrolled |
-| `ScrollOk` | `targetElementId` | The element ID, if `toElement` was used |
-| `ScrollError` | `container` | The container that was being scrolled |
-| `ScrollError` | `targetElementId` | The element ID, if one was specified |
-| `ScrollError` | `domError` | The underlying [`Dom.Error`](https://package.elm-lang.org/packages/elm/browser/latest/Browser-Dom#Error) |
+### `ScrollOk`
+
+`ScrollOk` is a type alias for `{ container : Container, targetElementId : Maybe String }`.
+
+It is returned for every scroll that completed successfully,  and tells you which container finished and - if you targeted a specific element - which one.
+
+| Field | Type | Description |
+| ----- | ---- | ----------- |
+| `container` | `Container` | The container that was scrolled (`Document` or `Container "id"`) |
+| `targetElementId` | `Maybe String` | The element ID, if `toElement` was used |
+
+??? example "View Source Code"
+
+    ```elm
+    GotScrollResult (Ok results) ->
+        let
+            arrived =
+                results
+                    |> List.filterMap .targetElementId
+                    |> String.join ", "
+        in
+        ( { model | status = "Arrived at: " ++ arrived }
+        , Cmd.none
+        )
+    ```
+
+### `ScrollError`
+
+Returned when a scroll fails. Tells you what was being scrolled, which target was involved, and the underlying DOM error - usually because the container or target element wasn't in the DOM.
+
+| Field | Type | Description |
+| ----- | ---- | ----------- |
+| `container` | `Container` | The container that was being scrolled |
+| `targetElementId` | `Maybe String` | The element ID, if one was specified |
+| `domError` | [`Dom.Error`](https://package.elm-lang.org/packages/elm/browser/latest/Browser-Dom#Error) | The underlying browser DOM error |
+
+??? example "View Source Code"
+
+    ```elm
+    GotScrollResult (Err (Task.ScrollError err)) ->
+        let
+            target =
+                err.targetElementId
+                    |> Maybe.withDefault "(no element)"
+        in
+        ( { model | status = "Scroll failed for: " ++ target }
+        , Cmd.none
+        )
+    ```
 
 ## `scroll` vs `scrollEach`
 
-`Task.scroll` is **fail-fast**: the first scroll to fail ends the task immediately, and later scrolls in the same builder are skipped. The `Ok` payload lists every scroll that *did* complete, in order.
+`Task.scroll` is **fail-fast**: the first scroll to fail ends the task immediately, and later scrolls in the same builder are skipped. You only get `Ok` if **every** scroll completed - and at that point the payload lists them all, in order. The moment one fails you get `Err` with no record of the ones that succeeded before it.
 
 If you'd rather get a result for **every** target - failures included - use `Task.scrollEach`:
 
@@ -91,24 +137,7 @@ If you'd rather get a result for **every** target - failures included - use `Tas
         )
     ```
 
-`scrollEach` always completes (its error type is `Never`) and returns one `Result` per target.
-
-## Parallel Scrolls
-
-To run independent scrolls in parallel - each with its own success/failure handling - build them separately and batch the resulting `Cmd`s:
-
-??? example "View Source Code"
-
-    ```elm
-    ( model
-    , Cmd.batch
-        [ Task.scroll scrollSidebar
-            |> TaskCore.attempt SidebarResult
-        , Task.scroll scrollMain
-            |> TaskCore.attempt MainResult
-        ]
-    )
-    ```
+`scrollEach` always completes and returns one `Result` per target.
 
 ## Task Composition
 
@@ -125,14 +154,12 @@ Because `Task.scroll` is a regular `Task`, you can compose it with anything else
 
 ## Caveats
 
-`Task` inherits the two pre-calculation trade-offs from [`Cmd`](cmd.md#caveats):
+`Task` suffers the two pre-calculation trade-offs that [`Cmd`](cmd.md#caveats) does:
 
 - **Timing drift** on busy pages or high-refresh-rate displays.
 - **Re-triggering doesn't cancel** - parallel scrolls compete for the container, longest wins.
 
-Both are fixed by [`Sub`](sub.md) if they matter to you. The `Task` shape does give you one extra workaround for the re-trigger case that `Cmd` doesn't have: serialize. Trigger the next scroll only after the previous `Task` resolves (or chain them with `Task.andThen`).
-
-📖 See [Interrupting Scrolls](../concepts/interrupting-scrolls.md) for a live side-by-side demonstration.
+Both are fixed by [`Sub`](sub.md) if they matter to you.
 
 ## Next Steps
 

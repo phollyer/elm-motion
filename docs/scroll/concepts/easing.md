@@ -37,6 +37,6 @@ If you don't set an easing, scrolls run on `Linear` - a constant rate from start
 
 ## Next Steps
 
-Now learn how to control scrolls once they've started.
+Learn what happens when a scroll is re-triggered before the first one finishes.
 
-[Controlling Scrolls →](controlling-scroll.md){ .md-button .md-button--primary }
+[Interrupting Scrolls →](interrupting-scrolls.md){ .md-button .md-button--primary }

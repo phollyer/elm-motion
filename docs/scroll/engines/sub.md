@@ -28,8 +28,6 @@ A vertical scroll with full state and event handling.
     --8<-- "docs/examples/src/Scroll/Sub/FirstScroll/Main.elm"
     ```
 
-📖 See [Vertical Scrolling](../first-scrolls/vertical-scrolling.md) for a step-by-step breakdown.
-
 ---
 
 ## Quick Walkthrough
@@ -67,23 +65,9 @@ Wire the engine into `subscriptions`. The subscription is dormant when no scroll
         Sub.subscriptions ScrollMsg model.scrollState
     ```
 
-!!! tip "Multiple `ScrollState`s"
-
-    If you keep more than one `ScrollState` in your model, combine their subscriptions with `Sub.batch`:
-
-    ```elm
-    subscriptions model =
-        Sub.batch
-            [ Sub.subscriptions GotMainScrollMsg model.mainScrollState
-            , Sub.subscriptions GotSidebarScrollMsg model.sidebarScrollState
-            ]
-    ```
-
-    Each `ScrollState` tracks its scrolls independently, fires its own events, and can be controlled and queried on its own.
-
 ### 3. Trigger
 
-`Sub.scroll` takes a tagger, the current state, and a builder. It returns `( ScrollState, Cmd msg )`:
+`Sub.scroll` takes your `Msg`, the current state, and a builder. It returns `( ScrollState, Cmd msg )`:
 
 ??? example "View Source Code"
 
@@ -113,7 +97,7 @@ Wire the engine into `subscriptions`. The subscription is dormant when no scroll
                 ( { model | scrollState = newState }, cmd )
     ```
 
-If a scroll for the same container is already running, this **replaces** it - the new scroll picks up from the current position. That's how mid-flight redirection works.
+If a scroll for the same container is already running, this **replaces** it - the new scroll picks up from the current position.
 
 ### 4. React
 
@@ -231,7 +215,25 @@ Each control takes a `Container` so you can target a specific scroll.
         )
     ```
 
-📖 See [Controlling Scrolls](../concepts/controlling-scroll.md) for live examples.
+Each control emits a matching event on the next frame, so you can react in your event handler:
+
+| Control | Event |
+| ------- | ----- |
+| `stop` | `Stopped` |
+| `pause` | `Paused` |
+| `resume` | `Resumed` |
+| `reset` | `Stopped` |
+| `restart` | `Restarted` |
+
+??? example "View Example"
+
+    <iframe src="../../../examples/src/Scroll/Sub/ControllingScrolls/index.html" class="example-iframe" loading="lazy"></iframe>
+
+??? example "View Source Code"
+
+    ```elm
+    --8<-- "docs/examples/src/Scroll/Sub/ControllingScrolls/Main.elm"
+    ```
 
 ### Querying State
 
@@ -276,8 +278,6 @@ This is the headline feature. Trigger `Sub.scroll` for the same container while 
 If you need timing precision, this is the engine to pick.
 
 [Check your display's refresh rate](../../tools/fps-test.html){ target="_blank" }
-
-📖 See [Timing](../concepts/timing.md) for more info.
 
 ### Easing
 

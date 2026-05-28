@@ -112,7 +112,7 @@ Useful if the container scrolls in both directions, but you just want to scroll 
 
 ## 3. Timing
 
-Pick **one** of `speed` or `duration` - `speed` is the better default for most scrolling.
+Pick **one** of `speed` or `duration`.
 
 | Function | What it means |
 | -------- | ------------- |
@@ -120,9 +120,14 @@ Pick **one** of `speed` or `duration` - `speed` is the better default for most s
 | `duration n` | Take exactly `n` ms, regardless of distance. |
 | `delay n` | Wait `n` ms before starting the scroll. |
 
-If you set neither `speed` nor `duration`, the engine treats the duration as `0ms` and snaps instantly to the target.
+!!! tip "`speed` is almost always the right default for scrolling"
+    A 100px scroll at a fixed 600ms duration crawls. A 2400px scroll at the same 600ms races. `speed` gives you the same *feel* no matter how far the user is jumping.
 
-📖 See [Timing](concepts/timing.md) for the full rundown, including why `speed` usually feels better.
+!!! warning "Gotchas"
+    - If both `speed` and `duration` are set on the same target, **the last one wins** - be explicit about which you want.
+    - With **neither** set, the engine treats the duration as `0ms` and snaps instantly to the target. Always set at least one.
+
+[Cmd](engines/cmd.md) and [Task](engines/task.md) pre-calculate every frame up front, so the actual time the scroll takes can drift on busy pages or high-refresh-rate displays. [Sub](engines/sub.md) advances on real animation frames and stays accurate - reach for it if timing precision matters.
 
 ---
 

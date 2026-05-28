@@ -42,7 +42,7 @@ Pause, resume, restart, stop, and reset a scroll while it's running. Sub engine 
 
     <iframe src="../../examples/src/Scroll/Sub/ControllingScrolls/index.html" class="example-iframe" loading="lazy"></iframe>
 
-[Go to page](concepts/controlling-scroll.md){ .md-button .md-button--primary }
+[Go to page](engines/sub.md#controls){ .md-button .md-button--primary }
 
 ---
 

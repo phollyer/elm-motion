@@ -130,8 +130,6 @@ nav:
       - Sub: scroll/engines/sub.md
     - Concepts:
       - Interrupting Scrolls: scroll/concepts/interrupting-scrolls.md
-      - Controlling Scroll: scroll/concepts/controlling-scroll.md
-      - Timing: scroll/concepts/timing.md
       - Easing: scroll/concepts/easing.md
     - Examples: scroll/examples.md
   - API Reference: api-reference.md

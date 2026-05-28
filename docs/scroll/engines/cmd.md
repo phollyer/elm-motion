@@ -5,10 +5,14 @@ This is everything `Scroll.Cmd` offers:
 | Function | Type |
 | -------- | ---- |
 | `scroll` | `msg -> (ScrollBuilder -> ScrollBuilder) -> Cmd msg` |
+| `delay` | `Float -> ScrollBuilder -> ScrollBuilder` |
+| `duration` | `Float -> ScrollBuilder -> ScrollBuilder` |
+| `speed` | `Float -> ScrollBuilder -> ScrollBuilder` |
+| `easing` | `Easing -> ScrollBuilder -> ScrollBuilder` |
 
-One function. That's it.
+One trigger, plus timing and easing. That's the whole engine.
 
-And that's the point: if your scroll is "send the user there, I don't need to know anything more", you can wire it up in two lines of `update` and there is nothing else to learn. No state in the model, no subscription, no view attribute, no event union.
+And that's the point: if your scroll is "send the user there, I don't need to know anything more", you can wire it up in two lines of `update` and there is nothing else to learn. No state in the model, no subscription, no event union.
 
 If you need anything beyond "go" - typed success/failure, mid-flight redirects, live progress, pause/resume - the other engines have it. But for plain navigation, this is the whole story.
 
@@ -25,6 +29,8 @@ If you need anything beyond "go" - typed success/failure, mid-flight redirects, 
     ```
 
 ## Trigger
+
+Use `scroll` to trigger the scroll animation.
 
 ??? example "View Source Code"
 
@@ -50,9 +56,9 @@ If you need anything beyond "go" - typed success/failure, mid-flight redirects, 
                 ( model, Cmd.none )
     ```
 
-`ScrollComplete` fires when the scroll finishes - successfully or not, you can't tell the difference, and that's deliberate. If the target element isn't in the DOM, the scroll fails silently.
+`ScrollComplete` fires when the scroll finishes - successfully or not, you can't tell the difference, and that's deliberate. If the target element isn't in the DOM, the scroll fails silently and reports completion.
 
-If you need a real result, use [`Task`](task.md).
+If you need a real result, use [`Task`](task.md) or [`Sub`](sub.md).
 
 ## Multiple Targets in One Call
 
@@ -75,19 +81,21 @@ Chain `build` calls into a single pipeline to dispatch several scrolls at once. 
 
 ## Caveats
 
-The minimal API has two real trade-offs - both shared with [`Task`](task.md), and both fixed by [`Sub`](sub.md) if they matter to you.
+This Engine has two real trade-offs - both shared with [`Task`](task.md), and both fixed by [`Sub`](sub.md) if they matter to you.
 
 ### Timing Drift
 
-`Cmd` pre-calculates every frame at dispatch time and writes them out as a `Task` chain. Without access to the browser's vsync signal, the *actual* duration can drift on busy pages or high-refresh-rate displays.
+When you ask for a `duration` of `3000`, you're saying "I want this scroll to take about three seconds". `Cmd` plans out all the in-between scroll positions up front and hands them to Elm as a chain of small tasks: *set position, then set the next, then the next...*
+
+There's no clock between those steps. The runtime just runs them back-to-back as fast as it can, and the browser paints whatever it has ready on its next refresh. So the *actual* time you see depends on how busy the page is and how fast the display refreshes - the duration is a target, not a guarantee.
+
+If you need a duration you can rely on to the millisecond, use [`Sub`](sub.md).
 
 ### Re-Triggering Doesn't Cancel
 
 Calling `Cmd.scroll` again while a scroll is in flight doesn't replace the running scroll - both run in parallel and compete for control of the container. The longer one usually wins, often finishing short of its real target.
 
 If you have to stay on `Cmd`, prevent overlap in your own code: ignore new triggers while a scroll is active, debounce rapid input, or queue the latest target and only dispatch it after `ScrollComplete`.
-
-📖 See [Interrupting Scrolls](../concepts/interrupting-scrolls.md) for a live side-by-side demonstration of all three engines.
 
 ## Next Steps
 
