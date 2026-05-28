@@ -137,8 +137,3 @@ Scroll-driven animation examples using the dedicated timeline engines.
 ### ViewTimeline Engine
 
 --8<-- "docs/animation/engines/waapi/timeline-animations.md:view-timeline-example"
-
-
-[Scroll Timeline Engine](engines/scroll-timeline.md){ .md-button .md-button--primary }
-or
-[View Timeline Engine](engines/view-timeline.md){ .md-button .md-button--primary }

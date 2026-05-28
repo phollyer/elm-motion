@@ -184,7 +184,7 @@ statusBar status =
                     ( "#22c55e", "✓ Scroll complete for " ++ containerLabel container )
 
                 Progress _ progress ->
-                    ( "#3b82f6", "Progress... " ++ String.fromFloat (progress * 100) ++ "%" )
+                    ( "#3b82f6", "Progress... " ++ String.fromInt (round (progress * 100)) ++ "%" )
 
                 Failed err ->
                     ( "#ef4444", "✗ " ++ err )
