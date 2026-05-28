@@ -1,5 +1,5 @@
 --8<-- [start:desc]
-Two-axis scrolling - navigate a large grid both horizontally and vertically to reach named regions.
+A spreadsheet-style grid with sticky row and column headers. Region buttons jump to named cells using both axes at once, and `withOffsetXY` keeps the cell clear of the sticky headers when the scroll settles. Shown in all three engines.
 --8<-- [end:desc]
 
 --8<-- [start:examples]
@@ -46,7 +46,7 @@ Two-axis scrolling - navigate a large grid both horizontally and vertically to r
 
 ??? example "Breaking It Down"
 
-    This example uses the same workflow, but the target container scrolls on both axes and the builder adds `withOffsetXY` so sticky headers stay visible after navigation.
+    Same six-step workflow as [Vertical Scrolling](vertical-scrolling.md). The two new ingredients are both in the builder: `toElement` naturally scrolls *both* axes, and `withOffsetXY` shifts the final position so the cell isn't hidden behind the sticky headers.
 
     ### 1. Build
 

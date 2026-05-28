@@ -1,5 +1,5 @@
 --8<-- [start:desc]
-Simple vertical scrolling to elment id's.
+The classic "jump to a section" scroll. A vertical container with three named sections and a button per section that smoothly scrolls to it. The same example is built three times - once per engine - so the only thing that changes between tabs is the engine wiring.
 --8<-- [end:desc]
 
 --8<-- [start:examples]
@@ -46,11 +46,13 @@ Simple vertical scrolling to elment id's.
 
 ??? example "Breaking It Down"
 
-    There are three common steps for fire-and-forget scrolls, and extra state steps when you want results or live progress.
+    Every scroll example follows the same workflow. The number of steps you actually wire up depends on the engine:
 
-    Cmd uses Build -> Render -> Trigger.
-    Task adds Initialize and React.
-    Sub adds Initialize, Subscribe, and React.
+    - **Cmd** - the minimal flow: Build, Render, Trigger.
+    - **Task** - adds Initialize (to hold the result) and React (to handle `Ok` / `Err`).
+    - **Sub** - adds Initialize (to hold `ScrollState`), Subscribe (for frame updates), and React (to update from events).
+
+    Below, each step is shown side by side per engine. Notice how only the wiring changes - the builder definition is identical across all three.
 
     ### 1. Build
 

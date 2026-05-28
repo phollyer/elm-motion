@@ -1,5 +1,5 @@
 --8<-- [start:desc]
-Horizontal scrolling - navigate an image gallery along the X axis only.
+A horizontally-scrolling image gallery. The buttons jump between named cards, and the builder uses `onXAxis` so the gallery never drifts vertically. Shown in all three engines.
 --8<-- [end:desc]
 
 --8<-- [start:examples]
@@ -46,7 +46,7 @@ Horizontal scrolling - navigate an image gallery along the X axis only.
 
 ??? example "Breaking It Down"
 
-    This example follows the same workflow as the vertical scroll example, but the builder adds `onXAxis` so the gallery only moves horizontally.
+    Same six-step workflow as [Vertical Scrolling](vertical-scrolling.md). The only meaningful difference is in the builder - `onXAxis` tells the engine to scroll horizontally only.
 
     ### 1. Build
 
