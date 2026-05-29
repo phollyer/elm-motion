@@ -2,6 +2,7 @@ module Shared.Easing.Keyframes exposing
     ( KeyframeSample
     , defaultKeyframeCount
     , generateKeyframes
+    , sampleCountForDuration
     )
 
 {-| Keyframe sample generation for easings the WAAPI engine cannot
@@ -50,6 +51,32 @@ the samples.
 defaultKeyframeCount : Int
 defaultKeyframeCount =
     60
+
+
+{-| Pick a keyframe sample count appropriate for an animation of a
+given duration.
+
+Engines that bake to a static keyframe representation (Keyframe
+`@keyframes`, WAAPI `easingKeyframes`) need enough samples that the
+browser's linear interpolation between samples stays visually smooth.
+The default 60 samples is fine for short animations (≤1s) but leaves
+long-running motions — notably low-stiffness or high-mass springs whose
+settle time can run into tens of seconds — with samples spaced far
+enough apart that the linear segments become visible.
+
+The heuristic is ~60 samples per second of motion (floor of 60, cap of
+
+1.  which keeps sub-second motions on their existing budget while
+    giving long springs the resolution they need to remain smooth.
+
+-}
+sampleCountForDuration : Float -> Int
+sampleCountForDuration durationMs =
+    let
+        target =
+            round (durationMs / 16.0)
+    in
+    max defaultKeyframeCount (min 1000 target)
 
 
 

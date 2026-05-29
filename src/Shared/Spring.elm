@@ -97,9 +97,10 @@ velocityAt params timeMs =
 {-| Time at which the motion is considered settled, in milliseconds.
 
 Settled means displacement and velocity have both decayed below a
-visually negligible threshold. Hard-capped at 8 seconds to keep keyframe
-arrays bounded for pathological configurations (e.g. very low stiffness,
-near-zero damping).
+visually negligible threshold. Hard-capped at 5 minutes as a sanity
+bound for degenerate configurations (e.g. zero stiffness, zero damping)
+that would otherwise never settle; real spring configurations finish
+well within this limit.
 
 -}
 settleTimeMs : MotionParams -> Float
@@ -127,8 +128,9 @@ Returns:
     at that point in time. The first sample is `(0, from)` and the last
     sample is `(1, to)`.
 
-The sample count is fixed at 60 for now (uniform spacing in time);
-non-uniform peak-aware placement is a possible future refinement.
+The sample count scales with `durationMs` (~60 samples per second of
+motion, floored at 60 and capped at 1000) so long-running springs stay
+smooth when engines linearly interpolate between samples.
 
 -}
 bake :
@@ -146,7 +148,7 @@ bake params =
             durationS * 1000.0
 
         n =
-            60
+            sampleCountForDurationMs durationMs
 
         sampleAt i =
             let
@@ -188,6 +190,19 @@ snapEndpoints from to samples =
 
                 [] ->
                     withSnappedHead
+
+
+{-| Pick a baked-sample count appropriate for an animation of the given
+duration. The constant 60-sample budget that was historically used for
+short easings leaves long springs with samples spaced far enough apart
+that linear interpolation between them becomes visible. Aim for ~60
+samples per second of motion, with a floor at 60 (so short motions are
+unaffected) and a cap at 1000 (so degenerate-long settle times don't
+blow up the keyframe array).
+-}
+sampleCountForDurationMs : Float -> Int
+sampleCountForDurationMs durationMs =
+    max 60 (min 1000 (round (durationMs / 16.0)))
 
 
 
@@ -365,8 +380,9 @@ that `|x(t)| < ε` after that point. The velocity decays with at least
 the same exponential rate as position in every regime, so the position
 bound is sufficient.
 
-Hard-capped at 8 seconds for pathological configurations (very low
-stiffness, near-zero damping).
+Hard-capped at 5 minutes as a sanity bound for degenerate
+configurations (zero stiffness, zero damping) that would otherwise
+never settle.
 
 -}
 settleTimeS : Solution -> Float
@@ -376,7 +392,7 @@ settleTimeS sol =
             0.005
 
         cap =
-            8.0
+            300.0
     in
     case sol of
         Underdamped { omega0, zeta, a, b } ->

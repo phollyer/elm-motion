@@ -189,6 +189,17 @@ generatedCssTests =
                     |> generatedTransition
                     |> String.contains "cubic-bezier(0.34, 1.56, 0.64, 1)"
                     |> Expect.equal True
+        , test "noWobble spring emits a non-overshoot cubic-bezier" <|
+            \_ ->
+                let
+                    css =
+                        initBuilder
+                            |> Transition.spring Spring.noWobble
+                            |> animateOpacityTo 0.5
+                            |> generatedTransition
+                in
+                ( String.contains "0.34, 1.56" css, String.contains "cubic-bezier(0.25, 0.1, 0.25, 1)" css )
+                    |> Expect.equal ( False, True )
         , test "no-spring + Linear easing emits 'linear'" <|
             \_ ->
                 initBuilder

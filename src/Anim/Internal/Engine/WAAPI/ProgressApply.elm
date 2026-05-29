@@ -26,7 +26,11 @@ import Anim.Internal.Property.Size as Size
 import Anim.Internal.Property.Skew as Skew
 import Anim.Internal.Property.Translate as Translate
 import Dict exposing (Dict)
+import Motion.Easing exposing (Easing)
+import Motion.Internal.Spring as SpringInt
+import Motion.Spring exposing (Spring)
 import Shared.Easing
+import Shared.Spring as SpringSolver
 
 
 
@@ -75,7 +79,7 @@ applyConfigProgress config rawProgress baselines =
                     resolveStart cfg.start (PropertyBaselines.getOpacity baselines) Opacity.default
 
                 t =
-                    Shared.Easing.toFunction cfg.easing rawProgress
+                    progressToT cfg rawProgress
             in
             PropertyBaselines.setOpacity (Interpolation.interpolateOpacity t start cfg.end) baselines
 
@@ -85,7 +89,7 @@ applyConfigProgress config rawProgress baselines =
                     resolveStart cfg.start (PropertyBaselines.getTranslate baselines) Translate.default
 
                 t =
-                    Shared.Easing.toFunction cfg.easing rawProgress
+                    progressToT cfg rawProgress
             in
             PropertyBaselines.setTranslate (Interpolation.interpolateTranslate t start cfg.end) baselines
 
@@ -95,7 +99,7 @@ applyConfigProgress config rawProgress baselines =
                     resolveStart cfg.start (PropertyBaselines.getRotate baselines) Rotate.default
 
                 t =
-                    Shared.Easing.toFunction cfg.easing rawProgress
+                    progressToT cfg rawProgress
             in
             PropertyBaselines.setRotate (Interpolation.interpolateRotate t start cfg.end) baselines
 
@@ -105,7 +109,7 @@ applyConfigProgress config rawProgress baselines =
                     resolveStart cfg.start (PropertyBaselines.getScale baselines) Scale.default
 
                 t =
-                    Shared.Easing.toFunction cfg.easing rawProgress
+                    progressToT cfg rawProgress
             in
             PropertyBaselines.setScale (Interpolation.interpolateScale t start cfg.end) baselines
 
@@ -115,7 +119,7 @@ applyConfigProgress config rawProgress baselines =
                     resolveStart cfg.start (PropertyBaselines.getSkew baselines) Skew.default
 
                 t =
-                    Shared.Easing.toFunction cfg.easing rawProgress
+                    progressToT cfg rawProgress
             in
             PropertyBaselines.setSkew (Interpolation.interpolateSkew t start cfg.end) baselines
 
@@ -125,7 +129,7 @@ applyConfigProgress config rawProgress baselines =
                     resolveStart cfg.start (PropertyBaselines.getSize baselines) Size.default
 
                 t =
-                    Shared.Easing.toFunction cfg.easing rawProgress
+                    progressToT cfg rawProgress
             in
             PropertyBaselines.setSize (Interpolation.interpolateSize t start cfg.end) baselines
 
@@ -135,7 +139,7 @@ applyConfigProgress config rawProgress baselines =
                     resolveStart cfg.start (PropertyBaselines.getPerspectiveOrigin baselines) PerspectiveOrigin.default
 
                 t =
-                    Shared.Easing.toFunction cfg.easing rawProgress
+                    progressToT cfg rawProgress
             in
             PropertyBaselines.setPerspectiveOrigin (Interpolation.interpolatePerspectiveOrigin t start cfg.end) baselines
 
@@ -145,7 +149,7 @@ applyConfigProgress config rawProgress baselines =
                     resolveStart cfg.start (PropertyBaselines.getCustomProperty cssName baselines) 0
 
                 t =
-                    Shared.Easing.toFunction cfg.easing rawProgress
+                    progressToT cfg rawProgress
             in
             PropertyBaselines.setCustomProperty cssName (Interpolation.interpolateFloat t start cfg.end) unit baselines
 
@@ -155,7 +159,7 @@ applyConfigProgress config rawProgress baselines =
                     resolveStart cfg.start (PropertyBaselines.getCustomColorProperty cssName baselines) Color.transparent
 
                 t =
-                    Shared.Easing.toFunction cfg.easing rawProgress
+                    progressToT cfg rawProgress
             in
             PropertyBaselines.setCustomColorProperty cssName (Color.interpolate t start cfg.end) baselines
 
@@ -178,3 +182,29 @@ resolveStart configStart baselineCurrent default =
 
         Nothing ->
             Maybe.withDefault default baselineCurrent
+
+
+{-| Map raw 0..1 progress to an eased `t` for interpolation. When the
+property's config carries a `Spring`, sample the spring's analytical
+trajectory at `progress * duration` so the Elm-side baseline matches the
+spring-driven WAAPI keyframes (including overshoot). Otherwise apply the
+stored easing curve. Keeping these in sync is what lets a spring-driven
+WAAPI animation be interrupted cleanly: the next animation reads a baseline
+that reflects the box's actual on-screen position rather than a linear
+projection of the old motion.
+-}
+progressToT : { a | easing : Easing, spring : Maybe Spring, duration : Int } -> Float -> Float
+progressToT cfg rawProgress =
+    case cfg.spring of
+        Just s ->
+            let
+                motion =
+                    { spring = SpringInt.unwrap s
+                    , from = 0
+                    , to = 1
+                    }
+            in
+            SpringSolver.valueAt motion (rawProgress * toFloat cfg.duration)
+
+        Nothing ->
+            Shared.Easing.toFunction cfg.easing rawProgress

@@ -331,12 +331,12 @@ These events come directly from the underlying technology - CSS DOM events or We
 ??? example "View Native Events"
 
     | Event | Transition | Keyframe | WAAPI | ScrollTimeline | ViewTimeline |
-    | ----- | :---------: | :-------: | :---: | :------------: | :----------: |
+    | ----- | :--------: | :------: | :---: | :------------: | :----------: |
     | Run | ✓ | | | | |
     | Started | ✓ | ✓ | | | |
     | Ended | ✓ | ✓ | ✓ | ✓ | ✓ |
     | Cancelled | ✓ | ✓ | ✓ | ✓ | ✓ |
-    | Iteration | | ✓ | | ✓ | ✓ |
+    | Iteration | | ✓ | | | |
 
 
 ### Engine-Generated Events
@@ -345,15 +345,15 @@ These events are generated internally by the engine:
 
 ??? example "View Engine Generated Events"
 
-    | Event | Keyframe | Sub | WAAPI |
-    | ----- | :-------: | :-: | :---: |
+    | Event | Keyframe | Sub | WAAPI | ScrollTimeline | ViewTimeline |
+    | ----- | :------: | :-: | :---: | :---=========: | :----------: | 
     | Started | | ✓ | ✓ |
     | Ended | | ✓ | |
     | Cancelled | | ✓ | |
     | Paused | ✓ | ✓ | ✓ |
     | Resumed | ✓ | ✓ | ✓ |
     | Restarted | ✓ | ✓ | ✓ |
-    | Iteration | | ✓ | ✓ |
+    | Iteration | | | ✓ | ✓ | ✓ |
     | Progress | | ✓ | ✓ |
 
 

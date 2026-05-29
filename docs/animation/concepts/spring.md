@@ -4,6 +4,63 @@ Springs describe motion in terms of physics — stiffness, damping, mass — rat
 
 Use a spring when motion should feel physical. Use an [easing](easing.md) when you want a known duration and a predictable curve.
 
+## Examples
+
+The same horizontal translate, driven by all five spring presets and rendered in each of the four time-driven engines. Click a preset to play the animation; each click flips the direction so you can keep tapping to compare. Notice there's no `duration` or `speed` — settle time is determined entirely by the spring's physics and the distance it has to travel.
+
+The bottom row builds a `Spring.custom` from the three inputs. Edit any of `stiffness`, `damping`, or `mass` and click **Play custom** to feel the change. Lower damping bounces longer; higher stiffness snaps faster; heavier mass feels more sluggish.
+
+??? example "View Example"
+    === "Transition"
+
+        ❌ **Behaviour**: Springs need to be converted to a css `cubic-bezier` curve, which means they are simple approximations.
+
+        <iframe src="../../examples/src/Animation/Transition/Springs/index.html" class="example-iframe" loading="lazy"></iframe>
+
+    === "Keyframe"
+
+        ✅ **Behaviour**: The full spring representation is baked into the `@keyframes` rules.
+
+        <iframe src="../../examples/src/Animation/Keyframe/Springs/index.html" class="example-iframe" loading="lazy"></iframe>
+
+    === "Sub"
+
+        ✅ **Behaviour**: The Spring is interpolated on every frame.
+
+        <iframe src="../../examples/src/Animation/Sub/Springs/index.html" class="example-iframe" loading="lazy"></iframe>
+
+    === "WAAPI"
+
+        ✅ **Behaviour**: The spring is baked into dense keyframes and handed to the Web Animations API for playback.
+
+        <iframe src="../../examples/src/Animation/WAAPI/Springs/index.html" class="example-iframe" loading="lazy"></iframe>
+
+??? example "View Source Code"
+    === "Transition"
+
+        ```elm
+        --8<-- "docs/examples/src/Animation/Transition/Springs/Main.elm"
+        ```
+
+    === "Keyframe"
+
+        ```elm
+        --8<-- "docs/examples/src/Animation/Keyframe/Springs/Main.elm"
+        ```
+
+    === "Sub"
+
+        ```elm
+        --8<-- "docs/examples/src/Animation/Sub/Springs/Main.elm"
+        ```
+
+    === "WAAPI"
+
+        ```elm
+        --8<-- "docs/examples/src/Animation/WAAPI/Springs/Main.elm"
+        ```
+
+
 --8<-- "docs/shared/spring-reference.md"
 
 ## Choosing a Spring

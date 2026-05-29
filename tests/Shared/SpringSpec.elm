@@ -101,7 +101,30 @@ initialConditionsTests =
 convergenceTests : Test
 convergenceTests =
     describe "convergence to target"
-        [ test "settles to target after long time (underdamped)" <|
+        [ test "settles to target naturally for heavy, lightly-damped spring" <|
+            \_ ->
+                -- {stiffness = 120, damping = 11, mass = 50} genuinely
+                -- needs ~103s to settle. With a generous cap the spring
+                -- runs its full course and lands on target naturally
+                -- (within the settle-time ε).
+                let
+                    params =
+                        { spring =
+                            { stiffness = 120
+                            , damping = 11
+                            , mass = 50
+                            , initialVelocity = 0
+                            }
+                        , from = 0
+                        , to = 420
+                        }
+
+                    settle =
+                        Spring.settleTimeMs params
+                in
+                Spring.valueAt params settle
+                    |> Expect.within (Expect.Absolute 0.01) 420
+        , test "settles to target after long time (underdamped)" <|
             \_ ->
                 Spring.valueAt (zeroToOne underdampedSpring) 20000
                     |> Expect.within (Expect.Absolute 0.001) 1
@@ -343,12 +366,31 @@ initialVelocityTests =
 bakeTests : Test
 bakeTests =
     describe "bake"
-        [ test "returns 60 samples" <|
+        [ test "returns at least 60 samples (short motion)" <|
             \_ ->
                 Spring.bake (zeroToOne underdampedSpring)
                     |> .samples
                     |> List.length
-                    |> Expect.equal 60
+                    |> Expect.atLeast 60
+        , test "sample count scales with duration for long springs" <|
+            \_ ->
+                -- ~103s settle → well above the 60-sample floor.
+                let
+                    params =
+                        { spring =
+                            { stiffness = 120
+                            , damping = 11
+                            , mass = 50
+                            , initialVelocity = 0
+                            }
+                        , from = 0
+                        , to = 420
+                        }
+                in
+                Spring.bake params
+                    |> .samples
+                    |> List.length
+                    |> Expect.greaterThan 200
         , test "first sample offset is 0 with value = from" <|
             \_ ->
                 let
@@ -404,11 +446,11 @@ bakeTests =
                 Spring.bake (zeroToOne underdampedSpring)
                     |> .durationMs
                     |> Expect.greaterThan 0
-        , test "durationMs honours 8 second cap" <|
+        , test "durationMs honours 5 minute cap" <|
             \_ ->
                 Spring.bake (zeroToOne underdampedSpring)
                     |> .durationMs
-                    |> Expect.atMost 8000
+                    |> Expect.atMost 300000
         ]
 
 
@@ -430,10 +472,10 @@ settleTimeTests =
             \_ ->
                 Spring.settleTimeMs (zeroToOne underdampedSpring)
                     |> Expect.greaterThan 0
-        , test "is bounded by 8 seconds" <|
+        , test "is bounded by 5 minutes" <|
             \_ ->
                 Spring.settleTimeMs (zeroToOne underdampedSpring)
-                    |> Expect.atMost 8000
+                    |> Expect.atMost 300000
         , test "stiffer spring settles faster than softer" <|
             \_ ->
                 let

@@ -50,16 +50,17 @@ Pause, resume, restart, stop, and reset a scroll while it's running. Sub engine 
 
 The same scroll, re-triggered mid-flight in all three engines. Shows the cost of fire-and-forget vs the smoothness of state-tracked redirection.
 
-??? example "View Example - Cmd"
+??? example "View Example"
+    === "Cmd"
 
-    <iframe src="../../examples/src/Scroll/Cmd/Interrupting/index.html" class="example-iframe" loading="lazy"></iframe>
+        <iframe src="../../examples/src/Scroll/Cmd/Interrupting/index.html" class="example-iframe" loading="lazy"></iframe>
 
-??? example "View Example - Task"
+    === "Task"
 
-    <iframe src="../../examples/src/Scroll/Task/Interrupting/index.html" class="example-iframe" loading="lazy"></iframe>
+        <iframe src="../../examples/src/Scroll/Task/Interrupting/index.html" class="example-iframe" loading="lazy"></iframe>
 
-??? example "View Example - Sub"
+    === "Sub"
 
-    <iframe src="../../examples/src/Scroll/Sub/Interrupting/index.html" class="example-iframe" loading="lazy"></iframe>
+        <iframe src="../../examples/src/Scroll/Sub/Interrupting/index.html" class="example-iframe" loading="lazy"></iframe>
 
 [Go to page](concepts/interrupting-scrolls.md){ .md-button .md-button--primary }

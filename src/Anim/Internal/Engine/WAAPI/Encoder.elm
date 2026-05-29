@@ -919,7 +919,7 @@ springKeyframes s durationMs =
             }
 
         n =
-            EasingKeyframes.defaultKeyframeCount
+            EasingKeyframes.sampleCountForDuration durationMs
     in
     List.range 0 (n - 1)
         |> List.map
