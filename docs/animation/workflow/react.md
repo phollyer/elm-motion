@@ -346,15 +346,15 @@ These events are generated internally by the engine:
 ??? example "View Engine Generated Events"
 
     | Event | Keyframe | Sub | WAAPI | ScrollTimeline | ViewTimeline |
-    | ----- | :------: | :-: | :---: | :---=========: | :----------: | 
-    | Started | | ✓ | ✓ |
-    | Ended | | ✓ | |
-    | Cancelled | | ✓ | |
-    | Paused | ✓ | ✓ | ✓ |
-    | Resumed | ✓ | ✓ | ✓ |
-    | Restarted | ✓ | ✓ | ✓ |
+    | ----- | :------: | :-: | :---: | :------------: | :----------: | 
+    | Started | | ✓ | ✓ | | |
+    | Ended | | ✓ | | | |
+    | Cancelled | | ✓ | | | |
+    | Paused | ✓ | ✓ | ✓ | | |
+    | Resumed | ✓ | ✓ | ✓ | | |
+    | Restarted | ✓ | ✓ | ✓ | | |
     | Iteration | | | ✓ | ✓ | ✓ |
-    | Progress | | ✓ | ✓ |
+    | Progress | | ✓ | ✓ | | |
 
 
 
