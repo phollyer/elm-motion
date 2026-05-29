@@ -11,12 +11,6 @@ The same horizontal translate, driven by all five spring presets and rendered in
 The bottom row builds a `Spring.custom` from the three inputs. Edit any of `stiffness`, `damping`, or `mass` and click **Play custom** to feel the change. Lower damping bounces longer; higher stiffness snaps faster; heavier mass feels more sluggish.
 
 ??? example "View Example"
-    === "Transition"
-
-        ❌ **Behaviour**: Springs need to be converted to a css `cubic-bezier` curve, which means they are simple approximations.
-
-        <iframe src="../../examples/src/Animation/Transition/Springs/index.html" class="example-iframe" loading="lazy"></iframe>
-
     === "Keyframe"
 
         ✅ **Behaviour**: The full spring representation is baked into the `@keyframes` rules.
@@ -36,12 +30,6 @@ The bottom row builds a `Spring.custom` from the three inputs. Edit any of `stif
         <iframe src="../../examples/src/Animation/WAAPI/Springs/index.html" class="example-iframe" loading="lazy"></iframe>
 
 ??? example "View Source Code"
-    === "Transition"
-
-        ```elm
-        --8<-- "docs/examples/src/Animation/Transition/Springs/Main.elm"
-        ```
-
     === "Keyframe"
 
         ```elm

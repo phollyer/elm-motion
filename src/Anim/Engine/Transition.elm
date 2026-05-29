@@ -11,7 +11,6 @@ module Anim.Engine.Transition exposing
     , events, eventsStopPropagation
     , delay, duration, speed
     , easing
-    , spring
     , cssUnit, cssUnitX, cssUnitY, cssUnitZ, cssUnitWidth, cssUnitHeight
     , stop, reset
     , discreteEntry, startingStyleNode, startingStyleNodeFor, discreteExit
@@ -119,13 +118,6 @@ To render a transition, add `attributes` to the element you want to animate.
 @docs easing
 
 
-# Spring
-
-@docs spring
-
-📖 See [Easing](https://phollyer.github.io/elm-motion/animation/concepts/easing/) in the docs.
-
-
 # Unit
 
 @docs cssUnit, cssUnitX, cssUnitY, cssUnitZ, cssUnitWidth, cssUnitHeight
@@ -211,7 +203,6 @@ import Anim.Internal.Engine.Transition.AnimGroup as AnimGroup
 import Anim.Unit exposing (Unit)
 import Html
 import Motion.Easing exposing (Easing)
-import Motion.Spring exposing (Spring)
 
 
 
@@ -594,26 +585,6 @@ speed =
 easing : Easing -> Builder.AnimBuilder mode -> Builder.AnimBuilder mode
 easing =
     Builder.easing
-
-
-
--- ============================================================
--- SPRING
--- ============================================================
-
-
-{-| Set the global spring.
-
-    draggableCardSettle : AnimBuilder mode -> AnimBuilder mode
-    draggableCardSettle =
-        spring Spring.wobbly
-            >> settleCardPosition
-            >> settleCardShadow
-
--}
-spring : Spring -> Builder.AnimBuilder mode -> Builder.AnimBuilder mode
-spring =
-    Builder.spring
 
 
 

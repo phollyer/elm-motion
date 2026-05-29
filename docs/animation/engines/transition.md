@@ -260,13 +260,13 @@ Use `eventsStopPropagation` to prevent events from bubbling to parent elements.
 
 ### Responsive Strategy
 
-Use relative CSS units whenever the motion can be defined in layout-relative terms.
+Use relative CSS units whenever the motion can be defined in layout-relative terms and the Browser does the work.
 
-For measured pixel targets, Transition has no proportional remap API for resize updates. Therefore:
+For measured pixel targets, Transition has no proportional remap API for resize updates because mid-flight values are not available. Therefore:
 
 - On resize, recompute pixel targets and re-trigger with `animate`.
 - Running animations then continue smoothly from current computed style to the new target.
-- Idle animations stay at their last resolved value until you trigger a new target.
+- Idle animations stay at their last resolved value until you trigger a new target with `animate` and reposition smoothly, or `retarget` and reposition immediately.
 
 📖 See [Responsive Animations](../concepts/responsive-animations.md) for more info.
 
@@ -299,7 +299,7 @@ Most standard easings (sine, quad, cubic, quart, quint, expo) convert accurately
 
 For accurate complex easing curves, use the [Keyframe](keyframes.md), [Sub](sub.md), or [WAAPI](waapi.md) engine instead.
 
-Set the default easing for all properties that don't override it.
+Set the default easing for all properties that don't override it:
 ??? example "View Source Code"
 
     ```elm
@@ -313,22 +313,6 @@ Set the default easing for all properties that don't override it.
     ```
 
 📖 See [Easing](../concepts/easing.md) for all available easing functions.
-
-### Spring
-
-Set the default spring for all properties that don't override it. The motion ends when each value has settled at the target — there is no explicit duration.
-
-??? example "View Source Code"
-
-    ```elm
-    bouncyReveal =
-        Transition.spring Spring.wobbly
-            >> Opacity.for "card"
-            >> Opacity.to 1
-            >> Opacity.build
-    ```
-
-📖 See [Spring](../concepts/spring.md) for the full preset list and tuning guidance.
 
 ### Controls
 
@@ -513,12 +497,6 @@ Choose Transition when you want minimal setup and smooth A→B animations.
 | Function | Type | Description |
 | -------- | ---- | ----------- |
 | `easing` | `Easing -> AnimBuilder mode -> AnimBuilder mode` | Set easing function |
-
-### Spring
-
-| Function | Type | Description |
-| -------- | ---- | ----------- |
-| `spring` | `Spring -> AnimBuilder mode -> AnimBuilder mode` | Set spring physics |
 
 ### Controls
 
