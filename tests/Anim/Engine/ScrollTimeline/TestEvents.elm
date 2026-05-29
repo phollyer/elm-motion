@@ -10,12 +10,29 @@ import Test exposing (..)
 suite : Test
 suite =
     describe "Anim.Engine.ScrollTimeline events"
-        [ completedStatusTests
+        [ startedStatusTests
+        , completedStatusTests
         , cancelledStatusTests
         , iterationStatusTests
         , wrongEngineTests
         , missingTypeTests
         , malformedPayloadTests
+        ]
+
+
+startedStatusTests : Test
+startedStatusTests =
+    describe "started status"
+        [ test "returns Started with animGroup when timeline enters range" <|
+            \_ ->
+                buildScrollEvent "scrollTimeline" "myGroup" "started" 0.0
+                    |> ScrollTimeline.update
+                    |> Expect.equal (Just (ScrollTimeline.Started "myGroup"))
+        , test "ignores progress payload (Started carries no value)" <|
+            \_ ->
+                buildScrollEvent "scrollTimeline" "myGroup" "started" 0.42
+                    |> ScrollTimeline.update
+                    |> Expect.equal (Just (ScrollTimeline.Started "myGroup"))
         ]
 
 

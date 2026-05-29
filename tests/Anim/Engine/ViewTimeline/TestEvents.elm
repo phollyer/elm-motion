@@ -10,12 +10,29 @@ import Test exposing (..)
 suite : Test
 suite =
     describe "Anim.Engine.ViewTimeline events"
-        [ completedStatusTests
+        [ startedStatusTests
+        , completedStatusTests
         , cancelledStatusTests
         , iterationStatusTests
         , wrongEngineTests
         , missingTypeTests
         , malformedPayloadTests
+        ]
+
+
+startedStatusTests : Test
+startedStatusTests =
+    describe "started status"
+        [ test "returns Started with animGroup when element enters range" <|
+            \_ ->
+                buildViewEvent "viewTimeline" "myGroup" "started" 0.0
+                    |> ViewTimeline.update
+                    |> Expect.equal (Just (ViewTimeline.Started "myGroup"))
+        , test "ignores progress payload (Started carries no value)" <|
+            \_ ->
+                buildViewEvent "viewTimeline" "myGroup" "started" 0.42
+                    |> ViewTimeline.update
+                    |> Expect.equal (Just (ViewTimeline.Started "myGroup"))
         ]
 
 

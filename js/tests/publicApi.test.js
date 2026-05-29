@@ -258,6 +258,93 @@ describe('ElmMotion public API', () => {
         );
     });
 
+    it('emits a synthetic started event each time a scroll-driven timeline enters range', async () => {
+        const animGroup = 'box-scroll-start';
+        const sourceId = 'source-scroll-start';
+        const progressBox = { value: null };
+        const buildAnimation = () => {
+            const anim = createFakeAnimation();
+            anim.effect.getComputedTiming = () => ({ progress: progressBox.value });
+            return anim;
+        };
+        const animations = [buildAnimation(), buildAnimation()];
+        const element = {
+            id: animGroup,
+            animate: vi.fn(() => animations.shift())
+        };
+        installDom({ element, targetId: animGroup, sourceId });
+        global.ScrollTimeline = class ScrollTimeline {
+            constructor(config) {
+                this.config = config;
+            }
+        };
+        global.window.ScrollTimeline = global.ScrollTimeline;
+
+        // Capture rAF callbacks so the test can drive the watcher manually.
+        const rafQueue = [];
+        const rafFn = vi.fn((cb) => {
+            rafQueue.push(cb);
+            return rafQueue.length;
+        });
+        global.requestAnimationFrame = rafFn;
+        global.window.requestAnimationFrame = rafFn;
+        const tick = () => {
+            const pending = rafQueue.splice(0);
+            pending.forEach((cb) => cb());
+        };
+
+        const events = [];
+        const ports = createPorts((payload) => events.push(payload));
+        ElmMotion.init(ports.ports);
+
+        await ports.send({
+            type: 'scrollDriven',
+            iterations: { type: 'times', count: 3 },
+            timeline: { source: sourceId, axis: 'block' },
+            elements: {
+                [animGroup]: {
+                    properties: [
+                        { type: 'opacity', startValue: 0, endValue: 1, duration: 300, easing: 'linear' }
+                    ]
+                }
+            }
+        });
+
+        const startedEvents = () =>
+            events.filter((e) => e.type === 'animationUpdate' && e.payload?.status === 'started');
+
+        // Out of range: watcher ticks but emits nothing.
+        progressBox.value = null;
+        tick();
+        expect(startedEvents()).toHaveLength(0);
+
+        // Entered range: started fires once with the entry progress.
+        progressBox.value = 0.3;
+        tick();
+        expect(startedEvents()).toHaveLength(1);
+        expect(startedEvents()[0]).toMatchObject({
+            type: 'animationUpdate',
+            engine: 'scrollTimeline',
+            payload: { animGroup, status: 'started', progress: 0.3 }
+        });
+
+        // Still in range: no duplicate started.
+        progressBox.value = 0.5;
+        tick();
+        expect(startedEvents()).toHaveLength(1);
+
+        // Scrolled back out of range.
+        progressBox.value = null;
+        tick();
+        expect(startedEvents()).toHaveLength(1);
+
+        // Re-entered: another started event.
+        progressBox.value = 0.1;
+        tick();
+        expect(startedEvents()).toHaveLength(2);
+        expect(startedEvents()[1].payload.progress).toBe(0.1);
+    });
+
     it('emits view-driven lifecycle events through the public API', async () => {
         const animGroup = 'box-view';
         const animations = [createFakeAnimation(), createFakeAnimation()];

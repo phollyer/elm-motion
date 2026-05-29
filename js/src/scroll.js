@@ -105,6 +105,7 @@ function attachScrollDrivenListeners(animGroup, animations, engine, element, dis
     const total = animations.length;
     let finishedCount = 0;
     let cancelFired = false;
+    let watcherStopped = false;
 
     // Initialise group iteration counter (reset on each animate call).
     scrollDrivenIterationCounts.set(animGroup, 0);
@@ -113,10 +114,33 @@ function attachScrollDrivenListeners(animGroup, animations, engine, element, dis
     // a group with N properties fires N native 'iteration' events per loop.
     const perAnimIterations = new Array(total).fill(0);
 
+    // Synthetic 'started' watcher: scroll/view timelines have no native play
+    // event, so we poll the representative animation's computed progress once
+    // per frame. A 'started' event fires each time progress transitions from
+    // null/0 (out of range) to > 0 (in range), so re-entering the range after
+    // scrolling out emits another 'started'.
+    if (animations.length > 0 && typeof window !== 'undefined' && typeof window.requestAnimationFrame === 'function') {
+        const representative = animations[0];
+        let inRange = false;
+        const tick = function () {
+            if (watcherStopped) return;
+            const progress = getScrollAnimationProgress(representative);
+            if (!inRange && progress > 0) {
+                inRange = true;
+                sendScrollLifecycleEvent('started', animGroup, progress, engine);
+            } else if (inRange && progress <= 0) {
+                inRange = false;
+            }
+            window.requestAnimationFrame(tick);
+        };
+        window.requestAnimationFrame(tick);
+    }
+
     animations.forEach(function (animation, i) {
         animation.addEventListener('finish', function () {
             finishedCount++;
             if (finishedCount === total) {
+                watcherStopped = true;
                 if (element && discreteExit) {
                     Object.entries(discreteExit).forEach(function ([prop, values]) {
                         element.style[prop] = values.to;
@@ -130,6 +154,7 @@ function attachScrollDrivenListeners(animGroup, animations, engine, element, dis
         animation.addEventListener('cancel', function () {
             if (cancelFired) return;
             cancelFired = true;
+            watcherStopped = true;
             const progress = getScrollAnimationProgress(animation);
             sendScrollLifecycleEvent('cancelled', animGroup, progress, engine);
             cleanupAnimGroup(animGroup);

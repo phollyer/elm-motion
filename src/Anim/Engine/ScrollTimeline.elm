@@ -186,6 +186,8 @@ containerToId container =
 
 {-| Lifecycle events from the ScrollTimeline engine.
 
+  - `Started String` — the scroll position entered the animation range. Fires every
+    time the timeline re-enters range, not just on the first entry.
   - `Ended String` — the scroll position reached the end of the animation range
   - `Cancelled String` — the animation was cancelled (e.g. element removed)
   - `Iteration String Int` — the animation looped; the `Int` is the cumulative iteration count
@@ -193,7 +195,8 @@ containerToId container =
 
 -}
 type AnimEvent
-    = Ended AnimGroupName
+    = Started AnimGroupName
+    | Ended AnimGroupName
     | Cancelled AnimGroupName Float
     | Iteration AnimGroupName Int
     | AnimError String
@@ -240,6 +243,9 @@ update =
 toAnimEvent : Internal.AnimEvent -> AnimEvent
 toAnimEvent internalEvent =
     case internalEvent of
+        Internal.Started animGroup ->
+            Started animGroup
+
         Internal.Ended animGroup ->
             Ended animGroup
 

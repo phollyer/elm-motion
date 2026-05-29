@@ -74,7 +74,8 @@ animate sendToPort pipeline =
 
 
 type AnimEvent
-    = Ended AnimGroupName
+    = Started AnimGroupName
+    | Ended AnimGroupName
     | Cancelled AnimGroupName Float
     | Iteration AnimGroupName Int
     | AnimError String
@@ -126,6 +127,9 @@ decodeViewEvent jsonValue =
 viewStatusToEvent : AnimGroupName -> String -> Float -> AnimEvent
 viewStatusToEvent animGroup status progress =
     case status of
+        "started" ->
+            Started animGroup
+
         "completed" ->
             Ended animGroup
 

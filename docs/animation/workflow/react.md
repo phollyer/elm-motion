@@ -314,7 +314,7 @@ Wire up subscriptions:
 | Event | Transition | Keyframe | Sub | WAAPI | ScrollTimeline | ViewTimeline |
 | ----- | :---------: | :-------: | :-: | :---: | :------------: | :----------: |
 | Run | ✓ | | | | | |
-| Started | ✓ | ✓ | ✓ | ✓ | | |
+| Started | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | Ended | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | Cancelled | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | Iteration | | ✓ | ✓ | ✓ | ✓ | ✓ |
@@ -347,7 +347,7 @@ These events are generated internally by the engine:
 
     | Event | Keyframe | Sub | WAAPI | ScrollTimeline | ViewTimeline |
     | ----- | :------: | :-: | :---: | :------------: | :----------: | 
-    | Started | | ✓ | ✓ | | |
+    | Started | | ✓ | ✓ | ✓ | ✓ |
     | Ended | | ✓ | | | |
     | Cancelled | | ✓ | | | |
     | Paused | ✓ | ✓ | ✓ | | |
@@ -367,6 +367,8 @@ Fired when a transition starts running, before any delay. Useful for tracking th
 ### Started
 
 Fired when an animation begins playing. For CSS engines, this fires after any configured delay has elapsed.
+
+For **ScrollTimeline** and **ViewTimeline**, `Started` fires each time the timeline enters its active range. Because scroll-driven animations have no native play event, the engine watches the timeline's computed progress on every frame and emits `Started` on the transition from out-of-range to in-range. Scrolling out of range and back in produces another `Started`.
 
 
 ### Ended
