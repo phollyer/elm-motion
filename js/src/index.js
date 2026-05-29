@@ -100,6 +100,9 @@ const COMMAND_HANDLERS = {
     },
     resume: function (commandData) {
         resumeAnimation(commandData.elementId, commandData.properties);
+    },
+    setUpdateThrottle: function (commandData) {
+        setPropertyUpdateThrottle(commandData.intervalMs);
     }
 };
 
@@ -124,11 +127,11 @@ async function dispatchCommand(commandData) {
 /**
  * Initialize the ElmMotion WAAPI system with Elm ports.
  *
- * If called again with a different ports object (typical SPA route swap or
- * HMR scenario), `dispose()` is invoked automatically to release per-group
- * caches before re-attaching to the new app — callers don't need to clean
- * up manually for the common reinitialisation case. A warning is still
- * reported via `PORTS_REINITIALIZED` so the swap is observable.
+ * If called again with a different ports object, `dispose()` is invoked
+ * automatically to release per-group caches before re-attaching to the
+ * new app — callers don't need to clean up manually for the common
+ * reinitialization case. A warning is still reported via 
+ * `PORTS_REINITIALIZED` so the swap is observable.
  *
  * @param {object} ports - The Elm app ports object (app.ports)
  */
@@ -147,7 +150,6 @@ export function init(ports) {
         dispose();
     }
 
-    // Store reference for outbound events (replaces former `window.app = ...`).
     portsRef.ports = ports;
     resetPortMissingWarning();
 
@@ -176,9 +178,8 @@ export function init(ports) {
 
 /**
  * Tear down the ElmMotion JS-side state. Call this when the host Elm app
- * is being unmounted (typical SPA / hot-reload scenarios) to release any
- * cached per-animation-group state and stop attempting to send events to
- * a stale ports object.
+ * is being unmounted to release any cached per-animation-group state and
+ * stop attempting to send events to a stale ports object.
  *
  * After dispose(), call init() again with a fresh ports object to resume.
  */

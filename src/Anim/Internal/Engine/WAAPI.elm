@@ -76,6 +76,7 @@ module Anim.Internal.Engine.WAAPI exposing
     , restart
     , resume
     , retarget
+    , setUpdateThrottle
     , speed
     , spring
     , stop
@@ -2567,6 +2568,11 @@ pause animGroupName (AnimState state animGroups) =
     , state.commandPort <|
         encodeCommandWithProperties "pause" animGroupName Nothing
     )
+
+
+setUpdateThrottle : Int -> AnimState msg -> Cmd msg
+setUpdateThrottle intervalMs (AnimState state _) =
+    state.commandPort (encodeSetProgressThrottle intervalMs)
 
 
 reset : AnimGroupName -> AnimState msg -> ( AnimState msg, Cmd msg )

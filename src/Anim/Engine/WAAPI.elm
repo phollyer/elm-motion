@@ -6,6 +6,7 @@ module Anim.Engine.WAAPI exposing
     , init
     , animate, fireAndForget, retarget
     , AnimEvent(..)
+    , withProgressEvents, setUpdateThrottle
     , AnimMsg, update
     , subscriptions
     , attributes
@@ -31,7 +32,6 @@ module Anim.Engine.WAAPI exposing
     , getSizeRange, getSizeStart, getSizeEnd, getSizeCurrent
     , getSkewRange, getSkewStart, getSkewEnd, getSkewCurrent
     , getTranslateRange, getTranslateStart, getTranslateEnd, getTranslateCurrent
-    , withProgressEvents
     )
 
 {-| Use the Web Animations API through ports.
@@ -85,6 +85,11 @@ Use this in type annotations when a builder function should only work with the W
 # Events
 
 @docs AnimEvent
+
+
+## Progress Events
+
+@docs withProgressEvents, setUpdateThrottle
 
 📖 See [Event Reference](https://phollyer.github.io/elm-motion/animation/workflow/react/#event-reference) in the docs.
 
@@ -239,11 +244,6 @@ Add `attributes` to the element you want to animate.
 ## Translate
 
 @docs getTranslateRange, getTranslateStart, getTranslateEnd, getTranslateCurrent
-
-
-# Progress Events
-
-@docs withProgressEvents
 
 -}
 
@@ -443,13 +443,6 @@ fireAndForget =
 
 
 {-| Animation lifecycle events from this engine.
-
-`Progress AnimGroupName Float` is only emitted when
-[`withProgressEvents`](#withProgressEvents) `True` was set on the builder
-passed to [`init`](#init). The underlying `propertyUpdate` port traffic
-still flows so engine state queries stay in sync — only the event delivery
-is gated.
-
 -}
 type AnimEvent
     = Started AnimGroupName
@@ -461,6 +454,57 @@ type AnimEvent
     | Iteration AnimGroupName Int
     | Progress AnimGroupName Float
     | AnimError String
+
+
+
+-- ============================================================
+-- PROGRESS EVENTS
+-- ============================================================
+
+
+{-| Opt in to per-frame `Progress` events.
+
+Off by default. You don't always need per-frame progress updates from the Engine,
+and they generate a lot of `Msg`s in your `update` function. If you do need them,
+you can turn them on with this setting.
+
+Pass it in [`init`](#init):
+
+    WAAPI.init motionCmd
+        motionMsg
+        [ WAAPI.withProgressEvents True ]
+
+Useful for debugging or driving progress UI directly from events. Leave it
+off for production unless you need it — `getProgress` gives the same
+information on demand without flooding your `update` with frame-rate events.
+
+-}
+withProgressEvents : Bool -> EngineBuilder -> EngineBuilder
+withProgressEvents =
+    Builder.setEmitProgress
+
+
+{-| Cap the rate at which the JavaScript runtime sends per-frame
+updates back to Elm.
+
+The visual animation is driven by the browser compositor and is **never**
+affected by this setting - it only controls how much port traffic is generated.
+
+  - Pass `0` (the default) to emit on every `requestAnimationFrame` tick,
+    matching the display refresh rate (60 Hz, 120 Hz, 144 Hz, …).
+  - Pass a positive number of milliseconds to cap the emission rate, e.g.
+    `16` for ~60 Hz, `33` for ~30 Hz. Useful when many simultaneous
+    animations on a high-refresh display would otherwise generate excessive
+    port traffic.
+
+The value is global to the JS runtime, shared across all animations
+in the app, and equivalent to calling `ElmMotion.setPropertyUpdateThrottle(ms)`
+directly from JavaScript.
+
+-}
+setUpdateThrottle : Int -> AnimState msg -> Cmd msg
+setUpdateThrottle =
+    Internal.setUpdateThrottle
 
 
 
@@ -1672,32 +1716,3 @@ Returns `Nothing` if the element has no translate animation.
 getTranslateRange : AnimGroupName -> AnimState msg -> Maybe { start : Maybe { x : Float, y : Float, z : Float }, end : { x : Float, y : Float, z : Float } }
 getTranslateRange =
     Internal.getTranslateRange
-
-
-
--- ============================================================
--- PROGRESS EVENTS
--- ============================================================
-
-
-{-| Opt in to per-frame `Progress` events.
-
-Off by default. The WAAPI engine always receives per-frame `propertyUpdate`
-messages from JavaScript (they keep `getProgress`, `isRunning`, and the
-other state queries in sync), so this flag only controls whether `update`
-surfaces them to your `update` handler as `Progress` events.
-
-Pass it in [`init`](#init):
-
-    WAAPI.init motionCmd
-        motionMsg
-        [ WAAPI.withProgressEvents True ]
-
-Useful for debugging or driving progress UI directly from events. Leave it
-off for production unless you need it — `getProgress` gives the same
-information on demand without flooding your `update` with frame-rate events.
-
--}
-withProgressEvents : Bool -> EngineBuilder -> EngineBuilder
-withProgressEvents =
-    Builder.setEmitProgress

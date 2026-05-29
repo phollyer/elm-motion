@@ -864,4 +864,24 @@ describe('ElmMotion public API', () => {
         expect(groups).toContain(animGroup + '__multi_0');
         expect(groups).toContain(animGroup + '__multi_1');
     });
+
+    it('routes a setUpdateThrottle port command to the JS throttle setter', async () => {
+        const events = [];
+        const errors = [];
+        const ports = createPorts((payload) => events.push(payload));
+        ElmMotion.init(ports.ports);
+        const offError = ElmMotion.onError((err, ctx) => errors.push({ err, ctx }));
+
+        // Valid intervalMs - no error reported, dispatcher accepts the command.
+        await ports.send({ type: 'setUpdateThrottle', intervalMs: 16 });
+        await ports.send({ type: 'setUpdateThrottle', intervalMs: 0 });
+        expect(errors).toEqual([]);
+
+        // Invalid intervalMs is rejected by setPropertyUpdateThrottle with
+        // THROTTLE_INVALID, proving the port command flowed through to it.
+        await ports.send({ type: 'setUpdateThrottle', intervalMs: 'nope' });
+        expect(errors.some(e => e.ctx && e.ctx.code === 'THROTTLE_INVALID')).toBe(true);
+
+        offError();
+    });
 });

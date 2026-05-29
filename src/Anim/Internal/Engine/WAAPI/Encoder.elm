@@ -7,6 +7,7 @@ module Anim.Internal.Engine.WAAPI.Encoder exposing
     , encodeRestart
     , encodeRetarget
     , encodeScroll
+    , encodeSetProgressThrottle
     , encodeTranslatePosition
     , encodeView
     )
@@ -253,6 +254,18 @@ encodeCommandWithProperties commandType animGroupName maybeProperties =
                     []
     in
     Encode.object (baseFields ++ propertyField)
+
+
+{-| Encode a `setUpdateThrottle` command. Global JS-side setting that caps
+the rate of per-frame `propertyUpdate` events sent back to Elm. Not tied to
+any animGroup. Pass 0 to disable throttling.
+-}
+encodeSetProgressThrottle : Int -> Encode.Value
+encodeSetProgressThrottle intervalMs =
+    Encode.object
+        [ ( "type", Encode.string "setUpdateThrottle" )
+        , ( "intervalMs", Encode.int intervalMs )
+        ]
 
 
 {-| Encode iterations config as a JSON object with `type` and `count` fields.

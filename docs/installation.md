@@ -98,6 +98,19 @@ ElmMotion.setPropertyUpdateThrottle(0);    // restore default (no throttle)
 
 The value is the minimum interval, in milliseconds, between two progress emissions for the same animation. It can be changed at any time and applies to every animation that runs after the call. Non-numeric or negative values are ignored and reported as a `THROTTLE_INVALID` warning.
 
+The same setting is reachable from Elm via [`WAAPI.setUpdateThrottle`](https://package.elm-lang.org/packages/phollyer/elm-motion/latest/Anim-Engine-WAAPI#setUpdateThrottle), so apps that prefer to keep configuration in Elm can call it from `init` (or dynamically from `update`):
+
+```elm
+init flags =
+    let
+        animState =
+            WAAPI.init motionCmd motionMsg []
+    in
+    ( { animState = animState }
+    , WAAPI.setUpdateThrottle 16 animState
+    )
+```
+
 ## Next Steps
 
 Now that you have the package installed, let's start using it:
