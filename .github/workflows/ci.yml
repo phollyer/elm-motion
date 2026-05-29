@@ -46,8 +46,29 @@ jobs:
       - name: Install JS dependencies
         run: npm ci
 
+      - name: Cache Elm packages
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.elm
+            elm-stuff
+            tests/elm-stuff
+          key: ${{ runner.os }}-elm-${{ hashFiles('elm.json', 'tests/elm.json') }}
+          restore-keys: |
+            ${{ runner.os }}-elm-
+
       - name: Run Elm tests
-        run: npm run test:elm
+        run: |
+          for i in 1 2 3; do
+            if npm run test:elm; then
+              exit 0
+            fi
+            if [ "$i" -lt 3 ]; then
+              echo "::warning ::elm-test attempt $i failed (likely transient package download); retrying"
+              sleep $((i * 10))
+            fi
+          done
+          exit 1
 
       - name: Run JS tests
         run: npm run test:js
@@ -67,5 +88,26 @@ jobs:
       - name: Install JS dependencies
         run: npm ci
 
+      - name: Cache Elm packages
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.elm
+            docs/examples/elm-stuff
+          key: ${{ runner.os }}-elm-docs-${{ hashFiles('docs/examples/elm.json') }}
+          restore-keys: |
+            ${{ runner.os }}-elm-docs-
+            ${{ runner.os }}-elm-
+
       - name: Build documentation examples
-        run: npm run build:docs
+        run: |
+          for i in 1 2 3; do
+            if npm run build:docs; then
+              exit 0
+            fi
+            if [ "$i" -lt 3 ]; then
+              echo "::warning ::build:docs attempt $i failed (likely transient package download); retrying"
+              sleep $((i * 10))
+            fi
+          done
+          exit 1
