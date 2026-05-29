@@ -304,18 +304,9 @@ init =
 {-| Trigger animations.
 
     import Anim.Engine.Transition as Transition
-    import Anim.Property.Opacity as Opacity
-    import Anim.Property.Translate as Translate
 
     { model
-        | animState =
-            Transition.animate model.animState <|
-                Opacity.for "box"
-                    >> Opacity.to 1
-                    >> Opacity.build
-                    >> Translate.for "box"
-                    >> Translate.toX 0
-                    >> Translate.build
+        | animState = Transition.animate model.animState entryAnim
     }
 
 -}

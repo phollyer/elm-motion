@@ -361,18 +361,10 @@ init =
 Returns the updated animation state and the command to send to JavaScript.
 
     import Anim.Engine.WAAPI as WAAPI
-    import Anim.Property.Opacity as Opacity
-    import Anim.Property.Translate as Translate
 
     let
         ( animState, animCmd ) =
-            WAAPI.animate model.animState <|
-                Opacity.for "box"
-                    >> Opacity.to 1
-                    >> Opacity.build
-                    >> Translate.for "box"
-                    >> Translate.toX 0
-                    >> Translate.build
+            WAAPI.animate model.animState entryAnim
     in
     ( { model | animState = animState }, animCmd )
 
@@ -392,14 +384,10 @@ A `Cancelled` event is emitted for every property whose
 animation was previously playing and is retargeted.
 
     import Anim.Engine.WAAPI as WAAPI
-    import Anim.Property.Translate as Translate
 
     let
         ( animState, animCmd ) =
-            WAAPI.retarget model.animState <|
-                Translate.for "box"
-                    >> Translate.toX newX
-                    >> Translate.build
+            WAAPI.retarget model.animState retargetAnim
     in
     ( { model | animState = animState }, animCmd )
 
@@ -414,19 +402,11 @@ retarget =
 The animation runs entirely in the browser via the Web Animations API.
 
     import Anim.Engine.WAAPI as WAAPI
-    import Anim.Property.Opacity as Opacity
-    import Anim.Property.Translate as Translate
     import Json.Encode as Encode
 
     port motionCmd : Encode.Value -> Cmd msg
 
-    WAAPI.fireAndForget motionCmd <|
-        Opacity.for "box"
-            >> Opacity.to 1
-            >> Opacity.build
-            >> Translate.for "box"
-            >> Translate.toX 0
-            >> Translate.build
+    WAAPI.fireAndForget motionCmd entryAnim
 
 For state management and continuity, use [animate](#animate) instead.
 

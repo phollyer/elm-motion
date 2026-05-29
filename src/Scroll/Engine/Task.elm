@@ -267,7 +267,7 @@ speed =
 This will be inherited by all scrolls that
 don't define their own easing.
 
-    import Easing exposing (Easing(..))
+    import Motion.Easing exposing (Easing(..))
     import Scroll.Builder as Scroll
     import Scroll.Engine.Task as Task
 
