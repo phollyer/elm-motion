@@ -85,6 +85,6 @@ The replaced scroll fires a `Stopped` event for the interrupted container before
 
 ## Next Steps
 
-You've covered every scroll concept. Now build your first scroll from scratch.
+Choose the easing curve that shapes how each scroll accelerates and decelerates.
 
-[Your First Scrolls →](../first-scrolls/vertical-scrolling.md){ .md-button .md-button--primary }
+[Easing →](easing.md){ .md-button .md-button--primary }

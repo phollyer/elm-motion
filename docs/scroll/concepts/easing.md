@@ -37,6 +37,6 @@ If you don't set an easing, scrolls run on `Linear` - a constant rate from start
 
 ## Next Steps
 
-Learn what happens when a scroll is re-triggered before the first one finishes.
+You've covered every scroll concept. Browse the full catalogue of live examples.
 
-[Interrupting Scrolls →](interrupting-scrolls.md){ .md-button .md-button--primary }
+[Examples →](../examples.md){ .md-button .md-button--primary }
