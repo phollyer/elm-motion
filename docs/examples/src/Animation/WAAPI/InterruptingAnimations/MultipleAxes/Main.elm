@@ -1,6 +1,6 @@
 port module Animation.WAAPI.InterruptingAnimations.MultipleAxes.Main exposing (main)
 
-import Anim.Builder exposing (AnimBuilder)
+import Anim.Builder exposing (AnimBuilder, ForWAAPI)
 import Anim.Engine.WAAPI as WAAPI
 import Anim.Property.Translate as Translate
 import Anim.Unit exposing (Unit(..))
@@ -136,19 +136,19 @@ targetY pos =
 -- ANIMATIONS
 
 
-moveBoxX : Float -> AnimBuilder mode -> AnimBuilder mode
+moveBoxX : Float -> WAAPI.EngineBuilder -> WAAPI.EngineBuilder
 moveBoxX x =
     moveBox <|
         Translate.toX x
 
 
-moveBoxY : Float -> AnimBuilder mode -> AnimBuilder mode
+moveBoxY : Float -> WAAPI.EngineBuilder -> WAAPI.EngineBuilder
 moveBoxY y =
     moveBox <|
         Translate.toY y
 
 
-moveBox : (Translate.Builder mode -> Translate.Builder mode) -> AnimBuilder mode -> AnimBuilder mode
+moveBox : (Translate.Builder ForWAAPI -> Translate.Builder ForWAAPI) -> WAAPI.EngineBuilder -> WAAPI.EngineBuilder
 moveBox moveFunc =
     Translate.for animGroup
         >> Translate.cssUnitX Cqw

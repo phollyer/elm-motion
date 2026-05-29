@@ -29,12 +29,23 @@ import Shared.TimeSpec exposing (TimeSpec(..))
 import Test exposing (..)
 
 
-animBuilder : Builder.AnimBuilder {}
+animBuilder : Builder.AnimBuilder TestMode
 animBuilder =
     Builder.init []
 
 
-processAndStore : Builder.AnimBuilder {} -> Builder.AnimBuilder {}
+type alias TestMode =
+    { supportsTime : ()
+    , supportsSpring : ()
+    , supportsLoopForever : ()
+    , supportsIterations : ()
+    , supportsAlternate : ()
+    , supportsTransformOrder : ()
+    , supportsProgressEvents : ()
+    }
+
+
+processAndStore : Builder.AnimBuilder TestMode -> Builder.AnimBuilder TestMode
 processAndStore builder =
     Builder.addAnimationToHistory (Builder.process builder) builder
 
@@ -250,10 +261,10 @@ propertyGetters =
 
 type alias GetStartTestConfig a =
     { label : String
-    , getter : String -> Builder.AnimBuilder {} -> Maybe a
-    , buildWithFrom : Builder.AnimBuilder {} -> Builder.AnimBuilder {}
+    , getter : String -> Builder.AnimBuilder TestMode -> Maybe a
+    , buildWithFrom : Builder.AnimBuilder TestMode -> Builder.AnimBuilder TestMode
     , expectedFrom : a
-    , buildWithoutFrom : Builder.AnimBuilder {} -> Builder.AnimBuilder {}
+    , buildWithoutFrom : Builder.AnimBuilder TestMode -> Builder.AnimBuilder TestMode
     , expectedDefault : a
     }
 
@@ -397,8 +408,8 @@ getStartValue =
 
 type alias GetEndTestConfig a =
     { label : String
-    , getter : String -> Builder.AnimBuilder {} -> Maybe a
-    , build : Builder.AnimBuilder {} -> Builder.AnimBuilder {}
+    , getter : String -> Builder.AnimBuilder TestMode -> Maybe a
+    , build : Builder.AnimBuilder TestMode -> Builder.AnimBuilder TestMode
     , expectedEnd : a
     }
 
@@ -493,11 +504,11 @@ getEndValue =
 
 type alias GetRangeTestConfig a =
     { label : String
-    , getter : String -> Builder.AnimBuilder {} -> Maybe { start : Maybe a, end : a }
-    , buildWithFrom : Builder.AnimBuilder {} -> Builder.AnimBuilder {}
+    , getter : String -> Builder.AnimBuilder TestMode -> Maybe { start : Maybe a, end : a }
+    , buildWithFrom : Builder.AnimBuilder TestMode -> Builder.AnimBuilder TestMode
     , expectedStart : a
     , expectedEndWithFrom : a
-    , buildWithoutFrom : Builder.AnimBuilder {} -> Builder.AnimBuilder {}
+    , buildWithoutFrom : Builder.AnimBuilder TestMode -> Builder.AnimBuilder TestMode
     , expectedDefaultStart : Maybe a
     , expectedEnd : a
     }
@@ -675,7 +686,7 @@ push it to history, merge baselines, clear in-progress data, then mark
 the named property as currently running on the given group so the next
 `continueFor` call inherits timing from history.
 -}
-finishRetargetBatch : String -> List String -> Builder.AnimBuilder {} -> Builder.AnimBuilder {}
+finishRetargetBatch : String -> List String -> Builder.AnimBuilder TestMode -> Builder.AnimBuilder TestMode
 finishRetargetBatch animGroupName runningProps builder =
     builder
         |> processAndStore
@@ -689,7 +700,7 @@ finishRetargetBatch animGroupName runningProps builder =
 (without injecting any running-property set). `continueFor` after this
 behaves like `for`.
 -}
-finishAnimateBatch : Builder.AnimBuilder {} -> Builder.AnimBuilder {}
+finishAnimateBatch : Builder.AnimBuilder TestMode -> Builder.AnimBuilder TestMode
 finishAnimateBatch builder =
     builder
         |> processAndStore
@@ -700,7 +711,7 @@ finishAnimateBatch builder =
 {-| Pull the first TranslateConfig out of the in-progress builder. Used to
 inspect what `continueFor` produced before the animation is processed.
 -}
-firstTranslateConfig : Builder.AnimBuilder {} -> Maybe (Builder.AnimationConfig InternalTranslate.Translate)
+firstTranslateConfig : Builder.AnimBuilder TestMode -> Maybe (Builder.AnimationConfig InternalTranslate.Translate)
 firstTranslateConfig builder =
     (Builder.getCurrentAnimGroupConfig builder).properties
         |> List.filterMap
@@ -1021,7 +1032,7 @@ translateClampTests =
 -- ============================================================
 
 
-firstRotateConfig : Builder.AnimBuilder {} -> Maybe (Builder.AnimationConfig InternalRotate.Rotate)
+firstRotateConfig : Builder.AnimBuilder TestMode -> Maybe (Builder.AnimationConfig InternalRotate.Rotate)
 firstRotateConfig builder =
     (Builder.getCurrentAnimGroupConfig builder).properties
         |> List.filterMap
@@ -1036,7 +1047,7 @@ firstRotateConfig builder =
         |> List.head
 
 
-firstScaleConfig : Builder.AnimBuilder {} -> Maybe (Builder.AnimationConfig InternalScale.Scale)
+firstScaleConfig : Builder.AnimBuilder TestMode -> Maybe (Builder.AnimationConfig InternalScale.Scale)
 firstScaleConfig builder =
     (Builder.getCurrentAnimGroupConfig builder).properties
         |> List.filterMap
@@ -1051,7 +1062,7 @@ firstScaleConfig builder =
         |> List.head
 
 
-firstSkewConfig : Builder.AnimBuilder {} -> Maybe (Builder.AnimationConfig InternalSkew.Skew)
+firstSkewConfig : Builder.AnimBuilder TestMode -> Maybe (Builder.AnimationConfig InternalSkew.Skew)
 firstSkewConfig builder =
     (Builder.getCurrentAnimGroupConfig builder).properties
         |> List.filterMap
@@ -1066,7 +1077,7 @@ firstSkewConfig builder =
         |> List.head
 
 
-firstSizeConfig : Builder.AnimBuilder {} -> Maybe (Builder.AnimationConfig InternalSize.Size)
+firstSizeConfig : Builder.AnimBuilder TestMode -> Maybe (Builder.AnimationConfig InternalSize.Size)
 firstSizeConfig builder =
     (Builder.getCurrentAnimGroupConfig builder).properties
         |> List.filterMap
@@ -1081,7 +1092,7 @@ firstSizeConfig builder =
         |> List.head
 
 
-firstPerspectiveOriginConfig : Builder.AnimBuilder {} -> Maybe (Builder.AnimationConfig InternalPerspectiveOrigin.PerspectiveOrigin)
+firstPerspectiveOriginConfig : Builder.AnimBuilder TestMode -> Maybe (Builder.AnimationConfig InternalPerspectiveOrigin.PerspectiveOrigin)
 firstPerspectiveOriginConfig builder =
     (Builder.getCurrentAnimGroupConfig builder).properties
         |> List.filterMap
@@ -1096,7 +1107,7 @@ firstPerspectiveOriginConfig builder =
         |> List.head
 
 
-firstOpacityConfig : Builder.AnimBuilder {} -> Maybe (Builder.AnimationConfig InternalOpacity.Opacity)
+firstOpacityConfig : Builder.AnimBuilder TestMode -> Maybe (Builder.AnimationConfig InternalOpacity.Opacity)
 firstOpacityConfig builder =
     (Builder.getCurrentAnimGroupConfig builder).properties
         |> List.filterMap
@@ -1111,7 +1122,7 @@ firstOpacityConfig builder =
         |> List.head
 
 
-firstCustomConfig : String -> Builder.AnimBuilder {} -> Maybe (Builder.AnimationConfig Float)
+firstCustomConfig : String -> Builder.AnimBuilder TestMode -> Maybe (Builder.AnimationConfig Float)
 firstCustomConfig cssName builder =
     (Builder.getCurrentAnimGroupConfig builder).properties
         |> List.filterMap

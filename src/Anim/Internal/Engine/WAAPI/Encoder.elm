@@ -1055,7 +1055,7 @@ encodeScroll builder =
 Duration and delay are omitted — the timeline drives progress.
 Iterations, direction, and easing are supported.
 -}
-encodeView : Builder.AnimBuilder Builder.ForViewTimeline -> Encode.Value
+encodeView : Builder.AnimBuilder Builder.ForView -> Encode.Value
 encodeView builder =
     let
         processed =

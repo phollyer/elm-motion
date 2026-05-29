@@ -261,13 +261,13 @@ Use `eventsStopPropagation` to prevent events from bubbling to parent elements.
 
 ### Responsive Strategy
 
-Use relative CSS units whenever the motion can be defined in layout-relative terms.
+Use relative CSS units whenever the motion can be defined in layout-relative terms and the Browser does the work.
 
-For measured pixel targets, Keyframe has no proportional remap API for resize updates. Therefore:
+For measured pixel targets, Keyframe has no proportional remap API for resize updates because mid-flight values are not available. Therefore:
 
 - On resize, recompute pixel targets and re-position with `retarget`.
 - The animation instantly moves to the `retarget`ed position and stops.
-- Idle animations stay at their last resolved value until you trigger a new target.
+- Idle animations stay at their last resolved value until you trigger a new target with `retarget`.
 
 📖 See [Responsive Animations](../concepts/responsive-animations.md) for more info.
 
@@ -287,7 +287,7 @@ Set `iterations`, `loopForever`, and `alternate` in the animation builder.
             >> Rotate.build
     ```
 
-📖 See [Playback](../concepts/playback.md) for the full looping, iterations, and alternate API with live examples.
+📖 See [Playback](../concepts/playback.md) for the full `looping`, `iterations`, and `alternate` API with live examples.
 
 ### Timing
 
@@ -314,9 +314,7 @@ Set the default `duration`, `speed`, and `delay`. Inherited by every property th
 
 Keyframe animations support the full Easing library, including bounce and elastic. Complex curves are sampled into densely-spaced `@keyframes` stops, and the browser interpolates linearly between them — visually faithful to the source curve.
 
-For truly per-frame mathematical evaluation, use the [Sub](sub.md) engine.
-
-Set the default easing for all properties that don't override it.
+Set the default easing for all properties that don't override it:
 
 ??? example "View Source Code"
 
@@ -336,7 +334,9 @@ Set the default easing for all properties that don't override it.
 
 Keyframe animations support springs. The spring's motion is pre-baked into densely-spaced `@keyframes` stops, and the browser interpolates linearly between them — visually faithful to the analytic solution.
 
-Set the default spring for all properties that don't override it. The motion ends when each value has settled at the target — there is no explicit duration.
+The motion ends when each value has settled at the target according to the spring settings — there is no explicit duration, therefore any `duration` or `speed` settings on the builder are ignored.
+
+Set the default spring for all properties that don't override it:
 
 ??? example "View Source Code"
 

@@ -101,7 +101,7 @@ type alias AnimBuilder mode =
 
 
 type alias TimelineBuilder engine =
-    Builder.AnimBuilder (Builder.ForDocumentTimeline engine)
+    Builder.AnimBuilder engine
 
 
 type alias AnimGroupName =
@@ -318,17 +318,17 @@ elementIdDecoder path =
 -- ============================================================
 
 
-iterations : Int -> Builder.AnimBuilder mode -> Builder.AnimBuilder mode
+iterations : Int -> Builder.AnimBuilder { m | supportsIterations : () } -> Builder.AnimBuilder { m | supportsIterations : () }
 iterations =
     Builder.iterations
 
 
-loopForever : Builder.AnimBuilder mode -> Builder.AnimBuilder mode
+loopForever : Builder.AnimBuilder { m | supportsLoopForever : () } -> Builder.AnimBuilder { m | supportsLoopForever : () }
 loopForever =
     Builder.loopForever
 
 
-alternate : Builder.AnimBuilder mode -> Builder.AnimBuilder mode
+alternate : Builder.AnimBuilder { m | supportsAlternate : () } -> Builder.AnimBuilder { m | supportsAlternate : () }
 alternate =
     Builder.alternate
 
@@ -339,17 +339,17 @@ alternate =
 -- ============================================================
 
 
-delay : Int -> Builder.AnimBuilder mode -> Builder.AnimBuilder mode
+delay : Int -> Builder.AnimBuilder { m | supportsTime : () } -> Builder.AnimBuilder { m | supportsTime : () }
 delay =
     Builder.delay
 
 
-duration : Int -> Builder.AnimBuilder mode -> Builder.AnimBuilder mode
+duration : Int -> Builder.AnimBuilder { m | supportsTime : () } -> Builder.AnimBuilder { m | supportsTime : () }
 duration =
     Builder.duration
 
 
-speed : Float -> Builder.AnimBuilder mode -> Builder.AnimBuilder mode
+speed : Float -> Builder.AnimBuilder { m | supportsTime : () } -> Builder.AnimBuilder { m | supportsTime : () }
 speed =
     Builder.speed
 
@@ -397,7 +397,7 @@ cssUnitZ =
 -- ============================================================
 
 
-spring : Spring -> Builder.AnimBuilder mode -> Builder.AnimBuilder mode
+spring : Spring -> Builder.AnimBuilder { m | supportsSpring : () } -> Builder.AnimBuilder { m | supportsSpring : () }
 spring =
     Builder.spring
 

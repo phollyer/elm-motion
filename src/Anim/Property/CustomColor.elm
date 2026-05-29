@@ -311,21 +311,21 @@ to =
 
 {-| Set the animation speed (0.0 to 1.0 range per second).
 -}
-speed : Float -> Builder mode -> Builder mode
+speed : Float -> Builder { m | supportsTime : () } -> Builder { m | supportsTime : () }
 speed =
     Internal.speed
 
 
 {-| Set the animation duration (milliseconds).
 -}
-duration : Int -> Builder mode -> Builder mode
+duration : Int -> Builder { m | supportsTime : () } -> Builder { m | supportsTime : () }
 duration =
     Internal.duration
 
 
 {-| Set the delay (milliseconds) before the animation starts.
 -}
-delay : Int -> Builder mode -> Builder mode
+delay : Int -> Builder { m | supportsTime : () } -> Builder { m | supportsTime : () }
 delay =
     Internal.delay
 
@@ -369,6 +369,6 @@ and vice versa — they are mutually exclusive.
             >> CustomColor.spring Spring.wobbly
 
 -}
-spring : Spring -> Builder mode -> Builder mode
+spring : Spring -> Builder { m | supportsSpring : () } -> Builder { m | supportsSpring : () }
 spring =
     Internal.spring

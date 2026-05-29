@@ -447,7 +447,7 @@ toY =
             >> ... -- continue with animation
 
 -}
-delay : Int -> Builder mode -> Builder mode
+delay : Int -> Builder { m | supportsTime : () } -> Builder { m | supportsTime : () }
 delay =
     PB.delay
 
@@ -462,7 +462,7 @@ delay =
             >> ... -- continue with animation
 
 -}
-duration : Int -> Builder mode -> Builder mode
+duration : Int -> Builder { m | supportsTime : () } -> Builder { m | supportsTime : () }
 duration =
     PB.duration
 
@@ -479,7 +479,7 @@ For example, an animation from `0` to `200px` with a speed of `100.0` will take 
             >> ... -- continue with animation
 
 -}
-speed : Float -> Builder mode -> Builder mode
+speed : Float -> Builder { m | supportsTime : () } -> Builder { m | supportsTime : () }
 speed =
     PB.speed
 
@@ -531,7 +531,7 @@ and vice versa — they are mutually exclusive.
             >> PerspectiveOrigin.spring Spring.wobbly
 
 -}
-spring : Spring -> Builder mode -> Builder mode
+spring : Spring -> Builder { m | supportsSpring : () } -> Builder { m | supportsSpring : () }
 spring =
     PB.spring
 

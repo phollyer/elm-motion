@@ -30,7 +30,7 @@ initialState =
     Sub.init [ Translate.initXY groupName 0 0 ]
 
 
-moveX : Float -> Sub.AnimBuilder mode -> Sub.AnimBuilder mode
+moveX : Float -> Sub.EngineBuilder -> Sub.EngineBuilder
 moveX target =
     Translate.for groupName
         >> Translate.toX target

@@ -66,7 +66,7 @@ init =
 -- ANIMATION
 
 
-dropBall : AnimBuilder mode -> AnimBuilder mode
+dropBall : Sub.EngineBuilder -> Sub.EngineBuilder
 dropBall =
     Translate.for animGroup
         >> Translate.cssUnit Cqh

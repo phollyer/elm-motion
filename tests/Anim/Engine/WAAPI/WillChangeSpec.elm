@@ -26,9 +26,9 @@ import Anim.Property.Size as Size
 import Anim.Property.Skew as Skew
 import Anim.Property.Translate as Translate
 import Anim.Unit as Unit
+import Dict
 import Expect
 import Json.Decode as Decode
-import Dict
 import Json.Encode as Encode
 import Test exposing (Test, describe, test)
 
@@ -110,11 +110,9 @@ suite =
                 encodeScroll
                     (Translate.for "cube"
                         >> Translate.toXY 0 200
-                        >> Translate.duration 1000
                         >> Translate.build
                         >> Opacity.for "cube"
                         >> Opacity.to 1
-                        >> Opacity.duration 1000
                         >> Opacity.build
                     )
                     |> decodeWillChange "cube"
@@ -124,7 +122,6 @@ suite =
                 encodeView
                     (Scale.for "cube"
                         >> Scale.to 2
-                        >> Scale.duration 1000
                         >> Scale.build
                     )
                     |> decodeWillChange "cube"
@@ -136,7 +133,7 @@ suite =
 -- HELPERS
 
 
-encodeAnimate : (Builder.AnimBuilder Builder.ForWAAPIEngine -> Builder.AnimBuilder Builder.ForWAAPIEngine) -> String
+encodeAnimate : (Builder.AnimBuilder Builder.ForWAAPI -> Builder.AnimBuilder Builder.ForWAAPI) -> String
 encodeAnimate steps =
     let
         processed =
@@ -153,7 +150,7 @@ encodeScroll steps =
         |> Encode.encode 0
 
 
-encodeView : (Builder.AnimBuilder Builder.ForViewTimeline -> Builder.AnimBuilder Builder.ForViewTimeline) -> String
+encodeView : (Builder.AnimBuilder Builder.ForView -> Builder.AnimBuilder Builder.ForView) -> String
 encodeView steps =
     Builder.init [ steps ]
         |> Encoder.encodeView

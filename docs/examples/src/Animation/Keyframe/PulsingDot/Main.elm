@@ -64,7 +64,7 @@ groupName =
     "pulsingDot"
 
 
-pulse : AnimBuilder mode -> AnimBuilder mode
+pulse : Keyframe.EngineBuilder -> Keyframe.EngineBuilder
 pulse =
     Keyframe.loopForever
         >> Keyframe.alternate

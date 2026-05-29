@@ -1,6 +1,6 @@
 module Animation.Keyframe.BorderRadius.Main exposing (main)
 
-import Anim.Builder exposing (AnimBuilder)
+import Anim.Builder exposing (AnimBuilder, ForKeyframe)
 import Anim.Engine.Keyframe as Keyframe
 import Anim.Property.Custom as Property
 import Anim.Unit exposing (Unit(..))
@@ -52,13 +52,13 @@ animGroup =
     "boxAnim"
 
 
-standardTiming : Property.Builder mode -> Property.Builder mode
+standardTiming : Property.Builder ForKeyframe -> Property.Builder ForKeyframe
 standardTiming =
     Property.duration 800
         >> Property.easing CubicInOut
 
 
-roundCorners : AnimBuilder mode -> AnimBuilder mode
+roundCorners : Keyframe.EngineBuilder -> Keyframe.EngineBuilder
 roundCorners =
     Property.for animGroup (Property.BorderRadius Px)
         >> Property.to 48
@@ -66,7 +66,7 @@ roundCorners =
         >> Property.build
 
 
-squareCorners : AnimBuilder mode -> AnimBuilder mode
+squareCorners : Keyframe.EngineBuilder -> Keyframe.EngineBuilder
 squareCorners =
     Property.for animGroup (Property.BorderRadius Px)
         >> Property.to 0

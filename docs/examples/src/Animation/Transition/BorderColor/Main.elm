@@ -1,6 +1,6 @@
 module Animation.Transition.BorderColor.Main exposing (main)
 
-import Anim.Builder exposing (AnimBuilder)
+import Anim.Builder exposing (AnimBuilder, ForTransition)
 import Anim.Engine.Transition as Transition
 import Anim.Extra.Color as Color
 import Anim.Property.CustomColor as CustomColor
@@ -56,13 +56,13 @@ animGroup =
     "borderAnim"
 
 
-standardTiming : CustomColor.Builder mode -> CustomColor.Builder mode
+standardTiming : CustomColor.Builder ForTransition -> CustomColor.Builder ForTransition
 standardTiming =
     CustomColor.duration 800
         >> CustomColor.easing CubicInOut
 
 
-toRed : AnimBuilder mode -> AnimBuilder mode
+toRed : Transition.EngineBuilder -> Transition.EngineBuilder
 toRed =
     CustomColor.for animGroup CustomColor.BorderColor
         >> CustomColor.to (Color.rgb 239 68 68)
@@ -70,7 +70,7 @@ toRed =
         >> CustomColor.build
 
 
-toBlue : AnimBuilder mode -> AnimBuilder mode
+toBlue : Transition.EngineBuilder -> Transition.EngineBuilder
 toBlue =
     CustomColor.for animGroup CustomColor.BorderColor
         >> CustomColor.to (Color.rgb 59 130 246)

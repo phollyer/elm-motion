@@ -242,7 +242,7 @@ will change by 2.0 units per second (e.g., from 0.0 to 1.0 takes 0.5 seconds).
             >> ... -- continue with animation
 
 -}
-speed : Float -> Builder mode -> Builder mode
+speed : Float -> Builder { m | supportsTime : () } -> Builder { m | supportsTime : () }
 speed =
     OB.speed
 
@@ -257,7 +257,7 @@ speed =
             >> ... -- continue with animation
 
 -}
-duration : Int -> Builder mode -> Builder mode
+duration : Int -> Builder { m | supportsTime : () } -> Builder { m | supportsTime : () }
 duration =
     OB.duration
 
@@ -272,7 +272,7 @@ duration =
             >> ... -- continue with animation
 
 -}
-delay : Int -> Builder mode -> Builder mode
+delay : Int -> Builder { m | supportsTime : () } -> Builder { m | supportsTime : () }
 delay =
     OB.delay
 
@@ -324,7 +324,7 @@ and vice versa — they are mutually exclusive.
             >> Opacity.spring Spring.wobbly
 
 -}
-spring : Spring -> Builder mode -> Builder mode
+spring : Spring -> Builder { m | supportsSpring : () } -> Builder { m | supportsSpring : () }
 spring =
     OB.spring
 

@@ -1,6 +1,6 @@
 port module Animation.WAAPI.TransformOrder.Main exposing (main)
 
-import Anim.Builder exposing (AnimBuilder, ForDocumentTimeline, ForWAAPIEngine)
+import Anim.Builder exposing (AnimBuilder)
 import Anim.Engine.WAAPI as WAAPI
 import Anim.Extra.TransformOrder as TransformProperty exposing (TransformProperty(..))
 import Anim.Property.Rotate as Rotate
@@ -186,7 +186,7 @@ init =
 -- ANIMATION
 
 
-animatePermutation : Permutation -> AnimBuilder mode -> AnimBuilder mode
+animatePermutation : Permutation -> WAAPI.EngineBuilder -> WAAPI.EngineBuilder
 animatePermutation perm =
     let
         key =
@@ -216,7 +216,7 @@ animatePermutation perm =
         >> Scale.build
 
 
-resetPermutation : Permutation -> AnimBuilder mode -> AnimBuilder mode
+resetPermutation : Permutation -> WAAPI.EngineBuilder -> WAAPI.EngineBuilder
 resetPermutation perm =
     let
         key =

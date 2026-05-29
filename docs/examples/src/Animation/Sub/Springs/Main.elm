@@ -62,7 +62,7 @@ init =
 -- ANIMATION
 
 
-animateTo : Float -> Spring -> AnimBuilder mode -> AnimBuilder mode
+animateTo : Float -> Spring -> Sub.EngineBuilder -> Sub.EngineBuilder
 animateTo x spring =
     Translate.for animGroup
         >> Translate.toX x

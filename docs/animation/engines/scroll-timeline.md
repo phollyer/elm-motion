@@ -241,7 +241,7 @@ Vertical scroll is the default. Use `horizontal` in the animation pipeline when 
 
 ### Easing
 
-Set the default easing for all properties that don't override it.
+Set the default easing for all properties that don't override it:
 
 ??? example "View Source Code"
 
@@ -257,7 +257,7 @@ Set the default easing for all properties that don't override it.
 
 ### Spring
 
-Set the default spring for all properties that don't override it. The spring's motion is pre-baked into densely-spaced keyframe stops driven by the scroll timeline.
+Set the default spring for all properties that don't override it: The spring's motion is pre-baked into densely-spaced keyframe stops driven by the scroll timeline.
 
 ??? example "View Source Code"
 

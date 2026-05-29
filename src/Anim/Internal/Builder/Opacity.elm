@@ -140,17 +140,17 @@ to endPos (OpacityBuilder config builder) =
 -- ============================================================
 
 
-speed : Float -> OpacityBuilder mode -> OpacityBuilder mode
+speed : Float -> OpacityBuilder { m | supportsTime : () } -> OpacityBuilder { m | supportsTime : () }
 speed spd (OpacityBuilder config builder) =
     OpacityBuilder (PropertyBuilder.speed spd config) builder
 
 
-duration : Int -> OpacityBuilder mode -> OpacityBuilder mode
+duration : Int -> OpacityBuilder { m | supportsTime : () } -> OpacityBuilder { m | supportsTime : () }
 duration dur (OpacityBuilder config builder) =
     OpacityBuilder (PropertyBuilder.duration dur config) builder
 
 
-delay : Int -> OpacityBuilder mode -> OpacityBuilder mode
+delay : Int -> OpacityBuilder { m | supportsTime : () } -> OpacityBuilder { m | supportsTime : () }
 delay dly (OpacityBuilder config builder) =
     OpacityBuilder (PropertyBuilder.delay dly config) builder
 
@@ -172,7 +172,7 @@ easing ease (OpacityBuilder config builder) =
 -- ============================================================
 
 
-spring : Spring -> OpacityBuilder mode -> OpacityBuilder mode
+spring : Spring -> OpacityBuilder { m | supportsSpring : () } -> OpacityBuilder { m | supportsSpring : () }
 spring s (OpacityBuilder config builder) =
     OpacityBuilder (PropertyBuilder.spring s config) builder
 

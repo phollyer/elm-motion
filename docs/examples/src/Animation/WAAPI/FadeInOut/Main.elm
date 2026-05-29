@@ -64,7 +64,7 @@ animGroup =
     "fadeAnim"
 
 
-fadeTo : Float -> AnimBuilder mode -> AnimBuilder mode
+fadeTo : Float -> WAAPI.EngineBuilder -> WAAPI.EngineBuilder
 fadeTo to =
     Opacity.for animGroup
         >> Opacity.to to
@@ -72,12 +72,12 @@ fadeTo to =
         >> Opacity.build
 
 
-fadeIn : AnimBuilder mode -> AnimBuilder mode
+fadeIn : WAAPI.EngineBuilder -> WAAPI.EngineBuilder
 fadeIn =
     fadeTo 1
 
 
-fadeOut : AnimBuilder mode -> AnimBuilder mode
+fadeOut : WAAPI.EngineBuilder -> WAAPI.EngineBuilder
 fadeOut =
     fadeTo 0
 

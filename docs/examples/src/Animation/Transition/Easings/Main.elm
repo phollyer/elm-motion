@@ -56,7 +56,7 @@ init =
 -- ANIMATION
 
 
-animateTo : Float -> Easing -> AnimBuilder mode -> AnimBuilder mode
+animateTo : Float -> Easing -> Transition.EngineBuilder -> Transition.EngineBuilder
 animateTo x easing =
     Translate.for animGroup
         >> Translate.toX x

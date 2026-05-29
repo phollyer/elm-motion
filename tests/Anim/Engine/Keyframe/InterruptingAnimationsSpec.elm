@@ -15,7 +15,7 @@ animGroup =
     "box"
 
 
-moveBoxX : Float -> Keyframe.AnimBuilder mode -> Keyframe.AnimBuilder mode
+moveBoxX : Float -> Keyframe.EngineBuilder -> Keyframe.EngineBuilder
 moveBoxX x =
     Translate.for animGroup
         >> Translate.cssUnitX Cqw

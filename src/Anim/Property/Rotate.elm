@@ -555,7 +555,7 @@ A speed of `90.0` means the element will rotate 90 degrees per second, so our an
 Similarly, a speed of `180.0` would complete the same animation in 1 second, and a speed of `45.0` would take 4 seconds.
 
 -}
-speed : Float -> Builder mode -> Builder mode
+speed : Float -> Builder { m | supportsTime : () } -> Builder { m | supportsTime : () }
 speed =
     RB.speed
 
@@ -570,7 +570,7 @@ speed =
             >> ... -- continue with animation
 
 -}
-duration : Int -> Builder mode -> Builder mode
+duration : Int -> Builder { m | supportsTime : () } -> Builder { m | supportsTime : () }
 duration =
     RB.duration
 
@@ -585,7 +585,7 @@ duration =
             >> ... -- continue with animation
 
 -}
-delay : Int -> Builder mode -> Builder mode
+delay : Int -> Builder { m | supportsTime : () } -> Builder { m | supportsTime : () }
 delay =
     RB.delay
 
@@ -637,7 +637,7 @@ and vice versa — they are mutually exclusive.
             >> Rotate.spring Spring.wobbly
 
 -}
-spring : Spring -> Builder mode -> Builder mode
+spring : Spring -> Builder { m | supportsSpring : () } -> Builder { m | supportsSpring : () }
 spring =
     RB.spring
 

@@ -1,6 +1,6 @@
 module Animation.Sub.InterruptingAnimations.SingleProperty.Main exposing (main)
 
-import Anim.Builder exposing (AnimBuilder)
+import Anim.Builder exposing (AnimBuilder, ForSub)
 import Anim.Engine.Sub as Sub
 import Anim.Extra.Color as Color exposing (Color)
 import Anim.Property.CustomColor as CustomColor
@@ -75,27 +75,27 @@ color4 =
     Color.rgb 255 193 7
 
 
-toColor1 : AnimBuilder mode -> AnimBuilder mode
+toColor1 : Sub.EngineBuilder -> Sub.EngineBuilder
 toColor1 =
     colorBox (CustomColor.to color1)
 
 
-toColor2 : AnimBuilder mode -> AnimBuilder mode
+toColor2 : Sub.EngineBuilder -> Sub.EngineBuilder
 toColor2 =
     colorBox (CustomColor.to color2)
 
 
-toColor3 : AnimBuilder mode -> AnimBuilder mode
+toColor3 : Sub.EngineBuilder -> Sub.EngineBuilder
 toColor3 =
     colorBox (CustomColor.to color3)
 
 
-toColor4 : AnimBuilder mode -> AnimBuilder mode
+toColor4 : Sub.EngineBuilder -> Sub.EngineBuilder
 toColor4 =
     colorBox (CustomColor.to color4)
 
 
-colorBox : (CustomColor.Builder mode -> CustomColor.Builder mode) -> AnimBuilder mode -> AnimBuilder mode
+colorBox : (CustomColor.Builder ForSub -> CustomColor.Builder ForSub) -> Sub.EngineBuilder -> Sub.EngineBuilder
 colorBox moveFunc =
     CustomColor.for animGroupName CustomColor.BackgroundColor
         >> moveFunc

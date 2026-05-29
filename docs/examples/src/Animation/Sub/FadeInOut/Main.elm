@@ -53,7 +53,7 @@ animGroup =
     "fadeAnim"
 
 
-fadeTo : Float -> AnimBuilder mode -> AnimBuilder mode
+fadeTo : Float -> Sub.EngineBuilder -> Sub.EngineBuilder
 fadeTo to =
     Opacity.for animGroup
         >> Opacity.to to
@@ -61,12 +61,12 @@ fadeTo to =
         >> Opacity.build
 
 
-fadeIn : AnimBuilder mode -> AnimBuilder mode
+fadeIn : Sub.EngineBuilder -> Sub.EngineBuilder
 fadeIn =
     fadeTo 1
 
 
-fadeOut : AnimBuilder mode -> AnimBuilder mode
+fadeOut : Sub.EngineBuilder -> Sub.EngineBuilder
 fadeOut =
     fadeTo 0
 

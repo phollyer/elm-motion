@@ -143,7 +143,7 @@ to color (Builder cssName config builder) =
 -- ============================================================
 
 
-speed : Float -> Builder mode -> Builder mode
+speed : Float -> Builder { m | supportsTime : () } -> Builder { m | supportsTime : () }
 speed spd (Builder cssName config builder) =
     let
         maxColorDistance =
@@ -161,7 +161,7 @@ speed spd (Builder cssName config builder) =
         builder
 
 
-duration : Int -> Builder mode -> Builder mode
+duration : Int -> Builder { m | supportsTime : () } -> Builder { m | supportsTime : () }
 duration dur (Builder cssName config builder) =
     Builder cssName (PropertyBuilder.duration dur config) builder
 
@@ -171,11 +171,11 @@ easing ease (Builder cssName config builder) =
     Builder cssName (PropertyBuilder.easing ease config) builder
 
 
-spring : Spring -> Builder mode -> Builder mode
+spring : Spring -> Builder { m | supportsSpring : () } -> Builder { m | supportsSpring : () }
 spring s (Builder cssName config builder) =
     Builder cssName (PropertyBuilder.spring s config) builder
 
 
-delay : Int -> Builder mode -> Builder mode
+delay : Int -> Builder { m | supportsTime : () } -> Builder { m | supportsTime : () }
 delay dly (Builder cssName config builder) =
     Builder cssName (PropertyBuilder.delay dly config) builder

@@ -47,7 +47,7 @@ import Html.Attributes
 
 
 type alias AnimState =
-    CSS.AnimState Builder.ForTransitionEngine AnimGroup
+    CSS.AnimState Builder.ForTransition AnimGroup
 
 
 type alias AnimGroupName =
@@ -63,7 +63,7 @@ type alias TimelineBuilder engine =
 
 
 type alias EngineBuilder =
-    TimelineBuilder Builder.ForTransitionEngine
+    Builder.AnimBuilder Builder.ForTransition
 
 
 

@@ -1,6 +1,6 @@
 module Animation.Keyframe.InterruptingAnimations.MultipleAxes.Main exposing (main)
 
-import Anim.Builder exposing (AnimBuilder)
+import Anim.Builder exposing (AnimBuilder, ForKeyframe)
 import Anim.Engine.Keyframe as Keyframe
 import Anim.Property.Translate as Translate
 import Anim.Unit exposing (Unit(..))
@@ -111,17 +111,17 @@ targetY pos =
 -- ANIMATIONS
 
 
-moveBoxX : Float -> AnimBuilder mode -> AnimBuilder mode
+moveBoxX : Float -> Keyframe.EngineBuilder -> Keyframe.EngineBuilder
 moveBoxX x =
     moveBox (Translate.toX x)
 
 
-moveBoxY : Float -> AnimBuilder mode -> AnimBuilder mode
+moveBoxY : Float -> Keyframe.EngineBuilder -> Keyframe.EngineBuilder
 moveBoxY y =
     moveBox (Translate.toY y)
 
 
-moveBox : (Translate.Builder mode -> Translate.Builder mode) -> AnimBuilder mode -> AnimBuilder mode
+moveBox : (Translate.Builder ForKeyframe -> Translate.Builder ForKeyframe) -> Keyframe.EngineBuilder -> Keyframe.EngineBuilder
 moveBox moveFunc =
     Translate.for animGroupName
         >> Translate.cssUnitX Cqw

@@ -150,12 +150,12 @@ to endValue (Builder cssName unit config builder) =
 -- ============================================================
 
 
-speed : Float -> Builder mode -> Builder mode
+speed : Float -> Builder { m | supportsTime : () } -> Builder { m | supportsTime : () }
 speed spd (Builder cssName unit config builder) =
     Builder cssName unit (PropertyBuilder.speed spd config) builder
 
 
-duration : Int -> Builder mode -> Builder mode
+duration : Int -> Builder { m | supportsTime : () } -> Builder { m | supportsTime : () }
 duration dur (Builder cssName unit config builder) =
     Builder cssName unit (PropertyBuilder.duration dur config) builder
 
@@ -165,7 +165,7 @@ easing ease (Builder cssName unit config builder) =
     Builder cssName unit (PropertyBuilder.easing ease config) builder
 
 
-spring : Spring -> Builder mode -> Builder mode
+spring : Spring -> Builder { m | supportsSpring : () } -> Builder { m | supportsSpring : () }
 spring s (Builder cssName unit config builder) =
     Builder cssName unit (PropertyBuilder.spring s config) builder
 
@@ -196,6 +196,6 @@ unclamp (Builder cssName unit config builder) =
             Builder cssName unit config builder
 
 
-delay : Int -> Builder mode -> Builder mode
+delay : Int -> Builder { m | supportsTime : () } -> Builder { m | supportsTime : () }
 delay dly (Builder cssName unit config builder) =
     Builder cssName unit (PropertyBuilder.delay dly config) builder

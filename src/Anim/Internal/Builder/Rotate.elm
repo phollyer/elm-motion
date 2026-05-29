@@ -348,17 +348,17 @@ toZ z (RotateBuilder config builder) =
 -- ============================================================
 
 
-delay : Int -> RotateBuilder mode -> RotateBuilder mode
+delay : Int -> RotateBuilder { m | supportsTime : () } -> RotateBuilder { m | supportsTime : () }
 delay ms (RotateBuilder config builder) =
     RotateBuilder (PropertyBuilder.delay ms config) builder
 
 
-duration : Int -> RotateBuilder mode -> RotateBuilder mode
+duration : Int -> RotateBuilder { m | supportsTime : () } -> RotateBuilder { m | supportsTime : () }
 duration ms (RotateBuilder config builder) =
     RotateBuilder (PropertyBuilder.duration ms config) builder
 
 
-speed : Float -> RotateBuilder mode -> RotateBuilder mode
+speed : Float -> RotateBuilder { m | supportsTime : () } -> RotateBuilder { m | supportsTime : () }
 speed value (RotateBuilder config builder) =
     RotateBuilder (PropertyBuilder.speed value config) builder
 
@@ -380,7 +380,7 @@ easing easing_ (RotateBuilder config builder) =
 -- ============================================================
 
 
-spring : Spring -> RotateBuilder mode -> RotateBuilder mode
+spring : Spring -> RotateBuilder { m | supportsSpring : () } -> RotateBuilder { m | supportsSpring : () }
 spring s (RotateBuilder config builder) =
     RotateBuilder (PropertyBuilder.spring s config) builder
 

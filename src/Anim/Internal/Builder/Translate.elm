@@ -604,17 +604,17 @@ markAxes axes builder =
 -- ============================================================
 
 
-delay : Int -> TranslateBuilder mode -> TranslateBuilder mode
+delay : Int -> TranslateBuilder { m | supportsTime : () } -> TranslateBuilder { m | supportsTime : () }
 delay delay_ (TranslateBuilder config builder) =
     TranslateBuilder (PropertyBuilder.delay delay_ config) builder
 
 
-duration : Int -> TranslateBuilder mode -> TranslateBuilder mode
+duration : Int -> TranslateBuilder { m | supportsTime : () } -> TranslateBuilder { m | supportsTime : () }
 duration ms (TranslateBuilder config builder) =
     TranslateBuilder (PropertyBuilder.duration ms config) builder
 
 
-speed : Float -> TranslateBuilder mode -> TranslateBuilder mode
+speed : Float -> TranslateBuilder { m | supportsTime : () } -> TranslateBuilder { m | supportsTime : () }
 speed value (TranslateBuilder config builder) =
     TranslateBuilder (PropertyBuilder.speed value config) builder
 
@@ -636,7 +636,7 @@ easing easing_ (TranslateBuilder config builder) =
 -- ============================================================
 
 
-spring : Spring -> TranslateBuilder mode -> TranslateBuilder mode
+spring : Spring -> TranslateBuilder { m | supportsSpring : () } -> TranslateBuilder { m | supportsSpring : () }
 spring s (TranslateBuilder config builder) =
     TranslateBuilder (PropertyBuilder.spring s config) builder
 

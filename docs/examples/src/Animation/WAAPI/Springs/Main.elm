@@ -73,7 +73,7 @@ init =
 -- ANIMATION
 
 
-animateTo : Float -> Spring -> AnimBuilder mode -> AnimBuilder mode
+animateTo : Float -> Spring -> WAAPI.EngineBuilder -> WAAPI.EngineBuilder
 animateTo x spring =
     Translate.for animGroup
         >> Translate.toX x

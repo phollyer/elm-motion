@@ -5,8 +5,6 @@ import Anim.Internal.Engine.Transition.AnimGroup as AnimGroup exposing (AnimGrou
 import Anim.Internal.Engine.Transition.Styles as TransitionStyles
 import Dict exposing (Dict)
 import Motion.Easing exposing (Easing)
-import Motion.Internal.Spring as SpringInt
-import Motion.Spring exposing (Spring)
 import Set
 import Shared.Easing as InternalEasing
 
@@ -318,48 +316,14 @@ transitionRule cssName cfg =
         ++ " "
         ++ String.fromInt cfg.duration
         ++ "ms "
-        ++ timingFunction cfg.spring cfg.easing
+        ++ timingFunction cfg.easing
         ++ " "
         ++ String.fromInt cfg.delay
         ++ "ms"
 
 
-{-| Resolve the CSS `transition-timing-function` for a property. When a
-`Spring` is set, pick a cubic-bezier based on the spring's damping ratio:
-critically- or over-damped springs (e.g. `noWobble`) get a smooth ease-out
-with no overshoot, under-damped springs get an overshoot curve.
+{-| Resolve the CSS `transition-timing-function` for a property.
 -}
-timingFunction : Maybe Spring -> Easing -> String
-timingFunction maybeSpring easing =
-    case maybeSpring of
-        Just s ->
-            let
-                cfg =
-                    SpringInt.unwrap s
-
-                dampingRatio =
-                    if cfg.stiffness <= 0 || cfg.mass <= 0 then
-                        1.0
-
-                    else
-                        cfg.damping / (2 * sqrt (cfg.stiffness * cfg.mass))
-
-                -- Analytical first-peak overshoot fraction for an
-                -- underdamped spring. Anything below 1% reads as
-                -- non-bouncy (React-Motion's `noWobble` lands at
-                -- ~0.997 damping ratio, well under this threshold).
-                overshoot =
-                    if dampingRatio >= 1.0 then
-                        0
-
-                    else
-                        e ^ (-pi * dampingRatio / sqrt (1 - dampingRatio * dampingRatio))
-            in
-            if overshoot < 0.01 then
-                "cubic-bezier(0.25, 0.1, 0.25, 1)"
-
-            else
-                "cubic-bezier(0.34, 1.56, 0.64, 1)"
-
-        Nothing ->
-            InternalEasing.toCSS (Just easing)
+timingFunction : Easing -> String
+timingFunction easing =
+    InternalEasing.toCSS (Just easing)

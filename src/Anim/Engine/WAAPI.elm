@@ -677,7 +677,7 @@ onResize =
             >> nudgeBellIcon
 
 -}
-iterations : Int -> Builder.AnimBuilder mode -> Builder.AnimBuilder mode
+iterations : Int -> EngineBuilder -> EngineBuilder
 iterations =
     Builder.iterations
 
@@ -698,7 +698,7 @@ iterations =
             >> pulse
 
 -}
-loopForever : Builder.AnimBuilder mode -> Builder.AnimBuilder mode
+loopForever : EngineBuilder -> EngineBuilder
 loopForever =
     Internal.loopForever
 
@@ -718,7 +718,7 @@ so calling it when `iterations` is unset or `1` automatically bumps
 before or after `alternate` is preserved.
 
 -}
-alternate : Builder.AnimBuilder mode -> Builder.AnimBuilder mode
+alternate : EngineBuilder -> EngineBuilder
 alternate =
     Builder.alternate
 
@@ -739,7 +739,7 @@ alternate =
             >> fadeInContent
 
 -}
-delay : Int -> Builder.AnimBuilder mode -> Builder.AnimBuilder mode
+delay : Int -> EngineBuilder -> EngineBuilder
 delay =
     Builder.delay
 
@@ -754,7 +754,7 @@ delay =
             >> fadeInContent
 
 -}
-duration : Int -> Builder.AnimBuilder mode -> Builder.AnimBuilder mode
+duration : Int -> EngineBuilder -> EngineBuilder
 duration =
     Builder.duration
 
@@ -769,7 +769,7 @@ duration =
             >> slideUpContent
 
 -}
-speed : Float -> Builder.AnimBuilder mode -> Builder.AnimBuilder mode
+speed : Float -> EngineBuilder -> EngineBuilder
 speed =
     Builder.speed
 
@@ -790,7 +790,7 @@ speed =
             >> revealPrimaryCta
 
 -}
-easing : Easing -> Builder.AnimBuilder mode -> Builder.AnimBuilder mode
+easing : Easing -> EngineBuilder -> EngineBuilder
 easing =
     Builder.easing
 
@@ -810,7 +810,7 @@ easing =
             >> growPanelHeight
 
 -}
-cssUnit : Unit -> Builder.AnimBuilder mode -> Builder.AnimBuilder mode
+cssUnit : Unit -> EngineBuilder -> EngineBuilder
 cssUnit =
     Builder.cssUnit
 
@@ -824,7 +824,7 @@ cssUnit =
             >> alignDrawerLabelX
 
 -}
-cssUnitX : Unit -> Builder.AnimBuilder mode -> Builder.AnimBuilder mode
+cssUnitX : Unit -> EngineBuilder -> EngineBuilder
 cssUnitX =
     Builder.cssUnitX
 
@@ -838,7 +838,7 @@ cssUnitX =
             >> alignSheetHeaderY
 
 -}
-cssUnitY : Unit -> Builder.AnimBuilder mode -> Builder.AnimBuilder mode
+cssUnitY : Unit -> EngineBuilder -> EngineBuilder
 cssUnitY =
     Builder.cssUnitY
 
@@ -852,7 +852,7 @@ cssUnitY =
             >> bringFloatingCardForward
 
 -}
-cssUnitZ : Unit -> Builder.AnimBuilder mode -> Builder.AnimBuilder mode
+cssUnitZ : Unit -> EngineBuilder -> EngineBuilder
 cssUnitZ =
     Builder.cssUnitZ
 
@@ -866,7 +866,7 @@ cssUnitZ =
             >> settleCardSpacing
 
 -}
-cssUnitWidth : Unit -> Builder.AnimBuilder mode -> Builder.AnimBuilder mode
+cssUnitWidth : Unit -> EngineBuilder -> EngineBuilder
 cssUnitWidth =
     Builder.cssUnitWidth
 
@@ -880,7 +880,7 @@ cssUnitWidth =
             >> alignPanelHeaderY
 
 -}
-cssUnitHeight : Unit -> Builder.AnimBuilder mode -> Builder.AnimBuilder mode
+cssUnitHeight : Unit -> EngineBuilder -> EngineBuilder
 cssUnitHeight =
     Builder.cssUnitHeight
 
@@ -900,7 +900,7 @@ cssUnitHeight =
             >> settleCardShadow
 
 -}
-spring : Spring -> Builder.AnimBuilder mode -> Builder.AnimBuilder mode
+spring : Spring -> EngineBuilder -> EngineBuilder
 spring =
     Builder.spring
 

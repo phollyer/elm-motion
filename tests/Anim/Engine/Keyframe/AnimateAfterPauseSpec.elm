@@ -37,7 +37,7 @@ initial =
     Keyframe.init [ Translate.initY animGroup 0 ]
 
 
-dropBall : Keyframe.AnimBuilder mode -> Keyframe.AnimBuilder mode
+dropBall : Keyframe.EngineBuilder -> Keyframe.EngineBuilder
 dropBall =
     Translate.for animGroup
         >> Translate.cssUnit Cqh

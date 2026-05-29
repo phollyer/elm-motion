@@ -14,7 +14,7 @@ import Expect
 import Test exposing (Test, describe, test)
 
 
-animBuilder : Builder.AnimBuilder {}
+animBuilder : Builder.AnimBuilder { supportsIterations : (), supportsAlternate : (), supportsLoopForever : () }
 animBuilder =
     Builder.init []
 

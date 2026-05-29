@@ -236,17 +236,17 @@ toW w (SizeBuilder config builder) =
 -- ============================================================
 
 
-delay : Int -> SizeBuilder mode -> SizeBuilder mode
+delay : Int -> SizeBuilder { m | supportsTime : () } -> SizeBuilder { m | supportsTime : () }
 delay ms (SizeBuilder config builder) =
     SizeBuilder (PropertyBuilder.delay ms config) builder
 
 
-duration : Int -> SizeBuilder mode -> SizeBuilder mode
+duration : Int -> SizeBuilder { m | supportsTime : () } -> SizeBuilder { m | supportsTime : () }
 duration ms (SizeBuilder config builder) =
     SizeBuilder (PropertyBuilder.duration ms config) builder
 
 
-speed : Float -> SizeBuilder mode -> SizeBuilder mode
+speed : Float -> SizeBuilder { m | supportsTime : () } -> SizeBuilder { m | supportsTime : () }
 speed pixelsPerSecond (SizeBuilder config builder) =
     SizeBuilder (PropertyBuilder.speed pixelsPerSecond config) builder
 
@@ -268,7 +268,7 @@ easing easingFunction (SizeBuilder config builder) =
 -- ============================================================
 
 
-spring : Spring -> SizeBuilder mode -> SizeBuilder mode
+spring : Spring -> SizeBuilder { m | supportsSpring : () } -> SizeBuilder { m | supportsSpring : () }
 spring s (SizeBuilder config builder) =
     SizeBuilder (PropertyBuilder.spring s config) builder
 

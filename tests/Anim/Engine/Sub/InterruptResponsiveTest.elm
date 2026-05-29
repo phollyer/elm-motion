@@ -39,7 +39,7 @@ initialState =
 -- ANIMATIONS
 
 
-moveX : Float -> Float -> Sub.AnimBuilder mode -> Sub.AnimBuilder mode
+moveX : Float -> Float -> Sub.EngineBuilder -> Sub.EngineBuilder
 moveX from to_ =
     Translate.for groupName
         >> Translate.fromX from

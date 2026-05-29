@@ -138,7 +138,7 @@ color4 =
 -- ANIMATIONS
 
 
-moveBoxX : Float -> AnimBuilder mode -> AnimBuilder mode
+moveBoxX : Float -> WAAPI.EngineBuilder -> WAAPI.EngineBuilder
 moveBoxX x =
     Translate.for animGroupName
         >> Translate.cssUnit Cqw
@@ -148,7 +148,7 @@ moveBoxX x =
         >> Translate.build
 
 
-changeColor : Color -> AnimBuilder mode -> AnimBuilder mode
+changeColor : Color -> WAAPI.EngineBuilder -> WAAPI.EngineBuilder
 changeColor color =
     CustomColor.for animGroupName CustomColor.BackgroundColor
         >> CustomColor.to color

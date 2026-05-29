@@ -621,7 +621,7 @@ toZ =
             >> ... -- continue with animation
 
 -}
-delay : Int -> Builder mode -> Builder mode
+delay : Int -> Builder { m | supportsTime : () } -> Builder { m | supportsTime : () }
 delay =
     SB.delay
 
@@ -636,7 +636,7 @@ delay =
             >> ... -- continue with animation
 
 -}
-duration : Int -> Builder mode -> Builder mode
+duration : Int -> Builder { m | supportsTime : () } -> Builder { m | supportsTime : () }
 duration =
     SB.duration
 
@@ -656,7 +656,7 @@ A speed of `2.0` means the scale will change by 2.0 units per second, so our ani
 Similarly, a speed of `4.0` would complete the same animation in 1 second, and a speed of `1.0` would take 4 seconds.
 
 -}
-speed : Float -> Builder mode -> Builder mode
+speed : Float -> Builder { m | supportsTime : () } -> Builder { m | supportsTime : () }
 speed =
     SB.speed
 
@@ -708,7 +708,7 @@ and vice versa — they are mutually exclusive.
             >> Scale.spring Spring.wobbly
 
 -}
-spring : Spring -> Builder mode -> Builder mode
+spring : Spring -> Builder { m | supportsSpring : () } -> Builder { m | supportsSpring : () }
 spring =
     SB.spring
 

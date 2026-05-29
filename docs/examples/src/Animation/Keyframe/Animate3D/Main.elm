@@ -1,6 +1,6 @@
 module Animation.Keyframe.Animate3D.Main exposing (main)
 
-import Anim.Builder exposing (AnimBuilder)
+import Anim.Builder exposing (AnimBuilder, ForKeyframe)
 import Anim.Engine.Keyframe as Keyframe
 import Anim.Extra.View3D as View3D
 import Anim.Property.Rotate as Rotate
@@ -262,7 +262,7 @@ bottomFace =
 -- on the cube container
 
 
-rotateCube : Float -> AnimBuilder mode -> AnimBuilder mode
+rotateCube : Float -> Keyframe.EngineBuilder -> Keyframe.EngineBuilder
 rotateCube to =
     Rotate.for cubeGroupName
         >> Rotate.toXYZ to to to
@@ -271,12 +271,12 @@ rotateCube to =
         >> Rotate.build
 
 
-rotateCubeClockwise : AnimBuilder mode -> AnimBuilder mode
+rotateCubeClockwise : Keyframe.EngineBuilder -> Keyframe.EngineBuilder
 rotateCubeClockwise =
     rotateCube 360
 
 
-rotateCubeAntiClockwise : AnimBuilder mode -> AnimBuilder mode
+rotateCubeAntiClockwise : Keyframe.EngineBuilder -> Keyframe.EngineBuilder
 rotateCubeAntiClockwise =
     rotateCube 0
 
@@ -285,7 +285,7 @@ rotateCubeAntiClockwise =
 -- SIDES
 
 
-moveSidesOut : Float -> AnimBuilder mode -> AnimBuilder mode
+moveSidesOut : Float -> Keyframe.EngineBuilder -> Keyframe.EngineBuilder
 moveSidesOut targetAmount =
     moveFrontFaceOut targetAmount
         >> moveBackFaceOut targetAmount
@@ -295,7 +295,7 @@ moveSidesOut targetAmount =
         >> moveBottomFaceOut targetAmount
 
 
-moveSidesIn : Float -> AnimBuilder mode -> AnimBuilder mode
+moveSidesIn : Float -> Keyframe.EngineBuilder -> Keyframe.EngineBuilder
 moveSidesIn targetAmount =
     moveFrontFaceIn targetAmount
         >> moveBackFaceIn targetAmount
@@ -315,7 +315,7 @@ moveSidesIn targetAmount =
 -- Top/Bottom faces move on Y (up/down)
 
 
-sharedTiming : AnimBuilder mode -> AnimBuilder mode
+sharedTiming : Keyframe.EngineBuilder -> Keyframe.EngineBuilder
 sharedTiming =
     Keyframe.duration 1000
         >> Keyframe.easing CircInOut
@@ -326,7 +326,7 @@ moveAmount =
     10
 
 
-moveFace : FaceConfig -> (Translate.Builder mode -> Translate.Builder mode) -> AnimBuilder mode -> AnimBuilder mode
+moveFace : FaceConfig -> (Translate.Builder ForKeyframe -> Translate.Builder ForKeyframe) -> Keyframe.EngineBuilder -> Keyframe.EngineBuilder
 moveFace config moveToBuilder =
     sharedTiming
         >> Translate.for config.groupName
@@ -335,73 +335,73 @@ moveFace config moveToBuilder =
         >> Translate.build
 
 
-moveFrontFaceOut : Float -> AnimBuilder mode -> AnimBuilder mode
+moveFrontFaceOut : Float -> Keyframe.EngineBuilder -> Keyframe.EngineBuilder
 moveFrontFaceOut toZ =
     moveFace frontFace <|
         Translate.toZ (toZ + moveAmount)
 
 
-moveFrontFaceIn : Float -> AnimBuilder mode -> AnimBuilder mode
+moveFrontFaceIn : Float -> Keyframe.EngineBuilder -> Keyframe.EngineBuilder
 moveFrontFaceIn toZ =
     moveFace frontFace <|
         Translate.toZ toZ
 
 
-moveBackFaceOut : Float -> AnimBuilder mode -> AnimBuilder mode
+moveBackFaceOut : Float -> Keyframe.EngineBuilder -> Keyframe.EngineBuilder
 moveBackFaceOut toZ =
     moveFace backFace <|
         Translate.toZ (-1 * toZ - moveAmount)
 
 
-moveBackFaceIn : Float -> AnimBuilder mode -> AnimBuilder mode
+moveBackFaceIn : Float -> Keyframe.EngineBuilder -> Keyframe.EngineBuilder
 moveBackFaceIn toZ =
     moveFace backFace <|
         Translate.toZ (-1 * toZ)
 
 
-moveRightFaceOut : Float -> AnimBuilder mode -> AnimBuilder mode
+moveRightFaceOut : Float -> Keyframe.EngineBuilder -> Keyframe.EngineBuilder
 moveRightFaceOut toX =
     moveFace rightFace <|
         Translate.toX (toX + moveAmount)
 
 
-moveRightFaceIn : Float -> AnimBuilder mode -> AnimBuilder mode
+moveRightFaceIn : Float -> Keyframe.EngineBuilder -> Keyframe.EngineBuilder
 moveRightFaceIn toX =
     moveFace rightFace <|
         Translate.toX toX
 
 
-moveLeftFaceOut : Float -> AnimBuilder mode -> AnimBuilder mode
+moveLeftFaceOut : Float -> Keyframe.EngineBuilder -> Keyframe.EngineBuilder
 moveLeftFaceOut toX =
     moveFace leftFace <|
         Translate.toX (-1 * toX - moveAmount)
 
 
-moveLeftFaceIn : Float -> AnimBuilder mode -> AnimBuilder mode
+moveLeftFaceIn : Float -> Keyframe.EngineBuilder -> Keyframe.EngineBuilder
 moveLeftFaceIn toX =
     moveFace leftFace <|
         Translate.toX (-1 * toX)
 
 
-moveTopFaceOut : Float -> AnimBuilder mode -> AnimBuilder mode
+moveTopFaceOut : Float -> Keyframe.EngineBuilder -> Keyframe.EngineBuilder
 moveTopFaceOut toY =
     moveFace topFace <|
         Translate.toY (-1 * toY - moveAmount)
 
 
-moveTopFaceIn : Float -> AnimBuilder mode -> AnimBuilder mode
+moveTopFaceIn : Float -> Keyframe.EngineBuilder -> Keyframe.EngineBuilder
 moveTopFaceIn toY =
     moveFace topFace <|
         Translate.toY (-1 * toY)
 
 
-moveBottomFaceOut : Float -> AnimBuilder mode -> AnimBuilder mode
+moveBottomFaceOut : Float -> Keyframe.EngineBuilder -> Keyframe.EngineBuilder
 moveBottomFaceOut toY =
     moveFace bottomFace <|
         Translate.toY (toY + moveAmount)
 
 
-moveBottomFaceIn : Float -> AnimBuilder mode -> AnimBuilder mode
+moveBottomFaceIn : Float -> Keyframe.EngineBuilder -> Keyframe.EngineBuilder
 moveBottomFaceIn toY =
     moveFace bottomFace <|
         Translate.toY toY
@@ -419,7 +419,7 @@ textMoveAmount =
     4
 
 
-moveText : TextConfig -> Float -> Float -> AnimBuilder mode -> AnimBuilder mode
+moveText : TextConfig -> Float -> Float -> Keyframe.EngineBuilder -> Keyframe.EngineBuilder
 moveText config toZ toRotate =
     sharedTiming
         >> Translate.for config.groupName
@@ -431,7 +431,7 @@ moveText config toZ toRotate =
         >> Rotate.build
 
 
-moveTextsOut : AnimBuilder mode -> AnimBuilder mode
+moveTextsOut : Keyframe.EngineBuilder -> Keyframe.EngineBuilder
 moveTextsOut =
     moveText frontFace.text textMoveAmount 360
         >> moveText backFace.text textMoveAmount 360
@@ -441,7 +441,7 @@ moveTextsOut =
         >> moveText bottomFace.text textMoveAmount 360
 
 
-moveTextsIn : AnimBuilder mode -> AnimBuilder mode
+moveTextsIn : Keyframe.EngineBuilder -> Keyframe.EngineBuilder
 moveTextsIn =
     moveText frontFace.text 0 0
         >> moveText backFace.text 0 0
@@ -456,7 +456,7 @@ moveTextsIn =
 ---8<-- [start:selectAnimation]
 
 
-selectAnimation : Float -> State -> AnimBuilder mode -> AnimBuilder mode
+selectAnimation : Float -> State -> Keyframe.EngineBuilder -> Keyframe.EngineBuilder
 selectAnimation targetAmount state =
     case state of
         Opening ->

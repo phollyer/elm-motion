@@ -1,6 +1,6 @@
 port module Animation.WAAPI.InterruptingAnimations.SingleProperty.Main exposing (main)
 
-import Anim.Builder exposing (AnimBuilder)
+import Anim.Builder exposing (AnimBuilder, ForWAAPI)
 import Anim.Engine.WAAPI as WAAPI
 import Anim.Extra.Color as Color exposing (Color)
 import Anim.Property.CustomColor as CustomColor
@@ -86,27 +86,27 @@ color4 =
     Color.rgb 255 193 7
 
 
-toColor1 : AnimBuilder mode -> AnimBuilder mode
+toColor1 : WAAPI.EngineBuilder -> WAAPI.EngineBuilder
 toColor1 =
     colorBox (CustomColor.to color1)
 
 
-toColor2 : AnimBuilder mode -> AnimBuilder mode
+toColor2 : WAAPI.EngineBuilder -> WAAPI.EngineBuilder
 toColor2 =
     colorBox (CustomColor.to color2)
 
 
-toColor3 : AnimBuilder mode -> AnimBuilder mode
+toColor3 : WAAPI.EngineBuilder -> WAAPI.EngineBuilder
 toColor3 =
     colorBox (CustomColor.to color3)
 
 
-toColor4 : AnimBuilder mode -> AnimBuilder mode
+toColor4 : WAAPI.EngineBuilder -> WAAPI.EngineBuilder
 toColor4 =
     colorBox (CustomColor.to color4)
 
 
-colorBox : (CustomColor.Builder mode -> CustomColor.Builder mode) -> AnimBuilder mode -> AnimBuilder mode
+colorBox : (CustomColor.Builder ForWAAPI -> CustomColor.Builder ForWAAPI) -> WAAPI.EngineBuilder -> WAAPI.EngineBuilder
 colorBox moveFunc =
     CustomColor.for animGroupName CustomColor.BackgroundColor
         >> moveFunc

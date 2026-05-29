@@ -175,7 +175,7 @@ init =
 -- ANIMATION
 
 
-animatePermutation : Permutation -> AnimBuilder mode -> AnimBuilder mode
+animatePermutation : Permutation -> Keyframe.EngineBuilder -> Keyframe.EngineBuilder
 animatePermutation perm =
     let
         key =
@@ -205,7 +205,7 @@ animatePermutation perm =
         >> Scale.build
 
 
-resetPermutation : Permutation -> AnimBuilder mode -> AnimBuilder mode
+resetPermutation : Permutation -> Keyframe.EngineBuilder -> Keyframe.EngineBuilder
 resetPermutation perm =
     let
         key =

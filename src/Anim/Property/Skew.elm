@@ -296,7 +296,7 @@ For example, a skew animation from `0` to `30` degrees with a speed of `15.0` wi
             >> ... -- continue with animation
 
 -}
-speed : Float -> Builder mode -> Builder mode
+speed : Float -> Builder { m | supportsTime : () } -> Builder { m | supportsTime : () }
 speed =
     SB.speed
 
@@ -311,7 +311,7 @@ speed =
             >> ... -- continue with animation
 
 -}
-duration : Int -> Builder mode -> Builder mode
+duration : Int -> Builder { m | supportsTime : () } -> Builder { m | supportsTime : () }
 duration =
     SB.duration
 
@@ -326,7 +326,7 @@ duration =
             >> ... -- continue with animation
 
 -}
-delay : Int -> Builder mode -> Builder mode
+delay : Int -> Builder { m | supportsTime : () } -> Builder { m | supportsTime : () }
 delay =
     SB.delay
 
@@ -378,7 +378,7 @@ and vice versa — they are mutually exclusive.
             >> Skew.spring Spring.wobbly
 
 -}
-spring : Spring -> Builder mode -> Builder mode
+spring : Spring -> Builder { m | supportsSpring : () } -> Builder { m | supportsSpring : () }
 spring =
     SB.spring
 

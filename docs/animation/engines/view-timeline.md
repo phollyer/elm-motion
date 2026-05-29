@@ -273,7 +273,7 @@ Try this [interactive tool](https://scroll-driven-animations.style/tools/view-ti
 
 ### Easing
 
-Set the default easing for all properties that don't override it.
+Set the default easing for all properties that don't override it:
 
 ??? example "View Source Code"
 
@@ -289,7 +289,7 @@ Set the default easing for all properties that don't override it.
 
 ### Spring
 
-Set the default spring for all properties that don't override it. The spring's motion is pre-baked into densely-spaced keyframe stops driven by the view timeline.
+Set the default spring for all properties that don't override it: The spring's motion is pre-baked into densely-spaced keyframe stops driven by the view timeline.
 
 ??? example "View Source Code"
 

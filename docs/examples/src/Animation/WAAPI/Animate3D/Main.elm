@@ -1,6 +1,6 @@
 port module Animation.WAAPI.Animate3D.Main exposing (main)
 
-import Anim.Builder exposing (AnimBuilder)
+import Anim.Builder exposing (AnimBuilder, ForWAAPI)
 import Anim.Engine.WAAPI as WAAPI
 import Anim.Extra.View3D as View3D
 import Anim.Property.Rotate as Rotate
@@ -278,7 +278,7 @@ bottomFace =
 -- on the cube container
 
 
-rotateCube : Float -> AnimBuilder mode -> AnimBuilder mode
+rotateCube : Float -> WAAPI.EngineBuilder -> WAAPI.EngineBuilder
 rotateCube to =
     Rotate.for cubeGroupName
         >> Rotate.toXYZ to to to
@@ -287,12 +287,12 @@ rotateCube to =
         >> Rotate.build
 
 
-rotateCubeClockwise : AnimBuilder mode -> AnimBuilder mode
+rotateCubeClockwise : WAAPI.EngineBuilder -> WAAPI.EngineBuilder
 rotateCubeClockwise =
     rotateCube 360
 
 
-rotateCubeAntiClockwise : AnimBuilder mode -> AnimBuilder mode
+rotateCubeAntiClockwise : WAAPI.EngineBuilder -> WAAPI.EngineBuilder
 rotateCubeAntiClockwise =
     rotateCube 0
 
@@ -301,7 +301,7 @@ rotateCubeAntiClockwise =
 -- SIDES
 
 
-moveSidesOut : Float -> AnimBuilder mode -> AnimBuilder mode
+moveSidesOut : Float -> WAAPI.EngineBuilder -> WAAPI.EngineBuilder
 moveSidesOut targetAmount =
     moveFrontFaceOut targetAmount
         >> moveBackFaceOut targetAmount
@@ -311,7 +311,7 @@ moveSidesOut targetAmount =
         >> moveBottomFaceOut targetAmount
 
 
-moveSidesIn : Float -> AnimBuilder mode -> AnimBuilder mode
+moveSidesIn : Float -> WAAPI.EngineBuilder -> WAAPI.EngineBuilder
 moveSidesIn targetAmount =
     moveFrontFaceIn targetAmount
         >> moveBackFaceIn targetAmount
@@ -321,13 +321,13 @@ moveSidesIn targetAmount =
         >> moveBottomFaceIn targetAmount
 
 
-sharedTiming : AnimBuilder mode -> AnimBuilder mode
+sharedTiming : WAAPI.EngineBuilder -> WAAPI.EngineBuilder
 sharedTiming =
     WAAPI.duration 1000
         >> WAAPI.easing CircInOut
 
 
-moveFace : FaceConfig -> (Translate.Builder mode -> Translate.Builder mode) -> AnimBuilder mode -> AnimBuilder mode
+moveFace : FaceConfig -> (Translate.Builder ForWAAPI -> Translate.Builder ForWAAPI) -> WAAPI.EngineBuilder -> WAAPI.EngineBuilder
 moveFace config moveToBuilder =
     sharedTiming
         >> Translate.for config.groupName
@@ -351,73 +351,73 @@ moveAmount =
     10
 
 
-moveFrontFaceOut : Float -> AnimBuilder mode -> AnimBuilder mode
+moveFrontFaceOut : Float -> WAAPI.EngineBuilder -> WAAPI.EngineBuilder
 moveFrontFaceOut toZ =
     moveFace frontFace <|
         Translate.toZ (toZ + moveAmount)
 
 
-moveFrontFaceIn : Float -> AnimBuilder mode -> AnimBuilder mode
+moveFrontFaceIn : Float -> WAAPI.EngineBuilder -> WAAPI.EngineBuilder
 moveFrontFaceIn toZ =
     moveFace frontFace <|
         Translate.toZ toZ
 
 
-moveBackFaceOut : Float -> AnimBuilder mode -> AnimBuilder mode
+moveBackFaceOut : Float -> WAAPI.EngineBuilder -> WAAPI.EngineBuilder
 moveBackFaceOut toZ =
     moveFace backFace <|
         Translate.toZ (-1 * toZ - moveAmount)
 
 
-moveBackFaceIn : Float -> AnimBuilder mode -> AnimBuilder mode
+moveBackFaceIn : Float -> WAAPI.EngineBuilder -> WAAPI.EngineBuilder
 moveBackFaceIn toZ =
     moveFace backFace <|
         Translate.toZ (-1 * toZ)
 
 
-moveRightFaceOut : Float -> AnimBuilder mode -> AnimBuilder mode
+moveRightFaceOut : Float -> WAAPI.EngineBuilder -> WAAPI.EngineBuilder
 moveRightFaceOut toX =
     moveFace rightFace <|
         Translate.toX (toX + moveAmount)
 
 
-moveRightFaceIn : Float -> AnimBuilder mode -> AnimBuilder mode
+moveRightFaceIn : Float -> WAAPI.EngineBuilder -> WAAPI.EngineBuilder
 moveRightFaceIn toX =
     moveFace rightFace <|
         Translate.toX toX
 
 
-moveLeftFaceOut : Float -> AnimBuilder mode -> AnimBuilder mode
+moveLeftFaceOut : Float -> WAAPI.EngineBuilder -> WAAPI.EngineBuilder
 moveLeftFaceOut toX =
     moveFace leftFace <|
         Translate.toX (-1 * toX - moveAmount)
 
 
-moveLeftFaceIn : Float -> AnimBuilder mode -> AnimBuilder mode
+moveLeftFaceIn : Float -> WAAPI.EngineBuilder -> WAAPI.EngineBuilder
 moveLeftFaceIn toX =
     moveFace leftFace <|
         Translate.toX (-1 * toX)
 
 
-moveTopFaceOut : Float -> AnimBuilder mode -> AnimBuilder mode
+moveTopFaceOut : Float -> WAAPI.EngineBuilder -> WAAPI.EngineBuilder
 moveTopFaceOut toY =
     moveFace topFace <|
         Translate.toY (-1 * toY - moveAmount)
 
 
-moveTopFaceIn : Float -> AnimBuilder mode -> AnimBuilder mode
+moveTopFaceIn : Float -> WAAPI.EngineBuilder -> WAAPI.EngineBuilder
 moveTopFaceIn toY =
     moveFace topFace <|
         Translate.toY (-1 * toY)
 
 
-moveBottomFaceOut : Float -> AnimBuilder mode -> AnimBuilder mode
+moveBottomFaceOut : Float -> WAAPI.EngineBuilder -> WAAPI.EngineBuilder
 moveBottomFaceOut toY =
     moveFace bottomFace <|
         Translate.toY (toY + moveAmount)
 
 
-moveBottomFaceIn : Float -> AnimBuilder mode -> AnimBuilder mode
+moveBottomFaceIn : Float -> WAAPI.EngineBuilder -> WAAPI.EngineBuilder
 moveBottomFaceIn toY =
     moveFace bottomFace <|
         Translate.toY toY
@@ -435,7 +435,7 @@ textMoveAmount =
     4
 
 
-moveText : TextConfig -> Float -> Float -> AnimBuilder mode -> AnimBuilder mode
+moveText : TextConfig -> Float -> Float -> WAAPI.EngineBuilder -> WAAPI.EngineBuilder
 moveText config toZ toRotate =
     sharedTiming
         >> Translate.for config.groupName
@@ -447,7 +447,7 @@ moveText config toZ toRotate =
         >> Rotate.build
 
 
-moveTextsOut : AnimBuilder mode -> AnimBuilder mode
+moveTextsOut : WAAPI.EngineBuilder -> WAAPI.EngineBuilder
 moveTextsOut =
     moveText frontFace.text textMoveAmount 360
         >> moveText backFace.text textMoveAmount 360
@@ -457,7 +457,7 @@ moveTextsOut =
         >> moveText bottomFace.text textMoveAmount 360
 
 
-moveTextsIn : AnimBuilder mode -> AnimBuilder mode
+moveTextsIn : WAAPI.EngineBuilder -> WAAPI.EngineBuilder
 moveTextsIn =
     moveText frontFace.text 0 0
         >> moveText backFace.text 0 0
@@ -472,7 +472,7 @@ moveTextsIn =
 ---8<-- [start:selectAnimation]
 
 
-selectAnimation : Float -> State -> AnimBuilder mode -> AnimBuilder mode
+selectAnimation : Float -> State -> WAAPI.EngineBuilder -> WAAPI.EngineBuilder
 selectAnimation targetAmount state =
     case state of
         Opening ->

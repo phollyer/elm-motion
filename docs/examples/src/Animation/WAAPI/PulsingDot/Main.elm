@@ -83,7 +83,7 @@ groupName =
     "pulsingDot"
 
 
-pulse : AnimBuilder mode -> AnimBuilder mode
+pulse : WAAPI.EngineBuilder -> WAAPI.EngineBuilder
 pulse =
     WAAPI.loopForever
         >> WAAPI.alternate

@@ -50,7 +50,7 @@ type alias AnimGroupName =
 
 
 type alias TimelineBuilder =
-    Builder.AnimBuilder Builder.ForScrollTimeline
+    Builder.AnimBuilder Builder.ForScroll
 
 
 

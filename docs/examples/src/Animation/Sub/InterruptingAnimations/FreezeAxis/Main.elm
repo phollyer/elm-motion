@@ -1,6 +1,6 @@
 module Animation.Sub.InterruptingAnimations.FreezeAxis.Main exposing (main)
 
-import Anim.Builder exposing (AnimBuilder)
+import Anim.Builder exposing (AnimBuilder, ForSub)
 import Anim.Engine.Sub as Sub
 import Anim.Property.Translate as Translate
 import Anim.Unit exposing (Unit(..))
@@ -112,19 +112,19 @@ targetY pos =
 -- ANIMATIONS
 
 
-moveBoxX : Float -> AnimBuilder mode -> AnimBuilder mode
+moveBoxX : Float -> Sub.EngineBuilder -> Sub.EngineBuilder
 moveBoxX x =
     moveBox <|
         Translate.toX x
 
 
-moveBoxY : Float -> AnimBuilder mode -> AnimBuilder mode
+moveBoxY : Float -> Sub.EngineBuilder -> Sub.EngineBuilder
 moveBoxY y =
     moveBox <|
         Translate.toY y
 
 
-moveBox : (Translate.Builder mode -> Translate.Builder mode) -> AnimBuilder mode -> AnimBuilder mode
+moveBox : (Translate.Builder ForSub -> Translate.Builder ForSub) -> Sub.EngineBuilder -> Sub.EngineBuilder
 moveBox moveFunc =
     Translate.for animGroupName
         >> Translate.cssUnitX Cqw

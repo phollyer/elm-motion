@@ -42,7 +42,7 @@ initialState =
     Sub.init [ Translate.initXY groupName 0 0 ]
 
 
-pingPong : Sub.AnimBuilder mode -> Sub.AnimBuilder mode
+pingPong : Sub.EngineBuilder -> Sub.EngineBuilder
 pingPong =
     Sub.loopForever
         >> Sub.alternate

@@ -1,6 +1,6 @@
 module Animation.Transition.Animate3D.Main exposing (main)
 
-import Anim.Builder exposing (AnimBuilder)
+import Anim.Builder exposing (AnimBuilder, ForTransition)
 import Anim.Engine.Transition as Transition
 import Anim.Extra.View3D as View3D
 import Anim.Property.Rotate as Rotate
@@ -274,7 +274,7 @@ bottomFace =
 ---8<-- [start:selectAnimation]
 
 
-selectAnimation : Float -> State -> AnimBuilder mode -> AnimBuilder mode
+selectAnimation : Float -> State -> Transition.EngineBuilder -> Transition.EngineBuilder
 selectAnimation targetAmount state =
     case state of
         Opening ->
@@ -304,7 +304,7 @@ selectAnimation targetAmount state =
 -- on the cube container
 
 
-rotateCube : Float -> AnimBuilder mode -> AnimBuilder mode
+rotateCube : Float -> Transition.EngineBuilder -> Transition.EngineBuilder
 rotateCube to =
     Rotate.for cubeGroupName
         >> Rotate.toXYZ to to to
@@ -313,12 +313,12 @@ rotateCube to =
         >> Rotate.build
 
 
-rotateCubeClockwise : AnimBuilder mode -> AnimBuilder mode
+rotateCubeClockwise : Transition.EngineBuilder -> Transition.EngineBuilder
 rotateCubeClockwise =
     rotateCube 360
 
 
-rotateCubeAntiClockwise : AnimBuilder mode -> AnimBuilder mode
+rotateCubeAntiClockwise : Transition.EngineBuilder -> Transition.EngineBuilder
 rotateCubeAntiClockwise =
     rotateCube 0
 
@@ -327,7 +327,7 @@ rotateCubeAntiClockwise =
 -- SIDES
 
 
-moveSidesOut : Float -> AnimBuilder mode -> AnimBuilder mode
+moveSidesOut : Float -> Transition.EngineBuilder -> Transition.EngineBuilder
 moveSidesOut targetAmount =
     moveFrontFaceOut targetAmount
         >> moveBackFaceOut targetAmount
@@ -337,7 +337,7 @@ moveSidesOut targetAmount =
         >> moveBottomFaceOut targetAmount
 
 
-moveSidesIn : Float -> AnimBuilder mode -> AnimBuilder mode
+moveSidesIn : Float -> Transition.EngineBuilder -> Transition.EngineBuilder
 moveSidesIn targetAmount =
     moveFrontFaceIn targetAmount
         >> moveBackFaceIn targetAmount
@@ -347,13 +347,13 @@ moveSidesIn targetAmount =
         >> moveBottomFaceIn targetAmount
 
 
-sharedTiming : AnimBuilder mode -> AnimBuilder mode
+sharedTiming : Transition.EngineBuilder -> Transition.EngineBuilder
 sharedTiming =
     Transition.duration 1000
         >> Transition.easing CircInOut
 
 
-moveFace : FaceConfig -> (Translate.Builder mode -> Translate.Builder mode) -> AnimBuilder mode -> AnimBuilder mode
+moveFace : FaceConfig -> (Translate.Builder ForTransition -> Translate.Builder ForTransition) -> Transition.EngineBuilder -> Transition.EngineBuilder
 moveFace config moveToBuilder =
     sharedTiming
         >> Translate.for config.groupName
@@ -377,73 +377,73 @@ moveAmount =
     50
 
 
-moveFrontFaceOut : Float -> AnimBuilder mode -> AnimBuilder mode
+moveFrontFaceOut : Float -> Transition.EngineBuilder -> Transition.EngineBuilder
 moveFrontFaceOut toZ =
     moveFace frontFace <|
         Translate.toZ (toZ + moveAmount)
 
 
-moveFrontFaceIn : Float -> AnimBuilder mode -> AnimBuilder mode
+moveFrontFaceIn : Float -> Transition.EngineBuilder -> Transition.EngineBuilder
 moveFrontFaceIn toZ =
     moveFace frontFace <|
         Translate.toZ toZ
 
 
-moveBackFaceOut : Float -> AnimBuilder mode -> AnimBuilder mode
+moveBackFaceOut : Float -> Transition.EngineBuilder -> Transition.EngineBuilder
 moveBackFaceOut toZ =
     moveFace backFace <|
         Translate.toZ (-1 * toZ - moveAmount)
 
 
-moveBackFaceIn : Float -> AnimBuilder mode -> AnimBuilder mode
+moveBackFaceIn : Float -> Transition.EngineBuilder -> Transition.EngineBuilder
 moveBackFaceIn toZ =
     moveFace backFace <|
         Translate.toZ (-1 * toZ)
 
 
-moveRightFaceOut : Float -> AnimBuilder mode -> AnimBuilder mode
+moveRightFaceOut : Float -> Transition.EngineBuilder -> Transition.EngineBuilder
 moveRightFaceOut toX =
     moveFace rightFace <|
         Translate.toX (toX + moveAmount)
 
 
-moveRightFaceIn : Float -> AnimBuilder mode -> AnimBuilder mode
+moveRightFaceIn : Float -> Transition.EngineBuilder -> Transition.EngineBuilder
 moveRightFaceIn toX =
     moveFace rightFace <|
         Translate.toX toX
 
 
-moveLeftFaceOut : Float -> AnimBuilder mode -> AnimBuilder mode
+moveLeftFaceOut : Float -> Transition.EngineBuilder -> Transition.EngineBuilder
 moveLeftFaceOut toX =
     moveFace leftFace <|
         Translate.toX (-1 * toX - moveAmount)
 
 
-moveLeftFaceIn : Float -> AnimBuilder mode -> AnimBuilder mode
+moveLeftFaceIn : Float -> Transition.EngineBuilder -> Transition.EngineBuilder
 moveLeftFaceIn toX =
     moveFace leftFace <|
         Translate.toX (-1 * toX)
 
 
-moveTopFaceOut : Float -> AnimBuilder mode -> AnimBuilder mode
+moveTopFaceOut : Float -> Transition.EngineBuilder -> Transition.EngineBuilder
 moveTopFaceOut toY =
     moveFace topFace <|
         Translate.toY (-1 * toY - moveAmount)
 
 
-moveTopFaceIn : Float -> AnimBuilder mode -> AnimBuilder mode
+moveTopFaceIn : Float -> Transition.EngineBuilder -> Transition.EngineBuilder
 moveTopFaceIn toY =
     moveFace topFace <|
         Translate.toY (-1 * toY)
 
 
-moveBottomFaceOut : Float -> AnimBuilder mode -> AnimBuilder mode
+moveBottomFaceOut : Float -> Transition.EngineBuilder -> Transition.EngineBuilder
 moveBottomFaceOut toY =
     moveFace bottomFace <|
         Translate.toY (toY + moveAmount)
 
 
-moveBottomFaceIn : Float -> AnimBuilder mode -> AnimBuilder mode
+moveBottomFaceIn : Float -> Transition.EngineBuilder -> Transition.EngineBuilder
 moveBottomFaceIn toY =
     moveFace bottomFace <|
         Translate.toY toY
@@ -461,7 +461,7 @@ textMoveAmount =
     20
 
 
-moveText : TextConfig -> Float -> Float -> AnimBuilder mode -> AnimBuilder mode
+moveText : TextConfig -> Float -> Float -> Transition.EngineBuilder -> Transition.EngineBuilder
 moveText config toZ toRotate =
     sharedTiming
         >> Translate.for config.groupName
@@ -472,7 +472,7 @@ moveText config toZ toRotate =
         >> Rotate.build
 
 
-moveTextsOut : AnimBuilder mode -> AnimBuilder mode
+moveTextsOut : Transition.EngineBuilder -> Transition.EngineBuilder
 moveTextsOut =
     moveText frontFace.text textMoveAmount 360
         >> moveText backFace.text textMoveAmount 360
@@ -482,7 +482,7 @@ moveTextsOut =
         >> moveText bottomFace.text textMoveAmount 360
 
 
-moveTextsIn : AnimBuilder mode -> AnimBuilder mode
+moveTextsIn : Transition.EngineBuilder -> Transition.EngineBuilder
 moveTextsIn =
     moveText frontFace.text 0 0
         >> moveText backFace.text 0 0
@@ -575,7 +575,7 @@ update msg model =
             )
 
 
-scaleTo : Float -> AnimBuilder mode -> AnimBuilder mode
+scaleTo : Float -> Transition.EngineBuilder -> Transition.EngineBuilder
 scaleTo s =
     Scale.for scaleGroupName
         >> Scale.toXYZ s s s

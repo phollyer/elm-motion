@@ -68,7 +68,7 @@ ballSizeCqh =
 -- ANIMATION
 
 
-dropBall : AnimBuilder mode -> AnimBuilder mode
+dropBall : Transition.EngineBuilder -> Transition.EngineBuilder
 dropBall =
     Translate.for animGroup
         >> Translate.cssUnit Cqh

@@ -45,7 +45,7 @@ suite =
 -- ============================================================
 
 
-initBuilder : Builder.AnimBuilder {}
+initBuilder : Builder.AnimBuilder mode
 initBuilder =
     Builder.init []
 
@@ -118,21 +118,21 @@ firstPerspectiveOriginLength builder =
             )
 
 
-animateTranslate : Builder.AnimBuilder mode -> Builder.AnimBuilder mode
+animateTranslate : Builder.AnimBuilder { m | supportsTime : () } -> Builder.AnimBuilder { m | supportsTime : () }
 animateTranslate =
     Translate.for "box"
         >> Translate.toX 100
         >> Translate.build
 
 
-animateSize : Builder.AnimBuilder mode -> Builder.AnimBuilder mode
+animateSize : Builder.AnimBuilder { m | supportsTime : () } -> Builder.AnimBuilder { m | supportsTime : () }
 animateSize =
     Size.for "box"
         >> Size.toW 200
         >> Size.build
 
 
-animatePerspectiveOrigin : Builder.AnimBuilder mode -> Builder.AnimBuilder mode
+animatePerspectiveOrigin : Builder.AnimBuilder { m | supportsTime : () } -> Builder.AnimBuilder { m | supportsTime : () }
 animatePerspectiveOrigin =
     PerspectiveOrigin.for "scene"
         >> PerspectiveOrigin.toX 25

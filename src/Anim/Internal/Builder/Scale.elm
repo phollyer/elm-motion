@@ -347,17 +347,17 @@ toZ z (ScaleBuilder config builder) =
 -- ============================================================
 
 
-speed : Float -> ScaleBuilder mode -> ScaleBuilder mode
+speed : Float -> ScaleBuilder { m | supportsTime : () } -> ScaleBuilder { m | supportsTime : () }
 speed value (ScaleBuilder config builder) =
     ScaleBuilder (PropertyBuilder.speed value config) builder
 
 
-duration : Int -> ScaleBuilder mode -> ScaleBuilder mode
+duration : Int -> ScaleBuilder { m | supportsTime : () } -> ScaleBuilder { m | supportsTime : () }
 duration ms (ScaleBuilder config builder) =
     ScaleBuilder (PropertyBuilder.duration ms config) builder
 
 
-delay : Int -> ScaleBuilder mode -> ScaleBuilder mode
+delay : Int -> ScaleBuilder { m | supportsTime : () } -> ScaleBuilder { m | supportsTime : () }
 delay delay_ (ScaleBuilder config builder) =
     ScaleBuilder (PropertyBuilder.delay delay_ config) builder
 
@@ -379,7 +379,7 @@ easing easing_ (ScaleBuilder config builder) =
 -- ============================================================
 
 
-spring : Spring -> ScaleBuilder mode -> ScaleBuilder mode
+spring : Spring -> ScaleBuilder { m | supportsSpring : () } -> ScaleBuilder { m | supportsSpring : () }
 spring s (ScaleBuilder config builder) =
     ScaleBuilder (PropertyBuilder.spring s config) builder
 

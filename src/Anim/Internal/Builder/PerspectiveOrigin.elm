@@ -232,17 +232,17 @@ toY y (PerspectiveOriginBuilder config builder) =
 -- ============================================================
 
 
-delay : Int -> PerspectiveOriginBuilder mode -> PerspectiveOriginBuilder mode
+delay : Int -> PerspectiveOriginBuilder { m | supportsTime : () } -> PerspectiveOriginBuilder { m | supportsTime : () }
 delay delay_ (PerspectiveOriginBuilder config builder) =
     PerspectiveOriginBuilder (PropertyBuilder.delay delay_ config) builder
 
 
-duration : Int -> PerspectiveOriginBuilder mode -> PerspectiveOriginBuilder mode
+duration : Int -> PerspectiveOriginBuilder { m | supportsTime : () } -> PerspectiveOriginBuilder { m | supportsTime : () }
 duration ms (PerspectiveOriginBuilder config builder) =
     PerspectiveOriginBuilder (PropertyBuilder.duration ms config) builder
 
 
-speed : Float -> PerspectiveOriginBuilder mode -> PerspectiveOriginBuilder mode
+speed : Float -> PerspectiveOriginBuilder { m | supportsTime : () } -> PerspectiveOriginBuilder { m | supportsTime : () }
 speed value (PerspectiveOriginBuilder config builder) =
     PerspectiveOriginBuilder (PropertyBuilder.speed value config) builder
 
@@ -264,7 +264,7 @@ easing easing_ (PerspectiveOriginBuilder config builder) =
 -- ============================================================
 
 
-spring : Spring -> PerspectiveOriginBuilder mode -> PerspectiveOriginBuilder mode
+spring : Spring -> PerspectiveOriginBuilder { m | supportsSpring : () } -> PerspectiveOriginBuilder { m | supportsSpring : () }
 spring s (PerspectiveOriginBuilder config builder) =
     PerspectiveOriginBuilder (PropertyBuilder.spring s config) builder
 

@@ -1,6 +1,6 @@
 module Animation.Sub.BorderColor.Main exposing (main)
 
-import Anim.Builder exposing (AnimBuilder)
+import Anim.Builder exposing (AnimBuilder, ForSub)
 import Anim.Engine.Sub as Sub
 import Anim.Extra.Color as Color
 import Anim.Property.CustomColor as CustomColor
@@ -55,13 +55,13 @@ animGroup =
     "borderAnim"
 
 
-standardTiming : CustomColor.Builder mode -> CustomColor.Builder mode
+standardTiming : CustomColor.Builder ForSub -> CustomColor.Builder ForSub
 standardTiming =
     CustomColor.duration 800
         >> CustomColor.easing CubicInOut
 
 
-toRed : AnimBuilder mode -> AnimBuilder mode
+toRed : Sub.EngineBuilder -> Sub.EngineBuilder
 toRed =
     CustomColor.for animGroup CustomColor.BorderColor
         >> CustomColor.to (Color.rgb 239 68 68)
@@ -69,7 +69,7 @@ toRed =
         >> CustomColor.build
 
 
-toBlue : AnimBuilder mode -> AnimBuilder mode
+toBlue : Sub.EngineBuilder -> Sub.EngineBuilder
 toBlue =
     CustomColor.for animGroup CustomColor.BorderColor
         >> CustomColor.to (Color.rgb 59 130 246)

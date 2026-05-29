@@ -6,13 +6,12 @@ module Anim.Internal.Builder exposing
     , DefaultsConfig
     , DiscreteEntryProperty
     , DiscreteExitProperty
-    , ForDocumentTimeline
-    , ForKeyframeEngine
-    , ForScrollTimeline
-    , ForSubEngine
-    , ForTransitionEngine
-    , ForViewTimeline
-    , ForWAAPIEngine
+    , ForKeyframe
+    , ForScroll
+    , ForSub
+    , ForTransition
+    , ForView
+    , ForWAAPI
     , FreezeProperty(..)
     , Iterations(..)
     , PlaybackConfig
@@ -157,34 +156,69 @@ type AnimBuilder mode
 -- Available `mode`s
 
 
-type alias ForScrollTimeline =
-    { forScroll : () }
-
-
-type alias ForViewTimeline =
-    { forView : () }
-
-
-type alias ForDocumentTimeline engine =
-    { forDocument : ()
-    , forEngine : engine
+type alias ForTransition =
+    { forTransition : ()
+    , forDocument : ()
+    , supportsTime : ()
     }
 
 
-type alias ForKeyframeEngine =
-    { forKeyframe : () }
+type alias ForKeyframe =
+    { forKeyframe : ()
+    , forDocument : ()
+    , supportsTime : ()
+    , supportsSpring : ()
+    , supportsLoopForever : ()
+    , supportsIterations : ()
+    , supportsAlternate : ()
+    , supportsTransformOrder : ()
+    }
 
 
-type alias ForSubEngine =
-    { forSub : () }
+type alias ForSub =
+    { forSub : ()
+    , forDocument : ()
+    , supportsTime : ()
+    , supportsSpring : ()
+    , supportsLoopForever : ()
+    , supportsIterations : ()
+    , supportsAlternate : ()
+    , supportsTransformOrder : ()
+    , supportsProgressEvents : ()
+    }
 
 
-type alias ForTransitionEngine =
-    { forTransition : () }
+type alias ForWAAPI =
+    { forWAAPI : ()
+    , forDocument : ()
+    , supportsTime : ()
+    , supportsSpring : ()
+    , supportsLoopForever : ()
+    , supportsIterations : ()
+    , supportsAlternate : ()
+    , supportsTransformOrder : ()
+    , supportsProgressEvents : ()
+    }
 
 
-type alias ForWAAPIEngine =
-    { forWAAPI : () }
+type alias ForScroll =
+    { forScroll : ()
+    , supportsSpring : ()
+    , supportsIterations : ()
+    , supportsAlternate : ()
+    , supportsTransformOrder : ()
+    , supportsProgressEvents : ()
+    }
+
+
+type alias ForView =
+    { forView : ()
+    , supportsSpring : ()
+    , supportsIterations : ()
+    , supportsAlternate : ()
+    , supportsTransformOrder : ()
+    , supportsProgressEvents : ()
+    }
 
 
 
@@ -485,7 +519,7 @@ initScrollDrivenConfig =
 -- ============================================================
 
 
-duration : Int -> AnimBuilder mode -> AnimBuilder mode
+duration : Int -> AnimBuilder { m | supportsTime : () } -> AnimBuilder { m | supportsTime : () }
 duration ms (AnimBuilder data) =
     let
         defs =
@@ -495,7 +529,7 @@ duration ms (AnimBuilder data) =
         { data | defaults = { defs | globalTiming = Just (Duration ms) } }
 
 
-speed : Float -> AnimBuilder mode -> AnimBuilder mode
+speed : Float -> AnimBuilder { m | supportsTime : () } -> AnimBuilder { m | supportsTime : () }
 speed value (AnimBuilder data) =
     let
         defs =
@@ -521,7 +555,7 @@ easing easingValue (AnimBuilder data) =
         }
 
 
-spring : Spring -> AnimBuilder mode -> AnimBuilder mode
+spring : Spring -> AnimBuilder { m | supportsSpring : () } -> AnimBuilder { m | supportsSpring : () }
 spring springValue (AnimBuilder data) =
     let
         defs =
@@ -537,7 +571,7 @@ spring springValue (AnimBuilder data) =
         }
 
 
-delay : Int -> AnimBuilder mode -> AnimBuilder mode
+delay : Int -> AnimBuilder { m | supportsTime : () } -> AnimBuilder { m | supportsTime : () }
 delay ms (AnimBuilder data) =
     let
         defs =
@@ -742,7 +776,7 @@ getPerspectiveOriginInitCssUnit (AnimBuilder data) =
     data.defaults.perspectiveOriginInitCssUnit
 
 
-transformOrder : List TransformProperty -> AnimBuilder mode -> AnimBuilder mode
+transformOrder : List TransformProperty -> AnimBuilder { m | supportsTransformOrder : () } -> AnimBuilder { m | supportsTransformOrder : () }
 transformOrder order (AnimBuilder data) =
     let
         normalizedOrder =
@@ -823,7 +857,7 @@ getAnimationConfigs animGroupName (AnimBuilder data) =
 -- ============================================================
 
 
-iterations : Int -> AnimBuilder mode -> AnimBuilder mode
+iterations : Int -> AnimBuilder { m | supportsIterations : () } -> AnimBuilder { m | supportsIterations : () }
 iterations count (AnimBuilder data) =
     let
         pb =
@@ -832,7 +866,7 @@ iterations count (AnimBuilder data) =
     AnimBuilder { data | playback = { pb | iterations = Times count } }
 
 
-loopForever : AnimBuilder mode -> AnimBuilder mode
+loopForever : AnimBuilder { m | supportsLoopForever : () } -> AnimBuilder { m | supportsLoopForever : () }
 loopForever (AnimBuilder data) =
     let
         pb =
@@ -841,7 +875,7 @@ loopForever (AnimBuilder data) =
     AnimBuilder { data | playback = { pb | iterations = Infinite } }
 
 
-alternate : AnimBuilder mode -> AnimBuilder mode
+alternate : AnimBuilder { m | supportsAlternate : () } -> AnimBuilder { m | supportsAlternate : () }
 alternate (AnimBuilder data) =
     let
         pb =
@@ -2221,7 +2255,7 @@ getScrollEmitProgress (AnimBuilder data) =
 animations. Off by default so the port stays quiet unless callers actively
 opt in.
 -}
-setScrollEmitProgress : Bool -> AnimBuilder mode -> AnimBuilder mode
+setScrollEmitProgress : Bool -> AnimBuilder { m | supportsProgressEvents : () } -> AnimBuilder { m | supportsProgressEvents : () }
 setScrollEmitProgress enabled (AnimBuilder data) =
     let
         sd =
@@ -2241,6 +2275,6 @@ getEmitProgress (AnimBuilder data) =
 port still delivers `propertyUpdate` messages so engine state stays in sync,
 but `update` returns `Nothing` instead of `Just (Progress ...)` when disabled.
 -}
-setEmitProgress : Bool -> AnimBuilder mode -> AnimBuilder mode
+setEmitProgress : Bool -> AnimBuilder { m | supportsProgressEvents : () } -> AnimBuilder { m | supportsProgressEvents : () }
 setEmitProgress enabled (AnimBuilder data) =
     AnimBuilder { data | emitProgress = enabled }

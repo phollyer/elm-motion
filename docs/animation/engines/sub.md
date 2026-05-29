@@ -312,7 +312,7 @@ Set the default `duration`, `speed`, and `delay`. Inherited by every property th
 
 Sub animations use the full Easing library with exact mathematical curves — including bounce and elastic.
 
-Set the default easing for all properties that don't override it.
+Set the default easing for all properties that don't override it:
 
 ??? example "View Source Code"
 
@@ -332,7 +332,7 @@ Set the default easing for all properties that don't override it.
 
 Sub animations evaluate the spring's analytic solution every frame — exact damped-harmonic-oscillator motion with no sampling.
 
-Set the default spring for all properties that don't override it. The motion ends when each value has settled at the target — there is no explicit duration.
+Set the default spring for all properties that don't override it: The motion ends when each value has settled at the target — there is no explicit duration.
 
 ??? example "View Source Code"
 

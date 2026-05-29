@@ -64,7 +64,7 @@ ballSizeCqh =
     String.fromFloat ballSize ++ "cqh"
 
 
-dropBall : AnimBuilder mode -> AnimBuilder mode
+dropBall : Keyframe.EngineBuilder -> Keyframe.EngineBuilder
 dropBall =
     Translate.for animGroup
         >> Translate.cssUnit Cqh

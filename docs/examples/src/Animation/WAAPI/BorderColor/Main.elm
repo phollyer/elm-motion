@@ -1,6 +1,6 @@
 port module Animation.WAAPI.BorderColor.Main exposing (main)
 
-import Anim.Builder exposing (AnimBuilder)
+import Anim.Builder exposing (AnimBuilder, ForWAAPI)
 import Anim.Engine.WAAPI as WAAPI
 import Anim.Extra.Color as Color
 import Anim.Property.CustomColor as CustomColor
@@ -66,13 +66,13 @@ animGroup =
     "borderAnim"
 
 
-standardTiming : CustomColor.Builder mode -> CustomColor.Builder mode
+standardTiming : CustomColor.Builder ForWAAPI -> CustomColor.Builder ForWAAPI
 standardTiming =
     CustomColor.duration 800
         >> CustomColor.easing CubicInOut
 
 
-toRed : AnimBuilder mode -> AnimBuilder mode
+toRed : WAAPI.EngineBuilder -> WAAPI.EngineBuilder
 toRed =
     CustomColor.for animGroup CustomColor.BorderColor
         >> CustomColor.to (Color.rgb 239 68 68)
@@ -80,7 +80,7 @@ toRed =
         >> CustomColor.build
 
 
-toBlue : AnimBuilder mode -> AnimBuilder mode
+toBlue : WAAPI.EngineBuilder -> WAAPI.EngineBuilder
 toBlue =
     CustomColor.for animGroup CustomColor.BorderColor
         >> CustomColor.to (Color.rgb 59 130 246)

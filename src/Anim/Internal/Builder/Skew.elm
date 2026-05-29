@@ -221,17 +221,17 @@ toY y (SkewBuilder config builder) =
 -- ============================================================
 
 
-delay : Int -> SkewBuilder mode -> SkewBuilder mode
+delay : Int -> SkewBuilder { m | supportsTime : () } -> SkewBuilder { m | supportsTime : () }
 delay delay_ (SkewBuilder config builder) =
     SkewBuilder (PropertyBuilder.delay delay_ config) builder
 
 
-duration : Int -> SkewBuilder mode -> SkewBuilder mode
+duration : Int -> SkewBuilder { m | supportsTime : () } -> SkewBuilder { m | supportsTime : () }
 duration ms (SkewBuilder config builder) =
     SkewBuilder (PropertyBuilder.duration ms config) builder
 
 
-speed : Float -> SkewBuilder mode -> SkewBuilder mode
+speed : Float -> SkewBuilder { m | supportsTime : () } -> SkewBuilder { m | supportsTime : () }
 speed value (SkewBuilder config builder) =
     SkewBuilder (PropertyBuilder.speed value config) builder
 
@@ -253,7 +253,7 @@ easing easing_ (SkewBuilder config builder) =
 -- ============================================================
 
 
-spring : Spring -> SkewBuilder mode -> SkewBuilder mode
+spring : Spring -> SkewBuilder { m | supportsSpring : () } -> SkewBuilder { m | supportsSpring : () }
 spring s (SkewBuilder config builder) =
     SkewBuilder (PropertyBuilder.spring s config) builder
 

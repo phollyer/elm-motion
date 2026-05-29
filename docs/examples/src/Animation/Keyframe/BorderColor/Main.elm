@@ -55,7 +55,7 @@ animGroup =
     "borderAnim"
 
 
-toRed : AnimBuilder mode -> AnimBuilder mode
+toRed : Keyframe.EngineBuilder -> Keyframe.EngineBuilder
 toRed =
     CustomColor.for animGroup CustomColor.BorderColor
         >> CustomColor.to (Color.rgb 239 68 68)
@@ -64,7 +64,7 @@ toRed =
         >> CustomColor.build
 
 
-toBlue : AnimBuilder mode -> AnimBuilder mode
+toBlue : Keyframe.EngineBuilder -> Keyframe.EngineBuilder
 toBlue =
     CustomColor.for animGroup CustomColor.BorderColor
         >> CustomColor.to (Color.rgb 59 130 246)

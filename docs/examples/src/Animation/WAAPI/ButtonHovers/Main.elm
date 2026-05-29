@@ -124,7 +124,7 @@ unhoverEasing =
 ---8<-- [start:build]
 
 
-scaleUp : AnimBuilder mode -> AnimBuilder mode
+scaleUp : WAAPI.EngineBuilder -> WAAPI.EngineBuilder
 scaleUp =
     Scale.for scaleButton
         >> Scale.to 1.1
@@ -133,7 +133,7 @@ scaleUp =
         >> Scale.build
 
 
-scaleDown : AnimBuilder mode -> AnimBuilder mode
+scaleDown : WAAPI.EngineBuilder -> WAAPI.EngineBuilder
 scaleDown =
     Scale.for scaleButton
         >> Scale.to 1
@@ -142,7 +142,7 @@ scaleDown =
         >> Scale.build
 
 
-growSize : AnimBuilder mode -> AnimBuilder mode
+growSize : WAAPI.EngineBuilder -> WAAPI.EngineBuilder
 growSize =
     Size.for sizeButton
         >> Size.cssUnit Cqmin
@@ -152,7 +152,7 @@ growSize =
         >> Size.build
 
 
-shrinkSize : AnimBuilder mode -> AnimBuilder mode
+shrinkSize : WAAPI.EngineBuilder -> WAAPI.EngineBuilder
 shrinkSize =
     Size.for sizeButton
         >> Size.cssUnit Cqmin
@@ -162,7 +162,7 @@ shrinkSize =
         >> Size.build
 
 
-liftUp : AnimBuilder mode -> AnimBuilder mode
+liftUp : WAAPI.EngineBuilder -> WAAPI.EngineBuilder
 liftUp =
     Translate.for zButton
         >> Translate.toZ 60
@@ -171,7 +171,7 @@ liftUp =
         >> Translate.build
 
 
-setDown : AnimBuilder mode -> AnimBuilder mode
+setDown : WAAPI.EngineBuilder -> WAAPI.EngineBuilder
 setDown =
     Translate.for zButton
         >> Translate.toZ 0

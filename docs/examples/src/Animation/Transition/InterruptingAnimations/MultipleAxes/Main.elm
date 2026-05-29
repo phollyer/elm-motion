@@ -1,6 +1,6 @@
 module Animation.Transition.InterruptingAnimations.MultipleAxes.Main exposing (main)
 
-import Anim.Builder exposing (AnimBuilder)
+import Anim.Builder exposing (AnimBuilder, ForTransition)
 import Anim.Engine.Transition as Transition
 import Anim.Property.Translate as Translate
 import Anim.Unit exposing (Unit(..))
@@ -121,17 +121,17 @@ targetY pos =
 -- ANIMATIONS
 
 
-moveBoxX : Float -> AnimBuilder mode -> AnimBuilder mode
+moveBoxX : Float -> Transition.EngineBuilder -> Transition.EngineBuilder
 moveBoxX x =
     moveBox (Translate.toX x)
 
 
-moveBoxY : Float -> AnimBuilder mode -> AnimBuilder mode
+moveBoxY : Float -> Transition.EngineBuilder -> Transition.EngineBuilder
 moveBoxY y =
     moveBox (Translate.toY y)
 
 
-moveBox : (Translate.Builder mode -> Translate.Builder mode) -> AnimBuilder mode -> AnimBuilder mode
+moveBox : (Translate.Builder ForTransition -> Translate.Builder ForTransition) -> Transition.EngineBuilder -> Transition.EngineBuilder
 moveBox moveFunc =
     Translate.for animGroupName
         >> Translate.cssUnitX Cqw

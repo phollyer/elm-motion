@@ -1,7 +1,7 @@
 module Anim.Builder exposing
     ( AnimBuilder
-    , ForScrollTimeline, ForViewTimeline, ForDocumentTimeline
-    , ForKeyframeEngine, ForSubEngine, ForTransitionEngine, ForWAAPIEngine
+    , ForScroll, ForView
+    , ForKeyframe, ForSub, ForTransition, ForWAAPI
     , delay, duration, speed
     , iterations, alternate
     , easing, spring
@@ -26,14 +26,14 @@ in the docs for detailed examples and patterns.
 
 Use these in type annotations when a builder function should only work on a certain timeline.
 
-@docs ForScrollTimeline, ForViewTimeline, ForDocumentTimeline
+@docs ForScroll, ForView
 
 
 ### Engine Modes
 
-Use these with `ForDocumentTimeline` when a builder function should only work with one specific Document timeline Engine.
+Use these to constrain a builder function to one specific Engine.
 
-@docs ForKeyframeEngine, ForSubEngine, ForTransitionEngine, ForWAAPIEngine
+@docs ForKeyframe, ForSub, ForTransition, ForWAAPI
 
 
 # Document Timeline Functions
@@ -102,29 +102,20 @@ type alias AnimBuilder mode =
 
 {-| Builder mode for ScrollTimeline builders.
 
-    f : AnimBuilder ForScrollTimeline -> AnimBuilder ForScrollTimeline
+    f : AnimBuilder ForScroll -> AnimBuilder ForScroll
 
 -}
-type alias ForScrollTimeline =
-    Internal.ForScrollTimeline
+type alias ForScroll =
+    Internal.ForScroll
 
 
 {-| Builder mode for ViewTimeline builders.
 
-    f : AnimBuilder ForViewTimeline -> AnimBuilder ForViewTimeline
+    f : AnimBuilder ForView -> AnimBuilder ForView
 
 -}
-type alias ForViewTimeline =
-    Internal.ForViewTimeline
-
-
-{-| Builder mode for Document timeline builders.
-
-    f : AnimBuilder (ForDocumentTimeline engine) -> AnimBuilder (ForDocumentTimeline engine)
-
--}
-type alias ForDocumentTimeline engine =
-    Internal.ForDocumentTimeline engine
+type alias ForView =
+    Internal.ForView
 
 
 
@@ -135,38 +126,38 @@ type alias ForDocumentTimeline engine =
 
 {-| Builder mode for Keyframe builders.
 
-    f : AnimBuilder (ForDocumentTimeline ForKeyframeEngine) -> AnimBuilder (ForDocumentTimeline ForKeyframeEngine)
+    f : AnimBuilder ForKeyframe -> AnimBuilder ForKeyframe
 
 -}
-type alias ForKeyframeEngine =
-    Internal.ForKeyframeEngine
+type alias ForKeyframe =
+    Internal.ForKeyframe
 
 
 {-| Builder mode for Sub builders.
 
-    f : AnimBuilder (ForDocumentTimeline ForSubEngine) -> AnimBuilder (ForDocumentTimeline ForSubEngine)
+    f : AnimBuilder ForSub -> AnimBuilder ForSub
 
 -}
-type alias ForSubEngine =
-    Internal.ForSubEngine
+type alias ForSub =
+    Internal.ForSub
 
 
 {-| Builder mode for Transition builders.
 
-    f : AnimBuilder (ForDocumentTimeline ForTransitionEngine) -> AnimBuilder (ForDocumentTimeline ForTransitionEngine)
+    f : AnimBuilder ForTransition -> AnimBuilder ForTransition
 
 -}
-type alias ForTransitionEngine =
-    Internal.ForTransitionEngine
+type alias ForTransition =
+    Internal.ForTransition
 
 
 {-| Builder mode for WAAPI builders.
 
-    f : AnimBuilder (ForDocumentTimeline ForWAAPIEngine) -> AnimBuilder (ForDocumentTimeline ForWAAPIEngine)
+    f : AnimBuilder ForWAAPI -> AnimBuilder ForWAAPI
 
 -}
-type alias ForWAAPIEngine =
-    Internal.ForWAAPIEngine
+type alias ForWAAPI =
+    Internal.ForWAAPI
 
 
 
@@ -177,7 +168,7 @@ type alias ForWAAPIEngine =
 
 {-| Set the global delay for all animations in a Document timeline builder.
 
-    introAnim : AnimBuilder mode -> AnimBuilder (ForDocumentTimeline engine)
+    introAnim : AnimBuilder { m | forDocument : (), supportsTime : () } -> AnimBuilder { m | forDocument : (), supportsTime : () }
     introAnim =
         delay 500
             >> fadeInHeader
@@ -185,14 +176,14 @@ type alias ForWAAPIEngine =
             >> fadeInContent
 
 -}
-delay : Int -> AnimBuilder (ForDocumentTimeline engine) -> AnimBuilder (ForDocumentTimeline engine)
+delay : Int -> AnimBuilder { m | supportsTime : () } -> AnimBuilder { m | supportsTime : () }
 delay =
     Internal.delay
 
 
 {-| Set the global duration for all animations in a Document timeline builder.
 
-    introAnim : AnimBuilder mode -> AnimBuilder (ForDocumentTimeline engine)
+    introAnim : AnimBuilder { m | forDocument : (), supportsTime : () } -> AnimBuilder { m | forDocument : (), supportsTime : () }
     introAnim =
         duration 500
             >> fadeInHeader
@@ -200,14 +191,14 @@ delay =
             >> fadeInContent
 
 -}
-duration : Int -> AnimBuilder (ForDocumentTimeline engine) -> AnimBuilder (ForDocumentTimeline engine)
+duration : Int -> AnimBuilder { m | supportsTime : () } -> AnimBuilder { m | supportsTime : () }
 duration =
     Internal.duration
 
 
 {-| Set the global speed for all animations in a Document timeline builder.
 
-    introAnim : AnimBuilder mode -> AnimBuilder (ForDocumentTimeline engine)
+    introAnim : AnimBuilder { m | forDocument : (), supportsTime : () } -> AnimBuilder { m | forDocument : (), supportsTime : () }
     introAnim =
         speed 300
             >> slideDownHeader
@@ -215,7 +206,7 @@ duration =
             >> slideUpContent
 
 -}
-speed : Float -> AnimBuilder (ForDocumentTimeline engine) -> AnimBuilder (ForDocumentTimeline engine)
+speed : Float -> AnimBuilder { m | supportsTime : () } -> AnimBuilder { m | supportsTime : () }
 speed =
     Internal.speed
 
@@ -236,7 +227,7 @@ speed =
             >> nudgeBellIcon
 
 -}
-iterations : Int -> AnimBuilder mode -> AnimBuilder mode
+iterations : Int -> AnimBuilder { m | supportsIterations : () } -> AnimBuilder { m | supportsIterations : () }
 iterations =
     Internal.iterations
 
@@ -256,7 +247,7 @@ so calling it when `iterations` is unset or `1` automatically bumps
 before or after `alternate` is preserved.
 
 -}
-alternate : AnimBuilder mode -> AnimBuilder mode
+alternate : AnimBuilder { m | supportsAlternate : () } -> AnimBuilder { m | supportsAlternate : () }
 alternate =
     Internal.alternate
 
@@ -289,7 +280,7 @@ easing =
             >> settleCardShadow
 
 -}
-spring : Spring -> AnimBuilder mode -> AnimBuilder mode
+spring : Spring -> AnimBuilder { m | supportsSpring : () } -> AnimBuilder { m | supportsSpring : () }
 spring =
     Internal.spring
 

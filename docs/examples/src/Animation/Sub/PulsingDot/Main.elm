@@ -64,7 +64,7 @@ groupName =
     "pulsingDot"
 
 
-pulse : AnimBuilder mode -> AnimBuilder mode
+pulse : Sub.EngineBuilder -> Sub.EngineBuilder
 pulse =
     Sub.loopForever
         >> Sub.alternate

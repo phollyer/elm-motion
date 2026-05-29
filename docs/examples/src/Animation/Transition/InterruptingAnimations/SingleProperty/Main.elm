@@ -1,6 +1,6 @@
 module Animation.Transition.InterruptingAnimations.SingleProperty.Main exposing (main)
 
-import Anim.Builder exposing (AnimBuilder)
+import Anim.Builder exposing (AnimBuilder, ForTransition)
 import Anim.Engine.Transition as Transition
 import Anim.Extra.Color as Color exposing (Color)
 import Anim.Property.CustomColor as CustomColor
@@ -74,27 +74,27 @@ color4 =
     Color.rgb 255 193 7
 
 
-toColor1 : AnimBuilder mode -> AnimBuilder mode
+toColor1 : Transition.EngineBuilder -> Transition.EngineBuilder
 toColor1 =
     colorBox (CustomColor.to color1)
 
 
-toColor2 : AnimBuilder mode -> AnimBuilder mode
+toColor2 : Transition.EngineBuilder -> Transition.EngineBuilder
 toColor2 =
     colorBox (CustomColor.to color2)
 
 
-toColor3 : AnimBuilder mode -> AnimBuilder mode
+toColor3 : Transition.EngineBuilder -> Transition.EngineBuilder
 toColor3 =
     colorBox (CustomColor.to color3)
 
 
-toColor4 : AnimBuilder mode -> AnimBuilder mode
+toColor4 : Transition.EngineBuilder -> Transition.EngineBuilder
 toColor4 =
     colorBox (CustomColor.to color4)
 
 
-colorBox : (CustomColor.Builder mode -> CustomColor.Builder mode) -> AnimBuilder mode -> AnimBuilder mode
+colorBox : (CustomColor.Builder ForTransition -> CustomColor.Builder ForTransition) -> Transition.EngineBuilder -> Transition.EngineBuilder
 colorBox moveFunc =
     CustomColor.for animGroupName CustomColor.BackgroundColor
         >> moveFunc

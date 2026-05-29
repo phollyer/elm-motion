@@ -60,7 +60,7 @@ groupName =
     "helloText"
 
 
-fadeIn : AnimBuilder mode -> AnimBuilder mode
+fadeIn : Transition.EngineBuilder -> Transition.EngineBuilder
 fadeIn =
     Opacity.for groupName
         >> Opacity.to 1

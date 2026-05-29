@@ -52,7 +52,7 @@ type alias AnimGroupName =
 
 
 type alias TimelineBuilder =
-    Builder.AnimBuilder Builder.ForViewTimeline
+    Builder.AnimBuilder Builder.ForView
 
 
 

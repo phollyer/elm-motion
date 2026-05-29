@@ -28,7 +28,7 @@ initialState =
         ]
 
 
-scaleX : Float -> Sub.AnimBuilder mode -> Sub.AnimBuilder mode
+scaleX : Float -> Sub.EngineBuilder -> Sub.EngineBuilder
 scaleX target =
     Scale.for groupName
         >> Scale.toX target

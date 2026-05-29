@@ -113,7 +113,7 @@ unhoverEasing =
 ---8<-- [start:build]
 
 
-scaleUp : AnimBuilder mode -> AnimBuilder mode
+scaleUp : Keyframe.EngineBuilder -> Keyframe.EngineBuilder
 scaleUp =
     Scale.for scaleButton
         >> Scale.to 1.1
@@ -122,7 +122,7 @@ scaleUp =
         >> Scale.build
 
 
-scaleDown : AnimBuilder mode -> AnimBuilder mode
+scaleDown : Keyframe.EngineBuilder -> Keyframe.EngineBuilder
 scaleDown =
     Scale.for scaleButton
         >> Scale.to 1
@@ -131,7 +131,7 @@ scaleDown =
         >> Scale.build
 
 
-growSize : AnimBuilder mode -> AnimBuilder mode
+growSize : Keyframe.EngineBuilder -> Keyframe.EngineBuilder
 growSize =
     Size.for sizeButton
         >> Size.cssUnit Cqmin
@@ -141,7 +141,7 @@ growSize =
         >> Size.build
 
 
-shrinkSize : AnimBuilder mode -> AnimBuilder mode
+shrinkSize : Keyframe.EngineBuilder -> Keyframe.EngineBuilder
 shrinkSize =
     Size.for sizeButton
         >> Size.cssUnit Cqmin
@@ -151,7 +151,7 @@ shrinkSize =
         >> Size.build
 
 
-liftUp : AnimBuilder mode -> AnimBuilder mode
+liftUp : Keyframe.EngineBuilder -> Keyframe.EngineBuilder
 liftUp =
     Translate.for zButton
         >> Translate.toZ 60
@@ -160,7 +160,7 @@ liftUp =
         >> Translate.build
 
 
-setDown : AnimBuilder mode -> AnimBuilder mode
+setDown : Keyframe.EngineBuilder -> Keyframe.EngineBuilder
 setDown =
     Translate.for zButton
         >> Translate.toZ 0

@@ -31,7 +31,7 @@ initialState =
     Sub.init [ Translate.initXY groupName 0 0 ]
 
 
-moveX : Float -> Sub.AnimBuilder mode -> Sub.AnimBuilder mode
+moveX : Float -> Sub.EngineBuilder -> Sub.EngineBuilder
 moveX target =
     Translate.for groupName
         >> Translate.toX target
@@ -363,7 +363,7 @@ suite =
             , test "preserves eased visual position with non-linear easing (regression)" <|
                 \_ ->
                     let
-                        easedMove : Sub.AnimBuilder mode -> Sub.AnimBuilder mode
+                        easedMove : Sub.EngineBuilder -> Sub.EngineBuilder
                         easedMove =
                             Translate.for groupName
                                 >> Translate.toX 500
@@ -529,7 +529,7 @@ suite =
             ]
         , describe "ping-pong (loopForever + alternate)"
             [ let
-                pingPong : Float -> Sub.AnimBuilder mode -> Sub.AnimBuilder mode
+                pingPong : Float -> Sub.EngineBuilder -> Sub.EngineBuilder
                 pingPong target =
                     Sub.loopForever
                         >> Sub.alternate
@@ -583,7 +583,7 @@ suite =
                 , test "preserves eased visual position with non-linear easing (regression)" <|
                     \_ ->
                         let
-                            easedPingPong : Sub.AnimBuilder mode -> Sub.AnimBuilder mode
+                            easedPingPong : Sub.EngineBuilder -> Sub.EngineBuilder
                             easedPingPong =
                                 Sub.loopForever
                                     >> Sub.alternate
