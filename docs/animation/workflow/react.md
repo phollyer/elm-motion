@@ -370,7 +370,7 @@ Fired when a transition starts running, before any delay. Useful for tracking th
 
 Fired when an animation begins playing. For CSS engines, this fires after any configured delay has elapsed.
 
-For **ScrollTimeline** and **ViewTimeline**, `Started` fires each time the timeline enters its active range. Because scroll-driven animations have no native play event, the engine watches the timeline's computed progress on every frame and emits `Started` on the transition from out-of-range to in-range. Scrolling out of range and back in produces another `Started`.
+For **ScrollTimeline** and **ViewTimeline**, `Started` fires each time the timeline enters its active range. Scrolling out of range and back in produces another `Started`.
 
 
 ### Ended
@@ -388,7 +388,7 @@ Fired when an animation is interrupted before completion:
 - The element is removed from the DOM
 - `stop` or `reset` is called on the animation
 
-For **ScrollTimeline** and **ViewTimeline**, `Cancelled` also carries the progress value (0.0–1.0) at the time of cancellation, read from the animation's computed timing.
+For **ScrollTimeline** and **ViewTimeline**, `Cancelled` also carries the progress value (0.0–1.0) at the time of cancellation.
 
 
 ### Iteration
@@ -414,7 +414,7 @@ Fired when an animation is restarted from the beginning with the `restart` contr
 
 Fired on each animation frame (at the display's refresh rate) with the current progress value (0.0 to 1.0). Use sparingly - this fires frequently and is intended for progress indicators or debugging rather than complex logic.
 
-For **Sub**, **WAAPI**, **ScrollTimeline**, and **ViewTimeline**, `Progress` is opt-in. Set `withProgressEvents True` on the builder to receive one event per frame while the animation is running (or while a scroll/view timeline is in range). Useful for triggering other animations or driving debug overlays from event flow rather than polling.
+For **Sub**, **WAAPI**, **ScrollTimeline**, and **ViewTimeline**, `Progress` is opt-in. Set `withProgressEvents True` on the builder to receive one event per frame while the animation is running (or while a scroll/view timeline is in range).
 
 
 ## Next Steps

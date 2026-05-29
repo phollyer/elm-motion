@@ -22,6 +22,7 @@ module Anim.Engine.Sub exposing
     , freezeX, freezeY, freezeZ, freezeXY, freezeXZ, freezeYZ, freezeXYZ
     , unfreezeX, unfreezeY, unfreezeZ, unfreezeXY, unfreezeXZ, unfreezeYZ, unfreezeXYZ
     , anyRunning, isRunning, allComplete, isComplete, getProgress
+    , withProgressEvents
     , getPropertyCurrent, getPropertyEnd, getPropertyRange, getPropertyStart
     , getColorPropertyCurrent, getColorPropertyEnd, getColorPropertyRange, getColorPropertyStart
     , getOpacityRange, getOpacityStart, getOpacityEnd, getOpacityCurrent
@@ -31,7 +32,6 @@ module Anim.Engine.Sub exposing
     , getSizeRange, getSizeStart, getSizeEnd, getSizeCurrent
     , getSkewRange, getSkewStart, getSkewEnd, getSkewCurrent
     , getTranslateRange, getTranslateStart, getTranslateEnd, getTranslateCurrent
-    , withProgressEvents
     )
 
 {-| Use a subscription-based animation engine with full Elm-side control.
