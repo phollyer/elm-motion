@@ -11,8 +11,8 @@ module Anim.Engine.Transition exposing
     , events, eventsStopPropagation
     , delay, duration, speed
     , easing
-    , cssUnit, cssUnitX, cssUnitY, cssUnitZ, cssUnitWidth, cssUnitHeight
     , spring
+    , cssUnit, cssUnitX, cssUnitY, cssUnitZ, cssUnitWidth, cssUnitHeight
     , stop, reset
     , discreteEntry, startingStyleNode, startingStyleNodeFor, discreteExit
     , anyRunning, isRunning, allComplete, isComplete, isCancelled
@@ -118,17 +118,17 @@ To render a transition, add `attributes` to the element you want to animate.
 
 @docs easing
 
+
+# Spring
+
+@docs spring
+
 📖 See [Easing](https://phollyer.github.io/elm-motion/animation/concepts/easing/) in the docs.
 
 
 # Unit
 
 @docs cssUnit, cssUnitX, cssUnitY, cssUnitZ, cssUnitWidth, cssUnitHeight
-
-
-# Spring
-
-@docs spring
 
 
 # Animation Control
@@ -317,12 +317,7 @@ animate =
 
 {-| Update the target and move the element instantly to the new end values.
 
-Use this when the target changed and you want the element to move there immediately.
-
-📖 For when to use `retarget` and which engines can continue smoothly, see
-[Responsive Animations](https://phollyer.github.io/elm-motion/animation/concepts/responsive-animations/)
-and the
-[Transition Engine Documentation](https://phollyer.github.io/elm-motion/animation/engines/transition/).
+Use this when you want to move an animation to a new state without animating.
 
 -}
 retarget : AnimState -> (EngineBuilder -> EngineBuilder) -> AnimState
@@ -535,21 +530,45 @@ eventsStopPropagation =
 -- ============================================================
 
 
-{-| Alias of [Anim.Builder.delay](Anim-Builder#delay).
+{-| Set the global delay for all animations in this builder.
+
+    introAnim : AnimBuilder mode -> AnimBuilder mode
+    introAnim =
+        delay 500
+            >> fadeInHeader
+            >> slideInSidebar
+            >> fadeInContent
+
 -}
 delay : Int -> Builder.AnimBuilder mode -> Builder.AnimBuilder mode
 delay =
     Builder.delay
 
 
-{-| Alias of [Anim.Builder.duration](Anim-Builder#duration).
+{-| Set the global duration for all animations in this builder.
+
+    introAnim : AnimBuilder mode -> AnimBuilder mode
+    introAnim =
+        duration 500
+            >> fadeInHeader
+            >> slideInSidebar
+            >> fadeInContent
+
 -}
 duration : Int -> Builder.AnimBuilder mode -> Builder.AnimBuilder mode
 duration =
     Builder.duration
 
 
-{-| Alias of [Anim.Builder.speed](Anim-Builder#speed).
+{-| Set the global speed for all animations in this builder.
+
+    introAnim : AnimBuilder mode -> AnimBuilder mode
+    introAnim =
+        speed 300
+            >> slideDownHeader
+            >> slideInSidebar
+            >> slideUpContent
+
 -}
 speed : Float -> Builder.AnimBuilder mode -> Builder.AnimBuilder mode
 speed =
@@ -562,7 +581,15 @@ speed =
 -- ============================================================
 
 
-{-| Alias of [Anim.Builder.easing](Anim-Builder#easing).
+{-| Set the global easing function.
+
+    heroEntrance : AnimBuilder mode -> AnimBuilder mode
+    heroEntrance =
+        easing EaseInOut
+            >> fadeInHeroTitle
+            >> slideInHeroArtwork
+            >> revealPrimaryCta
+
 -}
 easing : Easing -> Builder.AnimBuilder mode -> Builder.AnimBuilder mode
 easing =
@@ -571,32 +598,80 @@ easing =
 
 
 -- ============================================================
+-- SPRING
+-- ============================================================
+
+
+{-| Set the global spring.
+
+    draggableCardSettle : AnimBuilder mode -> AnimBuilder mode
+    draggableCardSettle =
+        spring Spring.wobbly
+            >> settleCardPosition
+            >> settleCardShadow
+
+-}
+spring : Spring -> Builder.AnimBuilder mode -> Builder.AnimBuilder mode
+spring =
+    Builder.spring
+
+
+
+-- ============================================================
 -- UNIT
 -- ============================================================
 
 
-{-| Alias of [Anim.Builder.cssUnit](Anim-Builder#cssUnit).
+{-| Set the default length unit for all length-bearing properties.
+
+    responsivePanelMotion : AnimBuilder mode -> AnimBuilder mode
+    responsivePanelMotion =
+        cssUnit Unit.Vw
+            >> slidePanelIn
+            >> growPanelHeight
+
 -}
 cssUnit : Unit -> Builder.AnimBuilder mode -> Builder.AnimBuilder mode
 cssUnit =
     Builder.cssUnit
 
 
-{-| Alias of [Anim.Builder.cssUnitX](Anim-Builder#cssUnitX).
+{-| Set the default length unit for the X axis.
+
+    responsiveDrawerMotion : AnimBuilder mode -> AnimBuilder mode
+    responsiveDrawerMotion =
+        cssUnitX Unit.Vw
+            >> slideDrawerX
+            >> alignDrawerLabelX
+
 -}
 cssUnitX : Unit -> Builder.AnimBuilder mode -> Builder.AnimBuilder mode
 cssUnitX =
     Builder.cssUnitX
 
 
-{-| Alias of [Anim.Builder.cssUnitY](Anim-Builder#cssUnitY).
+{-| Set the default length unit for the Y axis.
+
+    responsiveSheetMotion : AnimBuilder mode -> AnimBuilder mode
+    responsiveSheetMotion =
+        cssUnitY Unit.Vh
+            >> slideSheetY
+            >> alignSheetHeaderY
+
 -}
 cssUnitY : Unit -> Builder.AnimBuilder mode -> Builder.AnimBuilder mode
 cssUnitY =
     Builder.cssUnitY
 
 
-{-| Alias of [Anim.Builder.cssUnitZ](Anim-Builder#cssUnitZ).
+{-| Set the default length unit for the Z axis.
+
+    layeredSceneMotion : AnimBuilder mode -> AnimBuilder mode
+    layeredSceneMotion =
+        cssUnitZ Unit.Px
+            >> pushSceneBackgroundBack
+            >> bringFloatingCardForward
+
 -}
 cssUnitZ : Unit -> Builder.AnimBuilder mode -> Builder.AnimBuilder mode
 cssUnitZ =
@@ -629,19 +704,6 @@ cssUnitWidth =
 cssUnitHeight : Unit -> Builder.AnimBuilder mode -> Builder.AnimBuilder mode
 cssUnitHeight =
     Builder.cssUnitHeight
-
-
-
--- ============================================================
--- SPRING
--- ============================================================
-
-
-{-| Alias of [Anim.Builder.spring](Anim-Builder#spring).
--}
-spring : Spring -> Builder.AnimBuilder mode -> Builder.AnimBuilder mode
-spring =
-    Builder.spring
 
 
 

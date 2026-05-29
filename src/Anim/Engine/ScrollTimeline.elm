@@ -338,14 +338,34 @@ horizontal =
 -- ============================================================
 
 
-{-| Alias of [Anim.Builder.iterations](Anim-Builder#iterations).
+{-| Set how many times an animation should repeat.
+
+    notificationAttentionLoop : AnimBuilder mode -> AnimBuilder mode
+    notificationAttentionLoop =
+        iterations 3
+            >> pulseBadge
+            >> nudgeBellIcon
+
 -}
 iterations : Int -> TimelineBuilder -> TimelineBuilder
 iterations =
     Builder.iterations
 
 
-{-| Alias of [Anim.Builder.alternate](Anim-Builder#alternate).
+{-| Make an animation alternate direction on each iteration.
+
+    floatingCardLoop : AnimBuilder mode -> AnimBuilder mode
+    floatingCardLoop =
+        iterations 4
+            >> alternate
+            >> liftCard
+            >> glowCardBorder
+
+`alternate` only has a visible effect when the animation runs more than once,
+so calling it when `iterations` is unset or `1` automatically bumps
+`iterations` to `2`. An explicit `iterations` count (or `loopForever`) set
+before or after `alternate` is preserved.
+
 -}
 alternate : TimelineBuilder -> TimelineBuilder
 alternate =
@@ -358,7 +378,15 @@ alternate =
 -- ============================================================
 
 
-{-| Alias of [Anim.Builder.easing](Anim-Builder#easing).
+{-| Set the global easing function.
+
+    heroEntrance : AnimBuilder mode -> AnimBuilder mode
+    heroEntrance =
+        easing EaseInOut
+            >> fadeInHeroTitle
+            >> slideInHeroArtwork
+            >> revealPrimaryCta
+
 -}
 easing : Easing -> TimelineBuilder -> TimelineBuilder
 easing =
@@ -371,28 +399,56 @@ easing =
 -- ============================================================
 
 
-{-| Alias of [Anim.Builder.cssUnit](Anim-Builder#cssUnit).
+{-| Set the default length unit for all length-bearing properties.
+
+    responsivePanelMotion : AnimBuilder mode -> AnimBuilder mode
+    responsivePanelMotion =
+        cssUnit Unit.Vw
+            >> slidePanelIn
+            >> growPanelHeight
+
 -}
 cssUnit : Unit -> TimelineBuilder -> TimelineBuilder
 cssUnit =
     Builder.cssUnit
 
 
-{-| Alias of [Anim.Builder.cssUnitX](Anim-Builder#cssUnitX).
+{-| Set the default length unit for the X axis.
+
+    responsiveDrawerMotion : AnimBuilder mode -> AnimBuilder mode
+    responsiveDrawerMotion =
+        cssUnitX Unit.Vw
+            >> slideDrawerX
+            >> alignDrawerLabelX
+
 -}
 cssUnitX : Unit -> TimelineBuilder -> TimelineBuilder
 cssUnitX =
     Builder.cssUnitX
 
 
-{-| Alias of [Anim.Builder.cssUnitY](Anim-Builder#cssUnitY).
+{-| Set the default length unit for the Y axis.
+
+    responsiveSheetMotion : AnimBuilder mode -> AnimBuilder mode
+    responsiveSheetMotion =
+        cssUnitY Unit.Vh
+            >> slideSheetY
+            >> alignSheetHeaderY
+
 -}
 cssUnitY : Unit -> TimelineBuilder -> TimelineBuilder
 cssUnitY =
     Builder.cssUnitY
 
 
-{-| Alias of [Anim.Builder.cssUnitZ](Anim-Builder#cssUnitZ).
+{-| Set the default length unit for the Z axis.
+
+    layeredSceneMotion : AnimBuilder mode -> AnimBuilder mode
+    layeredSceneMotion =
+        cssUnitZ Unit.Px
+            >> pushSceneBackgroundBack
+            >> bringFloatingCardForward
+
 -}
 cssUnitZ : Unit -> TimelineBuilder -> TimelineBuilder
 cssUnitZ =
@@ -433,7 +489,14 @@ cssUnitHeight =
 -- ============================================================
 
 
-{-| Alias of [Anim.Builder.spring](Anim-Builder#spring).
+{-| Set the global spring.
+
+    draggableCardSettle : AnimBuilder mode -> AnimBuilder mode
+    draggableCardSettle =
+        spring Spring.wobbly
+            >> settleCardPosition
+            >> settleCardShadow
+
 -}
 spring : Spring -> TimelineBuilder -> TimelineBuilder
 spring =
