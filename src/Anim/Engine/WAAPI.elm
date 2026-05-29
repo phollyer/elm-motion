@@ -1,7 +1,6 @@
 module Anim.Engine.WAAPI exposing
     ( AnimState, AnimGroupName
     , AnimBuilder
-    , TimelineBuilder
     , EngineBuilder
     , init
     , animate, fireAndForget, retarget
@@ -52,13 +51,6 @@ and the
 ## Builders
 
 @docs AnimBuilder
-
-
-### Timeline Builder
-
-Use this in type annotations when a builder function should work with Document timeline engines only.
-
-@docs TimelineBuilder
 
 
 ### Engine Builder
@@ -290,18 +282,6 @@ type alias AnimBuilder mode =
 -}
 type alias AnimGroupName =
     String
-
-
-{-| Builder type for Document timeline builders.
-
-Use this in type annotations when a builder function should work with Document timeline engines.
-
-📖 See [Builder Modes](https://phollyer.github.io/elm-motion/animation/concepts/builder-modes/)
-for patterns and examples.
-
--}
-type alias TimelineBuilder engine =
-    Internal.TimelineBuilder engine
 
 
 {-| Builder type for WAAPI-only builders.
@@ -687,7 +667,7 @@ iterations =
     import Anim.Engine.WAAPI as WAAPI
     import Anim.Property.Opacity as Opacity
 
-    pulse : WAAPI.EngineBuilder -> WAAPI.TimelineBuilder
+    pulse : WAAPI.EngineBuilder -> WAAPI.EngineBuilder
     pulse =
         Opacity.for "box"
             >> Opacity.to 0.2

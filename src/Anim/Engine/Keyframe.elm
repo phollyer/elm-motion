@@ -1,7 +1,6 @@
 module Anim.Engine.Keyframe exposing
     ( AnimState, AnimGroupName
     , AnimBuilder
-    , TimelineBuilder
     , EngineBuilder
     , init
     , animate, retarget
@@ -51,15 +50,8 @@ and the
 
 Use `AnimBuilder` for most builder functions.
 
-Use `TimelineBuilder` or `EngineBuilder` only when you want a type annotation to say
-which engines a builder is meant to work with.
-
-
-### Timeline Builder
-
-Use this when a builder function should work with Document timeline engines only.
-
-@docs TimelineBuilder
+Use `EngineBuilder` only when you want a type annotation to say
+that a builder is meant to work with the Keyframe engine only.
 
 
 ### Engine Builder
@@ -266,18 +258,6 @@ type alias AnimBuilder mode =
 -}
 type alias AnimGroupName =
     String
-
-
-{-| Builder type for Document timeline builders.
-
-Use this in type annotations when a builder function should work with Document timeline engines.
-
-📖 See [Builder Modes](https://phollyer.github.io/elm-motion/animation/concepts/builder-modes/)
-for patterns and examples.
-
--}
-type alias TimelineBuilder engine =
-    Internal.TimelineBuilder engine
 
 
 {-| Builder type for Keyframe-only builders.
@@ -598,7 +578,7 @@ iterations =
     import Anim.Engine.Keyframe as Keyframe
     import Anim.Property.Opacity as Opacity
 
-    pulse : Keyframe.TimelineBuilder -> Keyframe.TimelineBuilder
+    pulse : Keyframe.EngineBuilder -> Keyframe.EngineBuilder
     pulse =
         Opacity.for "box"
             >> Opacity.to 0.2
