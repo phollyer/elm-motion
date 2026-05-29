@@ -377,7 +377,7 @@ For **ScrollTimeline** and **ViewTimeline**, `Started` fires each time the timel
 
 Fired when an animation completes naturally, reaching its end state.
 
-For **ScrollTimeline**, this fires when the scroll position reaches the end of the animation range. For **ViewTimeline**, this fires when the element has scrolled fully through the configured viewport range.
+For **ScrollTimeline** and **ViewTimeline**, `Ended` fires every time the scroll position crosses the end of the animation range. Scrolling back across the end and then forward again produces another `Ended`, so keep handlers idempotent.
 
 
 ### Cancelled

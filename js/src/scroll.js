@@ -103,9 +103,15 @@ function getScrollAnimationProgress(animation) {
  */
 function attachScrollDrivenListeners(animGroup, animations, engine, element, discreteExit, emitProgress) {
     const total = animations.length;
-    let finishedCount = 0;
     let cancelFired = false;
-    let watcherStopped = false;
+
+    // Per-pass tracking: a scroll-driven animation can cross its end point
+    // many times as the user scrolls back and forth, and the spec re-fires
+    // 'finish' on every forward crossing. We dedupe the group-level
+    // 'completed' event per pass and re-arm whenever any member animation
+    // leaves the 'finished' playState.
+    const perAnimFinished = new Array(total).fill(false);
+    let passEmitted = false;
 
     // Initialise group iteration counter (reset on each animate call).
     scrollDrivenIterationCounts.set(animGroup, 0);
@@ -114,18 +120,39 @@ function attachScrollDrivenListeners(animGroup, animations, engine, element, dis
     // a group with N properties fires N native 'iteration' events per loop.
     const perAnimIterations = new Array(total).fill(0);
 
+    function maybeEmitCompleted() {
+        if (passEmitted) return;
+        for (let i = 0; i < total; i++) {
+            if (!perAnimFinished[i]) return;
+        }
+        passEmitted = true;
+        if (element && discreteExit) {
+            Object.entries(discreteExit).forEach(function ([prop, values]) {
+                element.style[prop] = values.to;
+            });
+        }
+        sendScrollLifecycleEvent('completed', animGroup, 1.0, engine);
+    }
+
     // Synthetic 'started' watcher: scroll/view timelines have no native play
     // event, so we poll the representative animation's computed progress once
     // per frame. A 'started' event fires each time progress transitions from
-    // null/0 (out of range) to > 0 (in range), so re-entering the range after
-    // scrolling out emits another 'started'. When emitProgress is true, the
-    // same loop also forwards every in-range progress sample as a 'progress'
-    // event so callers can react to scroll position from Elm.
+    // null/0 (out of range) to > 0 (in range). The same tick also re-arms the
+    // per-pass 'completed' flag when any animation leaves the 'finished'
+    // state, so a subsequent forward crossing of the end emits another
+    // 'completed'. When emitProgress is true, the loop also forwards every
+    // in-range progress sample.
     if (animations.length > 0 && typeof window !== 'undefined' && typeof window.requestAnimationFrame === 'function') {
         const representative = animations[0];
         let inRange = false;
         const tick = function () {
-            if (watcherStopped) return;
+            if (cancelFired) return;
+            for (let i = 0; i < total; i++) {
+                if (perAnimFinished[i] && animations[i].playState !== 'finished') {
+                    perAnimFinished[i] = false;
+                    passEmitted = false;
+                }
+            }
             const progress = getScrollAnimationProgress(representative);
             if (!inRange && progress > 0) {
                 inRange = true;
@@ -143,23 +170,13 @@ function attachScrollDrivenListeners(animGroup, animations, engine, element, dis
 
     animations.forEach(function (animation, i) {
         animation.addEventListener('finish', function () {
-            finishedCount++;
-            if (finishedCount === total) {
-                watcherStopped = true;
-                if (element && discreteExit) {
-                    Object.entries(discreteExit).forEach(function ([prop, values]) {
-                        element.style[prop] = values.to;
-                    });
-                }
-                sendScrollLifecycleEvent('completed', animGroup, 1.0, engine);
-                cleanupAnimGroup(animGroup);
-            }
-        }, { once: true });
+            perAnimFinished[i] = true;
+            maybeEmitCompleted();
+        });
 
         animation.addEventListener('cancel', function () {
             if (cancelFired) return;
             cancelFired = true;
-            watcherStopped = true;
             const progress = getScrollAnimationProgress(animation);
             sendScrollLifecycleEvent('cancelled', animGroup, progress, engine);
             cleanupAnimGroup(animGroup);

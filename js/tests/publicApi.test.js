@@ -484,6 +484,80 @@ describe('ElmMotion public API', () => {
         expect(progressEvents).toHaveLength(0);
     });
 
+    it('re-emits scroll-driven completed each time all member animations finish a pass', async () => {
+        const animGroup = 'box-scroll-recompletes';
+        const sourceId = 'source-scroll-recompletes';
+        const buildAnimation = () => {
+            const anim = createFakeAnimation();
+            anim.effect.getComputedTiming = () => ({ progress: 1 });
+            return anim;
+        };
+        const animations = [buildAnimation(), buildAnimation()];
+        const element = {
+            id: animGroup,
+            animate: vi.fn(() => animations.shift())
+        };
+        installDom({ element, targetId: animGroup, sourceId });
+        global.ScrollTimeline = class ScrollTimeline {
+            constructor(config) {
+                this.config = config;
+            }
+        };
+        global.window.ScrollTimeline = global.ScrollTimeline;
+
+        const rafQueue = [];
+        const rafFn = vi.fn((cb) => {
+            rafQueue.push(cb);
+            return rafQueue.length;
+        });
+        global.requestAnimationFrame = rafFn;
+        global.window.requestAnimationFrame = rafFn;
+        const tick = () => {
+            const pending = rafQueue.splice(0);
+            pending.forEach((cb) => cb());
+        };
+
+        const events = [];
+        const ports = createPorts((payload) => events.push(payload));
+        ElmMotion.init(ports.ports);
+
+        await ports.send({
+            type: 'scrollDriven',
+            iterations: { type: 'times', count: 1 },
+            timeline: { source: sourceId, axis: 'block' },
+            elements: {
+                [animGroup]: {
+                    properties: [
+                        { type: 'opacity', startValue: 0, endValue: 1, duration: 300, easing: 'linear' },
+                        { type: 'customColorProperty', cssProperty: 'color', startColor: 'rgb(0, 0, 0)', endColor: 'rgb(255, 0, 0)', duration: 300, easing: 'linear' }
+                    ]
+                }
+            }
+        });
+
+        const createdAnimations = element.animate.mock.results.map((result) => result.value);
+        const completedEvents = () =>
+            events.filter((e) => e.type === 'animationUpdate' && e.payload?.status === 'completed');
+
+        // First pass: both member animations finish → one completed event.
+        createdAnimations.forEach((a) => a.finish());
+        expect(completedEvents()).toHaveLength(1);
+
+        // Triggering finish again without leaving the finished state must not
+        // double-fire completed.
+        createdAnimations.forEach((a) => a.finish());
+        expect(completedEvents()).toHaveLength(1);
+
+        // Simulate the user scrolling back into range: playState returns to
+        // running. The rAF watcher should clear the per-pass flag.
+        createdAnimations.forEach((a) => { a.playState = 'running'; });
+        tick();
+
+        // Second pass: finish fires again on the next forward crossing of the end.
+        createdAnimations.forEach((a) => a.finish());
+        expect(completedEvents()).toHaveLength(2);
+    });
+
     it('emits view-driven lifecycle events through the public API', async () => {
         const animGroup = 'box-view';
         const animations = [createFakeAnimation(), createFakeAnimation()];
