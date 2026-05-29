@@ -31,6 +31,7 @@ module Anim.Engine.WAAPI exposing
     , getSizeRange, getSizeStart, getSizeEnd, getSizeCurrent
     , getSkewRange, getSkewStart, getSkewEnd, getSkewCurrent
     , getTranslateRange, getTranslateStart, getTranslateEnd, getTranslateCurrent
+    , withProgressEvents
     )
 
 {-| Use the Web Animations API through ports.
@@ -239,6 +240,11 @@ Add `attributes` to the element you want to animate.
 
 @docs getTranslateRange, getTranslateStart, getTranslateEnd, getTranslateCurrent
 
+
+# Progress Events
+
+@docs withProgressEvents
+
 -}
 
 import Anim.Extra.Color exposing (Color)
@@ -437,6 +443,13 @@ fireAndForget =
 
 
 {-| Animation lifecycle events from this engine.
+
+`Progress AnimGroupName Float` is only emitted when
+[`withProgressEvents`](#withProgressEvents) `True` was set on the builder
+passed to [`init`](#init). The underlying `propertyUpdate` port traffic
+still flows so engine state queries stay in sync — only the event delivery
+is gated.
+
 -}
 type AnimEvent
     = Started AnimGroupName
@@ -1659,3 +1672,32 @@ Returns `Nothing` if the element has no translate animation.
 getTranslateRange : AnimGroupName -> AnimState msg -> Maybe { start : Maybe { x : Float, y : Float, z : Float }, end : { x : Float, y : Float, z : Float } }
 getTranslateRange =
     Internal.getTranslateRange
+
+
+
+-- ============================================================
+-- PROGRESS EVENTS
+-- ============================================================
+
+
+{-| Opt in to per-frame `Progress` events.
+
+Off by default. The WAAPI engine always receives per-frame `propertyUpdate`
+messages from JavaScript (they keep `getProgress`, `isRunning`, and the
+other state queries in sync), so this flag only controls whether `update`
+surfaces them to your `update` handler as `Progress` events.
+
+Pass it in [`init`](#init):
+
+    WAAPI.init motionCmd
+        motionMsg
+        [ WAAPI.withProgressEvents True ]
+
+Useful for debugging or driving progress UI directly from events. Leave it
+off for production unless you need it — `getProgress` gives the same
+information on demand without flooding your `update` with frame-rate events.
+
+-}
+withProgressEvents : Bool -> EngineBuilder -> EngineBuilder
+withProgressEvents =
+    Builder.setEmitProgress

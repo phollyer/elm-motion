@@ -13,6 +13,7 @@ module Anim.Engine.ScrollTimeline exposing
     , spring
     , discreteEntry, discreteExit
     , transformOrder
+    , withProgressEvents
     )
 
 {-| Use scroll position to drive animation progress.
@@ -104,6 +105,11 @@ and the
 
 @docs transformOrder
 
+
+# Progress Events
+
+@docs withProgressEvents
+
 -}
 
 import Anim.Extra.TransformOrder exposing (TransformProperty)
@@ -191,6 +197,8 @@ containerToId container =
   - `Ended String` — the scroll position reached the end of the animation range
   - `Cancelled String` — the animation was cancelled (e.g. element removed)
   - `Iteration String Int` — the animation looped; the `Int` is the cumulative iteration count
+  - `Progress String Float` — the timeline's current progress (0..1) while in range.
+    Only emitted when [`withProgressEvents`](#withProgressEvents) `True` was set on the builder.
   - `AnimError String` — a message arrived but could not be decoded
 
 -}
@@ -199,6 +207,7 @@ type AnimEvent
     | Ended AnimGroupName
     | Cancelled AnimGroupName Float
     | Iteration AnimGroupName Int
+    | Progress AnimGroupName Float
     | AnimError String
 
 
@@ -254,6 +263,9 @@ toAnimEvent internalEvent =
 
         Internal.Iteration animGroup iteration ->
             Iteration animGroup iteration
+
+        Internal.Progress animGroup progress ->
+            Progress animGroup progress
 
         Internal.AnimError errorMsg ->
             AnimError errorMsg
@@ -497,3 +509,32 @@ discreteEntry =
 discreteExit : String -> String -> String -> TimelineBuilder -> TimelineBuilder
 discreteExit =
     Internal.discreteExit
+
+
+
+-- ============================================================
+-- PROGRESS EVENTS
+-- ============================================================
+
+
+{-| Opt in to per-frame `Progress` events while the timeline is in range.
+
+Off by default — scroll/view-driven animations render entirely on the GPU and
+do not need progress messages to draw. Turn this on when you want to react to
+the scroll position from Elm (for example, to trigger another animation, mark
+a milestone, or update a progress badge).
+
+    ScrollTimeline.animate motionCmd (Container "scroller") <|
+        ScrollTimeline.withProgressEvents True
+            >> Opacity.for "hero-card"
+            >> Opacity.from 0
+            >> Opacity.to 1
+            >> Opacity.build
+
+While enabled, the engine emits one `Progress animGroup t` event per animation
+frame (typically ~60/sec) for every group that is currently in range.
+
+-}
+withProgressEvents : Bool -> TimelineBuilder -> TimelineBuilder
+withProgressEvents =
+    Internal.withProgressEvents

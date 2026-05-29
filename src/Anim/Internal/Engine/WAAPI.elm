@@ -1,7 +1,7 @@
 module Anim.Internal.Engine.WAAPI exposing
     ( AnimBuilder
     , AnimEvent(..)
-    , AnimMsg
+    , AnimMsg(..)
     , AnimState
     , EngineBuilder
     , FreezeProperty
@@ -604,9 +604,16 @@ update msg ((AnimState state animGroups) as animState) =
                                                 >> AnimGroups.groups
                                                 >> List.any (\prop -> prop.status == AnimGroup.Running)
                                             )
+
+                                progressEvent =
+                                    if Builder.getEmitProgress state.builder then
+                                        Just (Progress animUpdate.animGroupName animUpdate.progress)
+
+                                    else
+                                        Nothing
                             in
                             ( AnimState { state | subscriptionsActive = hasRunningAnimations } updatedAnimations
-                            , Just (Progress animUpdate.animGroupName animUpdate.progress)
+                            , progressEvent
                             )
 
                         Err error ->

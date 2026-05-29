@@ -62,11 +62,13 @@ module Anim.Internal.Builder exposing
     , getDiscreteExitProperties
     , getEasing
     , getEasingWithDefault
+    , getEmitProgress
     , getFrozenAxes
     , getIterations
     , getPerspectiveOriginInitCssUnit
     , getRuntimeBaseline
     , getScrollAxis
+    , getScrollEmitProgress
     , getScrollSource
     , getSizeInitCssUnit
     , getSpring
@@ -93,10 +95,12 @@ module Anim.Internal.Builder exposing
     , processedTimings
     , setAnimTarget
     , setClamp
+    , setEmitProgress
     , setPerspectiveOriginInitCssUnit
     , setPerspectiveOriginInitCssUnitX
     , setPerspectiveOriginInitCssUnitY
     , setScrollAxis
+    , setScrollEmitProgress
     , setScrollSource
     , setSizeInitCssUnit
     , setSizeInitCssUnitHeight
@@ -193,6 +197,7 @@ type alias BuilderData =
     , playback : PlaybackConfig
     , state : PersistentState
     , scrollDriven : ScrollDrivenConfig
+    , emitProgress : Bool
     }
 
 
@@ -395,6 +400,7 @@ type alias ScrollDrivenConfig =
     , axis : Maybe String
     , viewRangeStart : Maybe String
     , viewRangeEnd : Maybe String
+    , emitProgress : Bool
     , targets : AnimGroups String
     }
 
@@ -414,6 +420,7 @@ init =
             , playback = initPlayback
             , state = initState
             , scrollDriven = initScrollDrivenConfig
+            , emitProgress = False
             }
 
 
@@ -467,6 +474,7 @@ initScrollDrivenConfig =
     , axis = Nothing
     , viewRangeStart = Nothing
     , viewRangeEnd = Nothing
+    , emitProgress = False
     , targets = AnimGroups.init
     }
 
@@ -2200,3 +2208,39 @@ getViewRangeStart (AnimBuilder data) =
 getViewRangeEnd : AnimBuilder mode -> Maybe String
 getViewRangeEnd (AnimBuilder data) =
     data.scrollDriven.viewRangeEnd
+
+
+{-| Get the per-frame progress-event opt-in flag for scroll/view timelines.
+-}
+getScrollEmitProgress : AnimBuilder mode -> Bool
+getScrollEmitProgress (AnimBuilder data) =
+    data.scrollDriven.emitProgress
+
+
+{-| Enable or disable per-frame `Progress` events for scroll/view-driven
+animations. Off by default so the port stays quiet unless callers actively
+opt in.
+-}
+setScrollEmitProgress : Bool -> AnimBuilder mode -> AnimBuilder mode
+setScrollEmitProgress enabled (AnimBuilder data) =
+    let
+        sd =
+            data.scrollDriven
+    in
+    AnimBuilder { data | scrollDriven = { sd | emitProgress = enabled } }
+
+
+{-| Get the per-frame `Progress` event opt-in flag.
+-}
+getEmitProgress : AnimBuilder mode -> Bool
+getEmitProgress (AnimBuilder data) =
+    data.emitProgress
+
+
+{-| Enable or disable per-frame `Progress` events. Off by default — the JS
+port still delivers `propertyUpdate` messages so engine state stays in sync,
+but `update` returns `Nothing` instead of `Just (Progress ...)` when disabled.
+-}
+setEmitProgress : Bool -> AnimBuilder mode -> AnimBuilder mode
+setEmitProgress enabled (AnimBuilder data) =
+    AnimBuilder { data | emitProgress = enabled }

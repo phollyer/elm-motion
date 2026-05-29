@@ -1031,6 +1031,7 @@ encodeScroll builder =
          , ( "elements", Encode.object elements )
          , ( "iterations", encodeIterations processed.iterations )
          , ( "direction", encodeAnimationDirection processed.animationDirection )
+         , ( "emitProgress", Encode.bool (Builder.getScrollEmitProgress builder) )
          ]
             ++ discreteEntryFields
             ++ discreteExitFields
@@ -1094,6 +1095,7 @@ encodeView builder =
          , ( "elements", Encode.object elements )
          , ( "iterations", encodeIterations processed.iterations )
          , ( "direction", encodeAnimationDirection processed.animationDirection )
+         , ( "emitProgress", Encode.bool (Builder.getScrollEmitProgress builder) )
          ]
             ++ discreteEntryFields
             ++ discreteExitFields

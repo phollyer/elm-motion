@@ -14,6 +14,7 @@ suite =
         , completedStatusTests
         , cancelledStatusTests
         , iterationStatusTests
+        , progressStatusTests
         , wrongEngineTests
         , missingTypeTests
         , malformedPayloadTests
@@ -81,6 +82,22 @@ iterationStatusTests =
                 buildScrollEvent "scrollTimeline" "myGroup" "iteration" 2.7
                     |> ScrollTimeline.update
                     |> Expect.equal (Just (ScrollTimeline.Iteration "myGroup" 3))
+        ]
+
+
+progressStatusTests : Test
+progressStatusTests =
+    describe "progress status"
+        [ test "returns Progress with animGroup and current progress" <|
+            \_ ->
+                buildScrollEvent "scrollTimeline" "myGroup" "progress" 0.42
+                    |> ScrollTimeline.update
+                    |> Expect.equal (Just (ScrollTimeline.Progress "myGroup" 0.42))
+        , test "preserves zero progress" <|
+            \_ ->
+                buildScrollEvent "scrollTimeline" "myGroup" "progress" 0.0
+                    |> ScrollTimeline.update
+                    |> Expect.equal (Just (ScrollTimeline.Progress "myGroup" 0.0))
         ]
 
 

@@ -14,6 +14,7 @@ suite =
         , completedStatusTests
         , cancelledStatusTests
         , iterationStatusTests
+        , progressStatusTests
         , wrongEngineTests
         , missingTypeTests
         , malformedPayloadTests
@@ -81,6 +82,22 @@ iterationStatusTests =
                 buildViewEvent "viewTimeline" "heroCard" "iteration" 2.7
                     |> ViewTimeline.update
                     |> Expect.equal (Just (ViewTimeline.Iteration "heroCard" 3))
+        ]
+
+
+progressStatusTests : Test
+progressStatusTests =
+    describe "progress status"
+        [ test "returns Progress with animGroup and current progress" <|
+            \_ ->
+                buildViewEvent "viewTimeline" "heroCard" "progress" 0.42
+                    |> ViewTimeline.update
+                    |> Expect.equal (Just (ViewTimeline.Progress "heroCard" 0.42))
+        , test "preserves zero progress" <|
+            \_ ->
+                buildViewEvent "viewTimeline" "heroCard" "progress" 0.0
+                    |> ViewTimeline.update
+                    |> Expect.equal (Just (ViewTimeline.Progress "heroCard" 0.0))
         ]
 
 

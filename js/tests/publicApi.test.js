@@ -345,6 +345,145 @@ describe('ElmMotion public API', () => {
         expect(startedEvents()[1].payload.progress).toBe(0.1);
     });
 
+    it('emits per-frame progress events while in range when emitProgress is enabled', async () => {
+        const animGroup = 'box-scroll-progress';
+        const sourceId = 'source-scroll-progress';
+        const progressBox = { value: null };
+        const buildAnimation = () => {
+            const anim = createFakeAnimation();
+            anim.effect.getComputedTiming = () => ({ progress: progressBox.value });
+            return anim;
+        };
+        const animations = [buildAnimation()];
+        const element = {
+            id: animGroup,
+            animate: vi.fn(() => animations.shift())
+        };
+        installDom({ element, targetId: animGroup, sourceId });
+        global.ScrollTimeline = class ScrollTimeline {
+            constructor(config) {
+                this.config = config;
+            }
+        };
+        global.window.ScrollTimeline = global.ScrollTimeline;
+
+        const rafQueue = [];
+        const rafFn = vi.fn((cb) => {
+            rafQueue.push(cb);
+            return rafQueue.length;
+        });
+        global.requestAnimationFrame = rafFn;
+        global.window.requestAnimationFrame = rafFn;
+        const tick = () => {
+            const pending = rafQueue.splice(0);
+            pending.forEach((cb) => cb());
+        };
+
+        const events = [];
+        const ports = createPorts((payload) => events.push(payload));
+        ElmMotion.init(ports.ports);
+
+        await ports.send({
+            type: 'scrollDriven',
+            emitProgress: true,
+            iterations: { type: 'times', count: 1 },
+            timeline: { source: sourceId, axis: 'block' },
+            elements: {
+                [animGroup]: {
+                    properties: [
+                        { type: 'opacity', startValue: 0, endValue: 1, duration: 300, easing: 'linear' }
+                    ]
+                }
+            }
+        });
+
+        const progressEvents = () =>
+            events.filter((e) => e.type === 'animationUpdate' && e.payload?.status === 'progress');
+
+        // Out of range: no progress events.
+        progressBox.value = null;
+        tick();
+        expect(progressEvents()).toHaveLength(0);
+
+        // Enter range: progress event fires every frame.
+        progressBox.value = 0.25;
+        tick();
+        expect(progressEvents()).toHaveLength(1);
+        expect(progressEvents()[0]).toMatchObject({
+            type: 'animationUpdate',
+            engine: 'scrollTimeline',
+            payload: { animGroup, status: 'progress', progress: 0.25 }
+        });
+
+        progressBox.value = 0.6;
+        tick();
+        expect(progressEvents()).toHaveLength(2);
+        expect(progressEvents()[1].payload.progress).toBe(0.6);
+
+        // Out of range again: no further progress events.
+        progressBox.value = null;
+        tick();
+        expect(progressEvents()).toHaveLength(2);
+    });
+
+    it('does not emit progress events when emitProgress is omitted', async () => {
+        const animGroup = 'box-scroll-no-progress';
+        const sourceId = 'source-scroll-no-progress';
+        const progressBox = { value: null };
+        const buildAnimation = () => {
+            const anim = createFakeAnimation();
+            anim.effect.getComputedTiming = () => ({ progress: progressBox.value });
+            return anim;
+        };
+        const animations = [buildAnimation()];
+        const element = {
+            id: animGroup,
+            animate: vi.fn(() => animations.shift())
+        };
+        installDom({ element, targetId: animGroup, sourceId });
+        global.ScrollTimeline = class ScrollTimeline {
+            constructor(config) {
+                this.config = config;
+            }
+        };
+        global.window.ScrollTimeline = global.ScrollTimeline;
+
+        const rafQueue = [];
+        const rafFn = vi.fn((cb) => {
+            rafQueue.push(cb);
+            return rafQueue.length;
+        });
+        global.requestAnimationFrame = rafFn;
+        global.window.requestAnimationFrame = rafFn;
+        const tick = () => {
+            const pending = rafQueue.splice(0);
+            pending.forEach((cb) => cb());
+        };
+
+        const events = [];
+        const ports = createPorts((payload) => events.push(payload));
+        ElmMotion.init(ports.ports);
+
+        await ports.send({
+            type: 'scrollDriven',
+            iterations: { type: 'times', count: 1 },
+            timeline: { source: sourceId, axis: 'block' },
+            elements: {
+                [animGroup]: {
+                    properties: [
+                        { type: 'opacity', startValue: 0, endValue: 1, duration: 300, easing: 'linear' }
+                    ]
+                }
+            }
+        });
+
+        progressBox.value = 0.5;
+        tick();
+
+        const progressEvents = events.filter((e) => e.type === 'animationUpdate' && e.payload?.status === 'progress');
+        expect(progressEvents).toHaveLength(0);
+    });
+
     it('emits view-driven lifecycle events through the public API', async () => {
         const animGroup = 'box-view';
         const animations = [createFakeAnimation(), createFakeAnimation()];

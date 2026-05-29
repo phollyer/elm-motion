@@ -18,6 +18,7 @@ module Anim.Internal.Engine.ScrollTimeline exposing
     , subscriptions
     , transformOrder
     , update
+    , withProgressEvents
     )
 
 import Anim.Extra.TransformOrder exposing (TransformProperty)
@@ -77,6 +78,7 @@ type AnimEvent
     | Ended AnimGroupName
     | Cancelled AnimGroupName Float
     | Iteration AnimGroupName Int
+    | Progress AnimGroupName Float
     | AnimError String
 
 
@@ -138,6 +140,9 @@ scrollStatusToEvent animGroup status progress =
 
         "iteration" ->
             Iteration animGroup (round progress)
+
+        "progress" ->
+            Progress animGroup progress
 
         unknown ->
             AnimError ("Unknown scroll status: " ++ unknown)
@@ -261,3 +266,14 @@ discreteEntry =
 discreteExit : String -> String -> String -> TimelineBuilder -> TimelineBuilder
 discreteExit =
     Builder.discreteExit
+
+
+
+-- ============================================================
+-- EVENTS
+-- ============================================================
+
+
+withProgressEvents : Bool -> TimelineBuilder -> TimelineBuilder
+withProgressEvents =
+    Builder.setScrollEmitProgress

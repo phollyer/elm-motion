@@ -101,7 +101,7 @@ function getScrollAnimationProgress(animation) {
  * Attach finish, cancel, and iteration listeners to a group of scroll-driven animations.
  * Emits port events to Elm matching the 'animationUpdate' format used by the WAAPI engine.
  */
-function attachScrollDrivenListeners(animGroup, animations, engine, element, discreteExit) {
+function attachScrollDrivenListeners(animGroup, animations, engine, element, discreteExit, emitProgress) {
     const total = animations.length;
     let finishedCount = 0;
     let cancelFired = false;
@@ -118,7 +118,9 @@ function attachScrollDrivenListeners(animGroup, animations, engine, element, dis
     // event, so we poll the representative animation's computed progress once
     // per frame. A 'started' event fires each time progress transitions from
     // null/0 (out of range) to > 0 (in range), so re-entering the range after
-    // scrolling out emits another 'started'.
+    // scrolling out emits another 'started'. When emitProgress is true, the
+    // same loop also forwards every in-range progress sample as a 'progress'
+    // event so callers can react to scroll position from Elm.
     if (animations.length > 0 && typeof window !== 'undefined' && typeof window.requestAnimationFrame === 'function') {
         const representative = animations[0];
         let inRange = false;
@@ -130,6 +132,9 @@ function attachScrollDrivenListeners(animGroup, animations, engine, element, dis
                 sendScrollLifecycleEvent('started', animGroup, progress, engine);
             } else if (inRange && progress <= 0) {
                 inRange = false;
+            }
+            if (emitProgress && inRange) {
+                sendScrollLifecycleEvent('progress', animGroup, progress, engine);
             }
             window.requestAnimationFrame(tick);
         };
@@ -176,7 +181,7 @@ function attachScrollDrivenListeners(animGroup, animations, engine, element, dis
  * Apply a scroll/view-driven animation to a single element using the given timeline.
  * Builds start/end keyframes from each property config and calls element.animate().
  */
-function applyScrollDrivenAnimation(animGroup, element, elementConfig, timeline, rangeOptions, playbackOptions, engine, discreteEntry, discreteExit) {
+function applyScrollDrivenAnimation(animGroup, element, elementConfig, timeline, rangeOptions, playbackOptions, engine, discreteEntry, discreteExit, emitProgress) {
     // Apply discrete entry styles immediately so the element is in the correct
     // state when the animation begins.
     if (discreteEntry) {
@@ -309,7 +314,7 @@ function applyScrollDrivenAnimation(animGroup, element, elementConfig, timeline,
     }
 
     if (animations.length > 0 && engine) {
-        attachScrollDrivenListeners(animGroup, animations, engine, element, discreteExit || {});
+        attachScrollDrivenListeners(animGroup, animations, engine, element, discreteExit || {}, !!emitProgress);
     }
 }
 
@@ -324,7 +329,8 @@ function buildSharedTimelineOptions(commandData) {
             direction: commandData.direction || 'normal'
         },
         discreteEntry: commandData.discreteEntry || {},
-        discreteExit: commandData.discreteExit || {}
+        discreteExit: commandData.discreteExit || {},
+        emitProgress: !!commandData.emitProgress
     };
 }
 
@@ -424,26 +430,26 @@ export function processScrollDrivenData(commandData) {
     }
 
     const timeline = new ScrollTimeline({ source: sourceElement, axis: axis });
-    const { playbackOptions, discreteEntry, discreteExit } = buildSharedTimelineOptions(commandData);
+    const { playbackOptions, discreteEntry, discreteExit, emitProgress } = buildSharedTimelineOptions(commandData);
 
     Object.entries(commandData.elements).forEach(function ([animGroup, elementConfig]) {
         const targetId = elementConfig.target || animGroup;
         const element = resolveTimelineTarget(targetId, animGroup, 'scrollDriven', 'ScrollTimeline');
         if (!element) return;
-        applyScrollDrivenAnimation(animGroup, element, elementConfig, timeline, null, playbackOptions, 'scrollTimeline', discreteEntry, discreteExit);
+        applyScrollDrivenAnimation(animGroup, element, elementConfig, timeline, null, playbackOptions, 'scrollTimeline', discreteEntry, discreteExit, emitProgress);
     });
 }
 
 /**
  * Apply a view-driven animation to a single element entry.
  */
-function applyViewDrivenForEntry(animGroup, elementConfig, axis, rangeOptions, playbackOptions, discreteEntry, discreteExit) {
+function applyViewDrivenForEntry(animGroup, elementConfig, axis, rangeOptions, playbackOptions, discreteEntry, discreteExit, emitProgress) {
     const targetId = elementConfig.target || animGroup;
     const element = resolveTimelineTarget(targetId, animGroup, 'viewDriven', 'ViewTimeline');
     if (!element) return;
 
     const timeline = new ViewTimeline({ subject: element, axis: axis });
-    applyScrollDrivenAnimation(animGroup, element, elementConfig, timeline, rangeOptions, playbackOptions, 'viewTimeline', discreteEntry, discreteExit);
+    applyScrollDrivenAnimation(animGroup, element, elementConfig, timeline, rangeOptions, playbackOptions, 'viewTimeline', discreteEntry, discreteExit, emitProgress);
 }
 
 /**
@@ -457,9 +463,9 @@ export function processViewDrivenData(commandData) {
     const timelineConfig = commandData.timeline || {};
     const axis = timelineConfig.axis || 'block';
     const rangeOptions = buildViewRangeOptions(timelineConfig);
-    const { playbackOptions, discreteEntry, discreteExit } = buildSharedTimelineOptions(commandData);
+    const { playbackOptions, discreteEntry, discreteExit, emitProgress } = buildSharedTimelineOptions(commandData);
 
     Object.entries(commandData.elements).forEach(function ([animGroup, elementConfig]) {
-        applyViewDrivenForEntry(animGroup, elementConfig, axis, rangeOptions, playbackOptions, discreteEntry, discreteExit);
+        applyViewDrivenForEntry(animGroup, elementConfig, axis, rangeOptions, playbackOptions, discreteEntry, discreteExit, emitProgress);
     });
 }
