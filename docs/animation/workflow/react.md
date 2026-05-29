@@ -321,9 +321,9 @@ Wire up subscriptions:
 | Paused | | ✓ | ✓ | ✓ | | |
 | Resumed | | ✓ | ✓ | ✓ | | |
 | Restarted | | ✓ | ✓ | ✓ | | |
-| Progress | | | ✓ | ✓¹ | ✓¹ | ✓¹ |
+| Progress | | | ✓¹ | ✓¹ | ✓¹ | ✓¹ |
 
-¹ WAAPI, ScrollTimeline, and ViewTimeline emit `Progress` only when the builder opts in with `withProgressEvents True`.
+¹ Sub, WAAPI, ScrollTimeline, and ViewTimeline emit `Progress` only when the builder opts in with `withProgressEvents True`.
 
 
 ### Native Events
@@ -414,7 +414,7 @@ Fired when an animation is restarted from the beginning with the `restart` contr
 
 Fired on each animation frame (at the display's refresh rate) with the current progress value (0.0 to 1.0). Use sparingly - this fires frequently and is intended for progress indicators or debugging rather than complex logic.
 
-For **WAAPI**, **ScrollTimeline**, and **ViewTimeline**, `Progress` is opt-in. Set `withProgressEvents True` on the builder to receive one event per frame while the animation is running (or while a scroll/view timeline is in range). Useful for triggering other animations or driving debug overlays from event flow rather than polling.
+For **Sub**, **WAAPI**, **ScrollTimeline**, and **ViewTimeline**, `Progress` is opt-in. Set `withProgressEvents True` on the builder to receive one event per frame while the animation is running (or while a scroll/view timeline is in range). Useful for triggering other animations or driving debug overlays from event flow rather than polling.
 
 
 ## Next Steps

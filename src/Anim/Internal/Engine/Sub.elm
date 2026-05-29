@@ -515,6 +515,25 @@ update msg (AnimState state animGroups) =
                 allEvents =
                     List.concat events
 
+                emitProgress =
+                    Builder.getEmitProgress state.builder
+
+                filteredEvents =
+                    if emitProgress then
+                        allEvents
+
+                    else
+                        List.filter
+                            (\e ->
+                                case e of
+                                    Progress _ _ ->
+                                        False
+
+                                    _ ->
+                                        True
+                            )
+                            allEvents
+
                 stillRunning =
                     updatedGroups
                         |> AnimGroups.groups
@@ -528,7 +547,7 @@ update msg (AnimState state animGroups) =
                 }
                 updatedGroups
             , List.map Control state.pendingControlEvents
-                ++ List.map Tick allEvents
+                ++ List.map Tick filteredEvents
             )
 
 

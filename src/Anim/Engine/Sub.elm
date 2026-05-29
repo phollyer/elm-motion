@@ -31,6 +31,7 @@ module Anim.Engine.Sub exposing
     , getSizeRange, getSizeStart, getSizeEnd, getSizeCurrent
     , getSkewRange, getSkewStart, getSkewEnd, getSkewCurrent
     , getTranslateRange, getTranslateStart, getTranslateEnd, getTranslateCurrent
+    , withProgressEvents
     )
 
 {-| Use a subscription-based animation engine with full Elm-side control.
@@ -189,6 +190,11 @@ To render an animation, add `attributes` to the element you want to animate.
 @docs anyRunning, isRunning, allComplete, isComplete, getProgress
 
 📖 See [State Queries](https://phollyer.github.io/elm-motion/animation/engines/sub/#state-queries) in the docs.
+
+
+# Progress Events
+
+@docs withProgressEvents
 
 
 # Property Queries
@@ -429,6 +435,11 @@ onResize =
 
 
 {-| Subscription animation lifecycle events.
+
+`Progress AnimGroupName Float` is only emitted when
+[`withProgressEvents`](#withProgressEvents) `True` was set on the builder
+passed to [`init`](#init).
+
 -}
 type AnimEvent
     = Started AnimGroupName
@@ -1593,3 +1604,30 @@ Returns the end translate if the animation has completed.
 getTranslateCurrent : AnimGroupName -> AnimState -> Maybe { x : Float, y : Float, z : Float }
 getTranslateCurrent =
     Internal.getTranslateCurrent
+
+
+
+-- ============================================================
+-- PROGRESS EVENTS
+-- ============================================================
+
+
+{-| Opt in to per-frame `Progress` events.
+
+Off by default. The Sub engine runs its animation loop on every
+`AnimationFrame` tick regardless, so this flag only controls whether
+`update` returns `Progress AnimGroupName Float` events to your `update`
+handler. Other lifecycle events (`Started`, `Ended`, `Iteration`, etc.)
+are unaffected.
+
+Pass it in [`init`](#init):
+
+    Sub.init [ Sub.withProgressEvents True ]
+
+Useful when you want to drive UI or trigger other animations from event
+flow rather than polling [`getProgress`](#getProgress) on every render.
+
+-}
+withProgressEvents : Bool -> EngineBuilder -> EngineBuilder
+withProgressEvents =
+    Builder.setEmitProgress
