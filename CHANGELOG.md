@@ -10,6 +10,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- **`Anim.Engine.Keyframe.AnimEvent.Run`** — fires the moment a keyframe animation is applied, before any configured delay. Mirrors the native `animationrun` event and the existing `Anim.Engine.Transition.AnimEvent.Run`. `Started` continues to fire after the delay, matching the browser's `animationstart`. `events` and `eventsStopPropagation` now wire the additional `animationrun` listener.
 - **`Anim.Unit`** — shared length-unit selector covering `Px`, `Percent`, viewport units (`Vw`, `Vh`, `Dvw`, `Dvh`, `Svw`, `Svh`, `Lvw`, `Lvh`), font-relative units (`Rem`, `Em`), and container-query units (`Cqi`, `Cqb`, `Cqw`, `Cqh`, `Cqmin`, `Cqmax`) for length-bearing properties. On CSS Transition, Keyframe, WAAPI, ScrollTimeline, and ViewTimeline engines the unit is rendered verbatim, so relative units let the browser re-evaluate values against current layout on every frame — animations follow resize automatically without `Resize.bounds` plumbing. Default remains `Px`.
 - `Anim.Unit.toCssSuffix : Unit -> String` — exposed so callers can bridge a typed `Unit` into the `Anim.Property.Custom.Custom` String escape hatch.
 - Per-property `cssUnit : Unit -> Builder -> Builder` setter on `Anim.Property.Translate`, `Anim.Property.Size`, and `Anim.Property.PerspectiveOrigin`.

@@ -231,6 +231,7 @@ type AnimEvent
     | Paused AnimGroupName
     | Resumed AnimGroupName
     | Restarted AnimGroupName
+    | Run CurrentTargetId TargetId AnimGroupName
 
 
 
@@ -247,6 +248,7 @@ type AnimMsg
     | GotPaused AnimGroupName
     | GotResumed AnimGroupName
     | GotRestarted AnimGroupName
+    | GotRun AnimGroupName CSS.SourceEventData
 
 
 update : AnimMsg -> AnimState -> ( AnimState, AnimEvent )
@@ -264,6 +266,11 @@ update animMsg animState =
         GotStarted animGroupName { currentTargetId, targetId } ->
             ( CSS.handleEvent AnimGroup.setPlayState (CSS.AnimationStarted animGroupName) animState
             , Started currentTargetId targetId animGroupName
+            )
+
+        GotRun animGroupName { currentTargetId, targetId } ->
+            ( CSS.handleEvent AnimGroup.setPlayState (CSS.AnimationRun animGroupName) animState
+            , Run currentTargetId targetId animGroupName
             )
 
         GotEnded animGroupName { currentTargetId, targetId } ->
@@ -420,6 +427,7 @@ events toMsg =
     , CSS.onEvent "animationend" toMsg GotEnded
     , CSS.onEvent "animationcancel" toMsg GotCancelled
     , CSS.onEvent "animationiteration" toMsg GotIteration
+    , CSS.onEvent "animationrun" toMsg GotRun
     ]
 
 
@@ -429,6 +437,7 @@ eventsStopPropagation toMsg =
     , CSS.onEventStopPropagation "animationend" toMsg GotEnded
     , CSS.onEventStopPropagation "animationcancel" toMsg GotCancelled
     , CSS.onEventStopPropagation "animationiteration" toMsg GotIteration
+    , CSS.onEventStopPropagation "animationrun" toMsg GotRun
     ]
 
 

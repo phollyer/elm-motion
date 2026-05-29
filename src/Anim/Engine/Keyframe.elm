@@ -395,6 +395,7 @@ type AnimEvent
     | Paused AnimGroupName
     | Resumed AnimGroupName
     | Restarted AnimGroupName
+    | Run CurrentTargetId TargetId AnimGroupName
 
 
 
@@ -467,6 +468,9 @@ toAnimEvent event =
 
         Internal.Restarted animGroup ->
             Restarted animGroup
+
+        Internal.Run currentTargetId targetId animGroup ->
+            Run currentTargetId targetId animGroup
 
 
 

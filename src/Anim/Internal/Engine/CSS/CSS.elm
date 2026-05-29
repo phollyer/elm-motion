@@ -189,6 +189,7 @@ type AnimEvent
     | AnimationEnded AnimGroupName
     | AnimationCancelled AnimGroupName
     | AnimationIteration AnimGroupName
+    | AnimationRun AnimGroupName
     | TransitionStarted AnimGroupName
     | TransitionEnded AnimGroupName
     | TransitionRun AnimGroupName
@@ -210,6 +211,9 @@ handleEvent setPlayState event (AnimState state animGroups) =
                     ( groupName, PlayState.Cancelled )
 
                 AnimationIteration groupName ->
+                    ( groupName, PlayState.Running )
+
+                AnimationRun groupName ->
                     ( groupName, PlayState.Running )
 
                 TransitionStarted groupName ->

@@ -313,7 +313,7 @@ Wire up subscriptions:
 
 | Event | Transition | Keyframe | Sub | WAAPI | ScrollTimeline | ViewTimeline |
 | ----- | :---------: | :-------: | :-: | :---: | :------------: | :----------: |
-| Run | ✓ | | | | | |
+| Run | ✓ | ✓ | | | | |
 | Started | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | Ended | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | Cancelled | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
@@ -334,7 +334,7 @@ These events come directly from the underlying technology - CSS DOM events or We
 
     | Event | Transition | Keyframe | WAAPI | ScrollTimeline | ViewTimeline |
     | ----- | :--------: | :------: | :---: | :------------: | :----------: |
-    | Run | ✓ | | | | |
+    | Run | ✓ | ✓ | | | |
     | Started | ✓ | ✓ | | | |
     | Ended | ✓ | ✓ | ✓ | ✓ | ✓ |
     | Cancelled | ✓ | ✓ | ✓ | ✓ | ✓ |
@@ -364,11 +364,15 @@ These events are generated internally by the engine:
 
 ### Run
 
-Fired when a transition starts running, before any delay. Useful for tracking the exact moment a transition becomes "live."
+Fired the moment an animation is applied, before any configured delay. Use this if you need to react before the visual movement begins - `Started` fires only after the delay has elapsed.
+
+Supported by **Transition** (native `transitionrun`) and **Keyframe** (native `animationrun`).
 
 ### Started
 
-Fired when an animation begins playing. For CSS engines, this fires after any configured delay has elapsed.
+Fired when an animation begins playing.
+
+For **Transition** and **Keyframe**, this fires after any configured delay has elapsed. Use `Run` to react before the delay.
 
 For **ScrollTimeline** and **ViewTimeline**, `Started` fires each time the timeline enters its active range. Scrolling out of range and back in produces another `Started`.
 
