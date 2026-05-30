@@ -19,14 +19,29 @@ EXAMPLES_FILE="$REPO_ROOT/docs/examples/js/elm-motion.js"
 
 mkdir -p "$(dirname "$EXAMPLES_FILE")"
 
+# Portable mtime in epoch seconds: GNU stat (Linux) uses -c %Y, BSD stat
+# (macOS) uses -f %m. Detect once at startup so the rest of the script
+# stays platform-agnostic.
+if stat -c %Y "$0" >/dev/null 2>&1; then
+    _stat_mtime() { stat -c %Y "$1"; }
+else
+    _stat_mtime() { stat -f %m "$1"; }
+fi
+
 # Find the newest mtime under js/src/ (epoch seconds).
 newest_src_mtime() {
-    find "$SRC_DIR" -type f -name '*.js' -exec stat -f %m {} + 2>/dev/null \
-        | sort -nr | head -1
+    local newest=0 mtime
+    while IFS= read -r -d '' file; do
+        mtime=$(_stat_mtime "$file" 2>/dev/null || echo 0)
+        if [ "$mtime" -gt "$newest" ]; then
+            newest=$mtime
+        fi
+    done < <(find "$SRC_DIR" -type f -name '*.js' -print0)
+    echo "$newest"
 }
 
 file_mtime() {
-    [ -f "$1" ] && stat -f %m "$1" 2>/dev/null || echo 0
+    [ -f "$1" ] && _stat_mtime "$1" 2>/dev/null || echo 0
 }
 
 SRC_MTIME=$(newest_src_mtime)

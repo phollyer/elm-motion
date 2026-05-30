@@ -142,11 +142,28 @@ function attachScrollDrivenListeners(animGroup, animations, engine, element, dis
     // state, so a subsequent forward crossing of the end emits another
     // 'completed'. When emitProgress is true, the loop also forwards every
     // in-range progress sample.
+    //
+    // The RAF handle is captured so 'cancel' (and an element-detached guard)
+    // can stop the loop deterministically; otherwise the closure retains
+    // `element`, `animations`, and `discreteExit` for the lifetime of the
+    // page, even after the host element is unmounted from the DOM.
+    let rafId = null;
     if (animations.length > 0 && typeof window !== 'undefined' && typeof window.requestAnimationFrame === 'function') {
         const representative = animations[0];
         let inRange = false;
         const tick = function () {
-            if (cancelFired) return;
+            if (cancelFired) {
+                rafId = null;
+                return;
+            }
+            // Element detached without an explicit cancel - stop polling and
+            // release the closure so the GC can reclaim it.
+            if (element && typeof element.isConnected === 'boolean' && !element.isConnected) {
+                cancelFired = true;
+                rafId = null;
+                cleanupAnimGroup(animGroup);
+                return;
+            }
             for (let i = 0; i < total; i++) {
                 if (perAnimFinished[i] && animations[i].playState !== 'finished') {
                     perAnimFinished[i] = false;
@@ -163,9 +180,9 @@ function attachScrollDrivenListeners(animGroup, animations, engine, element, dis
             if (emitProgress && inRange) {
                 sendScrollLifecycleEvent('progress', animGroup, progress, engine);
             }
-            window.requestAnimationFrame(tick);
+            rafId = window.requestAnimationFrame(tick);
         };
-        window.requestAnimationFrame(tick);
+        rafId = window.requestAnimationFrame(tick);
     }
 
     animations.forEach(function (animation, i) {
@@ -177,6 +194,10 @@ function attachScrollDrivenListeners(animGroup, animations, engine, element, dis
         animation.addEventListener('cancel', function () {
             if (cancelFired) return;
             cancelFired = true;
+            if (rafId !== null && typeof window !== 'undefined' && typeof window.cancelAnimationFrame === 'function') {
+                window.cancelAnimationFrame(rafId);
+                rafId = null;
+            }
             const progress = getScrollAnimationProgress(animation);
             sendScrollLifecycleEvent('cancelled', animGroup, progress, engine);
             cleanupAnimGroup(animGroup);
