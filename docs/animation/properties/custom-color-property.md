@@ -52,8 +52,8 @@ See the [Properties Overview](overview.md) page for the shared usage patterns.
 
 | Function | Signature | Description |
 | -------- | --------- | ----------- |
-| `for` | `AnimGroupName -> ColorProperty -> AnimBuilder eng -> Builder mode` | Start building — takes group name and typed color property |
-| `build` | `Builder mode -> AnimBuilder eng` | Finish building |
+| `for` | `AnimGroupName -> ColorProperty -> AnimBuilder eng -> Builder eng` | Start building — takes group name and typed color property |
+| `build` | `Builder eng -> AnimBuilder eng` | Finish building |
 
 ### Start Value
 

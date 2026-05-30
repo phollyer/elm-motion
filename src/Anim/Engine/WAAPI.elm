@@ -13,8 +13,8 @@ module Anim.Engine.WAAPI exposing
     , iterations, loopForever, alternate
     , delay, duration, speed
     , easing
-    , cssUnit, cssUnitX, cssUnitY, cssUnitZ, cssUnitWidth, cssUnitHeight
     , spring
+    , cssUnit, cssUnitX, cssUnitY, cssUnitZ, cssUnitWidth, cssUnitHeight
     , stop, reset, restart, pause, resume
     , discreteEntry, discreteExit
     , transformOrder
@@ -133,14 +133,14 @@ Add `attributes` to the element you want to animate.
 📖 See [Easing](https://phollyer.github.io/elm-motion/animation/concepts/easing/) in the docs.
 
 
-# Unit
-
-@docs cssUnit, cssUnitX, cssUnitY, cssUnitZ, cssUnitWidth, cssUnitHeight
-
-
 # Spring
 
 @docs spring
+
+
+# Unit
+
+@docs cssUnit, cssUnitX, cssUnitY, cssUnitZ, cssUnitWidth, cssUnitHeight
 
 
 # Animation Control
@@ -288,7 +288,7 @@ type alias AnimGroupName =
 
 Use this in type annotations when a builder function should only work with this engine.
 
-📖 See [Builder Modes](https://phollyer.github.io/elm-motion/animation/concepts/builder-modes/)
+📖 See [Engine Capabilities](https://phollyer.github.io/elm-motion/animation/concepts/engine-capabilities/)
 for patterns and examples.
 
 -}
@@ -777,6 +777,26 @@ easing =
 
 
 -- ============================================================
+-- SPRING
+-- ============================================================
+
+
+{-| Set the global spring.
+
+    draggableCardSettle : AnimBuilder eng -> AnimBuilder eng
+    draggableCardSettle =
+        spring Spring.wobbly
+            >> settleCardPosition
+            >> settleCardShadow
+
+-}
+spring : Spring -> EngineBuilder -> EngineBuilder
+spring =
+    Builder.spring
+
+
+
+-- ============================================================
 -- UNIT
 -- ============================================================
 
@@ -863,26 +883,6 @@ cssUnitWidth =
 cssUnitHeight : Unit -> EngineBuilder -> EngineBuilder
 cssUnitHeight =
     Builder.cssUnitHeight
-
-
-
--- ============================================================
--- SPRING
--- ============================================================
-
-
-{-| Set the global spring.
-
-    draggableCardSettle : AnimBuilder eng -> AnimBuilder eng
-    draggableCardSettle =
-        spring Spring.wobbly
-            >> settleCardPosition
-            >> settleCardShadow
-
--}
-spring : Spring -> EngineBuilder -> EngineBuilder
-spring =
-    Builder.spring
 
 
 

@@ -1,4 +1,4 @@
-# Builder Modes
+# Engine Capabilities
 
 All animations are built using the property modules, they all use the same API. What differs are Engine capabilities.
 
@@ -6,7 +6,7 @@ Each Engine has its own set of capabilities in line with it's target output - CS
 
 The last thing you need is for someone to switch a nice looping animation from the Keyframe Engine to the Transition Engine, and then silently lose the looping behaviour.
 
-This is where **builder modes** come in; if an animation is built using a capability an Engine does not support, the compiler will complain, and any relevant tooling you may be using like [Elm Language Server](https://github.com/elm-tooling/elm-language-server) will flag the type error immediately.
+This is where **engine capabilities** come in; if an animation is built using a capability an Engine does not support, the compiler will complain, and any relevant tooling you may be using like [Elm Language Server](https://github.com/elm-tooling/elm-language-server) will flag the type error immediately.
 
 For example, here is a builder function with the Timing capability:
 

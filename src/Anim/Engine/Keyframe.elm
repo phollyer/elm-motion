@@ -264,7 +264,7 @@ type alias AnimGroupName =
 
 Use this in type annotations when a builder function should only work with this engine.
 
-📖 See [Builder Modes](https://phollyer.github.io/elm-motion/animation/concepts/builder-modes/)
+📖 See [Engine Capabilities](https://phollyer.github.io/elm-motion/animation/concepts/engine-capabilities/)
 for patterns and examples.
 
 -}
@@ -688,6 +688,26 @@ easing =
 
 
 -- ============================================================
+-- SPRING
+-- ============================================================
+
+
+{-| Set the global spring.
+
+    draggableCardSettle : AnimBuilder eng -> AnimBuilder eng
+    draggableCardSettle =
+        spring Spring.wobbly
+            >> settleCardPosition
+            >> settleCardShadow
+
+-}
+spring : Spring -> EngineBuilder -> EngineBuilder
+spring =
+    Builder.spring
+
+
+
+-- ============================================================
 -- UNIT
 -- ============================================================
 
@@ -774,26 +794,6 @@ cssUnitWidth =
 cssUnitHeight : Unit -> EngineBuilder -> EngineBuilder
 cssUnitHeight =
     Builder.cssUnitHeight
-
-
-
--- ============================================================
--- SPRING
--- ============================================================
-
-
-{-| Set the global spring.
-
-    draggableCardSettle : AnimBuilder eng -> AnimBuilder eng
-    draggableCardSettle =
-        spring Spring.wobbly
-            >> settleCardPosition
-            >> settleCardShadow
-
--}
-spring : Spring -> EngineBuilder -> EngineBuilder
-spring =
-    Builder.spring
 
 
 

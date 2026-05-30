@@ -31,11 +31,11 @@ Every animation follows this pattern:
 
 All animations are created by building them up with property specific builder functions. Each property has the same basic API, while multi-dimensional properties like `Translate` also have axis specific builders.
 
-Once built, the animations can be passed to any animation engine.
+Once built, an animation can be passed to any Engine that has the capabilities to run it.
 
 📖 See [Properties Overview](../properties/overview.md) for more information.
 
-## Builder Modes
+## Engine Capabilities
 
 A typical builder function has the following type signature:
 
@@ -43,9 +43,9 @@ A typical builder function has the following type signature:
 f : AnimBuilder eng -> AnimBuilder eng
 ```
 
-The builder type signature includes the `mode` type parameter which can be used to tighten the use of a function, and trigger compiler errors if used outside of the specified use.
+The builder type signature includes the `eng` type parameter, a phantom type. This is used by the compiler to determine if an Engine has the capabilities to run the animation - if it doesn't the compiler will complain with a type error.
 
-📖 See [Builder Modes](../concepts/builder-modes.md) for more information.
+📖 See [Engine Capabilities](../concepts/engine-capabilities.md) for more information.
 
 ## Animation Group Names
 
@@ -120,7 +120,7 @@ Use different group names when you want separate animation sets for different el
         fadeTo 0
 
     -- Reusable Slide Builder
-    slideTo : AnimGroupName -> (Translate.Builder mode -> Translate.Builder mode) -> AnimBuilder eng -> AnimBuilder eng
+    slideTo : AnimGroupName -> (Translate.Builder eng -> Translate.Builder eng) -> AnimBuilder eng -> AnimBuilder eng
     slideTo groupName slideTo =
         Translate.for groupName
             >> slideTo

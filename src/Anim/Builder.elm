@@ -16,20 +16,20 @@ This module is mainly for shared type annotations and global builder settings.
 
 # Types
 
-📖 See [Builder Modes](https://phollyer.github.io/elm-motion/animation/concepts/builder-modes/)
+📖 See [Engine Capabilities](https://phollyer.github.io/elm-motion/animation/concepts/engine-capabilities/)
 in the docs for detailed examples and patterns.
 
 @docs AnimBuilder
 
 
-## Timeline Modes
+## Timeline Capabilities
 
 Use these in type annotations when a builder function should only work on a certain timeline.
 
 @docs ForScroll, ForView
 
 
-### Engine Modes
+### Engine Capabilities
 
 Use these to constrain a builder function to one specific Engine.
 
@@ -96,7 +96,7 @@ type alias AnimBuilder eng =
 
 
 -- ============================================================
--- TIMELINE MODES
+-- TIMELINE CAPABILITIES
 -- ============================================================
 
 
@@ -120,7 +120,7 @@ type alias ForView =
 
 
 -- ============================================================
--- ENGINE MODES
+-- ENGINE CAPABILITIES
 -- ============================================================
 
 

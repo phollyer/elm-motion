@@ -215,6 +215,6 @@ The three arguments are: property name, value during animation, value after anim
 
 ## Next Steps
 
-Now that you've learnt about the Engines and Properties, learn about Builder Modes and how they make builder functions reusable across engines.
+Now that you've learnt about the Engines and Properties, learn about Engine Capabilities and how they make builder functions reusable across engines.
 
-[Builder Modes →](../concepts/builder-modes.md){ .md-button .md-button--primary }
+[Engine Capabilities →](../concepts/engine-capabilities.md){ .md-button .md-button--primary }

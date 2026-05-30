@@ -229,7 +229,7 @@ type alias AnimGroupName =
 
 Use this in type annotations when a builder function should only work with this engine.
 
-📖 See [Builder Modes](https://phollyer.github.io/elm-motion/animation/concepts/builder-modes/)
+📖 See [Engine Capabilities](https://phollyer.github.io/elm-motion/animation/concepts/engine-capabilities/)
 for patterns and examples.
 
 -}

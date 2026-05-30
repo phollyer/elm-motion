@@ -54,8 +54,8 @@ See the [Properties Overview](overview.md) page for the shared usage patterns.
 
 | Function | Signature | Description |
 | -------- | --------- | ----------- |
-| `for` | `AnimGroupName -> Property -> AnimBuilder eng -> Builder mode` | Start building — takes group name and CSS property (with unit embedded) |
-| `build` | `Builder mode -> AnimBuilder eng` | Finish building |
+| `for` | `AnimGroupName -> Property -> AnimBuilder eng -> Builder eng` | Start building — takes group name and CSS property (with unit embedded) |
+| `build` | `Builder eng -> AnimBuilder eng` | Finish building |
 
 ### Start Value
 

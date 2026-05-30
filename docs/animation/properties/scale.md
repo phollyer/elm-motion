@@ -49,8 +49,8 @@ See the [Properties Overview](overview.md) page for the shared usage patterns.
 
 | Function | Signature | Description |
 | -------- | --------- | ----------- |
-| `for` | `AnimGroupName -> AnimBuilder eng -> Builder mode` | Start building |
-| `build` | `Builder mode -> AnimBuilder eng` | Finish building |
+| `for` | `AnimGroupName -> AnimBuilder eng -> Builder eng` | Start building |
+| `build` | `Builder eng -> AnimBuilder eng` | Finish building |
 
 ### Start Value
 

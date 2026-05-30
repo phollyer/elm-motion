@@ -9,8 +9,8 @@ module Anim.Engine.ScrollTimeline exposing
     , horizontal
     , iterations, alternate
     , easing
-    , cssUnit, cssUnitX, cssUnitY, cssUnitZ, cssUnitWidth, cssUnitHeight
     , spring
+    , cssUnit, cssUnitX, cssUnitY, cssUnitZ, cssUnitWidth, cssUnitHeight
     , discreteEntry, discreteExit
     , transformOrder
     , withProgressEvents
@@ -86,14 +86,14 @@ and the
 📖 See [Easing](https://phollyer.github.io/elm-motion/animation/concepts/easing/) in the docs.
 
 
-# Unit
-
-@docs cssUnit, cssUnitX, cssUnitY, cssUnitZ, cssUnitWidth, cssUnitHeight
-
-
 # Spring
 
 @docs spring
+
+
+# Unit
+
+@docs cssUnit, cssUnitX, cssUnitY, cssUnitZ, cssUnitWidth, cssUnitHeight
 
 
 # Discrete Properties
@@ -395,6 +395,26 @@ easing =
 
 
 -- ============================================================
+-- SPRING
+-- ============================================================
+
+
+{-| Set the global spring.
+
+    draggableCardSettle : AnimBuilder eng -> AnimBuilder eng
+    draggableCardSettle =
+        spring Spring.wobbly
+            >> settleCardPosition
+            >> settleCardShadow
+
+-}
+spring : Spring -> TimelineBuilder -> TimelineBuilder
+spring =
+    Builder.spring
+
+
+
+-- ============================================================
 -- UNIT
 -- ============================================================
 
@@ -481,26 +501,6 @@ cssUnitWidth =
 cssUnitHeight : Unit -> TimelineBuilder -> TimelineBuilder
 cssUnitHeight =
     Builder.cssUnitHeight
-
-
-
--- ============================================================
--- SPRING
--- ============================================================
-
-
-{-| Set the global spring.
-
-    draggableCardSettle : AnimBuilder eng -> AnimBuilder eng
-    draggableCardSettle =
-        spring Spring.wobbly
-            >> settleCardPosition
-            >> settleCardShadow
-
--}
-spring : Spring -> TimelineBuilder -> TimelineBuilder
-spring =
-    Builder.spring
 
 
 
