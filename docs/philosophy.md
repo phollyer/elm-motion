@@ -43,7 +43,7 @@ Define your animations once.
 
     ```elm
     -- Define once
-    fadeIn : AnimBuilder mode -> AnimBuilder mode
+    fadeIn : AnimBuilder eng -> AnimBuilder eng
     fadeIn =
         Opacity.for "entranceAnim"
             >> Opacity.from 0

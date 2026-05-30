@@ -63,8 +63,8 @@ import Shared.TimeSpec exposing (TimeSpec(..))
 -- ============================================================
 
 
-type TranslateBuilder mode
-    = TranslateBuilder (Builder.AnimationConfig Translate) (AnimBuilder mode)
+type TranslateBuilder eng
+    = TranslateBuilder (Builder.AnimationConfig Translate) (AnimBuilder eng)
 
 
 type alias TranslateConfig =
@@ -87,7 +87,7 @@ defaultConfig =
 -- ============================================================
 
 
-for : String -> AnimBuilder mode -> TranslateBuilder mode
+for : String -> AnimBuilder eng -> TranslateBuilder eng
 for animGroupName builder =
     let
         extractExisting propertyConfig =
@@ -105,7 +105,7 @@ for animGroupName builder =
         Builder.for animGroupName builder
 
 
-forContinuing : String -> AnimBuilder mode -> TranslateBuilder mode
+forContinuing : String -> AnimBuilder eng -> TranslateBuilder eng
 forContinuing animGroupName builder =
     let
         extractExisting propertyConfig =
@@ -136,7 +136,7 @@ forContinuing animGroupName builder =
         Builder.for animGroupName builder
 
 
-build : TranslateBuilder mode -> AnimBuilder mode
+build : TranslateBuilder eng -> AnimBuilder eng
 build (TranslateBuilder config builder) =
     let
         clampedConfig =
@@ -155,7 +155,7 @@ build (TranslateBuilder config builder) =
         builder
 
 
-applyClamps : AnimBuilder mode -> TranslateConfig -> TranslateConfig
+applyClamps : AnimBuilder eng -> TranslateConfig -> TranslateConfig
 applyClamps builder config =
     case Builder.getCurrentAnimGroupName builder of
         Nothing ->
@@ -216,17 +216,17 @@ clampAxis range v =
 -- ============================================================
 
 
-from : Translate -> TranslateBuilder mode -> TranslateBuilder mode
+from : Translate -> TranslateBuilder eng -> TranslateBuilder eng
 from value (TranslateBuilder config builder) =
     TranslateBuilder { config | start = Just value } builder
 
 
-fromXYZ : Float -> Float -> Float -> TranslateBuilder mode -> TranslateBuilder mode
+fromXYZ : Float -> Float -> Float -> TranslateBuilder eng -> TranslateBuilder eng
 fromXYZ x y z =
     from (Translate.fromTriple ( x, y, z ))
 
 
-fromXY : Float -> Float -> TranslateBuilder mode -> TranslateBuilder mode
+fromXY : Float -> Float -> TranslateBuilder eng -> TranslateBuilder eng
 fromXY x y (TranslateBuilder config builder) =
     let
         z =
@@ -236,7 +236,7 @@ fromXY x y (TranslateBuilder config builder) =
         TranslateBuilder config builder
 
 
-fromXZ : Float -> Float -> TranslateBuilder mode -> TranslateBuilder mode
+fromXZ : Float -> Float -> TranslateBuilder eng -> TranslateBuilder eng
 fromXZ x z (TranslateBuilder config builder) =
     let
         y =
@@ -246,7 +246,7 @@ fromXZ x z (TranslateBuilder config builder) =
         TranslateBuilder config builder
 
 
-fromX : Float -> TranslateBuilder mode -> TranslateBuilder mode
+fromX : Float -> TranslateBuilder eng -> TranslateBuilder eng
 fromX x (TranslateBuilder config builder) =
     let
         y =
@@ -259,7 +259,7 @@ fromX x (TranslateBuilder config builder) =
         TranslateBuilder config builder
 
 
-fromYZ : Float -> Float -> TranslateBuilder mode -> TranslateBuilder mode
+fromYZ : Float -> Float -> TranslateBuilder eng -> TranslateBuilder eng
 fromYZ y z (TranslateBuilder config builder) =
     let
         x =
@@ -269,7 +269,7 @@ fromYZ y z (TranslateBuilder config builder) =
         TranslateBuilder config builder
 
 
-fromY : Float -> TranslateBuilder mode -> TranslateBuilder mode
+fromY : Float -> TranslateBuilder eng -> TranslateBuilder eng
 fromY y (TranslateBuilder config builder) =
     let
         x =
@@ -282,7 +282,7 @@ fromY y (TranslateBuilder config builder) =
         TranslateBuilder config builder
 
 
-fromZ : Float -> TranslateBuilder mode -> TranslateBuilder mode
+fromZ : Float -> TranslateBuilder eng -> TranslateBuilder eng
 fromZ z (TranslateBuilder config builder) =
     let
         x =
@@ -301,19 +301,19 @@ fromZ z (TranslateBuilder config builder) =
 -- ============================================================
 
 
-to : Translate -> TranslateBuilder mode -> TranslateBuilder mode
+to : Translate -> TranslateBuilder eng -> TranslateBuilder eng
 to value (TranslateBuilder config builder) =
     TranslateBuilder
         (setEnd value config)
         (markAxes [ "x", "y", "z" ] builder)
 
 
-toXYZ : Float -> Float -> Float -> TranslateBuilder mode -> TranslateBuilder mode
+toXYZ : Float -> Float -> Float -> TranslateBuilder eng -> TranslateBuilder eng
 toXYZ x y z =
     to (Translate.fromTriple ( x, y, z ))
 
 
-toXY : Float -> Float -> TranslateBuilder mode -> TranslateBuilder mode
+toXY : Float -> Float -> TranslateBuilder eng -> TranslateBuilder eng
 toXY x y (TranslateBuilder config builder) =
     let
         z =
@@ -327,7 +327,7 @@ toXY x y (TranslateBuilder config builder) =
         (markAxes [ "x", "y" ] builder)
 
 
-toXZ : Float -> Float -> TranslateBuilder mode -> TranslateBuilder mode
+toXZ : Float -> Float -> TranslateBuilder eng -> TranslateBuilder eng
 toXZ x z (TranslateBuilder config builder) =
     let
         y =
@@ -341,7 +341,7 @@ toXZ x z (TranslateBuilder config builder) =
         (markAxes [ "x", "z" ] builder)
 
 
-toX : Float -> TranslateBuilder mode -> TranslateBuilder mode
+toX : Float -> TranslateBuilder eng -> TranslateBuilder eng
 toX x (TranslateBuilder config builder) =
     let
         y =
@@ -358,7 +358,7 @@ toX x (TranslateBuilder config builder) =
         (markAxes [ "x" ] builder)
 
 
-toYZ : Float -> Float -> TranslateBuilder mode -> TranslateBuilder mode
+toYZ : Float -> Float -> TranslateBuilder eng -> TranslateBuilder eng
 toYZ y z (TranslateBuilder config builder) =
     let
         x =
@@ -372,7 +372,7 @@ toYZ y z (TranslateBuilder config builder) =
         (markAxes [ "y", "z" ] builder)
 
 
-toY : Float -> TranslateBuilder mode -> TranslateBuilder mode
+toY : Float -> TranslateBuilder eng -> TranslateBuilder eng
 toY y (TranslateBuilder config builder) =
     let
         x =
@@ -389,7 +389,7 @@ toY y (TranslateBuilder config builder) =
         (markAxes [ "y" ] builder)
 
 
-toZ : Float -> TranslateBuilder mode -> TranslateBuilder mode
+toZ : Float -> TranslateBuilder eng -> TranslateBuilder eng
 toZ z (TranslateBuilder config builder) =
     let
         x =
@@ -412,7 +412,7 @@ toZ z (TranslateBuilder config builder) =
 -- ============================================================
 
 
-by : Translate -> TranslateBuilder mode -> TranslateBuilder mode
+by : Translate -> TranslateBuilder eng -> TranslateBuilder eng
 by delta (TranslateBuilder config builder) =
     let
         startVal =
@@ -434,12 +434,12 @@ by delta (TranslateBuilder config builder) =
         (markAxes [ "x", "y", "z" ] builder)
 
 
-byXYZ : Float -> Float -> Float -> TranslateBuilder mode -> TranslateBuilder mode
+byXYZ : Float -> Float -> Float -> TranslateBuilder eng -> TranslateBuilder eng
 byXYZ dx dy dz =
     by (Translate.fromTriple ( dx, dy, dz ))
 
 
-byXY : Float -> Float -> TranslateBuilder mode -> TranslateBuilder mode
+byXY : Float -> Float -> TranslateBuilder eng -> TranslateBuilder eng
 byXY dx dy (TranslateBuilder config builder) =
     let
         startVal =
@@ -461,7 +461,7 @@ byXY dx dy (TranslateBuilder config builder) =
         (markAxes [ "x", "y" ] builder)
 
 
-byXZ : Float -> Float -> TranslateBuilder mode -> TranslateBuilder mode
+byXZ : Float -> Float -> TranslateBuilder eng -> TranslateBuilder eng
 byXZ dx dz (TranslateBuilder config builder) =
     let
         startVal =
@@ -483,7 +483,7 @@ byXZ dx dz (TranslateBuilder config builder) =
         (markAxes [ "x", "z" ] builder)
 
 
-byX : Float -> TranslateBuilder mode -> TranslateBuilder mode
+byX : Float -> TranslateBuilder eng -> TranslateBuilder eng
 byX dx (TranslateBuilder config builder) =
     let
         startVal =
@@ -505,7 +505,7 @@ byX dx (TranslateBuilder config builder) =
         (markAxes [ "x" ] builder)
 
 
-byYZ : Float -> Float -> TranslateBuilder mode -> TranslateBuilder mode
+byYZ : Float -> Float -> TranslateBuilder eng -> TranslateBuilder eng
 byYZ dy dz (TranslateBuilder config builder) =
     let
         startVal =
@@ -527,7 +527,7 @@ byYZ dy dz (TranslateBuilder config builder) =
         (markAxes [ "y", "z" ] builder)
 
 
-byY : Float -> TranslateBuilder mode -> TranslateBuilder mode
+byY : Float -> TranslateBuilder eng -> TranslateBuilder eng
 byY dy (TranslateBuilder config builder) =
     let
         startVal =
@@ -549,7 +549,7 @@ byY dy (TranslateBuilder config builder) =
         (markAxes [ "y" ] builder)
 
 
-byZ : Float -> TranslateBuilder mode -> TranslateBuilder mode
+byZ : Float -> TranslateBuilder eng -> TranslateBuilder eng
 byZ dz (TranslateBuilder config builder) =
     let
         startVal =
@@ -588,7 +588,7 @@ setEnd newEnd config =
     }
 
 
-markAxes : List String -> AnimBuilder mode -> AnimBuilder mode
+markAxes : List String -> AnimBuilder eng -> AnimBuilder eng
 markAxes axes builder =
     case Builder.getCurrentAnimGroupName builder of
         Just animGroupName ->
@@ -604,17 +604,17 @@ markAxes axes builder =
 -- ============================================================
 
 
-delay : Int -> TranslateBuilder { m | supportsTime : () } -> TranslateBuilder { m | supportsTime : () }
+delay : Int -> TranslateBuilder { eng | withTiming : () } -> TranslateBuilder { eng | withTiming : () }
 delay delay_ (TranslateBuilder config builder) =
     TranslateBuilder (PropertyBuilder.delay delay_ config) builder
 
 
-duration : Int -> TranslateBuilder { m | supportsTime : () } -> TranslateBuilder { m | supportsTime : () }
+duration : Int -> TranslateBuilder { eng | withTiming : () } -> TranslateBuilder { eng | withTiming : () }
 duration ms (TranslateBuilder config builder) =
     TranslateBuilder (PropertyBuilder.duration ms config) builder
 
 
-speed : Float -> TranslateBuilder { m | supportsTime : () } -> TranslateBuilder { m | supportsTime : () }
+speed : Float -> TranslateBuilder { eng | withTiming : () } -> TranslateBuilder { eng | withTiming : () }
 speed value (TranslateBuilder config builder) =
     TranslateBuilder (PropertyBuilder.speed value config) builder
 
@@ -625,7 +625,7 @@ speed value (TranslateBuilder config builder) =
 -- ============================================================
 
 
-easing : Easing -> TranslateBuilder mode -> TranslateBuilder mode
+easing : Easing -> TranslateBuilder eng -> TranslateBuilder eng
 easing easing_ (TranslateBuilder config builder) =
     TranslateBuilder (PropertyBuilder.easing easing_ config) builder
 
@@ -636,27 +636,27 @@ easing easing_ (TranslateBuilder config builder) =
 -- ============================================================
 
 
-spring : Spring -> TranslateBuilder { m | supportsSpring : () } -> TranslateBuilder { m | supportsSpring : () }
+spring : Spring -> TranslateBuilder { eng | withSpring : () } -> TranslateBuilder { eng | withSpring : () }
 spring s (TranslateBuilder config builder) =
     TranslateBuilder (PropertyBuilder.spring s config) builder
 
 
-cssUnit : Unit -> TranslateBuilder mode -> TranslateBuilder mode
+cssUnit : Unit -> TranslateBuilder eng -> TranslateBuilder eng
 cssUnit unit (TranslateBuilder config builder) =
     TranslateBuilder (PropertyBuilder.cssUnit unit config) builder
 
 
-cssUnitX : Unit -> TranslateBuilder mode -> TranslateBuilder mode
+cssUnitX : Unit -> TranslateBuilder eng -> TranslateBuilder eng
 cssUnitX unit (TranslateBuilder config builder) =
     TranslateBuilder (PropertyBuilder.cssUnitX unit config) builder
 
 
-cssUnitY : Unit -> TranslateBuilder mode -> TranslateBuilder mode
+cssUnitY : Unit -> TranslateBuilder eng -> TranslateBuilder eng
 cssUnitY unit (TranslateBuilder config builder) =
     TranslateBuilder (PropertyBuilder.cssUnitY unit config) builder
 
 
-cssUnitZ : Unit -> TranslateBuilder mode -> TranslateBuilder mode
+cssUnitZ : Unit -> TranslateBuilder eng -> TranslateBuilder eng
 cssUnitZ unit (TranslateBuilder config builder) =
     TranslateBuilder (PropertyBuilder.cssUnitZ unit config) builder
 
@@ -666,7 +666,7 @@ stored init-time unit defaults. Called at the start of every public `init*`
 helper so values supplied during initialization are rendered with whatever
 `initUnit*` was active at that point in the pipeline.
 -}
-applyInitCssUnitX : TranslateBuilder mode -> TranslateBuilder mode
+applyInitCssUnitX : TranslateBuilder eng -> TranslateBuilder eng
 applyInitCssUnitX (TranslateBuilder config builder) =
     let
         initUnits =
@@ -680,7 +680,7 @@ applyInitCssUnitX (TranslateBuilder config builder) =
         builder
 
 
-applyInitCssUnitY : TranslateBuilder mode -> TranslateBuilder mode
+applyInitCssUnitY : TranslateBuilder eng -> TranslateBuilder eng
 applyInitCssUnitY (TranslateBuilder config builder) =
     let
         initUnits =
@@ -694,7 +694,7 @@ applyInitCssUnitY (TranslateBuilder config builder) =
         builder
 
 
-applyInitCssUnitZ : TranslateBuilder mode -> TranslateBuilder mode
+applyInitCssUnitZ : TranslateBuilder eng -> TranslateBuilder eng
 applyInitCssUnitZ (TranslateBuilder config builder) =
     let
         initUnits =
@@ -714,37 +714,37 @@ applyInitCssUnitZ (TranslateBuilder config builder) =
 -- ============================================================
 
 
-clampX : Float -> Float -> TranslateBuilder mode -> TranslateBuilder mode
+clampX : Float -> Float -> TranslateBuilder eng -> TranslateBuilder eng
 clampX lo hi =
     updateBuilderClamp (\name -> Builder.setClamp name "translate" "x" lo hi)
 
 
-clampY : Float -> Float -> TranslateBuilder mode -> TranslateBuilder mode
+clampY : Float -> Float -> TranslateBuilder eng -> TranslateBuilder eng
 clampY lo hi =
     updateBuilderClamp (\name -> Builder.setClamp name "translate" "y" lo hi)
 
 
-clampZ : Float -> Float -> TranslateBuilder mode -> TranslateBuilder mode
+clampZ : Float -> Float -> TranslateBuilder eng -> TranslateBuilder eng
 clampZ lo hi =
     updateBuilderClamp (\name -> Builder.setClamp name "translate" "z" lo hi)
 
 
-unclampX : TranslateBuilder mode -> TranslateBuilder mode
+unclampX : TranslateBuilder eng -> TranslateBuilder eng
 unclampX =
     updateBuilderClamp (\name -> Builder.clearClamp name "translate" "x")
 
 
-unclampY : TranslateBuilder mode -> TranslateBuilder mode
+unclampY : TranslateBuilder eng -> TranslateBuilder eng
 unclampY =
     updateBuilderClamp (\name -> Builder.clearClamp name "translate" "y")
 
 
-unclampZ : TranslateBuilder mode -> TranslateBuilder mode
+unclampZ : TranslateBuilder eng -> TranslateBuilder eng
 unclampZ =
     updateBuilderClamp (\name -> Builder.clearClamp name "translate" "z")
 
 
-updateBuilderClamp : (String -> AnimBuilder mode -> AnimBuilder mode) -> TranslateBuilder mode -> TranslateBuilder mode
+updateBuilderClamp : (String -> AnimBuilder eng -> AnimBuilder eng) -> TranslateBuilder eng -> TranslateBuilder eng
 updateBuilderClamp f (TranslateBuilder config builder) =
     case Builder.getCurrentAnimGroupName builder of
         Just animGroupName ->

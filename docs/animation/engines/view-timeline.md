@@ -29,7 +29,7 @@ Set `rangeStart` and `rangeEnd` to control when the animation begins and ends.
     import Anim.Property.Opacity as Opacity
 
 
-    reveal : ViewTimeline.AnimBuilder mode -> ViewTimeline.AnimBuilder mode
+    reveal : ViewTimeline.AnimBuilder eng -> ViewTimeline.AnimBuilder eng
     reveal =
         ViewTimeline.rangeStart (ViewTimeline.Entry 0 ViewTimeline.Perc)
             >> ViewTimeline.rangeEnd (ViewTimeline.Entry 100 ViewTimeline.Perc)
@@ -340,7 +340,7 @@ Choose ViewTimeline when playback should follow how an element moves through the
 
 | Type | Description |
 | ---- | ----------- |
-| `AnimBuilder mode` | Carries all animation configuration |
+| `AnimBuilder eng` | Carries all animation configuration |
 | `AnimMsg` | Internal engine messages |
 | `AnimEvent` | Events returned by `update` |
 | `AnimGroupName` | `String` type alias for the animation group name |
@@ -352,7 +352,7 @@ Choose ViewTimeline when playback should follow how an element moves through the
 
 | Function | Type | Description |
 | -------- | ---- | ----------- |
-| `animate` | `(Value -> Cmd msg) -> (AnimBuilder mode -> AnimBuilder mode) -> Cmd msg` | Fire-and-forget view-driven animation |
+| `animate` | `(Value -> Cmd msg) -> (AnimBuilder eng -> AnimBuilder eng) -> Cmd msg` | Fire-and-forget view-driven animation |
 
 ### Events
 
@@ -385,14 +385,14 @@ Choose ViewTimeline when playback should follow how an element moves through the
 
 | Function | Type | Description |
 | -------- | ---- | ----------- |
-| `horizontal` | `AnimBuilder mode -> AnimBuilder mode` | Use horizontal viewport tracking |
+| `horizontal` | `AnimBuilder eng -> AnimBuilder eng` | Use horizontal viewport tracking |
 
 ### Range
 
 | Function | Type | Description |
 | -------- | ---- | ----------- |
-| `rangeStart` | `Range -> AnimBuilder mode -> AnimBuilder mode` | Set when the animation begins |
-| `rangeEnd` | `Range -> AnimBuilder mode -> AnimBuilder mode` | Set when the animation ends |
+| `rangeStart` | `Range -> AnimBuilder eng -> AnimBuilder eng` | Set when the animation begins |
+| `rangeEnd` | `Range -> AnimBuilder eng -> AnimBuilder eng` | Set when the animation ends |
 | `Cover` | `Float -> Unit -> Range` | Full element coverage — start or end |
 | `Contain` | `Float -> Unit -> Range` | Full element containment — start or end |
 | `Entry` | `Float -> Unit -> Range` | Element entering the viewport |
@@ -407,33 +407,33 @@ Choose ViewTimeline when playback should follow how an element moves through the
 
 | Function | Type | Description |
 | -------- | ---- | ----------- |
-| `iterations` | `Int -> AnimBuilder mode -> AnimBuilder mode` | Set number of iterations |
-| `alternate` | `AnimBuilder mode -> AnimBuilder mode` | Reverse direction on each iteration |
+| `iterations` | `Int -> AnimBuilder eng -> AnimBuilder eng` | Set number of iterations |
+| `alternate` | `AnimBuilder eng -> AnimBuilder eng` | Reverse direction on each iteration |
 
 ### Easing
 
 | Function | Type | Description |
 | -------- | ---- | ----------- |
-| `easing` | `Easing -> AnimBuilder mode -> AnimBuilder mode` | Set the easing function |
+| `easing` | `Easing -> AnimBuilder eng -> AnimBuilder eng` | Set the easing function |
 
 ### Spring
 
 | Function | Type | Description |
 | -------- | ---- | ----------- |
-| `spring` | `Spring -> AnimBuilder mode -> AnimBuilder mode` | Set spring physics |
+| `spring` | `Spring -> AnimBuilder eng -> AnimBuilder eng` | Set spring physics |
 
 ### Discrete Properties
 
 | Function | Type | Description |
 | -------- | ---- | ----------- |
-| `discreteEntry` | `String -> String -> AnimBuilder mode -> AnimBuilder mode` | Set a CSS property value when the animation starts |
-| `discreteExit` | `String -> String -> String -> AnimBuilder mode -> AnimBuilder mode` | Set a CSS property value during and after the animation |
+| `discreteEntry` | `String -> String -> AnimBuilder eng -> AnimBuilder eng` | Set a CSS property value when the animation starts |
+| `discreteExit` | `String -> String -> String -> AnimBuilder eng -> AnimBuilder eng` | Set a CSS property value during and after the animation |
 
 ### Transform Order
 
 | Function | Type | Description |
 | -------- | ---- | ----------- |
-| `transformOrder` | `List TransformProperty -> AnimBuilder mode -> AnimBuilder mode` | Set custom transform order |
+| `transformOrder` | `List TransformProperty -> AnimBuilder eng -> AnimBuilder eng` | Set custom transform order |
 
 For complete API details, see the [Anim.Engine.ViewTimeline](https://package.elm-lang.org/packages/phollyer/elm-motion/latest/Anim-Engine-ViewTimeline) documentation.
 

@@ -35,13 +35,13 @@ animBuilder =
 
 
 type alias TestMode =
-    { supportsTime : ()
-    , supportsSpring : ()
-    , supportsLoopForever : ()
-    , supportsIterations : ()
-    , supportsAlternate : ()
-    , supportsTransformOrder : ()
-    , supportsProgressEvents : ()
+    { withTiming : ()
+    , withSpring : ()
+    , withLoopForever : ()
+    , withIterations : ()
+    , withAlternate : ()
+    , withTransformOrder : ()
+    , withProgressEvents : ()
     }
 
 

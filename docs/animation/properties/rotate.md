@@ -13,7 +13,7 @@ Rotate elements around the X, Y, and Z axes.
     ```elm
     import Anim.Property.Rotate as Rotate
 
-    spin : AnimBuilder mode -> AnimBuilder mode
+    spin : AnimBuilder eng -> AnimBuilder eng
     spin =
         Rotate.for "animGroup"
             >> Rotate.toZ 360
@@ -36,20 +36,20 @@ See the [Properties Overview](overview.md) page for the shared usage patterns.
 
 | Function | Signature | Description |
 | -------- | --------- | ----------- |
-| `initXYZ` | `AnimGroupName -> Float -> Float -> Float -> AnimBuilder mode -> AnimBuilder mode` | Set the initial X, Y, and Z rotation |
-| `initXY` | `AnimGroupName -> Float -> Float -> AnimBuilder mode -> AnimBuilder mode` | Set the initial X and Y rotation |
-| `initXZ` | `AnimGroupName -> Float -> Float -> AnimBuilder mode -> AnimBuilder mode` | Set the initial X and Z rotation |
-| `initX` | `AnimGroupName -> Float -> AnimBuilder mode -> AnimBuilder mode` | Set the initial X rotation |
-| `initYZ` | `AnimGroupName -> Float -> Float -> AnimBuilder mode -> AnimBuilder mode` | Set the initial Y and Z rotation |
-| `initY` | `AnimGroupName -> Float -> AnimBuilder mode -> AnimBuilder mode` | Set the initial Y rotation |
-| `initZ` | `AnimGroupName -> Float -> AnimBuilder mode -> AnimBuilder mode` | Set the initial Z rotation |
+| `initXYZ` | `AnimGroupName -> Float -> Float -> Float -> AnimBuilder eng -> AnimBuilder eng` | Set the initial X, Y, and Z rotation |
+| `initXY` | `AnimGroupName -> Float -> Float -> AnimBuilder eng -> AnimBuilder eng` | Set the initial X and Y rotation |
+| `initXZ` | `AnimGroupName -> Float -> Float -> AnimBuilder eng -> AnimBuilder eng` | Set the initial X and Z rotation |
+| `initX` | `AnimGroupName -> Float -> AnimBuilder eng -> AnimBuilder eng` | Set the initial X rotation |
+| `initYZ` | `AnimGroupName -> Float -> Float -> AnimBuilder eng -> AnimBuilder eng` | Set the initial Y and Z rotation |
+| `initY` | `AnimGroupName -> Float -> AnimBuilder eng -> AnimBuilder eng` | Set the initial Y rotation |
+| `initZ` | `AnimGroupName -> Float -> AnimBuilder eng -> AnimBuilder eng` | Set the initial Z rotation |
 
 ### Build
 
 | Function | Signature | Description |
 | -------- | --------- | ----------- |
-| `for` | `AnimGroupName -> AnimBuilder mode -> Builder mode` | Start building |
-| `build` | `Builder mode -> AnimBuilder mode` | Finish building |
+| `for` | `AnimGroupName -> AnimBuilder eng -> Builder mode` | Start building |
+| `build` | `Builder mode -> AnimBuilder eng` | Finish building |
 
 ### Start Value
 

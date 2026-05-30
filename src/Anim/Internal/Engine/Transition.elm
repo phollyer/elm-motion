@@ -54,8 +54,8 @@ type alias AnimGroupName =
     String
 
 
-type alias AnimBuilder mode =
-    CSS.AnimBuilder mode
+type alias AnimBuilder eng =
+    CSS.AnimBuilder eng
 
 
 type alias TimelineBuilder engine =

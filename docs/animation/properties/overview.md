@@ -9,7 +9,7 @@ Every property uses the same pattern: target an animation group, set values, con
 ??? example "View Source Code"
 
     ```elm
-    animationFunction : AnimBuilder mode -> AnimBuilder mode
+    animationFunction : AnimBuilder eng -> AnimBuilder eng
     animationFunction =
         Property.for animGroup              -- Animation group name (required)
             >> Property.from startValue     -- Optional starting value
@@ -31,7 +31,7 @@ Properties are added to an animation group by providing the group name as a stri
 ??? example "View Source Code"
 
     ```elm
-    myAnimation : AnimBuilder mode -> AnimBuilder mode
+    myAnimation : AnimBuilder eng -> AnimBuilder eng
     myAnimation =
         Translate.for "myGroup"
             >> ... -- Continue configuring the animation
@@ -76,19 +76,19 @@ All properties have either a `to` function, or a variety of `to*` functions that
 ??? example "View Source Code"
 
     ```elm
-    myAnimation : AnimBuilder mode -> AnimBuilder mode
+    myAnimation : AnimBuilder eng -> AnimBuilder eng
     myAnimation =
         Opacity.for "animGroup"
             >> Opacity.to 1
             >> ... -- Continue configuring the animation
 
-    myAnimation : AnimBuilder mode -> AnimBuilder mode
+    myAnimation : AnimBuilder eng -> AnimBuilder eng
     myAnimation =
         Size.for "animGroup"
             >> Size.toHW 150 120
             >> ... -- Continue configuring the animation
 
-    myAnimation : AnimBuilder mode -> AnimBuilder mode
+    myAnimation : AnimBuilder eng -> AnimBuilder eng
     myAnimation =
         Translate.for "animGroup"
             >> Translate.toXYZ 120 150 100
@@ -106,7 +106,7 @@ All properties have an `easing` function which takes an `Easing` type variant. T
     ```elm 
     import Motion.Easing as Easing exposing (Easing(..))
 
-    slideInAnimation : AnimBuilder mode -> AnimBuilder mode
+    slideInAnimation : AnimBuilder eng -> AnimBuilder eng
     alideInAnimation =
         Translate.for "sidebarAnim"
             >> Translate.toX 0
@@ -127,7 +127,7 @@ All properties have a `spring` function which takes a `Spring`. This will overri
     ```elm
     import Motion.Spring as Spring
 
-    bouncyReveal : AnimBuilder mode -> AnimBuilder mode
+    bouncyReveal : AnimBuilder eng -> AnimBuilder eng
     bouncyReveal =
         Translate.for "panel"
             >> Translate.toX 0
@@ -146,7 +146,7 @@ All properties have a `delay` function which takes an `Int` representing millise
 ??? example "View Source Code"
 
     ```elm
-    fadeInAfterDelay : AnimBuilder mode -> AnimBuilder mode
+    fadeInAfterDelay : AnimBuilder eng -> AnimBuilder eng
     fadeInAfterDelay =
         Opacity.for "contentAnim"
             >> Opacity.to 1
@@ -167,7 +167,7 @@ All properties have a `duration` function which takes an `Int` representing mill
 ??? example "View Source Code"
 
     ```elm
-    slideIn : AnimBuilder mode -> AnimBuilder mode
+    slideIn : AnimBuilder eng -> AnimBuilder eng
     slideIn =
         Translate.for "panelAnim"
             >> Translate.toX 0
@@ -187,7 +187,7 @@ All properties have a `speed` function which takes a `Float`. The unit depends o
 ??? example "View Source Code"
 
     ```elm
-    moveToTarget : Float -> AnimBuilder mode -> AnimBuilder mode
+    moveToTarget : Float -> AnimBuilder eng -> AnimBuilder eng
     moveToTarget targetX =
         Translate.for "cursorAnim"
             >> Translate.toX targetX
@@ -207,17 +207,17 @@ All properties have a `speed` function which takes a `Float`. The unit depends o
 ??? example "View Source Code"
 
     ```elm
-    myAnimation : AnimBuilder mode -> AnimBuilder mode
+    myAnimation : AnimBuilder eng -> AnimBuilder eng
     myAnimation =
         Translate.for "myGroup"
             >> Translate.toX 100
-            >> Translate.build              -- Returns AnimBuilder mode
+            >> Translate.build              -- Returns AnimBuilder eng
             >> Opacity.for "myGroup"        -- Start next property
             >> Opacity.to 1
-            >> Opacity.build                -- Returns AnimBuilder mode
+            >> Opacity.build                -- Returns AnimBuilder eng
             >> Translate.for "myOtherGroup" -- Start another group
             >> Translate.toY 200
-            >> Translate.build              -- Returns AnimBuilder mode
+            >> Translate.build              -- Returns AnimBuilder eng
     ```
 
 📖 See [The Builder Pattern](../workflow/build.md#the-builder-pattern) for more information.

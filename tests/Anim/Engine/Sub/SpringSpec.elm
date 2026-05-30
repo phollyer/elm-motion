@@ -38,19 +38,19 @@ suite =
 -- ============================================================
 
 
-initBuilder : Sub.AnimBuilder mode
+initBuilder : Sub.AnimBuilder eng
 initBuilder =
     Builder.init []
 
 
-animateOpacityTo : Float -> Sub.AnimBuilder mode -> Sub.AnimBuilder mode
+animateOpacityTo : Float -> Sub.AnimBuilder eng -> Sub.AnimBuilder eng
 animateOpacityTo target =
     Opacity.for "el"
         >> Opacity.to target
         >> Opacity.build
 
 
-extractOpacitySpring : Builder.AnimBuilder mode -> Maybe (Maybe Spring.Spring)
+extractOpacitySpring : Builder.AnimBuilder eng -> Maybe (Maybe Spring.Spring)
 extractOpacitySpring builder =
     Builder.process builder
         |> .groups
@@ -59,7 +59,7 @@ extractOpacitySpring builder =
         |> Maybe.map .spring
 
 
-extractOpacityDuration : Builder.AnimBuilder mode -> Maybe Int
+extractOpacityDuration : Builder.AnimBuilder eng -> Maybe Int
 extractOpacityDuration builder =
     Builder.process builder
         |> .groups
@@ -68,7 +68,7 @@ extractOpacityDuration builder =
         |> Maybe.map .duration
 
 
-extractOpacityDelay : Builder.AnimBuilder mode -> Maybe Int
+extractOpacityDelay : Builder.AnimBuilder eng -> Maybe Int
 extractOpacityDelay builder =
     Builder.process builder
         |> .groups

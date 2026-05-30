@@ -24,7 +24,7 @@ for 3D transforms applied to a parent element.
 
 
     -- Percentages (default)
-    myAnimation : AnimBuilder mode -> AnimBuilder mode
+    myAnimation : AnimBuilder eng -> AnimBuilder eng
     myAnimation =
         PerspectiveOrigin.for "animGroupName"
             >> PerspectiveOrigin.to 100
@@ -33,7 +33,7 @@ for 3D transforms applied to a parent element.
             >> PerspectiveOrigin.build
 
     -- Pixels
-    myAnimation : AnimBuilder mode -> AnimBuilder mode
+    myAnimation : AnimBuilder eng -> AnimBuilder eng
     myAnimation =
         PerspectiveOrigin.for "animGroupName"
             >> PerspectiveOrigin.cssUnit Unit.Px
@@ -172,8 +172,8 @@ type alias AnimGroupName =
 
 {-| Builder type for perspective-origin animations.
 -}
-type alias Builder mode =
-    PB.PerspectiveOriginBuilder mode
+type alias Builder eng =
+    PB.PerspectiveOriginBuilder eng
 
 
 
@@ -197,7 +197,7 @@ type alias Builder mode =
         )
 
 -}
-initXY : AnimGroupName -> Float -> Float -> AnimBuilder mode -> AnimBuilder mode
+initXY : AnimGroupName -> Float -> Float -> AnimBuilder eng -> AnimBuilder eng
 initXY animationKey x y animBuilder =
     animBuilder
         |> for animationKey
@@ -211,7 +211,7 @@ initXY animationKey x y animBuilder =
 [Unit](Anim-Unit#Unit) was most recently selected by [`initUnit`](#initUnit) /
 [`initUnitX`](#initUnitX) upstream in the pipeline (defaults to `Percent`).
 -}
-initX : AnimGroupName -> Float -> AnimBuilder mode -> AnimBuilder mode
+initX : AnimGroupName -> Float -> AnimBuilder eng -> AnimBuilder eng
 initX animationKey x animBuilder =
     animBuilder
         |> for animationKey
@@ -225,7 +225,7 @@ initX animationKey x animBuilder =
 [Unit](Anim-Unit#Unit) was most recently selected by [`initUnit`](#initUnit) /
 [`initUnitY`](#initUnitY) upstream in the pipeline (defaults to `Percent`).
 -}
-initY : AnimGroupName -> Float -> AnimBuilder mode -> AnimBuilder mode
+initY : AnimGroupName -> Float -> AnimBuilder eng -> AnimBuilder eng
 initY animationKey y animBuilder =
     animBuilder
         |> for animationKey
@@ -251,7 +251,7 @@ override this setting on the relevant axis.
         ]
 
 -}
-initUnit : Unit.Unit -> AnimBuilder mode -> AnimBuilder mode
+initUnit : Unit.Unit -> AnimBuilder eng -> AnimBuilder eng
 initUnit =
     IB.setPerspectiveOriginInitCssUnit
 
@@ -260,7 +260,7 @@ initUnit =
 `PerspectiveOrigin` values. Overrides any unit set by [`initUnit`](#initUnit)
 on the X axis.
 -}
-initUnitX : Unit.Unit -> AnimBuilder mode -> AnimBuilder mode
+initUnitX : Unit.Unit -> AnimBuilder eng -> AnimBuilder eng
 initUnitX =
     IB.setPerspectiveOriginInitCssUnitX
 
@@ -269,7 +269,7 @@ initUnitX =
 `PerspectiveOrigin` values. Overrides any unit set by [`initUnit`](#initUnit)
 on the Y axis.
 -}
-initUnitY : Unit.Unit -> AnimBuilder mode -> AnimBuilder mode
+initUnitY : Unit.Unit -> AnimBuilder eng -> AnimBuilder eng
 initUnitY =
     IB.setPerspectiveOriginInitCssUnitY
 
@@ -284,13 +284,13 @@ initUnitY =
 
 Use this to start configuring a perspective origin animation.
 
-    myAnimation : AnimBuilder mode -> AnimBuilder mode
+    myAnimation : AnimBuilder eng -> AnimBuilder eng
     myAnimation =
         PerspectiveOrigin.for "animGroupName"
             >> ... -- Configure and build the animation
 
 -}
-for : AnimGroupName -> AnimBuilder mode -> Builder mode
+for : AnimGroupName -> AnimBuilder eng -> Builder eng
 for =
     PB.for
 
@@ -298,7 +298,7 @@ for =
 {-| Complete the [Builder](#Builder) animation configuration and return an `AnimBuilder`
 so you can continue configuring other property animations or execute the animation with an Engine.
 
-    myAnimation : AnimBuilder mode -> AnimBuilder mode
+    myAnimation : AnimBuilder eng -> AnimBuilder eng
     myAnimation =
         PerspectiveOrigin.for "animGroupName"
             >> ... -- configure the animation with from, to, duration, easing, etc.
@@ -306,7 +306,7 @@ so you can continue configuring other property animations or execute the animati
             >> ... -- continue with animation
 
 -}
-build : Builder mode -> AnimBuilder mode
+build : Builder eng -> AnimBuilder eng
 build =
     PB.build
 
@@ -325,7 +325,7 @@ layout, so the animation follows resize automatically.
 
     import Anim.Unit as Unit
 
-    myAnimation : AnimBuilder mode -> AnimBuilder mode
+    myAnimation : AnimBuilder eng -> AnimBuilder eng
     myAnimation =
         PerspectiveOrigin.for "animGroupName"
             >> PerspectiveOrigin.toXY 25 75
@@ -340,7 +340,7 @@ The `Sub` engine currently only supports `Px`; setting a non-`Px` unit on a
 perspective-origin targeted at `Sub` reports an error and falls back to `Px`.
 
 -}
-cssUnit : Unit.Unit -> Builder mode -> Builder mode
+cssUnit : Unit.Unit -> Builder eng -> Builder eng
 cssUnit =
     PB.cssUnit
 
@@ -349,7 +349,7 @@ cssUnit =
 perspective-origin value. Overrides any unit set by [`cssUnit`](#cssUnit) or by
 the engine's `cssUnit`/`cssUnitX` setter for the X axis.
 -}
-cssUnitX : Unit.Unit -> Builder mode -> Builder mode
+cssUnitX : Unit.Unit -> Builder eng -> Builder eng
 cssUnitX =
     PB.cssUnitX
 
@@ -358,7 +358,7 @@ cssUnitX =
 perspective-origin value. Overrides any unit set by [`cssUnit`](#cssUnit) or by
 the engine's `cssUnit`/`cssUnitY` setter for the Y axis.
 -}
-cssUnitY : Unit.Unit -> Builder mode -> Builder mode
+cssUnitY : Unit.Unit -> Builder eng -> Builder eng
 cssUnitY =
     PB.cssUnitY
 
@@ -371,28 +371,28 @@ cssUnitY =
 
 {-| Set the uniform starting X and Y values.
 -}
-from : Float -> Builder mode -> Builder mode
+from : Float -> Builder eng -> Builder eng
 from xy =
     PB.fromXY xy xy
 
 
 {-| Set the starting X and Y values.
 -}
-fromXY : Float -> Float -> Builder mode -> Builder mode
+fromXY : Float -> Float -> Builder eng -> Builder eng
 fromXY =
     PB.fromXY
 
 
 {-| Set the starting X value, preserving the current Y value.
 -}
-fromX : Float -> Builder mode -> Builder mode
+fromX : Float -> Builder eng -> Builder eng
 fromX =
     PB.fromX
 
 
 {-| Set the starting Y value, preserving the current X value.
 -}
-fromY : Float -> Builder mode -> Builder mode
+fromY : Float -> Builder eng -> Builder eng
 fromY =
     PB.fromY
 
@@ -405,28 +405,28 @@ fromY =
 
 {-| Set the uniform target X and Y values.
 -}
-to : Float -> Builder mode -> Builder mode
+to : Float -> Builder eng -> Builder eng
 to xy =
     PB.toXY xy xy
 
 
 {-| Set the target X and Y values.
 -}
-toXY : Float -> Float -> Builder mode -> Builder mode
+toXY : Float -> Float -> Builder eng -> Builder eng
 toXY =
     PB.toXY
 
 
 {-| Set the target X value, preserving the current Y value.
 -}
-toX : Float -> Builder mode -> Builder mode
+toX : Float -> Builder eng -> Builder eng
 toX =
     PB.toX
 
 
 {-| Set the target Y value, preserving the current X value.
 -}
-toY : Float -> Builder mode -> Builder mode
+toY : Float -> Builder eng -> Builder eng
 toY =
     PB.toY
 
@@ -439,7 +439,7 @@ toY =
 
 {-| Set the delay (milliseconds) before the animation starts.
 
-    myAnimation : AnimBuilder mode -> AnimBuilder mode
+    myAnimation : AnimBuilder eng -> AnimBuilder eng
     myAnimation =
         PerspectiveOrigin.for "animGroupName"
             >> PerspectiveOrigin.to 200
@@ -447,14 +447,14 @@ toY =
             >> ... -- continue with animation
 
 -}
-delay : Int -> Builder { m | supportsTime : () } -> Builder { m | supportsTime : () }
+delay : Int -> Builder { eng | withTiming : () } -> Builder { eng | withTiming : () }
 delay =
     PB.delay
 
 
 {-| Set the animation duration (milliseconds).
 
-    myAnimation : AnimBuilder mode -> AnimBuilder mode
+    myAnimation : AnimBuilder eng -> AnimBuilder eng
     myAnimation =
         PerspectiveOrigin.for "animGroupName"
             >> PerspectiveOrigin.to 200
@@ -462,7 +462,7 @@ delay =
             >> ... -- continue with animation
 
 -}
-duration : Int -> Builder { m | supportsTime : () } -> Builder { m | supportsTime : () }
+duration : Int -> Builder { eng | withTiming : () } -> Builder { eng | withTiming : () }
 duration =
     PB.duration
 
@@ -471,7 +471,7 @@ duration =
 
 For example, an animation from `0` to `200px` with a speed of `100.0` will take 2 seconds to complete.
 
-    myAnimation : AnimBuilder mode -> AnimBuilder mode
+    myAnimation : AnimBuilder eng -> AnimBuilder eng
     myAnimation =
         PerspectiveOrigin.for "animGroupName"
             >> PerspectiveOrigin.to 200
@@ -479,7 +479,7 @@ For example, an animation from `0` to `200px` with a speed of `100.0` will take 
             >> ... -- continue with animation
 
 -}
-speed : Float -> Builder { m | supportsTime : () } -> Builder { m | supportsTime : () }
+speed : Float -> Builder { eng | withTiming : () } -> Builder { eng | withTiming : () }
 speed =
     PB.speed
 
@@ -494,7 +494,7 @@ speed =
 
     import Easing exposing (Easing(..))
 
-    myAnimation : AnimBuilder mode -> AnimBuilder mode
+    myAnimation : AnimBuilder eng -> AnimBuilder eng
     myAnimation =
         PerspectiveOrigin.for "animGroupName"
             >> PerspectiveOrigin.to 200
@@ -502,7 +502,7 @@ speed =
             >> ... -- continue with animation
 
 -}
-easing : Easing -> Builder mode -> Builder mode
+easing : Easing -> Builder eng -> Builder eng
 easing =
     PB.easing
 
@@ -524,14 +524,14 @@ and vice versa — they are mutually exclusive.
 
     import Motion.Spring as Spring
 
-    myAnimation : AnimBuilder mode -> AnimBuilder mode
+    myAnimation : AnimBuilder eng -> AnimBuilder eng
     myAnimation =
         PerspectiveOrigin.for "animGroupName"
             >> PerspectiveOrigin.to 200
             >> PerspectiveOrigin.spring Spring.wobbly
 
 -}
-spring : Spring -> Builder { m | supportsSpring : () } -> Builder { m | supportsSpring : () }
+spring : Spring -> Builder { eng | withSpring : () } -> Builder { eng | withSpring : () }
 spring =
     PB.spring
 
@@ -552,7 +552,7 @@ The active unit (percent or px) on each value is preserved.
 for patterns and examples.
 
 -}
-clampX : Float -> Float -> Builder mode -> Builder mode
+clampX : Float -> Float -> Builder eng -> Builder eng
 clampX =
     PB.clampX
 
@@ -562,21 +562,21 @@ clampX =
 See [clampX](#clampX) for behaviour.
 
 -}
-clampY : Float -> Float -> Builder mode -> Builder mode
+clampY : Float -> Float -> Builder eng -> Builder eng
 clampY =
     PB.clampY
 
 
 {-| Remove the X axis range for this animation group. Does nothing if no range is set.
 -}
-unclampX : Builder mode -> Builder mode
+unclampX : Builder eng -> Builder eng
 unclampX =
     PB.unclampX
 
 
 {-| Remove the Y axis range for this animation group. Does nothing if no range is set.
 -}
-unclampY : Builder mode -> Builder mode
+unclampY : Builder eng -> Builder eng
 unclampY =
     PB.unclampY
 

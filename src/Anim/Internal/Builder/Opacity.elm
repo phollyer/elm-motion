@@ -28,8 +28,8 @@ import Shared.TimeSpec exposing (TimeSpec(..))
 -- ============================================================
 
 
-type OpacityBuilder mode
-    = OpacityBuilder (Builder.AnimationConfig Opacity) (AnimBuilder mode)
+type OpacityBuilder eng
+    = OpacityBuilder (Builder.AnimationConfig Opacity) (AnimBuilder eng)
 
 
 type alias OpacityConfig =
@@ -47,7 +47,7 @@ defaultConfig =
 -- ============================================================
 
 
-for : String -> AnimBuilder mode -> OpacityBuilder mode
+for : String -> AnimBuilder eng -> OpacityBuilder eng
 for animGroupName builder =
     let
         extractExisting propertyConfig =
@@ -65,12 +65,12 @@ for animGroupName builder =
         Builder.for animGroupName builder
 
 
-build : OpacityBuilder mode -> AnimBuilder mode
+build : OpacityBuilder eng -> AnimBuilder eng
 build (OpacityBuilder config builder) =
     PropertyBuilder.upsert (Builder.OpacityConfig (applyClamps builder config)) builder
 
 
-applyClamps : AnimBuilder mode -> OpacityConfig -> OpacityConfig
+applyClamps : AnimBuilder eng -> OpacityConfig -> OpacityConfig
 applyClamps builder config =
     case Builder.getCurrentAnimGroupName builder of
         Nothing ->
@@ -108,7 +108,7 @@ applyClamps builder config =
 -- ============================================================
 
 
-from : Opacity -> OpacityBuilder mode -> OpacityBuilder mode
+from : Opacity -> OpacityBuilder eng -> OpacityBuilder eng
 from opacity (OpacityBuilder config builder) =
     OpacityBuilder { config | start = Just opacity } builder
 
@@ -119,7 +119,7 @@ from opacity (OpacityBuilder config builder) =
 -- ============================================================
 
 
-to : Opacity -> OpacityBuilder mode -> OpacityBuilder mode
+to : Opacity -> OpacityBuilder eng -> OpacityBuilder eng
 to endPos (OpacityBuilder config builder) =
     let
         startPos =
@@ -140,17 +140,17 @@ to endPos (OpacityBuilder config builder) =
 -- ============================================================
 
 
-speed : Float -> OpacityBuilder { m | supportsTime : () } -> OpacityBuilder { m | supportsTime : () }
+speed : Float -> OpacityBuilder { eng | withTiming : () } -> OpacityBuilder { eng | withTiming : () }
 speed spd (OpacityBuilder config builder) =
     OpacityBuilder (PropertyBuilder.speed spd config) builder
 
 
-duration : Int -> OpacityBuilder { m | supportsTime : () } -> OpacityBuilder { m | supportsTime : () }
+duration : Int -> OpacityBuilder { eng | withTiming : () } -> OpacityBuilder { eng | withTiming : () }
 duration dur (OpacityBuilder config builder) =
     OpacityBuilder (PropertyBuilder.duration dur config) builder
 
 
-delay : Int -> OpacityBuilder { m | supportsTime : () } -> OpacityBuilder { m | supportsTime : () }
+delay : Int -> OpacityBuilder { eng | withTiming : () } -> OpacityBuilder { eng | withTiming : () }
 delay dly (OpacityBuilder config builder) =
     OpacityBuilder (PropertyBuilder.delay dly config) builder
 
@@ -161,7 +161,7 @@ delay dly (OpacityBuilder config builder) =
 -- ============================================================
 
 
-easing : Easing -> OpacityBuilder mode -> OpacityBuilder mode
+easing : Easing -> OpacityBuilder eng -> OpacityBuilder eng
 easing ease (OpacityBuilder config builder) =
     OpacityBuilder (PropertyBuilder.easing ease config) builder
 
@@ -172,7 +172,7 @@ easing ease (OpacityBuilder config builder) =
 -- ============================================================
 
 
-spring : Spring -> OpacityBuilder { m | supportsSpring : () } -> OpacityBuilder { m | supportsSpring : () }
+spring : Spring -> OpacityBuilder { eng | withSpring : () } -> OpacityBuilder { eng | withSpring : () }
 spring s (OpacityBuilder config builder) =
     OpacityBuilder (PropertyBuilder.spring s config) builder
 
@@ -183,17 +183,17 @@ spring s (OpacityBuilder config builder) =
 -- ============================================================
 
 
-clamp : Float -> Float -> OpacityBuilder mode -> OpacityBuilder mode
+clamp : Float -> Float -> OpacityBuilder eng -> OpacityBuilder eng
 clamp lo hi =
     updateBuilderClamp (\name -> Builder.setClamp name "opacity" "value" lo hi)
 
 
-unclamp : OpacityBuilder mode -> OpacityBuilder mode
+unclamp : OpacityBuilder eng -> OpacityBuilder eng
 unclamp =
     updateBuilderClamp (\name -> Builder.clearClamp name "opacity" "value")
 
 
-updateBuilderClamp : (String -> AnimBuilder mode -> AnimBuilder mode) -> OpacityBuilder mode -> OpacityBuilder mode
+updateBuilderClamp : (String -> AnimBuilder eng -> AnimBuilder eng) -> OpacityBuilder eng -> OpacityBuilder eng
 updateBuilderClamp f (OpacityBuilder config builder) =
     case Builder.getCurrentAnimGroupName builder of
         Just animGroupName ->

@@ -26,7 +26,7 @@ Here's a general workflow to get up an running quickly.
     import Anim.Property.Opacity as Opacity
 
 
-    scrollAnimation : ScrollTimeline.AnimBuilder mode -> ScrollTimeline.AnimBuilder mode
+    scrollAnimation : ScrollTimeline.AnimBuilder eng -> ScrollTimeline.AnimBuilder eng
     scrollAnimation =
         Opacity.for "progress"
             >> Opacity.from 0
@@ -308,7 +308,7 @@ Choose ScrollTimeline when animation progress should be directly tied to scroll 
 
 | Type | Description |
 | ---- | ----------- |
-| `AnimBuilder mode` | Carries all animation configuration |
+| `AnimBuilder eng` | Carries all animation configuration |
 | `AnimMsg` | Internal engine messages |
 | `AnimEvent` | Events returned by `update` |
 | `AnimGroupName` | `String` type alias for the animation group name |
@@ -319,7 +319,7 @@ Choose ScrollTimeline when animation progress should be directly tied to scroll 
 
 | Function | Type | Description |
 | -------- | ---- | ----------- |
-| `animate` | `(Value -> Cmd msg) -> Container -> (AnimBuilder mode -> AnimBuilder mode) -> Cmd msg` | Fire-and-forget scroll-driven animation |
+| `animate` | `(Value -> Cmd msg) -> Container -> (AnimBuilder eng -> AnimBuilder eng) -> Cmd msg` | Fire-and-forget scroll-driven animation |
 
 ### Events
 
@@ -352,39 +352,39 @@ Choose ScrollTimeline when animation progress should be directly tied to scroll 
 
 | Function | Type | Description |
 | -------- | ---- | ----------- |
-| `horizontal` | `AnimBuilder mode -> AnimBuilder mode` | Use horizontal scroll as the timeline source |
+| `horizontal` | `AnimBuilder eng -> AnimBuilder eng` | Use horizontal scroll as the timeline source |
 
 ### Playback
 
 | Function | Type | Description |
 | -------- | ---- | ----------- |
-| `iterations` | `Int -> AnimBuilder mode -> AnimBuilder mode` | Set number of iterations |
-| `alternate` | `AnimBuilder mode -> AnimBuilder mode` | Reverse direction on each iteration |
+| `iterations` | `Int -> AnimBuilder eng -> AnimBuilder eng` | Set number of iterations |
+| `alternate` | `AnimBuilder eng -> AnimBuilder eng` | Reverse direction on each iteration |
 
 ### Easing
 
 | Function | Type | Description |
 | -------- | ---- | ----------- |
-| `easing` | `Easing -> AnimBuilder mode -> AnimBuilder mode` | Set the easing function |
+| `easing` | `Easing -> AnimBuilder eng -> AnimBuilder eng` | Set the easing function |
 
 ### Spring
 
 | Function | Type | Description |
 | -------- | ---- | ----------- |
-| `spring` | `Spring -> AnimBuilder mode -> AnimBuilder mode` | Set spring physics |
+| `spring` | `Spring -> AnimBuilder eng -> AnimBuilder eng` | Set spring physics |
 
 ### Discrete Properties
 
 | Function | Type | Description |
 | -------- | ---- | ----------- |
-| `discreteEntry` | `String -> String -> AnimBuilder mode -> AnimBuilder mode` | Set a CSS property value when the animation starts |
-| `discreteExit` | `String -> String -> String -> AnimBuilder mode -> AnimBuilder mode` | Set a CSS property value during and after the animation |
+| `discreteEntry` | `String -> String -> AnimBuilder eng -> AnimBuilder eng` | Set a CSS property value when the animation starts |
+| `discreteExit` | `String -> String -> String -> AnimBuilder eng -> AnimBuilder eng` | Set a CSS property value during and after the animation |
 
 ### Transform Order
 
 | Function | Type | Description |
 | -------- | ---- | ----------- |
-| `transformOrder` | `List TransformProperty -> AnimBuilder mode -> AnimBuilder mode` | Set custom transform order |
+| `transformOrder` | `List TransformProperty -> AnimBuilder eng -> AnimBuilder eng` | Set custom transform order |
 
 For complete API details, see the [Anim.Engine.ScrollTimeline](https://package.elm-lang.org/packages/phollyer/elm-motion/latest/Anim-Engine-ScrollTimeline) documentation.
 

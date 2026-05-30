@@ -45,13 +45,13 @@ suite =
 -- ============================================================
 
 
-initBuilder : Builder.AnimBuilder mode
+initBuilder : Builder.AnimBuilder eng
 initBuilder =
     Builder.init []
 
 
 firstGroup :
-    Builder.AnimBuilder mode
+    Builder.AnimBuilder eng
     -> Maybe Builder.ProcessedAnimGroupConfig
 firstGroup builder =
     Builder.process builder
@@ -61,7 +61,7 @@ firstGroup builder =
         |> Maybe.map Tuple.second
 
 
-firstTranslateLength : Builder.AnimBuilder mode -> Maybe Unit
+firstTranslateLength : Builder.AnimBuilder eng -> Maybe Unit
 firstTranslateLength builder =
     firstGroup builder
         |> Maybe.andThen
@@ -80,7 +80,7 @@ firstTranslateLength builder =
             )
 
 
-firstSizeLength : Builder.AnimBuilder mode -> Maybe Unit
+firstSizeLength : Builder.AnimBuilder eng -> Maybe Unit
 firstSizeLength builder =
     firstGroup builder
         |> Maybe.andThen
@@ -99,7 +99,7 @@ firstSizeLength builder =
             )
 
 
-firstPerspectiveOriginLength : Builder.AnimBuilder mode -> Maybe Unit
+firstPerspectiveOriginLength : Builder.AnimBuilder eng -> Maybe Unit
 firstPerspectiveOriginLength builder =
     firstGroup builder
         |> Maybe.andThen
@@ -118,21 +118,21 @@ firstPerspectiveOriginLength builder =
             )
 
 
-animateTranslate : Builder.AnimBuilder { m | supportsTime : () } -> Builder.AnimBuilder { m | supportsTime : () }
+animateTranslate : Builder.AnimBuilder { eng | withTiming : () } -> Builder.AnimBuilder { eng | withTiming : () }
 animateTranslate =
     Translate.for "box"
         >> Translate.toX 100
         >> Translate.build
 
 
-animateSize : Builder.AnimBuilder { m | supportsTime : () } -> Builder.AnimBuilder { m | supportsTime : () }
+animateSize : Builder.AnimBuilder { eng | withTiming : () } -> Builder.AnimBuilder { eng | withTiming : () }
 animateSize =
     Size.for "box"
         >> Size.toW 200
         >> Size.build
 
 
-animatePerspectiveOrigin : Builder.AnimBuilder { m | supportsTime : () } -> Builder.AnimBuilder { m | supportsTime : () }
+animatePerspectiveOrigin : Builder.AnimBuilder { eng | withTiming : () } -> Builder.AnimBuilder { eng | withTiming : () }
 animatePerspectiveOrigin =
     PerspectiveOrigin.for "scene"
         >> PerspectiveOrigin.toX 25

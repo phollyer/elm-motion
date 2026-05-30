@@ -33,8 +33,8 @@ import Motion.Spring exposing (Spring)
 -- ============================================================
 
 
-type SkewBuilder mode
-    = SkewBuilder (Builder.AnimationConfig Skew) (AnimBuilder mode)
+type SkewBuilder eng
+    = SkewBuilder (Builder.AnimationConfig Skew) (AnimBuilder eng)
 
 
 type alias SkewConfig =
@@ -58,7 +58,7 @@ defaultConfig =
 -- ============================================================
 
 
-for : String -> AnimBuilder mode -> SkewBuilder mode
+for : String -> AnimBuilder eng -> SkewBuilder eng
 for animGroupName builder =
     let
         extractExisting propertyConfig =
@@ -76,12 +76,12 @@ for animGroupName builder =
         Builder.for animGroupName builder
 
 
-build : SkewBuilder mode -> AnimBuilder mode
+build : SkewBuilder eng -> AnimBuilder eng
 build (SkewBuilder config builder) =
     PropertyBuilder.upsert (Builder.SkewConfig (applyClamps builder config)) builder
 
 
-applyClamps : AnimBuilder mode -> SkewConfig -> SkewConfig
+applyClamps : AnimBuilder eng -> SkewConfig -> SkewConfig
 applyClamps builder config =
     case Builder.getCurrentAnimGroupName builder of
         Nothing ->
@@ -138,7 +138,7 @@ clampAxis range v =
 -- ============================================================
 
 
-fromXY : Float -> Float -> SkewBuilder mode -> SkewBuilder mode
+fromXY : Float -> Float -> SkewBuilder eng -> SkewBuilder eng
 fromXY x y (SkewBuilder config builder) =
     SkewBuilder
         { config
@@ -149,7 +149,7 @@ fromXY x y (SkewBuilder config builder) =
         builder
 
 
-fromX : Float -> SkewBuilder mode -> SkewBuilder mode
+fromX : Float -> SkewBuilder eng -> SkewBuilder eng
 fromX x (SkewBuilder config builder) =
     let
         y =
@@ -159,7 +159,7 @@ fromX x (SkewBuilder config builder) =
         SkewBuilder config builder
 
 
-fromY : Float -> SkewBuilder mode -> SkewBuilder mode
+fromY : Float -> SkewBuilder eng -> SkewBuilder eng
 fromY y (SkewBuilder config builder) =
     let
         x =
@@ -175,7 +175,7 @@ fromY y (SkewBuilder config builder) =
 -- ============================================================
 
 
-to : Skew -> SkewBuilder mode -> SkewBuilder mode
+to : Skew -> SkewBuilder eng -> SkewBuilder eng
 to skew (SkewBuilder config builder) =
     let
         start =
@@ -190,12 +190,12 @@ to skew (SkewBuilder config builder) =
         builder
 
 
-toXY : Float -> Float -> SkewBuilder mode -> SkewBuilder mode
+toXY : Float -> Float -> SkewBuilder eng -> SkewBuilder eng
 toXY x y =
     to (Skew.fromTuple ( x, y ))
 
 
-toX : Float -> SkewBuilder mode -> SkewBuilder mode
+toX : Float -> SkewBuilder eng -> SkewBuilder eng
 toX x (SkewBuilder config builder) =
     let
         y =
@@ -205,7 +205,7 @@ toX x (SkewBuilder config builder) =
         SkewBuilder config builder
 
 
-toY : Float -> SkewBuilder mode -> SkewBuilder mode
+toY : Float -> SkewBuilder eng -> SkewBuilder eng
 toY y (SkewBuilder config builder) =
     let
         x =
@@ -221,17 +221,17 @@ toY y (SkewBuilder config builder) =
 -- ============================================================
 
 
-delay : Int -> SkewBuilder { m | supportsTime : () } -> SkewBuilder { m | supportsTime : () }
+delay : Int -> SkewBuilder { eng | withTiming : () } -> SkewBuilder { eng | withTiming : () }
 delay delay_ (SkewBuilder config builder) =
     SkewBuilder (PropertyBuilder.delay delay_ config) builder
 
 
-duration : Int -> SkewBuilder { m | supportsTime : () } -> SkewBuilder { m | supportsTime : () }
+duration : Int -> SkewBuilder { eng | withTiming : () } -> SkewBuilder { eng | withTiming : () }
 duration ms (SkewBuilder config builder) =
     SkewBuilder (PropertyBuilder.duration ms config) builder
 
 
-speed : Float -> SkewBuilder { m | supportsTime : () } -> SkewBuilder { m | supportsTime : () }
+speed : Float -> SkewBuilder { eng | withTiming : () } -> SkewBuilder { eng | withTiming : () }
 speed value (SkewBuilder config builder) =
     SkewBuilder (PropertyBuilder.speed value config) builder
 
@@ -242,7 +242,7 @@ speed value (SkewBuilder config builder) =
 -- ============================================================
 
 
-easing : Easing -> SkewBuilder mode -> SkewBuilder mode
+easing : Easing -> SkewBuilder eng -> SkewBuilder eng
 easing easing_ (SkewBuilder config builder) =
     SkewBuilder (PropertyBuilder.easing easing_ config) builder
 
@@ -253,7 +253,7 @@ easing easing_ (SkewBuilder config builder) =
 -- ============================================================
 
 
-spring : Spring -> SkewBuilder { m | supportsSpring : () } -> SkewBuilder { m | supportsSpring : () }
+spring : Spring -> SkewBuilder { eng | withSpring : () } -> SkewBuilder { eng | withSpring : () }
 spring s (SkewBuilder config builder) =
     SkewBuilder (PropertyBuilder.spring s config) builder
 
@@ -264,27 +264,27 @@ spring s (SkewBuilder config builder) =
 -- ============================================================
 
 
-clampX : Float -> Float -> SkewBuilder mode -> SkewBuilder mode
+clampX : Float -> Float -> SkewBuilder eng -> SkewBuilder eng
 clampX lo hi =
     updateBuilderClamp (\name -> Builder.setClamp name "skew" "x" lo hi)
 
 
-clampY : Float -> Float -> SkewBuilder mode -> SkewBuilder mode
+clampY : Float -> Float -> SkewBuilder eng -> SkewBuilder eng
 clampY lo hi =
     updateBuilderClamp (\name -> Builder.setClamp name "skew" "y" lo hi)
 
 
-unclampX : SkewBuilder mode -> SkewBuilder mode
+unclampX : SkewBuilder eng -> SkewBuilder eng
 unclampX =
     updateBuilderClamp (\name -> Builder.clearClamp name "skew" "x")
 
 
-unclampY : SkewBuilder mode -> SkewBuilder mode
+unclampY : SkewBuilder eng -> SkewBuilder eng
 unclampY =
     updateBuilderClamp (\name -> Builder.clearClamp name "skew" "y")
 
 
-updateBuilderClamp : (String -> AnimBuilder mode -> AnimBuilder mode) -> SkewBuilder mode -> SkewBuilder mode
+updateBuilderClamp : (String -> AnimBuilder eng -> AnimBuilder eng) -> SkewBuilder eng -> SkewBuilder eng
 updateBuilderClamp f (SkewBuilder config builder) =
     case Builder.getCurrentAnimGroupName builder of
         Just animGroupName ->

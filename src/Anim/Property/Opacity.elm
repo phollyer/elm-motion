@@ -19,7 +19,7 @@ When no start value is available, the default will be used.
 
     import Easing exposing (Easing(..))
 
-    myAnimation : AnimBuilder mode -> AnimBuilder mode
+    myAnimation : AnimBuilder eng -> AnimBuilder eng
     myAnimation =
         Opacity.for "animGroupName"
             >> Opacity.to 0.5
@@ -112,8 +112,8 @@ type alias AnimGroupName =
 
 {-| Builder type for opacity animations.
 -}
-type alias Builder mode =
-    OB.OpacityBuilder mode
+type alias Builder eng =
+    OB.OpacityBuilder eng
 
 
 
@@ -136,7 +136,7 @@ Use this to initialize the opacity in your Engine's `init` function.
         )
 
 -}
-init : AnimGroupName -> Float -> AnimBuilder mode -> AnimBuilder mode
+init : AnimGroupName -> Float -> AnimBuilder eng -> AnimBuilder eng
 init animationKey value animBuilder =
     animBuilder
         |> OB.for animationKey
@@ -155,13 +155,13 @@ init animationKey value animBuilder =
 
 Use this to start configuring an opacity animation.
 
-    myAnimation : AnimBuilder mode -> AnimBuilder mode
+    myAnimation : AnimBuilder eng -> AnimBuilder eng
     myAnimation =
         Opacity.for "animGroupName"
             >> ... -- Configure and build the animation
 
 -}
-for : AnimGroupName -> AnimBuilder mode -> Builder mode
+for : AnimGroupName -> AnimBuilder eng -> Builder eng
 for =
     OB.for
 
@@ -169,7 +169,7 @@ for =
 {-| Complete the [Builder](#Builder) animation configuration and return an `AnimBuilder`
 so you can continue configuring other property animations or execute the animation with an Engine.
 
-    myAnimation : AnimBuilder mode -> AnimBuilder mode
+    myAnimation : AnimBuilder eng -> AnimBuilder eng
     myAnimation =
         Opacity.for "animGroupName"
             >> ... -- configure the animation with from, to, duration, easing, etc.
@@ -177,7 +177,7 @@ so you can continue configuring other property animations or execute the animati
             >> ... -- continue with animation
 
 -}
-build : Builder mode -> AnimBuilder mode
+build : Builder eng -> AnimBuilder eng
 build =
     OB.build
 
@@ -190,14 +190,14 @@ build =
 
 {-| Set the starting opacity.
 
-    myAnimation : AnimBuilder mode -> AnimBuilder mode
+    myAnimation : AnimBuilder eng -> AnimBuilder eng
     myAnimation =
         Opacity.for "animGroupName"
             >> Opacity.from 1.0
             >> ... -- continue with animation
 
 -}
-from : Float -> Builder mode -> Builder mode
+from : Float -> Builder eng -> Builder eng
 from =
     OB.from << O.fromFloat
 
@@ -210,14 +210,14 @@ from =
 
 {-| Set the target opacity for the current animation group.
 
-    myAnimation : AnimBuilder mode -> AnimBuilder mode
+    myAnimation : AnimBuilder eng -> AnimBuilder eng
     myAnimation =
         Opacity.for "animGroupName"
             >> Opacity.to 0.5
             >> ... -- continue with animation
 
 -}
-to : Float -> Builder mode -> Builder mode
+to : Float -> Builder eng -> Builder eng
 to =
     OB.to << O.fromFloat
 
@@ -234,7 +234,7 @@ The speed represents how much the opacity value changes per second. Since opacit
 ranges from 0.0 (transparent) to 1.0 (opaque), a speed of `2.0` means the opacity
 will change by 2.0 units per second (e.g., from 0.0 to 1.0 takes 0.5 seconds).
 
-    myAnimation : AnimBuilder mode -> AnimBuilder mode
+    myAnimation : AnimBuilder eng -> AnimBuilder eng
     myAnimation =
         Opacity.for "animGroupName"
             >> Opacity.to 0.0
@@ -242,14 +242,14 @@ will change by 2.0 units per second (e.g., from 0.0 to 1.0 takes 0.5 seconds).
             >> ... -- continue with animation
 
 -}
-speed : Float -> Builder { m | supportsTime : () } -> Builder { m | supportsTime : () }
+speed : Float -> Builder { eng | withTiming : () } -> Builder { eng | withTiming : () }
 speed =
     OB.speed
 
 
 {-| Set the animation duration (milliseconds).
 
-    myAnimation : AnimBuilder mode -> AnimBuilder mode
+    myAnimation : AnimBuilder eng -> AnimBuilder eng
     myAnimation =
         Opacity.for "animGroupName"
             >> Opacity.to 0.5
@@ -257,14 +257,14 @@ speed =
             >> ... -- continue with animation
 
 -}
-duration : Int -> Builder { m | supportsTime : () } -> Builder { m | supportsTime : () }
+duration : Int -> Builder { eng | withTiming : () } -> Builder { eng | withTiming : () }
 duration =
     OB.duration
 
 
 {-| Set the delay (milliseconds) before the animation starts.
 
-    myAnimation : AnimBuilder mode -> AnimBuilder mode
+    myAnimation : AnimBuilder eng -> AnimBuilder eng
     myAnimation =
         Opacity.for "animGroupName"
             >> Opacity.to 0.5
@@ -272,7 +272,7 @@ duration =
             >> ... -- continue with animation
 
 -}
-delay : Int -> Builder { m | supportsTime : () } -> Builder { m | supportsTime : () }
+delay : Int -> Builder { eng | withTiming : () } -> Builder { eng | withTiming : () }
 delay =
     OB.delay
 
@@ -287,7 +287,7 @@ delay =
 
     import Easing exposing (Easing(..))
 
-    myAnimation : AnimBuilder mode -> AnimBuilder mode
+    myAnimation : AnimBuilder eng -> AnimBuilder eng
     myAnimation =
         Opacity.for "animGroupName"
             >> Opacity.to 0.5
@@ -295,7 +295,7 @@ delay =
             >> ... -- continue with animation
 
 -}
-easing : Easing -> Builder mode -> Builder mode
+easing : Easing -> Builder eng -> Builder eng
 easing =
     OB.easing
 
@@ -317,14 +317,14 @@ and vice versa — they are mutually exclusive.
 
     import Motion.Spring as Spring
 
-    myAnimation : AnimBuilder mode -> AnimBuilder mode
+    myAnimation : AnimBuilder eng -> AnimBuilder eng
     myAnimation =
         Opacity.for "animGroupName"
             >> Opacity.to 1.0
             >> Opacity.spring Spring.wobbly
 
 -}
-spring : Spring -> Builder { m | supportsSpring : () } -> Builder { m | supportsSpring : () }
+spring : Spring -> Builder { eng | withSpring : () } -> Builder { eng | withSpring : () }
 spring =
     OB.spring
 
@@ -344,13 +344,13 @@ until you call [unclamp](#unclamp). If `min > max`, the values are swapped.
 for patterns and examples.
 
 -}
-clamp : Float -> Float -> Builder mode -> Builder mode
+clamp : Float -> Float -> Builder eng -> Builder eng
 clamp =
     OB.clamp
 
 
 {-| Remove the opacity range for this animation group. Does nothing if no range is set.
 -}
-unclamp : Builder mode -> Builder mode
+unclamp : Builder eng -> Builder eng
 unclamp =
     OB.unclamp

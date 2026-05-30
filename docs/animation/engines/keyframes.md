@@ -34,7 +34,7 @@ Here's a general workflow to get up an running quickly.
     import Anim.Property.Opacity as Opacity
 
 
-    fadeIn : Keyframe.AnimBuilder mode -> Keyframe.AnimBuilder mode
+    fadeIn : Keyframe.AnimBuilder eng -> Keyframe.AnimBuilder eng
     fadeIn =
         Opacity.for "card"
             >> Opacity.to 1
@@ -468,7 +468,7 @@ Choose Keyframe when you want browser-native keyframes with state-tracked lifecy
 | Type | Description |
 | ---- | ----------- |
 | `AnimState` | Tracks animations and their states |
-| `AnimBuilder mode` | Carries all animation configurations |
+| `AnimBuilder eng` | Carries all animation configurations |
 | `AnimMsg` | Internal engine messages |
 | `AnimEvent` | Events received during a keyframe animation's lifecycle |
 | `AnimGroupName` | `String` type alias for the animation group name |
@@ -480,13 +480,13 @@ Choose Keyframe when you want browser-native keyframes with state-tracked lifecy
 
 | Function | Type | Description |
 | -------- | ---- | ----------- |
-| `init` | `List (AnimBuilder mode -> AnimBuilder mode) -> AnimState` | Create initial animation state |
+| `init` | `List (AnimBuilder eng -> AnimBuilder eng) -> AnimState` | Create initial animation state |
 
 ### Trigger
 
 | Function | Type | Description |
 | -------- | ---- | ----------- |
-| `animate` | `AnimState -> (AnimBuilder mode -> AnimBuilder mode) -> AnimState` | Apply an animation to the current state |
+| `animate` | `AnimState -> (AnimBuilder eng -> AnimBuilder eng) -> AnimState` | Apply an animation to the current state |
 
 ### Events
 
@@ -526,29 +526,29 @@ Choose Keyframe when you want browser-native keyframes with state-tracked lifecy
 
 | Function | Type | Description |
 | -------- | ---- | ----------- |
-| `iterations` | `Int -> AnimBuilder mode -> AnimBuilder mode` | Set number of iterations |
-| `loopForever` | `AnimBuilder mode -> AnimBuilder mode` | Loop animation infinitely |
-| `alternate` | `AnimBuilder mode -> AnimBuilder mode` | Reverse direction on each iteration |
+| `iterations` | `Int -> AnimBuilder eng -> AnimBuilder eng` | Set number of iterations |
+| `loopForever` | `AnimBuilder eng -> AnimBuilder eng` | Loop animation infinitely |
+| `alternate` | `AnimBuilder eng -> AnimBuilder eng` | Reverse direction on each iteration |
 
 ### Timing
 
 | Function | Type | Description |
 | -------- | ---- | ----------- |
-| `duration` | `Int -> AnimBuilder mode -> AnimBuilder mode` | Set duration (ms) |
-| `speed` | `Float -> AnimBuilder mode -> AnimBuilder mode` | Set speed (property units/sec) |
-| `delay` | `Int -> AnimBuilder mode -> AnimBuilder mode` | Set delay before animation starts (ms) |
+| `duration` | `Int -> AnimBuilder eng -> AnimBuilder eng` | Set duration (ms) |
+| `speed` | `Float -> AnimBuilder eng -> AnimBuilder eng` | Set speed (property units/sec) |
+| `delay` | `Int -> AnimBuilder eng -> AnimBuilder eng` | Set delay before animation starts (ms) |
 
 ### Easing
 
 | Function | Type | Description |
 | -------- | ---- | ----------- |
-| `easing` | `Easing -> AnimBuilder mode -> AnimBuilder mode` | Set easing function |
+| `easing` | `Easing -> AnimBuilder eng -> AnimBuilder eng` | Set easing function |
 
 ### Spring
 
 | Function | Type | Description |
 | -------- | ---- | ----------- |
-| `spring` | `Spring -> AnimBuilder mode -> AnimBuilder mode` | Set spring physics |
+| `spring` | `Spring -> AnimBuilder eng -> AnimBuilder eng` | Set spring physics |
 
 ### Controls
 
@@ -564,14 +564,14 @@ Choose Keyframe when you want browser-native keyframes with state-tracked lifecy
 
 | Function | Type | Description |
 | -------- | ---- | ----------- |
-| `discreteEntry` | `String -> String -> AnimBuilder mode -> AnimBuilder mode` | Set a CSS property value when the animation starts |
-| `discreteExit` | `String -> String -> String -> AnimBuilder mode -> AnimBuilder mode` | Set a CSS property value during and after the animation |
+| `discreteEntry` | `String -> String -> AnimBuilder eng -> AnimBuilder eng` | Set a CSS property value when the animation starts |
+| `discreteExit` | `String -> String -> String -> AnimBuilder eng -> AnimBuilder eng` | Set a CSS property value during and after the animation |
 
 ### Transform Order
 
 | Function | Type | Description |
 | -------- | ---- | ----------- |
-| `transformOrder` | `List TransformProperty -> AnimBuilder mode -> AnimBuilder mode` | Set custom transform order |
+| `transformOrder` | `List TransformProperty -> AnimBuilder eng -> AnimBuilder eng` | Set custom transform order |
 
 ### State Queries
 

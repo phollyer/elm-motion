@@ -15,7 +15,7 @@ Every animation follows this pattern:
 ??? example "View Source Code"
 
     ```elm
-    animationFunction : AnimBuilder mode -> AnimBuilder mode
+    animationFunction : AnimBuilder eng -> AnimBuilder eng
     animationFunction =
         Property.for animGroup              -- Animation group name (required)
             >> Property.from startValue     -- Optional starting value
@@ -40,7 +40,7 @@ Once built, the animations can be passed to any animation engine.
 A typical builder function has the following type signature:
 
 ```elm
-f : AnimBuilder mode -> AnimBuilder mode
+f : AnimBuilder eng -> AnimBuilder eng
 ```
 
 The builder type signature includes the `mode` type parameter which can be used to tighten the use of a function, and trigger compiler errors if used outside of the specified use.
@@ -61,7 +61,7 @@ Properties with the same group name animate together and are applied to the same
 
     ```elm
     -- Both properties share "boxAnim" - they animate together on the same element
-    enterAnimation : AnimBuilder mode -> AnimBuilder mode
+    enterAnimation : AnimBuilder eng -> AnimBuilder eng
     enterAnimation =
         Opacity.for "boxAnim"
             >> Opacity.to 1
@@ -79,7 +79,7 @@ Use different group names when you want separate animation sets for different el
 
     ```elm
     -- Different groups for different element animations
-    pageAnimations : AnimBuilder mode -> AnimBuilder mode
+    pageAnimations : AnimBuilder eng -> AnimBuilder eng
     pageAnimations =
         Opacity.for "header"            -- Header fades in
             >> Opacity.to 1
@@ -104,23 +104,23 @@ Use different group names when you want separate animation sets for different el
 
     ```elm
     -- Reusable Fade Builders
-    fadeTo :  Float -> AnimGroupName -> AnimBuilder mode -> AnimBuilder mode
+    fadeTo :  Float -> AnimGroupName -> AnimBuilder eng -> AnimBuilder eng
     fadeTo opacity groupName  =
         Opacity.for groupName
             >> Opacity.to opacity
             >> Opacity.duration 400
             >> Opacity.build
 
-    fadeIn : AnimGroupName -> AnimBuilder mode -> AnimBuilder mode
+    fadeIn : AnimGroupName -> AnimBuilder eng -> AnimBuilder eng
     fadeIn =
         fadeTo 1
 
-    fadeOut : AnimGroupName -> AnimBuilder mode -> AnimBuilder mode
+    fadeOut : AnimGroupName -> AnimBuilder eng -> AnimBuilder eng
     fadeOut =
         fadeTo 0
 
     -- Reusable Slide Builder
-    slideTo : AnimGroupName -> (Translate.Builder mode -> Translate.Builder mode) -> AnimBuilder mode -> AnimBuilder mode
+    slideTo : AnimGroupName -> (Translate.Builder mode -> Translate.Builder mode) -> AnimBuilder eng -> AnimBuilder eng
     slideTo groupName slideTo =
         Translate.for groupName
             >> slideTo
@@ -129,47 +129,47 @@ Use different group names when you want separate animation sets for different el
             >> Translate.build
 
     -- Reusable Sidebar Builder
-    slideSidebar : Float -> AnimBuilder mode -> AnimBuilder mode
+    slideSidebar : Float -> AnimBuilder eng -> AnimBuilder eng
     slideSidebar toX =
         slideTo "sidebarAnim" <|
             Translate.toX toX
 
     -- Reusable Content Builder
-    slideContent : Float -> AnimBuilder mode -> AnimBuilder mode
+    slideContent : Float -> AnimBuilder eng -> AnimBuilder eng
     slideContent toY =
         slideTo "contentAnim" <|
             Translate.toY toY
 
 
     -- Specific Sidebar Builders
-    sidebarEntrance : AnimBuilder mode -> AnimBuilder mode
+    sidebarEntrance : AnimBuilder eng -> AnimBuilder eng
     sidebarEntrance =
         fadeIn "sidebarAnim" 
             >> slideSidebar 0
 
-    sidebarExit : AnimBuilder mode -> AnimBuilder mode
+    sidebarExit : AnimBuilder eng -> AnimBuilder eng
     sidebarExit =
         fadeOut "sidebarAnim" 
             >> slideSidebar -300
 
     -- Specific Content Builders
-    contentEntrance : AnimBuilder mode -> AnimBuilder mode
+    contentEntrance : AnimBuilder eng -> AnimBuilder eng
     contentEntrance =
         fadeIn "contentAnim"
             >> slideContent 0
 
-    contentExit : AnimBuilder mode -> AnimBuilder mode
+    contentExit : AnimBuilder eng -> AnimBuilder eng
     contentExit =
         fadeOut "contentAnim"
             >> slideContent 300
 
     -- Specific Page Builders
-    pageEntrance : AnimBuilder mode -> AnimBuilder mode
+    pageEntrance : AnimBuilder eng -> AnimBuilder eng
     pageEntrance =
         sidebarEntrance
             >> contentEntrance
 
-    pageExit : AnimBuilder mode -> AnimBuilder mode
+    pageExit : AnimBuilder eng -> AnimBuilder eng
     pageExit =
         sidebarExit
             >> contentExit

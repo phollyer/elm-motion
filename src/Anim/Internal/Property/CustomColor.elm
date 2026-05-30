@@ -26,8 +26,8 @@ import Shared.TimeSpec exposing (TimeSpec(..))
 -- ============================================================
 
 
-type Builder mode
-    = Builder String (Builder.AnimationConfig Color) (AnimBuilder mode)
+type Builder eng
+    = Builder String (Builder.AnimationConfig Color) (AnimBuilder eng)
 
 
 defaultColor : Color
@@ -41,7 +41,7 @@ defaultColor =
 -- ============================================================
 
 
-for : String -> String -> AnimBuilder mode -> Builder mode
+for : String -> String -> AnimBuilder eng -> Builder eng
 for animGroupName cssPropertyName builder =
     let
         extractExisting propertyConfig =
@@ -68,7 +68,7 @@ for animGroupName cssPropertyName builder =
         Builder.for animGroupName builder
 
 
-build : Builder mode -> AnimBuilder mode
+build : Builder eng -> AnimBuilder eng
 build (Builder cssName config builder) =
     PropertyBuilder.upsert (Builder.CustomColorPropertyConfig cssName config) builder
 
@@ -79,7 +79,7 @@ build (Builder cssName config builder) =
 -- ============================================================
 
 
-from : Color -> Builder mode -> Builder mode
+from : Color -> Builder eng -> Builder eng
 from color (Builder cssName config builder) =
     let
         colorWithPreservedAlpha =
@@ -104,7 +104,7 @@ from color (Builder cssName config builder) =
 -- ============================================================
 
 
-to : Color -> Builder mode -> Builder mode
+to : Color -> Builder eng -> Builder eng
 to color (Builder cssName config builder) =
     let
         startPos =
@@ -143,7 +143,7 @@ to color (Builder cssName config builder) =
 -- ============================================================
 
 
-speed : Float -> Builder { m | supportsTime : () } -> Builder { m | supportsTime : () }
+speed : Float -> Builder { eng | withTiming : () } -> Builder { eng | withTiming : () }
 speed spd (Builder cssName config builder) =
     let
         maxColorDistance =
@@ -161,21 +161,21 @@ speed spd (Builder cssName config builder) =
         builder
 
 
-duration : Int -> Builder { m | supportsTime : () } -> Builder { m | supportsTime : () }
+duration : Int -> Builder { eng | withTiming : () } -> Builder { eng | withTiming : () }
 duration dur (Builder cssName config builder) =
     Builder cssName (PropertyBuilder.duration dur config) builder
 
 
-easing : Easing -> Builder mode -> Builder mode
+easing : Easing -> Builder eng -> Builder eng
 easing ease (Builder cssName config builder) =
     Builder cssName (PropertyBuilder.easing ease config) builder
 
 
-spring : Spring -> Builder { m | supportsSpring : () } -> Builder { m | supportsSpring : () }
+spring : Spring -> Builder { eng | withSpring : () } -> Builder { eng | withSpring : () }
 spring s (Builder cssName config builder) =
     Builder cssName (PropertyBuilder.spring s config) builder
 
 
-delay : Int -> Builder { m | supportsTime : () } -> Builder { m | supportsTime : () }
+delay : Int -> Builder { eng | withTiming : () } -> Builder { eng | withTiming : () }
 delay dly (Builder cssName config builder) =
     Builder cssName (PropertyBuilder.delay dly config) builder

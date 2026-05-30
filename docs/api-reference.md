@@ -10,7 +10,7 @@ The complete API documentation is available on the official Elm package reposito
 
 | Module | Description |
 | -------- | ------------- |
-| [Anim.Builder](https://package.elm-lang.org/packages/phollyer/elm-motion/latest/Anim-Builder) | `AnimBuilder mode` type for reusable animations |
+| [Anim.Builder](https://package.elm-lang.org/packages/phollyer/elm-motion/latest/Anim-Builder) | `AnimBuilder eng` type for reusable animations |
 
 ### Engines
 
@@ -55,7 +55,7 @@ The complete API documentation is available on the official Elm package reposito
 All animation functions follow this pattern:
 
 ```elm
-myAnimation : AnimBuilder mode -> AnimBuilder mode
+myAnimation : AnimBuilder eng -> AnimBuilder eng
 ```
 
 This makes them composable with `>>` and reusable across engines.

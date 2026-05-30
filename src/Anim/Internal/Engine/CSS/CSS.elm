@@ -96,8 +96,8 @@ type AnimState engine a
     = AnimState { builder : TimelineBuilder engine } (AnimGroups a)
 
 
-type alias AnimBuilder mode =
-    Builder.AnimBuilder mode
+type alias AnimBuilder eng =
+    Builder.AnimBuilder eng
 
 
 type alias TimelineBuilder engine =
@@ -318,17 +318,17 @@ elementIdDecoder path =
 -- ============================================================
 
 
-iterations : Int -> Builder.AnimBuilder { m | supportsIterations : () } -> Builder.AnimBuilder { m | supportsIterations : () }
+iterations : Int -> Builder.AnimBuilder { eng | withIterations : () } -> Builder.AnimBuilder { eng | withIterations : () }
 iterations =
     Builder.iterations
 
 
-loopForever : Builder.AnimBuilder { m | supportsLoopForever : () } -> Builder.AnimBuilder { m | supportsLoopForever : () }
+loopForever : Builder.AnimBuilder { eng | withLoopForever : () } -> Builder.AnimBuilder { eng | withLoopForever : () }
 loopForever =
     Builder.loopForever
 
 
-alternate : Builder.AnimBuilder { m | supportsAlternate : () } -> Builder.AnimBuilder { m | supportsAlternate : () }
+alternate : Builder.AnimBuilder { eng | withAlternate : () } -> Builder.AnimBuilder { eng | withAlternate : () }
 alternate =
     Builder.alternate
 
@@ -339,17 +339,17 @@ alternate =
 -- ============================================================
 
 
-delay : Int -> Builder.AnimBuilder { m | supportsTime : () } -> Builder.AnimBuilder { m | supportsTime : () }
+delay : Int -> Builder.AnimBuilder { eng | withTiming : () } -> Builder.AnimBuilder { eng | withTiming : () }
 delay =
     Builder.delay
 
 
-duration : Int -> Builder.AnimBuilder { m | supportsTime : () } -> Builder.AnimBuilder { m | supportsTime : () }
+duration : Int -> Builder.AnimBuilder { eng | withTiming : () } -> Builder.AnimBuilder { eng | withTiming : () }
 duration =
     Builder.duration
 
 
-speed : Float -> Builder.AnimBuilder { m | supportsTime : () } -> Builder.AnimBuilder { m | supportsTime : () }
+speed : Float -> Builder.AnimBuilder { eng | withTiming : () } -> Builder.AnimBuilder { eng | withTiming : () }
 speed =
     Builder.speed
 
@@ -360,7 +360,7 @@ speed =
 -- ============================================================
 
 
-easing : Easing -> Builder.AnimBuilder mode -> Builder.AnimBuilder mode
+easing : Easing -> Builder.AnimBuilder eng -> Builder.AnimBuilder eng
 easing =
     Builder.easing
 
@@ -371,22 +371,22 @@ easing =
 -- ============================================================
 
 
-cssUnit : Unit -> Builder.AnimBuilder mode -> Builder.AnimBuilder mode
+cssUnit : Unit -> Builder.AnimBuilder eng -> Builder.AnimBuilder eng
 cssUnit =
     Builder.cssUnit
 
 
-cssUnitX : Unit -> Builder.AnimBuilder mode -> Builder.AnimBuilder mode
+cssUnitX : Unit -> Builder.AnimBuilder eng -> Builder.AnimBuilder eng
 cssUnitX =
     Builder.cssUnitX
 
 
-cssUnitY : Unit -> Builder.AnimBuilder mode -> Builder.AnimBuilder mode
+cssUnitY : Unit -> Builder.AnimBuilder eng -> Builder.AnimBuilder eng
 cssUnitY =
     Builder.cssUnitY
 
 
-cssUnitZ : Unit -> Builder.AnimBuilder mode -> Builder.AnimBuilder mode
+cssUnitZ : Unit -> Builder.AnimBuilder eng -> Builder.AnimBuilder eng
 cssUnitZ =
     Builder.cssUnitZ
 
@@ -397,7 +397,7 @@ cssUnitZ =
 -- ============================================================
 
 
-spring : Spring -> Builder.AnimBuilder { m | supportsSpring : () } -> Builder.AnimBuilder { m | supportsSpring : () }
+spring : Spring -> Builder.AnimBuilder { eng | withSpring : () } -> Builder.AnimBuilder { eng | withSpring : () }
 spring =
     Builder.spring
 

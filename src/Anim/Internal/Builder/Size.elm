@@ -41,8 +41,8 @@ import Shared.TimeSpec exposing (TimeSpec(..))
 -- ============================================================
 
 
-type SizeBuilder mode
-    = SizeBuilder (Builder.AnimationConfig Size) (AnimBuilder mode)
+type SizeBuilder eng
+    = SizeBuilder (Builder.AnimationConfig Size) (AnimBuilder eng)
 
 
 type alias SizeConfig =
@@ -66,7 +66,7 @@ defaultConfig =
 -- ============================================================
 
 
-for : String -> AnimBuilder mode -> SizeBuilder mode
+for : String -> AnimBuilder eng -> SizeBuilder eng
 for animGroupName builder =
     let
         extractExisting propertyConfig =
@@ -84,12 +84,12 @@ for animGroupName builder =
         Builder.for animGroupName builder
 
 
-build : SizeBuilder mode -> AnimBuilder mode
+build : SizeBuilder eng -> AnimBuilder eng
 build (SizeBuilder config builder) =
     PropertyBuilder.upsert (Builder.SizeConfig (applyClamps builder config)) builder
 
 
-applyClamps : AnimBuilder mode -> SizeConfig -> SizeConfig
+applyClamps : AnimBuilder eng -> SizeConfig -> SizeConfig
 applyClamps builder config =
     case Builder.getCurrentAnimGroupName builder of
         Nothing ->
@@ -150,14 +150,14 @@ clampAxis range v =
 -- ============================================================
 
 
-from : Size -> SizeBuilder mode -> SizeBuilder mode
+from : Size -> SizeBuilder eng -> SizeBuilder eng
 from size (SizeBuilder config builder) =
     SizeBuilder
         { config | start = Just size }
         builder
 
 
-fromHW : Float -> Float -> SizeBuilder mode -> SizeBuilder mode
+fromHW : Float -> Float -> SizeBuilder eng -> SizeBuilder eng
 fromHW height width (SizeBuilder config builder) =
     SizeBuilder
         { config
@@ -168,7 +168,7 @@ fromHW height width (SizeBuilder config builder) =
         builder
 
 
-fromH : Float -> SizeBuilder mode -> SizeBuilder mode
+fromH : Float -> SizeBuilder eng -> SizeBuilder eng
 fromH h (SizeBuilder config builder) =
     let
         w =
@@ -177,7 +177,7 @@ fromH h (SizeBuilder config builder) =
     fromHW h w (SizeBuilder config builder)
 
 
-fromW : Float -> SizeBuilder mode -> SizeBuilder mode
+fromW : Float -> SizeBuilder eng -> SizeBuilder eng
 fromW w (SizeBuilder config builder) =
     let
         h =
@@ -192,7 +192,7 @@ fromW w (SizeBuilder config builder) =
 -- ============================================================
 
 
-to : Size -> SizeBuilder mode -> SizeBuilder mode
+to : Size -> SizeBuilder eng -> SizeBuilder eng
 to size (SizeBuilder config builder) =
     let
         start =
@@ -207,12 +207,12 @@ to size (SizeBuilder config builder) =
         builder
 
 
-toHW : Float -> Float -> SizeBuilder mode -> SizeBuilder mode
+toHW : Float -> Float -> SizeBuilder eng -> SizeBuilder eng
 toHW height width =
     to (Size.fromTuple ( width, height ))
 
 
-toH : Float -> SizeBuilder mode -> SizeBuilder mode
+toH : Float -> SizeBuilder eng -> SizeBuilder eng
 toH h (SizeBuilder config builder) =
     let
         w =
@@ -221,7 +221,7 @@ toH h (SizeBuilder config builder) =
     toHW h w (SizeBuilder config builder)
 
 
-toW : Float -> SizeBuilder mode -> SizeBuilder mode
+toW : Float -> SizeBuilder eng -> SizeBuilder eng
 toW w (SizeBuilder config builder) =
     let
         h =
@@ -236,17 +236,17 @@ toW w (SizeBuilder config builder) =
 -- ============================================================
 
 
-delay : Int -> SizeBuilder { m | supportsTime : () } -> SizeBuilder { m | supportsTime : () }
+delay : Int -> SizeBuilder { eng | withTiming : () } -> SizeBuilder { eng | withTiming : () }
 delay ms (SizeBuilder config builder) =
     SizeBuilder (PropertyBuilder.delay ms config) builder
 
 
-duration : Int -> SizeBuilder { m | supportsTime : () } -> SizeBuilder { m | supportsTime : () }
+duration : Int -> SizeBuilder { eng | withTiming : () } -> SizeBuilder { eng | withTiming : () }
 duration ms (SizeBuilder config builder) =
     SizeBuilder (PropertyBuilder.duration ms config) builder
 
 
-speed : Float -> SizeBuilder { m | supportsTime : () } -> SizeBuilder { m | supportsTime : () }
+speed : Float -> SizeBuilder { eng | withTiming : () } -> SizeBuilder { eng | withTiming : () }
 speed pixelsPerSecond (SizeBuilder config builder) =
     SizeBuilder (PropertyBuilder.speed pixelsPerSecond config) builder
 
@@ -257,7 +257,7 @@ speed pixelsPerSecond (SizeBuilder config builder) =
 -- ============================================================
 
 
-easing : Easing -> SizeBuilder mode -> SizeBuilder mode
+easing : Easing -> SizeBuilder eng -> SizeBuilder eng
 easing easingFunction (SizeBuilder config builder) =
     SizeBuilder (PropertyBuilder.easing easingFunction config) builder
 
@@ -268,22 +268,22 @@ easing easingFunction (SizeBuilder config builder) =
 -- ============================================================
 
 
-spring : Spring -> SizeBuilder { m | supportsSpring : () } -> SizeBuilder { m | supportsSpring : () }
+spring : Spring -> SizeBuilder { eng | withSpring : () } -> SizeBuilder { eng | withSpring : () }
 spring s (SizeBuilder config builder) =
     SizeBuilder (PropertyBuilder.spring s config) builder
 
 
-cssUnit : Unit -> SizeBuilder mode -> SizeBuilder mode
+cssUnit : Unit -> SizeBuilder eng -> SizeBuilder eng
 cssUnit unit (SizeBuilder config builder) =
     SizeBuilder (PropertyBuilder.cssUnit unit config) builder
 
 
-cssUnitWidth : Unit -> SizeBuilder mode -> SizeBuilder mode
+cssUnitWidth : Unit -> SizeBuilder eng -> SizeBuilder eng
 cssUnitWidth unit (SizeBuilder config builder) =
     SizeBuilder (PropertyBuilder.cssUnitX unit config) builder
 
 
-cssUnitHeight : Unit -> SizeBuilder mode -> SizeBuilder mode
+cssUnitHeight : Unit -> SizeBuilder eng -> SizeBuilder eng
 cssUnitHeight unit (SizeBuilder config builder) =
     SizeBuilder (PropertyBuilder.cssUnitY unit config) builder
 
@@ -293,7 +293,7 @@ stored init-time unit defaults. Called at the start of every public `init*`
 helper so values supplied during initialization are rendered with whatever
 `initUnit*` was active at that point in the pipeline.
 -}
-applyInitCssUnit : SizeBuilder mode -> SizeBuilder mode
+applyInitCssUnit : SizeBuilder eng -> SizeBuilder eng
 applyInitCssUnit (SizeBuilder config builder) =
     SizeBuilder
         { config | cssUnit = Builder.getSizeInitCssUnit builder }
@@ -306,27 +306,27 @@ applyInitCssUnit (SizeBuilder config builder) =
 -- ============================================================
 
 
-clampWidth : Float -> Float -> SizeBuilder mode -> SizeBuilder mode
+clampWidth : Float -> Float -> SizeBuilder eng -> SizeBuilder eng
 clampWidth lo hi =
     updateBuilderClamp (\name -> Builder.setClamp name "size" "width" lo hi)
 
 
-clampHeight : Float -> Float -> SizeBuilder mode -> SizeBuilder mode
+clampHeight : Float -> Float -> SizeBuilder eng -> SizeBuilder eng
 clampHeight lo hi =
     updateBuilderClamp (\name -> Builder.setClamp name "size" "height" lo hi)
 
 
-unclampWidth : SizeBuilder mode -> SizeBuilder mode
+unclampWidth : SizeBuilder eng -> SizeBuilder eng
 unclampWidth =
     updateBuilderClamp (\name -> Builder.clearClamp name "size" "width")
 
 
-unclampHeight : SizeBuilder mode -> SizeBuilder mode
+unclampHeight : SizeBuilder eng -> SizeBuilder eng
 unclampHeight =
     updateBuilderClamp (\name -> Builder.clearClamp name "size" "height")
 
 
-updateBuilderClamp : (String -> AnimBuilder mode -> AnimBuilder mode) -> SizeBuilder mode -> SizeBuilder mode
+updateBuilderClamp : (String -> AnimBuilder eng -> AnimBuilder eng) -> SizeBuilder eng -> SizeBuilder eng
 updateBuilderClamp f (SizeBuilder config builder) =
     case Builder.getCurrentAnimGroupName builder of
         Just animGroupName ->

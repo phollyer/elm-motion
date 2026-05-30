@@ -17,7 +17,7 @@ property modules (Translate, Rotate, Scale etc.).
     import Anim.Unit exposing (Unit(..))
     import Easing exposing (Easing(..))
 
-    myAnimation : AnimBuilder mode -> AnimBuilder mode
+    myAnimation : AnimBuilder eng -> AnimBuilder eng
     myAnimation =
         Property.for "box" (BorderRadius Px)
             >> Property.to 16
@@ -120,8 +120,8 @@ type alias AnimGroupName =
 
 {-| Builder type for custom property animations.
 -}
-type alias Builder mode =
-    Internal.Builder mode
+type alias Builder eng =
+    Internal.Builder eng
 
 
 {-| A typed set of common numeric CSS properties with a custom escape hatch.
@@ -227,7 +227,7 @@ Use this to initialize the property in your Engine's `init` function.
         )
 
 -}
-init : AnimGroupName -> Property -> Float -> AnimBuilder mode -> AnimBuilder mode
+init : AnimGroupName -> Property -> Float -> AnimBuilder eng -> AnimBuilder eng
 init animGroupName cssProperty value animBuilder =
     let
         ( name, unit ) =
@@ -419,14 +419,14 @@ The first argument is the animation group name, the second is the CSS property.
 
     import Anim.Unit exposing (Unit(..))
 
-    myAnimation : AnimBuilder mode -> AnimBuilder mode
+    myAnimation : AnimBuilder eng -> AnimBuilder eng
     myAnimation =
         Property.for "box" (BorderRadius Px)
             >> Property.to 16
             >> Property.build
 
 -}
-for : AnimGroupName -> Property -> AnimBuilder mode -> Builder mode
+for : AnimGroupName -> Property -> AnimBuilder eng -> Builder eng
 for animGroupName cssProperty =
     let
         ( name, unit ) =
@@ -437,7 +437,7 @@ for animGroupName cssProperty =
 
 {-| Complete the animation configuration and return an `AnimBuilder`.
 -}
-build : Builder mode -> AnimBuilder mode
+build : Builder eng -> AnimBuilder eng
 build =
     Internal.build
 
@@ -450,7 +450,7 @@ build =
 
 {-| Set the starting value.
 -}
-from : Float -> Builder mode -> Builder mode
+from : Float -> Builder eng -> Builder eng
 from =
     Internal.from
 
@@ -463,7 +463,7 @@ from =
 
 {-| Set the target value.
 -}
-to : Float -> Builder mode -> Builder mode
+to : Float -> Builder eng -> Builder eng
 to =
     Internal.to
 
@@ -476,21 +476,21 @@ to =
 
 {-| Set the animation speed (units per second).
 -}
-speed : Float -> Builder { m | supportsTime : () } -> Builder { m | supportsTime : () }
+speed : Float -> Builder { eng | withTiming : () } -> Builder { eng | withTiming : () }
 speed =
     Internal.speed
 
 
 {-| Set the animation duration (milliseconds).
 -}
-duration : Int -> Builder { m | supportsTime : () } -> Builder { m | supportsTime : () }
+duration : Int -> Builder { eng | withTiming : () } -> Builder { eng | withTiming : () }
 duration =
     Internal.duration
 
 
 {-| Set the delay (milliseconds) before the animation starts.
 -}
-delay : Int -> Builder { m | supportsTime : () } -> Builder { m | supportsTime : () }
+delay : Int -> Builder { eng | withTiming : () } -> Builder { eng | withTiming : () }
 delay =
     Internal.delay
 
@@ -503,7 +503,7 @@ delay =
 
 {-| Set the easing function.
 -}
-easing : Easing -> Builder mode -> Builder mode
+easing : Easing -> Builder eng -> Builder eng
 easing =
     Internal.easing
 
@@ -527,14 +527,14 @@ and vice versa — they are mutually exclusive.
     import Anim.Unit exposing (Unit(..))
     import Motion.Spring as Spring
 
-    myAnimation : AnimBuilder mode -> AnimBuilder mode
+    myAnimation : AnimBuilder eng -> AnimBuilder eng
     myAnimation =
         Property.for "box" (BorderRadius Px)
             >> Property.to 16
             >> Property.spring Spring.wobbly
 
 -}
-spring : Spring -> Builder { m | supportsSpring : () } -> Builder { m | supportsSpring : () }
+spring : Spring -> Builder { eng | withSpring : () } -> Builder { eng | withSpring : () }
 spring =
     Internal.spring
 
@@ -556,13 +556,13 @@ If `min > max`, the values are swapped.
 for patterns and examples.
 
 -}
-clamp : Float -> Float -> Builder mode -> Builder mode
+clamp : Float -> Float -> Builder eng -> Builder eng
 clamp =
     Internal.clamp
 
 
 {-| Remove the range for this CSS property on this animation group. Does nothing if no range is set.
 -}
-unclamp : Builder mode -> Builder mode
+unclamp : Builder eng -> Builder eng
 unclamp =
     Internal.unclamp

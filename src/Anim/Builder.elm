@@ -87,11 +87,11 @@ import Motion.Spring exposing (Spring)
 
 {-| Base builder type for animations.
 
-    f : AnimBuilder mode -> AnimBuilder mode
+    f : AnimBuilder eng -> AnimBuilder eng
 
 -}
-type alias AnimBuilder mode =
-    Internal.AnimBuilder mode
+type alias AnimBuilder eng =
+    Internal.AnimBuilder eng
 
 
 
@@ -100,7 +100,7 @@ type alias AnimBuilder mode =
 -- ============================================================
 
 
-{-| Builder mode for ScrollTimeline builders.
+{-| Builder type for ScrollTimeline builders.
 
     f : AnimBuilder ForScroll -> AnimBuilder ForScroll
 
@@ -109,7 +109,7 @@ type alias ForScroll =
     Internal.ForScroll
 
 
-{-| Builder mode for ViewTimeline builders.
+{-| Builder type for ViewTimeline builders.
 
     f : AnimBuilder ForView -> AnimBuilder ForView
 
@@ -124,7 +124,7 @@ type alias ForView =
 -- ============================================================
 
 
-{-| Builder mode for Keyframe builders.
+{-| Builder type for Keyframe builders.
 
     f : AnimBuilder ForKeyframe -> AnimBuilder ForKeyframe
 
@@ -133,7 +133,7 @@ type alias ForKeyframe =
     Internal.ForKeyframe
 
 
-{-| Builder mode for Sub builders.
+{-| Builder type for Sub builders.
 
     f : AnimBuilder ForSub -> AnimBuilder ForSub
 
@@ -142,7 +142,7 @@ type alias ForSub =
     Internal.ForSub
 
 
-{-| Builder mode for Transition builders.
+{-| Builder type for Transition builders.
 
     f : AnimBuilder ForTransition -> AnimBuilder ForTransition
 
@@ -151,7 +151,7 @@ type alias ForTransition =
     Internal.ForTransition
 
 
-{-| Builder mode for WAAPI builders.
+{-| Builder type for WAAPI builders.
 
     f : AnimBuilder ForWAAPI -> AnimBuilder ForWAAPI
 
@@ -168,7 +168,7 @@ type alias ForWAAPI =
 
 {-| Set the global delay for all animations in a Document timeline builder.
 
-    introAnim : AnimBuilder { m | forDocument : (), supportsTime : () } -> AnimBuilder { m | forDocument : (), supportsTime : () }
+    introAnim : AnimBuilder { eng | withTiming : () } -> AnimBuilder { eng | withTiming : () }
     introAnim =
         delay 500
             >> fadeInHeader
@@ -176,14 +176,14 @@ type alias ForWAAPI =
             >> fadeInContent
 
 -}
-delay : Int -> AnimBuilder { m | supportsTime : () } -> AnimBuilder { m | supportsTime : () }
+delay : Int -> AnimBuilder { eng | withTiming : () } -> AnimBuilder { eng | withTiming : () }
 delay =
     Internal.delay
 
 
 {-| Set the global duration for all animations in a Document timeline builder.
 
-    introAnim : AnimBuilder { m | forDocument : (), supportsTime : () } -> AnimBuilder { m | forDocument : (), supportsTime : () }
+    introAnim : AnimBuilder { eng | withTiming : () } -> AnimBuilder { eng | withTiming : () }
     introAnim =
         duration 500
             >> fadeInHeader
@@ -191,14 +191,14 @@ delay =
             >> fadeInContent
 
 -}
-duration : Int -> AnimBuilder { m | supportsTime : () } -> AnimBuilder { m | supportsTime : () }
+duration : Int -> AnimBuilder { eng | withTiming : () } -> AnimBuilder { eng | withTiming : () }
 duration =
     Internal.duration
 
 
 {-| Set the global speed for all animations in a Document timeline builder.
 
-    introAnim : AnimBuilder { m | forDocument : (), supportsTime : () } -> AnimBuilder { m | forDocument : (), supportsTime : () }
+    introAnim : AnimBuilder { eng | withTiming : () } -> AnimBuilder { eng | withTiming : () }
     introAnim =
         speed 300
             >> slideDownHeader
@@ -206,7 +206,7 @@ duration =
             >> slideUpContent
 
 -}
-speed : Float -> AnimBuilder { m | supportsTime : () } -> AnimBuilder { m | supportsTime : () }
+speed : Float -> AnimBuilder { eng | withTiming : () } -> AnimBuilder { eng | withTiming : () }
 speed =
     Internal.speed
 
@@ -220,21 +220,21 @@ speed =
 
 {-| Set how many times an animation should repeat.
 
-    notificationAttentionLoop : AnimBuilder mode -> AnimBuilder mode
+    notificationAttentionLoop : AnimBuilder eng -> AnimBuilder eng
     notificationAttentionLoop =
         iterations 3
             >> pulseBadge
             >> nudgeBellIcon
 
 -}
-iterations : Int -> AnimBuilder { m | supportsIterations : () } -> AnimBuilder { m | supportsIterations : () }
+iterations : Int -> AnimBuilder { eng | withIterations : () } -> AnimBuilder { eng | withIterations : () }
 iterations =
     Internal.iterations
 
 
 {-| Make an animation alternate direction on each iteration.
 
-    floatingCardLoop : AnimBuilder mode -> AnimBuilder mode
+    floatingCardLoop : AnimBuilder eng -> AnimBuilder eng
     floatingCardLoop =
         iterations 4
             >> alternate
@@ -247,7 +247,7 @@ so calling it when `iterations` is unset or `1` automatically bumps
 before or after `alternate` is preserved.
 
 -}
-alternate : AnimBuilder { m | supportsAlternate : () } -> AnimBuilder { m | supportsAlternate : () }
+alternate : AnimBuilder { eng | withAlternate : () } -> AnimBuilder { eng | withAlternate : () }
 alternate =
     Internal.alternate
 
@@ -258,7 +258,7 @@ alternate =
 
 {-| Set the global easing function.
 
-    heroEntrance : AnimBuilder mode -> AnimBuilder mode
+    heroEntrance : AnimBuilder eng -> AnimBuilder eng
     heroEntrance =
         easing EaseInOut
             >> fadeInHeroTitle
@@ -266,21 +266,21 @@ alternate =
             >> revealPrimaryCta
 
 -}
-easing : Easing -> AnimBuilder mode -> AnimBuilder mode
+easing : Easing -> AnimBuilder eng -> AnimBuilder eng
 easing =
     Internal.easing
 
 
 {-| Set the global spring.
 
-    draggableCardSettle : AnimBuilder mode -> AnimBuilder mode
+    draggableCardSettle : AnimBuilder eng -> AnimBuilder eng
     draggableCardSettle =
         spring Spring.wobbly
             >> settleCardPosition
             >> settleCardShadow
 
 -}
-spring : Spring -> AnimBuilder { m | supportsSpring : () } -> AnimBuilder { m | supportsSpring : () }
+spring : Spring -> AnimBuilder { eng | withSpring : () } -> AnimBuilder { eng | withSpring : () }
 spring =
     Internal.spring
 
@@ -291,83 +291,83 @@ spring =
 
 {-| Set the default length unit for all length-bearing properties.
 
-    responsivePanelMotion : AnimBuilder mode -> AnimBuilder mode
+    responsivePanelMotion : AnimBuilder eng -> AnimBuilder eng
     responsivePanelMotion =
         cssUnit Unit.Vw
             >> slidePanelIn
             >> growPanelHeight
 
 -}
-cssUnit : Unit -> AnimBuilder mode -> AnimBuilder mode
+cssUnit : Unit -> AnimBuilder eng -> AnimBuilder eng
 cssUnit =
     Internal.cssUnit
 
 
 {-| Set the default length unit for the X axis.
 
-    responsiveDrawerMotion : AnimBuilder mode -> AnimBuilder mode
+    responsiveDrawerMotion : AnimBuilder eng -> AnimBuilder eng
     responsiveDrawerMotion =
         cssUnitX Unit.Vw
             >> slideDrawerX
             >> alignDrawerLabelX
 
 -}
-cssUnitX : Unit -> AnimBuilder mode -> AnimBuilder mode
+cssUnitX : Unit -> AnimBuilder eng -> AnimBuilder eng
 cssUnitX =
     Internal.cssUnitX
 
 
 {-| Set the default length unit for the Y axis.
 
-    responsiveSheetMotion : AnimBuilder mode -> AnimBuilder mode
+    responsiveSheetMotion : AnimBuilder eng -> AnimBuilder eng
     responsiveSheetMotion =
         cssUnitY Unit.Vh
             >> slideSheetY
             >> alignSheetHeaderY
 
 -}
-cssUnitY : Unit -> AnimBuilder mode -> AnimBuilder mode
+cssUnitY : Unit -> AnimBuilder eng -> AnimBuilder eng
 cssUnitY =
     Internal.cssUnitY
 
 
 {-| Set the default length unit for the Z axis.
 
-    layeredSceneMotion : AnimBuilder mode -> AnimBuilder mode
+    layeredSceneMotion : AnimBuilder eng -> AnimBuilder eng
     layeredSceneMotion =
         cssUnitZ Unit.Px
             >> pushSceneBackgroundBack
             >> bringFloatingCardForward
 
 -}
-cssUnitZ : Unit -> AnimBuilder mode -> AnimBuilder mode
+cssUnitZ : Unit -> AnimBuilder eng -> AnimBuilder eng
 cssUnitZ =
     Internal.cssUnitZ
 
 
 {-| Set the default length unit used for width values.
 
-    responsiveCardWidth : AnimBuilder mode -> AnimBuilder mode
+    responsiveCardWidth : AnimBuilder eng -> AnimBuilder eng
     responsiveCardWidth =
         cssUnitWidth Unit.Vw
             >> growCardWidth
             >> settleCardSpacing
 
 -}
-cssUnitWidth : Unit -> AnimBuilder mode -> AnimBuilder mode
+cssUnitWidth : Unit -> AnimBuilder eng -> AnimBuilder eng
 cssUnitWidth =
     Internal.cssUnitWidth
 
 
 {-| Set the default length unit used for height values.
 
-    responsivePanelHeight : AnimBuilder mode -> AnimBuilder mode
+    responsivePanelHeight : AnimBuilder eng -> AnimBuilder eng
     responsivePanelHeight =
         cssUnitHeight Unit.Vh
             >> expandPanelHeight
             >> alignPanelHeaderY
 
 -}
-cssUnitHeight : Unit -> AnimBuilder mode -> AnimBuilder mode
+cssUnitHeight : Unit -> AnimBuilder eng -> AnimBuilder eng
 cssUnitHeight =
     Internal.cssUnitHeight

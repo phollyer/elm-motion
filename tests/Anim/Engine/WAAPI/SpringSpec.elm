@@ -39,19 +39,19 @@ suite =
 -- ============================================================
 
 
-initBuilder : WAAPI.AnimBuilder mode
+initBuilder : WAAPI.AnimBuilder eng
 initBuilder =
     Builder.init []
 
 
-animateOpacityTo : Float -> WAAPI.AnimBuilder mode -> WAAPI.AnimBuilder mode
+animateOpacityTo : Float -> WAAPI.AnimBuilder eng -> WAAPI.AnimBuilder eng
 animateOpacityTo target =
     Opacity.for "el"
         >> Opacity.to target
         >> Opacity.build
 
 
-extractOpacitySpring : Builder.AnimBuilder mode -> Maybe (Maybe Spring.Spring)
+extractOpacitySpring : Builder.AnimBuilder eng -> Maybe (Maybe Spring.Spring)
 extractOpacitySpring builder =
     Builder.process builder
         |> .groups
@@ -60,7 +60,7 @@ extractOpacitySpring builder =
         |> Maybe.map .spring
 
 
-extractOpacityEasing : Builder.AnimBuilder mode -> Maybe Easing
+extractOpacityEasing : Builder.AnimBuilder eng -> Maybe Easing
 extractOpacityEasing builder =
     Builder.process builder
         |> .groups
@@ -95,7 +95,7 @@ firstOpacity group =
         |> List.head
 
 
-encodedJsonString : Builder.AnimBuilder mode -> String
+encodedJsonString : Builder.AnimBuilder eng -> String
 encodedJsonString builder =
     Builder.process builder
         |> Encoder.encodeProcessedData

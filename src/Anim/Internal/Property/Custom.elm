@@ -26,8 +26,8 @@ import Motion.Spring exposing (Spring)
 -- ============================================================
 
 
-type Builder mode
-    = Builder String String (Builder.AnimationConfig Float) (AnimBuilder mode)
+type Builder eng
+    = Builder String String (Builder.AnimationConfig Float) (AnimBuilder eng)
 
 
 
@@ -36,7 +36,7 @@ type Builder mode
 -- ============================================================
 
 
-for : String -> String -> String -> AnimBuilder mode -> Builder mode
+for : String -> String -> String -> AnimBuilder eng -> Builder eng
 for animGroupName cssPropertyName unit builder =
     let
         extractExisting propertyConfig =
@@ -63,7 +63,7 @@ for animGroupName cssPropertyName unit builder =
         Builder.for animGroupName builder
 
 
-build : Builder mode -> AnimBuilder mode
+build : Builder eng -> AnimBuilder eng
 build (Builder cssName unit config builder) =
     let
         clampedConfig =
@@ -72,7 +72,7 @@ build (Builder cssName unit config builder) =
     PropertyBuilder.upsert (Builder.CustomPropertyConfig cssName unit clampedConfig) builder
 
 
-applyClamps : String -> AnimBuilder mode -> Builder.AnimationConfig Float -> Builder.AnimationConfig Float
+applyClamps : String -> AnimBuilder eng -> Builder.AnimationConfig Float -> Builder.AnimationConfig Float
 applyClamps cssName builder config =
     case Builder.getCurrentAnimGroupName builder of
         Nothing ->
@@ -112,7 +112,7 @@ defaultConfig =
     PropertyBuilder.defaultConfig 0
 
 
-from : Float -> Builder mode -> Builder mode
+from : Float -> Builder eng -> Builder eng
 from value (Builder cssName unit config builder) =
     Builder cssName unit { config | start = Just value } builder
 
@@ -123,7 +123,7 @@ from value (Builder cssName unit config builder) =
 -- ============================================================
 
 
-to : Float -> Builder mode -> Builder mode
+to : Float -> Builder eng -> Builder eng
 to endValue (Builder cssName unit config builder) =
     let
         startValue =
@@ -150,22 +150,22 @@ to endValue (Builder cssName unit config builder) =
 -- ============================================================
 
 
-speed : Float -> Builder { m | supportsTime : () } -> Builder { m | supportsTime : () }
+speed : Float -> Builder { eng | withTiming : () } -> Builder { eng | withTiming : () }
 speed spd (Builder cssName unit config builder) =
     Builder cssName unit (PropertyBuilder.speed spd config) builder
 
 
-duration : Int -> Builder { m | supportsTime : () } -> Builder { m | supportsTime : () }
+duration : Int -> Builder { eng | withTiming : () } -> Builder { eng | withTiming : () }
 duration dur (Builder cssName unit config builder) =
     Builder cssName unit (PropertyBuilder.duration dur config) builder
 
 
-easing : Easing -> Builder mode -> Builder mode
+easing : Easing -> Builder eng -> Builder eng
 easing ease (Builder cssName unit config builder) =
     Builder cssName unit (PropertyBuilder.easing ease config) builder
 
 
-spring : Spring -> Builder { m | supportsSpring : () } -> Builder { m | supportsSpring : () }
+spring : Spring -> Builder { eng | withSpring : () } -> Builder { eng | withSpring : () }
 spring s (Builder cssName unit config builder) =
     Builder cssName unit (PropertyBuilder.spring s config) builder
 
@@ -176,7 +176,7 @@ spring s (Builder cssName unit config builder) =
 -- ============================================================
 
 
-clamp : Float -> Float -> Builder mode -> Builder mode
+clamp : Float -> Float -> Builder eng -> Builder eng
 clamp lo hi (Builder cssName unit config builder) =
     case Builder.getCurrentAnimGroupName builder of
         Just animGroupName ->
@@ -186,7 +186,7 @@ clamp lo hi (Builder cssName unit config builder) =
             Builder cssName unit config builder
 
 
-unclamp : Builder mode -> Builder mode
+unclamp : Builder eng -> Builder eng
 unclamp (Builder cssName unit config builder) =
     case Builder.getCurrentAnimGroupName builder of
         Just animGroupName ->
@@ -196,6 +196,6 @@ unclamp (Builder cssName unit config builder) =
             Builder cssName unit config builder
 
 
-delay : Int -> Builder { m | supportsTime : () } -> Builder { m | supportsTime : () }
+delay : Int -> Builder { eng | withTiming : () } -> Builder { eng | withTiming : () }
 delay dly (Builder cssName unit config builder) =
     Builder cssName unit (PropertyBuilder.delay dly config) builder

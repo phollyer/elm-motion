@@ -15,7 +15,7 @@ module Anim.Property.CustomColor exposing
     import Anim.Property.CustomColor as CustomColor
     import Easing exposing (Easing(..))
 
-    myAnimation : AnimBuilder mode -> AnimBuilder mode
+    myAnimation : AnimBuilder eng -> AnimBuilder eng
     myAnimation =
         CustomColor.for "box" BackgroundColor
             >> CustomColor.to (Color.rgb 255 0 0)
@@ -95,8 +95,8 @@ type alias AnimGroupName =
 
 {-| Builder type for custom color animations.
 -}
-type alias Builder mode =
-    Internal.Builder mode
+type alias Builder eng =
+    Internal.Builder eng
 
 
 {-| A typed set of common color properties with a custom escape hatch.
@@ -162,7 +162,7 @@ Use this to initialize the property in your Engine's `init` function.
         )
 
 -}
-init : AnimGroupName -> ColorProperty -> Color -> AnimBuilder mode -> AnimBuilder mode
+init : AnimGroupName -> ColorProperty -> Color -> AnimBuilder eng -> AnimBuilder eng
 init animGroupName cssProperty value animBuilder =
     animBuilder
         |> Internal.for animGroupName (toCssPropertyName cssProperty)
@@ -179,21 +179,21 @@ init animGroupName cssProperty value animBuilder =
 
 {-| Turn the `AnimBuilder` into a custom color property animation `Builder`.
 
-    myAnimation : AnimBuilder mode -> AnimBuilder mode
+    myAnimation : AnimBuilder eng -> AnimBuilder eng
     myAnimation =
         CustomColor.for "box" TextColor
             >> CustomColor.to (Color.rgb 255 0 0)
             >> CustomColor.build
 
 -}
-for : AnimGroupName -> ColorProperty -> AnimBuilder mode -> Builder mode
+for : AnimGroupName -> ColorProperty -> AnimBuilder eng -> Builder eng
 for animGroupName cssProperty =
     Internal.for animGroupName (toCssPropertyName cssProperty)
 
 
 {-| Complete the animation configuration and return an `AnimBuilder`.
 -}
-build : Builder mode -> AnimBuilder mode
+build : Builder eng -> AnimBuilder eng
 build =
     Internal.build
 
@@ -285,7 +285,7 @@ toCssPropertyName cssProperty =
 
 {-| Set the starting color.
 -}
-from : Color -> Builder mode -> Builder mode
+from : Color -> Builder eng -> Builder eng
 from =
     Internal.from
 
@@ -298,7 +298,7 @@ from =
 
 {-| Set the target color.
 -}
-to : Color -> Builder mode -> Builder mode
+to : Color -> Builder eng -> Builder eng
 to =
     Internal.to
 
@@ -311,21 +311,21 @@ to =
 
 {-| Set the animation speed (0.0 to 1.0 range per second).
 -}
-speed : Float -> Builder { m | supportsTime : () } -> Builder { m | supportsTime : () }
+speed : Float -> Builder { eng | withTiming : () } -> Builder { eng | withTiming : () }
 speed =
     Internal.speed
 
 
 {-| Set the animation duration (milliseconds).
 -}
-duration : Int -> Builder { m | supportsTime : () } -> Builder { m | supportsTime : () }
+duration : Int -> Builder { eng | withTiming : () } -> Builder { eng | withTiming : () }
 duration =
     Internal.duration
 
 
 {-| Set the delay (milliseconds) before the animation starts.
 -}
-delay : Int -> Builder { m | supportsTime : () } -> Builder { m | supportsTime : () }
+delay : Int -> Builder { eng | withTiming : () } -> Builder { eng | withTiming : () }
 delay =
     Internal.delay
 
@@ -338,7 +338,7 @@ delay =
 
 {-| Set the easing function.
 -}
-easing : Easing -> Builder mode -> Builder mode
+easing : Easing -> Builder eng -> Builder eng
 easing =
     Internal.easing
 
@@ -362,13 +362,13 @@ and vice versa — they are mutually exclusive.
     import Anim.Property.CustomColor as CustomColor
     import Motion.Spring as Spring
 
-    myAnimation : AnimBuilder mode -> AnimBuilder mode
+    myAnimation : AnimBuilder eng -> AnimBuilder eng
     myAnimation =
         CustomColor.for "box" BackgroundColor
             >> CustomColor.to (Color.rgb 255 0 0)
             >> CustomColor.spring Spring.wobbly
 
 -}
-spring : Spring -> Builder { m | supportsSpring : () } -> Builder { m | supportsSpring : () }
+spring : Spring -> Builder { eng | withSpring : () } -> Builder { eng | withSpring : () }
 spring =
     Internal.spring

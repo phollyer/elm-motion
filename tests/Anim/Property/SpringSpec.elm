@@ -34,7 +34,7 @@ import Test exposing (Test, describe, test)
 -- ============================================================
 
 
-initBuilder : Builder.AnimBuilder mode
+initBuilder : Builder.AnimBuilder eng
 initBuilder =
     Builder.init []
 
@@ -44,7 +44,7 @@ builder, in source order. A flat list of `Maybe Spring` is enough
 for the assertions below \\u2014 we don't care which constructor each
 came from.
 -}
-collectSprings : Builder.AnimBuilder mode -> List (Maybe Spring.Spring)
+collectSprings : Builder.AnimBuilder eng -> List (Maybe Spring.Spring)
 collectSprings builder =
     let
         groupSprings group =
@@ -119,7 +119,7 @@ propertyEasing p =
             Just cfg.easing
 
 
-collectEasings : Builder.AnimBuilder mode -> List (Maybe Easing)
+collectEasings : Builder.AnimBuilder eng -> List (Maybe Easing)
 collectEasings builder =
     Builder.process builder
         |> .groups

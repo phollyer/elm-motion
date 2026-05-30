@@ -104,7 +104,7 @@ for :
     -> (PropertyBaselines -> Maybe a)
     -> (Builder.PropertyConfig -> Maybe (Config a))
     -> Config a
-    -> AnimBuilder mode
+    -> AnimBuilder eng
     -> Config a
 for animGroupName propertyTypeTag extractBaseline extractExisting =
     resolveFor Fresh animGroupName propertyTypeTag extractBaseline extractExisting (\_ -> Nothing)
@@ -121,7 +121,7 @@ forContinuing :
     -> (Builder.PropertyConfig -> Maybe (Config a))
     -> (Builder.ProcessedPropertyConfig -> Maybe InheritedTiming)
     -> Config a
-    -> AnimBuilder mode
+    -> AnimBuilder eng
     -> Config a
 forContinuing =
     resolveFor Continuing
@@ -148,7 +148,7 @@ resolveFor :
     -> (Builder.PropertyConfig -> Maybe (Config a))
     -> (Builder.ProcessedPropertyConfig -> Maybe InheritedTiming)
     -> Config a
-    -> AnimBuilder mode
+    -> AnimBuilder eng
     -> Config a
 resolveFor mode animGroupName propertyTypeTag extractBaseline extractExisting extractProcessedTiming defaultConfig_ builder =
     let
@@ -286,7 +286,7 @@ resolveFor mode animGroupName propertyTypeTag extractBaseline extractExisting ex
 -- ============================================================
 
 
-upsert : Builder.PropertyConfig -> AnimBuilder mode -> AnimBuilder mode
+upsert : Builder.PropertyConfig -> AnimBuilder eng -> AnimBuilder eng
 upsert propertyConfig builder =
     case find (configsMatch propertyConfig) builder of
         Just _ ->
@@ -296,7 +296,7 @@ upsert propertyConfig builder =
             add propertyConfig builder
 
 
-add : Builder.PropertyConfig -> AnimBuilder mode -> AnimBuilder mode
+add : Builder.PropertyConfig -> AnimBuilder eng -> AnimBuilder eng
 add propertyConfig builder =
     let
         config =
@@ -305,7 +305,7 @@ add propertyConfig builder =
     Builder.updateCurrentConfig { config | properties = config.properties ++ [ propertyConfig ] } builder
 
 
-replace : Builder.PropertyConfig -> AnimBuilder mode -> AnimBuilder mode
+replace : Builder.PropertyConfig -> AnimBuilder eng -> AnimBuilder eng
 replace propertyConfig builder =
     let
         config =
@@ -318,7 +318,7 @@ replace propertyConfig builder =
     Builder.updateCurrentConfig { config | properties = properties } builder
 
 
-find : (Builder.PropertyConfig -> Bool) -> AnimBuilder mode -> Maybe Builder.PropertyConfig
+find : (Builder.PropertyConfig -> Bool) -> AnimBuilder eng -> Maybe Builder.PropertyConfig
 find predicate =
     Builder.getCurrentAnimGroupConfig
         >> .properties
@@ -365,7 +365,7 @@ applyFrozenAxes :
     -> (a -> { x : Float, y : Float, z : Float })
     -> ({ x : Float, y : Float, z : Float } -> a)
     -> (a -> a -> Float)
-    -> AnimBuilder mode
+    -> AnimBuilder eng
     -> Config a
     -> Config a
 applyFrozenAxes propertyName toRec fromRec calcDistance builder config =
@@ -424,7 +424,7 @@ applyFrozenAxes propertyName toRec fromRec calcDistance builder config =
 
 
 applyGlobalDefaults :
-    AnimBuilder mode
+    AnimBuilder eng
     -> { c | easing : Maybe Easing, spring : Maybe Spring, delay : Maybe Int, timing : Maybe TimeSpec }
     -> { c | easing : Maybe Easing, spring : Maybe Spring, delay : Maybe Int, timing : Maybe TimeSpec }
 applyGlobalDefaults builder config =
@@ -569,7 +569,7 @@ type alias AnimGroupName =
 getRange :
     (Builder.ProcessedPropertyConfig -> Maybe { start : Maybe a, end : a })
     -> AnimGroupName
-    -> AnimBuilder mode
+    -> AnimBuilder eng
     -> Maybe { start : Maybe a, end : a }
 getRange extractor animGroupName =
     Builder.getCurrentAnimationConfig animGroupName
@@ -584,7 +584,7 @@ getStart :
     a
     -> (Builder.ProcessedPropertyConfig -> Maybe { start : Maybe a, end : a })
     -> AnimGroupName
-    -> AnimBuilder mode
+    -> AnimBuilder eng
     -> Maybe a
 getStart default extractor animGroupName =
     getRange extractor animGroupName
@@ -595,7 +595,7 @@ getStart default extractor animGroupName =
 getEnd :
     (Builder.ProcessedPropertyConfig -> Maybe { start : Maybe a, end : a })
     -> AnimGroupName
-    -> AnimBuilder mode
+    -> AnimBuilder eng
     -> Maybe a
 getEnd extractor animGroupName =
     getRange extractor animGroupName
@@ -625,17 +625,17 @@ customPropertyExtractor cssName prop =
             Nothing
 
 
-getCustomPropertyRange : AnimGroupName -> String -> AnimBuilder mode -> Maybe { start : Maybe Float, end : Float }
+getCustomPropertyRange : AnimGroupName -> String -> AnimBuilder eng -> Maybe { start : Maybe Float, end : Float }
 getCustomPropertyRange animGroupName cssName =
     getRange (customPropertyExtractor cssName) animGroupName
 
 
-getCustomPropertyStart : AnimGroupName -> String -> AnimBuilder mode -> Maybe Float
+getCustomPropertyStart : AnimGroupName -> String -> AnimBuilder eng -> Maybe Float
 getCustomPropertyStart animGroupName cssName =
     getStart 0 (customPropertyExtractor cssName) animGroupName
 
 
-getCustomPropertyEnd : AnimGroupName -> String -> AnimBuilder mode -> Maybe Float
+getCustomPropertyEnd : AnimGroupName -> String -> AnimBuilder eng -> Maybe Float
 getCustomPropertyEnd animGroupName cssName =
     getEnd (customPropertyExtractor cssName) animGroupName
 
@@ -660,17 +660,17 @@ customColorPropertyExtractor cssName prop =
             Nothing
 
 
-getCustomColorPropertyRange : AnimGroupName -> String -> AnimBuilder mode -> Maybe { start : Maybe Color, end : Color }
+getCustomColorPropertyRange : AnimGroupName -> String -> AnimBuilder eng -> Maybe { start : Maybe Color, end : Color }
 getCustomColorPropertyRange animGroupName cssName =
     getRange (customColorPropertyExtractor cssName) animGroupName
 
 
-getCustomColorPropertyStart : AnimGroupName -> String -> AnimBuilder mode -> Maybe Color
+getCustomColorPropertyStart : AnimGroupName -> String -> AnimBuilder eng -> Maybe Color
 getCustomColorPropertyStart animGroupName cssName =
     getStart (Color.fromRGBA { r = 255, g = 255, b = 255, a = 0 }) (customColorPropertyExtractor cssName) animGroupName
 
 
-getCustomColorPropertyEnd : AnimGroupName -> String -> AnimBuilder mode -> Maybe Color
+getCustomColorPropertyEnd : AnimGroupName -> String -> AnimBuilder eng -> Maybe Color
 getCustomColorPropertyEnd animGroupName cssName =
     getEnd (customColorPropertyExtractor cssName) animGroupName
 
@@ -694,17 +694,17 @@ opacityExtractor prop =
             Nothing
 
 
-getOpacityRange : AnimGroupName -> AnimBuilder mode -> Maybe { start : Maybe Float, end : Float }
+getOpacityRange : AnimGroupName -> AnimBuilder eng -> Maybe { start : Maybe Float, end : Float }
 getOpacityRange =
     getRange opacityExtractor
 
 
-getOpacityStart : AnimGroupName -> AnimBuilder mode -> Maybe Float
+getOpacityStart : AnimGroupName -> AnimBuilder eng -> Maybe Float
 getOpacityStart =
     getStart (Opacity.toFloat Opacity.default) opacityExtractor
 
 
-getOpacityEnd : AnimGroupName -> AnimBuilder mode -> Maybe Float
+getOpacityEnd : AnimGroupName -> AnimBuilder eng -> Maybe Float
 getOpacityEnd =
     getEnd opacityExtractor
 
@@ -728,17 +728,17 @@ rotateExtractor prop =
             Nothing
 
 
-getRotateRange : AnimGroupName -> AnimBuilder mode -> Maybe { start : Maybe { x : Float, y : Float, z : Float }, end : { x : Float, y : Float, z : Float } }
+getRotateRange : AnimGroupName -> AnimBuilder eng -> Maybe { start : Maybe { x : Float, y : Float, z : Float }, end : { x : Float, y : Float, z : Float } }
 getRotateRange =
     getRange rotateExtractor
 
 
-getRotateStart : AnimGroupName -> AnimBuilder mode -> Maybe { x : Float, y : Float, z : Float }
+getRotateStart : AnimGroupName -> AnimBuilder eng -> Maybe { x : Float, y : Float, z : Float }
 getRotateStart =
     getStart (Rotate.toRecord Rotate.default) rotateExtractor
 
 
-getRotateEnd : AnimGroupName -> AnimBuilder mode -> Maybe { x : Float, y : Float, z : Float }
+getRotateEnd : AnimGroupName -> AnimBuilder eng -> Maybe { x : Float, y : Float, z : Float }
 getRotateEnd =
     getEnd rotateExtractor
 
@@ -762,17 +762,17 @@ scaleExtractor prop =
             Nothing
 
 
-getScaleRange : AnimGroupName -> AnimBuilder mode -> Maybe { start : Maybe { x : Float, y : Float, z : Float }, end : { x : Float, y : Float, z : Float } }
+getScaleRange : AnimGroupName -> AnimBuilder eng -> Maybe { start : Maybe { x : Float, y : Float, z : Float }, end : { x : Float, y : Float, z : Float } }
 getScaleRange =
     getRange scaleExtractor
 
 
-getScaleStart : AnimGroupName -> AnimBuilder mode -> Maybe { x : Float, y : Float, z : Float }
+getScaleStart : AnimGroupName -> AnimBuilder eng -> Maybe { x : Float, y : Float, z : Float }
 getScaleStart =
     getStart (Scale.toRecord Scale.default) scaleExtractor
 
 
-getScaleEnd : AnimGroupName -> AnimBuilder mode -> Maybe { x : Float, y : Float, z : Float }
+getScaleEnd : AnimGroupName -> AnimBuilder eng -> Maybe { x : Float, y : Float, z : Float }
 getScaleEnd =
     getEnd scaleExtractor
 
@@ -796,17 +796,17 @@ sizeExtractor prop =
             Nothing
 
 
-getSizeRange : AnimGroupName -> AnimBuilder mode -> Maybe { start : Maybe { width : Float, height : Float }, end : { width : Float, height : Float } }
+getSizeRange : AnimGroupName -> AnimBuilder eng -> Maybe { start : Maybe { width : Float, height : Float }, end : { width : Float, height : Float } }
 getSizeRange =
     getRange sizeExtractor
 
 
-getSizeStart : AnimGroupName -> AnimBuilder mode -> Maybe { width : Float, height : Float }
+getSizeStart : AnimGroupName -> AnimBuilder eng -> Maybe { width : Float, height : Float }
 getSizeStart =
     getStart (Size.toRecord Size.default) sizeExtractor
 
 
-getSizeEnd : AnimGroupName -> AnimBuilder mode -> Maybe { width : Float, height : Float }
+getSizeEnd : AnimGroupName -> AnimBuilder eng -> Maybe { width : Float, height : Float }
 getSizeEnd =
     getEnd sizeExtractor
 
@@ -830,17 +830,17 @@ perspectiveOriginExtractor prop =
             Nothing
 
 
-getPerspectiveOriginRange : AnimGroupName -> AnimBuilder mode -> Maybe { start : Maybe { x : Float, y : Float }, end : { x : Float, y : Float } }
+getPerspectiveOriginRange : AnimGroupName -> AnimBuilder eng -> Maybe { start : Maybe { x : Float, y : Float }, end : { x : Float, y : Float } }
 getPerspectiveOriginRange =
     getRange perspectiveOriginExtractor
 
 
-getPerspectiveOriginStart : AnimGroupName -> AnimBuilder mode -> Maybe { x : Float, y : Float }
+getPerspectiveOriginStart : AnimGroupName -> AnimBuilder eng -> Maybe { x : Float, y : Float }
 getPerspectiveOriginStart =
     getStart (PerspectiveOrigin.toRecord PerspectiveOrigin.default) perspectiveOriginExtractor
 
 
-getPerspectiveOriginEnd : AnimGroupName -> AnimBuilder mode -> Maybe { x : Float, y : Float }
+getPerspectiveOriginEnd : AnimGroupName -> AnimBuilder eng -> Maybe { x : Float, y : Float }
 getPerspectiveOriginEnd =
     getEnd perspectiveOriginExtractor
 
@@ -864,17 +864,17 @@ skewExtractor prop =
             Nothing
 
 
-getSkewRange : AnimGroupName -> AnimBuilder mode -> Maybe { start : Maybe { x : Float, y : Float }, end : { x : Float, y : Float } }
+getSkewRange : AnimGroupName -> AnimBuilder eng -> Maybe { start : Maybe { x : Float, y : Float }, end : { x : Float, y : Float } }
 getSkewRange =
     getRange skewExtractor
 
 
-getSkewStart : AnimGroupName -> AnimBuilder mode -> Maybe { x : Float, y : Float }
+getSkewStart : AnimGroupName -> AnimBuilder eng -> Maybe { x : Float, y : Float }
 getSkewStart =
     getStart (Skew.toRecord Skew.default) skewExtractor
 
 
-getSkewEnd : AnimGroupName -> AnimBuilder mode -> Maybe { x : Float, y : Float }
+getSkewEnd : AnimGroupName -> AnimBuilder eng -> Maybe { x : Float, y : Float }
 getSkewEnd =
     getEnd skewExtractor
 
@@ -898,16 +898,16 @@ translateExtractor prop =
             Nothing
 
 
-getTranslateRange : AnimGroupName -> AnimBuilder mode -> Maybe { start : Maybe { x : Float, y : Float, z : Float }, end : { x : Float, y : Float, z : Float } }
+getTranslateRange : AnimGroupName -> AnimBuilder eng -> Maybe { start : Maybe { x : Float, y : Float, z : Float }, end : { x : Float, y : Float, z : Float } }
 getTranslateRange =
     getRange translateExtractor
 
 
-getTranslateStart : AnimGroupName -> AnimBuilder mode -> Maybe { x : Float, y : Float, z : Float }
+getTranslateStart : AnimGroupName -> AnimBuilder eng -> Maybe { x : Float, y : Float, z : Float }
 getTranslateStart =
     getStart (Translate.toRecord Translate.default) translateExtractor
 
 
-getTranslateEnd : AnimGroupName -> AnimBuilder mode -> Maybe { x : Float, y : Float, z : Float }
+getTranslateEnd : AnimGroupName -> AnimBuilder eng -> Maybe { x : Float, y : Float, z : Float }
 getTranslateEnd =
     getEnd translateExtractor

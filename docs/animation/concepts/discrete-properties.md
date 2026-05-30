@@ -210,8 +210,8 @@ The three arguments are: property name, value during animation, value after anim
 
 | Function | Type | Description |
 | -------- | ---- | ----------- |
-| `discreteEntry` | `String -> String -> AnimBuilder mode -> AnimBuilder mode` | Set a CSS discrete property value when the animation starts |
-| `discreteExit` | `String -> String -> String -> AnimBuilder mode -> AnimBuilder mode` | Set a CSS discrete property value during and after the animation |
+| `discreteEntry` | `String -> String -> AnimBuilder eng -> AnimBuilder eng` | Set a CSS discrete property value when the animation starts |
+| `discreteExit` | `String -> String -> String -> AnimBuilder eng -> AnimBuilder eng` | Set a CSS discrete property value during and after the animation |
 
 ## Next Steps
 

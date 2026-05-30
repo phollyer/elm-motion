@@ -23,7 +23,7 @@ or 1.0 if not set.
 
     import Easing exposing (Easing(..))
 
-    myAnimation : AnimBuilder mode -> AnimBuilder mode
+    myAnimation : AnimBuilder eng -> AnimBuilder eng
     myAnimation =
         Scale.for "animGroupName"
             >> Scale.toXY 1.5 1.5
@@ -122,8 +122,8 @@ type alias AnimGroupName =
 
 {-| Builder type for scale animations.
 -}
-type alias Builder mode =
-    SB.ScaleBuilder mode
+type alias Builder eng =
+    SB.ScaleBuilder eng
 
 
 
@@ -148,7 +148,7 @@ Use this to initialize the scale in your Engine's `init` function.
 This is equivalent to calling `initXYZ 1.5 1.5 1.5`.
 
 -}
-init : AnimGroupName -> Float -> AnimBuilder mode -> AnimBuilder mode
+init : AnimGroupName -> Float -> AnimBuilder eng -> AnimBuilder eng
 init animationKey value animBuilder =
     animBuilder
         |> SB.for animationKey
@@ -169,7 +169,7 @@ init animationKey value animBuilder =
         )
 
 -}
-initXYZ : AnimGroupName -> Float -> Float -> Float -> AnimBuilder mode -> AnimBuilder mode
+initXYZ : AnimGroupName -> Float -> Float -> Float -> AnimBuilder eng -> AnimBuilder eng
 initXYZ animationKey x y z animBuilder =
     animBuilder
         |> SB.for animationKey
@@ -190,7 +190,7 @@ initXYZ animationKey x y z animBuilder =
         )
 
 -}
-initXY : AnimGroupName -> Float -> Float -> AnimBuilder mode -> AnimBuilder mode
+initXY : AnimGroupName -> Float -> Float -> AnimBuilder eng -> AnimBuilder eng
 initXY animationKey x y animBuilder =
     animBuilder
         |> SB.for animationKey
@@ -211,7 +211,7 @@ initXY animationKey x y animBuilder =
         )
 
 -}
-initXZ : AnimGroupName -> Float -> Float -> AnimBuilder mode -> AnimBuilder mode
+initXZ : AnimGroupName -> Float -> Float -> AnimBuilder eng -> AnimBuilder eng
 initXZ animationKey x z animBuilder =
     animBuilder
         |> SB.for animationKey
@@ -232,7 +232,7 @@ initXZ animationKey x z animBuilder =
         )
 
 -}
-initX : AnimGroupName -> Float -> AnimBuilder mode -> AnimBuilder mode
+initX : AnimGroupName -> Float -> AnimBuilder eng -> AnimBuilder eng
 initX animationKey x animBuilder =
     animBuilder
         |> SB.for animationKey
@@ -253,7 +253,7 @@ initX animationKey x animBuilder =
         )
 
 -}
-initYZ : AnimGroupName -> Float -> Float -> AnimBuilder mode -> AnimBuilder mode
+initYZ : AnimGroupName -> Float -> Float -> AnimBuilder eng -> AnimBuilder eng
 initYZ animationKey y z animBuilder =
     animBuilder
         |> SB.for animationKey
@@ -274,7 +274,7 @@ initYZ animationKey y z animBuilder =
         )
 
 -}
-initY : AnimGroupName -> Float -> AnimBuilder mode -> AnimBuilder mode
+initY : AnimGroupName -> Float -> AnimBuilder eng -> AnimBuilder eng
 initY animationKey y animBuilder =
     animBuilder
         |> SB.for animationKey
@@ -295,7 +295,7 @@ initY animationKey y animBuilder =
         )
 
 -}
-initZ : AnimGroupName -> Float -> AnimBuilder mode -> AnimBuilder mode
+initZ : AnimGroupName -> Float -> AnimBuilder eng -> AnimBuilder eng
 initZ animationKey z animBuilder =
     animBuilder
         |> SB.for animationKey
@@ -314,13 +314,13 @@ initZ animationKey z animBuilder =
 
 Use this to start configuring a scale animation.
 
-    myAnimation : AnimBuilder mode -> AnimBuilder mode
+    myAnimation : AnimBuilder eng -> AnimBuilder eng
     myAnimation =
         Scale.for "animGroupName"
             >> ... -- Configure and build the animation
 
 -}
-for : AnimGroupName -> AnimBuilder mode -> Builder mode
+for : AnimGroupName -> AnimBuilder eng -> Builder eng
 for =
     SB.for
 
@@ -328,7 +328,7 @@ for =
 {-| Complete the [Builder](#Builder) animation configuration and return an `AnimBuilder`
 so you can continue configuring other property animations or execute the animation with an Engine.
 
-    myAnimation : AnimBuilder mode -> AnimBuilder mode
+    myAnimation : AnimBuilder eng -> AnimBuilder eng
     myAnimation =
         Scale.for "animGroupName"
             >> ... -- configure the animation with from, to, duration, easing, etc.
@@ -336,7 +336,7 @@ so you can continue configuring other property animations or execute the animati
             >> ... -- continue with animation
 
 -}
-build : Builder mode -> AnimBuilder mode
+build : Builder eng -> AnimBuilder eng
 build =
     SB.build
 
@@ -349,7 +349,7 @@ build =
 
 {-| Set the starting scale (uniform across all axes).
 
-    myAnimation : AnimBuilder mode -> AnimBuilder mode
+    myAnimation : AnimBuilder eng -> AnimBuilder eng
     myAnimation =
         Scale.for "animGroupName"
             >> Scale.from 0.8
@@ -358,28 +358,28 @@ build =
 This is equivalent to `Scale.fromXYZ 0.8 0.8 0.8`.
 
 -}
-from : Float -> Builder mode -> Builder mode
+from : Float -> Builder eng -> Builder eng
 from uniformScale =
     SB.fromXYZ uniformScale uniformScale uniformScale
 
 
 {-| Set the starting X, Y, and Z scale.
 
-    myAnimation : AnimBuilder mode -> AnimBuilder mode
+    myAnimation : AnimBuilder eng -> AnimBuilder eng
     myAnimation =
         Scale.for "animGroupName"
             >> Scale.fromXYZ 0.8 1.2 0.9
             >> ... -- continue with animation
 
 -}
-fromXYZ : Float -> Float -> Float -> Builder mode -> Builder mode
+fromXYZ : Float -> Float -> Float -> Builder eng -> Builder eng
 fromXYZ =
     SB.fromXYZ
 
 
 {-| Set the starting X and Y scale.
 
-    myAnimation : AnimBuilder mode -> AnimBuilder mode
+    myAnimation : AnimBuilder eng -> AnimBuilder eng
     myAnimation =
         Scale.for "animGroupName"
             >> Scale.fromXY 0.8 1.2
@@ -388,14 +388,14 @@ fromXYZ =
 The Z scale remains unchanged, or 1.0 if not set.
 
 -}
-fromXY : Float -> Float -> Builder mode -> Builder mode
+fromXY : Float -> Float -> Builder eng -> Builder eng
 fromXY =
     SB.fromXY
 
 
 {-| Set the starting X and Z scale.
 
-    myAnimation : AnimBuilder mode -> AnimBuilder mode
+    myAnimation : AnimBuilder eng -> AnimBuilder eng
     myAnimation =
         Scale.for "animGroupName"
             >> Scale.fromXZ 0.8 0.9
@@ -404,14 +404,14 @@ fromXY =
 The Y scale remains unchanged, or 1.0 if not set.
 
 -}
-fromXZ : Float -> Float -> Builder mode -> Builder mode
+fromXZ : Float -> Float -> Builder eng -> Builder eng
 fromXZ =
     SB.fromXZ
 
 
 {-| Set the starting X-axis scale.
 
-    myAnimation : AnimBuilder mode -> AnimBuilder mode
+    myAnimation : AnimBuilder eng -> AnimBuilder eng
     myAnimation =
         Scale.for "animGroupName"
             >> Scale.fromX 0.8
@@ -420,14 +420,14 @@ fromXZ =
 The Y and Z scales remain unchanged, or 1.0 if not set.
 
 -}
-fromX : Float -> Builder mode -> Builder mode
+fromX : Float -> Builder eng -> Builder eng
 fromX =
     SB.fromX
 
 
 {-| Set the starting Y and Z scale.
 
-    myAnimation : AnimBuilder mode -> AnimBuilder mode
+    myAnimation : AnimBuilder eng -> AnimBuilder eng
     myAnimation =
         Scale.for "animGroupName"
             >> Scale.fromYZ 1.2 0.9
@@ -436,14 +436,14 @@ fromX =
 The X scale remains unchanged, or 1.0 if not set.
 
 -}
-fromYZ : Float -> Float -> Builder mode -> Builder mode
+fromYZ : Float -> Float -> Builder eng -> Builder eng
 fromYZ =
     SB.fromYZ
 
 
 {-| Set the starting Y-axis scale.
 
-    myAnimation : AnimBuilder mode -> AnimBuilder mode
+    myAnimation : AnimBuilder eng -> AnimBuilder eng
     myAnimation =
         Scale.for "animGroupName"
             >> Scale.fromY 1.2
@@ -452,14 +452,14 @@ fromYZ =
 The X and Z scales remain unchanged, or 1.0 if not set.
 
 -}
-fromY : Float -> Builder mode -> Builder mode
+fromY : Float -> Builder eng -> Builder eng
 fromY =
     SB.fromY
 
 
 {-| Set the starting Z-axis scale.
 
-    myAnimation : AnimBuilder mode -> AnimBuilder mode
+    myAnimation : AnimBuilder eng -> AnimBuilder eng
     myAnimation =
         Scale.for "animGroupName"
             >> Scale.fromZ 1.1
@@ -468,7 +468,7 @@ fromY =
 The X and Y scales remain unchanged, or 1.0 if not set.
 
 -}
-fromZ : Float -> Builder mode -> Builder mode
+fromZ : Float -> Builder eng -> Builder eng
 fromZ =
     SB.fromZ
 
@@ -481,7 +481,7 @@ fromZ =
 
 {-| Set the target scale for the current animation group (uniform across all axes).
 
-    myAnimation : AnimBuilder mode -> AnimBuilder mode
+    myAnimation : AnimBuilder eng -> AnimBuilder eng
     myAnimation =
         Scale.for "animGroupName"
             >> Scale.to 1.5
@@ -490,28 +490,28 @@ fromZ =
 This is equivalent to `toXYZ 1.5 1.5 1.5`.
 
 -}
-to : Float -> Builder mode -> Builder mode
+to : Float -> Builder eng -> Builder eng
 to targetScale =
     SB.toXYZ targetScale targetScale targetScale
 
 
 {-| Set the target X, Y, and Z scale for the current animation group.
 
-    myAnimation : AnimBuilder mode -> AnimBuilder mode
+    myAnimation : AnimBuilder eng -> AnimBuilder eng
     myAnimation =
         Scale.for "animGroupName"
             >> Scale.toXYZ 1.5 2.0 0.8
             >> ... -- continue with animation
 
 -}
-toXYZ : Float -> Float -> Float -> Builder mode -> Builder mode
+toXYZ : Float -> Float -> Float -> Builder eng -> Builder eng
 toXYZ =
     SB.toXYZ
 
 
 {-| Set the target X and Y scale for the current animation group.
 
-    myAnimation : AnimBuilder mode -> AnimBuilder mode
+    myAnimation : AnimBuilder eng -> AnimBuilder eng
     myAnimation =
         Scale.for "animGroupName"
             >> Scale.toXY 1.5 2.0
@@ -520,14 +520,14 @@ toXYZ =
 The Z scale remains unchanged, or 1.0 if not set.
 
 -}
-toXY : Float -> Float -> Builder mode -> Builder mode
+toXY : Float -> Float -> Builder eng -> Builder eng
 toXY =
     SB.toXY
 
 
 {-| Set the target X and Z scale for the current animation group.
 
-    myAnimation : AnimBuilder mode -> AnimBuilder mode
+    myAnimation : AnimBuilder eng -> AnimBuilder eng
     myAnimation =
         Scale.for "animGroupName"
             >> Scale.toXZ 1.5 0.8
@@ -536,14 +536,14 @@ toXY =
 The Y scale remains unchanged, or 1.0 if not set.
 
 -}
-toXZ : Float -> Float -> Builder mode -> Builder mode
+toXZ : Float -> Float -> Builder eng -> Builder eng
 toXZ =
     SB.toXZ
 
 
 {-| Set the target X-axis scale for the current animation group.
 
-    myAnimation : AnimBuilder mode -> AnimBuilder mode
+    myAnimation : AnimBuilder eng -> AnimBuilder eng
     myAnimation =
         Scale.for "animGroupName"
             >> Scale.toX 2.0
@@ -552,14 +552,14 @@ toXZ =
 The Y and Z scales remain unchanged, or 1.0 if not set.
 
 -}
-toX : Float -> Builder mode -> Builder mode
+toX : Float -> Builder eng -> Builder eng
 toX =
     SB.toX
 
 
 {-| Set the target Y and Z scale for the current animation group.
 
-    myAnimation : AnimBuilder mode -> AnimBuilder mode
+    myAnimation : AnimBuilder eng -> AnimBuilder eng
     myAnimation =
         Scale.for "animGroupName"
             >> Scale.toYZ 1.5 0.8
@@ -568,14 +568,14 @@ toX =
 The X scale remains unchanged, or 1.0 if not set.
 
 -}
-toYZ : Float -> Float -> Builder mode -> Builder mode
+toYZ : Float -> Float -> Builder eng -> Builder eng
 toYZ =
     SB.toYZ
 
 
 {-| Set the target Y-axis scale for the current animation group.
 
-    myAnimation : AnimBuilder mode -> AnimBuilder mode
+    myAnimation : AnimBuilder eng -> AnimBuilder eng
     myAnimation =
         Scale.for "animGroupName"
             >> Scale.toY 1.5
@@ -584,14 +584,14 @@ toYZ =
 The X and Z scales remain unchanged, or 1.0 if not set.
 
 -}
-toY : Float -> Builder mode -> Builder mode
+toY : Float -> Builder eng -> Builder eng
 toY =
     SB.toY
 
 
 {-| Set the target Z-axis scale for the current animation group.
 
-    myAnimation : AnimBuilder mode -> AnimBuilder mode
+    myAnimation : AnimBuilder eng -> AnimBuilder eng
     myAnimation =
         Scale.for "animGroupName"
             >> Scale.toZ 0.8
@@ -600,7 +600,7 @@ toY =
 The X and Y scales remain unchanged, or 1.0 if not set.
 
 -}
-toZ : Float -> Builder mode -> Builder mode
+toZ : Float -> Builder eng -> Builder eng
 toZ =
     SB.toZ
 
@@ -613,7 +613,7 @@ toZ =
 
 {-| Set the delay (milliseconds) before the animation starts.
 
-    myAnimation : AnimBuilder mode -> AnimBuilder mode
+    myAnimation : AnimBuilder eng -> AnimBuilder eng
     myAnimation =
         Scale.for "animGroupName"
             >> Scale.to 1.5
@@ -621,14 +621,14 @@ toZ =
             >> ... -- continue with animation
 
 -}
-delay : Int -> Builder { m | supportsTime : () } -> Builder { m | supportsTime : () }
+delay : Int -> Builder { eng | withTiming : () } -> Builder { eng | withTiming : () }
 delay =
     SB.delay
 
 
 {-| Set the animation duration (milliseconds).
 
-    myAnimation : AnimBuilder mode -> AnimBuilder mode
+    myAnimation : AnimBuilder eng -> AnimBuilder eng
     myAnimation =
         Scale.for "animGroupName"
             >> Scale.to 1.5
@@ -636,7 +636,7 @@ delay =
             >> ... -- continue with animation
 
 -}
-duration : Int -> Builder { m | supportsTime : () } -> Builder { m | supportsTime : () }
+duration : Int -> Builder { eng | withTiming : () } -> Builder { eng | withTiming : () }
 duration =
     SB.duration
 
@@ -646,7 +646,7 @@ duration =
 For example, lets take a scale animation from `1.0` to `5.0`.
 A speed of `2.0` means the scale will change by 2.0 units per second, so our animation will take 2 seconds to complete (1.0 -> 3.0 in 1 second, then 3.0 -> 5.0 in the next second).
 
-    myAnimation : AnimBuilder mode -> AnimBuilder mode
+    myAnimation : AnimBuilder eng -> AnimBuilder eng
     myAnimation =
         Scale.for "animGroupName"
             >> Scale.toXYZ 5.0 5.0 5.0
@@ -656,7 +656,7 @@ A speed of `2.0` means the scale will change by 2.0 units per second, so our ani
 Similarly, a speed of `4.0` would complete the same animation in 1 second, and a speed of `1.0` would take 4 seconds.
 
 -}
-speed : Float -> Builder { m | supportsTime : () } -> Builder { m | supportsTime : () }
+speed : Float -> Builder { eng | withTiming : () } -> Builder { eng | withTiming : () }
 speed =
     SB.speed
 
@@ -671,7 +671,7 @@ speed =
 
     import Easing exposing (Easing(..))
 
-    myAnimation : AnimBuilder mode -> AnimBuilder mode
+    myAnimation : AnimBuilder eng -> AnimBuilder eng
     myAnimation =
         Scale.for "animGroupName"
             >> Scale.to 1.5
@@ -679,7 +679,7 @@ speed =
             >> ... -- continue with animation
 
 -}
-easing : Easing -> Builder mode -> Builder mode
+easing : Easing -> Builder eng -> Builder eng
 easing =
     SB.easing
 
@@ -701,14 +701,14 @@ and vice versa — they are mutually exclusive.
 
     import Motion.Spring as Spring
 
-    myAnimation : AnimBuilder mode -> AnimBuilder mode
+    myAnimation : AnimBuilder eng -> AnimBuilder eng
     myAnimation =
         Scale.for "animGroupName"
             >> Scale.to 1.5
             >> Scale.spring Spring.wobbly
 
 -}
-spring : Spring -> Builder { m | supportsSpring : () } -> Builder { m | supportsSpring : () }
+spring : Spring -> Builder { eng | withSpring : () } -> Builder { eng | withSpring : () }
 spring =
     SB.spring
 
@@ -728,7 +728,7 @@ until you call [unclampX](#unclampX). If `min > max`, the values are swapped.
 for patterns and examples.
 
 -}
-clampX : Float -> Float -> Builder mode -> Builder mode
+clampX : Float -> Float -> Builder eng -> Builder eng
 clampX =
     SB.clampX
 
@@ -738,7 +738,7 @@ clampX =
 See [clampX](#clampX) for behaviour.
 
 -}
-clampY : Float -> Float -> Builder mode -> Builder mode
+clampY : Float -> Float -> Builder eng -> Builder eng
 clampY =
     SB.clampY
 
@@ -748,28 +748,28 @@ clampY =
 See [clampX](#clampX) for behaviour.
 
 -}
-clampZ : Float -> Float -> Builder mode -> Builder mode
+clampZ : Float -> Float -> Builder eng -> Builder eng
 clampZ =
     SB.clampZ
 
 
 {-| Remove the X axis range for this animation group. Does nothing if no range is set.
 -}
-unclampX : Builder mode -> Builder mode
+unclampX : Builder eng -> Builder eng
 unclampX =
     SB.unclampX
 
 
 {-| Remove the Y axis range for this animation group. Does nothing if no range is set.
 -}
-unclampY : Builder mode -> Builder mode
+unclampY : Builder eng -> Builder eng
 unclampY =
     SB.unclampY
 
 
 {-| Remove the Z axis range for this animation group. Does nothing if no range is set.
 -}
-unclampZ : Builder mode -> Builder mode
+unclampZ : Builder eng -> Builder eng
 unclampZ =
     SB.unclampZ
 

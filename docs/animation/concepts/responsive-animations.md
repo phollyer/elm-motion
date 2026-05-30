@@ -99,7 +99,7 @@ Relative units are the best fit when:
 ??? example "Example: responsive animation with relative units"
 
     ```elm
-    dropBall : AnimBuilder mode -> AnimBuilder mode
+    dropBall : AnimBuilder eng -> AnimBuilder eng
     dropBall =
         Translate.for "ball"
             >> Translate.cssUnit Cqh

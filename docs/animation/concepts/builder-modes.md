@@ -1,98 +1,79 @@
 # Builder Modes
 
-Builder modes are used in the type signatures of your builder functions, and determine how portable your animations are. Use the default mode for maximum portability, narrow the mode when the need arises.
+All animations are built using the property modules, they all use the same API. What differs are Engine capabilities.
 
-## The Default: `AnimBuilder mode`
+Each Engine has its own set of capabilities in line with it's target output - CSS transitions, @keyframes, JS Web Animations API etc. CSS transitions for instance, do not natively support looping or alternating, and it would be lax of this library to allow animations into production with capabilities not supported by the Engine consuming it.
 
-Most builders should look like this:
+The last thing you need is for someone to switch a nice looping animation from the Keyframe Engine to the Transition Engine, and then silently lose the looping behaviour.
 
-??? example "View Source Code"
+This is where **builder modes** come in; if an animation is built using a capability an Engine does not support, the compiler will complain, and any relevant tooling you may be using like [Elm Language Server](https://github.com/elm-tooling/elm-language-server) will flag the type error immediately.
 
-    ```elm
-    import Anim.Builder exposing (AnimBuilder)
+For example, here is a builder function with the Timing capability:
 
-    f : AnimBuilder mode -> AnimBuilder mode
-    ```
-    The lowercase `mode` is a type variable - "whatever `mode` the caller has, this builder accepts it and returns the same one". A builder defined this way can be used by all animation engines, and in general this is exacly what you want.
+```elm
+f : AnimBuilder { eng | withTiming : () } -> AnimBuilder { eng | withTiming : () }
+```
 
-    If you're new to type variables, `mode` can be expressed however you want, it just needs to be consistent: `AnimBuilder m -> AnimBuilder m` works just the same. Throughout these docs we use `mode`.
+The Timing capability covers three functions: `delay`, `duration` and `speed`. Wherever you see these functions in the property modules, they will declare the `withTiming` capability in their type signature.
+
+So when you see:
+
+```elm
+delay : Int -> AnimBuilder { eng | withTiming : () } -> AnimBuilder { eng | withTiming : () } 
+```
+
+You can just read it naturally as "an `AnimBuider` for an Engine with timing capabilities".
+
+In general, you will only need these capability type annotations for reference, and then only if you want to preempt the compiler. Most of the time you should only need to think about these when the compiler complains. The type annotations you write for your builder functions will mostly be like:
+
+- `AnimBuilder eng` - portable across every engine
+- `Engine.EngineBuilder` - locked to a single engine (e.g. `Transition.EngineBuilder`)
+
+The compiler will then tell you if an animation is being consumed by an Engine that does not support some of the capabilities the animation uses.
+
+---
+
+## Capability Reference
+
+Each capability is declared by one or more functions in the API. If your builder composes any of them, the corresponding capability is added to its inferred type, and any Engine that lacks that capability is barred from running it.
+
+| Capability           | Declared by                  | Supported by                       |
+| -------------------- | ---------------------------- | ---------------------------------- |
+| `withTiming`         | `delay`, `duration`, `speed` | Transition, Keyframe, Sub, WAAPI   |
+| `withSpring`         | `spring`                     | Keyframe, Sub, WAAPI, ScrollTimeline, ViewTimeline |
+| `withIterations`     | `iterations`                 | Keyframe, Sub, WAAPI, ScrollTimeline, ViewTimeline |
+| `withAlternate`      | `alternate`                  | Keyframe, Sub, WAAPI, ScrollTimeline, ViewTimeline |
+| `withLoopForever`    | `loopForever`                | Keyframe, Sub, WAAPI               |
+| `withTransformOrder` | `transformOrder`             | Keyframe, Sub, WAAPI, ScrollTimeline, ViewTimeline |
+| `withProgressEvents` | progress event subscriptions | Sub, WAAPI, ScrollTimeline, ViewTimeline           |
+
+The capability field names (`withTiming`, `withSpring`, ...) are what the compiler reports when there's a mismatch - you don't write them, you just read them in the error.
 
 
+## Locking to a Single Engine
 
-## Narrowing the `mode`
+If you ever wish to enforce the use of a particular Engine, maybe if using a different Engine would be considered a bug, then you can use each Engine's own `EngineBuilder`.
 
-In general, you'll want to keep your builders as portable as you can, but if you introduce engine specific behaviour it will narrow the `mode`. The narrowed `mode` will then bleed into any other builders it composes with and makes the builders less portable:
+Annotate the builder with a specific Engine's `EngineBuilder` type and the compiler will only allow that Engine to consume it:
 
-??? example "View Source Code"
+```elm
+heroEntrance : AnimGroupName -> Transition.EngineBuilder -> Transition.EngineBuilder
+heroEntrance group =
+    Opacity.for group
+        >> Opacity.to 1
+        >> Opacity.duration 400
+        >> Opacity.build
+```
 
-    ```elm
-    fadeIn : AnimGroupName -> AnimBuilder (ForDocumentTimeline ForTransitionEngine) -> AnimBuilder (ForDocumentTimeline ForTransitionEngine)
-    fadeIn  animGroup =
-        Transition.discreteEntry "display" "flex" -- Engine specific behaviour
-            >> Opacity.for animGroup
-            >> Opacity.to 1
-            >> Opacity.duration 400
-            >> Opacity.build
-    ```
+Each Engine module exposes its own alias:
 
-    Only works with Transition engine. Every other engine is now barred from using this `fadeIn` builder.
-
-
-The obvious way to avoid this is to simply put your engine specific behaviour with the trigger:
-
-??? example "View Source Code"
-
-    ```elm
-    Transition.animate model.animState <|
-        Transition.discreteEntry "display" "flex"
-            >> fadeIn
-    ```
-
-    `fadeIn` can now be made portable again for use by any engine.
-
-However, there may be times when you intentionally want to narrow the `mode` of a builder to a particular Timeline or Engine:
-
-- When requiring Engine specific behaviour and using a different Engine would be considered a bug
-- When the builder only makes sense on a particular Timeline - for example a parallax effect that has no meaning on the Document timeline
-
-### Restricting by Timeline
-
-If you want a builder that is restricted to a specific timeline, just replace `mode` with the required timeline type:
-
-??? example "View Source Code"
-
-    ```elm
-    f : AnimBuilder ForScrollTimeline -> AnimBuilder ForScrollTimeline
-    
-    f : AnimBuilder ForViewTimeline -> AnimBuilder FoeViewTimeline
-    
-    f : AnimBuilder (ForDocumentTimeline engine)  -> AnimBuilder (ForDocumentTimeline engine)
-    ```
-
-### Restricting by Engine
-
-If you want a builder tied to one specific engine on the Document timeline, just replace the `engine` type variable with the required Engine type:
-
-??? example "View Source Code"
-
-    ```elm
-    -- all engines
-    f : AnimBuilder (ForDocumentTimeline engine)  -> AnimBuilder (ForDocumentTimeline engine)
-
-    -- specific engines
-    f : AnimBuilder (ForDocumentTimeline ForTransition)  -> AnimBuilder (ForDocumentTimeline ForTransition)
-
-    f : AnimBuilder (ForDocumentTimeline ForWAAPI)  -> AnimBuilder (ForDocumentTimeline ForWAAPI)
-    ```
-
-## Shorthand `modes`
-
-The engine modules also export shorter aliases, for example:
-
-- `Transition.EngineBuilder` == `AnimBuilder (ForDocumentTimeline ForTransition)`
+- `Transition.EngineBuilder`
+- `Keyframe.EngineBuilder`
+- `Sub.EngineBuilder`
+- `WAAPI.EngineBuilder`
+- `ScrollTimeline.TimelineBuilder`
+- `ViewTimeline.TimelineBuilder`
 
 ## Next Steps
-
-Learn about Interrupting Animations mid-flight.
 
 [Interrupting Animations →](../concepts/interrupting-animations.md){ .md-button .md-button--primary }

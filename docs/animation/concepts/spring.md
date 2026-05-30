@@ -90,7 +90,7 @@ A spring can be set at either level, with the same precedence rules as easing:
     ```elm
     import Motion.Spring as Spring
 
-    bouncyReveal : AnimBuilder mode -> AnimBuilder mode
+    bouncyReveal : AnimBuilder eng -> AnimBuilder eng
     bouncyReveal =
         Translate.for "panel"
             >> Translate.toX 0

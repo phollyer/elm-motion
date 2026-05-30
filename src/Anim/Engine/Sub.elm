@@ -271,8 +271,8 @@ type alias AnimState =
 
 {-| Type alias for the base [AnimBuilder](Anim.Builder#AnimBuilder) type.
 -}
-type alias AnimBuilder mode =
-    Internal.AnimBuilder mode
+type alias AnimBuilder eng =
+    Internal.AnimBuilder eng
 
 
 {-| The name of the animation group you want to target.
@@ -569,7 +569,7 @@ attributes =
 
 {-| Set how many times an animation should repeat.
 
-    notificationAttentionLoop : AnimBuilder mode -> AnimBuilder mode
+    notificationAttentionLoop : AnimBuilder eng -> AnimBuilder eng
     notificationAttentionLoop =
         iterations 3
             >> pulseBadge
@@ -604,7 +604,7 @@ loopForever =
 
 {-| Make an animation alternate direction on each iteration.
 
-    floatingCardLoop : AnimBuilder mode -> AnimBuilder mode
+    floatingCardLoop : AnimBuilder eng -> AnimBuilder eng
     floatingCardLoop =
         iterations 4
             >> alternate
@@ -630,7 +630,7 @@ alternate =
 
 {-| Set the global delay for all animations in this builder.
 
-    introAnim : AnimBuilder mode -> AnimBuilder mode
+    introAnim : AnimBuilder eng -> AnimBuilder eng
     introAnim =
         delay 500
             >> fadeInHeader
@@ -645,7 +645,7 @@ delay =
 
 {-| Set the global duration for all animations in this builder.
 
-    introAnim : AnimBuilder mode -> AnimBuilder mode
+    introAnim : AnimBuilder eng -> AnimBuilder eng
     introAnim =
         duration 500
             >> fadeInHeader
@@ -660,7 +660,7 @@ duration =
 
 {-| Set the global speed for all animations in this builder.
 
-    introAnim : AnimBuilder mode -> AnimBuilder mode
+    introAnim : AnimBuilder eng -> AnimBuilder eng
     introAnim =
         speed 300
             >> slideDownHeader
@@ -681,7 +681,7 @@ speed =
 
 {-| Set the global easing function.
 
-    heroEntrance : AnimBuilder mode -> AnimBuilder mode
+    heroEntrance : AnimBuilder eng -> AnimBuilder eng
     heroEntrance =
         easing EaseInOut
             >> fadeInHeroTitle
@@ -702,7 +702,7 @@ easing =
 
 {-| Set the default length unit for all length-bearing properties.
 
-    responsivePanelMotion : AnimBuilder mode -> AnimBuilder mode
+    responsivePanelMotion : AnimBuilder eng -> AnimBuilder eng
     responsivePanelMotion =
         cssUnit Unit.Vw
             >> slidePanelIn
@@ -716,7 +716,7 @@ cssUnit =
 
 {-| Set the default length unit for the X axis.
 
-    responsiveDrawerMotion : AnimBuilder mode -> AnimBuilder mode
+    responsiveDrawerMotion : AnimBuilder eng -> AnimBuilder eng
     responsiveDrawerMotion =
         cssUnitX Unit.Vw
             >> slideDrawerX
@@ -730,7 +730,7 @@ cssUnitX =
 
 {-| Set the default length unit for the Y axis.
 
-    responsiveSheetMotion : AnimBuilder mode -> AnimBuilder mode
+    responsiveSheetMotion : AnimBuilder eng -> AnimBuilder eng
     responsiveSheetMotion =
         cssUnitY Unit.Vh
             >> slideSheetY
@@ -744,7 +744,7 @@ cssUnitY =
 
 {-| Set the default length unit for the Z axis.
 
-    layeredSceneMotion : AnimBuilder mode -> AnimBuilder mode
+    layeredSceneMotion : AnimBuilder eng -> AnimBuilder eng
     layeredSceneMotion =
         cssUnitZ Unit.Px
             >> pushSceneBackgroundBack
@@ -758,7 +758,7 @@ cssUnitZ =
 
 {-| Set the default length unit used for width values in Sub animations.
 
-    responsiveCardWidth : AnimBuilder mode -> AnimBuilder mode
+    responsiveCardWidth : AnimBuilder eng -> AnimBuilder eng
     responsiveCardWidth =
         cssUnitWidth Unit.Vw
             >> growCardWidth
@@ -772,7 +772,7 @@ cssUnitWidth =
 
 {-| Set the default length unit used for height values in Sub animations.
 
-    responsivePanelHeight : AnimBuilder mode -> AnimBuilder mode
+    responsivePanelHeight : AnimBuilder eng -> AnimBuilder eng
     responsivePanelHeight =
         cssUnitHeight Unit.Vh
             >> expandPanelHeight
@@ -792,7 +792,7 @@ cssUnitHeight =
 
 {-| Set the global spring.
 
-    draggableCardSettle : AnimBuilder mode -> AnimBuilder mode
+    draggableCardSettle : AnimBuilder eng -> AnimBuilder eng
     draggableCardSettle =
         spring Spring.wobbly
             >> settleCardPosition

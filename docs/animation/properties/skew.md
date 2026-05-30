@@ -13,7 +13,7 @@ Skew elements along the X and Y axes.
     ```elm
     import Anim.Property.Skew as Skew
 
-    tilt : AnimBuilder mode -> AnimBuilder mode
+    tilt : AnimBuilder eng -> AnimBuilder eng
     tilt =
         Skew.for "animGroup"
             >> Skew.toXY 12 0
@@ -36,16 +36,16 @@ See the [Properties Overview](overview.md) page for the shared usage patterns.
 
 | Function | Signature | Description |
 | -------- | --------- | ----------- |
-| `initXY` | `AnimGroupName -> Float -> Float -> AnimBuilder mode -> AnimBuilder mode` | Set the initial X and Y skew |
-| `initX` | `AnimGroupName -> Float -> AnimBuilder mode -> AnimBuilder mode` | Set the initial X skew |
-| `initY` | `AnimGroupName -> Float -> AnimBuilder mode -> AnimBuilder mode` | Set the initial Y skew |
+| `initXY` | `AnimGroupName -> Float -> Float -> AnimBuilder eng -> AnimBuilder eng` | Set the initial X and Y skew |
+| `initX` | `AnimGroupName -> Float -> AnimBuilder eng -> AnimBuilder eng` | Set the initial X skew |
+| `initY` | `AnimGroupName -> Float -> AnimBuilder eng -> AnimBuilder eng` | Set the initial Y skew |
 
 ### Build
 
 | Function | Signature | Description |
 | -------- | --------- | ----------- |
-| `for` | `AnimGroupName -> AnimBuilder mode -> Builder mode` | Start building |
-| `build` | `Builder mode -> AnimBuilder mode` | Finish building |
+| `for` | `AnimGroupName -> AnimBuilder eng -> Builder mode` | Start building |
+| `build` | `Builder mode -> AnimBuilder eng` | Finish building |
 
 ### Start Value
 

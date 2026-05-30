@@ -24,7 +24,7 @@ or 0 if not set.
 
     import Easing exposing (Easing(..))
 
-    myAnimation : AnimBuilder mode -> AnimBuilder mode
+    myAnimation : AnimBuilder eng -> AnimBuilder eng
     myAnimation =
         Size.for "animGroupName"
             >> Size.toHW 200 100
@@ -144,8 +144,8 @@ type alias AnimGroupName =
 
 {-| Builder type for size animations.
 -}
-type alias Builder mode =
-    SB.SizeBuilder mode
+type alias Builder eng =
+    SB.SizeBuilder eng
 
 
 
@@ -170,7 +170,7 @@ Use this to initialize the size in your Engine's `init` function.
 This is equivalent to calling `initHW 100 100`.
 
 -}
-init : AnimGroupName -> Float -> AnimBuilder mode -> AnimBuilder mode
+init : AnimGroupName -> Float -> AnimBuilder eng -> AnimBuilder eng
 init animationKey value animBuilder =
     animBuilder
         |> SB.for animationKey
@@ -192,7 +192,7 @@ init animationKey value animBuilder =
         )
 
 -}
-initHW : AnimGroupName -> Float -> Float -> AnimBuilder mode -> AnimBuilder mode
+initHW : AnimGroupName -> Float -> Float -> AnimBuilder eng -> AnimBuilder eng
 initHW animationKey h w animBuilder =
     animBuilder
         |> SB.for animationKey
@@ -214,7 +214,7 @@ initHW animationKey h w animBuilder =
         )
 
 -}
-initW : AnimGroupName -> Float -> AnimBuilder mode -> AnimBuilder mode
+initW : AnimGroupName -> Float -> AnimBuilder eng -> AnimBuilder eng
 initW animationKey w animBuilder =
     animBuilder
         |> SB.for animationKey
@@ -236,7 +236,7 @@ initW animationKey w animBuilder =
         )
 
 -}
-initH : AnimGroupName -> Float -> AnimBuilder mode -> AnimBuilder mode
+initH : AnimGroupName -> Float -> AnimBuilder eng -> AnimBuilder eng
 initH animationKey h animBuilder =
     animBuilder
         |> SB.for animationKey
@@ -266,7 +266,7 @@ Later per-axis setters ([`initUnitW`](#initUnitW),
         ]
 
 -}
-initUnit : Unit -> AnimBuilder mode -> AnimBuilder mode
+initUnit : Unit -> AnimBuilder eng -> AnimBuilder eng
 initUnit =
     IB.setSizeInitCssUnit
 
@@ -274,7 +274,7 @@ initUnit =
 {-| Set the width-axis unit used by every subsequent `init*` call for `Size`
 values. Overrides any unit set by [`initUnit`](#initUnit) on the width axis.
 -}
-initUnitW : Unit -> AnimBuilder mode -> AnimBuilder mode
+initUnitW : Unit -> AnimBuilder eng -> AnimBuilder eng
 initUnitW =
     IB.setSizeInitCssUnitWidth
 
@@ -282,7 +282,7 @@ initUnitW =
 {-| Set the height-axis unit used by every subsequent `init*` call for `Size`
 values. Overrides any unit set by [`initUnit`](#initUnit) on the height axis.
 -}
-initUnitH : Unit -> AnimBuilder mode -> AnimBuilder mode
+initUnitH : Unit -> AnimBuilder eng -> AnimBuilder eng
 initUnitH =
     IB.setSizeInitCssUnitHeight
 
@@ -297,13 +297,13 @@ initUnitH =
 
 Use this to start configuring a size animation.
 
-    myAnimation : AnimBuilder mode -> AnimBuilder mode
+    myAnimation : AnimBuilder eng -> AnimBuilder eng
     myAnimation =
         Size.for "animGroupName"
             >> ... -- Configure and build the animation
 
 -}
-for : AnimGroupName -> AnimBuilder mode -> Builder mode
+for : AnimGroupName -> AnimBuilder eng -> Builder eng
 for =
     SB.for
 
@@ -311,7 +311,7 @@ for =
 {-| Complete the [Builder](#Builder) animation configuration and return an `AnimBuilder`
 so you can continue configuring other property animations or execute the animation with an Engine.
 
-    myAnimation : AnimBuilder mode -> AnimBuilder mode
+    myAnimation : AnimBuilder eng -> AnimBuilder eng
     myAnimation =
         Size.for "animGroupName"
             >> ... -- configure the animation with from, to, duration, easing, etc.
@@ -319,7 +319,7 @@ so you can continue configuring other property animations or execute the animati
             >> ... -- continue with animation
 
 -}
-build : Builder mode -> AnimBuilder mode
+build : Builder eng -> AnimBuilder eng
 build =
     SB.build
 
@@ -332,21 +332,21 @@ build =
 
 {-| Set the starting height and width.
 
-    myAnimation : AnimBuilder mode -> AnimBuilder mode
+    myAnimation : AnimBuilder eng -> AnimBuilder eng
     myAnimation =
         Size.for "animGroupName"
             >> Size.fromHW 200 100
             >> ... -- continue with animation
 
 -}
-fromHW : Float -> Float -> Builder mode -> Builder mode
+fromHW : Float -> Float -> Builder eng -> Builder eng
 fromHW =
     SB.fromHW
 
 
 {-| Set the starting height, keeping the current width.
 
-    myAnimation : AnimBuilder mode -> AnimBuilder mode
+    myAnimation : AnimBuilder eng -> AnimBuilder eng
     myAnimation =
         Size.for "animGroupName"
             >> Size.fromH 150
@@ -355,14 +355,14 @@ fromHW =
 The width remains unchanged, or 0 if not set.
 
 -}
-fromH : Float -> Builder mode -> Builder mode
+fromH : Float -> Builder eng -> Builder eng
 fromH =
     SB.fromH
 
 
 {-| Set the starting width, keeping the current height.
 
-    myAnimation : AnimBuilder mode -> AnimBuilder mode
+    myAnimation : AnimBuilder eng -> AnimBuilder eng
     myAnimation =
         Size.for "animGroupName"
             >> Size.fromW 250
@@ -371,14 +371,14 @@ fromH =
 The height remains unchanged, or 0 if not set.
 
 -}
-fromW : Float -> Builder mode -> Builder mode
+fromW : Float -> Builder eng -> Builder eng
 fromW =
     SB.fromW
 
 
 {-| Set the starting width and height to the same value.
 
-    myAnimation : AnimBuilder mode -> AnimBuilder mode
+    myAnimation : AnimBuilder eng -> AnimBuilder eng
     myAnimation =
         Size.for "animGroupName"
             >> Size.from 100
@@ -387,7 +387,7 @@ fromW =
 This is equivalent to calling `fromHW 100 100`.
 
 -}
-from : Float -> Builder mode -> Builder mode
+from : Float -> Builder eng -> Builder eng
 from value =
     SB.fromHW value value
 
@@ -400,21 +400,21 @@ from value =
 
 {-| Set the target height and width for the current animation group.
 
-    myAnimation : AnimBuilder mode -> AnimBuilder mode
+    myAnimation : AnimBuilder eng -> AnimBuilder eng
     myAnimation =
         Size.for "animGroupName"
             >> Size.toHW 200 100
             >> ... -- continue with animation
 
 -}
-toHW : Float -> Float -> Builder mode -> Builder mode
+toHW : Float -> Float -> Builder eng -> Builder eng
 toHW =
     SB.toHW
 
 
 {-| Set the target height for the current animation group, keeping the current target width.
 
-    myAnimation : AnimBuilder mode -> AnimBuilder mode
+    myAnimation : AnimBuilder eng -> AnimBuilder eng
     myAnimation =
         Size.for "animGroupName"
             >> Size.toH 150
@@ -423,14 +423,14 @@ toHW =
 The width remains unchanged, or 0 if not set.
 
 -}
-toH : Float -> Builder mode -> Builder mode
+toH : Float -> Builder eng -> Builder eng
 toH =
     SB.toH
 
 
 {-| Set the target width for the current animation group, keeping the current target height.
 
-    myAnimation : AnimBuilder mode -> AnimBuilder mode
+    myAnimation : AnimBuilder eng -> AnimBuilder eng
     myAnimation =
         Size.for "animGroupName"
             >> Size.toW 250
@@ -439,7 +439,7 @@ toH =
 The height remains unchanged, or 0 if not set.
 
 -}
-toW : Float -> Builder mode -> Builder mode
+toW : Float -> Builder eng -> Builder eng
 toW =
     SB.toW
 
@@ -452,7 +452,7 @@ toW =
 
 {-| Set the delay (milliseconds) before the animation starts.
 
-    myAnimation : AnimBuilder mode -> AnimBuilder mode
+    myAnimation : AnimBuilder eng -> AnimBuilder eng
     myAnimation =
         Size.for "animGroupName"
             >> Size.toHW 200 100
@@ -460,14 +460,14 @@ toW =
             >> ... -- continue with animation
 
 -}
-delay : Int -> Builder { m | supportsTime : () } -> Builder { m | supportsTime : () }
+delay : Int -> Builder { eng | withTiming : () } -> Builder { eng | withTiming : () }
 delay =
     SB.delay
 
 
 {-| Set the animation duration (milliseconds).
 
-    myAnimation : AnimBuilder mode -> AnimBuilder mode
+    myAnimation : AnimBuilder eng -> AnimBuilder eng
     myAnimation =
         Size.for "animGroupName"
             >> Size.toHW 200 100
@@ -475,7 +475,7 @@ delay =
             >> ... -- continue with animation
 
 -}
-duration : Int -> Builder { m | supportsTime : () } -> Builder { m | supportsTime : () }
+duration : Int -> Builder { eng | withTiming : () } -> Builder { eng | withTiming : () }
 duration =
     SB.duration
 
@@ -485,7 +485,7 @@ duration =
 For example, lets take a size animation from `(100, 100)` to `(200, 200)`.
 A speed of `50.0` means the size will change by 50 pixels per second, so our animation will take 2 seconds to complete.
 
-    myAnimation : AnimBuilder mode -> AnimBuilder mode
+    myAnimation : AnimBuilder eng -> AnimBuilder eng
     myAnimation =
         Size.for "animGroupName"
             >> Size.toHW 200 200
@@ -495,7 +495,7 @@ A speed of `50.0` means the size will change by 50 pixels per second, so our ani
 Similarly, a speed of `100.0` would complete the same animation in 1 second, and a speed of `25.0` would take 4 seconds.
 
 -}
-speed : Float -> Builder { m | supportsTime : () } -> Builder { m | supportsTime : () }
+speed : Float -> Builder { eng | withTiming : () } -> Builder { eng | withTiming : () }
 speed =
     SB.speed
 
@@ -510,7 +510,7 @@ speed =
 
     import Easing exposing (Easing(..))
 
-    myAnimation : AnimBuilder mode -> AnimBuilder mode
+    myAnimation : AnimBuilder eng -> AnimBuilder eng
     myAnimation =
         Size.for "animGroupName"
             >> Size.toHW 200 100
@@ -518,7 +518,7 @@ speed =
             >> ... -- continue with animation
 
 -}
-easing : Easing -> Builder mode -> Builder mode
+easing : Easing -> Builder eng -> Builder eng
 easing =
     SB.easing
 
@@ -540,14 +540,14 @@ and vice versa — they are mutually exclusive.
 
     import Motion.Spring as Spring
 
-    myAnimation : AnimBuilder mode -> AnimBuilder mode
+    myAnimation : AnimBuilder eng -> AnimBuilder eng
     myAnimation =
         Size.for "animGroupName"
             >> Size.toHW 200 100
             >> Size.spring Spring.wobbly
 
 -}
-spring : Spring -> Builder { m | supportsSpring : () } -> Builder { m | supportsSpring : () }
+spring : Spring -> Builder { eng | withSpring : () } -> Builder { eng | withSpring : () }
 spring =
     SB.spring
 
@@ -567,7 +567,7 @@ animation follows resize automatically.
 
     import Anim.Unit as Unit
 
-    myAnimation : AnimBuilder mode -> AnimBuilder mode
+    myAnimation : AnimBuilder eng -> AnimBuilder eng
     myAnimation =
         Size.for "animGroupName"
             >> Size.toHW 50 80
@@ -581,7 +581,7 @@ The `Sub` engine currently only supports `Px`; setting a non-`Px` unit on a
 size targeted at `Sub` reports an error and falls back to `Px`.
 
 -}
-cssUnit : Unit -> Builder mode -> Builder mode
+cssUnit : Unit -> Builder eng -> Builder eng
 cssUnit =
     SB.cssUnit
 
@@ -590,7 +590,7 @@ cssUnit =
 this property. Overrides any unit set by [`cssUnit`](#cssUnit) or by the
 engine's `cssUnit`/`cssUnitWidth` setter for the width axis.
 -}
-cssUnitWidth : Unit -> Builder mode -> Builder mode
+cssUnitWidth : Unit -> Builder eng -> Builder eng
 cssUnitWidth =
     SB.cssUnitWidth
 
@@ -599,7 +599,7 @@ cssUnitWidth =
 for this property. Overrides any unit set by [`cssUnit`](#cssUnit) or by the
 engine's `cssUnit`/`cssUnitHeight` setter for the height axis.
 -}
-cssUnitHeight : Unit -> Builder mode -> Builder mode
+cssUnitHeight : Unit -> Builder eng -> Builder eng
 cssUnitHeight =
     SB.cssUnitHeight
 
@@ -619,7 +619,7 @@ until you call [unclampWidth](#unclampWidth). If `min > max`, the values are swa
 for patterns and examples.
 
 -}
-clampWidth : Float -> Float -> Builder mode -> Builder mode
+clampWidth : Float -> Float -> Builder eng -> Builder eng
 clampWidth =
     SB.clampWidth
 
@@ -629,20 +629,20 @@ clampWidth =
 See [clampWidth](#clampWidth) for behaviour.
 
 -}
-clampHeight : Float -> Float -> Builder mode -> Builder mode
+clampHeight : Float -> Float -> Builder eng -> Builder eng
 clampHeight =
     SB.clampHeight
 
 
 {-| Remove the width range for this animation group. Does nothing if no range is set.
 -}
-unclampWidth : Builder mode -> Builder mode
+unclampWidth : Builder eng -> Builder eng
 unclampWidth =
     SB.unclampWidth
 
 
 {-| Remove the height range for this animation group. Does nothing if no range is set.
 -}
-unclampHeight : Builder mode -> Builder mode
+unclampHeight : Builder eng -> Builder eng
 unclampHeight =
     SB.unclampHeight

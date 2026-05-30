@@ -119,7 +119,7 @@ suite =
 -- HELPERS
 
 
-rotateBuilder : Builder.AnimBuilder { m | supportsTime : () } -> Builder.AnimBuilder { m | supportsTime : () }
+rotateBuilder : Builder.AnimBuilder { eng | withTiming : () } -> Builder.AnimBuilder { eng | withTiming : () }
 rotateBuilder =
     Rotate.for "cube"
         >> Rotate.toZ 90

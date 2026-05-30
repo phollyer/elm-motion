@@ -42,7 +42,7 @@ Define your animations once, then run them with any Engine.
 
 ```elm
 -- Define once
-fadeIn : AnimBuilder mode -> AnimBuilder mode
+fadeIn : AnimBuilder eng -> AnimBuilder eng
 fadeIn =
     Opacity.for "entranceAnim"
         >> Opacity.from 0
@@ -71,19 +71,19 @@ can easily build animations from smaller pieces.
 
 ```elm
 -- Standard timing for all animations
-standardTiming : AnimBuilder mode -> AnimBuilder mode 
+standardTiming : AnimBuilder eng -> AnimBuilder eng 
 standardTiming =
     Transition.duration 300
         >> Transition.easing QuadOut
 
 -- Define animations
-fadeIn : AnimBuilder mode -> AnimBuilder mode
+fadeIn : AnimBuilder eng -> AnimBuilder eng
 fadeIn =
     Opacity.for "headerEntranceAnim"
         >> Opacity.to 1
         >> Opacity.build
 
-slideIn : AnimBuilder mode -> AnimBuilder mode
+slideIn : AnimBuilder eng -> AnimBuilder eng
 slideIn =
     Translate.for "sidebarEntranceAnim"
         >> Translate.toX 0
@@ -163,7 +163,7 @@ init =
 
 
 -- 2. Define your animation
-fadeInHeader : AnimBuilder mode -> AnimBuilder mode
+fadeInHeader : AnimBuilder eng -> AnimBuilder eng
 fadeInHeader =
     Opacity.for "headerAnim"
         >> Opacity.to 1
