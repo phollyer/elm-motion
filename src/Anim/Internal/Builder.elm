@@ -92,6 +92,8 @@ module Anim.Internal.Builder exposing
     , process
     , processProperties
     , processedPropertyType
+    , processedPropertyMode
+    , partitionByMode
     , processedTimings
     , setAnimTarget
     , setClamp
@@ -1583,6 +1585,58 @@ processedPropertyType prop =
 
         ProcessedTranslateConfig _ ->
             "translate"
+
+
+{-| Extract the [`AnimationMode`](#AnimationMode) from a
+[`ProcessedPropertyConfig`](#ProcessedPropertyConfig), regardless of which
+property variant it wraps. Used by engines to branch interpolated vs
+snapped rendering.
+-}
+processedPropertyMode : ProcessedPropertyConfig -> AnimationMode
+processedPropertyMode prop =
+    case prop of
+        ProcessedCustomPropertyConfig _ _ cfg ->
+            cfg.mode
+
+        ProcessedCustomColorPropertyConfig _ cfg ->
+            cfg.mode
+
+        ProcessedOpacityConfig cfg ->
+            cfg.mode
+
+        ProcessedPerspectiveOriginConfig cfg ->
+            cfg.mode
+
+        ProcessedRotateConfig cfg ->
+            cfg.mode
+
+        ProcessedScaleConfig cfg ->
+            cfg.mode
+
+        ProcessedSizeConfig cfg ->
+            cfg.mode
+
+        ProcessedSkewConfig cfg ->
+            cfg.mode
+
+        ProcessedTranslateConfig cfg ->
+            cfg.mode
+
+
+{-| Partition a list of [`ProcessedPropertyConfig`](#ProcessedPropertyConfig)
+by their [`AnimationMode`](#AnimationMode): properties with
+`mode = Animate` go in `animate`, properties with `mode = Snap` go in
+`snap`.
+-}
+partitionByMode :
+    List ProcessedPropertyConfig
+    -> { animate : List ProcessedPropertyConfig, snap : List ProcessedPropertyConfig }
+partitionByMode props =
+    let
+        ( snapped, animated ) =
+            List.partition (\p -> processedPropertyMode p == Snap) props
+    in
+    { animate = animated, snap = snapped }
 
 
 {-| Extract `duration` and `delay` (in milliseconds) from a

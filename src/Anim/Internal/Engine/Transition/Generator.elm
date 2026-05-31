@@ -90,8 +90,15 @@ baseStyles discreteTransitions discreteEntry discreteExit processedProps =
 generate : Bool -> Dict String String -> Dict String Builder.DiscreteExitProperty -> List Builder.ProcessedPropertyConfig -> String
 generate discreteTransitions discreteEntry discreteExit properties =
     let
+        -- Snap properties get no transition rule - the style change happens
+        -- instantly because the browser only interpolates properties listed
+        -- in `transition`. End-value styles are still emitted via
+        -- TransitionStyles.fromProcessedProperties regardless of mode.
+        animated =
+            (Builder.partitionByMode properties).animate
+
         allDurationsZero =
-            properties
+            animated
                 |> List.all
                     (\prop ->
                         case prop of
@@ -144,13 +151,13 @@ generate discreteTransitions discreteEntry discreteExit properties =
     else
         let
             transformTransition =
-                transformTransitionFromProcessed properties
+                transformTransitionFromProcessed animated
 
             nonTransformTransitions =
-                List.filterMap nonTransformTransitionFromProcessed properties
+                List.filterMap nonTransformTransitionFromProcessed animated
 
             mainDuration =
-                maxAnimationDuration properties
+                maxAnimationDuration animated
 
             discreteTransitions_ =
                 List.map
