@@ -1,5 +1,6 @@
 module Anim.Internal.Builder.Scale exposing
     ( ScaleBuilder
+    , bounds
     , build
     , clampX
     , clampY
@@ -399,6 +400,21 @@ setY y =
 setZ : Float -> ScaleBuilder eng -> ScaleBuilder eng
 setZ z =
     toZ z >> snap
+
+
+
+-- ============================================================
+-- BOUNDS (resize)
+-- ============================================================
+
+
+{-| Mark this scale config as a `RemapToBounds` resize directive for
+the current animation group. See `Anim.Internal.Builder.Translate.bounds`
+for the design.
+-}
+bounds : Builder.AxisRanges -> ScaleBuilder { eng | withBounds : () } -> ScaleBuilder { eng | withBounds : () }
+bounds ranges (ScaleBuilder config builder) =
+    ScaleBuilder { config | mode = Builder.RemapToBounds ranges } builder
 
 
 

@@ -1,6 +1,7 @@
 module Anim.Internal.Builder.PerspectiveOrigin exposing
     ( PerspectiveOriginBuilder
     , applyInitCssUnit
+    , bounds
     , build
     , clampX
     , clampY
@@ -260,6 +261,21 @@ setX x =
 setY : Float -> PerspectiveOriginBuilder eng -> PerspectiveOriginBuilder eng
 setY y =
     toY y >> snap
+
+
+
+-- ============================================================
+-- BOUNDS (resize)
+-- ============================================================
+
+
+{-| Mark this perspective-origin config as a `RemapToBounds` resize
+directive for the current animation group. See
+`Anim.Internal.Builder.Translate.bounds` for the design.
+-}
+bounds : Builder.AxisRanges -> PerspectiveOriginBuilder { eng | withBounds : () } -> PerspectiveOriginBuilder { eng | withBounds : () }
+bounds ranges (PerspectiveOriginBuilder config builder) =
+    PerspectiveOriginBuilder { config | mode = Builder.RemapToBounds ranges } builder
 
 
 

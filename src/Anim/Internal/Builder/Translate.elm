@@ -3,6 +3,7 @@ module Anim.Internal.Builder.Translate exposing
     , applyInitCssUnitX
     , applyInitCssUnitY
     , applyInitCssUnitZ
+    , bounds
     , build
     , by
     , byX
@@ -656,6 +657,23 @@ setY y =
 setZ : Float -> TranslateBuilder eng -> TranslateBuilder eng
 setZ z =
     toZ z >> snap
+
+
+
+-- ============================================================
+-- BOUNDS (resize)
+-- ============================================================
+
+
+{-| Mark this translate config as a `RemapToBounds` resize directive
+for the current animation group. Engines outside `onResize` ignore
+these entries (see `Builder.partitionForResize`); the `withBounds`
+phantom on the engine tag makes that a compile-time guarantee for the
+public API.
+-}
+bounds : Builder.AxisRanges -> TranslateBuilder { eng | withBounds : () } -> TranslateBuilder { eng | withBounds : () }
+bounds ranges (TranslateBuilder config builder) =
+    TranslateBuilder { config | mode = Builder.RemapToBounds ranges } builder
 
 
 
