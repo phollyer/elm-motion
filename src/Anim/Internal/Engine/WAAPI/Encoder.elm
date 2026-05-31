@@ -412,11 +412,6 @@ encodeResize r =
 -- ============================================================
 
 
-encodeMaybeFloat : Maybe Float -> Encode.Value
-encodeMaybeFloat =
-    Maybe.map Encode.float >> Maybe.withDefault Encode.null
-
-
 encodeProcessedAnimGroupConfig :
     AnimGroupName
     -> String
