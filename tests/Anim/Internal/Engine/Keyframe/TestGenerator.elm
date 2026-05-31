@@ -4,6 +4,7 @@ import Anim.Internal.Builder as Builder
 import Anim.Internal.Engine.Keyframe.AnimGroup as KeyframeAnimGroup
 import Anim.Internal.Engine.Keyframe.Animation as Animation
 import Anim.Internal.Engine.Keyframe.Generator as Generator
+import Anim.Internal.Property.Opacity as Opacity
 import Anim.Internal.Property.Translate as Translate
 import Anim.Internal.Unit as InternalUnit
 import Dict
@@ -33,6 +34,7 @@ suite =
         [ initTests
         , keyframeContentTests
         , interpolationTests
+        , snapModeTests
         ]
 
 
@@ -171,4 +173,57 @@ interpolationTests =
                 Generator.init Nothing Builder.Once Builder.Normal Generator.emptyDiscreteConfig "noOp" [ noOpTranslate ]
                     |> KeyframeAnimGroup.getAnimation
                     |> Expect.notEqual Nothing
+        ]
+
+
+snapTranslateConfig : Builder.PropertyConfig
+snapTranslateConfig =
+    Builder.TranslateConfig
+        { start = Just (Translate.fromTriple ( 0, 0, 0 ))
+        , end = Translate.fromTriple ( 100, 0, 0 )
+        , distance = 100
+        , timing = Just (Duration 1000)
+        , easing = Nothing
+        , spring = Nothing
+        , delay = Nothing
+        , cssUnit = InternalUnit.emptyCssUnitAxes
+        , mode = Builder.Snap
+        }
+
+
+snapModeTests : Test
+snapModeTests =
+    describe "Snap mode"
+        [ test "Snap-only properties produce no @keyframes animation" <|
+            \_ ->
+                Generator.init Nothing Builder.Once Builder.Normal Generator.emptyDiscreteConfig "snap" [ snapTranslateConfig ]
+                    |> KeyframeAnimGroup.getAnimation
+                    |> Expect.equal Nothing
+        , test "Snap properties do not appear in keyframes when mixed with Animate" <|
+            \_ ->
+                let
+                    animateOpacity =
+                        Builder.OpacityConfig
+                            { start = Nothing
+                            , end = Opacity.fromFloat 0
+                            , distance = 1
+                            , timing = Just (Duration 1000)
+                            , easing = Nothing
+                            , spring = Nothing
+                            , delay = Nothing
+                            , cssUnit = InternalUnit.emptyCssUnitAxes
+                            , mode = Builder.Animate
+                            }
+                in
+                Generator.init Nothing Builder.Once Builder.Normal Generator.emptyDiscreteConfig "mix" [ animateOpacity, snapTranslateConfig ]
+                    |> KeyframeAnimGroup.getAnimation
+                    |> Maybe.map Animation.getKeyframes
+                    |> Maybe.withDefault ""
+                    |> (\kf ->
+                            Expect.all
+                                [ \s -> Expect.equal True (String.contains "opacity" s)
+                                , \s -> Expect.equal False (String.contains "translate3d" s)
+                                ]
+                                kf
+                       )
         ]

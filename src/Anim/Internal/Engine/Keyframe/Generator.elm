@@ -109,21 +109,28 @@ generateRestart counter maybeOrder iterationCount direction maybeTargetValues di
 
 generate : String -> Int -> Maybe (List TransformProperty) -> Builder.Iterations -> Builder.AnimationDirection -> Maybe PropertyBaselines -> DiscreteConfig -> List Builder.ProcessedPropertyConfig -> AnimGroup
 generate name counter maybeOrder iterationCount direction maybeTargetValues discrete properties =
+    let
+        -- Snap properties are excluded from the @keyframes rule so the
+        -- browser does not interpolate them; their end-value styles are
+        -- still emitted as base styles via KeyframeStyles.
+        animated =
+            (Builder.partitionByMode properties).animate
+    in
     AnimGroup.init
         |> AnimGroup.setStyles (KeyframeStyles.fromProcessedProperties maybeOrder maybeTargetValues [] properties)
         |> AnimGroup.setRestartCounter counter
         |> AnimGroup.setIterationCount 0
-        |> AnimGroup.setWillChange (Builder.willChangeComposite properties)
+        |> AnimGroup.setWillChange (Builder.willChangeComposite animated)
         |> AnimGroup.setDiscreteEntry discrete.entry
         |> AnimGroup.setDiscreteExit discrete.exit
         |> (\animGroup ->
-                if List.isEmpty properties && Dict.isEmpty discrete.entry && Dict.isEmpty discrete.exit then
+                if List.isEmpty animated && Dict.isEmpty discrete.entry && Dict.isEmpty discrete.exit then
                     animGroup
 
                 else
                     let
                         ( maxDuration, maxDelay ) =
-                            getMaxTimings properties
+                            getMaxTimings animated
 
                         totalDuration =
                             maxDuration + maxDelay
@@ -139,7 +146,7 @@ generate name counter maybeOrder iterationCount direction maybeTargetValues disc
                     else
                         let
                             keyframesString =
-                                properties
+                                animated
                                     |> generateSteps maybeOrder maybeTargetValues maxDuration maxDelay discrete
                                     |> buildKeyframesString name
                         in
