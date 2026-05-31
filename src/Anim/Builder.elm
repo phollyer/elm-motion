@@ -1,7 +1,6 @@
 module Anim.Builder exposing
     ( AnimBuilder
-    , ForScroll, ForView
-    , ForKeyframe, ForSub, ForTransition, ForWAAPI
+    , ForKeyframe, ForSub, ForTransition, ForWAAPI, ForScroll, ForView
     , delay, duration, speed
     , iterations, alternate
     , easing, spring
@@ -16,24 +15,14 @@ This module is mainly for shared type annotations and global builder settings.
 
 # Types
 
-📖 See [Engine Capabilities](https://phollyer.github.io/elm-motion/animation/concepts/engine-capabilities/)
-in the docs for detailed examples and patterns.
-
 @docs AnimBuilder
-
-
-## Timeline Capabilities
-
-Use these in type annotations when a builder function should only work on a certain timeline.
-
-@docs ForScroll, ForView
-
-
-### Engine Capabilities
 
 Use these to constrain a builder function to one specific Engine.
 
-@docs ForKeyframe, ForSub, ForTransition, ForWAAPI
+@docs ForKeyframe, ForSub, ForTransition, ForWAAPI, ForScroll, ForView
+
+📖 See [Engine Capabilities](https://phollyer.github.io/elm-motion/animation/concepts/engine-capabilities/)
+in the docs for detailed examples and patterns.
 
 
 # Document Timeline Functions

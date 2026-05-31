@@ -130,7 +130,7 @@ type AnimState
         { builder : EngineBuilder
         , subscriptionsActive : Bool
         , pendingControlEvents : List ControlEvent
-        , lastResize : ResizeBuilder.Builder
+        , lastResize : Dict.Dict ( AnimGroupName, String ) Bounds
         }
         (AnimGroups AnimGroup)
 
@@ -165,7 +165,7 @@ init propertyInitializers =
                 { builder = Builder.init []
                 , subscriptionsActive = False
                 , pendingControlEvents = []
-                , lastResize = ResizeBuilder.empty
+                , lastResize = Dict.empty
                 }
                 AnimGroups.init
 
@@ -191,7 +191,7 @@ init propertyInitializers =
                         |> Builder.mergeBaselines
                         |> Builder.clearAnimData
                 , pendingControlEvents = []
-                , lastResize = ResizeBuilder.empty
+                , lastResize = Dict.empty
                 }
                 (AnimGroups.map initGroup animGroups)
 
@@ -701,66 +701,65 @@ subscriptions toMsg (AnimState state _) =
 -- ============================================================
 
 
-{-| Adjust the in-flight properties of every anim group named in the
-builder to match new bounding ranges, using the directives composed in a
-[`Anim.Resize.Builder`](Anim-Resize#Builder).
+{-| Adjust the in-flight properties of every anim group referenced by the
+resize builder to match new bounding ranges.
 
-Properties without a directive on a given group are left alone. Axes set
-to `Nothing` are left alone. Groups that do not exist are silently
+Properties without a bounds entry for a given group are left alone. Axes
+set to `Nothing` are left alone. Groups that do not exist are silently
 skipped.
 
 -}
-onResize : AnimState -> (ResizeBuilder.Builder -> ResizeBuilder.Builder) -> AnimState
+onResize : AnimState -> (AnimBuilder Builder.ForResizeSub -> AnimBuilder Builder.ForResizeSub) -> AnimState
 onResize (AnimState state animGroups) buildResize =
     let
-        builder =
-            ResizeBuilder.build buildResize
-
-        previousBuilder =
-            state.lastResize
-
-        merged =
-            ResizeBuilder.merge previousBuilder builder
-
-        animStateWithCache =
-            AnimState { state | lastResize = merged } animGroups
+        processed =
+            Builder.init []
+                |> buildResize
+                |> Builder.process
     in
-    List.foldl (applyGroupResize previousBuilder builder) animStateWithCache (ResizeBuilder.groups builder)
+    AnimGroups.foldl applyGroupResize (AnimState state animGroups) processed.groups
 
 
-applyGroupResize : ResizeBuilder.Builder -> ResizeBuilder.Builder -> AnimGroupName -> AnimState -> AnimState
-applyGroupResize previousBuilder builder animGroupName animState =
+applyGroupResize : AnimGroupName -> Builder.ProcessedAnimGroupConfig -> AnimState -> AnimState
+applyGroupResize animGroupName cfg st =
+    List.foldl (applyBoundsEntry animGroupName)
+        st
+        (Builder.partitionForResize cfg.properties).bounds
+
+
+applyBoundsEntry : AnimGroupName -> ( Builder.ProcessedPropertyConfig, Builder.AxisRanges ) -> AnimState -> AnimState
+applyBoundsEntry animGroupName ( prop, ranges ) ((AnimState state _) as st) =
     let
-        prevBoundsFor : (AnimGroupName -> ResizeBuilder.Builder -> Maybe ResizeBuilder.Entry) -> Bounds
-        prevBoundsFor lookup =
-            lookup animGroupName previousBuilder
-                |> Maybe.map .bounds
+        propKey =
+            Builder.processedPropertyType prop
+
+        cacheKey =
+            ( animGroupName, propKey )
+
+        prev =
+            Dict.get cacheKey state.lastResize
                 |> Maybe.withDefault emptyBounds
 
-        withBounds : (AnimGroupName -> ResizeBuilder.Builder -> Maybe ResizeBuilder.Entry) -> (AnimGroupName -> Bounds -> Bounds -> AnimState -> AnimState) -> AnimState -> AnimState
-        withBounds lookup apply state =
-            case lookup animGroupName builder of
-                Nothing ->
-                    state
+        next =
+            case propKey of
+                "translate" ->
+                    applyTranslateResize animGroupName prev ranges st
 
-                Just { bounds } ->
-                    apply animGroupName (prevBoundsFor lookup) bounds state
+                "scale" ->
+                    applyScaleResize animGroupName prev ranges st
 
-        withPosition : (AnimGroupName -> ResizeBuilder.Builder -> Maybe ResizeBuilder.Position) -> (AnimGroupName -> ResizeBuilder.Position -> AnimState -> AnimState) -> AnimState -> AnimState
-        withPosition lookup apply state =
-            case lookup animGroupName builder of
-                Nothing ->
-                    state
+                "perspectiveOrigin" ->
+                    applyPerspectiveOriginResize animGroupName prev ranges st
 
-                Just pos ->
-                    apply animGroupName pos state
+                _ ->
+                    st
+
+        (AnimState nextState nextGroups) =
+            next
     in
-    animState
-        |> withBounds ResizeBuilder.getTranslate applyTranslateResize
-        |> withPosition ResizeBuilder.getTranslatePosition applyTranslatePositionResize
-        |> withBounds ResizeBuilder.getScale applyScaleResize
-        |> withBounds ResizeBuilder.getPerspectiveOrigin applyPerspectiveOriginResize
-        |> withPosition ResizeBuilder.getPerspectiveOriginPosition applyPerspectiveOriginPositionResize
+    AnimState
+        { nextState | lastResize = Dict.insert cacheKey ranges nextState.lastResize }
+        nextGroups
 
 
 emptyBounds : Bounds
@@ -944,74 +943,6 @@ preserveProgress { cfg, newStart, newEnd, oldDistance, newLegDistance } =
 
 {-| Dispatch a translate-position snap to the group's translate animation, if it has one.
 -}
-applyTranslatePositionResize : AnimGroupName -> ResizeBuilder.Position -> AnimState -> AnimState
-applyTranslatePositionResize animGroupName pos (AnimState state animGroups) =
-    case AnimGroups.get animGroupName animGroups of
-        Nothing ->
-            AnimState state animGroups
-
-        Just animGroup ->
-            let
-                updatedAnimations =
-                    AnimGroup.getAnimations animGroup
-                        |> Animations.map
-                            (\_ anim ->
-                                case anim of
-                                    Translate units cfg ->
-                                        Translate units (positionTranslate units pos cfg)
-
-                                    _ ->
-                                        anim
-                            )
-
-                updatedGroup =
-                    AnimGroup.setAnimations updatedAnimations animGroup
-
-                updatedAnimGroups =
-                    AnimGroups.insert animGroupName updatedGroup animGroups
-            in
-            AnimState state updatedAnimGroups
-
-
-{-| Apply a position snap to each translate axis via `ResizeBuilder.applyAxisPosition`.
--}
-positionTranslate : InternalUnit.ResolvedCssUnitAxes -> ResizeBuilder.Position -> PropertyAnimation Translate -> PropertyAnimation Translate
-positionTranslate units pos cfg =
-    let
-        oldStart =
-            Translate.toRecord cfg.start
-
-        oldEnd =
-            Translate.toRecord cfg.end
-
-        rx =
-            applyAxisPositionForUnit units.x pos.x oldStart.x oldEnd.x oldStart.x
-
-        ry =
-            applyAxisPositionForUnit units.y pos.y oldStart.y oldEnd.y oldStart.y
-
-        rz =
-            applyAxisPositionForUnit units.z pos.z oldStart.z oldEnd.z oldStart.z
-    in
-    { cfg
-        | start = Translate.fromRecord { x = rx.start, y = ry.start, z = rz.start }
-        , end = Translate.fromRecord { x = rx.end, y = ry.end, z = rz.end }
-    }
-
-
-applyAxisPositionForUnit : Unit -> Maybe Float -> Float -> Float -> Float -> { start : Float, end : Float }
-applyAxisPositionForUnit unit maybePosition startV endV fallbackCurrent =
-    if unit == Px then
-        let
-            result =
-                ResizeBuilder.applyAxisPosition maybePosition startV endV fallbackCurrent
-        in
-        { start = result.start, end = result.end }
-
-    else
-        { start = startV, end = endV }
-
-
 applyScaleResize : AnimGroupName -> Bounds -> Bounds -> AnimState -> AnimState
 applyScaleResize animGroupName previousBounds bounds (AnimState state animGroups) =
     if ResizeBuilder.isEmpty bounds then
@@ -1123,58 +1054,6 @@ resizeScale previousBounds bounds isLooping isPaused cfg =
 
 {-| Dispatch a perspective-origin position snap to the group's perspective-origin animation, if it has one.
 -}
-applyPerspectiveOriginPositionResize : AnimGroupName -> ResizeBuilder.Position -> AnimState -> AnimState
-applyPerspectiveOriginPositionResize animGroupName pos (AnimState state animGroups) =
-    case AnimGroups.get animGroupName animGroups of
-        Nothing ->
-            AnimState state animGroups
-
-        Just animGroup ->
-            let
-                updatedAnimations =
-                    AnimGroup.getAnimations animGroup
-                        |> Animations.map
-                            (\_ anim ->
-                                case anim of
-                                    PerspectiveOrigin units cfg ->
-                                        PerspectiveOrigin units (positionPerspectiveOrigin units pos cfg)
-
-                                    _ ->
-                                        anim
-                            )
-
-                updatedGroup =
-                    AnimGroup.setAnimations updatedAnimations animGroup
-
-                updatedAnimGroups =
-                    AnimGroups.insert animGroupName updatedGroup animGroups
-            in
-            AnimState state updatedAnimGroups
-
-
-{-| Apply a position snap to each perspective-origin axis via `ResizeBuilder.applyAxisPosition`.
--}
-positionPerspectiveOrigin : InternalUnit.ResolvedCssUnitAxes -> ResizeBuilder.Position -> PropertyAnimation PerspectiveOrigin -> PropertyAnimation PerspectiveOrigin
-positionPerspectiveOrigin units pos cfg =
-    let
-        oldStart =
-            PerspectiveOrigin.toRecord cfg.start
-
-        oldEnd =
-            PerspectiveOrigin.toRecord cfg.end
-
-        rx =
-            applyAxisPositionForUnit units.x pos.x oldStart.x oldEnd.x oldStart.x
-
-        ry =
-            applyAxisPositionForUnit units.y pos.y oldStart.y oldEnd.y oldStart.y
-    in
-    { cfg
-        | start = PerspectiveOrigin.fromRecord { x = rx.start, y = ry.start }
-        , end = PerspectiveOrigin.fromRecord { x = rx.end, y = ry.end }
-    }
-
-
 applyPerspectiveOriginResize : AnimGroupName -> Bounds -> Bounds -> AnimState -> AnimState
 applyPerspectiveOriginResize animGroupName previousBounds bounds (AnimState state animGroups) =
     if ResizeBuilder.isEmpty bounds then

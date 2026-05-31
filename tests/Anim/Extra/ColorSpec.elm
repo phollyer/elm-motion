@@ -23,7 +23,7 @@ Coverage:
 
 -}
 
-import Anim.Extra.Color as Color exposing (Color)
+import Anim.Extra.Color as Color
 import Color as ElmColor
 import Expect
 import Test exposing (Test, describe, test)

@@ -10,6 +10,7 @@ A comprehensive Elm package for smooth, high-performance DOM animations and scro
 - **Composable** — Compose animations and scrolls from small reusable pieces
 - **Configurable** — Delay, duration, speed, easing, and spring physics
 - **Interruptible & Controllable** — Query, divert, and control animations and scrolls mid-flight
+- **Compiler-Enforced Engine Capabilities** — only the capabilities an engine actually supports compile against it
 
 ### Animation
 

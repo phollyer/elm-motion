@@ -135,7 +135,7 @@ type AnimState msg
         , commandPort : Encode.Value -> Cmd msg
         , subscriptionPort : (Decode.Value -> msg) -> Sub msg
         , builder : EngineBuilder
-        , lastResize : ResizeBuilder.Builder
+        , lastResize : Dict.Dict ( AnimGroupName, String ) Bounds
         }
         (AnimGroups AnimGroup)
 
@@ -171,7 +171,7 @@ init commandPort subscriptionPort propertyInitializers =
                 , subscriptionsActive = False
                 , commandPort = commandPort
                 , subscriptionPort = subscriptionPort
-                , lastResize = ResizeBuilder.empty
+                , lastResize = Dict.empty
                 }
                 AnimGroups.init
 
@@ -198,7 +198,7 @@ init commandPort subscriptionPort propertyInitializers =
                         |> Builder.clearAnimData
                 , commandPort = commandPort
                 , subscriptionPort = subscriptionPort
-                , lastResize = ResizeBuilder.empty
+                , lastResize = Dict.empty
                 }
                 (AnimGroups.map initGroup animGroups)
 
@@ -291,8 +291,6 @@ animate (AnimState state animGroups) build =
                 ]
     in
     ( nextState, animateCmd )
-
-
 
 
 setSnapshot : AnimGroups AnimGroup -> AnimGroups { propertySnapshot : PropertyBaselines }
@@ -860,87 +858,74 @@ subscriptions toMsg (AnimState state _) =
 -- ============================================================
 
 
-{-| Adjust the in-flight properties of every anim group named in the builder
-to new bounding ranges, using the directives composed in a
-[`Anim.Resize.Builder`](Anim-Resize#Builder).
--}
-onResize : AnimState msg -> (ResizeBuilder.Builder -> ResizeBuilder.Builder) -> ( AnimState msg, Cmd msg )
+{-| Adjust the in-flight properties of every anim group referenced by the\nresize builder to new bounding ranges.\n-}
+onResize : AnimState msg -> (AnimBuilder Builder.ForResizeWAAPI -> AnimBuilder Builder.ForResizeWAAPI) -> ( AnimState msg, Cmd msg )
 onResize (AnimState state animGroups) buildResize =
     let
-        builder =
-            ResizeBuilder.build buildResize
-
-        previousBuilder =
-            state.lastResize
-
-        merged =
-            ResizeBuilder.merge previousBuilder builder
-
-        animStateWithCache =
-            AnimState { state | lastResize = merged } animGroups
+        processed =
+            Builder.init []
+                |> buildResize
+                |> Builder.process
 
         ( finalState, accCmds ) =
-            List.foldl (applyGroupResize previousBuilder builder)
-                ( animStateWithCache, [] )
-                (ResizeBuilder.groups builder)
+            AnimGroups.foldl applyGroupResize
+                ( AnimState state animGroups, [] )
+                processed.groups
     in
     ( finalState, Cmd.batch (List.reverse accCmds) )
 
 
 applyGroupResize :
-    ResizeBuilder.Builder
-    -> ResizeBuilder.Builder
-    -> AnimGroupName
+    AnimGroupName
+    -> Builder.ProcessedAnimGroupConfig
     -> ( AnimState msg, List (Cmd msg) )
     -> ( AnimState msg, List (Cmd msg) )
-applyGroupResize previousBuilder builder animGroupName ( animState, accCmds ) =
+applyGroupResize animGroupName cfg acc =
+    List.foldl (applyBoundsEntry animGroupName)
+        acc
+        (Builder.partitionForResize cfg.properties).bounds
+
+
+applyBoundsEntry :
+    AnimGroupName
+    -> ( Builder.ProcessedPropertyConfig, Builder.AxisRanges )
+    -> ( AnimState msg, List (Cmd msg) )
+    -> ( AnimState msg, List (Cmd msg) )
+applyBoundsEntry animGroupName ( prop, ranges ) ( (AnimState state _) as st, accCmds ) =
     let
-        prevBoundsFor lookup =
-            lookup animGroupName previousBuilder
-                |> Maybe.map .bounds
+        propKey =
+            Builder.processedPropertyType prop
+
+        cacheKey =
+            ( animGroupName, propKey )
+
+        prev =
+            Dict.get cacheKey state.lastResize
                 |> Maybe.withDefault emptyBounds
 
-        ( afterTranslate, translateCmd ) =
-            case ResizeBuilder.getTranslate animGroupName builder of
-                Nothing ->
-                    ( animState, Cmd.none )
+        ( nextState, cmd ) =
+            case propKey of
+                "translate" ->
+                    applyTranslateResize animGroupName prev ranges st
 
-                Just { bounds } ->
-                    applyTranslateResize animGroupName (prevBoundsFor ResizeBuilder.getTranslate) bounds animState
+                "scale" ->
+                    applyScaleResize animGroupName prev ranges st
 
-        ( afterTranslatePosition, translatePositionCmd ) =
-            case ResizeBuilder.getTranslatePosition animGroupName builder of
-                Nothing ->
-                    ( afterTranslate, Cmd.none )
+                "perspectiveOrigin" ->
+                    applyPerspectiveOriginResize animGroupName prev ranges st
 
-                Just pos ->
-                    applyTranslatePositionResize animGroupName pos afterTranslate
+                _ ->
+                    ( st, Cmd.none )
 
-        ( afterScale, scaleCmd ) =
-            case ResizeBuilder.getScale animGroupName builder of
-                Nothing ->
-                    ( afterTranslatePosition, Cmd.none )
+        (AnimState nextStateData nextGroups) =
+            nextState
 
-                Just { bounds } ->
-                    applyScaleResize animGroupName (prevBoundsFor ResizeBuilder.getScale) bounds afterTranslatePosition
-
-        ( afterPerspectiveOrigin, perspectiveOriginCmd ) =
-            case ResizeBuilder.getPerspectiveOrigin animGroupName builder of
-                Nothing ->
-                    ( afterScale, Cmd.none )
-
-                Just { bounds } ->
-                    applyPerspectiveOriginResize animGroupName (prevBoundsFor ResizeBuilder.getPerspectiveOrigin) bounds afterScale
-
-        ( afterPerspectiveOriginPosition, perspectiveOriginPositionCmd ) =
-            case ResizeBuilder.getPerspectiveOriginPosition animGroupName builder of
-                Nothing ->
-                    ( afterPerspectiveOrigin, Cmd.none )
-
-                Just pos ->
-                    applyPerspectiveOriginPositionResize animGroupName pos afterPerspectiveOrigin
+        cachedState =
+            AnimState
+                { nextStateData | lastResize = Dict.insert cacheKey ranges nextStateData.lastResize }
+                nextGroups
     in
-    ( afterPerspectiveOriginPosition, perspectiveOriginPositionCmd :: perspectiveOriginCmd :: scaleCmd :: translatePositionCmd :: translateCmd :: accCmds )
+    ( cachedState, cmd :: accCmds )
 
 
 emptyBounds : Bounds
@@ -988,182 +973,6 @@ applyTranslateResize animGroupName previousBounds bounds ((AnimState state animG
                 in
                 ( AnimState { state | builder = updatedBuilder } updatedAnimGroups
                 , state.commandPort (encodeResize payload.command)
-                )
-
-
-{-| Apply a `Translate.position` directive for a group's translate.
-
-For each axis with `Just newPos`, write `newPos` into the snapshot's
-translate baseline and the builder baseline, then ship the directive
-to JS via the `translatePosition` port command. JS validates the
-static-axis precondition (running animation's `startX == endX`) and
-either snaps the live animation's keyframes + persists the inline
-transform, or no-ops the axis silently. Axes set to `Nothing` are
-left alone.
-
-Always returns a port command when any axis is `Just`; JS owns the
-static-vs-animating decision so the Elm side never has to consult
-`AnimGroup.getResizeState` or thread per-axis live state through.
-
--}
-applyTranslatePositionResize : AnimGroupName -> ResizeBuilder.Position -> AnimState msg -> ( AnimState msg, Cmd msg )
-applyTranslatePositionResize animGroupName pos ((AnimState state animGroups) as animState) =
-    if pos.x == Nothing && pos.y == Nothing && pos.z == Nothing then
-        ( animState, Cmd.none )
-
-    else
-        case AnimGroups.get animGroupName animGroups of
-            Nothing ->
-                ( animState, Cmd.none )
-
-            Just animGroup ->
-                let
-                    snapshot =
-                        AnimGroup.getPropertySnapshot animGroup
-
-                    current =
-                        PropertyBaselines.getTranslate snapshot
-                            |> Maybe.map Translate.toRecord
-                            |> Maybe.withDefault { x = 0, y = 0, z = 0 }
-
-                    -- Snapshot follows the live current value for axes not
-                    -- being snapped, so `current` is the right default here.
-                    newSnapshotT =
-                        Translate.fromRecord
-                            { x = Maybe.withDefault current.x pos.x
-                            , y = Maybe.withDefault current.y pos.y
-                            , z = Maybe.withDefault current.z pos.z
-                            }
-
-                    -- Baseline must follow the existing baseline (the leg's
-                    -- end target, freshly updated by `Translate.bounds`) for
-                    -- axes not being snapped — not the live snapshot, which
-                    -- holds the mid-flight current value.
-                    existingBaselineT =
-                        Builder.getBaseline animGroupName state.builder
-                            |> Maybe.andThen PropertyBaselines.getTranslate
-                            |> Maybe.map Translate.toRecord
-                            |> Maybe.withDefault current
-
-                    newBaselineT =
-                        Translate.fromRecord
-                            { x = Maybe.withDefault existingBaselineT.x pos.x
-                            , y = Maybe.withDefault existingBaselineT.y pos.y
-                            , z = Maybe.withDefault existingBaselineT.z pos.z
-                            }
-
-                    updatedAnimGroups =
-                        AnimGroups.update animGroupName
-                            (Maybe.map (AnimGroup.setSnapshot (PropertyBaselines.setTranslate newSnapshotT snapshot)))
-                            animGroups
-
-                    updatedBuilder =
-                        state.builder
-                            |> Builder.updateBaselines animGroupName
-                                (PropertyBaselines.setTranslate newBaselineT)
-                in
-                ( AnimState { state | builder = updatedBuilder } updatedAnimGroups
-                , state.commandPort
-                    (encodeTranslatePosition
-                        { animGroupName = animGroupName
-                        , x = pos.x
-                        , y = pos.y
-                        , z = pos.z
-                        }
-                    )
-                )
-
-
-{-| Apply a `PerspectiveOrigin.position` directive for a group's
-perspective-origin. Mirror of [`applyTranslatePositionResize`](#applyTranslatePositionResize):
-writes per-axis `Just newPos` into the snapshot's perspective-origin baseline
-and the builder baseline, then ships a `perspectiveOriginPosition` port
-command. JS validates the static-axis precondition and either snaps the
-live perspective-origin animation's keyframes in place (no cancel, no
-seek) or no-ops the axis. Axes set to `Nothing` are left alone.
--}
-applyPerspectiveOriginPositionResize : AnimGroupName -> ResizeBuilder.Position -> AnimState msg -> ( AnimState msg, Cmd msg )
-applyPerspectiveOriginPositionResize animGroupName pos ((AnimState state animGroups) as animState) =
-    if pos.x == Nothing && pos.y == Nothing then
-        ( animState, Cmd.none )
-
-    else
-        case AnimGroups.get animGroupName animGroups of
-            Nothing ->
-                ( animState, Cmd.none )
-
-            Just animGroup ->
-                let
-                    snapshot =
-                        AnimGroup.getPropertySnapshot animGroup
-
-                    currentPO =
-                        PropertyBaselines.getPerspectiveOrigin snapshot
-
-                    -- Pull the actual stored unit from the snapshot - the
-                    -- baseline was tagged with the resolved unit by
-                    -- `Generator.propertyBounds` when the animation was
-                    -- created. Hard-coding `Percent` here would emit a `%`
-                    -- suffix on a payload whose X/Y are in `px` (or any
-                    -- other unit), producing perspective-origin values
-                    -- like `400% 300%` that send the rendered cube off
-                    -- screen during a drag-resize.
-                    unit =
-                        PropertyBaselines.getPerspectiveOriginUnits snapshot
-                            |> Maybe.map .x
-                            |> Maybe.withDefault InternalUnit.default
-
-                    current =
-                        currentPO
-                            |> Maybe.map PerspectiveOrigin.toRecord
-                            |> Maybe.withDefault { x = 50, y = 50 }
-
-                    -- Snapshot follows the live current value for axes not
-                    -- being snapped, so `current` is the right default here.
-                    newSnapshotPO =
-                        PerspectiveOrigin.fromRecord
-                            { x = Maybe.withDefault current.x pos.x
-                            , y = Maybe.withDefault current.y pos.y
-                            }
-
-                    -- Baseline must follow the existing baseline (the leg's
-                    -- end target, freshly updated by `PerspectiveOrigin.bounds`)
-                    -- for axes not being snapped — not the live snapshot,
-                    -- which holds the mid-flight current value.
-                    existingBaselinePO =
-                        Builder.getBaseline animGroupName state.builder
-                            |> Maybe.andThen PropertyBaselines.getPerspectiveOrigin
-                            |> Maybe.map PerspectiveOrigin.toRecord
-                            |> Maybe.withDefault current
-
-                    newBaselinePO =
-                        PerspectiveOrigin.fromRecord
-                            { x = Maybe.withDefault existingBaselinePO.x pos.x
-                            , y = Maybe.withDefault existingBaselinePO.y pos.y
-                            }
-
-                    updatedAnimGroups =
-                        AnimGroups.update animGroupName
-                            (Maybe.map (AnimGroup.setSnapshot (PropertyBaselines.setPerspectiveOrigin newSnapshotPO snapshot)))
-                            animGroups
-
-                    updatedBuilder =
-                        state.builder
-                            |> Builder.updateBaselines animGroupName
-                                (PropertyBaselines.setPerspectiveOrigin newBaselinePO)
-
-                    unitStr =
-                        InternalUnit.toCssSuffix unit
-                in
-                ( AnimState { state | builder = updatedBuilder } updatedAnimGroups
-                , state.commandPort
-                    (encodePerspectiveOriginPosition
-                        { animGroupName = animGroupName
-                        , x = pos.x
-                        , y = pos.y
-                        , unit = unitStr
-                        }
-                    )
                 )
 
 

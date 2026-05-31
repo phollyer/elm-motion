@@ -243,7 +243,6 @@ import Anim.Extra.Color exposing (Color)
 import Anim.Extra.TransformOrder exposing (TransformProperty)
 import Anim.Internal.Builder as Builder
 import Anim.Internal.Engine.Sub as Internal
-import Anim.Resize as Resize
 import Anim.Unit exposing (Unit)
 import Browser exposing (UrlRequest(..))
 import Html
@@ -371,7 +370,6 @@ Typical resize handler:
 
     import Anim.Engine.Sub as Sub
     import Anim.Property.Translate as Translate
-    import Anim.Resize as Resize
 
     GotTrack (Ok element) ->
         let
@@ -385,14 +383,14 @@ Typical resize handler:
             | trackPx = element.element.width
             , animState =
                 Sub.onResize model.animState <|
-                    Resize.bounds "box" bounds
+                    Translate.bounds "box" bounds
                         >> Translate.bounds "card" bounds
           }
         , Cmd.none
         )
 
 -}
-onResize : AnimState -> (Resize.Builder -> Resize.Builder) -> AnimState
+onResize : AnimState -> (AnimBuilder Builder.ForResizeSub -> AnimBuilder Builder.ForResizeSub) -> AnimState
 onResize =
     Internal.onResize
 

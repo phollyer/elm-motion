@@ -16,7 +16,6 @@ import Anim.Internal.Engine.Sub as Internal
 import Anim.Property.Rotate as Rotate
 import Anim.Property.Scale as Scale
 import Anim.Property.Translate as Translate
-import Expect
 import Html
 import Motion.Easing exposing (Easing(..))
 import Test exposing (Test, describe, test)

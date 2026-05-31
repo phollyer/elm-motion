@@ -243,7 +243,6 @@ import Anim.Extra.Color exposing (Color)
 import Anim.Extra.TransformOrder exposing (TransformProperty)
 import Anim.Internal.Builder as Builder
 import Anim.Internal.Engine.WAAPI as Internal
-import Anim.Resize as Resize
 import Anim.Unit exposing (Unit)
 import Html
 import Json.Decode as Decode
@@ -604,29 +603,25 @@ attributes =
 -- ============================================================
 
 
-{-| A resize handler that updates animation configurations based on the provided resize strategy.
+{-| A resize handler that updates animation configurations in response to a
+layout change.
 
-Use with [Resize.bounds](Anim-Resize#bounds) to create a resize handler that updates
-animation configurations for all affected properties in the group.
-
-Not all properties in a group are affected by a resize — `Opacity` for example is unaffected by resizing —
-but those that are (e.g., `Translate`, `Scale`) have their own `bounds` builder function that you can use to target
-just that property, and override the per-group default set with
-[`Anim.Resize.bounds`](Anim-Resize#bounds).
+Compose the `bounds` setters from property modules that support resize
+(currently `Translate`, `Scale`, `PerspectiveOrigin`). Each entry
+retargets one property of one anim group; other properties and other
+groups are left alone.
 
 Example resize handler targeting two groups in one call:
 
     import Anim.Engine.WAAPI as WAAPI
     import Anim.Property.Scale as Scale
     import Anim.Property.Translate as Translate
-    import Anim.Resize as Resize
 
     GotTrack (Ok element) ->
         let
             ( animState, animCmd ) =
                 WAAPI.onResize model.animState <|
-                    Resize.bounds "box" defaultBounds
-                        >> Translate.bounds "box" translateBounds
+                    Translate.bounds "box" translateBounds
                         >> Scale.bounds "cube" scaleBounds
         in
         ( { model
@@ -637,7 +632,7 @@ Example resize handler targeting two groups in one call:
         )
 
 -}
-onResize : AnimState msg -> (Resize.Builder -> Resize.Builder) -> ( AnimState msg, Cmd msg )
+onResize : AnimState msg -> (AnimBuilder Builder.ForResizeWAAPI -> AnimBuilder Builder.ForResizeWAAPI) -> ( AnimState msg, Cmd msg )
 onResize =
     Internal.onResize
 

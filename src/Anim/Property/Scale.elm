@@ -108,7 +108,6 @@ for patterns and examples.
 
 import Anim.Internal.Builder exposing (AnimBuilder)
 import Anim.Internal.Builder.Scale as SB
-import Anim.Internal.Resize.Builder as ResizeBuilder
 import Anim.Resize as Resize
 import Motion.Easing exposing (Easing)
 import Motion.Spring exposing (Spring)
@@ -850,7 +849,7 @@ unclampZ =
 
 
 {-| Scale's contribution to a resize bounds directive for the named anim group.
-Compose into the builder passed to an engine's `onResize`:
+Compose inside an engine's `onResize` callback:
 
     WAAPI.onResize model.animState <|
         Scale.bounds "cube"
@@ -862,9 +861,10 @@ Compose into the builder passed to an engine's `onResize`:
 You can resize multiple anim groups in one call by composing more entries.
 
 Leave an axis as `Nothing` to ignore it. Bounds are scale multipliers,
-not pixels.
+not pixels. Only callable from inside an `onResize` callback - the
+`withBounds` capability on the builder type is what gates it.
 
 -}
-bounds : AnimGroupName -> Resize.Bounds -> Resize.Builder -> Resize.Builder
-bounds =
-    ResizeBuilder.setScale
+bounds : AnimGroupName -> Resize.Bounds -> AnimBuilder { eng | withBounds : () } -> AnimBuilder { eng | withBounds : () }
+bounds name ranges =
+    SB.for name >> SB.bounds ranges >> SB.build

@@ -5,10 +5,11 @@ A comprehensive Elm package for smooth, high-performance DOM animations and scro
 ## 👀 At a Glance
 
 - **6 Animation Engines** — Transition, Keyframe, Sub, WAAPI, ScrollTimeline, ViewTimeline
-- **3 Scroll Engines** — Cmd, Sub, Task
+- **3 Scroll Engines** — Cmd, Task, Sub
 - **Three timelines, one API** — drive animations by time, scroll progress or viewport position
 - **Mid-flight control** — query, divert, pause, resume, restart and stop animations and scrolls in motion
 - **Hardware-accelerated** — GPU transforms with full 3D support
+- **Type Safe** — only the capabilities an engine actually supports compile against it
 
 ---
 
@@ -66,7 +67,7 @@ ViewTimeline.animate motionCmd fadeIn
 
 ### Composability
 
-The builder API makes animations, and their building blocks, composable so you
+The builder API makes animations and their building blocks composable, so you
 can easily build animations from smaller pieces.
 
 ```elm

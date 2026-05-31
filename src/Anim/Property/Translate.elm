@@ -13,7 +13,7 @@ module Anim.Property.Translate exposing
     , cssUnit, cssUnitX, cssUnitY, cssUnitZ
     , clampX, clampY, clampZ, unclampX, unclampY, unclampZ
     , bounds
-    , setXYZ, setXY, setXZ, setX, setYZ, setY, setZ, position
+    , setXYZ, setXY, setXZ, setX, setYZ, setY, setZ
     )
 
 {-| Move elements along the X, Y, and Z axes.
@@ -153,13 +153,12 @@ for patterns and examples.
 ## Resize
 
 @docs bounds
-@docs setXYZ, setXY, setXZ, setX, setYZ, setY, setZ, position
+@docs setXYZ, setXY, setXZ, setX, setYZ, setY, setZ
 
 -}
 
 import Anim.Internal.Builder as SB exposing (AnimBuilder)
 import Anim.Internal.Builder.Translate as TB
-import Anim.Internal.Resize.Builder as ResizeBuilder
 import Anim.Resize as Resize
 import Anim.Unit exposing (Unit)
 import Motion.Easing exposing (Easing)
@@ -1138,9 +1137,9 @@ unclampZ =
 
 {-| Apply new translate bounds for an anim group during resize.
 
-Pass this to `WAAPI.onResize` or `Sub.onResize`:
+Pass this inside an engine's `onResize` builder:
 
-    WAAPI.onResize model.animState <|
+    Sub.onResize model.animState <|
         Translate.bounds "box"
             { x = Just { min = 0, max = newWidth - boxSize }
             , y = Nothing
@@ -1149,41 +1148,17 @@ Pass this to `WAAPI.onResize` or `Sub.onResize`:
 
 You can resize multiple anim groups in one call:
 
-    WAAPI.onResize model.animState <|
+    Sub.onResize model.animState <|
         Translate.bounds "box" boxBounds
             >> Translate.bounds "card" cardBounds
 
-Leave an axis as `Nothing` to ignore it.
+Leave an axis as `Nothing` to ignore it. The engine proportionally remaps
+the in-flight animation onto the new range and pins its endpoints to it.
+
+Only callable from inside an engine's `onResize` callback - the `withBounds`
+capability on the builder type is what gates it.
 
 -}
-bounds : AnimGroupName -> Resize.Bounds -> Resize.Builder -> Resize.Builder
-bounds =
-    ResizeBuilder.setTranslate
-
-
-{-| One-shot position update for an anim group's translate property during resize.
-
-Use `position` when an axis is **not** animating (`start == end`) but its
-correct screen position depends on layout - for example, a dot that sits
-on the right edge of an area needs `x = newWidth` after a portrait →
-landscape resize.
-
-    Sub.onResize model.animState <|
-        Translate.bounds "dot" newBounds
-            >> Translate.position "dot"
-                { x = Just newAreaSize.width
-                , y = Nothing
-                , z = Nothing
-                }
-
-Each axis is `Just newPos` to move that axis instantly, or `Nothing` to leave it
-untouched. On a static axis the update sets `start`, `end`, and `current`
-to `newPos`. On an animating axis (`start /= end`) the update is ignored,
-because the next interpolation frame would overwrite a current-only
-change. Use [`bounds`](#bounds) (with its proportional remap) to
-retarget animating axes.
-
--}
-position : AnimGroupName -> { x : Maybe Float, y : Maybe Float, z : Maybe Float } -> Resize.Builder -> Resize.Builder
-position =
-    ResizeBuilder.setTranslatePosition
+bounds : AnimGroupName -> Resize.Bounds -> AnimBuilder { eng | withBounds : () } -> AnimBuilder { eng | withBounds : () }
+bounds name ranges =
+    TB.for name >> TB.bounds ranges >> TB.build

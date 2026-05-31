@@ -53,9 +53,6 @@ For implementation details, each engine page includes the complete usage flow fo
 | Resumed | | ✓ | ✓ | ✓ | | |
 | Iteration | | ✓ | ✓ | ✓ | ✓ | ✓ |
 | Progress | | | ✓ | ✓ | | |
-| **Responsive** |
-| When Idle | ✓ | ✓ | ✓ | ✓ | ✓ † | ✓ † |
-| When Animating | ✓ † | ✓ † | ✓ | ✓ | ✓ † | ✓ † |
 | **Mid-Flight Access** |
 | Query current values | | | ✓ | ✓ | | |
 | Dynamic redirects | ✓ | | ✓ | ✓ | | |
@@ -63,7 +60,7 @@ For implementation details, each engine page includes the complete usage flow fo
 | Custom transform order | | ✓ | ✓ | ✓ | ✓ | ✓ |
 | Discrete properties | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 
-† Via [relative CSS units](../concepts/responsive-animations.md#path-2---using-relative-units) - the browser re-evaluates values on resize automatically. `Sub` and `WAAPI` additionally support measured-pixel resize updates via [`onResize`](../concepts/responsive-animations.md#path-1---measured-pixel-values).
+All engines work with responsive layouts; see [Responsive Animations](../concepts/responsive-animations.md) for the techniques available and which engines support measured-pixel updates.
 
 ## Engine Families
 
