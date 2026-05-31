@@ -25,7 +25,7 @@ Use these to constrain a builder function to one specific Engine.
 in the docs for detailed examples and patterns.
 
 
-# Document Timeline Functions
+# Timing
 
 These settings are for Document timeline engines: Keyframe, Sub, Transition, and WAAPI.
 The engine modules re-export the same functions.
@@ -33,23 +33,17 @@ The engine modules re-export the same functions.
 @docs delay, duration, speed
 
 
-# Universal Functions
-
-Use the shared builder functions below for settings that work across engines.
-The engine modules re-export the same functions.
-
-
-## Playback
+# Playback
 
 @docs iterations, alternate
 
 
-## Motion Behaviour
+# Motion Behaviour
 
 @docs easing, spring
 
 
-## Units
+# CSS Units
 
 Set the CSS unit for built-in properties that use length values.
 

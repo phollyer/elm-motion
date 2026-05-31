@@ -11,7 +11,7 @@ module Anim.Unit exposing
 The default is `Px`. Switching to a relative unit (`Percent`, `Vw`, `Vh`,
 `Cqw`, `Cqh`, `Rem`, `Em`, etc.) makes the browser re-evaluate the animation
 against current layout, so the animation follows window or container resize
-automatically - no [Resize.bounds](Anim.Resize#bounds) plumbing needed.
+automatically - no `onResize` plumbing needed.
 
 You can set the unit per-property (`Translate.cssUnit`, `Size.cssUnit`,
 `PerspectiveOrigin.cssUnit`) or globally on an Engine (`WAAPI.cssUnit`,
