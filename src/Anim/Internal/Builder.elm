@@ -4,10 +4,15 @@ module Anim.Internal.Builder exposing
     , AnimationConfig
     , AnimationDirection(..)
     , AnimationMode(..)
+    , AxisBounds
+    , AxisCoords
+    , AxisRanges
     , DefaultsConfig
     , DiscreteEntryProperty
     , DiscreteExitProperty
     , ForKeyframe
+    , ForResizeSub
+    , ForResizeWAAPI
     , ForScroll
     , ForSub
     , ForTransition
@@ -89,11 +94,12 @@ module Anim.Internal.Builder exposing
     , markTouchedAxes
     , mergeBaselines
     , normalizeTransformOrder
+    , partitionByMode
+    , partitionForResize
     , process
     , processProperties
-    , processedPropertyType
     , processedPropertyMode
-    , partitionByMode
+    , processedPropertyType
     , processedTimings
     , setAnimTarget
     , setClamp
@@ -220,6 +226,46 @@ type alias ForView =
     }
 
 
+{-| Engine capability tag for a `Sub.onResize` builder callback. Same
+shape as [`ForSub`](#ForSub) plus `withBounds`, which unlocks the
+resize-only [`bounds`](Anim-Property-Translate#bounds) /
+[`position`](Anim-Property-Translate#position) functions. Inside a
+regular `Sub.animate` callback (which receives a `ForSub` builder), the
+absence of `withBounds` makes those calls a compile error.
+-}
+type alias ForResizeSub =
+    { forSub : ()
+    , withTiming : ()
+    , withSpring : ()
+    , withLoopForever : ()
+    , withIterations : ()
+    , withAlternate : ()
+    , withTransformOrder : ()
+    , withProgressEvents : ()
+    , withBounds : ()
+    }
+
+
+{-| Engine capability tag for a `WAAPI.onResize` builder callback. Same
+shape as [`ForWAAPI`](#ForWAAPI) plus `withBounds`, which unlocks the
+resize-only [`bounds`](Anim-Property-Translate#bounds) /
+[`position`](Anim-Property-Translate#position) functions. Inside a
+regular `WAAPI.animate` callback (which receives a `ForWAAPI` builder),
+the absence of `withBounds` makes those calls a compile error.
+-}
+type alias ForResizeWAAPI =
+    { forWAAPI : ()
+    , withTiming : ()
+    , withSpring : ()
+    , withLoopForever : ()
+    , withIterations : ()
+    , withAlternate : ()
+    , withTransformOrder : ()
+    , withProgressEvents : ()
+    , withBounds : ()
+    }
+
+
 
 -- Configuration records
 
@@ -309,13 +355,58 @@ type alias AnimationConfig targetProperty =
     }
 
 
-{-| How an engine should consume an `AnimationConfig`. `Animate` is the
-normal interpolated transition; `Snap` instructs the engine to silently
-cancel any in-flight animation on the affected axis and jump to `end`.
+{-| How an engine should consume an `AnimationConfig`.
+
+  - `Animate` — normal interpolated transition.
+  - `Snap` — silently cancel any in-flight animation on the affected
+    axis and jump to `end`.
+  - `RemapToBounds` — resize-only directive: proportionally remap the
+    current animation onto the supplied bounds (preserving in-flight
+    progress) and pin its endpoints to the new range.
+  - `SnapToPosition` — resize-only directive: snap each `Just` axis to
+    the given coordinate, but only on axes where the property is
+    currently static (`start == end`). Ignored on animating axes.
+
+Engines outside `onResize` (i.e. the `animate` path of every engine)
+ignore `RemapToBounds` and `SnapToPosition`. The `withBounds` phantom
+on engine tags makes that the compiler's job, but the partition helpers
+also defensively filter, so a stray Bounds/Position entry in a regular
+`animate` builder is a no-op rather than a crash.
+
 -}
 type AnimationMode
     = Animate
     | Snap
+    | RemapToBounds AxisRanges
+    | SnapToPosition AxisCoords
+
+
+{-| Inclusive numeric range for one axis. Re-declared here (structurally
+equivalent to `Anim.Resize.AxisBounds`) so the core builder stays
+independent of the resize accumulator module.
+-}
+type alias AxisBounds =
+    { min : Float, max : Float }
+
+
+{-| Per-axis resize bounds. `Nothing` leaves an axis untouched.
+-}
+type alias AxisRanges =
+    { x : Maybe AxisBounds
+    , y : Maybe AxisBounds
+    , z : Maybe AxisBounds
+    }
+
+
+{-| Per-axis static-position snap. `Nothing` leaves an axis untouched.
+Each `Just newPos` sets that axis to `newPos` iff the property's current
+`start == end` on that axis (it is silently dropped on animating axes).
+-}
+type alias AxisCoords =
+    { x : Maybe Float
+    , y : Maybe Float
+    , z : Maybe Float
+    }
 
 
 type ProcessedPropertyConfig
@@ -1624,19 +1715,79 @@ processedPropertyMode prop =
 
 
 {-| Partition a list of [`ProcessedPropertyConfig`](#ProcessedPropertyConfig)
-by their [`AnimationMode`](#AnimationMode): properties with
-`mode = Animate` go in `animate`, properties with `mode = Snap` go in
-`snap`.
+by [`AnimationMode`](#AnimationMode):
+
+  - `animate` — properties with `mode = Animate` (regular interpolated path).
+  - `snap` — properties with `mode = Snap` (jump-to-end path).
+
+`RemapToBounds` and `SnapToPosition` entries are dropped: they are
+resize-time directives consumed by [`partitionForResize`](#partitionForResize),
+not by any `animate` engine path. The `withBounds` phantom on engine tags
+prevents these variants from being constructed in the regular `animate`
+builder pipeline; this filter is the runtime backstop.
+
 -}
 partitionByMode :
     List ProcessedPropertyConfig
     -> { animate : List ProcessedPropertyConfig, snap : List ProcessedPropertyConfig }
 partitionByMode props =
     let
-        ( snapped, animated ) =
-            List.partition (\p -> processedPropertyMode p == Snap) props
+        step prop acc =
+            case processedPropertyMode prop of
+                Animate ->
+                    { acc | animate = prop :: acc.animate }
+
+                Snap ->
+                    { acc | snap = prop :: acc.snap }
+
+                RemapToBounds _ ->
+                    acc
+
+                SnapToPosition _ ->
+                    acc
     in
-    { animate = animated, snap = snapped }
+    List.foldr step { animate = [], snap = [] } props
+
+
+{-| Partition a list of [`ProcessedPropertyConfig`](#ProcessedPropertyConfig)
+into the four buckets consumed by an engine's `onResize` path. The list's
+input order is preserved within each bucket so that engines can implement
+"last entry wins" semantics per (group, property) by replaying the
+combined stream in source order.
+
+  - `animate` — `mode = Animate` (regular animation, started inside resize).
+  - `snap` — `mode = Snap` (instantaneous jump-to-end).
+  - `bounds` — `mode = RemapToBounds bounds`.
+  - `position` — `mode = SnapToPosition coords`.
+
+-}
+partitionForResize :
+    List ProcessedPropertyConfig
+    ->
+        { animate : List ProcessedPropertyConfig
+        , snap : List ProcessedPropertyConfig
+        , bounds : List ( ProcessedPropertyConfig, AxisRanges )
+        , position : List ( ProcessedPropertyConfig, AxisCoords )
+        }
+partitionForResize props =
+    let
+        step prop acc =
+            case processedPropertyMode prop of
+                Animate ->
+                    { acc | animate = prop :: acc.animate }
+
+                Snap ->
+                    { acc | snap = prop :: acc.snap }
+
+                RemapToBounds ranges ->
+                    { acc | bounds = ( prop, ranges ) :: acc.bounds }
+
+                SnapToPosition coords ->
+                    { acc | position = ( prop, coords ) :: acc.position }
+    in
+    List.foldr step
+        { animate = [], snap = [], bounds = [], position = [] }
+        props
 
 
 {-| Extract `duration` and `delay` (in milliseconds) from a
