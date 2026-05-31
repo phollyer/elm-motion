@@ -15,6 +15,15 @@ module Anim.Internal.Builder.Scale exposing
     , fromY
     , fromYZ
     , fromZ
+    , set
+    , setX
+    , setXY
+    , setXYZ
+    , setXZ
+    , setY
+    , setYZ
+    , setZ
+    , snap
     , speed
     , spring
     , to
@@ -339,6 +348,57 @@ toZ z (ScaleBuilder config builder) =
     in
     toXYZ x y z <|
         ScaleBuilder config builder
+
+
+
+-- ============================================================
+-- SET (snap)
+-- ============================================================
+
+
+snap : ScaleBuilder eng -> ScaleBuilder eng
+snap (ScaleBuilder config builder) =
+    ScaleBuilder { config | mode = Builder.Snap } builder
+
+
+set : Scale -> ScaleBuilder eng -> ScaleBuilder eng
+set value =
+    to value >> snap
+
+
+setXYZ : Float -> Float -> Float -> ScaleBuilder eng -> ScaleBuilder eng
+setXYZ x y z =
+    toXYZ x y z >> snap
+
+
+setXY : Float -> Float -> ScaleBuilder eng -> ScaleBuilder eng
+setXY x y =
+    toXY x y >> snap
+
+
+setXZ : Float -> Float -> ScaleBuilder eng -> ScaleBuilder eng
+setXZ x z =
+    toXZ x z >> snap
+
+
+setX : Float -> ScaleBuilder eng -> ScaleBuilder eng
+setX x =
+    toX x >> snap
+
+
+setYZ : Float -> Float -> ScaleBuilder eng -> ScaleBuilder eng
+setYZ y z =
+    toYZ y z >> snap
+
+
+setY : Float -> ScaleBuilder eng -> ScaleBuilder eng
+setY y =
+    toY y >> snap
+
+
+setZ : Float -> ScaleBuilder eng -> ScaleBuilder eng
+setZ z =
+    toZ z >> snap
 
 
 

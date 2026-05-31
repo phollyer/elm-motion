@@ -5,6 +5,7 @@ module Anim.Property.Size exposing
     , for, build
     , fromHW, fromH, fromW, from
     , toHW, toH, toW
+    , set, setHW, setH, setW
     , delay, duration, speed
     , easing
     , spring
@@ -90,6 +91,11 @@ for details.
 ## End Value
 
 @docs toHW, toH, toW
+
+
+## Snap
+
+@docs set, setHW, setH, setW
 
 
 ## Timing
@@ -442,6 +448,41 @@ The height remains unchanged, or 0 if not set.
 toW : Float -> Builder eng -> Builder eng
 toW =
     SB.toW
+
+
+
+-- ============================================================
+-- SET (snap)
+-- ============================================================
+
+
+{-| Snap the uniform target height and width values silently,
+cancelling any in-flight animation on this property.
+-}
+set : Float -> Builder eng -> Builder eng
+set hw =
+    SB.setHW hw hw
+
+
+{-| Snap the target height and width values.
+-}
+setHW : Float -> Float -> Builder eng -> Builder eng
+setHW =
+    SB.setHW
+
+
+{-| Snap the target height, preserving the current width.
+-}
+setH : Float -> Builder eng -> Builder eng
+setH =
+    SB.setH
+
+
+{-| Snap the target width, preserving the current height.
+-}
+setW : Float -> Builder eng -> Builder eng
+setW =
+    SB.setW
 
 
 

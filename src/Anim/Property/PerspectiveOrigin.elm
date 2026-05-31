@@ -6,6 +6,7 @@ module Anim.Property.PerspectiveOrigin exposing
     , cssUnit, cssUnitX, cssUnitY
     , from, fromXY, fromX, fromY
     , to, toXY, toX, toY
+    , set, setXY, setX, setY
     , delay, duration, speed
     , easing
     , spring
@@ -113,6 +114,11 @@ for details.
 ## End Value
 
 @docs to, toXY, toX, toY
+
+
+## Snap
+
+@docs set, setXY, setX, setY
 
 
 ## Timing
@@ -429,6 +435,41 @@ toX =
 toY : Float -> Builder eng -> Builder eng
 toY =
     PB.toY
+
+
+
+-- ============================================================
+-- SET (snap)
+-- ============================================================
+
+
+{-| Snap the uniform target X and Y values silently, cancelling any
+in-flight animation on this property.
+-}
+set : Float -> Builder eng -> Builder eng
+set xy =
+    PB.setXY xy xy
+
+
+{-| Snap the target X and Y values.
+-}
+setXY : Float -> Float -> Builder eng -> Builder eng
+setXY =
+    PB.setXY
+
+
+{-| Snap the target X value, preserving the current Y value.
+-}
+setX : Float -> Builder eng -> Builder eng
+setX =
+    PB.setX
+
+
+{-| Snap the target Y value, preserving the current X value.
+-}
+setY : Float -> Builder eng -> Builder eng
+setY =
+    PB.setY
 
 
 

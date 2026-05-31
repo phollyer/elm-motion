@@ -42,6 +42,7 @@ springTranslateConfig spring =
         , spring = Just spring
         , delay = Nothing
         , cssUnit = InternalUnit.emptyCssUnitAxes
+        , mode = Builder.Animate
         }
 
 
@@ -56,6 +57,7 @@ easingTranslateConfig easing =
         , spring = Nothing
         , delay = Nothing
         , cssUnit = InternalUnit.emptyCssUnitAxes
+        , mode = Builder.Animate
         }
 
 

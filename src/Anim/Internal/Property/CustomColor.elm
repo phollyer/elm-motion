@@ -6,6 +6,8 @@ module Anim.Internal.Property.CustomColor exposing
     , easing
     , for
     , from
+    , set
+    , snap
     , speed
     , spring
     , to
@@ -135,6 +137,22 @@ to color (Builder cssName config builder) =
             , start = Just startPos
         }
         builder
+
+
+
+-- ============================================================
+-- SET (snap)
+-- ============================================================
+
+
+snap : Builder eng -> Builder eng
+snap (Builder cssName config builder) =
+    Builder cssName { config | mode = Builder.Snap } builder
+
+
+set : Color -> Builder eng -> Builder eng
+set value =
+    to value >> snap
 
 
 

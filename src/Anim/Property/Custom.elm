@@ -4,6 +4,7 @@ module Anim.Property.Custom exposing
     , for, build
     , from
     , to
+    , set
     , delay, duration, speed
     , easing
     , spring
@@ -70,6 +71,11 @@ for details.
 ## End Value
 
 @docs to
+
+
+## Snap
+
+@docs set
 
 
 ## Timing
@@ -466,6 +472,20 @@ from =
 to : Float -> Builder eng -> Builder eng
 to =
     Internal.to
+
+
+
+-- ============================================================
+-- SET (snap)
+-- ============================================================
+
+
+{-| Snap the value silently, cancelling any in-flight animation
+on this property.
+-}
+set : Float -> Builder eng -> Builder eng
+set =
+    Internal.set
 
 
 

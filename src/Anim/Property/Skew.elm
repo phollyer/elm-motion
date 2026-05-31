@@ -4,6 +4,7 @@ module Anim.Property.Skew exposing
     , for, build
     , fromXY, fromX, fromY
     , toXY, toX, toY
+    , setXY, setX, setY
     , delay, duration, speed
     , easing
     , spring
@@ -66,6 +67,11 @@ for details.
 ## End Value
 
 @docs toXY, toX, toY
+
+
+## Snap
+
+@docs setXY, setX, setY
 
 
 ## Timing
@@ -276,6 +282,34 @@ toX =
 toY : Float -> Builder eng -> Builder eng
 toY =
     SB.toY
+
+
+
+-- ============================================================
+-- SET (snap)
+-- ============================================================
+
+
+{-| Snap skew to specified angles silently, cancelling any in-flight
+animation on this property.
+-}
+setXY : Float -> Float -> Builder eng -> Builder eng
+setXY =
+    SB.setXY
+
+
+{-| Snap the target X value, preserving the current Y value.
+-}
+setX : Float -> Builder eng -> Builder eng
+setX =
+    SB.setX
+
+
+{-| Snap the target Y value, preserving the current X value.
+-}
+setY : Float -> Builder eng -> Builder eng
+setY =
+    SB.setY
 
 
 

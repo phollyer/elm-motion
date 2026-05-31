@@ -44,6 +44,7 @@ mkCfg start end easing =
     , spring = Nothing
     , cssUnit = unitAxes
     , delay = 0
+    , mode = Builder.Animate
     }
 
 

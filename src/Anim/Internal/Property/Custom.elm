@@ -7,6 +7,8 @@ module Anim.Internal.Property.Custom exposing
     , easing
     , for
     , from
+    , set
+    , snap
     , speed
     , spring
     , to
@@ -142,6 +144,22 @@ to endValue (Builder cssName unit config builder) =
             , start = Just startValue
         }
         builder
+
+
+
+-- ============================================================
+-- SET (snap)
+-- ============================================================
+
+
+snap : Builder eng -> Builder eng
+snap (Builder cssName unit config builder) =
+    Builder cssName unit { config | mode = Builder.Snap } builder
+
+
+set : Float -> Builder eng -> Builder eng
+set value =
+    to value >> snap
 
 
 

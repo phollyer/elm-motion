@@ -33,6 +33,7 @@ dummyConfig =
             , z = InternalUnit.default
             }
         , delay = 0
+        , mode = Builder.Animate
         }
 
 

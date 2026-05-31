@@ -15,6 +15,11 @@ module Anim.Internal.Builder.PerspectiveOrigin exposing
     , fromX
     , fromXY
     , fromY
+    , set
+    , setX
+    , setXY
+    , setY
+    , snap
     , speed
     , spring
     , to
@@ -224,6 +229,37 @@ toY y (PerspectiveOriginBuilder config builder) =
             PerspectiveOrigin.getX config.end
     in
     toXY x y (PerspectiveOriginBuilder config builder)
+
+
+
+-- ============================================================
+-- SET (snap)
+-- ============================================================
+
+
+snap : PerspectiveOriginBuilder eng -> PerspectiveOriginBuilder eng
+snap (PerspectiveOriginBuilder config builder) =
+    PerspectiveOriginBuilder { config | mode = Builder.Snap } builder
+
+
+set : PerspectiveOrigin -> PerspectiveOriginBuilder eng -> PerspectiveOriginBuilder eng
+set value =
+    to value >> snap
+
+
+setXY : Float -> Float -> PerspectiveOriginBuilder eng -> PerspectiveOriginBuilder eng
+setXY x y =
+    toXY x y >> snap
+
+
+setX : Float -> PerspectiveOriginBuilder eng -> PerspectiveOriginBuilder eng
+setX x =
+    toX x >> snap
+
+
+setY : Float -> PerspectiveOriginBuilder eng -> PerspectiveOriginBuilder eng
+setY y =
+    toY y >> snap
 
 
 

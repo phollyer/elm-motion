@@ -76,6 +76,7 @@ type alias Config a =
     , cssUnit : InternalUnit.CssUnitAxes
     , timing : Maybe TimeSpec
     , distance : Float
+    , mode : Builder.AnimationMode
     }
 
 
@@ -89,6 +90,7 @@ defaultConfig defaultEnd =
     , cssUnit = InternalUnit.emptyCssUnitAxes
     , easing = Nothing
     , spring = Nothing
+    , mode = Builder.Animate
     }
 
 

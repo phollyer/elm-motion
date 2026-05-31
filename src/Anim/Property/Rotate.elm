@@ -4,6 +4,7 @@ module Anim.Property.Rotate exposing
     , for, build
     , fromXYZ, fromXY, fromXZ, fromX, fromYZ, fromY, fromZ
     , toXYZ, toXY, toXZ, toX, toYZ, toY, toZ
+    , set, setXYZ, setXY, setXZ, setX, setYZ, setY, setZ
     , delay, duration, speed
     , easing
     , spring
@@ -66,6 +67,11 @@ for details.
 ## End Value
 
 @docs toXYZ, toXY, toXZ, toX, toYZ, toY, toZ
+
+
+## Snap
+
+@docs set, setXYZ, setXY, setXZ, setX, setYZ, setY, setZ
 
 
 ## Timing
@@ -532,6 +538,69 @@ The X and Y rotations remain unchanged, or zero if not set.
 toZ : Float -> Builder eng -> Builder eng
 toZ =
     RB.toZ
+
+
+
+-- ============================================================
+-- SET (snap)
+-- ============================================================
+
+
+{-| Snap the uniform target rotation angles silently, cancelling
+any in-flight animation on this property.
+-}
+set : Float -> Builder eng -> Builder eng
+set xyz =
+    RB.setXYZ xyz xyz xyz
+
+
+{-| Snap target X, Y and Z angles.
+-}
+setXYZ : Float -> Float -> Float -> Builder eng -> Builder eng
+setXYZ =
+    RB.setXYZ
+
+
+{-| Snap target X and Y angles, preserving the current Z angle.
+-}
+setXY : Float -> Float -> Builder eng -> Builder eng
+setXY =
+    RB.setXY
+
+
+{-| Snap target X and Z angles, preserving the current Y angle.
+-}
+setXZ : Float -> Float -> Builder eng -> Builder eng
+setXZ =
+    RB.setXZ
+
+
+{-| Snap target X angle, preserving the current Y and Z angles.
+-}
+setX : Float -> Builder eng -> Builder eng
+setX =
+    RB.setX
+
+
+{-| Snap target Y and Z angles, preserving the current X angle.
+-}
+setYZ : Float -> Float -> Builder eng -> Builder eng
+setYZ =
+    RB.setYZ
+
+
+{-| Snap target Y angle, preserving the current X and Z angles.
+-}
+setY : Float -> Builder eng -> Builder eng
+setY =
+    RB.setY
+
+
+{-| Snap target Z angle, preserving the current X and Y angles.
+-}
+setZ : Float -> Builder eng -> Builder eng
+setZ =
+    RB.setZ
 
 
 

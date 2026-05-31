@@ -10,6 +10,10 @@ module Anim.Internal.Builder.Skew exposing
     , fromX
     , fromXY
     , fromY
+    , setX
+    , setXY
+    , setY
+    , snap
     , speed
     , spring
     , toX
@@ -213,6 +217,32 @@ toY y (SkewBuilder config builder) =
     in
     toXY x y <|
         SkewBuilder config builder
+
+
+
+-- ============================================================
+-- SET (snap)
+-- ============================================================
+
+
+snap : SkewBuilder eng -> SkewBuilder eng
+snap (SkewBuilder config builder) =
+    SkewBuilder { config | mode = Builder.Snap } builder
+
+
+setXY : Float -> Float -> SkewBuilder eng -> SkewBuilder eng
+setXY x y =
+    toXY x y >> snap
+
+
+setX : Float -> SkewBuilder eng -> SkewBuilder eng
+setX x =
+    toX x >> snap
+
+
+setY : Float -> SkewBuilder eng -> SkewBuilder eng
+setY y =
+    toY y >> snap
 
 
 

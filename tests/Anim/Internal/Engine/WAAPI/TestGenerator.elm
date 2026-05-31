@@ -38,6 +38,7 @@ mkCfg start end =
     , spring = Nothing
     , cssUnit = unitAxes
     , delay = 0
+    , mode = Builder.Animate
     }
 
 

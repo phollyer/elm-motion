@@ -32,6 +32,15 @@ module Anim.Internal.Builder.Translate exposing
     , fromY
     , fromYZ
     , fromZ
+    , set
+    , setX
+    , setXY
+    , setXYZ
+    , setXZ
+    , setY
+    , setYZ
+    , setZ
+    , snap
     , speed
     , spring
     , to
@@ -596,6 +605,57 @@ markAxes axes builder =
 
         Nothing ->
             builder
+
+
+
+-- ============================================================
+-- SET (snap)
+-- ============================================================
+
+
+snap : TranslateBuilder eng -> TranslateBuilder eng
+snap (TranslateBuilder config builder) =
+    TranslateBuilder { config | mode = Builder.Snap } builder
+
+
+set : Translate -> TranslateBuilder eng -> TranslateBuilder eng
+set value =
+    to value >> snap
+
+
+setXYZ : Float -> Float -> Float -> TranslateBuilder eng -> TranslateBuilder eng
+setXYZ x y z =
+    toXYZ x y z >> snap
+
+
+setXY : Float -> Float -> TranslateBuilder eng -> TranslateBuilder eng
+setXY x y =
+    toXY x y >> snap
+
+
+setXZ : Float -> Float -> TranslateBuilder eng -> TranslateBuilder eng
+setXZ x z =
+    toXZ x z >> snap
+
+
+setX : Float -> TranslateBuilder eng -> TranslateBuilder eng
+setX x =
+    toX x >> snap
+
+
+setYZ : Float -> Float -> TranslateBuilder eng -> TranslateBuilder eng
+setYZ y z =
+    toYZ y z >> snap
+
+
+setY : Float -> TranslateBuilder eng -> TranslateBuilder eng
+setY y =
+    toY y >> snap
+
+
+setZ : Float -> TranslateBuilder eng -> TranslateBuilder eng
+setZ z =
+    toZ z >> snap
 
 
 

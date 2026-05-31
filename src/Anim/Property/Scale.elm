@@ -4,6 +4,7 @@ module Anim.Property.Scale exposing
     , for, build
     , from, fromXYZ, fromXY, fromXZ, fromX, fromYZ, fromY, fromZ
     , to, toXYZ, toXY, toXZ, toX, toYZ, toY, toZ
+    , set, setXYZ, setXY, setXZ, setX, setYZ, setY, setZ
     , delay, duration, speed
     , easing
     , spring
@@ -67,6 +68,11 @@ for details.
 ## End Value
 
 @docs to, toXYZ, toXY, toXZ, toX, toYZ, toY, toZ
+
+
+## Snap
+
+@docs set, setXYZ, setXY, setXZ, setX, setYZ, setY, setZ
 
 
 ## Timing
@@ -603,6 +609,69 @@ The X and Y scales remain unchanged, or 1.0 if not set.
 toZ : Float -> Builder eng -> Builder eng
 toZ =
     SB.toZ
+
+
+
+-- ============================================================
+-- SET (snap)
+-- ============================================================
+
+
+{-| Snap the uniform target scale silently, cancelling any
+in-flight animation on this property.
+-}
+set : Float -> Builder eng -> Builder eng
+set xyz =
+    SB.setXYZ xyz xyz xyz
+
+
+{-| Snap target X, Y and Z scales.
+-}
+setXYZ : Float -> Float -> Float -> Builder eng -> Builder eng
+setXYZ =
+    SB.setXYZ
+
+
+{-| Snap target X and Y scales, preserving the current Z scale.
+-}
+setXY : Float -> Float -> Builder eng -> Builder eng
+setXY =
+    SB.setXY
+
+
+{-| Snap target X and Z scales, preserving the current Y scale.
+-}
+setXZ : Float -> Float -> Builder eng -> Builder eng
+setXZ =
+    SB.setXZ
+
+
+{-| Snap target X scale, preserving the current Y and Z scales.
+-}
+setX : Float -> Builder eng -> Builder eng
+setX =
+    SB.setX
+
+
+{-| Snap target Y and Z scales, preserving the current X scale.
+-}
+setYZ : Float -> Float -> Builder eng -> Builder eng
+setYZ =
+    SB.setYZ
+
+
+{-| Snap target Y scale, preserving the current X and Z scales.
+-}
+setY : Float -> Builder eng -> Builder eng
+setY =
+    SB.setY
+
+
+{-| Snap target Z scale, preserving the current X and Y scales.
+-}
+setZ : Float -> Builder eng -> Builder eng
+setZ =
+    SB.setZ
 
 
 

@@ -13,7 +13,7 @@ module Anim.Property.Translate exposing
     , cssUnit, cssUnitX, cssUnitY, cssUnitZ
     , clampX, clampY, clampZ, unclampX, unclampY, unclampZ
     , bounds
-    , position
+    , setXYZ, setXY, setXZ, setX, setYZ, setY, setZ, position
     )
 
 {-| Move elements along the X, Y, and Z axes.
@@ -153,7 +153,7 @@ for patterns and examples.
 ## Resize
 
 @docs bounds
-@docs position
+@docs setXYZ, setXY, setXZ, setX, setYZ, setY, setZ, position
 
 -}
 
@@ -701,6 +701,62 @@ The X and Y positions remain unchanged, or zero if not set.
 toZ : Float -> Builder eng -> Builder eng
 toZ =
     TB.toZ
+
+
+
+-- ============================================================
+-- SET (snap)
+-- ============================================================
+
+
+{-| Snap target X, Y and Z values silently, cancelling any
+in-flight animation on this property.
+-}
+setXYZ : Float -> Float -> Float -> Builder eng -> Builder eng
+setXYZ =
+    TB.setXYZ
+
+
+{-| Snap target X and Y values, preserving the current Z value.
+-}
+setXY : Float -> Float -> Builder eng -> Builder eng
+setXY =
+    TB.setXY
+
+
+{-| Snap target X and Z values, preserving the current Y value.
+-}
+setXZ : Float -> Float -> Builder eng -> Builder eng
+setXZ =
+    TB.setXZ
+
+
+{-| Snap target X value, preserving the current Y and Z values.
+-}
+setX : Float -> Builder eng -> Builder eng
+setX =
+    TB.setX
+
+
+{-| Snap target Y and Z values, preserving the current X value.
+-}
+setYZ : Float -> Float -> Builder eng -> Builder eng
+setYZ =
+    TB.setYZ
+
+
+{-| Snap target Y value, preserving the current X and Z values.
+-}
+setY : Float -> Builder eng -> Builder eng
+setY =
+    TB.setY
+
+
+{-| Snap target Z value, preserving the current X and Y values.
+-}
+setZ : Float -> Builder eng -> Builder eng
+setZ =
+    TB.setZ
 
 
 

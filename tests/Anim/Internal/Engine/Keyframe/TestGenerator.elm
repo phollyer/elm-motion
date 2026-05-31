@@ -23,6 +23,7 @@ translateConfig =
         , spring = Nothing
         , delay = Nothing
         , cssUnit = InternalUnit.emptyCssUnitAxes
+        , mode = Builder.Animate
         }
 
 
@@ -164,6 +165,7 @@ interpolationTests =
                             , spring = Nothing
                             , delay = Nothing
                             , cssUnit = InternalUnit.emptyCssUnitAxes
+                            , mode = Builder.Animate
                             }
                 in
                 Generator.init Nothing Builder.Once Builder.Normal Generator.emptyDiscreteConfig "noOp" [ noOpTranslate ]

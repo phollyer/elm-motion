@@ -7,6 +7,8 @@ module Anim.Internal.Builder.Opacity exposing
     , easing
     , for
     , from
+    , set
+    , snap
     , speed
     , spring
     , to
@@ -132,6 +134,22 @@ to endPos (OpacityBuilder config builder) =
             , start = Just startPos
         }
         builder
+
+
+
+-- ============================================================
+-- SET (snap)
+-- ============================================================
+
+
+snap : OpacityBuilder eng -> OpacityBuilder eng
+snap (OpacityBuilder config builder) =
+    OpacityBuilder { config | mode = Builder.Snap } builder
+
+
+set : Opacity -> OpacityBuilder eng -> OpacityBuilder eng
+set value =
+    to value >> snap
 
 
 

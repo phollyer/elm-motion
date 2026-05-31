@@ -23,6 +23,7 @@ translateConfig =
         , spring = Nothing
         , delay = Nothing
         , cssUnit = InternalUnit.emptyCssUnitAxes
+        , mode = Builder.Animate
         }
 
 

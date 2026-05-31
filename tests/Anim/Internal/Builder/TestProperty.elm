@@ -166,6 +166,7 @@ upsertTests =
                 , spring = Nothing
                 , delay = Nothing
                 , cssUnit = InternalUnit.emptyCssUnitAxes
+                , mode = Builder.Animate
                 }
 
         opacityConfig =
@@ -178,6 +179,7 @@ upsertTests =
                 , spring = Nothing
                 , delay = Nothing
                 , cssUnit = InternalUnit.emptyCssUnitAxes
+                , mode = Builder.Animate
                 }
 
         replacementTranslateConfig =
@@ -190,6 +192,7 @@ upsertTests =
                 , spring = Nothing
                 , delay = Nothing
                 , cssUnit = InternalUnit.emptyCssUnitAxes
+                , mode = Builder.Animate
                 }
 
         getProperties builder =

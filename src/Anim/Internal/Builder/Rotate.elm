@@ -16,6 +16,15 @@ module Anim.Internal.Builder.Rotate exposing
     , fromY
     , fromYZ
     , fromZ
+    , set
+    , setX
+    , setXY
+    , setXYZ
+    , setXZ
+    , setY
+    , setYZ
+    , setZ
+    , snap
     , speed
     , spring
     , to
@@ -340,6 +349,57 @@ toZ z (RotateBuilder config builder) =
     in
     toXYZ x y z <|
         RotateBuilder config builder
+
+
+
+-- ============================================================
+-- SET (snap)
+-- ============================================================
+
+
+snap : RotateBuilder eng -> RotateBuilder eng
+snap (RotateBuilder config builder) =
+    RotateBuilder { config | mode = Builder.Snap } builder
+
+
+set : Rotate -> RotateBuilder eng -> RotateBuilder eng
+set value =
+    to value >> snap
+
+
+setXYZ : Float -> Float -> Float -> RotateBuilder eng -> RotateBuilder eng
+setXYZ x y z =
+    toXYZ x y z >> snap
+
+
+setXY : Float -> Float -> RotateBuilder eng -> RotateBuilder eng
+setXY x y =
+    toXY x y >> snap
+
+
+setXZ : Float -> Float -> RotateBuilder eng -> RotateBuilder eng
+setXZ x z =
+    toXZ x z >> snap
+
+
+setX : Float -> RotateBuilder eng -> RotateBuilder eng
+setX x =
+    toX x >> snap
+
+
+setYZ : Float -> Float -> RotateBuilder eng -> RotateBuilder eng
+setYZ y z =
+    toYZ y z >> snap
+
+
+setY : Float -> RotateBuilder eng -> RotateBuilder eng
+setY y =
+    toY y >> snap
+
+
+setZ : Float -> RotateBuilder eng -> RotateBuilder eng
+setZ z =
+    toZ z >> snap
 
 
 

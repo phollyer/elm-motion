@@ -4,6 +4,7 @@ module Anim.Property.Opacity exposing
     , for, build
     , from
     , to
+    , set
     , delay, duration, speed
     , easing
     , spring
@@ -63,6 +64,11 @@ for details.
 ## End Value
 
 @docs to
+
+
+## Snap
+
+@docs set
 
 
 ## Timing
@@ -220,6 +226,31 @@ from =
 to : Float -> Builder eng -> Builder eng
 to =
     OB.to << O.fromFloat
+
+
+
+-- ============================================================
+-- SET
+-- ============================================================
+
+
+{-| Snap the opacity to a value silently, cancelling any in-flight
+animation on this property.
+
+Use this when a layout change or external event invalidates the
+current animation and you want the property to jump to a new value
+without interpolation.
+
+    myAnimation : AnimBuilder eng -> AnimBuilder eng
+    myAnimation =
+        Opacity.for "animGroupName"
+            >> Opacity.set 0
+            >> Opacity.build
+
+-}
+set : Float -> Builder eng -> Builder eng
+set =
+    OB.set << O.fromFloat
 
 
 

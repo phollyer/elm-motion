@@ -3,6 +3,7 @@ module Anim.Internal.Builder exposing
     , AnimGroupConfig
     , AnimationConfig
     , AnimationDirection(..)
+    , AnimationMode(..)
     , DefaultsConfig
     , DiscreteEntryProperty
     , DiscreteExitProperty
@@ -302,7 +303,17 @@ type alias AnimationConfig targetProperty =
     , spring : Maybe Spring
     , delay : Maybe Int
     , cssUnit : InternalUnit.CssUnitAxes
+    , mode : AnimationMode
     }
+
+
+{-| How an engine should consume an `AnimationConfig`. `Animate` is the
+normal interpolated transition; `Snap` instructs the engine to silently
+cancel any in-flight animation on the affected axis and jump to `end`.
+-}
+type AnimationMode
+    = Animate
+    | Snap
 
 
 type ProcessedPropertyConfig
@@ -328,6 +339,7 @@ type alias ProcessedAnimationConfig targetProperty =
     , spring : Maybe Spring
     , cssUnit : InternalUnit.ResolvedCssUnitAxes
     , delay : Int
+    , mode : AnimationMode
     }
 
 
@@ -1965,6 +1977,7 @@ processStandardAnimation { config, globalData, globalCssUnit, defaultStart, defa
         , spring = resolvedSpring
         , cssUnit = InternalUnit.resolveCssUnitAxes config.cssUnit globalCssUnit defaultCssUnit
         , delay = resolveDelayWithDefault config.delay globalData.globalDelay 0
+        , mode = config.mode
         }
 
 

@@ -15,6 +15,11 @@ module Anim.Internal.Builder.Size exposing
     , fromH
     , fromHW
     , fromW
+    , set
+    , setH
+    , setHW
+    , setW
+    , snap
     , speed
     , spring
     , to
@@ -228,6 +233,37 @@ toW w (SizeBuilder config builder) =
             Size.getH config.end
     in
     toHW h w (SizeBuilder config builder)
+
+
+
+-- ============================================================
+-- SET (snap)
+-- ============================================================
+
+
+snap : SizeBuilder eng -> SizeBuilder eng
+snap (SizeBuilder config builder) =
+    SizeBuilder { config | mode = Builder.Snap } builder
+
+
+set : Size -> SizeBuilder eng -> SizeBuilder eng
+set value =
+    to value >> snap
+
+
+setHW : Float -> Float -> SizeBuilder eng -> SizeBuilder eng
+setHW h w =
+    toHW h w >> snap
+
+
+setH : Float -> SizeBuilder eng -> SizeBuilder eng
+setH h =
+    toH h >> snap
+
+
+setW : Float -> SizeBuilder eng -> SizeBuilder eng
+setW w =
+    toW w >> snap
 
 
 
