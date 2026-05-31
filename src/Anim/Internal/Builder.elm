@@ -376,9 +376,7 @@ type AnimationMode
     | RemapToBounds AxisRanges
 
 
-{-| Inclusive numeric range for one axis. Re-declared here (structurally
-equivalent to `Anim.Resize.AxisBounds`) so the core builder stays
-independent of the resize accumulator module.
+{-| Inclusive numeric range for one axis.
 -}
 type alias AxisBounds =
     { min : Float, max : Float }

@@ -11,10 +11,7 @@ module Anim.Internal.Unit exposing
     , toCssSuffix
     )
 
-{-| Internal re-exports for `Anim.Unit`. The implementation lives in the
-public `Anim.Unit` module; this module exists so internal callers can keep
-their `import Anim.Internal.Unit as InternalUnit` aliases without coupling
-to the public API surface.
+{-| Internal unit helpers.
 
 `CssUnitAxes` is the unresolved per-axis unit override carried through the
 builder pipeline. `ResolvedCssUnitAxes` is the resolved record stored on a
@@ -22,7 +19,7 @@ builder pipeline. `ResolvedCssUnitAxes` is the resolved record stored on a
 
 -}
 
-import Anim.Unit as Unit exposing (Unit)
+import Anim.Unit as Unit exposing (Unit(..))
 
 
 
@@ -37,8 +34,157 @@ default =
 
 
 toCssSuffix : Unit -> String
-toCssSuffix =
-    Unit.toCssSuffix
+toCssSuffix unit =
+    case unit of
+        Cap ->
+            "cap"
+
+        Ch ->
+            "ch"
+
+        Cm ->
+            "cm"
+
+        Cqb ->
+            "cqb"
+
+        Cqh ->
+            "cqh"
+
+        Cqi ->
+            "cqi"
+
+        Cqmax ->
+            "cqmax"
+
+        Cqmin ->
+            "cqmin"
+
+        Cqw ->
+            "cqw"
+
+        Dvb ->
+            "dvb"
+
+        Dvh ->
+            "dvh"
+
+        Dvi ->
+            "dvi"
+
+        Dvmax ->
+            "dvmax"
+
+        Dvmin ->
+            "dvmin"
+
+        Dvw ->
+            "dvw"
+
+        Em ->
+            "em"
+
+        Ex ->
+            "ex"
+
+        Ic ->
+            "ic"
+
+        In ->
+            "in"
+
+        Lh ->
+            "lh"
+
+        Lvb ->
+            "lvb"
+
+        Lvh ->
+            "lvh"
+
+        Lvi ->
+            "lvi"
+
+        Lvmax ->
+            "lvmax"
+
+        Lvmin ->
+            "lvmin"
+
+        Lvw ->
+            "lvw"
+
+        Mm ->
+            "mm"
+
+        Pc ->
+            "pc"
+
+        Percent ->
+            "%"
+
+        Pt ->
+            "pt"
+
+        Px ->
+            "px"
+
+        Q ->
+            "Q"
+
+        Rcap ->
+            "rcap"
+
+        Rch ->
+            "rch"
+
+        Rem ->
+            "rem"
+
+        Rex ->
+            "rex"
+
+        Ric ->
+            "ric"
+
+        Rlh ->
+            "rlh"
+
+        Svb ->
+            "svb"
+
+        Svh ->
+            "svh"
+
+        Svi ->
+            "svi"
+
+        Svmax ->
+            "svmax"
+
+        Svmin ->
+            "svmin"
+
+        Svw ->
+            "svw"
+
+        Vb ->
+            "vb"
+
+        Vh ->
+            "vh"
+
+        Vi ->
+            "vi"
+
+        Vmax ->
+            "vmax"
+
+        Vmin ->
+            "vmin"
+
+        Vw ->
+            "vw"
 
 
 

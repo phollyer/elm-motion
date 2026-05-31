@@ -97,7 +97,7 @@ When a resize message arrives, hand the engine the updated pixel ranges via `onR
 The bounds builder itself is engine-agnostic:
 
 ```elm
-cookieBounds : Int -> Int -> Model -> Resize.Bounds
+cookieBounds : Int -> Int -> Model -> { x : Maybe { min : Float, max : Float }, y : Maybe { min : Float, max : Float }, z : Maybe { min : Float, max : Float } }
 cookieBounds w h model =
     { x = Just { min = 0, max = toFloat w }
     , y = Just { min = toFloat h - model.cqHeight, max = toFloat h }

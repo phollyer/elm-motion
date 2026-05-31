@@ -8,9 +8,9 @@ module Anim.Engine.Transition exposing
     , AnimMsg, update
     , attributes
     , events, eventsStopPropagation
+    , cssUnit, cssUnitX, cssUnitY, cssUnitZ, cssUnitWidth, cssUnitHeight
     , delay, duration, speed
     , easing
-    , cssUnit, cssUnitX, cssUnitY, cssUnitZ, cssUnitWidth, cssUnitHeight
     , stop, reset
     , discreteEntry, startingStyleNode, startingStyleNodeFor, discreteExit
     , anyRunning, isRunning, allComplete, isComplete, isCancelled
@@ -25,9 +25,9 @@ module Anim.Engine.Transition exposing
     , getTranslateEnd
     )
 
-{-| Use CSS transitions for simple A to B animations.
+{-| CSS transitions for simple A→B animations with browser-native performance.
 
-This engine is a good fit when you want browser-native transitions with a small API surface.
+This engine is a good fit for hover effects, focus effects, and other simple state changes.
 
 📖 For setup, examples, and behaviour details, see the
 [Transition Engine Documentation](https://phollyer.github.io/elm-motion/animation/engines/transition/)
@@ -46,8 +46,6 @@ and the
 
 
 ### Engine Builder
-
-Use this in type annotations when a builder function should only work with the Transition engine.
 
 @docs EngineBuilder
 
@@ -96,6 +94,11 @@ To render a transition, add `attributes` to the element you want to animate.
 📖 See [Event Reference](https://phollyer.github.io/elm-motion/animation/workflow/react/#event-reference) in the docs.
 
 
+# Unit
+
+@docs cssUnit, cssUnitX, cssUnitY, cssUnitZ, cssUnitWidth, cssUnitHeight
+
+
 # Timing
 
 @docs delay, duration, speed
@@ -106,11 +109,6 @@ To render a transition, add `attributes` to the element you want to animate.
 # Easing
 
 @docs easing
-
-
-# Unit
-
-@docs cssUnit, cssUnitX, cssUnitY, cssUnitZ, cssUnitWidth, cssUnitHeight
 
 
 # Animation Control
@@ -284,7 +282,7 @@ animate =
     Internal.animate
 
 
-{-| Update the target and move the element instantly to the new end values.
+{-| Update the target and snap to the new end values.
 
 Use this when you want to move an animation to a new state without animating.
 
@@ -495,78 +493,6 @@ eventsStopPropagation =
 
 
 -- ============================================================
--- TIMING
--- ============================================================
-
-
-{-| Set the global delay for all animations in this builder.
-
-    introAnim : AnimBuilder eng -> AnimBuilder eng
-    introAnim =
-        delay 500
-            >> fadeInHeader
-            >> slideInSidebar
-            >> fadeInContent
-
--}
-delay : Int -> EngineBuilder -> EngineBuilder
-delay =
-    Builder.delay
-
-
-{-| Set the global duration for all animations in this builder.
-
-    introAnim : AnimBuilder eng -> AnimBuilder eng
-    introAnim =
-        duration 500
-            >> fadeInHeader
-            >> slideInSidebar
-            >> fadeInContent
-
--}
-duration : Int -> EngineBuilder -> EngineBuilder
-duration =
-    Builder.duration
-
-
-{-| Set the global speed for all animations in this builder.
-
-    introAnim : AnimBuilder eng -> AnimBuilder eng
-    introAnim =
-        speed 300
-            >> slideDownHeader
-            >> slideInSidebar
-            >> slideUpContent
-
--}
-speed : Float -> EngineBuilder -> EngineBuilder
-speed =
-    Builder.speed
-
-
-
--- ============================================================
--- EASING
--- ============================================================
-
-
-{-| Set the global easing function.
-
-    heroEntrance : AnimBuilder eng -> AnimBuilder eng
-    heroEntrance =
-        easing EaseInOut
-            >> fadeInHeroTitle
-            >> slideInHeroArtwork
-            >> revealPrimaryCta
-
--}
-easing : Easing -> EngineBuilder -> EngineBuilder
-easing =
-    Builder.easing
-
-
-
--- ============================================================
 -- UNIT
 -- ============================================================
 
@@ -653,6 +579,78 @@ cssUnitWidth =
 cssUnitHeight : Unit -> EngineBuilder -> EngineBuilder
 cssUnitHeight =
     Builder.cssUnitHeight
+
+
+
+-- ============================================================
+-- TIMING
+-- ============================================================
+
+
+{-| Set the global delay for all animations in this builder.
+
+    introAnim : AnimBuilder eng -> AnimBuilder eng
+    introAnim =
+        delay 500
+            >> fadeInHeader
+            >> slideInSidebar
+            >> fadeInContent
+
+-}
+delay : Int -> EngineBuilder -> EngineBuilder
+delay =
+    Builder.delay
+
+
+{-| Set the global duration for all animations in this builder.
+
+    introAnim : AnimBuilder eng -> AnimBuilder eng
+    introAnim =
+        duration 500
+            >> fadeInHeader
+            >> slideInSidebar
+            >> fadeInContent
+
+-}
+duration : Int -> EngineBuilder -> EngineBuilder
+duration =
+    Builder.duration
+
+
+{-| Set the global speed for all animations in this builder.
+
+    introAnim : AnimBuilder eng -> AnimBuilder eng
+    introAnim =
+        speed 300
+            >> slideDownHeader
+            >> slideInSidebar
+            >> slideUpContent
+
+-}
+speed : Float -> EngineBuilder -> EngineBuilder
+speed =
+    Builder.speed
+
+
+
+-- ============================================================
+-- EASING
+-- ============================================================
+
+
+{-| Set the global easing function.
+
+    heroEntrance : AnimBuilder eng -> AnimBuilder eng
+    heroEntrance =
+        easing EaseInOut
+            >> fadeInHeroTitle
+            >> slideInHeroArtwork
+            >> revealPrimaryCta
+
+-}
+easing : Easing -> EngineBuilder -> EngineBuilder
+easing =
+    Builder.easing
 
 
 

@@ -48,15 +48,8 @@ and the
 
 @docs AnimBuilder
 
-Use `AnimBuilder` for most builder functions.
-
-Use `EngineBuilder` only when you want a type annotation to say
-that a builder is meant to work with the Keyframe engine only.
-
 
 ### Engine Builder
-
-Use this when a builder function should only work with the Keyframe engine.
 
 @docs EngineBuilder
 

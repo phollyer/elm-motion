@@ -11,10 +11,10 @@ queried via `Sub.getTranslateCurrent` / `getTranslateEnd`.
 -}
 
 import Anim.Engine.Sub as Sub
+import Anim.Internal.Builder as Builder
 import Anim.Internal.Engine.Sub as Internal
 import Anim.Property.Opacity as Opacity
 import Anim.Property.Translate as Translate
-import Anim.Resize as Resize
 import Anim.Unit as Unit
 import Expect
 import Motion.Easing exposing (Easing(..))
@@ -124,7 +124,7 @@ within tolerance expected actual =
 -}
 onResize :
     Sub.AnimGroupName
-    -> { x : Maybe Resize.AxisBounds, y : Maybe Resize.AxisBounds }
+    -> { x : Maybe Builder.AxisBounds, y : Maybe Builder.AxisBounds }
     -> Sub.AnimState
     -> Sub.AnimState
 onResize name bounds animState =

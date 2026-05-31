@@ -106,9 +106,8 @@ for patterns and examples.
 
 -}
 
-import Anim.Internal.Builder exposing (AnimBuilder)
+import Anim.Internal.Builder exposing (AnimBuilder, AxisRanges)
 import Anim.Internal.Builder.Scale as SB
-import Anim.Resize as Resize
 import Motion.Easing exposing (Easing)
 import Motion.Spring exposing (Spring)
 
@@ -865,6 +864,6 @@ not pixels. Only callable from inside an `onResize` callback - the
 `withBounds` capability on the builder type is what gates it.
 
 -}
-bounds : AnimGroupName -> Resize.Bounds -> AnimBuilder { eng | withBounds : () } -> AnimBuilder { eng | withBounds : () }
+bounds : AnimGroupName -> AxisRanges -> AnimBuilder { eng | withBounds : () } -> AnimBuilder { eng | withBounds : () }
 bounds name ranges =
     SB.for name >> SB.bounds ranges >> SB.build

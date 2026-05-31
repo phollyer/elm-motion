@@ -159,7 +159,6 @@ for patterns and examples.
 
 import Anim.Internal.Builder as SB exposing (AnimBuilder)
 import Anim.Internal.Builder.Translate as TB
-import Anim.Resize as Resize
 import Anim.Unit exposing (Unit)
 import Motion.Easing exposing (Easing)
 import Motion.Spring exposing (Spring)
@@ -1010,8 +1009,8 @@ so the animation follows resize automatically.
 This setting takes precedence over any [length](Anim-Engine-WAAPI#cssUnit) set
 on the engine.
 
-The `Sub` engine currently only supports `Px`; setting a non-`Px` unit on a
-translate targeted at `Sub` reports an error and falls back to `Px`.
+`Sub` renders non-`Px` units normally. During `onResize` bounds remapping,
+only `Px` translate axes are remapped; non-`Px` axes are left unchanged.
 
 -}
 cssUnit : Unit -> Builder eng -> Builder eng
@@ -1159,6 +1158,6 @@ Only callable from inside an engine's `onResize` callback - the `withBounds`
 capability on the builder type is what gates it.
 
 -}
-bounds : AnimGroupName -> Resize.Bounds -> AnimBuilder { eng | withBounds : () } -> AnimBuilder { eng | withBounds : () }
+bounds : AnimGroupName -> SB.AxisRanges -> AnimBuilder { eng | withBounds : () } -> AnimBuilder { eng | withBounds : () }
 bounds name ranges =
     TB.for name >> TB.bounds ranges >> TB.build

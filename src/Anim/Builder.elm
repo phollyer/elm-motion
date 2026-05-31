@@ -10,30 +10,37 @@ module Anim.Builder exposing
 {-| Shared builder types and settings for animations.
 
 Most app code will use the engine and property modules directly.
-This module is mainly for shared type annotations and global builder settings.
+
+This module contains shared types and global builder settings.
 
 
 # Types
 
 @docs AnimBuilder
 
+
+## Engine Capability Types
+
 Use these to constrain a builder function to one specific Engine.
 
 @docs ForKeyframe, ForSub, ForTransition, ForWAAPI, ForScroll, ForView
 
-📖 See [Engine Capabilities](https://phollyer.github.io/elm-motion/animation/concepts/engine-capabilities/)
-in the docs for detailed examples and patterns.
+
+# Builder Settings
+
+All the engines expose their own equivalents of these functions that are engine-specific,
+these are the engine-agnostic versions. Use these when you are writing builder functions
+that should work across engines, or when you don't want to commit to a specific engine.
 
 
-# Timing
+## Timing
 
 These settings are for Document timeline engines: Keyframe, Sub, Transition, and WAAPI.
-The engine modules re-export the same functions.
 
 @docs delay, duration, speed
 
 
-# Playback
+## Playback
 
 @docs iterations, alternate
 
@@ -47,10 +54,10 @@ The engine modules re-export the same functions.
 
 Set the CSS unit for built-in properties that use length values.
 
-This is useful when you want those properties to render in units like `px`, `rem`, or container units.
+This is useful when you want those properties to render in units like `rem`, `cqh` or `vw`, for example, instead of `px`, the default.
 
 📖 See the property docs and [Responsive Animations](https://phollyer.github.io/elm-motion/animation/concepts/responsive-animations/)
-for details.
+for more details.
 
 @docs cssUnit, cssUnitX, cssUnitY, cssUnitZ, cssUnitWidth, cssUnitHeight
 
@@ -72,33 +79,15 @@ import Motion.Spring exposing (Spring)
 
     f : AnimBuilder eng -> AnimBuilder eng
 
+The `eng` type parameter is a phantom type used to optionally constrain
+builder functions to specific engines or capabilities.
+
+📖 See [Engine Capabilities](https://phollyer.github.io/elm-motion/animation/concepts/engine-capabilities/)
+in the docs for detailed examples and patterns.
+
 -}
 type alias AnimBuilder eng =
     Internal.AnimBuilder eng
-
-
-
--- ============================================================
--- TIMELINE CAPABILITIES
--- ============================================================
-
-
-{-| Builder type for ScrollTimeline builders.
-
-    f : AnimBuilder ForScroll -> AnimBuilder ForScroll
-
--}
-type alias ForScroll =
-    Internal.ForScroll
-
-
-{-| Builder type for ViewTimeline builders.
-
-    f : AnimBuilder ForView -> AnimBuilder ForView
-
--}
-type alias ForView =
-    Internal.ForView
 
 
 
@@ -143,9 +132,27 @@ type alias ForWAAPI =
     Internal.ForWAAPI
 
 
+{-| Builder type for ScrollTimeline builders.
+
+    f : AnimBuilder ForScroll -> AnimBuilder ForScroll
+
+-}
+type alias ForScroll =
+    Internal.ForScroll
+
+
+{-| Builder type for ViewTimeline builders.
+
+    f : AnimBuilder ForView -> AnimBuilder ForView
+
+-}
+type alias ForView =
+    Internal.ForView
+
+
 
 -- ============================================================
--- DOCUMENT TIMELINE FUNCTIONS
+-- TIMING CAPABILITIES
 -- ============================================================
 
 
@@ -196,14 +203,13 @@ speed =
 
 
 -- ============================================================
--- UNIVERSAL FUNCTIONS
+-- PLAYBACK CAPABILITIES
 -- ============================================================
--- Playback
 
 
 {-| Set how many times an animation should repeat.
 
-    notificationAttentionLoop : AnimBuilder eng -> AnimBuilder eng
+    notificationAttentionLoop : AnimBuilder { eng | withIterations : () } -> AnimBuilder { eng | withIterations : () }
     notificationAttentionLoop =
         iterations 3
             >> pulseBadge
@@ -217,7 +223,7 @@ iterations =
 
 {-| Make an animation alternate direction on each iteration.
 
-    floatingCardLoop : AnimBuilder eng -> AnimBuilder eng
+    floatingCardLoop : AnimBuilder { eng | withAlternate : () } -> AnimBuilder { eng | withAlternate : () }
     floatingCardLoop =
         iterations 4
             >> alternate
@@ -236,12 +242,14 @@ alternate =
 
 
 
--- Motion Behaviour
+-- ============================================================
+-- MOTION CAPABILITIES
+-- ============================================================
 
 
 {-| Set the global easing function.
 
-    heroEntrance : AnimBuilder eng -> AnimBuilder eng
+    heroEntrance : AnimBuilder { eng | withEasing : () } -> AnimBuilder { eng | withEasing : () }
     heroEntrance =
         easing EaseInOut
             >> fadeInHeroTitle
@@ -249,14 +257,14 @@ alternate =
             >> revealPrimaryCta
 
 -}
-easing : Easing -> AnimBuilder eng -> AnimBuilder eng
+easing : Easing -> AnimBuilder { eng | withEasing : () } -> AnimBuilder { eng | withEasing : () }
 easing =
     Internal.easing
 
 
 {-| Set the global spring.
 
-    draggableCardSettle : AnimBuilder eng -> AnimBuilder eng
+    draggableCardSettle : AnimBuilder { eng | withSpring : () } -> AnimBuilder { eng | withSpring : () }
     draggableCardSettle =
         spring Spring.wobbly
             >> settleCardPosition
@@ -269,68 +277,70 @@ spring =
 
 
 
--- Units
+-- ============================================================
+-- CSS UNIT CAPABILITIES
+-- ============================================================
 
 
 {-| Set the default length unit for all length-bearing properties.
 
-    responsivePanelMotion : AnimBuilder eng -> AnimBuilder eng
+    responsivePanelMotion : AnimBuilder { eng | withCssUnit : () } -> AnimBuilder { eng | withCssUnit : () }
     responsivePanelMotion =
         cssUnit Unit.Vw
             >> slidePanelIn
             >> growPanelHeight
 
 -}
-cssUnit : Unit -> AnimBuilder eng -> AnimBuilder eng
+cssUnit : Unit -> AnimBuilder { eng | withCssUnit : () } -> AnimBuilder { eng | withCssUnit : () }
 cssUnit =
     Internal.cssUnit
 
 
 {-| Set the default length unit for the X axis.
 
-    responsiveDrawerMotion : AnimBuilder eng -> AnimBuilder eng
+    responsiveDrawerMotion : AnimBuilder { eng | withCssUnit : () } -> AnimBuilder { eng | withCssUnit : () }
     responsiveDrawerMotion =
         cssUnitX Unit.Vw
             >> slideDrawerX
             >> alignDrawerLabelX
 
 -}
-cssUnitX : Unit -> AnimBuilder eng -> AnimBuilder eng
+cssUnitX : Unit -> AnimBuilder { eng | withCssUnit : () } -> AnimBuilder { eng | withCssUnit : () }
 cssUnitX =
     Internal.cssUnitX
 
 
 {-| Set the default length unit for the Y axis.
 
-    responsiveSheetMotion : AnimBuilder eng -> AnimBuilder eng
+    responsiveSheetMotion : AnimBuilder { eng | withCssUnit : () } -> AnimBuilder { eng | withCssUnit : () }
     responsiveSheetMotion =
         cssUnitY Unit.Vh
             >> slideSheetY
             >> alignSheetHeaderY
 
 -}
-cssUnitY : Unit -> AnimBuilder eng -> AnimBuilder eng
+cssUnitY : Unit -> AnimBuilder { eng | withCssUnit : () } -> AnimBuilder { eng | withCssUnit : () }
 cssUnitY =
     Internal.cssUnitY
 
 
 {-| Set the default length unit for the Z axis.
 
-    layeredSceneMotion : AnimBuilder eng -> AnimBuilder eng
+    layeredSceneMotion : AnimBuilder { eng | withCssUnit : () } -> AnimBuilder { eng | withCssUnit : () }
     layeredSceneMotion =
         cssUnitZ Unit.Px
             >> pushSceneBackgroundBack
             >> bringFloatingCardForward
 
 -}
-cssUnitZ : Unit -> AnimBuilder eng -> AnimBuilder eng
+cssUnitZ : Unit -> AnimBuilder { eng | withCssUnit : () } -> AnimBuilder { eng | withCssUnit : () }
 cssUnitZ =
     Internal.cssUnitZ
 
 
 {-| Set the default length unit used for width values.
 
-    responsiveCardWidth : AnimBuilder eng -> AnimBuilder eng
+    responsiveCardWidth : AnimBuilder { eng | withCssUnit : () } -> AnimBuilder { eng | withCssUnit : () }
     responsiveCardWidth =
         cssUnitWidth Unit.Vw
             >> growCardWidth

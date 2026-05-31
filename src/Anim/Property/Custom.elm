@@ -34,9 +34,7 @@ properties (including the container-query and dynamic-viewport units).
 The escape hatch [`Custom`](#Property) and the awkward `LineHeight` /
 `TabSize` constructors keep a free-form `String` unit, since they target
 properties that may be unitless or use units outside the [`Unit`](Anim.Unit#Unit)
-vocabulary (`ch`, `ex`, `lh`, `deg`, `s`, `fr`, ...). Use
-[`Anim.Unit.toCssSuffix`](Anim.Unit#toCssSuffix) when you want to feed a
-typed `Unit` into one of those.
+vocabulary (`ch`, `ex`, `lh`, `deg`, `s`, `fr`, ...).
 
 
 # Types
@@ -107,7 +105,8 @@ for patterns and examples.
 
 import Anim.Internal.Builder exposing (AnimBuilder)
 import Anim.Internal.Property.Custom as Internal
-import Anim.Unit as Unit exposing (Unit)
+import Anim.Internal.Unit as InternalUnit
+import Anim.Unit exposing (Unit)
 import Motion.Easing exposing (Easing)
 import Motion.Spring exposing (Spring)
 
@@ -134,8 +133,7 @@ type alias Builder eng =
 
 Length-typed constructors take a [`Unit`](Anim.Unit#Unit). The escape hatch
 `Custom`, plus `LineHeight` and `TabSize`, take a free-form `String` unit
-(use `""` for unitless values, or [`Anim.Unit.toCssSuffix`](Anim.Unit#toCssSuffix)
-to bridge a typed `Unit`).
+(use `""` for unitless values).
 
     import Anim.Property.Custom as Property
     import Anim.Unit exposing (Unit(..))
@@ -251,134 +249,134 @@ toCssArgs cssProperty =
     case cssProperty of
         -- Standard CSS
         BorderBottomLeftRadius unit ->
-            ( "border-bottom-left-radius", Unit.toCssSuffix unit )
+            ( "border-bottom-left-radius", InternalUnit.toCssSuffix unit )
 
         BorderBottomRightRadius unit ->
-            ( "border-bottom-right-radius", Unit.toCssSuffix unit )
+            ( "border-bottom-right-radius", InternalUnit.toCssSuffix unit )
 
         BorderBottomWidth unit ->
-            ( "border-bottom-width", Unit.toCssSuffix unit )
+            ( "border-bottom-width", InternalUnit.toCssSuffix unit )
 
         BorderLeftWidth unit ->
-            ( "border-left-width", Unit.toCssSuffix unit )
+            ( "border-left-width", InternalUnit.toCssSuffix unit )
 
         BorderRadius unit ->
-            ( "border-radius", Unit.toCssSuffix unit )
+            ( "border-radius", InternalUnit.toCssSuffix unit )
 
         BorderRightWidth unit ->
-            ( "border-right-width", Unit.toCssSuffix unit )
+            ( "border-right-width", InternalUnit.toCssSuffix unit )
 
         BorderTopLeftRadius unit ->
-            ( "border-top-left-radius", Unit.toCssSuffix unit )
+            ( "border-top-left-radius", InternalUnit.toCssSuffix unit )
 
         BorderTopRightRadius unit ->
-            ( "border-top-right-radius", Unit.toCssSuffix unit )
+            ( "border-top-right-radius", InternalUnit.toCssSuffix unit )
 
         BorderTopWidth unit ->
-            ( "border-top-width", Unit.toCssSuffix unit )
+            ( "border-top-width", InternalUnit.toCssSuffix unit )
 
         BorderWidth unit ->
-            ( "border-width", Unit.toCssSuffix unit )
+            ( "border-width", InternalUnit.toCssSuffix unit )
 
         Bottom unit ->
-            ( "bottom", Unit.toCssSuffix unit )
+            ( "bottom", InternalUnit.toCssSuffix unit )
 
         ColumnGap unit ->
-            ( "column-gap", Unit.toCssSuffix unit )
+            ( "column-gap", InternalUnit.toCssSuffix unit )
 
         ColumnWidth unit ->
-            ( "column-width", Unit.toCssSuffix unit )
+            ( "column-width", InternalUnit.toCssSuffix unit )
 
         FontSize unit ->
-            ( "font-size", Unit.toCssSuffix unit )
+            ( "font-size", InternalUnit.toCssSuffix unit )
 
         Gap unit ->
-            ( "gap", Unit.toCssSuffix unit )
+            ( "gap", InternalUnit.toCssSuffix unit )
 
         Inset unit ->
-            ( "inset", Unit.toCssSuffix unit )
+            ( "inset", InternalUnit.toCssSuffix unit )
 
         Left unit ->
-            ( "left", Unit.toCssSuffix unit )
+            ( "left", InternalUnit.toCssSuffix unit )
 
         LetterSpacing unit ->
-            ( "letter-spacing", Unit.toCssSuffix unit )
+            ( "letter-spacing", InternalUnit.toCssSuffix unit )
 
         LineHeight unit ->
             ( "line-height", unit )
 
         Margin unit ->
-            ( "margin", Unit.toCssSuffix unit )
+            ( "margin", InternalUnit.toCssSuffix unit )
 
         MarginBottom unit ->
-            ( "margin-bottom", Unit.toCssSuffix unit )
+            ( "margin-bottom", InternalUnit.toCssSuffix unit )
 
         MarginLeft unit ->
-            ( "margin-left", Unit.toCssSuffix unit )
+            ( "margin-left", InternalUnit.toCssSuffix unit )
 
         MarginRight unit ->
-            ( "margin-right", Unit.toCssSuffix unit )
+            ( "margin-right", InternalUnit.toCssSuffix unit )
 
         MarginTop unit ->
-            ( "margin-top", Unit.toCssSuffix unit )
+            ( "margin-top", InternalUnit.toCssSuffix unit )
 
         MaxHeight unit ->
-            ( "max-height", Unit.toCssSuffix unit )
+            ( "max-height", InternalUnit.toCssSuffix unit )
 
         MaxWidth unit ->
-            ( "max-width", Unit.toCssSuffix unit )
+            ( "max-width", InternalUnit.toCssSuffix unit )
 
         MinHeight unit ->
-            ( "min-height", Unit.toCssSuffix unit )
+            ( "min-height", InternalUnit.toCssSuffix unit )
 
         MinWidth unit ->
-            ( "min-width", Unit.toCssSuffix unit )
+            ( "min-width", InternalUnit.toCssSuffix unit )
 
         OutlineOffset unit ->
-            ( "outline-offset", Unit.toCssSuffix unit )
+            ( "outline-offset", InternalUnit.toCssSuffix unit )
 
         OutlineWidth unit ->
-            ( "outline-width", Unit.toCssSuffix unit )
+            ( "outline-width", InternalUnit.toCssSuffix unit )
 
         Padding unit ->
-            ( "padding", Unit.toCssSuffix unit )
+            ( "padding", InternalUnit.toCssSuffix unit )
 
         PaddingBottom unit ->
-            ( "padding-bottom", Unit.toCssSuffix unit )
+            ( "padding-bottom", InternalUnit.toCssSuffix unit )
 
         PaddingLeft unit ->
-            ( "padding-left", Unit.toCssSuffix unit )
+            ( "padding-left", InternalUnit.toCssSuffix unit )
 
         PaddingRight unit ->
-            ( "padding-right", Unit.toCssSuffix unit )
+            ( "padding-right", InternalUnit.toCssSuffix unit )
 
         PaddingTop unit ->
-            ( "padding-top", Unit.toCssSuffix unit )
+            ( "padding-top", InternalUnit.toCssSuffix unit )
 
         Perspective unit ->
-            ( "perspective", Unit.toCssSuffix unit )
+            ( "perspective", InternalUnit.toCssSuffix unit )
 
         Right unit ->
-            ( "right", Unit.toCssSuffix unit )
+            ( "right", InternalUnit.toCssSuffix unit )
 
         RowGap unit ->
-            ( "row-gap", Unit.toCssSuffix unit )
+            ( "row-gap", InternalUnit.toCssSuffix unit )
 
         TabSize unit ->
             ( "tab-size", unit )
 
         TextIndent unit ->
-            ( "text-indent", Unit.toCssSuffix unit )
+            ( "text-indent", InternalUnit.toCssSuffix unit )
 
         Top unit ->
-            ( "top", Unit.toCssSuffix unit )
+            ( "top", InternalUnit.toCssSuffix unit )
 
         WordSpacing unit ->
-            ( "word-spacing", Unit.toCssSuffix unit )
+            ( "word-spacing", InternalUnit.toCssSuffix unit )
 
         -- Flex
         FlexBasis unit ->
-            ( "flex-basis", Unit.toCssSuffix unit )
+            ( "flex-basis", InternalUnit.toCssSuffix unit )
 
         FlexGrow ->
             ( "flex-grow", "" )

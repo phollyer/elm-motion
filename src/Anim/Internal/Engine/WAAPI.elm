@@ -111,7 +111,6 @@ import Anim.Internal.Property.Skew as Skew
 import Anim.Internal.Property.Translate as Translate
 import Anim.Internal.Resize.Builder as ResizeBuilder
 import Anim.Internal.Unit as InternalUnit
-import Anim.Resize exposing (Bounds)
 import Anim.Unit exposing (Unit(..))
 import Dict
 import Html
@@ -135,7 +134,7 @@ type AnimState msg
         , commandPort : Encode.Value -> Cmd msg
         , subscriptionPort : (Decode.Value -> msg) -> Sub msg
         , builder : EngineBuilder
-        , lastResize : Dict.Dict ( AnimGroupName, String ) Bounds
+        , lastResize : Dict.Dict ( AnimGroupName, String ) Builder.AxisRanges
         }
         (AnimGroups AnimGroup)
 
@@ -929,12 +928,12 @@ applyBoundsEntry animGroupName ( prop, ranges ) ( (AnimState state _) as st, acc
     ( cachedState, cmd :: accCmds )
 
 
-emptyBounds : Bounds
+emptyBounds : Builder.AxisRanges
 emptyBounds =
     { x = Nothing, y = Nothing, z = Nothing }
 
 
-applyTranslateResize : AnimGroupName -> Bounds -> Bounds -> AnimState msg -> ( AnimState msg, Cmd msg )
+applyTranslateResize : AnimGroupName -> Builder.AxisRanges -> Builder.AxisRanges -> AnimState msg -> ( AnimState msg, Cmd msg )
 applyTranslateResize animGroupName previousBounds bounds ((AnimState state animGroups) as animState) =
     if ResizeBuilder.isEmpty bounds then
         ( animState, Cmd.none )
@@ -979,8 +978,8 @@ applyTranslateResize animGroupName previousBounds bounds ((AnimState state animG
 
 computeResizePayload :
     AnimGroupName
-    -> Bounds
-    -> Bounds
+    -> Builder.AxisRanges
+    -> Builder.AxisRanges
     -> AnimState msg
     ->
         Maybe
@@ -1429,7 +1428,7 @@ rebaseTranslateConfig cached config =
             config
 
 
-applyScaleResize : AnimGroupName -> Bounds -> Bounds -> AnimState msg -> ( AnimState msg, Cmd msg )
+applyScaleResize : AnimGroupName -> Builder.AxisRanges -> Builder.AxisRanges -> AnimState msg -> ( AnimState msg, Cmd msg )
 applyScaleResize animGroupName previousBounds bounds ((AnimState state animGroups) as animState) =
     if ResizeBuilder.isEmpty bounds then
         ( animState, Cmd.none )
@@ -1472,8 +1471,8 @@ applyScaleResize animGroupName previousBounds bounds ((AnimState state animGroup
 
 computeScaleResizePayload :
     AnimGroupName
-    -> Bounds
-    -> Bounds
+    -> Builder.AxisRanges
+    -> Builder.AxisRanges
     -> AnimState msg
     ->
         Maybe
@@ -1726,7 +1725,7 @@ rebaseScaleConfig cached config =
             config
 
 
-applyPerspectiveOriginResize : AnimGroupName -> Bounds -> Bounds -> AnimState msg -> ( AnimState msg, Cmd msg )
+applyPerspectiveOriginResize : AnimGroupName -> Builder.AxisRanges -> Builder.AxisRanges -> AnimState msg -> ( AnimState msg, Cmd msg )
 applyPerspectiveOriginResize animGroupName previousBounds bounds ((AnimState state animGroups) as animState) =
     if ResizeBuilder.isEmpty bounds then
         ( animState, Cmd.none )
@@ -1764,8 +1763,8 @@ applyPerspectiveOriginResize animGroupName previousBounds bounds ((AnimState sta
 
 computePerspectiveOriginResizePayload :
     AnimGroupName
-    -> Bounds
-    -> Bounds
+    -> Builder.AxisRanges
+    -> Builder.AxisRanges
     -> AnimState msg
     ->
         Maybe

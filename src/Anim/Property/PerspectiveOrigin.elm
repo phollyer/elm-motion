@@ -157,7 +157,6 @@ new bounds during `onResize`.
 
 import Anim.Internal.Builder as IB exposing (AnimBuilder)
 import Anim.Internal.Builder.PerspectiveOrigin as PB
-import Anim.Resize as Resize
 import Anim.Unit as Unit
 import Motion.Easing exposing (Easing)
 import Motion.Spring exposing (Spring)
@@ -341,8 +340,9 @@ This setting takes precedence over any [length](Anim-Engine-WAAPI#cssUnit) set
 on the engine, and over the legacy [`px`](#px) / [`percent`](#percent)
 switchers (which only choose between pixels and percentages).
 
-The `Sub` engine currently only supports `Px`; setting a non-`Px` unit on a
-perspective-origin targeted at `Sub` reports an error and falls back to `Px`.
+`Sub` renders non-`Px` units normally. During `onResize` bounds remapping,
+only `Px` perspective-origin axes are remapped; non-`Px` axes are left
+unchanged.
 
 -}
 cssUnit : Unit.Unit -> Builder eng -> Builder eng
@@ -637,6 +637,6 @@ Only callable from inside an `onResize` callback - the `withBounds`
 capability on the builder type is what gates it.
 
 -}
-bounds : AnimGroupName -> Resize.Bounds -> AnimBuilder { eng | withBounds : () } -> AnimBuilder { eng | withBounds : () }
+bounds : AnimGroupName -> IB.AxisRanges -> AnimBuilder { eng | withBounds : () } -> AnimBuilder { eng | withBounds : () }
 bounds name ranges =
     PB.for name >> PB.bounds ranges >> PB.build
