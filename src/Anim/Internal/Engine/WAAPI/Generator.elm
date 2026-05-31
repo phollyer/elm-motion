@@ -46,6 +46,16 @@ generateAnimation iterations animationDirection globalTransformOrder discreteEnt
         animationBounds =
             propertyBounds properties
 
+        snapBounds =
+            -- Snap properties commit their end value to the visual
+            -- baseline immediately, so subsequent animations resolve
+            -- their implicit start from the snapped position.
+            propertyBounds
+                (List.filter
+                    (\p -> Builder.processedPropertyMode p == Builder.Snap)
+                    properties
+                )
+
         snapshot =
             case existingAnimation of
                 Just existing ->
@@ -53,11 +63,12 @@ generateAnimation iterations animationDirection globalTransformOrder discreteEnt
                     -- Only merge explicit start values, so we never pre-paint
                     -- the next end state for a frame before WAAPI starts.
                     PropertyBaselines.merge (AnimGroup.getPropertySnapshot existing) animationBounds.start
+                        |> PropertyBaselines.merge snapBounds.end
 
                 Nothing ->
                     -- For brand-new groups, only apply explicit start bounds.
                     -- End values are applied by WAAPI updates as animation runs.
-                    animationBounds.start
+                    PropertyBaselines.merge animationBounds.start snapBounds.end
 
         existingPropertyVersions =
             existingAnimation
@@ -77,10 +88,17 @@ generateAnimation iterations animationDirection globalTransformOrder discreteEnt
                                     |> Maybe.map .version
                                     |> Maybe.map ((+) 1)
                                     |> Maybe.withDefault 1
+
+                            initialStatus =
+                                if Builder.processedPropertyMode property == Builder.Snap then
+                                    Complete
+
+                                else
+                                    NotStarted
                         in
                         ( propType
                         , { version = newVersion
-                          , status = NotStarted
+                          , status = initialStatus
                           , config = resolveStartFromSnapshot snapshot property
                           }
                         )

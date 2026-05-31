@@ -270,11 +270,29 @@ animate (AnimState state animGroups) build =
                 }
                 processedAnimGroups
 
+        hasSnap =
+            processed.groups
+                |> AnimGroups.groups
+                |> List.any
+                    (\config ->
+                        List.any
+                            (\p -> Builder.processedPropertyMode p == Builder.Snap)
+                            config.properties
+                    )
+
         animateCmd =
-            state.commandPort <|
-                encode processedAnimGroups frozenAxes processed
+            Cmd.batch
+                [ state.commandPort (encode processedAnimGroups frozenAxes processed)
+                , if hasSnap then
+                    state.commandPort (encodeSnap processedAnimGroups frozenAxes processed)
+
+                  else
+                    Cmd.none
+                ]
     in
     ( nextState, animateCmd )
+
+
 
 
 setSnapshot : AnimGroups AnimGroup -> AnimGroups { propertySnapshot : PropertyBaselines }

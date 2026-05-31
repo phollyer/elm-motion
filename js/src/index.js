@@ -64,6 +64,12 @@ const COMMAND_HANDLERS = {
     retarget: function (commandData) {
         retargetAnimation(commandData);
     },
+    snap: function (commandData) {
+        // Same wire shape as `retarget`, same effect: cancel any in-flight
+        // WAAPI animation on each named property and apply the end value
+        // as inline style. No touchedAxes => full snap.
+        retargetAnimation(commandData);
+    },
     resize: function (commandData) {
         resizeTransformAnimation(commandData);
     },

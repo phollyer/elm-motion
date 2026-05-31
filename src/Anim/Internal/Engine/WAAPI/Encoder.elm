@@ -8,6 +8,7 @@ module Anim.Internal.Engine.WAAPI.Encoder exposing
     , encodeRetarget
     , encodeScroll
     , encodeSetProgressThrottle
+    , encodeSnap
     , encodeTranslatePosition
     , encodeView
     )
@@ -56,7 +57,7 @@ type alias AnimGroupName =
 
 encode : AnimGroups AnimGroup -> Dict.Dict String (List String) -> Builder.ProcessedAnimationData -> Encode.Value
 encode animGroups frozenAxes processed =
-    encodeAnimateLike "animate" animGroups frozenAxes Dict.empty processed
+    encodeAnimateLike "animate" animGroups frozenAxes Dict.empty (filterGroupsByMode Builder.Animate processed)
 
 
 {-| Encode a snap-to-target retarget command. The JSON payload is the
@@ -84,6 +85,49 @@ encodeRetarget :
     -> Encode.Value
 encodeRetarget =
     encodeAnimateLike "retarget"
+
+
+{-| Encode a snap-mode batch command. Same payload shape as `encode`
+and `encodeRetarget`; the JS handler cancels any in-flight WAAPI
+animation on each named property and writes the property's `endValue`
+as inline style. Timing fields are present in the payload but ignored
+by JS. Emitted in addition to (and separately from) the regular
+`animate` command, with the per-element property list pre-filtered to
+contain only `mode = Snap` properties.
+-}
+encodeSnap : AnimGroups AnimGroup -> Dict.Dict String (List String) -> Builder.ProcessedAnimationData -> Encode.Value
+encodeSnap animGroups frozenAxes processed =
+    encodeAnimateLike "snap" animGroups frozenAxes Dict.empty (filterGroupsByMode Builder.Snap processed)
+
+
+{-| Keep only properties whose `mode` matches `targetMode`, and drop
+groups left with no properties. Used to split an animate command into
+the regular `animate` payload (Animate-mode) and the parallel `snap`
+payload (Snap-mode).
+-}
+filterGroupsByMode : Builder.AnimationMode -> Builder.ProcessedAnimationData -> Builder.ProcessedAnimationData
+filterGroupsByMode targetMode processed =
+    let
+        filteredGroups =
+            processed.groups
+                |> AnimGroups.toList
+                |> List.filterMap
+                    (\( name, config ) ->
+                        let
+                            kept =
+                                List.filter
+                                    (\p -> Builder.processedPropertyMode p == targetMode)
+                                    config.properties
+                        in
+                        if List.isEmpty kept then
+                            Nothing
+
+                        else
+                            Just ( name, { config | properties = kept } )
+                    )
+                |> AnimGroups.fromList
+    in
+    { processed | groups = filteredGroups }
 
 
 encodeAnimateLike :
