@@ -360,4 +360,3 @@ encoderTests =
                             ++ ",\"unit\":\"px\"}"
                         )
         ]
-
