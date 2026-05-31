@@ -5,7 +5,6 @@ module Anim.Internal.Builder exposing
     , AnimationDirection(..)
     , AnimationMode(..)
     , AxisBounds
-    , AxisCoords
     , AxisRanges
     , DefaultsConfig
     , DiscreteEntryProperty
@@ -363,22 +362,18 @@ type alias AnimationConfig targetProperty =
   - `RemapToBounds` — resize-only directive: proportionally remap the
     current animation onto the supplied bounds (preserving in-flight
     progress) and pin its endpoints to the new range.
-  - `SnapToPosition` — resize-only directive: snap each `Just` axis to
-    the given coordinate, but only on axes where the property is
-    currently static (`start == end`). Ignored on animating axes.
 
 Engines outside `onResize` (i.e. the `animate` path of every engine)
-ignore `RemapToBounds` and `SnapToPosition`. The `withBounds` phantom
-on engine tags makes that the compiler's job, but the partition helpers
-also defensively filter, so a stray Bounds/Position entry in a regular
-`animate` builder is a no-op rather than a crash.
+ignore `RemapToBounds`. The `withBounds` phantom on engine tags makes
+that the compiler's job, but the partition helpers also defensively
+filter, so a stray Bounds entry in a regular `animate` builder is a
+no-op rather than a crash.
 
 -}
 type AnimationMode
     = Animate
     | Snap
     | RemapToBounds AxisRanges
-    | SnapToPosition AxisCoords
 
 
 {-| Inclusive numeric range for one axis. Re-declared here (structurally
@@ -395,17 +390,6 @@ type alias AxisRanges =
     { x : Maybe AxisBounds
     , y : Maybe AxisBounds
     , z : Maybe AxisBounds
-    }
-
-
-{-| Per-axis static-position snap. `Nothing` leaves an axis untouched.
-Each `Just newPos` sets that axis to `newPos` iff the property's current
-`start == end` on that axis (it is silently dropped on animating axes).
--}
-type alias AxisCoords =
-    { x : Maybe Float
-    , y : Maybe Float
-    , z : Maybe Float
     }
 
 
@@ -1720,11 +1704,11 @@ by [`AnimationMode`](#AnimationMode):
   - `animate` — properties with `mode = Animate` (regular interpolated path).
   - `snap` — properties with `mode = Snap` (jump-to-end path).
 
-`RemapToBounds` and `SnapToPosition` entries are dropped: they are
-resize-time directives consumed by [`partitionForResize`](#partitionForResize),
-not by any `animate` engine path. The `withBounds` phantom on engine tags
-prevents these variants from being constructed in the regular `animate`
-builder pipeline; this filter is the runtime backstop.
+`RemapToBounds` entries are dropped: they are resize-time directives
+consumed by [`partitionForResize`](#partitionForResize), not by any
+`animate` engine path. The `withBounds` phantom on engine tags prevents
+these variants from being constructed in the regular `animate` builder
+pipeline; this filter is the runtime backstop.
 
 -}
 partitionByMode :
@@ -1742,15 +1726,12 @@ partitionByMode props =
 
                 RemapToBounds _ ->
                     acc
-
-                SnapToPosition _ ->
-                    acc
     in
     List.foldr step { animate = [], snap = [] } props
 
 
 {-| Partition a list of [`ProcessedPropertyConfig`](#ProcessedPropertyConfig)
-into the four buckets consumed by an engine's `onResize` path. The list's
+into the three buckets consumed by an engine's `onResize` path. The list's
 input order is preserved within each bucket so that engines can implement
 "last entry wins" semantics per (group, property) by replaying the
 combined stream in source order.
@@ -1758,7 +1739,6 @@ combined stream in source order.
   - `animate` — `mode = Animate` (regular animation, started inside resize).
   - `snap` — `mode = Snap` (instantaneous jump-to-end).
   - `bounds` — `mode = RemapToBounds bounds`.
-  - `position` — `mode = SnapToPosition coords`.
 
 -}
 partitionForResize :
@@ -1767,7 +1747,6 @@ partitionForResize :
         { animate : List ProcessedPropertyConfig
         , snap : List ProcessedPropertyConfig
         , bounds : List ( ProcessedPropertyConfig, AxisRanges )
-        , position : List ( ProcessedPropertyConfig, AxisCoords )
         }
 partitionForResize props =
     let
@@ -1781,12 +1760,9 @@ partitionForResize props =
 
                 RemapToBounds ranges ->
                     { acc | bounds = ( prop, ranges ) :: acc.bounds }
-
-                SnapToPosition coords ->
-                    { acc | position = ( prop, coords ) :: acc.position }
     in
     List.foldr step
-        { animate = [], snap = [], bounds = [], position = [] }
+        { animate = [], snap = [], bounds = [] }
         props
 
 
