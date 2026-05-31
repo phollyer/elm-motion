@@ -309,7 +309,7 @@ Use relative CSS units whenever the motion can be defined in layout-relative ter
 
 For measured pixel targets, WAAPI supports proportional remap for resize updates.
 
-- On resize, update bounds with `onResize` and `Anim.Resize.bounds`.
+- On resize, update bounds with `onResize` and `Translate.bounds` / `Scale.bounds` / `PerspectiveOrigin.bounds`.
 - Running animations remap to the equivalent relative position inside the updated bounds.
 - Idle animations also re-position proportionally inside the updated bounds.
 
