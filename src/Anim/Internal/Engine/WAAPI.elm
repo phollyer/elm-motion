@@ -858,7 +858,8 @@ subscriptions toMsg (AnimState state _) =
 -- ============================================================
 
 
-{-| Adjust the in-flight properties of every anim group referenced by the\nresize builder to new bounding ranges.\n-}
+{-| Adjust the in-flight properties of every anim group referenced by the\\nresize builder to new bounding ranges.\\n
+-}
 onResize : AnimState msg -> (AnimBuilder Builder.ForResizeWAAPI -> AnimBuilder Builder.ForResizeWAAPI) -> ( AnimState msg, Cmd msg )
 onResize (AnimState state animGroups) buildResize =
     let
