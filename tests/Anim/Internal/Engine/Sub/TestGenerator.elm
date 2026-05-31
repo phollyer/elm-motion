@@ -3,6 +3,8 @@ module Anim.Internal.Engine.Sub.TestGenerator exposing (suite)
 import Anim.Extra.TransformOrder exposing (TransformProperty(..))
 import Anim.Internal.Builder as Builder
 import Anim.Internal.Engine.Sub.AnimGroup as SubAnimGroup
+import Anim.Internal.Engine.Sub.Animation as SubAnimation
+import Anim.Internal.Engine.Sub.Animations as SubAnimations
 import Anim.Internal.Engine.Sub.Generator as SubGenerator
 import Anim.Internal.Property.Translate as Translate
 import Anim.Internal.Unit as InternalUnit
@@ -37,6 +39,7 @@ suite =
     describe "Anim.Internal.Engine.Sub.Generator"
         [ initTests
         , generateAnimationTests
+        , snapModeTests
         ]
 
 
@@ -110,4 +113,47 @@ generateAnimationTests =
                 SubGenerator.generateAnimation Builder.Once Builder.Alternate Nothing Dict.empty Dict.empty Nothing processedConfigs
                     |> SubAnimGroup.getAnimationDirection
                     |> Expect.equal Builder.Alternate
+        ]
+
+
+snapTranslateConfig : Builder.PropertyConfig
+snapTranslateConfig =
+    Builder.TranslateConfig
+        { start = Just (Translate.fromTriple ( 0, 0, 0 ))
+        , end = Translate.fromTriple ( 100, 0, 0 )
+        , distance = 100
+        , timing = Just (Duration 1000)
+        , easing = Nothing
+        , spring = Nothing
+        , delay = Nothing
+        , cssUnit = InternalUnit.emptyCssUnitAxes
+        , mode = Builder.Snap
+        }
+
+
+snapModeTests : Test
+snapModeTests =
+    describe "Snap mode"
+        [ test "generateAnimation marks Snap properties complete from the start" <|
+            \_ ->
+                let
+                    processed =
+                        Builder.processProperties Builder.initDefaults [ snapTranslateConfig ]
+                in
+                SubGenerator.generateAnimation Builder.Once Builder.Normal Nothing Dict.empty Dict.empty Nothing processed
+                    |> SubAnimGroup.getAnimations
+                    |> SubAnimations.list
+                    |> List.all (SubAnimation.foldTiming .isComplete)
+                    |> Expect.equal True
+        , test "generateAnimation leaves Animate properties incomplete" <|
+            \_ ->
+                let
+                    processed =
+                        Builder.processProperties Builder.initDefaults [ translateConfig ]
+                in
+                SubGenerator.generateAnimation Builder.Once Builder.Normal Nothing Dict.empty Dict.empty Nothing processed
+                    |> SubAnimGroup.getAnimations
+                    |> SubAnimations.list
+                    |> List.all (SubAnimation.foldTiming .isComplete >> not)
+                    |> Expect.equal True
         ]

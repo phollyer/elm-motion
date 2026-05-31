@@ -97,6 +97,15 @@ generateAnimation iterationCount directionConfig maybeOrder discreteEntryProps d
 toAnimation : Bool -> Builder.ProcessedPropertyConfig -> Maybe ( String, Animation )
 toAnimation isComplete propertyConfig =
     let
+        -- Snap mode bypasses the frame-loop entirely: the PropertyAnimation
+        -- is born already complete at its end value, so the renderer reads
+        -- `end` on every query and no progress events ever fire.
+        snapped =
+            Builder.processedPropertyMode propertyConfig == Builder.Snap
+
+        completeFlag =
+            isComplete || snapped
+
         build : property -> Builder.ProcessedAnimationConfig property -> PropertyAnimation property
         build default config =
             let
@@ -118,9 +127,14 @@ toAnimation isComplete propertyConfig =
             , end = config.end
             , easingFunction = easingFn
             , delayMs = toFloat config.delay
-            , isComplete = isComplete
+            , isComplete = completeFlag
             , totalDurationMs = durationMs
-            , elapsedMs = 0.0
+            , elapsedMs =
+                if snapped then
+                    durationMs + toFloat config.delay
+
+                else
+                    0.0
             }
     in
     case propertyConfig of
