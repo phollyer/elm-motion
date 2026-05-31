@@ -12,21 +12,6 @@ function isFiniteNumber(value) {
     return typeof value === 'number' && Number.isFinite(value);
 }
 
-// Targeted debug logging for the WAAPI resize path.
-// Enable from a browser console with `window.__ELM_MOTION_DEBUG = true`
-// (or `globalThis.__ELM_MOTION_DEBUG = true`). When disabled the helper
-// short-circuits before any string formatting so the cost is one global
-// property read per call site.
-function motionDebug(tag, payload) {
-    try {
-        if (!globalThis.__ELM_MOTION_DEBUG) return;
-        // eslint-disable-next-line no-console
-        console.log('[elm-motion]', tag, payload);
-    } catch (_err) {
-        // Never let debug logging throw into production callers.
-    }
-}
-
 function distance3(a, b) {
     const dx = a.x - b.x;
     const dy = a.y - b.y;
@@ -748,7 +733,6 @@ function createMergedTransformAnimation(animGroup, element, transformProperties,
 
         const easing = activeProps[0].easing;
         const animationEasing = easingFunctions[easing] || easing;
-
         return {
             animation: element.animate([
                 { transform: startTransform },
@@ -929,47 +913,6 @@ export function flushPendingResizes() {
     }
     const resizeBatch = Array.from(pendingResizes.values());
     pendingResizes.clear();
-    motionDebug('flushPendingResizes', {
-        resizeBatch: resizeBatch.map((p) => ({
-            property: p.property,
-            animGroup: p.elementId || p.animGroup,
-            start: { x: p.startX, y: p.startY, z: p.startZ },
-            end: { x: p.endX, y: p.endY, z: p.endZ },
-            current: { x: p.currentX, y: p.currentY, z: p.currentZ },
-            currentTimeMs: p.currentTimeMs,
-            durationMs: p.duration
-        }))
-    });
-
-    // Diagnostic: live clock snapshot of every active animation in any
-    // group touched by this flush. Captured BEFORE any rebuild runs so
-    // sibling phase-lock can be inspected per-frame. If two co-emitted
-    // animations are configured identically they should show matching
-    // `liveCurrentTime` / `liveDuration` here on every flush.
-    if (typeof globalThis !== 'undefined' && globalThis.__ELM_MOTION_DEBUG) {
-        const touchedGroups = new Set();
-        for (const p of resizeBatch) touchedGroups.add(p.elementId || p.animGroup);
-        const coRunningClocks = [];
-        for (const animGroup of touchedGroups) {
-            const elementAnims = activeAnimations.get(animGroup);
-            if (!elementAnims) continue;
-            for (const [property, entry] of elementAnims) {
-                const anim = entry && entry.animation;
-                if (!anim) continue;
-                const timing = anim.effect ? anim.effect.getTiming() : null;
-                coRunningClocks.push({
-                    animGroup,
-                    property,
-                    liveCurrentTime: anim.currentTime,
-                    liveDuration: timing ? timing.duration : null,
-                    direction: timing ? timing.direction : null,
-                    iterations: timing ? timing.iterations : null,
-                    playState: anim.playState
-                });
-            }
-        }
-        motionDebug('flushPendingResizes.coRunningClocks', { groups: coRunningClocks });
-    }
     for (const payload of resizeBatch) {
         try {
             _resizeTransformAnimationImmediate(payload);
@@ -1037,23 +980,6 @@ export function _resizeTransformAnimationImmediate(commandData) {
         return;
     }
 
-    motionDebug('resize.enter', {
-        animGroup,
-        property: propertyKey,
-        payloadStart: { x: commandData.startX, y: commandData.startY, z: commandData.startZ },
-        payloadEnd: { x: commandData.endX, y: commandData.endY, z: commandData.endZ },
-        payloadCurrent: { x: commandData.currentX, y: commandData.currentY, z: commandData.currentZ },
-        payloadDuration: commandData.duration,
-        payloadCurrentTimeMs: commandData.currentTimeMs,
-        hasBaseline: commandData.hasAnimationBaseline,
-        slotStart: { x: resolved[propertyKey].startX, y: resolved[propertyKey].startY, z: resolved[propertyKey].startZ },
-        slotEnd: { x: resolved[propertyKey].endX, y: resolved[propertyKey].endY, z: resolved[propertyKey].endZ },
-        slotDuration: resolved[propertyKey].duration,
-        liveCurrentTime: animation.currentTime,
-        liveTimingDuration: animation.effect.getTiming().duration,
-        livePlayState: animation.playState
-    });
-
     // Fast path: when start/end/duration of the resized slot are identical
     // to what JS already has, the resize cmd is purely advisory (Elm fired
     // because `currentTimeMs` drifted as Progress events advanced — the
@@ -1062,7 +988,6 @@ export function _resizeTransformAnimationImmediate(commandData) {
     // up during a continuous window drag, while leaving the running WAAPI
     // animation to keep ticking on its own undisturbed clock.
     if (isResizeGeometryUnchanged(commandData, resolved[propertyKey], Number(animation.effect.getTiming().duration) || 0)) {
-        motionDebug('resize.fastPathSkip', { animGroup, property: propertyKey });
         return;
     }
 
@@ -1369,15 +1294,6 @@ export function _resizeTransformAnimationImmediate(commandData) {
         }
     }
 
-    motionDebug('resize.recreated', {
-        animGroup,
-        oldDuration,
-        newDuration,
-        newCurrentTime,
-        newLiveCurrentTime: newAnimation.currentTime,
-        wasPaused
-    });
-
     if (wasPaused) {
         try { newAnimation.pause(); } catch (_pauseErr) { /* non-fatal */ }
     }
@@ -1397,14 +1313,12 @@ export function _resizeTransformAnimationImmediate(commandData) {
 function resizePerspectiveOriginAnimation(commandData, animGroup, element) {
     const elementAnims = activeAnimations.get(animGroup);
     if (!elementAnims || !elementAnims.has('perspectiveOrigin')) {
-        motionDebug('perspectiveOriginBounds.skipNoEntry', { animGroup });
         return;
     }
 
     const entry = elementAnims.get('perspectiveOrigin');
     const animation = entry.animation;
     if (!animation || !animation.effect) {
-        motionDebug('perspectiveOriginBounds.skipNoAnimation', { animGroup });
         return;
     }
 
@@ -1412,33 +1326,6 @@ function resizePerspectiveOriginAnimation(commandData, animGroup, element) {
     const oldDuration = Number(oldTiming.duration) || 0;
     const oldCurrentTime = Number(animation.currentTime) || 0;
     const oldDirection = oldTiming.direction || 'normal';
-    motionDebug('perspectiveOriginBounds.enter', {
-        animGroup,
-        incoming: {
-            start: { x: commandData.startX, y: commandData.startY },
-            end: { x: commandData.endX, y: commandData.endY },
-            current: { x: commandData.currentX, y: commandData.currentY },
-            currentTimeMs: commandData.currentTimeMs,
-            durationMs: commandData.duration,
-            unit: commandData.unit
-        },
-        live: {
-            currentTime: oldCurrentTime,
-            duration: oldDuration,
-            direction: oldDirection,
-            playState: animation.playState
-        },
-        previousResolved: entry.resolvedNonTransform
-            ? {
-                startX: entry.resolvedNonTransform.startX,
-                startY: entry.resolvedNonTransform.startY,
-                endX: entry.resolvedNonTransform.endX,
-                endY: entry.resolvedNonTransform.endY,
-                unitX: entry.resolvedNonTransform.unitX,
-                unitY: entry.resolvedNonTransform.unitY
-            }
-            : null
-    });
 
     // Fast-path skip: when start/end/duration/unit of the perspective-origin
     // slot are identical to what JS already has, the resize cmd is purely
@@ -1453,7 +1340,6 @@ function resizePerspectiveOriginAnimation(commandData, animGroup, element) {
     // catches up.
     const previousResolved = entry.resolvedNonTransform || null;
     if (isPerspectiveOriginGeometryUnchanged(commandData, previousResolved, oldDuration)) {
-        motionDebug('perspectiveOriginBounds.fastPathSkip', { animGroup });
         return;
     }
 
@@ -1603,21 +1489,6 @@ function resizePerspectiveOriginAnimation(commandData, animGroup, element) {
         newVersion,
         null
     );
-    motionDebug('perspectiveOriginBounds.recreated', {
-        animGroup,
-        seekedTo: newCurrentTime,
-        liveCurrentTimeAfter: newAnimation.currentTime,
-        liveDurationAfter: newDuration,
-        resolvedAfter: {
-            startX: resolved.startX,
-            startY: resolved.startY,
-            endX: resolved.endX,
-            endY: resolved.endY,
-            unitX: resolved.unitX,
-            unitY: resolved.unitY
-        },
-        effectivePosition: effectiveCurrentPosition
-    });
 }
 
 export function processAnimationData(animationData) {

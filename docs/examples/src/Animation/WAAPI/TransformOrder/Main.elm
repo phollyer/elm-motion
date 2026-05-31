@@ -48,6 +48,28 @@ type alias Model =
     { animState : WAAPI.AnimState Msg }
 
 
+
+-- INIT
+
+
+init : ( Model, Cmd Msg )
+init =
+    ( { animState =
+            WAAPI.init motionCmd motionMsg <|
+                List.concatMap
+                    (\perm ->
+                        [ Translate.initUnitX Cqw
+                            >> Translate.initUnitY Cqh
+                            >> Translate.initXY (permutationKey perm) 0 0
+                        , Skew.initXY (permutationKey perm) 0 0
+                        ]
+                    )
+                    allPermutations
+      }
+    , Cmd.none
+    )
+
+
 boxSize : Float
 boxSize =
     16
@@ -161,28 +183,6 @@ permutationColor perm =
 
 
 
--- INIT
-
-
-init : ( Model, Cmd Msg )
-init =
-    ( { animState =
-            WAAPI.init motionCmd motionMsg <|
-                List.concatMap
-                    (\perm ->
-                        [ Translate.initUnitX Cqw
-                            >> Translate.initUnitY Cqh
-                            >> Translate.initXY (permutationKey perm) 0 0
-                        , Skew.initXY (permutationKey perm) 0 0
-                        ]
-                    )
-                    allPermutations
-      }
-    , Cmd.none
-    )
-
-
-
 -- ANIMATION
 
 
@@ -274,7 +274,8 @@ update msg model =
             let
                 ( newAnimState, animCmd ) =
                     WAAPI.animate model.animState <|
-                        animatePermutation perm
+                        WAAPI.transformOrder (permutationOrder perm)
+                            >> animatePermutation perm
             in
             ( { model
                 | animState = newAnimState
@@ -320,7 +321,8 @@ update msg model =
                     WAAPI.animate model.animState <|
                         List.foldl
                             (\perm acc ->
-                                resetPermutation perm
+                                WAAPI.transformOrder (permutationOrder perm)
+                                    >> resetPermutation perm
                                     >> acc
                             )
                             identity

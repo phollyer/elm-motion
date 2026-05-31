@@ -1,5 +1,5 @@
 /* eslint-env browser */
-/* global window, requestAnimationFrame, cancelAnimationFrame, performance */
+/* global requestAnimationFrame, cancelAnimationFrame, performance */
 import { updateGroupIteration } from './utils.js';
 import { activeAnimations, animationGroups, lastKnownTransforms, cleanupAnimGroup } from './state.js';
 import { getDefaultTransformState, computeTransformFromResolved } from './transform.js';
