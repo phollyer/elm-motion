@@ -1,7 +1,6 @@
 module Anim.Internal.Engine.WAAPI.Encoder exposing
     ( encode
     , encodeCommandWithProperties
-    , encodePerspectiveOriginPosition
     , encodeProcessedData
     , encodeResize
     , encodeRestart
@@ -9,7 +8,6 @@ module Anim.Internal.Engine.WAAPI.Encoder exposing
     , encodeScroll
     , encodeSetProgressThrottle
     , encodeSnap
-    , encodeTranslatePosition
     , encodeView
     )
 
@@ -406,48 +404,6 @@ encodeResize r =
                     []
     in
     Encode.object (baseFields ++ unitField)
-
-
-{-| Encode a `translatePosition` directive: per-axis static-axis snap requests
-(`Just newPos` to snap, `Nothing` to leave alone).
--}
-encodeTranslatePosition :
-    { animGroupName : AnimGroupName
-    , x : Maybe Float
-    , y : Maybe Float
-    , z : Maybe Float
-    }
-    -> Encode.Value
-encodeTranslatePosition r =
-    Encode.object
-        [ ( "type", Encode.string "translatePosition" )
-        , ( "elementId", Encode.string r.animGroupName )
-        , ( "animGroup", Encode.string r.animGroupName )
-        , ( "x", encodeMaybeFloat r.x )
-        , ( "y", encodeMaybeFloat r.y )
-        , ( "z", encodeMaybeFloat r.z )
-        ]
-
-
-{-| Encode a `perspectiveOriginPosition` port command: per-axis static-axis
-snap requests (`Just newPos` to snap, `Nothing` to leave alone).
--}
-encodePerspectiveOriginPosition :
-    { animGroupName : AnimGroupName
-    , x : Maybe Float
-    , y : Maybe Float
-    , unit : String
-    }
-    -> Encode.Value
-encodePerspectiveOriginPosition r =
-    Encode.object
-        [ ( "type", Encode.string "perspectiveOriginPosition" )
-        , ( "elementId", Encode.string r.animGroupName )
-        , ( "animGroup", Encode.string r.animGroupName )
-        , ( "x", encodeMaybeFloat r.x )
-        , ( "y", encodeMaybeFloat r.y )
-        , ( "unit", Encode.string r.unit )
-        ]
 
 
 
