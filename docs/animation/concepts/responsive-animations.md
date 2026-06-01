@@ -50,36 +50,114 @@ For working examples see:
 
 Use this any time you need to snap an animtion to a new state instantly, for example if a user action invalidates a running animation and you need to end it and move it to a new state.
 
-`retarget` is available on:
+`retarget` will stop the animation and snap it to the new state. It is available on:
 
 - [`Transition`](../engines/transition.md)
 - [`Keyframe`](../engines/keyframes.md)
 - [`Sub`](../engines/sub.md)
 - [`WAAPI`](../engines/waapi.md)
 
-=== "Transition / Keyframe / Sub"
+??? example "View Source Code"
 
-    ```elm
-    TriggerLayoutChanged ->
-        ( { model | animState = Engine.retarget model.animState newLayoutTarget }
-        , Cmd.none
-        )
-    ```
+    === "Transition"
 
-=== "WAAPI"
+        ```elm
+        TriggerLayoutChanged ->
+            ( { model | animState = Transition.retarget model.animState newLayoutTarget }
+            , Cmd.none
+            )
+        ```
 
-    ```elm
-    TriggerLayoutChanged ->
-        let
-            ( animState, animCmd ) =
-                WAAPI.retarget model.animState newLayoutTarget
-        in
-        ( { model | animState = animState }
-        , animCmd
-        )
-    ```
 
-For `Sub` and `WAAPI`, if you retarget only some `Translate` axes, untouched axes can keep their existing interpolation. The touched target still snaps to the new correct value.
+    === "Keyframe"
+
+        ```elm
+        TriggerLayoutChanged ->
+            ( { model | animState = Keyframe.retarget model.animState newLayoutTarget }
+            , Cmd.none
+            )
+        ```
+
+
+    === "Sub"
+
+        ```elm
+        TriggerLayoutChanged ->
+            ( { model | animState = Sub.retarget model.animState newLayoutTarget }
+            , Cmd.none
+            )
+        ```
+
+    === "WAAPI"
+
+        ```elm
+        TriggerLayoutChanged ->
+            let
+                ( animState, animCmd ) =
+                    WAAPI.retarget model.animState newLayoutTarget
+            in
+            ( { model | animState = animState }
+            , animCmd
+            )
+        ```
+
+### How each engine behaves
+
+`retarget` only touches what your builder mentions. Anything you don't mention is left alone - but what "left alone" looks like depends on the engine:
+
+- **Transition** and **Keyframe** - untouched values stay where they currently are. If you retarget only the Y axis of a `Translate`, X holds its last value and does not keep animating.
+- **Sub** and **WAAPI** - untouched values *keep animating* along their existing curve. Retargeting only Y snaps Y while X carries on toward its original target uninterrupted.
+
+For `Transition` and `Keyframe`, treat `retarget` as "this is the new state of the whole element" - mention every property you care about. For `Sub` and `WAAPI` you can be surgical and only retarget the parts that changed.
+
+### Examples
+
+Each demo starts a 5-second diagonal `Translate` from the top-left corner to the bottom-right. Press **Animate diagonally**, then mid-flight press **Retarget Y to 0** - the builder only mentions the Y axis. Watch what the X axis does:
+
+- `Transition` and `Keyframe` - X freezes where it is.
+- `Sub` and `WAAPI` - X keeps gliding toward the right edge.
+
+??? example "View Example"
+    === "Transition"
+
+        <iframe src="../../examples/src/Animation/Transition/Retarget/index.html" class="example-iframe" loading="lazy"></iframe>
+
+    === "Keyframe"
+
+        <iframe src="../../examples/src/Animation/Keyframe/Retarget/index.html" class="example-iframe" loading="lazy"></iframe>
+
+    === "Sub"
+
+        <iframe src="../../examples/src/Animation/Sub/Retarget/index.html" class="example-iframe" loading="lazy"></iframe>
+
+    === "WAAPI"
+
+        <iframe src="../../examples/src/Animation/WAAPI/Retarget/index.html" class="example-iframe" loading="lazy"></iframe>
+
+??? example "View Source Code"
+    === "Transition"
+
+        ```elm
+        --8<-- "docs/examples/src/Animation/Transition/Retarget/Main.elm"
+        ```
+
+    === "Keyframe"
+
+        ```elm
+        --8<-- "docs/examples/src/Animation/Keyframe/Retarget/Main.elm"
+        ```
+
+    === "Sub"
+
+        ```elm
+        --8<-- "docs/examples/src/Animation/Sub/Retarget/Main.elm"
+        ```
+
+    === "WAAPI"
+
+        ```elm
+        --8<-- "docs/examples/src/Animation/WAAPI/Retarget/Main.elm"
+        ```
 
 ---
 
