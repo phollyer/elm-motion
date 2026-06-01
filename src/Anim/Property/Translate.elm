@@ -914,7 +914,7 @@ duration =
 
 {-| The speed represents how many pixels the element moves per second.
 
-For example, lets take a translate animation from `(0, 0)` to `(100, 0)`.
+For example, lets take a translate animation from `(0, 0)` to `(100, 0)`, assuming `Px` for the CSS Unit.
 A speed of `50.0` means the element will move 50 pixels per second, so our animation will take 2 seconds to complete (0 -> 50 in 1 second, then 50 -> 100 in the next second).
 
     myAnimation : AnimBuilder eng -> AnimBuilder eng

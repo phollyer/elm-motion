@@ -266,7 +266,7 @@ For measured pixel targets, Transition has no proportional remap API for resize 
 
 - On resize, recompute pixel targets and re-trigger with `animate`.
 - Running animations then continue smoothly from current computed style to the new target.
-- Idle animations stay at their last resolved value until you trigger a new target with `animate` and reposition smoothly, or `retarget` and reposition immediately.
+- If a later layout change makes the old target wrong, use `retarget` to snap straight to the new correct position.
 
 📖 See [Responsive Animations](../concepts/responsive-animations.md) for more info.
 

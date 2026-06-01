@@ -523,7 +523,7 @@ duration =
 
 {-| The speed represents how many pixels the element's size changes per second.
 
-For example, lets take a size animation from `(100, 100)` to `(200, 200)`.
+For example, lets take a size animation from `(100, 100)` to `(200, 200)` assuming `Px` for the CSS Unit.
 A speed of `50.0` means the size will change by 50 pixels per second, so our animation will take 2 seconds to complete.
 
     myAnimation : AnimBuilder eng -> AnimBuilder eng

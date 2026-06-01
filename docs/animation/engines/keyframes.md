@@ -265,9 +265,9 @@ Use relative CSS units whenever the motion can be defined in layout-relative ter
 
 For measured pixel targets, Keyframe has no proportional remap API for resize updates because mid-flight values are not available. Therefore:
 
-- On resize, recompute pixel targets and re-position with `retarget`.
-- The animation instantly moves to the `retarget`ed position and stops.
-- Idle animations stay at their last resolved value until you trigger a new target with `retarget`.
+- On resize, recompute pixel targets and re-anchor with `retarget`.
+- `retarget` snaps immediately to the new correct position and stops.
+- Use this when a layout change makes the old target wrong.
 
 📖 See [Responsive Animations](../concepts/responsive-animations.md) for more info.
 

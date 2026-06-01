@@ -37,6 +37,24 @@ type alias Model =
     { animState : Keyframe.AnimState }
 
 
+init : ( Model, Cmd Msg )
+init =
+    ( { animState =
+            Keyframe.init <|
+                List.concatMap
+                    (\perm ->
+                        [ Translate.initUnitX Cqw
+                            >> Translate.initUnitY Cqh
+                            >> Translate.initXY (permutationKey perm) 0 0
+                        , Skew.initXY (permutationKey perm) 0 0
+                        ]
+                    )
+                    allPermutations
+      }
+    , Cmd.none
+    )
+
+
 boxSize : Float
 boxSize =
     16
@@ -150,89 +168,56 @@ permutationColor perm =
 
 
 
--- INIT
-
-
-init : ( Model, Cmd Msg )
-init =
-    ( { animState =
-            Keyframe.init <|
-                List.concatMap
-                    (\perm ->
-                        [ Translate.initUnitX Cqw
-                            >> Translate.initUnitY Cqh
-                            >> Translate.initXY (permutationKey perm) 0 0
-                        , Skew.initXY (permutationKey perm) 0 0
-                        ]
-                    )
-                    allPermutations
-      }
-    , Cmd.none
-    )
-
-
-
 -- ANIMATION
 
 
-animatePermutation : Permutation -> Keyframe.EngineBuilder -> Keyframe.EngineBuilder
-animatePermutation perm =
+moveOut : Permutation -> AnimBuilder eng -> AnimBuilder eng
+moveOut perm =
     let
         key =
             permutationKey perm
     in
     Translate.for key
-        >> Translate.cssUnitX Cqw
-        >> Translate.cssUnitY Cqh
-        >> Translate.toXY 24 11.2
-        >> Translate.duration 2000
-        >> Translate.easing EaseInOut
+        >> Translate.toXY 24 10
         >> Translate.build
         >> Rotate.for key
         >> Rotate.toZ 45
-        >> Rotate.duration 2000
-        >> Rotate.easing EaseInOut
         >> Rotate.build
         >> Skew.for key
         >> Skew.toXY 15 9
-        >> Skew.duration 2000
-        >> Skew.easing EaseInOut
         >> Skew.build
         >> Scale.for key
         >> Scale.toXY 1.5 0.8
-        >> Scale.duration 2000
-        >> Scale.easing EaseInOut
         >> Scale.build
 
 
-resetPermutation : Permutation -> Keyframe.EngineBuilder -> Keyframe.EngineBuilder
-resetPermutation perm =
+reset : Permutation -> AnimBuilder eng -> AnimBuilder eng
+reset perm =
     let
         key =
             permutationKey perm
     in
     Translate.for key
-        >> Translate.cssUnitX Cqw
-        >> Translate.cssUnitY Cqh
         >> Translate.toXY 0 0
-        >> Translate.duration 2000
-        >> Translate.easing EaseInOut
         >> Translate.build
         >> Rotate.for key
         >> Rotate.toZ 0
-        >> Rotate.duration 2000
-        >> Rotate.easing EaseInOut
         >> Rotate.build
         >> Skew.for key
         >> Skew.toXY 0 0
-        >> Skew.duration 2000
-        >> Skew.easing EaseInOut
         >> Skew.build
         >> Scale.for key
         >> Scale.toXY 1 1
-        >> Scale.duration 2000
-        >> Scale.easing EaseInOut
         >> Scale.build
+
+
+engineDefaults : Permutation -> Keyframe.EngineBuilder -> Keyframe.EngineBuilder
+engineDefaults perm =
+    Keyframe.transformOrder (permutationOrder perm)
+        >> Keyframe.duration 2000
+        >> Keyframe.easing EaseInOut
+        >> Keyframe.cssUnitX Cqw
+        >> Keyframe.cssUnitY Cqh
 
 
 
@@ -253,8 +238,8 @@ update msg model =
             ( { model
                 | animState =
                     Keyframe.animate model.animState <|
-                        Keyframe.transformOrder (permutationOrder perm)
-                            >> animatePermutation perm
+                        engineDefaults perm
+                            >> moveOut perm
               }
             , Cmd.none
             )
@@ -263,8 +248,8 @@ update msg model =
             ( { model
                 | animState =
                     Keyframe.animate model.animState <|
-                        Keyframe.transformOrder (permutationOrder perm)
-                            >> resetPermutation perm
+                        engineDefaults perm
+                            >> reset perm
               }
             , Cmd.none
             )
@@ -275,8 +260,8 @@ update msg model =
                     Keyframe.animate model.animState <|
                         List.foldl
                             (\perm acc ->
-                                Keyframe.transformOrder (permutationOrder perm)
-                                    >> animatePermutation perm
+                                engineDefaults perm
+                                    >> moveOut perm
                                     >> acc
                             )
                             identity
@@ -291,8 +276,8 @@ update msg model =
                     Keyframe.animate model.animState <|
                         List.foldl
                             (\perm acc ->
-                                Keyframe.transformOrder (permutationOrder perm)
-                                    >> resetPermutation perm
+                                engineDefaults perm
+                                    >> reset perm
                                     >> acc
                             )
                             identity

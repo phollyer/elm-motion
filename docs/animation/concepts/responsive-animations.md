@@ -2,14 +2,13 @@
 
 Responsive design is a broad topic, so this page focuses on how Elm Motion keeps animations aligned when layout changes.
 
-Elm Motion supports two responsive animation workflows:
+Elm Motion supports three responsive animation workflows:
 
-1. **Relative CSS units** - re-evaluated by the browser as layout changes (works with every engine)
-2. **Measured pixel targets** - updated by your `update` on resize ([`Sub`](../engines/sub.md) and [`WAAPI`](../engines/waapi.md) only)
+1. **Relative CSS units** - re-evaluated by the browser as layout changes
+2. **Snap Re-Anchoring** - snap to a given state when the layout changes
+3. **Measured pixel targets** - proportional remapping on resize ([`Sub`](../engines/sub.md) and [`WAAPI`](../engines/waapi.md) only)
 
-Reach for path 1 first. It is the simplest, costs nothing at runtime, and works for the majority of cases. Fall back to path 2 only when you **need** to work with direct pixel values.
-
-You can mix both strategies on the same page for different animations.
+You can mix all strategies on the same page for different animations.
 
 ---
 
@@ -23,21 +22,21 @@ Elm Motion exposes the full set of relative units through [`Anim.Unit`](https://
 - viewport units - `Vw`, `Vh`, `Vi`, `Vb`, `Vmin`, `Vmax`, plus `Sv*` / `Lv*` / `Dv*` variants
 - container units - `Cqi`, `Cqb`, `Cqw`, `Cqh`, `Cqmin`, `Cqmax`
 
-This path works with every engine because the unit is rendered into the CSS that the engine emits. The builder is identical regardless of which engine consumes it:
+??? example "View Source Code"
 
-```elm
-dropBall : AnimBuilder eng -> AnimBuilder eng
-dropBall =
-    Translate.for "ball"
-        >> Translate.cssUnit Cqh
-        >> Translate.fromY 0
-        >> Translate.toY 88
-        >> Translate.speed 75
-        >> Translate.easing BounceOut
-        >> Translate.build
-```
+    ```elm
+    dropBall : AnimBuilder eng -> AnimBuilder eng
+    dropBall =
+        Translate.for "ball"
+            >> Translate.cssUnit Cqh
+            >> Translate.fromY 0
+            >> Translate.toY 88
+            >> Translate.speed 75
+            >> Translate.easing BounceOut
+            >> Translate.build
+    ```
 
-`1cqh` is `1%` of the nearest containment context's block size, so the ball drops 88% of the container's height regardless of how the container is sized, and it travels at 75% of the height per second. If you change `cssUnit`, adjust the numeric values accordingly.
+    `1cqh` is `1%` of the nearest containment context's block size, so the ball drops 88% of the container's height regardless of how the container is sized, and it travels at 75% of the height per second. If you change `cssUnit`, adjust the numeric values accordingly.
 
 For working examples see:
 
@@ -47,7 +46,44 @@ For working examples see:
 
 ---
 
-## Path 2 - Measured Pixel Values
+## Path 2 - Snap Re-Anchoring
+
+Use this any time you need to snap an animtion to a new state instantly, for example if a user action invalidates a running animation and you need to end it and move it to a new state.
+
+`retarget` is available on:
+
+- [`Transition`](../engines/transition.md)
+- [`Keyframe`](../engines/keyframes.md)
+- [`Sub`](../engines/sub.md)
+- [`WAAPI`](../engines/waapi.md)
+
+=== "Transition / Keyframe / Sub"
+
+    ```elm
+    TriggerLayoutChanged ->
+        ( { model | animState = Engine.retarget model.animState newLayoutTarget }
+        , Cmd.none
+        )
+    ```
+
+=== "WAAPI"
+
+    ```elm
+    TriggerLayoutChanged ->
+        let
+            ( animState, animCmd ) =
+                WAAPI.retarget model.animState newLayoutTarget
+        in
+        ( { model | animState = animState }
+        , animCmd
+        )
+    ```
+
+For `Sub` and `WAAPI`, if you retarget only some `Translate` axes, untouched axes can keep their existing interpolation. The touched target still snaps to the new correct value.
+
+---
+
+## Path 3 - Measured Pixel Values
 
 Use this path when your animation depends on direct pixel values, it is supported by the [`Sub`](../engines/sub.md) and [`WAAPI`](../engines/waapi.md) engines via their `onResize` function.
 
@@ -116,7 +152,7 @@ Most animations only need one of the two paths above. If you need more control, 
 | Function | Where | What it helps with |
 | --- | --- | --- |
 | `onResize` | [Sub](../engines/sub.md), [WAAPI](../engines/waapi.md) | Apply resize updates to active and idle animations. |
-| `retarget` | [Transition](../engines/transition.md), [Keyframe](../engines/keyframes.md), [Sub](../engines/sub.md), [WAAPI](../engines/waapi.md) | Snap the targeted properties to new end values without animating. Sub additionally preserves untouched `Translate` axes in flight along their original easing curve. |
+| `retarget` | [Transition](../engines/transition.md), [Keyframe](../engines/keyframes.md), [Sub](../engines/sub.md), [WAAPI](../engines/waapi.md) | Re-anchor elements immediately when a layout change makes the old target wrong. |
 | `bounds` | [Translate](../properties/translate.md), [Scale](../properties/scale.md), [PerspectiveOrigin](https://package.elm-lang.org/packages/phollyer/elm-motion/latest/Anim-Property-PerspectiveOrigin#bounds) | Set min/max property bounds during `onResize`. |
 | `clampX`, `clampY`, `clampZ` | [Translate](../properties/translate.md), [Rotate](../properties/rotate.md), [Scale](../properties/scale.md), [Skew](../properties/skew.md) | Keep animated values inside safe limits. |
 | `clampWidth`, `clampHeight` | [Size](../properties/size.md) | Keep animated width and height inside safe limits. |

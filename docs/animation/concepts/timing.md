@@ -28,7 +28,7 @@ Duration should be the default choice for most animations. Fades, color changes,
 
 ## Speed
 
-Set a rate of change per second:
+Set a rate of change per second (assuming `Px` as the CSS Unit):
 
 ??? example "View Source Code"
 

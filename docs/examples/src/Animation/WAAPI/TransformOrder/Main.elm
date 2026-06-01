@@ -48,10 +48,6 @@ type alias Model =
     { animState : WAAPI.AnimState Msg }
 
 
-
--- INIT
-
-
 init : ( Model, Cmd Msg )
 init =
     ( { animState =
@@ -186,64 +182,53 @@ permutationColor perm =
 -- ANIMATION
 
 
-animatePermutation : Permutation -> WAAPI.EngineBuilder -> WAAPI.EngineBuilder
-animatePermutation perm =
+moveOut : Permutation -> AnimBuilder eng -> AnimBuilder eng
+moveOut perm =
     let
         key =
             permutationKey perm
     in
     Translate.for key
-        >> Translate.cssUnitX Cqw
-        >> Translate.cssUnitY Cqh
-        >> Translate.toXY 24 11.2
-        >> Translate.duration 2000
-        >> Translate.easing EaseInOut
+        >> Translate.toXY 24 10
         >> Translate.build
         >> Rotate.for key
         >> Rotate.toZ 45
-        >> Rotate.duration 2000
-        >> Rotate.easing EaseInOut
         >> Rotate.build
         >> Skew.for key
         >> Skew.toXY 15 9
-        >> Skew.duration 2000
-        >> Skew.easing EaseInOut
         >> Skew.build
         >> Scale.for key
         >> Scale.toXY 1.5 0.8
-        >> Scale.duration 2000
-        >> Scale.easing EaseInOut
         >> Scale.build
 
 
-resetPermutation : Permutation -> WAAPI.EngineBuilder -> WAAPI.EngineBuilder
-resetPermutation perm =
+reset : Permutation -> AnimBuilder eng -> AnimBuilder eng
+reset perm =
     let
         key =
             permutationKey perm
     in
     Translate.for key
-        >> Translate.cssUnitX Cqw
-        >> Translate.cssUnitY Cqh
         >> Translate.toXY 0 0
-        >> Translate.duration 2000
-        >> Translate.easing EaseInOut
         >> Translate.build
         >> Rotate.for key
         >> Rotate.toZ 0
-        >> Rotate.duration 2000
-        >> Rotate.easing EaseInOut
         >> Rotate.build
         >> Skew.for key
         >> Skew.toXY 0 0
-        >> Skew.duration 2000
-        >> Skew.easing EaseInOut
         >> Skew.build
         >> Scale.for key
         >> Scale.toXY 1 1
-        >> Scale.duration 2000
-        >> Scale.easing EaseInOut
         >> Scale.build
+
+
+engineDefaults : Permutation -> WAAPI.EngineBuilder -> WAAPI.EngineBuilder
+engineDefaults perm =
+    WAAPI.transformOrder (permutationOrder perm)
+        >> WAAPI.duration 2000
+        >> WAAPI.easing EaseInOut
+        >> WAAPI.cssUnitX Cqw
+        >> WAAPI.cssUnitY Cqh
 
 
 
@@ -274,12 +259,10 @@ update msg model =
             let
                 ( newAnimState, animCmd ) =
                     WAAPI.animate model.animState <|
-                        WAAPI.transformOrder (permutationOrder perm)
-                            >> animatePermutation perm
+                        engineDefaults perm
+                            >> moveOut perm
             in
-            ( { model
-                | animState = newAnimState
-              }
+            ( { model | animState = newAnimState }
             , animCmd
             )
 
@@ -287,12 +270,10 @@ update msg model =
             let
                 ( newAnimState, animCmd ) =
                     WAAPI.animate model.animState <|
-                        WAAPI.transformOrder (permutationOrder perm)
-                            >> resetPermutation perm
+                        engineDefaults perm
+                            >> reset perm
             in
-            ( { model
-                | animState = newAnimState
-              }
+            ( { model | animState = newAnimState }
             , animCmd
             )
 
@@ -302,16 +283,14 @@ update msg model =
                     WAAPI.animate model.animState <|
                         List.foldl
                             (\perm acc ->
-                                WAAPI.transformOrder (permutationOrder perm)
-                                    >> animatePermutation perm
+                                engineDefaults perm
+                                    >> moveOut perm
                                     >> acc
                             )
                             identity
                             allPermutations
             in
-            ( { model
-                | animState = finalState
-              }
+            ( { model | animState = finalState }
             , cmd
             )
 
@@ -321,16 +300,14 @@ update msg model =
                     WAAPI.animate model.animState <|
                         List.foldl
                             (\perm acc ->
-                                WAAPI.transformOrder (permutationOrder perm)
-                                    >> resetPermutation perm
+                                engineDefaults perm
+                                    >> reset perm
                                     >> acc
                             )
                             identity
                             allPermutations
             in
-            ( { model
-                | animState = finalState
-              }
+            ( { model | animState = finalState }
             , cmd
             )
 

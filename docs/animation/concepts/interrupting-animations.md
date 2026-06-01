@@ -49,17 +49,6 @@ In the examples below, try the same sequence — click "Move Right" then "Move U
 
 `freeze*` is available on the **Sub** and **WAAPI** engines.
 
-## Re-Anchoring with `retarget`
-
-When an animation just needs its end value updated mid-flight, after maybe an orientation switch from portrait to landscape, use `retarget` rather than `animate`. You only supply the new target — the existing motion's timing is reused where possible, instead of being re-specified on every call.
-
-How that reuse plays out depends on whether the engine keeps a runtime snapshot of the currently rendered value:
-
-- **Sub** and **WAAPI** keep a live snapshot, so `retarget` inherits the in-flight duration, easing, and delay for any property currently `Running` and interpolates smoothly from where it is. Idle properties snap (`for`-style).
-- **Transition** and **Keyframe** have no runtime snapshot — the browser owns the in-flight value and Elm cannot read it back — so `retarget` clears the running animation and writes the new end value inline. The element ends up exactly where the new builder placed it, safely repeatable during a drag or resize without accumulating partial animations.
-
-📖 See [Responsive Animations](responsive-animations.md) for the full breakdown.
-
 ## Next Steps
 
 Now that you understand how animations handle interruptions, learn how to control them.
