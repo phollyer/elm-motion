@@ -141,6 +141,7 @@ forContinuing animGroupName builder =
 
         config =
             PropertyBuilder.forContinuing animGroupName "translate" PropertyBaselines.getTranslate extractExisting extractProcessedTiming defaultConfig builder
+                |> PropertyBuilder.seedCssUnit animGroupName PropertyBaselines.getTranslateUnits builder
     in
     TranslateBuilder config <|
         Builder.for animGroupName builder

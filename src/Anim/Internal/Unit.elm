@@ -3,6 +3,7 @@ module Anim.Internal.Unit exposing
     , ResolvedCssUnitAxes
     , default
     , emptyCssUnitAxes
+    , fromResolvedCssUnitAxes
     , resolveCssUnitAxes
     , setAllCssUnitAxes
     , setCssUnitX
@@ -216,6 +217,11 @@ type alias ResolvedCssUnitAxes =
 emptyCssUnitAxes : CssUnitAxes
 emptyCssUnitAxes =
     { x = Nothing, y = Nothing, z = Nothing }
+
+
+fromResolvedCssUnitAxes : ResolvedCssUnitAxes -> CssUnitAxes
+fromResolvedCssUnitAxes axes =
+    { x = Just axes.x, y = Just axes.y, z = Just axes.z }
 
 
 setAllCssUnitAxes : Unit -> CssUnitAxes -> CssUnitAxes

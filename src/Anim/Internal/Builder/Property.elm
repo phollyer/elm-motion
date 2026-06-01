@@ -39,6 +39,7 @@ module Anim.Internal.Builder.Property exposing
     , getTranslateEnd
     , getTranslateRange
     , getTranslateStart
+    , seedCssUnit
     , speed
     , spring
     , upsert
@@ -360,6 +361,40 @@ configsMatch prop1 prop2 =
 
         _ ->
             False
+
+
+{-| When `forContinuing` is called after the previous animate has already
+been processed (the normal retarget path), the config's `cssUnit` field
+starts empty because `clearAnimData` wiped `animation.animGroups`.
+
+Resurrect the per-axis units the previous animate stored on the baseline
+so a retarget that omits explicit `cssUnit*` calls inherits the prior
+unit choice instead of silently snapping to the property default (Px).
+
+If the caller has already set `cssUnit` (non-empty), or the baseline has
+no recorded units, the config is returned unchanged.
+
+-}
+seedCssUnit :
+    AnimGroupName
+    -> (PropertyBaselines -> Maybe InternalUnit.ResolvedCssUnitAxes)
+    -> AnimBuilder eng
+    -> Config a
+    -> Config a
+seedCssUnit animGroupName extractBaselineUnits builder config =
+    if config.cssUnit == InternalUnit.emptyCssUnitAxes then
+        case
+            Builder.getBaseline animGroupName builder
+                |> Maybe.andThen extractBaselineUnits
+        of
+            Just resolved ->
+                { config | cssUnit = InternalUnit.fromResolvedCssUnitAxes resolved }
+
+            Nothing ->
+                config
+
+    else
+        config
 
 
 applyFrozenAxes :
