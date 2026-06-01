@@ -527,8 +527,7 @@ retarget (AnimState state animGroups) build =
                 { state
                     | builder =
                         builder
-                            |> Builder.addAnimationToHistory processed
-                            |> Builder.mergeBaselines
+                            |> Builder.addRetargetToHistory processed
                             |> Builder.clearAnimData
                     , subscriptionsActive = nextSubscriptionsActive
                 }
@@ -2409,7 +2408,7 @@ reset animGroupName animState =
 
 resetSingleKey : AnimGroupName -> AnimState msg -> ( AnimState msg, Cmd msg )
 resetSingleKey animGroupName (AnimState state animGroups) =
-    case Builder.getCurrentAnimationConfig animGroupName state.builder of
+    case Builder.getLatestAnimateConfig animGroupName state.builder of
         Nothing ->
             ( AnimState state animGroups, Cmd.none )
 
@@ -2421,6 +2420,16 @@ resetSingleKey animGroupName (AnimState state animGroups) =
                 propertyConfigs : List ( String, Builder.ProcessedPropertyConfig )
                 propertyConfigs =
                     List.map (\p -> ( Generator.propertyTypeString p, p )) properties
+
+                -- Rewind the stored builder baselines to the original
+                -- animate's `end` values so the next `animate`'s
+                -- synthesised `.start` no longer reflects any subsequent
+                -- retarget's transient end.
+                rewoundBuilder =
+                    Builder.setBaselinesFromProcessedEnds
+                        animGroupName
+                        properties
+                        state.builder
 
                 resetCmd =
                     state.commandPort <|
@@ -2448,7 +2457,7 @@ resetSingleKey animGroupName (AnimState state animGroups) =
                                 |> AnimGroup.setPropertyStates newPropertyStates
                     in
                     ( AnimState
-                        { state | subscriptionsActive = False }
+                        { state | subscriptionsActive = False, builder = rewoundBuilder }
                         (AnimGroups.insert animGroupName newAnimGroup animGroups)
                     , resetCmd
                     )
@@ -2470,7 +2479,8 @@ resetSingleKey animGroupName (AnimState state animGroups) =
                     in
                     ( AnimState
                         { state
-                            | subscriptionsActive =
+                            | builder = rewoundBuilder
+                            , subscriptionsActive =
                                 AnimGroups.groups updatedAnimGroups
                                     |> List.any AnimGroup.isRunning
                         }

@@ -18,6 +18,7 @@ module Anim.Internal.Builder exposing
     , ForView
     , ForWAAPI
     , FreezeProperty(..)
+    , HistoryKind(..)
     , Iterations(..)
     , PlaybackConfig
     , ProcessedAnimGroupConfig
@@ -28,6 +29,7 @@ module Anim.Internal.Builder exposing
     , ScrollDrivenConfig
     , TransformParts
     , addAnimationToHistory
+    , addRetargetToHistory
     , alternate
     , clearAnimData
     , clearClamp
@@ -69,6 +71,7 @@ module Anim.Internal.Builder exposing
     , getEmitProgress
     , getFrozenAxes
     , getIterations
+    , getLatestAnimateConfig
     , getPerspectiveOriginInitCssUnit
     , getRuntimeBaseline
     , getScrollAxis
@@ -101,6 +104,7 @@ module Anim.Internal.Builder exposing
     , processedPropertyType
     , processedTimings
     , setAnimTarget
+    , setBaselinesFromProcessedEnds
     , setClamp
     , setEmitProgress
     , setPerspectiveOriginInitCssUnit
@@ -446,11 +450,27 @@ type alias PersistentState =
   - current: The most recent animation (if any)
   - history: Previous animations (most recent first)
 
+Each entry is tagged with its `HistoryKind` so that `reset` can distinguish
+a user-initiated `animate` (the rest position to return to) from a
+mid-flight `retarget` (whose synthesised `start` reflects the in-flight
+position, not the original anchor).
+
 -}
 type alias AnimationHistory =
-    { current : ProcessedAnimGroupConfig
-    , history : List ProcessedAnimGroupConfig -- Most recent first (head = previous)
+    { current : HistoryEntry
+    , history : List HistoryEntry
     }
+
+
+type alias HistoryEntry =
+    { kind : HistoryKind
+    , config : ProcessedAnimGroupConfig
+    }
+
+
+type HistoryKind
+    = AnimateKind
+    | RetargetKind
 
 
 
@@ -921,7 +941,7 @@ for elementId (AnimBuilder data) =
 getCurrentAnimationConfig : AnimGroupName -> AnimBuilder eng -> Maybe ProcessedAnimGroupConfig
 getCurrentAnimationConfig animGroupName (AnimBuilder data) =
     AnimGroups.get animGroupName data.state.animationHistories
-        |> Maybe.map .current
+        |> Maybe.map (.current >> .config)
 
 
 getAnimationConfigs : AnimGroupName -> AnimBuilder eng -> List ProcessedAnimGroupConfig
@@ -931,7 +951,48 @@ getAnimationConfigs animGroupName (AnimBuilder data) =
             []
 
         Just h ->
-            h.current :: h.history
+            (h.current :: h.history) |> List.map .config
+
+
+{-| Walk current then history, returning the most recent entry tagged as
+`AnimateKind` - i.e. the last user-initiated `animate` call, ignoring any
+subsequent `retarget` entries. Used by `reset` so it returns to the rest
+position established by the original animate, not to the synthesised
+mid-flight `start` produced by a retarget.
+
+Falls back to the most recent entry of any kind (matching legacy behaviour)
+when no `AnimateKind` entry exists - e.g. if retarget were ever invoked
+before any animate.
+
+-}
+getLatestAnimateConfig : AnimGroupName -> AnimBuilder eng -> Maybe ProcessedAnimGroupConfig
+getLatestAnimateConfig animGroupName (AnimBuilder data) =
+    case AnimGroups.get animGroupName data.state.animationHistories of
+        Nothing ->
+            Nothing
+
+        Just h ->
+            let
+                isAnimate entry =
+                    case entry.kind of
+                        AnimateKind ->
+                            True
+
+                        RetargetKind ->
+                            False
+            in
+            (h.current :: h.history)
+                |> List.filter isAnimate
+                |> List.head
+                |> Maybe.map .config
+                |> (\result ->
+                        case result of
+                            Just _ ->
+                                result
+
+                            Nothing ->
+                                Just h.current.config
+                   )
 
 
 
@@ -1544,6 +1605,82 @@ extractPropertyBaseline defaults propConfig baselines =
 
         CustomColorPropertyConfig cssName cfg ->
             PropertyBaselines.setCustomColorProperty cssName cfg.end baselines
+
+
+{-| Like `extractPropertyBaseline` but for already-processed property
+configs. Reads `.end` and the resolved cssUnit, writing them into the
+running baselines.
+
+Used by `setBaselinesFromProcessedEnds` so engines can rewind the stored
+baselines after a `reset` snaps the element back to its rest position -
+otherwise the next `animate` would synthesise `.start` from the
+pre-reset (post-animate) baseline and visually jump to the previous end
+value before animating.
+
+-}
+extractProcessedPropertyBaseline : ProcessedPropertyConfig -> PropertyBaselines -> PropertyBaselines
+extractProcessedPropertyBaseline propConfig baselines =
+    case propConfig of
+        ProcessedTranslateConfig cfg ->
+            baselines
+                |> PropertyBaselines.setTranslate cfg.end
+                |> PropertyBaselines.setTranslateUnits cfg.cssUnit
+
+        ProcessedRotateConfig cfg ->
+            PropertyBaselines.setRotate cfg.end baselines
+
+        ProcessedScaleConfig cfg ->
+            PropertyBaselines.setScale cfg.end baselines
+
+        ProcessedSkewConfig cfg ->
+            PropertyBaselines.setSkew cfg.end baselines
+
+        ProcessedOpacityConfig cfg ->
+            PropertyBaselines.setOpacity cfg.end baselines
+
+        ProcessedPerspectiveOriginConfig cfg ->
+            baselines
+                |> PropertyBaselines.setPerspectiveOrigin cfg.end
+                |> PropertyBaselines.setPerspectiveOriginUnits cfg.cssUnit
+
+        ProcessedSizeConfig cfg ->
+            baselines
+                |> PropertyBaselines.setSize cfg.end
+                |> PropertyBaselines.setSizeUnits cfg.cssUnit
+
+        ProcessedCustomPropertyConfig cssName unit cfg ->
+            PropertyBaselines.setCustomProperty cssName cfg.end unit baselines
+
+        ProcessedCustomColorPropertyConfig cssName cfg ->
+            PropertyBaselines.setCustomColorProperty cssName cfg.end baselines
+
+
+{-| Merge a list of processed property configs into the stored baselines
+for the given animGroup, taking `.end` from each. Used by `reset` to
+rewind baselines to the rest position so the next `animate` reads the
+correct anchor for its synthesised `.start`.
+-}
+setBaselinesFromProcessedEnds : AnimGroupName -> List ProcessedPropertyConfig -> AnimBuilder eng -> AnimBuilder eng
+setBaselinesFromProcessedEnds animGroupName props (AnimBuilder data) =
+    let
+        state =
+            data.state
+
+        existing =
+            AnimGroups.get animGroupName state.baselines
+                |> Maybe.withDefault PropertyBaselines.empty
+
+        merged =
+            List.foldl extractProcessedPropertyBaseline existing props
+    in
+    AnimBuilder
+        { data
+            | state =
+                { state
+                    | baselines =
+                        AnimGroups.insert animGroupName merged state.baselines
+                }
+        }
 
 
 updateCurrentConfig : AnimGroupConfig -> AnimBuilder eng -> AnimBuilder eng
@@ -2267,32 +2404,48 @@ collectPropertyTransform property acc =
 -- ============================================================
 
 
-{-| Add a new animation to the element's history.
-This function creates a new history entry and updates the element's animation timeline.
-The previous current animation (if any) is moved to the history list.
+{-| Add a new animation to the element's history, tagged `AnimateKind`.
+This is the normal `animate` path - the entry becomes the rest position
+that subsequent `reset` calls return to.
 -}
 addAnimationToHistory : ProcessedAnimationData -> AnimBuilder eng -> AnimBuilder eng
-addAnimationToHistory processedData (AnimBuilder data) =
+addAnimationToHistory =
+    addToHistoryWithKind AnimateKind
+
+
+{-| Add a retarget entry to the element's history, tagged `RetargetKind`.
+Subsequent `reset` calls walk past these entries to find the most recent
+`AnimateKind` entry, so the box returns to the originally-animated rest
+position rather than the synthesised mid-flight start.
+-}
+addRetargetToHistory : ProcessedAnimationData -> AnimBuilder eng -> AnimBuilder eng
+addRetargetToHistory =
+    addToHistoryWithKind RetargetKind
+
+
+addToHistoryWithKind : HistoryKind -> ProcessedAnimationData -> AnimBuilder eng -> AnimBuilder eng
+addToHistoryWithKind kind processedData (AnimBuilder data) =
     AnimGroups.foldl
         (\animGroupName groupConfig (AnimBuilder accData) ->
             let
                 state =
                     accData.state
 
-                -- Get existing history for this element
+                newEntry =
+                    { kind = kind, config = groupConfig }
+
                 existingHistory =
                     AnimGroups.get animGroupName state.animationHistories
 
-                -- Update history: move current to history list, set new as current
                 updatedHistory =
                     case existingHistory of
                         Nothing ->
-                            { current = groupConfig
+                            { current = newEntry
                             , history = []
                             }
 
                         Just existing ->
-                            { current = groupConfig
+                            { current = newEntry
                             , history = existing.current :: existing.history
                             }
             in
@@ -2310,7 +2463,6 @@ addAnimationToHistory processedData (AnimBuilder data) =
         )
         (AnimBuilder data)
         processedData.groups
-
 
 
 -- ============================================================

@@ -57,6 +57,7 @@ module Anim.Internal.Engine.CSS.CSS exposing
     , onEvent
     , onEventStopPropagation
     , reset
+    , retarget
     , speed
     , spring
     , stop
@@ -169,6 +170,60 @@ animate setPlayState generateData insertData (AnimState state animGroups) transf
             builder
                 |> Builder.addAnimationToHistory processedAnimData
                 |> Builder.mergeBaselines
+                |> Builder.clearAnimData
+        }
+        (processedAnimData.groups
+            |> AnimGroups.map (\animGroupName config -> generateData config.transformOrder builder animGroupName config)
+            |> AnimGroups.foldl (insertData processedAnimData.groups) animGroups
+            |> setAllRunning
+        )
+
+
+
+-- ============================================================
+-- RETARGET
+-- ============================================================
+
+
+{-| Dedicated retarget pipeline. Re-uses the animate code path to compute
+fresh group styles, but:
+
+  - Tags the new history entry `RetargetKind` so `reset` walks past it
+    to find the original animate's rest position.
+  - **Skips `mergeBaselines`**, so the retarget's end value does not
+    become the start anchor for the next `animate` or `reset`. Without
+    this skip, a subsequent `animate` would jump to the retarget's end
+    before animating, and a subsequent `reset` would snap to the
+    retarget's synthesised mid-flight start.
+
+The engine-specific snap (e.g. `transition: none` for the Transition
+engine, `stop` for the Keyframe engine) is applied by the caller via the
+`postProcess` function once the new groups are in place.
+
+-}
+retarget :
+    (PlayState -> a -> a)
+    -> (Maybe (List TransformProperty) -> TimelineBuilder engine -> AnimGroupName -> Builder.ProcessedAnimGroupConfig -> a)
+    -> (AnimGroups Builder.ProcessedAnimGroupConfig -> AnimGroupName -> a -> AnimGroups a -> AnimGroups a)
+    -> AnimState engine a
+    -> (TimelineBuilder engine -> TimelineBuilder engine)
+    -> AnimState engine a
+retarget setPlayState generateData insertData (AnimState state animGroups) transform =
+    let
+        builder =
+            transform state.builder
+
+        processedAnimData =
+            Builder.process builder
+
+        setAllRunning : AnimGroups a -> AnimGroups a
+        setAllRunning groups =
+            AnimGroups.map (\_ group -> setPlayState PlayState.Running group) groups
+    in
+    AnimState
+        { builder =
+            builder
+                |> Builder.addRetargetToHistory processedAnimData
                 |> Builder.clearAnimData
         }
         (processedAnimData.groups
@@ -427,7 +482,7 @@ stop setPlayState getIsActive buildStyles setStyles animGroupName animState =
                         , size = snapTo .end
                         }
             in
-            simpleControl (setPlayState PlayState.Complete) toStopProperty buildStyles setStyles animGroupName animState
+            simpleControl Builder.getCurrentAnimationConfig (setPlayState PlayState.Complete) toStopProperty buildStyles setStyles animGroupName animState
 
         _ ->
             animState
@@ -456,7 +511,7 @@ reset setPlayState =
                 , size = toStartOr Size.default
                 }
     in
-    simpleControl (setPlayState PlayState.Reset) toResetProperty
+    simpleControl Builder.getLatestAnimateConfig (setPlayState PlayState.Reset) toResetProperty
 
 
 snapTo : (Builder.ProcessedAnimationConfig a -> a) -> Builder.ProcessedAnimationConfig a -> Builder.ProcessedAnimationConfig a
@@ -519,19 +574,20 @@ mapProcessedProperty transforms prop =
 
 
 simpleControl :
-    (a -> a)
+    (AnimGroupName -> Builder.AnimBuilder engine -> Maybe Builder.ProcessedAnimGroupConfig)
+    -> (a -> a)
     -> (Builder.ProcessedPropertyConfig -> Builder.ProcessedPropertyConfig)
     -> (List ( String, String ) -> List Builder.ProcessedPropertyConfig -> Styles)
     -> (Styles -> a)
     -> AnimGroupName
     -> AnimState engine a
     -> AnimState engine a
-simpleControl setPlayState mapper buildStyles setStyles animGroupName ((AnimState state animGroups) as animState) =
+simpleControl fetchConfig setPlayState mapper buildStyles setStyles animGroupName ((AnimState state animGroups) as animState) =
     let
         getProcessedProperties : List Builder.ProcessedPropertyConfig
         getProcessedProperties =
             state.builder
-                |> Builder.getCurrentAnimationConfig animGroupName
+                |> fetchConfig animGroupName
                 |> Maybe.map .properties
                 |> Maybe.withDefault []
     in
@@ -541,9 +597,11 @@ simpleControl setPlayState mapper buildStyles setStyles animGroupName ((AnimStat
 
         properties ->
             let
+                snappedProperties =
+                    List.map mapper properties
+
                 animGroup =
-                    properties
-                        |> List.map mapper
+                    snappedProperties
                         |> buildStyles
                             [ ( "animation", "none" )
                             , ( "transition", "none" )
@@ -551,8 +609,15 @@ simpleControl setPlayState mapper buildStyles setStyles animGroupName ((AnimStat
                         |> setStyles
                         |> setPlayState
             in
-            AnimState state <|
-                AnimGroups.insert animGroupName animGroup animGroups
+            AnimState
+                { state
+                    | builder =
+                        Builder.setBaselinesFromProcessedEnds
+                            animGroupName
+                            snappedProperties
+                            state.builder
+                }
+                (AnimGroups.insert animGroupName animGroup animGroups)
 
 
 

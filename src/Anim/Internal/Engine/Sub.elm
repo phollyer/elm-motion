@@ -446,8 +446,7 @@ retarget (AnimState state animGroups) build =
         { subscriptionsActive = nextSubscriptionsActive
         , builder =
             builder
-                |> Builder.addAnimationToHistory processed
-                |> Builder.mergeBaselines
+                |> Builder.addRetargetToHistory processed
                 |> Builder.clearAnimData
         , pendingControlEvents = state.pendingControlEvents ++ cancelledEvents
         , lastResize = state.lastResize

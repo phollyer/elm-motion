@@ -108,7 +108,67 @@ init =
 
 
 animate : AnimState -> (EngineBuilder -> EngineBuilder) -> AnimState
-animate (AnimState state animGroups) transform =
+animate =
+    runPipeline
+        (\builder processed ->
+            builder
+                |> Builder.addAnimationToHistory processed
+                |> Builder.mergeBaselines
+                |> Builder.clearAnimData
+        )
+
+
+{-| Re-anchor an animation to a new target by snapping to the new end values.
+
+The Keyframe engine drives animations entirely through CSS @keyframes
+rules and has no JavaScript-side runtime snapshot of the currently
+rendered values. That makes it impossible to smoothly continue an
+in-flight keyframe animation when the target changes mid-flight (typical
+of resize handlers).
+
+`retarget` therefore guarantees a deterministic outcome: the build is
+processed to compute the new end values, the keyframe animation is
+cleared, and those end values are written inline. The element ends up
+exactly where the new builder placed it - safe to call repeatedly during
+a drag or resize without accumulating partial animations.
+
+Uses a dedicated pipeline that tags the new history entry `RetargetKind`
+and skips `mergeBaselines`, so the retarget's end value does not
+overwrite the baseline anchor used by the next `animate` or `reset`.
+
+If you need smooth visual continuity instead of a snap, use the `Sub` or
+`WAAPI` engines, both of which keep a runtime snapshot of the current
+animated value and can interpolate from it.
+
+-}
+retarget : AnimState -> (EngineBuilder -> EngineBuilder) -> AnimState
+retarget ((AnimState origState _) as animState) build =
+    let
+        touchedGroups =
+            (Builder.process (build origState.builder)).groups
+
+        retargetedState =
+            runPipeline
+                (\builder processed ->
+                    builder
+                        |> Builder.addRetargetToHistory processed
+                        |> Builder.clearAnimData
+                )
+                animState
+                build
+    in
+    AnimGroups.foldl
+        (\name _ acc -> stop name acc)
+        retargetedState
+        touchedGroups
+
+
+runPipeline :
+    (EngineBuilder -> Builder.ProcessedAnimationData -> EngineBuilder)
+    -> AnimState
+    -> (EngineBuilder -> EngineBuilder)
+    -> AnimState
+runPipeline finaliseBuilder (AnimState state animGroups) transform =
     let
         builder =
             transform state.builder
@@ -158,51 +218,13 @@ animate (AnimState state animGroups) transform =
                         acc
     in
     AnimState
-        { builder =
-            builder
-                |> Builder.addAnimationToHistory processedAnimData
-                |> Builder.mergeBaselines
-                |> Builder.clearAnimData
+        { builder = finaliseBuilder builder processedAnimData
         }
         (processedAnimData.groups
             |> AnimGroups.map generateAnimGroup
             |> AnimGroups.foldl insertAnimGroup animGroups
             |> AnimGroups.map (\_ animGroup -> setPlayStateWithStyle PlayState.Running animGroup)
         )
-
-
-{-| Re-anchor an animation to a new target by snapping to the new end values.
-
-The Keyframe engine drives animations entirely through CSS @keyframes
-rules and has no JavaScript-side runtime snapshot of the currently
-rendered values. That makes it impossible to smoothly continue an
-in-flight keyframe animation when the target changes mid-flight (typical
-of resize handlers).
-
-`retarget` therefore guarantees a deterministic outcome: the build is
-processed to compute the new end values, the keyframe animation is
-cleared, and those end values are written inline. The element ends up
-exactly where the new builder placed it - safe to call repeatedly during
-a drag or resize without accumulating partial animations.
-
-If you need smooth visual continuity instead of a snap, use the `Sub` or
-`WAAPI` engines, both of which keep a runtime snapshot of the current
-animated value and can interpolate from it.
-
--}
-retarget : AnimState -> (EngineBuilder -> EngineBuilder) -> AnimState
-retarget ((AnimState origState _) as animState) build =
-    let
-        touchedGroups =
-            (Builder.process (build origState.builder)).groups
-
-        animatedState =
-            animate animState build
-    in
-    AnimGroups.foldl
-        (\name _ acc -> stop name acc)
-        animatedState
-        touchedGroups
 
 
 

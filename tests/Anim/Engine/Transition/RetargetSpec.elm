@@ -18,6 +18,7 @@ import Anim.Internal.Engine.Shared.AnimGroups as AnimGroups
 import Anim.Internal.Engine.Transition.AnimGroup as TAnimGroup
 import Anim.Property.Opacity as Opacity
 import Anim.Property.Translate as Translate
+import Anim.Unit exposing (Unit(..))
 import Expect
 import Motion.Easing exposing (Easing(..))
 import Set
@@ -30,6 +31,8 @@ suite =
         [ propertyKeysTests
         , snapTests
         , scopingTests
+        , cssUnitTests
+        , resetAfterRetargetTests
         ]
 
 
@@ -255,4 +258,145 @@ scopingTests =
                        )
                     |> transitionCss "b"
                     |> Expect.equal (Just "none")
+        ]
+
+
+
+-- ============================================================
+-- PER-AXIS CSS UNIT PRESERVATION
+-- ============================================================
+
+
+cssUnitTests : Test
+cssUnitTests =
+    describe "retarget preserves per-axis cssUnit from the previous animation"
+        [ test "retarget Y only keeps X axis's Cqw unit in the snapped translate" <|
+            \_ ->
+                initState
+                    |> (\s ->
+                            Transition.animate s <|
+                                (Translate.for "el"
+                                    >> Translate.cssUnitX Cqw
+                                    >> Translate.cssUnitY Cqh
+                                    >> Translate.toXY 88 88
+                                    >> Translate.duration 5000
+                                    >> Translate.easing Linear
+                                    >> Translate.build
+                                )
+                       )
+                    |> (\s ->
+                            Transition.retarget s <|
+                                (Translate.continueFor "el"
+                                    >> Translate.toY 0
+                                    >> Translate.build
+                                )
+                       )
+                    |> stylesFor "el"
+                    |> Maybe.andThen (Styles.get "translate")
+                    |> Expect.equal (Just "88cqw 0cqh 0px")
+        ]
+
+
+
+-- ============================================================
+-- RESET AFTER RETARGET
+-- ============================================================
+
+
+resetAfterRetargetTests : Test
+resetAfterRetargetTests =
+    describe "reset after retarget returns to the original animate's start, not the retarget's synthesised start"
+        [ test "animate XY 0->88, retarget Y to 0, reset -> snaps back to 0 0" <|
+            \_ ->
+                initState
+                    |> (\s ->
+                            Transition.animate s <|
+                                (Translate.for "el"
+                                    >> Translate.cssUnitX Cqw
+                                    >> Translate.cssUnitY Cqh
+                                    >> Translate.toXY 88 88
+                                    >> Translate.duration 5000
+                                    >> Translate.easing Linear
+                                    >> Translate.build
+                                )
+                       )
+                    |> (\s ->
+                            Transition.retarget s <|
+                                (Translate.continueFor "el"
+                                    >> Translate.toY 0
+                                    >> Translate.build
+                                )
+                       )
+                    |> Transition.reset "el"
+                    |> stylesFor "el"
+                    |> Maybe.andThen (Styles.get "translate")
+                    |> Expect.equal (Just "0cqw 0cqh 0px")
+        , test "two full A→R→Reset cycles - the second reset still snaps to 0 0" <|
+            \_ ->
+                let
+                    runCycle s =
+                        s
+                            |> (\inner ->
+                                    Transition.animate inner <|
+                                        (Translate.for "el"
+                                            >> Translate.cssUnitX Cqw
+                                            >> Translate.cssUnitY Cqh
+                                            >> Translate.toXY 88 88
+                                            >> Translate.duration 5000
+                                            >> Translate.easing Linear
+                                            >> Translate.build
+                                        )
+                               )
+                            |> (\inner ->
+                                    Transition.retarget inner <|
+                                        (Translate.continueFor "el"
+                                            >> Translate.toY 0
+                                            >> Translate.build
+                                        )
+                               )
+                            |> Transition.reset "el"
+                in
+                initState
+                    |> runCycle
+                    |> runCycle
+                    |> stylesFor "el"
+                    |> Maybe.andThen (Styles.get "translate")
+                    |> Expect.equal (Just "0cqw 0cqh 0px")
+        , test "A→R→Reset→A - the next animate's start is the original anchor, not the retarget end" <|
+            \_ ->
+                initState
+                    |> (\s ->
+                            Transition.animate s <|
+                                (Translate.for "el"
+                                    >> Translate.cssUnitX Cqw
+                                    >> Translate.cssUnitY Cqh
+                                    >> Translate.toXY 88 88
+                                    >> Translate.duration 5000
+                                    >> Translate.easing Linear
+                                    >> Translate.build
+                                )
+                       )
+                    |> (\s ->
+                            Transition.retarget s <|
+                                (Translate.continueFor "el"
+                                    >> Translate.toY 0
+                                    >> Translate.build
+                                )
+                       )
+                    |> Transition.reset "el"
+                    |> (\s ->
+                            -- Second animate: should be (0,0)->(88,88), not (88,0)->(88,88)
+                            Transition.animate s <|
+                                (Translate.for "el"
+                                    >> Translate.cssUnitX Cqw
+                                    >> Translate.cssUnitY Cqh
+                                    >> Translate.toXY 88 88
+                                    >> Translate.duration 5000
+                                    >> Translate.easing Linear
+                                    >> Translate.build
+                                )
+                       )
+                    |> stylesFor "el"
+                    |> Maybe.andThen (Styles.get "translate")
+                    |> Expect.equal (Just "88cqw 88cqh 0px")
         ]

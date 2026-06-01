@@ -94,61 +94,68 @@ init =
 
 animate : AnimState -> (EngineBuilder -> EngineBuilder) -> AnimState
 animate =
-    let
-        generateAnimGroup : Maybe (List TransformProperty) -> EngineBuilder -> AnimGroupName -> { a | properties : List Builder.ProcessedPropertyConfig } -> AnimGroup
-        generateAnimGroup _ builder _ { properties } =
-            let
-                freshEntry =
-                    Builder.getDiscreteEntryProperties builder
-
-                -- `@starting-style` is only useful for ENTRY transitions
-                -- (element becoming rendered). Only emit starting styles
-                -- on the animate call that freshly set `discreteEntry`;
-                -- on exit (Hide) or plain animates we skip them so we
-                -- don't pollute the stylesheet with dead rules.
-                startingStylesForThisAnimate =
-                    if Dict.isEmpty freshEntry then
-                        []
-
-                    else
-                        extractStartingStyles properties
-            in
-            Generator.generateAnimation
-                (Builder.discreteTransitionsEnabled builder)
-                freshEntry
-                (Builder.getDiscreteExitProperties builder)
-                properties
-                |> AnimGroup.setStartingStyles startingStylesForThisAnimate
-
-        insertAnimGroup : AnimGroups Builder.ProcessedAnimGroupConfig -> AnimGroupName -> AnimGroup -> AnimGroups AnimGroup -> AnimGroups AnimGroup
-        insertAnimGroup animGroupsConfig animGroupName newAnimGroup acc =
-            case AnimGroups.get animGroupName acc of
-                Nothing ->
-                    AnimGroups.insert animGroupName newAnimGroup acc
-
-                Just currentGroup ->
-                    let
-                        animatedCssProps =
-                            AnimGroups.get animGroupName animGroupsConfig
-                                |> Maybe.map (.properties >> toCssPropertyNames)
-                                |> Maybe.withDefault []
-
-                        -- Include discrete property names so old `display Xms`
-                        -- entries are evicted from the merged transition list
-                        -- when this animate retouches the discrete property.
-                        discreteCssProps =
-                            Dict.keys (AnimGroup.getDiscreteEntry newAnimGroup)
-                                ++ Dict.keys (AnimGroup.getDiscreteExit newAnimGroup)
-
-                        styles =
-                            AnimGroup.mergeStyles newAnimGroup currentGroup (animatedCssProps ++ discreteCssProps)
-                    in
-                    AnimGroups.insert animGroupName styles acc
-    in
     CSS.animate AnimGroup.setPlayState generateAnimGroup insertAnimGroup
 
 
+generateAnimGroup : Maybe (List TransformProperty) -> EngineBuilder -> AnimGroupName -> { a | properties : List Builder.ProcessedPropertyConfig } -> AnimGroup
+generateAnimGroup _ builder _ { properties } =
+    let
+        freshEntry =
+            Builder.getDiscreteEntryProperties builder
+
+        -- `@starting-style` is only useful for ENTRY transitions
+        -- (element becoming rendered). Only emit starting styles
+        -- on the animate call that freshly set `discreteEntry`;
+        -- on exit (Hide) or plain animates we skip them so we
+        -- don't pollute the stylesheet with dead rules.
+        startingStylesForThisAnimate =
+            if Dict.isEmpty freshEntry then
+                []
+
+            else
+                extractStartingStyles properties
+    in
+    Generator.generateAnimation
+        (Builder.discreteTransitionsEnabled builder)
+        freshEntry
+        (Builder.getDiscreteExitProperties builder)
+        properties
+        |> AnimGroup.setStartingStyles startingStylesForThisAnimate
+
+
+insertAnimGroup : AnimGroups Builder.ProcessedAnimGroupConfig -> AnimGroupName -> AnimGroup -> AnimGroups AnimGroup -> AnimGroups AnimGroup
+insertAnimGroup animGroupsConfig animGroupName newAnimGroup acc =
+    case AnimGroups.get animGroupName acc of
+        Nothing ->
+            AnimGroups.insert animGroupName newAnimGroup acc
+
+        Just currentGroup ->
+            let
+                animatedCssProps =
+                    AnimGroups.get animGroupName animGroupsConfig
+                        |> Maybe.map (.properties >> toCssPropertyNames)
+                        |> Maybe.withDefault []
+
+                -- Include discrete property names so old `display Xms`
+                -- entries are evicted from the merged transition list
+                -- when this animate retouches the discrete property.
+                discreteCssProps =
+                    Dict.keys (AnimGroup.getDiscreteEntry newAnimGroup)
+                        ++ Dict.keys (AnimGroup.getDiscreteExit newAnimGroup)
+
+                styles =
+                    AnimGroup.mergeStyles newAnimGroup currentGroup (animatedCssProps ++ discreteCssProps)
+            in
+            AnimGroups.insert animGroupName styles acc
+
+
 {-| Re-anchor an animation to a new target by snapping to the new end values.
+
+Uses the dedicated `CSS.retarget` pipeline so the retarget's end value
+does not pollute the stored baseline (which would otherwise become the
+synthesised `start` for the next `animate` or the snap target for the
+next `reset`).
+
 -}
 retarget : AnimState -> (EngineBuilder -> EngineBuilder) -> AnimState
 retarget ((AnimState origState _) as animState) build =
@@ -157,7 +164,7 @@ retarget ((AnimState origState _) as animState) build =
             (Builder.process (build origState.builder)).groups
 
         (AnimState newState newGroups) =
-            animate animState build
+            CSS.retarget AnimGroup.setPlayState generateAnimGroup insertAnimGroup animState build
 
         snapGroup group =
             group
