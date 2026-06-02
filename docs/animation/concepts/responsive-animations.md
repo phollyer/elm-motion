@@ -171,7 +171,7 @@ Mid-flight values are not available for CSS transitions or @keframes animations,
 
 Use this path when your animation depends on direct pixel values, it is supported by the [`Sub`](../engines/sub.md) and [`WAAPI`](../engines/waapi.md) engines.
 
-Unlike relative values which the browser can reinterpret when the layout changes, pixel values remain fixed, so animations using pixel values need to be told about the layout change.
+Unlike relative values which the browser can re-evaluate when the layout changes, pixel values remain fixed, so animations using pixel values need to be told about the layout change.
 
 This is done by giving the Engine the new bounds for the animation. The bounds represent the space on the page the animation can operate in. All supporting properties have their own `bounds` builder function which takes a `Bounds` record - which is then passed to the Engine's `onResize` function:
 
@@ -238,9 +238,9 @@ This is done by giving the Engine the new bounds for the animation. The bounds r
             )
         ```
 
-    When switching from Portrait to Landscape, the `logoAnim` animation group will adjust it's position on the X axis proportionally. So if it is at `x=25` in Portrait and the user switches to Landscape, it will be remapped to `x=50`, and it's X axis end value will be remapped to `x=100`, the new `max`.
+    When switching from Portrait to Landscape, the `logoAnim` animation group will adjust it's position on the X axis proportionally. So if it is at `x=25` in Portrait (50% of the width) and the user switches to Landscape, it will be remapped to `x=50` (50% of the new width), and it's X axis end value will be remapped to `x=100`, the new `max`.
 
-`bounds` must always be paired with `onResize`, attempting to use it with a Trigger function like `animate` will produce a type error.
+`bounds` must can only be paired with `onResize`, attempting to use it with a Trigger function like `animate` will produce a type error.
 
 ---
 
