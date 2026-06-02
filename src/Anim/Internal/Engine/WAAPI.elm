@@ -134,7 +134,7 @@ type AnimState msg
         , commandPort : Encode.Value -> Cmd msg
         , subscriptionPort : (Decode.Value -> msg) -> Sub msg
         , builder : EngineBuilder
-        , lastResize : Dict.Dict ( AnimGroupName, String ) Builder.AxisRanges
+        , lastResize : Dict.Dict ( AnimGroupName, String ) Builder.AxisBounds
         }
         (AnimGroups AnimGroup)
 
@@ -887,7 +887,7 @@ applyGroupResize animGroupName cfg acc =
 
 applyBoundsEntry :
     AnimGroupName
-    -> ( Builder.ProcessedPropertyConfig, Builder.AxisRanges )
+    -> ( Builder.ProcessedPropertyConfig, Builder.AxisBounds )
     -> ( AnimState msg, List (Cmd msg) )
     -> ( AnimState msg, List (Cmd msg) )
 applyBoundsEntry animGroupName ( prop, ranges ) ( (AnimState state _) as st, accCmds ) =
@@ -930,12 +930,12 @@ applyBoundsEntry animGroupName ( prop, ranges ) ( (AnimState state _) as st, acc
     ( cachedState, cmd :: accCmds )
 
 
-emptyBounds : Builder.AxisRanges
+emptyBounds : Builder.AxisBounds
 emptyBounds =
     { x = Nothing, y = Nothing, z = Nothing }
 
 
-applyTranslateResize : AnimGroupName -> Builder.AxisRanges -> Builder.AxisRanges -> AnimState msg -> ( AnimState msg, Cmd msg )
+applyTranslateResize : AnimGroupName -> Builder.AxisBounds -> Builder.AxisBounds -> AnimState msg -> ( AnimState msg, Cmd msg )
 applyTranslateResize animGroupName previousBounds bounds ((AnimState state animGroups) as animState) =
     if ResizeBuilder.isEmpty bounds then
         ( animState, Cmd.none )
@@ -980,8 +980,8 @@ applyTranslateResize animGroupName previousBounds bounds ((AnimState state animG
 
 computeResizePayload :
     AnimGroupName
-    -> Builder.AxisRanges
-    -> Builder.AxisRanges
+    -> Builder.AxisBounds
+    -> Builder.AxisBounds
     -> AnimState msg
     ->
         Maybe
@@ -1293,7 +1293,7 @@ absolute position. Falls back to `fallbackCurrent` when no proportion is
 available for the axis or when the new bounds aren't defined for that
 axis (Clamp-only on that side, degenerate leg, etc.).
 -}
-applyProportionToBounds : Maybe Float -> Maybe ResizeBuilder.AxisBounds -> Float -> Float
+applyProportionToBounds : Maybe Float -> Maybe ResizeBuilder.Bounds -> Float -> Float
 applyProportionToBounds maybeP maybeBounds fallbackCurrent =
     case ( maybeP, maybeBounds ) of
         ( Just p, Just b ) ->
@@ -1433,7 +1433,7 @@ rebaseTranslateConfig cached config =
             config
 
 
-applyScaleResize : AnimGroupName -> Builder.AxisRanges -> Builder.AxisRanges -> AnimState msg -> ( AnimState msg, Cmd msg )
+applyScaleResize : AnimGroupName -> Builder.AxisBounds -> Builder.AxisBounds -> AnimState msg -> ( AnimState msg, Cmd msg )
 applyScaleResize animGroupName previousBounds bounds ((AnimState state animGroups) as animState) =
     if ResizeBuilder.isEmpty bounds then
         ( animState, Cmd.none )
@@ -1476,8 +1476,8 @@ applyScaleResize animGroupName previousBounds bounds ((AnimState state animGroup
 
 computeScaleResizePayload :
     AnimGroupName
-    -> Builder.AxisRanges
-    -> Builder.AxisRanges
+    -> Builder.AxisBounds
+    -> Builder.AxisBounds
     -> AnimState msg
     ->
         Maybe
@@ -1730,7 +1730,7 @@ rebaseScaleConfig cached config =
             config
 
 
-applyPerspectiveOriginResize : AnimGroupName -> Builder.AxisRanges -> Builder.AxisRanges -> AnimState msg -> ( AnimState msg, Cmd msg )
+applyPerspectiveOriginResize : AnimGroupName -> Builder.AxisBounds -> Builder.AxisBounds -> AnimState msg -> ( AnimState msg, Cmd msg )
 applyPerspectiveOriginResize animGroupName previousBounds bounds ((AnimState state animGroups) as animState) =
     if ResizeBuilder.isEmpty bounds then
         ( animState, Cmd.none )
@@ -1768,8 +1768,8 @@ applyPerspectiveOriginResize animGroupName previousBounds bounds ((AnimState sta
 
 computePerspectiveOriginResizePayload :
     AnimGroupName
-    -> Builder.AxisRanges
-    -> Builder.AxisRanges
+    -> Builder.AxisBounds
+    -> Builder.AxisBounds
     -> AnimState msg
     ->
         Maybe
@@ -2053,7 +2053,7 @@ scalePerspectiveOriginDurationForResize r =
         r.oldDurationMs
 
 
-applySizeResize : AnimGroupName -> Builder.AxisRanges -> Builder.AxisRanges -> AnimState msg -> ( AnimState msg, Cmd msg )
+applySizeResize : AnimGroupName -> Builder.AxisBounds -> Builder.AxisBounds -> AnimState msg -> ( AnimState msg, Cmd msg )
 applySizeResize animGroupName previousBounds bounds ((AnimState state animGroups) as animState) =
     if ResizeBuilder.isEmpty bounds then
         ( animState, Cmd.none )
@@ -2091,8 +2091,8 @@ applySizeResize animGroupName previousBounds bounds ((AnimState state animGroups
 
 computeSizeResizePayload :
     AnimGroupName
-    -> Builder.AxisRanges
-    -> Builder.AxisRanges
+    -> Builder.AxisBounds
+    -> Builder.AxisBounds
     -> AnimState msg
     ->
         Maybe

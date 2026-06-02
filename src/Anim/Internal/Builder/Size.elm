@@ -347,7 +347,7 @@ applyInitCssUnit (SizeBuilder config builder) =
 the current animation group. See `Anim.Internal.Builder.Translate.bounds`
 for the design.
 -}
-bounds : Builder.AxisRanges -> SizeBuilder { eng | withBounds : () } -> SizeBuilder { eng | withBounds : () }
+bounds : Builder.AxisBounds -> SizeBuilder { eng | withBounds : () } -> SizeBuilder { eng | withBounds : () }
 bounds ranges (SizeBuilder config builder) =
     SizeBuilder { config | mode = Builder.RemapToBounds ranges } builder
 

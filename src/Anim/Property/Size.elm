@@ -10,7 +10,7 @@ module Anim.Property.Size exposing
     , easing
     , spring
     , cssUnit, cssUnitWidth, cssUnitHeight
-    , Bounds, AxisRanges, bounds
+    , Bounds, AxisBounds, bounds
     , clampWidth, clampHeight, unclampWidth, unclampHeight
     )
 
@@ -124,7 +124,7 @@ ranges from inside an engine's `onResize` callback.
 📖 See [Responsive Animations](https://phollyer.github.io/elm-motion/animation/concepts/responsive-animations/)
 for patterns and examples.
 
-@docs Bounds, AxisRanges, bounds
+@docs Bounds, AxisBounds, bounds
 
 
 ## Clamping
@@ -673,7 +673,7 @@ type alias Bounds =
     }
 
 -}
-type alias AxisRanges =
+type alias AxisBounds =
     { width : Maybe Bounds
     , height : Maybe Bounds
     }
@@ -702,12 +702,12 @@ Only callable from inside an engine's `onResize` callback - the `withBounds`
 capability on the builder type is what gates it.
 
 -}
-bounds : AnimGroupName -> AxisRanges -> AnimBuilder { eng | withBounds : () } -> AnimBuilder { eng | withBounds : () }
+bounds : AnimGroupName -> AxisBounds -> AnimBuilder { eng | withBounds : () } -> AnimBuilder { eng | withBounds : () }
 bounds name ranges =
     SB.for name >> SB.bounds (toBuilderRanges ranges) >> SB.build
 
 
-toBuilderRanges : AxisRanges -> IB.AxisRanges
+toBuilderRanges : AxisBounds -> IB.AxisBounds
 toBuilderRanges ranges =
     { x = ranges.width
     , y = ranges.height

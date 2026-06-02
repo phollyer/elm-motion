@@ -672,7 +672,7 @@ these entries (see `Builder.partitionForResize`); the `withBounds`
 phantom on the engine tag makes that a compile-time guarantee for the
 public API.
 -}
-bounds : Builder.AxisRanges -> TranslateBuilder { eng | withBounds : () } -> TranslateBuilder { eng | withBounds : () }
+bounds : Builder.AxisBounds -> TranslateBuilder { eng | withBounds : () } -> TranslateBuilder { eng | withBounds : () }
 bounds ranges (TranslateBuilder config builder) =
     TranslateBuilder { config | mode = Builder.RemapToBounds ranges } builder
 

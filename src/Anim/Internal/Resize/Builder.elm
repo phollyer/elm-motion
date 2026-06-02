@@ -1,5 +1,5 @@
 module Anim.Internal.Resize.Builder exposing
-    ( AxisBounds, Bounds, AxisResult
+    ( Bounds, AxisBounds, AxisResult
     , isEmpty, applyAxis
     )
 
@@ -11,20 +11,20 @@ expressed through the regular `AnimBuilder` pipeline (a `RemapToBounds`
 specific property entries) and extracted by
 [`partitionForResize`](Anim-Internal-Builder#partitionForResize). What
 remains here is the per-axis math (`applyAxis`) and the shared
-[`Bounds`](#Bounds) / [`AxisBounds`](#AxisBounds) record shapes used
+[`AxisBounds`](#AxisBounds) / [`Bounds`](#Bounds) record shapes used
 throughout the engine internals.
 
 -}
 
 
-type alias AxisBounds =
+type alias Bounds =
     { min : Float, max : Float }
 
 
-type alias Bounds =
-    { x : Maybe AxisBounds
-    , y : Maybe AxisBounds
-    , z : Maybe AxisBounds
+type alias AxisBounds =
+    { x : Maybe Bounds
+    , y : Maybe Bounds
+    , z : Maybe Bounds
     }
 
 
@@ -37,7 +37,7 @@ type alias AxisResult =
 
 {-| A resize directive with no populated axes is treated as a no-op by engines.
 -}
-isEmpty : Bounds -> Bool
+isEmpty : AxisBounds -> Bool
 isEmpty bounds_ =
     bounds_.x == Nothing && bounds_.y == Nothing && bounds_.z == Nothing
 
@@ -67,8 +67,8 @@ animations, so a single resize (orientation flip) and successive resizes
 
 -}
 applyAxis :
-    Maybe AxisBounds
-    -> Maybe AxisBounds
+    Maybe Bounds
+    -> Maybe Bounds
     -> Float
     -> Float
     -> Float

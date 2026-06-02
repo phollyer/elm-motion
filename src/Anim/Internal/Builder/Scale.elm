@@ -412,7 +412,7 @@ setZ z =
 the current animation group. See `Anim.Internal.Builder.Translate.bounds`
 for the design.
 -}
-bounds : Builder.AxisRanges -> ScaleBuilder { eng | withBounds : () } -> ScaleBuilder { eng | withBounds : () }
+bounds : Builder.AxisBounds -> ScaleBuilder { eng | withBounds : () } -> ScaleBuilder { eng | withBounds : () }
 bounds ranges (ScaleBuilder config builder) =
     ScaleBuilder { config | mode = Builder.RemapToBounds ranges } builder
 

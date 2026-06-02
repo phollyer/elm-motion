@@ -9,7 +9,7 @@ module Anim.Property.Scale exposing
     , easing
     , spring
     , clampX, clampY, clampZ, unclampX, unclampY, unclampZ
-    , Bounds, AxisRanges, bounds
+    , Bounds, AxisBounds, bounds
     )
 
 {-| Scale elements along the X, Y, and Z axes.
@@ -99,7 +99,7 @@ for patterns and examples.
 
 ## Resize
 
-@docs Bounds, AxisRanges, bounds
+@docs Bounds, AxisBounds, bounds
 
 -}
 
@@ -858,7 +858,7 @@ type alias Bounds =
     }
 
 -}
-type alias AxisRanges =
+type alias AxisBounds =
     { x : Maybe Bounds
     , y : Maybe Bounds
     , z : Maybe Bounds
@@ -882,6 +882,6 @@ not pixels. Only callable from inside an `onResize` callback - the
 `withBounds` capability on the builder type is what gates it.
 
 -}
-bounds : AnimGroupName -> AxisRanges -> AnimBuilder { eng | withBounds : () } -> AnimBuilder { eng | withBounds : () }
+bounds : AnimGroupName -> AxisBounds -> AnimBuilder { eng | withBounds : () } -> AnimBuilder { eng | withBounds : () }
 bounds name ranges =
     SB.for name >> SB.bounds ranges >> SB.build

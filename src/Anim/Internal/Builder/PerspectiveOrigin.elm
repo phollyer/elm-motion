@@ -273,7 +273,7 @@ setY y =
 directive for the current animation group. See
 `Anim.Internal.Builder.Translate.bounds` for the design.
 -}
-bounds : Builder.AxisRanges -> PerspectiveOriginBuilder { eng | withBounds : () } -> PerspectiveOriginBuilder { eng | withBounds : () }
+bounds : Builder.AxisBounds -> PerspectiveOriginBuilder { eng | withBounds : () } -> PerspectiveOriginBuilder { eng | withBounds : () }
 bounds ranges (PerspectiveOriginBuilder config builder) =
     PerspectiveOriginBuilder { config | mode = Builder.RemapToBounds ranges } builder
 

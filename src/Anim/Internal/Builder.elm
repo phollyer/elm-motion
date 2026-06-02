@@ -4,8 +4,8 @@ module Anim.Internal.Builder exposing
     , AnimationConfig
     , AnimationDirection(..)
     , AnimationMode(..)
+    , Bounds
     , AxisBounds
-    , AxisRanges
     , DefaultsConfig
     , DiscreteEntryProperty
     , DiscreteExitProperty
@@ -377,21 +377,21 @@ no-op rather than a crash.
 type AnimationMode
     = Animate
     | Snap
-    | RemapToBounds AxisRanges
+    | RemapToBounds AxisBounds
 
 
 {-| Inclusive numeric range for one axis.
 -}
-type alias AxisBounds =
+type alias Bounds =
     { min : Float, max : Float }
 
 
 {-| Per-axis resize bounds. `Nothing` leaves an axis untouched.
 -}
-type alias AxisRanges =
-    { x : Maybe AxisBounds
-    , y : Maybe AxisBounds
-    , z : Maybe AxisBounds
+type alias AxisBounds =
+    { x : Maybe Bounds
+    , y : Maybe Bounds
+    , z : Maybe Bounds
     }
 
 
@@ -1881,7 +1881,7 @@ partitionForResize :
     ->
         { animate : List ProcessedPropertyConfig
         , snap : List ProcessedPropertyConfig
-        , bounds : List ( ProcessedPropertyConfig, AxisRanges )
+        , bounds : List ( ProcessedPropertyConfig, AxisBounds )
         }
 partitionForResize props =
     let

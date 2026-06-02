@@ -124,7 +124,7 @@ within tolerance expected actual =
 -}
 onResize :
     Sub.AnimGroupName
-    -> { x : Maybe Builder.AxisBounds, y : Maybe Builder.AxisBounds }
+    -> { x : Maybe Builder.Bounds, y : Maybe Builder.Bounds }
     -> Sub.AnimState
     -> Sub.AnimState
 onResize name bounds animState =

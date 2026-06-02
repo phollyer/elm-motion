@@ -11,7 +11,7 @@ module Anim.Property.Translate exposing
     , easing
     , spring
     , cssUnit, cssUnitX, cssUnitY, cssUnitZ
-    , Bounds, AxisRanges, bounds
+    , Bounds, AxisBounds, bounds
     , setXYZ, setXY, setXZ, setX, setYZ, setY, setZ
     , clampX, clampY, clampZ, unclampX, unclampY, unclampZ
     )
@@ -132,7 +132,7 @@ for details.
 
 ## Resize
 
-@docs Bounds, AxisRanges, bounds
+@docs Bounds, AxisBounds, bounds
 @docs setXYZ, setXY, setXZ, setX, setYZ, setY, setZ
 
 
@@ -1140,7 +1140,7 @@ type alias Bounds =
     }
 
 -}
-type alias AxisRanges =
+type alias AxisBounds =
     { x : Maybe Bounds
     , y : Maybe Bounds
     , z : Maybe Bounds
@@ -1171,6 +1171,6 @@ Only callable from inside an engine's `onResize` callback - the `withBounds`
 capability on the builder type is what gates it.
 
 -}
-bounds : AnimGroupName -> AxisRanges -> AnimBuilder { eng | withBounds : () } -> AnimBuilder { eng | withBounds : () }
+bounds : AnimGroupName -> AxisBounds -> AnimBuilder { eng | withBounds : () } -> AnimBuilder { eng | withBounds : () }
 bounds name ranges =
     TB.for name >> TB.bounds ranges >> TB.build

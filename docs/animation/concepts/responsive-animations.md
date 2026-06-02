@@ -172,18 +172,21 @@ Use this path when your animation depends on direct pixel values, it is supporte
 
 Unlike relative values which the browser can reinterpret when the layout changes, pixel values remain fixed, so animations using pixel values need to be told about the layout change.
 
-This is done by giving the Engine the new bounds for the animation. The bounds represent the space on the page the animation can operate in, and supporting properties have their own `bounds` function which takes a bounds record: `{ bounds | x = Just {min = 0, max = 50} }`
-
-And then you give the `bounds` to the Engine via it's `onResize` function:
+This is done by giving the Engine the new bounds for the animation. The bounds represent the space on the page the animation can operate in. All supporting properties have their own `bounds` builder function which takes a `Bounds` record - which is then passed to the Engine's `onResize` function:
 
 ??? example "View Source Code"
     === "Sub"
 
         ```elm
-        import Anim.Property.Translate exposing (AxisRanges, Bounds)
-        bounds : AxisRanges
+        import Anim.Property.Translate exposing (AxisBounds)
+
+        bounds : AxisBounds
         bounds =
-            { x : Maybe Bounds}
+            { x = Nothing
+            , y = Nothing
+            , z = Nothing
+            }
+
         OnResize w h ->
             let
                 max =
@@ -206,6 +209,15 @@ And then you give the `bounds` to the Engine via it's `onResize` function:
     === "WAAPI"
 
         ```elm
+        import Anim.Property.Translate exposing (AxisBounds)
+
+        bounds : AxisBounds
+        bounds =
+            { x = Nothing
+            , y = Nothing
+            , z = Nothing
+            }
+
         OnResize w h ->
             let
                 max =

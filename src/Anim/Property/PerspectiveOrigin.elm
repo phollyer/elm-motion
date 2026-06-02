@@ -11,7 +11,7 @@ module Anim.Property.PerspectiveOrigin exposing
     , easing
     , spring
     , clampX, clampY, unclampX, unclampY
-    , Bounds, AxisRanges, bounds
+    , Bounds, AxisBounds, bounds
     )
 
 {-| Animate the CSS `perspective-origin` property, which controls the vanishing point
@@ -142,7 +142,7 @@ for patterns and examples.
 Set how perspective-origin responds to viewport/container resize and provide
 new bounds during `onResize`.
 
-@docs Bounds, AxisRanges, bounds
+@docs Bounds, AxisBounds, bounds
 
 -}
 
@@ -633,7 +633,7 @@ type alias Bounds =
     }
 
 -}
-type alias AxisRanges =
+type alias AxisBounds =
     { x : Maybe Bounds
     , y : Maybe Bounds
     , z : Maybe Bounds
@@ -650,6 +650,6 @@ Only callable from inside an `onResize` callback - the `withBounds`
 capability on the builder type is what gates it.
 
 -}
-bounds : AnimGroupName -> AxisRanges -> AnimBuilder { eng | withBounds : () } -> AnimBuilder { eng | withBounds : () }
+bounds : AnimGroupName -> AxisBounds -> AnimBuilder { eng | withBounds : () } -> AnimBuilder { eng | withBounds : () }
 bounds name ranges =
     PB.for name >> PB.bounds ranges >> PB.build
