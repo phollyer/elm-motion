@@ -15,24 +15,10 @@ module Anim.Property.Rotate exposing
 
 **Default**: 0 degrees for all axes
 
-This property uses a 'sensible default' approach to configuring animations.
-When no start value is available for any axis, the default will be used for that axis.
+When no start value is configured for any axis, the default will be used for that axis.
 
 Any axis that is not defined in the animation configuration will remain unchanged,
 or zero if not set.
-
-    import Easing exposing (Easing(..))
-
-    myAnimation : AnimBuilder eng -> AnimBuilder eng
-    myAnimation =
-        Rotate.for "animGroupName"
-            >> Rotate.toZ 180
-            >> Rotate.duration 1000
-            >> Rotate.easing EaseInOut
-            >> Rotate.build
-
-The Engines track the end value of each animation, so new animations with no start value
-will use the current end value as the start, ensuring a smooth transition between animations.
 
 
 # Types
@@ -55,16 +41,18 @@ will use the current end value as the start, ensuring a smooth transition betwee
 
 ## Start Value
 
-When not set, the engine determines the start value - behaviour
-varies by engine and context.
+When not set, the default will be used.
 
-📖 See [Start Values](https://phollyer.github.io/elm-motion/animation/engines/overview/#start-values)
+📖 See [Start Values](https://phollyer.github.io/elm-motion/animation/properties/overview/?h=start+values#start-values)
 for details.
 
 @docs fromXYZ, fromXY, fromXZ, fromX, fromYZ, fromY, fromZ
 
 
 ## End Value
+
+📖 See [End Values](https://phollyer.github.io/elm-motion/animation/properties/overview/?h=start+values#end-values)
+for details.
 
 @docs toXYZ, toXY, toXZ, toX, toYZ, toY, toZ
 
@@ -76,20 +64,29 @@ for details.
 
 ## Timing
 
+📖 See [Animation Timing](https://phollyer.github.io/elm-motion/animation/concepts/timing/)
+for details.
+
 @docs delay, duration, speed
 
 
 ## Easing
+
+📖 See [Easing](https://phollyer.github.io/elm-motion/animation/concepts/easing/)
+for details.
 
 @docs easing
 
 
 ## Spring
 
+📖 See [Spring](https://phollyer.github.io/elm-motion/animation/concepts/spring/)
+for details.
+
 @docs spring
 
 
-## Bounds
+## Clamping
 
 Keep rotate values on each axis within a range you choose.
 

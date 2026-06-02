@@ -15,21 +15,7 @@ module Anim.Property.Opacity exposing
 
 **Default**: 1.0 (fully opaque)
 
-This property uses a 'sensible default' approach to configuring animations.
-When no start value is available, the default will be used.
-
-    import Easing exposing (Easing(..))
-
-    myAnimation : AnimBuilder eng -> AnimBuilder eng
-    myAnimation =
-        Opacity.for "animGroupName"
-            >> Opacity.to 0.5
-            >> Opacity.duration 1000
-            >> Opacity.easing EaseInOut
-            >> Opacity.build
-
-The Engines track the end value of each animation, so new animations with no start value
-will use the current end value as the start, ensuring a smooth transition between animations.
+When no start value is configured, the default will be used.
 
 
 # Types
@@ -52,10 +38,9 @@ will use the current end value as the start, ensuring a smooth transition betwee
 
 ## Start Value
 
-When not set, the engine determines the start value - behaviour
-varies by engine and context.
+When not set, the default will be used.
 
-📖 See [Start Values](https://phollyer.github.io/elm-motion/animation/engines/overview/#start-values)
+📖 See [Start Values](https://phollyer.github.io/elm-motion/animation/properties/overview/?h=start+values#start-values)
 for details.
 
 @docs from
@@ -73,20 +58,29 @@ for details.
 
 ## Timing
 
+📖 See [Animation Timing](https://phollyer.github.io/elm-motion/animation/concepts/timing/)
+for details.
+
 @docs delay, duration, speed
 
 
 ## Easing
+
+📖 See [Easing](https://phollyer.github.io/elm-motion/animation/concepts/easing/)
+for details.
 
 @docs easing
 
 
 ## Spring
 
+📖 See [Spring](https://phollyer.github.io/elm-motion/animation/concepts/spring/)
+for details.
+
 @docs spring
 
 
-## Bounds
+## Clamping
 
 Keep opacity within a range you choose.
 

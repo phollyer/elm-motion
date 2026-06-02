@@ -105,16 +105,14 @@ Use this any time you need to snap an animtion to a new state instantly, for exa
 
 `retarget` only touches what your builder mentions. Anything you don't mention is left alone - but what "left alone" looks like depends on the engine:
 
-- **Transition** and **Keyframe** - untouched values stay where they currently are. If you retarget only the Y axis of a `Translate`, X holds its last value and does not keep animating.
+- **Transition** and **Keyframe** - untouched properties/axes snap to their targeted end state. If you retarget only the Y axis of a `Translate` animation, and the X axis is also animating, the Y axis snaps to the targeted value, while the X axis snaps to it's end target value.
 - **Sub** and **WAAPI** - untouched values *keep animating* along their existing curve. Retargeting only Y snaps Y while X carries on toward its original target uninterrupted.
 
-For `Transition` and `Keyframe`, treat `retarget` as "this is the new state of the whole element" - mention every property you care about. For `Sub` and `WAAPI` you can be surgical and only retarget the parts that changed.
+### Example
 
-### Examples
+Press **Animate diagonally**, then mid-flight press **Retarget Y to 0** - the builder only mentions the Y axis. Watch what the X axis does:
 
-Each demo starts a 5-second diagonal `Translate` from the top-left corner to the bottom-right. Press **Animate diagonally**, then mid-flight press **Retarget Y to 0** - the builder only mentions the Y axis. Watch what the X axis does:
-
-- `Transition` and `Keyframe` - X freezes where it is.
+- `Transition` and `Keyframe` - X snaps to it's end value - the right edge.
 - `Sub` and `WAAPI` - X keeps gliding toward the right edge.
 
 ??? example "View Example"
@@ -159,13 +157,36 @@ Each demo starts a 5-second diagonal `Translate` from the top-left corner to the
         --8<-- "docs/examples/src/Animation/WAAPI/Retarget/Main.elm"
         ```
 
+#### Why the difference?
+
+Mid-flight values are not available for CSS transitions or @keframes animations, so they snap to their targeted end state to ensure they finish correctly.
+
+The Sub and WAAPI engines do have access to mid-flight values, so untouched properties/axes can continue on their way untouched, as intended.
+
+
 ---
 
 ## Path 3 - Measured Pixel Values
 
-Use this path when your animation depends on direct pixel values, it is supported by the [`Sub`](../engines/sub.md) and [`WAAPI`](../engines/waapi.md) engines via their `onResize` function.
+Use this path when your animation depends on direct pixel values, it is supported by the [`Sub`](../engines/sub.md) and [`WAAPI`](../engines/waapi.md) engines.
 
-When a resize message arrives, hand the engine the updated pixel ranges via `onResize`.
+Unlike relative values which the browser can reinterpret when the layout changes, pixel values remain fixed, so animations using pixel values need to be told about the layout change.
+
+This is done by giving the Engine the new bounds for the animation. The bounds represent the space on the page the animation can operate in and the animation will adjust proportionally.
+
+The bounds are just a simple record:
+
+```elm
+
+```
+
+
+
+Imagine a `Translate` animation is looping between `x=0` and `x=100`, and the animation is at `x=50` when the user flips from landscape to portrait. You might want to reduce the width the animation takes up, lets say, to `50px` so that the animation moves between `x=0` and `x=50`.
+
+To do this you'd just set new bounds on the X axis: `{ bounds | x = Just {min = 0, max = 50} }`
+
+When a resize message arrives, hand the new bounds to the Engine's `onResize` function.
 
 === "Sub"
 

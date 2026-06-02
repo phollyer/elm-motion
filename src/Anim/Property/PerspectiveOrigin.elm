@@ -11,7 +11,7 @@ module Anim.Property.PerspectiveOrigin exposing
     , easing
     , spring
     , clampX, clampY, unclampX, unclampY
-    , bounds
+    , AxisRanges, bounds
     )
 
 {-| Animate the CSS `perspective-origin` property, which controls the vanishing point
@@ -21,30 +21,10 @@ for 3D transforms applied to a parent element.
 
 **Default value**: `50% 50%` (center of the element)
 
-    import Easing exposing (Easing(..))
-
-
-    -- Percentages (default)
-    myAnimation : AnimBuilder eng -> AnimBuilder eng
-    myAnimation =
-        PerspectiveOrigin.for "animGroupName"
-            >> PerspectiveOrigin.to 100
-            >> PerspectiveOrigin.duration 500
-            >> PerspectiveOrigin.easing EaseInOut
-            >> PerspectiveOrigin.build
-
-    -- Pixels
-    myAnimation : AnimBuilder eng -> AnimBuilder eng
-    myAnimation =
-        PerspectiveOrigin.for "animGroupName"
-            >> PerspectiveOrigin.cssUnit Unit.Px
-            >> PerspectiveOrigin.to 200
-            >> PerspectiveOrigin.duration 500
-            >> PerspectiveOrigin.easing EaseInOut
-            >> PerspectiveOrigin.build
-
-The Engines track the end value of each animation, so new animations with no start value
-will use the current end value as the start, ensuring a smooth transition between animations.
+**Note**: This module is for _animating_ `perspective-origin`, if all you need is to
+set a static `perspective-origin` without animation, use the
+[View3D.perspectiveOrigin](Anim.Extra.View3D#perspectiveOrigin) function instead, or set the `style`
+attribute yourself in your view.
 
 
 # Types
@@ -102,16 +82,18 @@ percentages.
 
 ## Start Value
 
-When not set, the engine determines the start value - behaviour
-varies by engine and context.
+When not set, the default will be used.
 
-📖 See [Start Values](https://phollyer.github.io/elm-motion/animation/engines/overview/#start-values)
+📖 See [Start Values](https://phollyer.github.io/elm-motion/animation/properties/overview/?h=start+values#start-values)
 for details.
 
 @docs from, fromXY, fromX, fromY
 
 
 ## End Value
+
+📖 See [End Values](https://phollyer.github.io/elm-motion/animation/properties/overview/?h=start+values#end-values)
+for details.
 
 @docs to, toXY, toX, toY
 
@@ -123,20 +105,29 @@ for details.
 
 ## Timing
 
+📖 See [Animation Timing](https://phollyer.github.io/elm-motion/animation/concepts/timing/)
+for details.
+
 @docs delay, duration, speed
 
 
 ## Easing
+
+📖 See [Easing](https://phollyer.github.io/elm-motion/animation/concepts/easing/)
+for details.
 
 @docs easing
 
 
 ## Spring
 
+📖 See [Spring](https://phollyer.github.io/elm-motion/animation/concepts/spring/)
+for details.
+
 @docs spring
 
 
-## Bounds
+## Clamping
 
 Keep perspective-origin values on each axis within a range you choose.
 
@@ -151,7 +142,7 @@ for patterns and examples.
 Set how perspective-origin responds to viewport/container resize and provide
 new bounds during `onResize`.
 
-@docs bounds
+@docs AxisRanges, bounds
 
 -}
 
@@ -627,6 +618,22 @@ unclampY =
 -- ============================================================
 
 
+{-| Per-axis resize ranges. `Nothing` leaves an axis untouched.
+`z` is ignored for this property.
+
+    { x = Just { min = 0, max = 100 }
+    , y = Nothing
+    , z = Nothing
+    }
+
+-}
+type alias AxisRanges =
+    { x : Maybe { min : Float, max : Float }
+    , y : Maybe { min : Float, max : Float }
+    , z : Maybe { min : Float, max : Float }
+    }
+
+
 {-| Perspective-origin's contribution to a resize bounds directive for the
 named anim group.
 
@@ -637,6 +644,6 @@ Only callable from inside an `onResize` callback - the `withBounds`
 capability on the builder type is what gates it.
 
 -}
-bounds : AnimGroupName -> IB.AxisRanges -> AnimBuilder { eng | withBounds : () } -> AnimBuilder { eng | withBounds : () }
+bounds : AnimGroupName -> AxisRanges -> AnimBuilder { eng | withBounds : () } -> AnimBuilder { eng | withBounds : () }
 bounds name ranges =
     PB.for name >> PB.bounds ranges >> PB.build

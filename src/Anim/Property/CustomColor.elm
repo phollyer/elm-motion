@@ -45,16 +45,16 @@ module Anim.Property.CustomColor exposing
 
 ## Start Value
 
-When not set, the engine determines the start value - behaviour
-varies by engine and context.
-
-📖 See [Start Values](https://phollyer.github.io/elm-motion/animation/engines/overview/#start-values)
+📖 See [Start Values](https://phollyer.github.io/elm-motion/animation/properties/overview/?h=start+values#start-values)
 for details.
 
 @docs from
 
 
 ## End Value
+
+📖 See [End Values](https://phollyer.github.io/elm-motion/animation/properties/overview/?h=start+values#end-values)
+for details.
 
 @docs to
 
@@ -66,15 +66,24 @@ for details.
 
 ## Timing
 
+📖 See [Animation Timing](https://phollyer.github.io/elm-motion/animation/concepts/timing/)
+for details.
+
 @docs delay, duration, speed
 
 
 ## Easing
 
+📖 See [Easing](https://phollyer.github.io/elm-motion/animation/concepts/easing/)
+for details.
+
 @docs easing
 
 
 ## Spring
+
+📖 See [Spring](https://phollyer.github.io/elm-motion/animation/concepts/spring/)
+for details.
 
 @docs spring
 

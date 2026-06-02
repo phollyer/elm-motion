@@ -11,33 +11,16 @@ module Anim.Property.Translate exposing
     , easing
     , spring
     , cssUnit, cssUnitX, cssUnitY, cssUnitZ
-    , clampX, clampY, clampZ, unclampX, unclampY, unclampZ
-    , bounds
+    , AxisRanges, bounds
     , setXYZ, setXY, setXZ, setX, setYZ, setY, setZ
+    , clampX, clampY, clampZ, unclampX, unclampY, unclampZ
     )
 
 {-| Move elements along the X, Y, and Z axes.
 
 **Default**: 0 for all axes
 
-This property uses a 'sensible default' approach to configuring animations.
-When no start value is available for any axis, the default will be used for that axis.
-
-Any axis that is not defined in the animation configuration will remain unchanged,
-or zero if not set.
-
-    import Easing exposing (Easing(..))
-
-    myAnimation : AnimBuilder eng -> AnimBuilder eng
-    myAnimation =
-        Translate.for "animGroupName"
-            >> Translate.toXY 200 100
-            >> Translate.duration 1000
-            >> Translate.easing EaseInOut
-            >> Translate.build
-
-The Engines track the end value of each animation, so new animations with no start value
-will use the current end value as the start, ensuring a smooth transition between animations.
+When no start value is configured for any axis, the default will be used for that axis.
 
 
 # Types
@@ -89,16 +72,18 @@ the pipeline. Defaults to `Px`.
 
 ## Start Value
 
-When not set, the engine determines the start value - behaviour
-varies by engine and context.
+When not set, the default will be used.
 
-📖 See [Start Values](https://phollyer.github.io/elm-motion/animation/engines/overview/#start-values)
+📖 See [Start Values](https://phollyer.github.io/elm-motion/animation/properties/overview/?h=start+values#start-values)
 for details.
 
 @docs fromXYZ, fromXY, fromXZ, fromX, fromYZ, fromY, fromZ
 
 
 ## End Value (Absolute)
+
+📖 See [End Values](https://phollyer.github.io/elm-motion/animation/properties/overview/?h=start+values#end-values)
+for details.
 
 @docs toXYZ, toXY, toXZ, toX, toYZ, toY, toZ
 
@@ -110,7 +95,7 @@ Move by a delta instead of to a fixed position. The end value is `current + delt
 What counts as **current** depends on the engine: `Sub` and `WAAPI` always use the live
 animated position, while `Keyframe` and `Transition` use the last configured start or end value.
 
-📖 See [Start Values](https://phollyer.github.io/elm-motion/animation/engines/overview/#start-values)
+📖 See [Start Values](https://phollyer.github.io/elm-motion/animation/properties/overview/?h=start+values#start-values)
 for full per-engine behaviour.
 
 @docs byXYZ, byXY, byXZ, byX, byYZ, byY, byZ
@@ -118,15 +103,24 @@ for full per-engine behaviour.
 
 ## Timing
 
+📖 See [Animation Timing](https://phollyer.github.io/elm-motion/animation/concepts/timing/)
+for details.
+
 @docs delay, duration, speed
 
 
 ## Easing
 
+📖 See [Easing](https://phollyer.github.io/elm-motion/animation/concepts/easing/)
+for details.
+
 @docs easing
 
 
 ## Spring
+
+📖 See [Spring](https://phollyer.github.io/elm-motion/animation/concepts/spring/)
+for details.
 
 @docs spring
 
@@ -136,24 +130,22 @@ for full per-engine behaviour.
 @docs cssUnit, cssUnitX, cssUnitY, cssUnitZ
 
 
-## Bounds
+## Resize
+
+@docs AxisRanges, bounds
+@docs setXYZ, setXY, setXZ, setX, setYZ, setY, setZ
+
+
+## Clamping
 
 Keep translate values on each axis within a range you choose.
 
-Values outside the range are clamped to the nearest boundary. Relative `byX`/`byY`/`byZ` moves
-stop at the boundary instead of pushing past it — handy for keeping an element on-screen
-during drags or resizes.
+Values outside the range are clamped to the nearest boundary.
 
 📖 See [Responsive Animations](https://phollyer.github.io/elm-motion/animation/concepts/responsive-animations/)
 for patterns and examples.
 
 @docs clampX, clampY, clampZ, unclampX, unclampY, unclampZ
-
-
-## Resize
-
-@docs bounds
-@docs setXYZ, setXY, setXZ, setX, setYZ, setY, setZ
 
 -}
 
@@ -1134,6 +1126,21 @@ unclampZ =
 -- ============================================================
 
 
+{-| Per-axis resize ranges. `Nothing` leaves an axis untouched.
+
+    { x = Just { min = 0, max = 100 }
+    , y = Nothing
+    , z = Nothing
+    }
+
+-}
+type alias AxisRanges =
+    { x : Maybe { min : Float, max : Float }
+    , y : Maybe { min : Float, max : Float }
+    , z : Maybe { min : Float, max : Float }
+    }
+
+
 {-| Apply new translate bounds for an anim group during resize.
 
 Pass this inside an engine's `onResize` builder:
@@ -1158,6 +1165,6 @@ Only callable from inside an engine's `onResize` callback - the `withBounds`
 capability on the builder type is what gates it.
 
 -}
-bounds : AnimGroupName -> SB.AxisRanges -> AnimBuilder { eng | withBounds : () } -> AnimBuilder { eng | withBounds : () }
+bounds : AnimGroupName -> AxisRanges -> AnimBuilder { eng | withBounds : () } -> AnimBuilder { eng | withBounds : () }
 bounds name ranges =
     TB.for name >> TB.bounds ranges >> TB.build

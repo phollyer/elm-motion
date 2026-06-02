@@ -9,31 +9,17 @@ module Anim.Property.Scale exposing
     , easing
     , spring
     , clampX, clampY, clampZ, unclampX, unclampY, unclampZ
-    , bounds
+    , AxisRanges, bounds
     )
 
 {-| Scale elements along the X, Y, and Z axes.
 
 **Default**: 1.0 (original size) for all axes
 
-This property uses a 'sensible default' approach to configuring animations.
-When no start value is available, the default will be used.
+When no start value is configured, the default will be used.
 
 Any axis that is not defined in the animation configuration will remain unchanged,
 or 1.0 if not set.
-
-    import Easing exposing (Easing(..))
-
-    myAnimation : AnimBuilder eng -> AnimBuilder eng
-    myAnimation =
-        Scale.for "animGroupName"
-            >> Scale.toXY 1.5 1.5
-            >> Scale.duration 1000
-            >> Scale.easing EaseInOut
-            >> Scale.build
-
-The Engines track the end value of each animation, so new animations with no start value
-will use the current end value as the start, ensuring a smooth transition between animations.
 
 
 # Types
@@ -56,16 +42,18 @@ will use the current end value as the start, ensuring a smooth transition betwee
 
 ## Start Value
 
-When not set, the engine determines the start value - behaviour
-varies by engine and context.
+When not set, the default will be used.
 
-📖 See [Start Values](https://phollyer.github.io/elm-motion/animation/engines/overview/#start-values)
+📖 See [Start Values](https://phollyer.github.io/elm-motion/animation/properties/overview/?h=start+values#start-values)
 for details.
 
 @docs from, fromXYZ, fromXY, fromXZ, fromX, fromYZ, fromY, fromZ
 
 
 ## End Value
+
+📖 See [End Values](https://phollyer.github.io/elm-motion/animation/properties/overview/?h=start+values#end-values)
+for details.
 
 @docs to, toXYZ, toXY, toXZ, toX, toYZ, toY, toZ
 
@@ -77,20 +65,29 @@ for details.
 
 ## Timing
 
+📖 See [Animation Timing](https://phollyer.github.io/elm-motion/animation/concepts/timing/)
+for details.
+
 @docs delay, duration, speed
 
 
 ## Easing
+
+📖 See [Easing](https://phollyer.github.io/elm-motion/animation/concepts/easing/)
+for details.
 
 @docs easing
 
 
 ## Spring
 
+📖 See [Spring](https://phollyer.github.io/elm-motion/animation/concepts/spring/)
+for details.
+
 @docs spring
 
 
-## Bounds
+## Clamping
 
 Keep scale values on each axis within a range you choose.
 
@@ -102,11 +99,11 @@ for patterns and examples.
 
 ## Resize
 
-@docs bounds
+@docs AxisRanges, bounds
 
 -}
 
-import Anim.Internal.Builder exposing (AnimBuilder, AxisRanges)
+import Anim.Internal.Builder as IB exposing (AnimBuilder)
 import Anim.Internal.Builder.Scale as SB
 import Motion.Easing exposing (Easing)
 import Motion.Spring exposing (Spring)
@@ -845,6 +842,21 @@ unclampZ =
 -- ============================================================
 -- RESIZE
 -- ============================================================
+
+
+{-| Per-axis resize ranges. `Nothing` leaves an axis untouched.
+
+    { x = Just { min = 1, max = 2 }
+    , y = Nothing
+    , z = Nothing
+    }
+
+-}
+type alias AxisRanges =
+    { x : Maybe { min : Float, max : Float }
+    , y : Maybe { min : Float, max : Float }
+    , z : Maybe { min : Float, max : Float }
+    }
 
 
 {-| Scale's contribution to a resize bounds directive for the named anim group.
