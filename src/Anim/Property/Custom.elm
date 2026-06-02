@@ -14,28 +14,6 @@ module Anim.Property.Custom exposing
 {-| Animate any numeric CSS property not covered by the first-class
 property modules (Translate, Rotate, Scale etc.).
 
-    import Anim.Property.Custom as Property
-    import Anim.Unit exposing (Unit(..))
-    import Easing exposing (Easing(..))
-
-    myAnimation : AnimBuilder eng -> AnimBuilder eng
-    myAnimation =
-        Property.for "box" (BorderRadius Px)
-            >> Property.to 16
-            >> Property.duration 300
-            >> Property.easing EaseInOut
-            >> Property.build
-
-Length-typed constructors (`BorderRadius`, `Padding`, `Margin*`, `FontSize`,
-`Top`/`Left`/`Right`/`Bottom`, etc.) take a typed [`Unit`](Anim.Unit#Unit), so
-they share the same CSS-unit vocabulary as the first-class transform
-properties (including the container-query and dynamic-viewport units).
-
-The escape hatch [`Custom`](#Property) and the awkward `LineHeight` /
-`TabSize` constructors keep a free-form `String` unit, since they target
-properties that may be unitless or use units outside the [`Unit`](Anim.Unit#Unit)
-vocabulary (`ch`, `ex`, `lh`, `deg`, `s`, `fr`, ...).
-
 
 # Types
 
@@ -57,16 +35,16 @@ vocabulary (`ch`, `ex`, `lh`, `deg`, `s`, `fr`, ...).
 
 ## Start Value
 
-When not set, the engine determines the start value - behaviour
-varies by engine and context.
-
-📖 See [Start Values](https://phollyer.github.io/elm-motion/animation/engines/overview/#start-values)
+📖 See [Start Values](https://phollyer.github.io/elm-motion/animation/properties/overview/?h=start+values#start-values)
 for details.
 
 @docs from
 
 
 ## End Value
+
+📖 See [End Values](https://phollyer.github.io/elm-motion/animation/properties/overview/?h=start+values#end-values)
+for details.
 
 @docs to
 
@@ -78,20 +56,29 @@ for details.
 
 ## Timing
 
+📖 See [Animation Timing](https://phollyer.github.io/elm-motion/animation/concepts/timing/)
+for details.
+
 @docs delay, duration, speed
 
 
 ## Easing
+
+📖 See [Easing](https://phollyer.github.io/elm-motion/animation/concepts/easing/)
+for details.
 
 @docs easing
 
 
 ## Spring
 
+📖 See [Spring](https://phollyer.github.io/elm-motion/animation/concepts/spring/)
+for details.
+
 @docs spring
 
 
-## Bounds
+## Clamping
 
 Keep this property's value within a range you choose. Each custom property keeps its own range,
 even on the same animation group.
@@ -131,19 +118,20 @@ type alias Builder eng =
 
 {-| A typed set of common numeric CSS properties with a custom escape hatch.
 
-Length-typed constructors take a [`Unit`](Anim.Unit#Unit). The escape hatch
-`Custom`, plus `LineHeight` and `TabSize`, take a free-form `String` unit
-(use `""` for unitless values).
-
     import Anim.Property.Custom as Property
     import Anim.Unit exposing (Unit(..))
 
-    Property.for "box" (Property.Custom "property-name" "unit")
-        >> Property.to 32
+
+    Property.for "labelAnim" (Property.LineHeight Em)
+        >> Property.to 1.4 -- Animate to "1.4em"
         >> Property.build
 
-    Property.for "label" (Property.LineHeight "") --- unitless
-        >> Property.to 1.4
+    Property.for "labelAnim" (Property.LineHeight Unitless)
+        >> Property.to 1.4 -- Animate to "1.4" - 1.4x the element's font-size
+        >> Property.build
+
+    Property.for "boxAnim" (Property.Custom "property-name" "unit")
+        >> Property.to 32 -- Animate to "32unit"
         >> Property.build
 
 -}
@@ -167,7 +155,7 @@ type Property
     | Inset Unit
     | Left Unit
     | LetterSpacing Unit
-    | LineHeight String
+    | LineHeight Unit
     | Margin Unit
     | MarginBottom Unit
     | MarginLeft Unit
@@ -187,7 +175,7 @@ type Property
     | Perspective Unit
     | Right Unit
     | RowGap Unit
-    | TabSize String
+    | TabSize Unit
     | TextIndent Unit
     | Top Unit
     | WordSpacing Unit
@@ -303,7 +291,7 @@ toCssArgs cssProperty =
             ( "letter-spacing", InternalUnit.toCssSuffix unit )
 
         LineHeight unit ->
-            ( "line-height", unit )
+            ( "line-height", InternalUnit.toCssSuffix unit )
 
         Margin unit ->
             ( "margin", InternalUnit.toCssSuffix unit )
@@ -363,7 +351,7 @@ toCssArgs cssProperty =
             ( "row-gap", InternalUnit.toCssSuffix unit )
 
         TabSize unit ->
-            ( "tab-size", unit )
+            ( "tab-size", InternalUnit.toCssSuffix unit )
 
         TextIndent unit ->
             ( "text-indent", InternalUnit.toCssSuffix unit )

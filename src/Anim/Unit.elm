@@ -73,3 +73,4 @@ type Unit
     | Vmax
     | Vmin
     | Vw
+    | Unitless
