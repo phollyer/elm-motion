@@ -913,6 +913,9 @@ applyBoundsEntry animGroupName ( prop, ranges ) ( (AnimState state _) as st, acc
                 "perspectiveOrigin" ->
                     applyPerspectiveOriginResize animGroupName prev ranges st
 
+                "size" ->
+                    applySizeResize animGroupName prev ranges st
+
                 _ ->
                     ( st, Cmd.none )
 
@@ -1399,6 +1402,9 @@ rebaseFor propName =
 
         "perspectiveOrigin" ->
             Just rebasePerspectiveOriginConfig
+
+        "size" ->
+            Just rebaseSizeConfig
 
         _ ->
             Nothing
@@ -2039,6 +2045,302 @@ scalePerspectiveOriginDurationForResize r =
 
         newDistance =
             PerspectiveOrigin.distance r.newStart r.newEnd
+    in
+    if oldDistance > 0 && newDistance > 0 && r.oldDurationMs > 0 then
+        (newDistance / oldDistance) * r.oldDurationMs
+
+    else
+        r.oldDurationMs
+
+
+applySizeResize : AnimGroupName -> Builder.AxisRanges -> Builder.AxisRanges -> AnimState msg -> ( AnimState msg, Cmd msg )
+applySizeResize animGroupName previousBounds bounds ((AnimState state animGroups) as animState) =
+    if ResizeBuilder.isEmpty bounds then
+        ( animState, Cmd.none )
+
+    else
+        case computeSizeResizePayload animGroupName previousBounds bounds animState of
+            Nothing ->
+                ( animState, Cmd.none )
+
+            Just payload ->
+                let
+                    updatedAnimGroups =
+                        AnimGroups.update animGroupName
+                            (Maybe.map
+                                (AnimGroup.setSnapshot payload.newSnapshot
+                                    >> AnimGroup.setResizeState "size"
+                                        { start = payload.command.start
+                                        , end = payload.command.end
+                                        , durationMs = payload.command.durationMs
+                                        , proportion = payload.proportion
+                                        }
+                                )
+                            )
+                            animGroups
+
+                    updatedBuilder =
+                        state.builder
+                            |> Builder.updateBaselines animGroupName
+                                (PropertyBaselines.setSize payload.newBaseline)
+                in
+                ( AnimState { state | builder = updatedBuilder } updatedAnimGroups
+                , state.commandPort (encodeResize payload.command)
+                )
+
+
+computeSizeResizePayload :
+    AnimGroupName
+    -> Builder.AxisRanges
+    -> Builder.AxisRanges
+    -> AnimState msg
+    ->
+        Maybe
+            { command :
+                { animGroupName : AnimGroupName
+                , property : String
+                , start : { x : Float, y : Float, z : Float }
+                , end : { x : Float, y : Float, z : Float }
+                , current : { x : Float, y : Float, z : Float }
+                , durationMs : Float
+                , currentTimeMs : Maybe Float
+                , hasAnimationBaseline : Bool
+                , unit : Maybe String
+                }
+            , newSnapshot : PropertyBaselines
+            , newBaseline : Size.Size
+            , proportion : AnimGroup.AxisProportion
+            }
+computeSizeResizePayload animGroupName previousBounds bounds (AnimState state animGroups) =
+    AnimGroups.get animGroupName animGroups
+        |> Maybe.andThen
+            (\animGroup ->
+                let
+                    snapshot =
+                        AnimGroup.getPropertySnapshot animGroup
+                in
+                PropertyBaselines.getSize snapshot
+                    |> Maybe.andThen
+                        (\currentSize ->
+                            let
+                                resolvedBaseline =
+                                    resolveSizeResizeBaseline animGroupName animGroup state.builder
+
+                                hasAnimationBaseline =
+                                    resolvedBaseline /= Nothing
+
+                                baseline =
+                                    resolvedBaseline
+                                        |> Maybe.withDefault
+                                            (let
+                                                cur =
+                                                    Size.toRecord currentSize
+
+                                                cur3d =
+                                                    { x = cur.width, y = cur.height, z = 0 }
+                                             in
+                                             { start = cur3d
+                                             , end = cur3d
+                                             , durationMs = 0
+                                             , proportion = AnimGroup.emptyProportion
+                                             }
+                                            )
+
+                                oldStart =
+                                    { x = baseline.start.x, y = baseline.start.y }
+
+                                oldEnd =
+                                    { x = baseline.end.x, y = baseline.end.y }
+
+                                oldCurrent =
+                                    let
+                                        cur =
+                                            Size.toRecord currentSize
+                                    in
+                                    { x = cur.width, y = cur.height }
+
+                                rx =
+                                    ResizeBuilder.applyAxis previousBounds.x bounds.x oldStart.x oldEnd.x oldCurrent.x
+
+                                ry =
+                                    ResizeBuilder.applyAxis previousBounds.y bounds.y oldStart.y oldEnd.y oldCurrent.y
+
+                                newStart2d =
+                                    { x = rx.start, y = ry.start }
+
+                                newEnd2d =
+                                    { x = rx.end, y = ry.end }
+
+                                direction =
+                                    AnimGroup.getAnimationDirection animGroup
+
+                                iter =
+                                    AnimGroup.getCurrentIteration animGroup
+
+                                progressValue =
+                                    AnimGroup.getProgress animGroup
+
+                                axisProportion =
+                                    { x = proportionFromProgress direction iter progressValue oldStart.x oldEnd.x
+                                    , y = proportionFromProgress direction iter progressValue oldStart.y oldEnd.y
+                                    , z = Nothing
+                                    }
+
+                                newCurrent2d =
+                                    { x = applyProportionToBounds axisProportion.x bounds.x rx.current
+                                    , y = applyProportionToBounds axisProportion.y bounds.y ry.current
+                                    }
+
+                                unit =
+                                    PropertyBaselines.getSizeUnits snapshot
+                                        |> Maybe.map .x
+                                        |> Maybe.withDefault InternalUnit.default
+
+                                newDurationMs =
+                                    scaleSizeDurationForResize
+                                        { oldStart = Size.fromRecord { width = oldStart.x, height = oldStart.y }
+                                        , oldEnd = Size.fromRecord { width = oldEnd.x, height = oldEnd.y }
+                                        , newStart = Size.fromRecord { width = newStart2d.x, height = newStart2d.y }
+                                        , newEnd = Size.fromRecord { width = newEnd2d.x, height = newEnd2d.y }
+                                        , oldDurationMs = baseline.durationMs
+                                        }
+
+                                oldCurrentTimeMs =
+                                    currentTimeForResize
+                                        { durationMs = baseline.durationMs
+                                        , currentIteration = AnimGroup.getCurrentIteration animGroup
+                                        , progress = AnimGroup.getProgress animGroup
+                                        }
+
+                                currentTimeMs =
+                                    currentTimeForResize
+                                        { durationMs = newDurationMs
+                                        , currentIteration = AnimGroup.getCurrentIteration animGroup
+                                        , progress = AnimGroup.getProgress animGroup
+                                        }
+
+                                noChange =
+                                    perspectiveOriginRecordsNearlyEqual newStart2d oldStart
+                                        && perspectiveOriginRecordsNearlyEqual newEnd2d oldEnd
+                                        && perspectiveOriginRecordsNearlyEqual newCurrent2d oldCurrent
+                                        && floatNearlyEqual newDurationMs baseline.durationMs
+                                        && maybeFloatNearlyEqual currentTimeMs oldCurrentTimeMs
+
+                                unitStr =
+                                    InternalUnit.toCssSuffix unit
+                            in
+                            if noChange then
+                                Nothing
+
+                            else
+                                Just
+                                    { command =
+                                        { animGroupName = animGroupName
+                                        , property = "size"
+                                        , start = { x = newStart2d.x, y = newStart2d.y, z = 0 }
+                                        , end = { x = newEnd2d.x, y = newEnd2d.y, z = 0 }
+                                        , current = { x = newCurrent2d.x, y = newCurrent2d.y, z = 0 }
+                                        , durationMs = newDurationMs
+                                        , currentTimeMs = currentTimeMs
+                                        , hasAnimationBaseline = hasAnimationBaseline
+                                        , unit = Just unitStr
+                                        }
+                                    , newSnapshot =
+                                        PropertyBaselines.setSize
+                                            (Size.fromRecord { width = newCurrent2d.x, height = newCurrent2d.y })
+                                            snapshot
+                                    , newBaseline = Size.fromRecord { width = newEnd2d.x, height = newEnd2d.y }
+                                    , proportion = axisProportion
+                                    }
+                        )
+            )
+
+
+resolveSizeResizeBaseline :
+    AnimGroupName
+    -> AnimGroup
+    -> Builder.AnimBuilder eng
+    -> Maybe ResizeAxisState
+resolveSizeResizeBaseline animGroupName animGroup builder =
+    case AnimGroup.getResizeState "size" animGroup of
+        Just cached ->
+            rejectDegenerateBaseline cached
+
+        Nothing ->
+            findCurrentSize animGroupName builder
+                |> Maybe.map
+                    (\cfg ->
+                        let
+                            startR =
+                                cfg.start
+                                    |> Maybe.withDefault Size.default
+                                    |> Size.toRecord
+
+                            endR =
+                                Size.toRecord cfg.end
+                        in
+                        { start = { x = startR.width, y = startR.height, z = 0 }
+                        , end = { x = endR.width, y = endR.height, z = 0 }
+                        , durationMs = toFloat cfg.duration
+                        , proportion = AnimGroup.emptyProportion
+                        }
+                    )
+                |> Maybe.andThen rejectDegenerateBaseline
+
+
+findCurrentSize : AnimGroupName -> Builder.AnimBuilder eng -> Maybe (Builder.ProcessedAnimationConfig Size.Size)
+findCurrentSize animGroupName builder =
+    Builder.getAnimationConfigs animGroupName builder
+        |> List.filterMap
+            (\group ->
+                group.properties
+                    |> List.filterMap
+                        (\p ->
+                            case p of
+                                Builder.ProcessedSizeConfig cfg ->
+                                    Just cfg
+
+                                _ ->
+                                    Nothing
+                        )
+                    |> List.head
+            )
+        |> List.head
+
+
+rebaseSizeConfig :
+    ResizeAxisState
+    -> Builder.ProcessedPropertyConfig
+    -> Builder.ProcessedPropertyConfig
+rebaseSizeConfig cached config =
+    case config of
+        Builder.ProcessedSizeConfig cfg ->
+            Builder.ProcessedSizeConfig
+                { cfg
+                    | start = Just (Size.fromRecord { width = cached.start.x, height = cached.start.y })
+                    , end = Size.fromRecord { width = cached.end.x, height = cached.end.y }
+                    , duration = round cached.durationMs
+                }
+
+        _ ->
+            config
+
+
+scaleSizeDurationForResize :
+    { oldStart : Size.Size
+    , oldEnd : Size.Size
+    , newStart : Size.Size
+    , newEnd : Size.Size
+    , oldDurationMs : Float
+    }
+    -> Float
+scaleSizeDurationForResize r =
+    let
+        oldDistance =
+            Size.distance r.oldStart r.oldEnd
+
+        newDistance =
+            Size.distance r.newStart r.newEnd
     in
     if oldDistance > 0 && newDistance > 0 && r.oldDurationMs > 0 then
         (newDistance / oldDistance) * r.oldDurationMs

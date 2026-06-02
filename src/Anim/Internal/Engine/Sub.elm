@@ -2114,18 +2114,36 @@ interpolateScale =
 
 
 getSizeRange : AnimGroupName -> AnimState -> Maybe { start : Maybe { width : Float, height : Float }, end : { width : Float, height : Float } }
-getSizeRange animGroupName =
-    getBuilder >> Property.getSizeRange animGroupName
+getSizeRange animGroupName state =
+    case getRuntimeSize animGroupName state of
+        Just cfg ->
+            Just
+                { start = Just (Size.toRecord cfg.start)
+                , end = Size.toRecord cfg.end
+                }
+
+        Nothing ->
+            (getBuilder >> Property.getSizeRange animGroupName) state
 
 
 getSizeStart : AnimGroupName -> AnimState -> Maybe { width : Float, height : Float }
-getSizeStart animGroupName =
-    getBuilder >> Property.getSizeStart animGroupName
+getSizeStart animGroupName state =
+    case getRuntimeSize animGroupName state of
+        Just cfg ->
+            Just (Size.toRecord cfg.start)
+
+        Nothing ->
+            (getBuilder >> Property.getSizeStart animGroupName) state
 
 
 getSizeEnd : AnimGroupName -> AnimState -> Maybe { width : Float, height : Float }
-getSizeEnd animGroupName =
-    getBuilder >> Property.getSizeEnd animGroupName
+getSizeEnd animGroupName state =
+    case getRuntimeSize animGroupName state of
+        Just cfg ->
+            Just (Size.toRecord cfg.end)
+
+        Nothing ->
+            (getBuilder >> Property.getSizeEnd animGroupName) state
 
 
 getSizeCurrent : AnimGroupName -> AnimState -> Maybe { width : Float, height : Float }
@@ -2138,6 +2156,26 @@ getSizeCurrent =
                         |> interpolateEasedProgress interpolateSize
                         |> Size.toRecord
                         |> Just
+
+                _ ->
+                    Nothing
+        )
+
+
+{-| Look up the live `PropertyAnimation Size` for a group, if any.
+
+Like Scale and Translate, Size's runtime state can diverge from the
+builder snapshot via [`onResize`](#onResize), so its getters consult
+the runtime first and fall back to the builder.
+
+-}
+getRuntimeSize : AnimGroupName -> AnimState -> Maybe (PropertyAnimation Size)
+getRuntimeSize =
+    getPropertyValue "size"
+        (\prop ->
+            case prop of
+                Size _ config ->
+                    Just config
 
                 _ ->
                     Nothing

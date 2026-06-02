@@ -175,6 +175,24 @@ function isPerspectiveOriginGeometryUnchanged(commandData, slot, oldDuration) {
         && newDuration === oldDuration;
 }
 
+function isSizeGeometryUnchanged(commandData, slot, oldDuration) {
+    if (!slot) {
+        return false;
+    }
+    const incomingUnit = typeof commandData.unit === 'string' ? commandData.unit : 'px';
+    if (incomingUnit !== slot.unitWidth || incomingUnit !== slot.unitHeight) {
+        return false;
+    }
+    const payloadDuration = sanitizeResizeDuration(Number(commandData.duration), oldDuration);
+    const hasBaseline = commandData.hasAnimationBaseline !== false;
+    const newDuration = hasBaseline ? payloadDuration : oldDuration;
+    return Number(commandData.startX) === Number(slot.startWidth)
+        && Number(commandData.startY) === Number(slot.startHeight)
+        && Number(commandData.endX) === Number(slot.endWidth)
+        && Number(commandData.endY) === Number(slot.endHeight)
+        && newDuration === oldDuration;
+}
+
 const TRANSFORM_STATE_KEYS = {
     translate: { x: 'x', y: 'y', z: 'z' },
     scale: { x: 'scaleX', y: 'scaleY', z: 'scaleZ' },
@@ -962,6 +980,11 @@ export function _resizeTransformAnimationImmediate(commandData) {
         return;
     }
 
+    if (commandData.property === 'size') {
+        resizeSizeAnimation(commandData, animGroup, element);
+        return;
+    }
+
     const propertyKey = commandData.property === 'scale' ? 'scale' : 'translate';
 
     const elementAnims = activeAnimations.get(animGroup);
@@ -1484,6 +1507,181 @@ function resizePerspectiveOriginAnimation(commandData, animGroup, element) {
     entry.updateFn = setupAnimationEvents(
         animGroup,
         'perspectiveOrigin',
+        element,
+        newAnimation,
+        newVersion,
+        null
+    );
+}
+
+function resizeSizeAnimation(commandData, animGroup, element) {
+    const elementAnims = activeAnimations.get(animGroup);
+    if (!elementAnims || !elementAnims.has('size')) {
+        return;
+    }
+
+    const entry = elementAnims.get('size');
+    const animation = entry.animation;
+    if (!animation || !animation.effect) {
+        return;
+    }
+
+    const oldTiming = animation.effect.getTiming() || {};
+    const oldDuration = Number(oldTiming.duration) || 0;
+    const oldCurrentTime = Number(animation.currentTime) || 0;
+    const oldDirection = oldTiming.direction || 'normal';
+
+    // Fast-path skip mirroring the perspective-origin handler: a resize cmd
+    // whose start/end/duration/unit match what JS already has is purely
+    // advisory (Elm fired because `currentTimeMs` advanced via Progress
+    // ticks during a continuous drag). Without this, every flush would
+    // cancel+recreate and reset the animation's clock.
+    const previousResolved = entry.resolvedNonTransform || null;
+    if (isSizeGeometryUnchanged(commandData, previousResolved, oldDuration)) {
+        return;
+    }
+
+    const oldLegProgress = computeLegProgress(oldCurrentTime, oldDuration, oldDirection, animation);
+
+    const unit = typeof commandData.unit === 'string' ? commandData.unit : 'px';
+    const oldVisual =
+        oldLegProgress !== null
+            && previousResolved
+            && isFiniteNumber(previousResolved.startWidth)
+            && isFiniteNumber(previousResolved.endWidth)
+            && isFiniteNumber(previousResolved.startHeight)
+            && isFiniteNumber(previousResolved.endHeight)
+            ? {
+                x: previousResolved.startWidth + (previousResolved.endWidth - previousResolved.startWidth) * oldLegProgress,
+                y: previousResolved.startHeight + (previousResolved.endHeight - previousResolved.startHeight) * oldLegProgress
+            }
+            : null;
+
+    const hasElmCurrentTime = typeof commandData.currentTimeMs === 'number' && isFinite(commandData.currentTimeMs);
+    const effectiveCurrentPosition = !hasElmCurrentTime && oldVisual
+        ? {
+            x: chooseEffectiveAxisValue(
+                Number(previousResolved?.startWidth),
+                Number(previousResolved?.endWidth),
+                Number(commandData.startX),
+                Number(commandData.endX),
+                Number(commandData.currentX),
+                oldVisual.x
+            ),
+            y: chooseEffectiveAxisValue(
+                Number(previousResolved?.startHeight),
+                Number(previousResolved?.endHeight),
+                Number(commandData.startY),
+                Number(commandData.endY),
+                Number(commandData.currentY),
+                oldVisual.y
+            )
+        }
+        : {
+            x: Number(commandData.currentX),
+            y: Number(commandData.currentY)
+        };
+
+    const resolved = {
+        type: 'size',
+        startWidth: Number(commandData.startX),
+        startHeight: Number(commandData.startY),
+        endWidth: Number(commandData.endX),
+        endHeight: Number(commandData.endY),
+        unitWidth: unit,
+        unitHeight: unit
+    };
+
+    const keyframeData = buildPropertyKeyframes(resolved, entry.easingKeyframes, 'linear');
+    if (!keyframeData || !keyframeData.keyframes) {
+        return;
+    }
+
+    const hasBaseline = commandData.hasAnimationBaseline !== false;
+    const payloadDuration = sanitizeResizeDuration(Number(commandData.duration), oldDuration);
+    const newDuration = hasBaseline ? payloadDuration : oldDuration;
+    const wasPaused = animation.playState === 'paused';
+
+    let newCurrentTime = null;
+    if (hasElmCurrentTime) {
+        newCurrentTime = commandData.currentTimeMs;
+    } else if (oldDuration > 0 && newDuration > 0) {
+        const oldIter = Math.floor(oldCurrentTime / oldDuration);
+        const startsReversed = oldDirection === 'alternate-reverse';
+        const isAlternate = oldDirection === 'alternate' || oldDirection === 'alternate-reverse';
+        const isReverseLeg = isAlternate ? ((oldIter % 2 === 1) !== startsReversed) : oldDirection === 'reverse';
+
+        const xStart = Number(commandData.startX);
+        const xEnd = Number(commandData.endX);
+        const yStart = Number(commandData.startY);
+        const yEnd = Number(commandData.endY);
+
+        const spans = {
+            x: xEnd - xStart,
+            y: yEnd - yStart,
+            z: 0
+        };
+
+        const chosenAxis = chooseDominantAxis(spans);
+
+        let pWanted = 0;
+        if (chosenAxis === 'x') {
+            pWanted = (effectiveCurrentPosition.x - xStart) / spans.x;
+        } else if (chosenAxis === 'y') {
+            pWanted = (effectiveCurrentPosition.y - yStart) / spans.y;
+        }
+        if (pWanted < 0) pWanted = 0;
+        if (pWanted > 1) pWanted = 1;
+
+        const pWithinIter = isReverseLeg ? 1 - pWanted : pWanted;
+        newCurrentTime = (oldIter + pWithinIter) * newDuration;
+    }
+
+    const oldVersion = entry.version;
+    const newVersion = oldVersion + 1;
+    const oldIterations = oldTiming.iterations;
+    const animateOptions = {
+        duration: newDuration > 0 ? newDuration : oldDuration,
+        easing: keyframeData.animationEasing || 'linear',
+        fill: 'forwards',
+        iterations: Number.isFinite(oldIterations) || oldIterations === Infinity ? oldIterations : 1,
+        direction: oldDirection
+    };
+
+    entry.version = newVersion;
+    try {
+        animation.cancel();
+    } catch (_err) {
+        // Best-effort: keep going and recreate.
+    }
+
+    let newAnimation = null;
+    try {
+        newAnimation = element.animate(keyframeData.keyframes, animateOptions);
+    } catch (_err) {
+        return;
+    }
+
+    if (newCurrentTime !== null) {
+        try {
+            newAnimation.currentTime = newCurrentTime;
+        } catch (_err) {
+            // Non-fatal; animation still recreated with new bounds.
+        }
+    }
+
+    if (wasPaused) {
+        try { newAnimation.pause(); } catch (_pauseErr) { /* non-fatal */ }
+    }
+
+    element.style.width = `${effectiveCurrentPosition.x}${unit}`;
+    element.style.height = `${effectiveCurrentPosition.y}${unit}`;
+
+    entry.animation = newAnimation;
+    entry.resolvedNonTransform = resolved;
+    entry.updateFn = setupAnimationEvents(
+        animGroup,
+        'size',
         element,
         newAnimation,
         newVersion,

@@ -172,75 +172,64 @@ Use this path when your animation depends on direct pixel values, it is supporte
 
 Unlike relative values which the browser can reinterpret when the layout changes, pixel values remain fixed, so animations using pixel values need to be told about the layout change.
 
-This is done by giving the Engine the new bounds for the animation. The bounds represent the space on the page the animation can operate in and the animation will adjust proportionally.
+This is done by giving the Engine the new bounds for the animation. The bounds represent the space on the page the animation can operate in, and supporting properties have their own `bounds` function which takes a bounds record: `{ bounds | x = Just {min = 0, max = 50} }`
 
-The bounds are just a simple record:
+And then you give the `bounds` to the Engine via it's `onResize` function:
 
-```elm
+??? example "View Source Code"
+    === "Sub"
 
-```
+        ```elm
+        import Anim.Property.Translate exposing (AxisRanges, Bounds)
+        bounds : AxisRanges
+        bounds =
+            { x : Maybe Bounds}
+        OnResize w h ->
+            let
+                max =
+                    case getOrientation w h of
+                        Portrait ->
+                            50
 
+                        Landscape ->
+                            100
+            in
+            ( { model
+                | animState =
+                    Sub.onResize model.animState <|
+                        Translate.bounds "logoAnim" { bounds | x = Just {min = 0, max = max} }
+                }
+            , Cmd.none
+            )
+        ```
 
+    === "WAAPI"
+
+        ```elm
+        OnResize w h ->
+            let
+                max =
+                    case getOrientation w h of
+                        Portrait ->
+                            50
+
+                        Landscape ->
+                            100
+
+                ( animState, animCmd ) =
+                    WAAPI.onResize model.animState <|
+                        Translate.bounds "logoAnim" { bounds | x = Just {min = 0, max = max} }
+            in
+            ( { model | animState = animState }
+            , animCmd
+            )
+        ```
+
+`bounds` must always be paired with `onResize`, attempting to use it with a Trigger function like `animate` will produce a type error.
+
+Animations mid-flight will be remapped proportionally.
 
 Imagine a `Translate` animation is looping between `x=0` and `x=100`, and the animation is at `x=50` when the user flips from landscape to portrait. You might want to reduce the width the animation takes up, lets say, to `50px` so that the animation moves between `x=0` and `x=50`.
-
-To do this you'd just set new bounds on the X axis: `{ bounds | x = Just {min = 0, max = 50} }`
-
-When a resize message arrives, hand the new bounds to the Engine's `onResize` function.
-
-=== "Sub"
-
-    ```elm
-    import Anim.Engine.Sub as SubEngine
-    import Anim.Property.Translate as Translate
-
-    update : Msg -> Model -> ( Model, Cmd Msg )
-    update msg model =
-        case msg of
-            OnResize w h ->
-                ( { model
-                    | animState =
-                        SubEngine.onResize model.animState <|
-                            Translate.bounds "cookieQuestionsAnim" (cookieBounds w h model)
-                                >> Translate.bounds "modalAnim" (modalBounds w h)
-                  }
-                , Cmd.none
-                )
-    ```
-
-=== "WAAPI"
-
-    ```elm
-    import Anim.Engine.WAAPI as WAAPI
-    import Anim.Property.Translate as Translate
-
-    update : Msg -> Model -> ( Model, Cmd Msg )
-    update msg model =
-        case msg of
-            OnResize w h ->
-                let
-                    ( animState, animCmd ) =
-                        WAAPI.onResize model.animState <|
-                            Translate.bounds "cookieQuestionsAnim" (cookieBounds w h model)
-                                >> Translate.bounds "modalAnim" (modalBounds w h)
-                in
-                ( { model | animState = animState }
-                , animCmd
-                )
-    ```
-
-The bounds builder itself is engine-agnostic:
-
-```elm
-cookieBounds : Int -> Int -> Model -> { x : Maybe { min : Float, max : Float }, y : Maybe { min : Float, max : Float }, z : Maybe { min : Float, max : Float } }
-cookieBounds w h model =
-    { x = Just { min = 0, max = toFloat w }
-    , y = Just { min = toFloat h - model.cqHeight, max = toFloat h }
-    , z = Nothing
-    }
-```
-
-Compose as many `bounds` updates into the `onResize` call as you need - one call per resize event covers every affected anim group.
 
 ---
 
@@ -252,7 +241,7 @@ Most animations only need one of the two paths above. If you need more control, 
 | --- | --- | --- |
 | `onResize` | [Sub](../engines/sub.md), [WAAPI](../engines/waapi.md) | Apply resize updates to active and idle animations. |
 | `retarget` | [Transition](../engines/transition.md), [Keyframe](../engines/keyframes.md), [Sub](../engines/sub.md), [WAAPI](../engines/waapi.md) | Re-anchor elements immediately when a layout change makes the old target wrong. |
-| `bounds` | [Translate](../properties/translate.md), [Scale](../properties/scale.md), [PerspectiveOrigin](https://package.elm-lang.org/packages/phollyer/elm-motion/latest/Anim-Property-PerspectiveOrigin#bounds) | Set min/max property bounds during `onResize`. |
+| `bounds` | [Translate](../properties/translate.md), [Scale](../properties/scale.md), [PerspectiveOrigin](https://package.elm-lang.org/packages/phollyer/elm-motion/latest/Anim-Property-PerspectiveOrigin#bounds), [Size](../properties/size.md) | Set min/max property bounds during `onResize`. |
 | `clampX`, `clampY`, `clampZ` | [Translate](../properties/translate.md), [Rotate](../properties/rotate.md), [Scale](../properties/scale.md), [Skew](../properties/skew.md) | Keep animated values inside safe limits. |
 | `clampWidth`, `clampHeight` | [Size](../properties/size.md) | Keep animated width and height inside safe limits. |
 | `clamp`, `unclamp` | [Opacity](../properties/opacity.md), [Custom](../properties/custom-property.md) | Add or remove value limits as needed. |

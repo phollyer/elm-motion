@@ -919,4 +919,99 @@ describe('resizeTransformAnimation', () => {
         expect(liveAnim.cancelCalls).toBe(1);
         expect(animateMock).toHaveBeenCalledTimes(1);
     });
+
+    it('resizes a size animation, patching the size slot and width/height styles', () => {
+        const liveAnim = createFakeAnimation({ duration: 1000 });
+        liveAnim.playState = 'running';
+        liveAnim.currentTime = 500;
+        const newAnim = createFakeAnimation({ duration: 1000 });
+        const element = makeElement('box', vi.fn(() => newAnim));
+        installDom({ element: element, targetId: 'box' });
+
+        const elementAnims = new Map();
+        elementAnims.set('size', {
+            animation: liveAnim,
+            version: 1,
+            animGroup: 'box',
+            easingKeyframes: null,
+            resolvedNonTransform: {
+                type: 'size',
+                startWidth: 100, startHeight: 200,
+                endWidth: 500, endHeight: 600,
+                unitWidth: 'px', unitHeight: 'px'
+            },
+            generation: 1,
+            propertyIndex: 0,
+            updateFn: vi.fn()
+        });
+        activeAnimations.set('box', elementAnims);
+        animationGroups.set('box', { propertyIterations: [0], propertyConfigs: [] });
+
+        resizeTransformAnimation({
+            elementId: 'box',
+            property: 'size',
+            startX: 0, startY: 0, startZ: 0,
+            endX: 250, endY: 300, endZ: 0,
+            currentX: 125, currentY: 150, currentZ: 0,
+            duration: 1000,
+            currentTimeMs: 500,
+            unit: 'px',
+            hasAnimationBaseline: true
+        });
+
+        const updated = activeAnimations.get('box').get('size');
+        expect(updated.resolvedNonTransform.startWidth).toBe(0);
+        expect(updated.resolvedNonTransform.endWidth).toBe(250);
+        expect(updated.resolvedNonTransform.startHeight).toBe(0);
+        expect(updated.resolvedNonTransform.endHeight).toBe(300);
+        expect(updated.resolvedNonTransform.unitWidth).toBe('px');
+        expect(updated.resolvedNonTransform.unitHeight).toBe('px');
+        expect(liveAnim.cancelCalls).toBe(1);
+        expect(newAnim.currentTime).toBe(500);
+        expect(element.style.width).toBe('125px');
+        expect(element.style.height).toBe('150px');
+    });
+
+    it('skips a size resize when the geometry payload is unchanged (advisory tick during a drag)', () => {
+        const liveAnim = createFakeAnimation({ duration: 1000 });
+        liveAnim.playState = 'running';
+        liveAnim.currentTime = 500;
+        const animateMock = vi.fn();
+        const element = makeElement('box', animateMock);
+        installDom({ element: element, targetId: 'box' });
+
+        const elementAnims = new Map();
+        elementAnims.set('size', {
+            animation: liveAnim,
+            version: 1,
+            animGroup: 'box',
+            easingKeyframes: null,
+            resolvedNonTransform: {
+                type: 'size',
+                startWidth: 0, startHeight: 0,
+                endWidth: 250, endHeight: 300,
+                unitWidth: 'px', unitHeight: 'px'
+            },
+            generation: 1,
+            propertyIndex: 0,
+            updateFn: vi.fn()
+        });
+        activeAnimations.set('box', elementAnims);
+        animationGroups.set('box', { propertyIterations: [0], propertyConfigs: [] });
+
+        resizeTransformAnimation({
+            elementId: 'box',
+            property: 'size',
+            startX: 0, startY: 0,
+            endX: 250, endY: 300,
+            currentX: 125, currentY: 150,
+            duration: 1000,
+            currentTimeMs: 500,
+            unit: 'px',
+            hasAnimationBaseline: true
+        });
+
+        expect(liveAnim.cancelCalls).toBe(0);
+        expect(animateMock).not.toHaveBeenCalled();
+    });
 });

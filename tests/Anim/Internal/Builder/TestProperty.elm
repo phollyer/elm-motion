@@ -1876,4 +1876,28 @@ animationHistoryLookupTests =
                                 group.properties
                         )
                     |> Expect.equal True
+        , test "preserves a Size config in history after a Rotate-only animation runs (regression for Size.bounds after non-size animate)" <|
+            \_ ->
+                animBuilder
+                    |> Size.initHW "box" 100 200
+                    |> processAndStore
+                    |> Builder.mergeBaselines
+                    |> Builder.clearAnimData
+                    |> (Rotate.for "box" >> Rotate.toX 90 >> Rotate.build)
+                    |> processAndStore
+                    |> Builder.getAnimationConfigs "box"
+                    |> List.any
+                        (\group ->
+                            List.any
+                                (\p ->
+                                    case p of
+                                        Builder.ProcessedSizeConfig _ ->
+                                            True
+
+                                        _ ->
+                                            False
+                                )
+                                group.properties
+                        )
+                    |> Expect.equal True
         ]

@@ -359,4 +359,31 @@ encoderTests =
                             ++ ",\"currentTimeMs\":250"
                             ++ ",\"unit\":\"px\"}"
                         )
+        , test "emits property=size with width/height in x/y and z=0 (size resize)" <|
+            \_ ->
+                Encoder.encodeResize
+                    { animGroupName = "box"
+                    , property = "size"
+                    , start = { x = 0, y = 0, z = 0 }
+                    , end = { x = 250, y = 300, z = 0 }
+                    , current = { x = 125, y = 150, z = 0 }
+                    , durationMs = 1000
+                    , currentTimeMs = Just 500
+                    , hasAnimationBaseline = True
+                    , unit = Just "px"
+                    }
+                    |> Encode.encode 0
+                    |> Expect.equal
+                        ("{\"type\":\"resize\""
+                            ++ ",\"elementId\":\"box\""
+                            ++ ",\"animGroup\":\"box\""
+                            ++ ",\"property\":\"size\""
+                            ++ ",\"startX\":0,\"startY\":0,\"startZ\":0"
+                            ++ ",\"endX\":250,\"endY\":300,\"endZ\":0"
+                            ++ ",\"currentX\":125,\"currentY\":150,\"currentZ\":0"
+                            ++ ",\"duration\":1000"
+                            ++ ",\"hasAnimationBaseline\":true"
+                            ++ ",\"currentTimeMs\":500"
+                            ++ ",\"unit\":\"px\"}"
+                        )
         ]
