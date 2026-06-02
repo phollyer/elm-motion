@@ -240,7 +240,7 @@ This is done by giving the Engine the new bounds for the animation. The bounds r
 
     When switching from Portrait to Landscape, the `logoAnim` animation group will adjust it's position on the X axis proportionally. So if it is at `x=25` in Portrait (50% of the width) and the user switches to Landscape, it will be remapped to `x=50` (50% of the new width), and it's X axis end value will be remapped to `x=100`, the new `max`.
 
-`bounds` must can only be paired with `onResize`, attempting to use it with a Trigger function like `animate` will produce a type error.
+`bounds` can only be paired with `onResize`, attempting to use it with a Trigger function like `animate` will produce a type error.
 
 ---
 
