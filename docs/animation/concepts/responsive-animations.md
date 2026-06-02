@@ -8,7 +8,7 @@ Elm Motion supports three responsive animation workflows:
 2. **Snap Re-Anchoring** - snap to a given state when the layout changes
 3. **Measured pixel targets** - proportional remapping on resize ([`Sub`](../engines/sub.md) and [`WAAPI`](../engines/waapi.md) only)
 
-You can mix all strategies on the same page for different animations.
+You can mix all strategies on the same page for different animations, or even for different properties or axes in the same animation group.
 
 ---
 
@@ -159,9 +159,10 @@ Press **Animate diagonally**, then mid-flight press **Retarget Y to 0** - the bu
 
 #### Why the difference?
 
-Mid-flight values are not available for CSS transitions or @keframes animations, so they snap to their targeted end state to ensure they finish correctly.
+The Sub and WAAPI engines have access to mid-flight values, so untouched properties/axes can continue on their way untouched, as intended.
 
-The Sub and WAAPI engines do have access to mid-flight values, so untouched properties/axes can continue on their way untouched, as intended.
+Mid-flight values are not available for CSS transitions or @keframes animations, so untouched properties/axes can't be reconfigured when mid-flight. Therefore they snap to their targeted end state to ensure they finish correctly and as intended.
+
 
 
 ---
@@ -237,11 +238,9 @@ This is done by giving the Engine the new bounds for the animation. The bounds r
             )
         ```
 
+    When switching from Portrait to Landscape, the `logoAnim` animation group will adjust it's position on the X axis proportionally. So if it is at `x=25` in Portrait and the user switches to Landscape, it will be remapped to `x=50`, and it's X axis end value will be remapped to `x=100`, the new `max`.
+
 `bounds` must always be paired with `onResize`, attempting to use it with a Trigger function like `animate` will produce a type error.
-
-Animations mid-flight will be remapped proportionally.
-
-Imagine a `Translate` animation is looping between `x=0` and `x=100`, and the animation is at `x=50` when the user flips from landscape to portrait. You might want to reduce the width the animation takes up, lets say, to `50px` so that the animation moves between `x=0` and `x=50`.
 
 ---
 
