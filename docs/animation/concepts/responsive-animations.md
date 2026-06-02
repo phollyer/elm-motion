@@ -246,28 +246,13 @@ This is done by giving the Engine the new bounds for the animation. The bounds r
 
 ## Responsive Tooling
 
-Most animations only need one of the two paths above. If you need more control, these are the main tools to reach for.
-
 | Function | Where | What it helps with |
 | --- | --- | --- |
-| `onResize` | [Sub](../engines/sub.md), [WAAPI](../engines/waapi.md) | Apply resize updates to active and idle animations. |
-| `retarget` | [Transition](../engines/transition.md), [Keyframe](../engines/keyframes.md), [Sub](../engines/sub.md), [WAAPI](../engines/waapi.md) | Re-anchor elements immediately when a layout change makes the old target wrong. |
-| `bounds` | [Translate](../properties/translate.md), [Scale](../properties/scale.md), [PerspectiveOrigin](https://package.elm-lang.org/packages/phollyer/elm-motion/latest/Anim-Property-PerspectiveOrigin#bounds), [Size](../properties/size.md) | Set min/max property bounds during `onResize`. |
-| `clampX`, `clampY`, `clampZ` | [Translate](../properties/translate.md), [Rotate](../properties/rotate.md), [Scale](../properties/scale.md), [Skew](../properties/skew.md) | Keep animated values inside safe limits. |
-| `clampWidth`, `clampHeight` | [Size](../properties/size.md) | Keep animated width and height inside safe limits. |
-| `clamp`, `unclamp` | [Opacity](../properties/opacity.md), [Custom](../properties/custom-property.md) | Add or remove value limits as needed. |
-
-Values are interpreted in the active CSS unit for each property, and updates apply only to the anim group(s) you target.
-
-Start simple with relative units or measured pixels. Reach for these tools only when you need extra control.
-
----
-
-## Engine Guidance
-
-- [Transition](../engines/transition.md) and [Keyframe](../engines/keyframes.md) - use relative units. No `onResize` is exposed; re-render attributes if you need measured-pixel updates.
-- [Sub](../engines/sub.md) and [WAAPI](../engines/waapi.md) - use relative units when you can. Reach for `onResize` with the `bounds` setter on the relevant property module when you need measured-pixel targets.
-- [ScrollTimeline](../engines/scroll-timeline.md) and [ViewTimeline](../engines/view-timeline.md) - relative units are the responsive path.
+| `retarget` | [Transition](https://package.elm-lang.org/packages/phollyer/elm-motion/latest/Anim-Engine-Transition#retarget), [Keyframe](https://package.elm-lang.org/packages/phollyer/elm-motion/latest/Anim-Engine-Keyframe#retarget), [Sub](https://package.elm-lang.org/packages/phollyer/elm-motion/latest/Anim-Engine-Sub#retarget), [WAAPI](https://package.elm-lang.org/packages/phollyer/elm-motion/latest/Anim-Engine-WAAPI#retarget) | Re-anchor elements immediately when a layout change makes the old target wrong. |
+| `onResize` | [Sub](https://package.elm-lang.org/packages/phollyer/elm-motion/latest/Anim-Engine-Sub#onResize), [WAAPI](https://package.elm-lang.org/packages/phollyer/elm-motion/latest/Anim-Engine-WAAPI#onResize) | Apply new bounds to active and idle animations after a layout change. |
+| `bounds` | [Translate](https://package.elm-lang.org/packages/phollyer/elm-motion/latest/Anim-Property-Translate#bounds), [Scale](https://package.elm-lang.org/packages/phollyer/elm-motion/latest/Anim-Property-Scale#bounds), [PerspectiveOrigin](https://package.elm-lang.org/packages/phollyer/elm-motion/latest/Anim-Property-PerspectiveOrigin#bounds), [Size](https://package.elm-lang.org/packages/phollyer/elm-motion/latest/Anim-Property-Size#bounds) | Set min/max property bounds after a layout change. |
+| `clamp*` | [Translate](https://package.elm-lang.org/packages/phollyer/elm-motion/latest/Anim-Property-Translate#clampX), [Rotate](https://package.elm-lang.org/packages/phollyer/elm-motion/latest/Anim-Property-Rotate#clampX), [Scale](https://package.elm-lang.org/packages/phollyer/elm-motion/latest/Anim-Property-Scale#clampX), [Skew](https://package.elm-lang.org/packages/phollyer/elm-motion/latest/Anim-Property-Skew#clampX), [Opacity](https://package.elm-lang.org/packages/phollyer/elm-motion/latest/Anim-Property-Opacity#clamp), [Custom](https://package.elm-lang.org/packages/phollyer/elm-motion/latest/Anim-Property-Custom#clamp) | Keep animated values inside safe limits. |
+| `unclamp*` | [Translate](https://package.elm-lang.org/packages/phollyer/elm-motion/latest/Anim-Property-Translate#unclampX), [Rotate](https://package.elm-lang.org/packages/phollyer/elm-motion/latest/Anim-Property-Rotate#unclampX), [Scale](https://package.elm-lang.org/packages/phollyer/elm-motion/latest/Anim-Property-Scale#unclampX), [Skew](https://package.elm-lang.org/packages/phollyer/elm-motion/latest/Anim-Property-Skew#unclampX), [Opacity](https://package.elm-lang.org/packages/phollyer/elm-motion/latest/Anim-Property-Opacity#unclamp), [Custom](https://package.elm-lang.org/packages/phollyer/elm-motion/latest/Anim-Property-Custom#unclamp) | Remove animation limits. |
 
 ---
 
