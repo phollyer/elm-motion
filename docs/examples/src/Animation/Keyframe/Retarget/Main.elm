@@ -126,7 +126,7 @@ view model =
             , button [ onClick Reset, class "ui-action-button purple" ] [ text "⏮️ Reset" ]
             ]
         , p [ style "margin" "0 0 8px 0", style "font-size" "13px" ]
-            [ text "Press Animate, then mid-flight press \"Retarget Y to 0\". The Keyframe engine snaps Y to 0; X holds its current value and stops moving." ]
+            [ text "Press Animate, then mid-flight press \"Retarget Y to 0\". The Keyframe engine snaps Y to 0; X to it's end value." ]
         , animationArea model.animState
         ]
 
@@ -147,8 +147,8 @@ animationArea animState =
                    , style "left" "0"
                    , style "width" (String.fromFloat boxSize ++ "cqw")
                    , style "height" (String.fromFloat boxSize ++ "cqh")
-                   , style "background-color" "rgba(16, 185, 129, 0.35)"
-                   , style "border" "0.4cqmin solid rgb(16, 185, 129)"
+                   , style "background-color" "rgba(59, 130, 246, 0.35)"
+                   , style "border" "0.4cqmin solid rgb(59, 130, 246)"
                    , style "border-radius" "1.6cqmin"
                    , style "box-sizing" "border-box"
                    ]

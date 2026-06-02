@@ -188,8 +188,8 @@ animationArea animState =
                    , style "left" "0"
                    , style "width" (String.fromFloat boxSize ++ "cqw")
                    , style "height" (String.fromFloat boxSize ++ "cqh")
-                   , style "background-color" "rgba(139, 92, 246, 0.35)"
-                   , style "border" "0.4cqmin solid rgb(139, 92, 246)"
+                   , style "background-color" "rgba(59, 130, 246, 0.35)"
+                   , style "border" "0.4cqmin solid rgb(59, 130, 246)"
                    , style "border-radius" "1.6cqmin"
                    , style "box-sizing" "border-box"
                    ]
