@@ -10,7 +10,7 @@ module Anim.Property.Size exposing
     , easing
     , spring
     , cssUnit, cssUnitWidth, cssUnitHeight
-    , AxisRanges, bounds
+    , Bounds, AxisRanges, bounds
     , clampWidth, clampHeight, unclampWidth, unclampHeight
     )
 
@@ -124,7 +124,7 @@ ranges from inside an engine's `onResize` callback.
 📖 See [Responsive Animations](https://phollyer.github.io/elm-motion/animation/concepts/responsive-animations/)
 for patterns and examples.
 
-@docs AxisRanges, bounds
+@docs Bounds, AxisRanges, bounds
 
 
 ## Clamping
@@ -660,6 +660,12 @@ cssUnitHeight =
 -- ============================================================
 
 
+{-| A numeric range with `min` and `max` boundaries.
+-}
+type alias Bounds =
+    { min : Float, max : Float }
+
+
 {-| Per-axis resize ranges. `Nothing` leaves an axis untouched.
 
     { width = Just { min = 0, max = 400 }
@@ -668,8 +674,8 @@ cssUnitHeight =
 
 -}
 type alias AxisRanges =
-    { width : Maybe { min : Float, max : Float }
-    , height : Maybe { min : Float, max : Float }
+    { width : Maybe Bounds
+    , height : Maybe Bounds
     }
 
 

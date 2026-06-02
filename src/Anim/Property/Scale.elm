@@ -9,7 +9,7 @@ module Anim.Property.Scale exposing
     , easing
     , spring
     , clampX, clampY, clampZ, unclampX, unclampY, unclampZ
-    , AxisRanges, bounds
+    , Bounds, AxisRanges, bounds
     )
 
 {-| Scale elements along the X, Y, and Z axes.
@@ -99,7 +99,7 @@ for patterns and examples.
 
 ## Resize
 
-@docs AxisRanges, bounds
+@docs Bounds, AxisRanges, bounds
 
 -}
 
@@ -844,6 +844,12 @@ unclampZ =
 -- ============================================================
 
 
+{-| A numeric range with `min` and `max` boundaries.
+-}
+type alias Bounds =
+    { min : Float, max : Float }
+
+
 {-| Per-axis resize ranges. `Nothing` leaves an axis untouched.
 
     { x = Just { min = 1, max = 2 }
@@ -853,9 +859,9 @@ unclampZ =
 
 -}
 type alias AxisRanges =
-    { x : Maybe { min : Float, max : Float }
-    , y : Maybe { min : Float, max : Float }
-    , z : Maybe { min : Float, max : Float }
+    { x : Maybe Bounds
+    , y : Maybe Bounds
+    , z : Maybe Bounds
     }
 
 

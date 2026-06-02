@@ -11,7 +11,7 @@ module Anim.Property.PerspectiveOrigin exposing
     , easing
     , spring
     , clampX, clampY, unclampX, unclampY
-    , AxisRanges, bounds
+    , Bounds, AxisRanges, bounds
     )
 
 {-| Animate the CSS `perspective-origin` property, which controls the vanishing point
@@ -142,7 +142,7 @@ for patterns and examples.
 Set how perspective-origin responds to viewport/container resize and provide
 new bounds during `onResize`.
 
-@docs AxisRanges, bounds
+@docs Bounds, AxisRanges, bounds
 
 -}
 
@@ -618,6 +618,12 @@ unclampY =
 -- ============================================================
 
 
+{-| A numeric range with `min` and `max` boundaries.
+-}
+type alias Bounds =
+    { min : Float, max : Float }
+
+
 {-| Per-axis resize ranges. `Nothing` leaves an axis untouched.
 `z` is ignored for this property.
 
@@ -628,9 +634,9 @@ unclampY =
 
 -}
 type alias AxisRanges =
-    { x : Maybe { min : Float, max : Float }
-    , y : Maybe { min : Float, max : Float }
-    , z : Maybe { min : Float, max : Float }
+    { x : Maybe Bounds
+    , y : Maybe Bounds
+    , z : Maybe Bounds
     }
 
 

@@ -11,7 +11,7 @@ module Anim.Property.Translate exposing
     , easing
     , spring
     , cssUnit, cssUnitX, cssUnitY, cssUnitZ
-    , AxisRanges, bounds
+    , Bounds, AxisRanges, bounds
     , setXYZ, setXY, setXZ, setX, setYZ, setY, setZ
     , clampX, clampY, clampZ, unclampX, unclampY, unclampZ
     )
@@ -132,7 +132,7 @@ for details.
 
 ## Resize
 
-@docs AxisRanges, bounds
+@docs Bounds, AxisRanges, bounds
 @docs setXYZ, setXY, setXZ, setX, setYZ, setY, setZ
 
 
@@ -1126,6 +1126,12 @@ unclampZ =
 -- ============================================================
 
 
+{-| A numeric range with `min` and `max` boundaries.
+-}
+type alias Bounds =
+    { min : Float, max : Float }
+
+
 {-| Per-axis resize ranges. `Nothing` leaves an axis untouched.
 
     { x = Just { min = 0, max = 100 }
@@ -1135,9 +1141,9 @@ unclampZ =
 
 -}
 type alias AxisRanges =
-    { x : Maybe { min : Float, max : Float }
-    , y : Maybe { min : Float, max : Float }
-    , z : Maybe { min : Float, max : Float }
+    { x : Maybe Bounds
+    , y : Maybe Bounds
+    , z : Maybe Bounds
     }
 
 
