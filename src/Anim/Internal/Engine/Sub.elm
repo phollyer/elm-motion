@@ -750,6 +750,9 @@ applyBoundsEntry animGroupName ( prop, ranges ) ((AnimState state _) as st) =
                 "perspectiveOrigin" ->
                     applyPerspectiveOriginResize animGroupName prev ranges st
 
+                "size" ->
+                    applySizeResize animGroupName prev ranges st
+
                 _ ->
                     st
 
@@ -1130,6 +1133,115 @@ resizePerspectiveOrigin units previousBounds bounds isLooping isPaused cfg =
 
         newLegDistance =
             PerspectiveOrigin.distance newStart newEnd
+    in
+    if cfg.isComplete && not isLooping then
+        { cfg
+            | start = newStart
+            , end = newEnd
+            , elapsedMs = cfg.totalDurationMs
+            , isComplete = True
+        }
+
+    else if newLegDistance == 0 && not (isPaused && not isLooping) then
+        { cfg
+            | start = newStart
+            , end = newEnd
+            , elapsedMs = cfg.totalDurationMs
+            , isComplete = True
+        }
+
+    else
+        preserveProgress
+            { cfg = cfg
+            , newStart = newStart
+            , newEnd = newEnd
+            , oldDistance = oldDistance
+            , newLegDistance = newLegDistance
+            }
+
+
+{-| Dispatch a size remap to the group's size animation, if it has one.
+-}
+applySizeResize : AnimGroupName -> Bounds -> Bounds -> AnimState -> AnimState
+applySizeResize animGroupName previousBounds bounds (AnimState state animGroups) =
+    if ResizeBuilder.isEmpty bounds then
+        AnimState state animGroups
+
+    else
+        case AnimGroups.get animGroupName animGroups of
+            Nothing ->
+                AnimState state animGroups
+
+            Just animGroup ->
+                let
+                    isLooping =
+                        case AnimGroup.getIterations animGroup of
+                            Builder.Once ->
+                                False
+
+                            _ ->
+                                True
+
+                    isPaused =
+                        AnimGroup.isPaused animGroup
+
+                    updatedAnimations =
+                        AnimGroup.getAnimations animGroup
+                            |> Animations.map
+                                (\_ anim ->
+                                    case anim of
+                                        Size units cfg ->
+                                            Size units (resizeSize units previousBounds bounds isLooping isPaused cfg)
+
+                                        _ ->
+                                            anim
+                                )
+
+                    updatedGroup =
+                        AnimGroup.setAnimations updatedAnimations animGroup
+
+                    updatedAnimGroups =
+                        AnimGroups.insert animGroupName updatedGroup animGroups
+                in
+                AnimState
+                    { state
+                        | subscriptionsActive =
+                            updatedAnimGroups
+                                |> AnimGroups.groups
+                                |> List.any AnimGroup.isRunning
+                    }
+                    updatedAnimGroups
+
+
+{-| Resize the in-memory size animation to match new bounds. Width is
+mapped to the X axis of the bounds record, height to the Y axis.
+-}
+resizeSize : InternalUnit.ResolvedCssUnitAxes -> Bounds -> Bounds -> Bool -> Bool -> PropertyAnimation Size -> PropertyAnimation Size
+resizeSize units previousBounds bounds isLooping isPaused cfg =
+    let
+        oldStart =
+            Size.toRecord cfg.start
+
+        oldEnd =
+            Size.toRecord cfg.end
+
+        rw =
+            applyAxisLegForUnit units.x previousBounds.x bounds.x oldStart.width oldEnd.width
+
+        rh =
+            applyAxisLegForUnit units.y previousBounds.y bounds.y oldStart.height oldEnd.height
+
+        newStart =
+            Size.fromRecord { width = rw.start, height = rh.start }
+
+        newEnd =
+            Size.fromRecord { width = rw.end, height = rh.end }
+
+        oldDistance =
+            Size.distance cfg.start cfg.end
+
+        newLegDistance =
+            Size.distance newStart newEnd
     in
     if cfg.isComplete && not isLooping then
         { cfg

@@ -1,6 +1,7 @@
 module Anim.Internal.Builder.Size exposing
     ( SizeBuilder
     , applyInitCssUnit
+    , bounds
     , build
     , clampHeight
     , clampWidth
@@ -334,6 +335,21 @@ applyInitCssUnit (SizeBuilder config builder) =
     SizeBuilder
         { config | cssUnit = Builder.getSizeInitCssUnit builder }
         builder
+
+
+
+-- ============================================================
+-- BOUNDS (resize)
+-- ============================================================
+
+
+{-| Mark this size config as a `RemapToBounds` resize directive for
+the current animation group. See `Anim.Internal.Builder.Translate.bounds`
+for the design.
+-}
+bounds : Builder.AxisRanges -> SizeBuilder { eng | withBounds : () } -> SizeBuilder { eng | withBounds : () }
+bounds ranges (SizeBuilder config builder) =
+    SizeBuilder { config | mode = Builder.RemapToBounds ranges } builder
 
 
 

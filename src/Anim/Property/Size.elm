@@ -10,6 +10,7 @@ module Anim.Property.Size exposing
     , easing
     , spring
     , cssUnit, cssUnitWidth, cssUnitHeight
+    , AxisRanges, bounds
     , clampWidth, clampHeight, unclampWidth, unclampHeight
     )
 
@@ -17,24 +18,10 @@ module Anim.Property.Size exposing
 
 **Default**: 0 for width and height
 
-This property uses a 'sensible default' approach to configuring animations.
-When no start value is available, the default will be used.
+When no start value is configured, the default will be used.
 
 If height or width is not defined in the animation configuration, it will remain unchanged,
 or 0 if not set.
-
-    import Easing exposing (Easing(..))
-
-    myAnimation : AnimBuilder eng -> AnimBuilder eng
-    myAnimation =
-        Size.for "animGroupName"
-            >> Size.toHW 200 100
-            >> Size.duration 1000
-            >> Size.easing EaseInOut
-            >> Size.build
-
-The Engines track the end value of each animation, so new animations with no start value
-will use the current end value as the start, ensuring a smooth transition between animations.
 
 
 # Types
@@ -79,16 +66,18 @@ the pipeline. Defaults to `Px`.
 
 ## Start Value
 
-When not set, the engine determines the start value - behaviour
-varies by engine and context.
+When not set, the default will be used.
 
-📖 See [Start Values](https://phollyer.github.io/elm-motion/animation/engines/overview/#start-values)
+📖 See [Start Values](https://phollyer.github.io/elm-motion/animation/properties/overview/?h=start+values#start-values)
 for details.
 
 @docs fromHW, fromH, fromW, from
 
 
 ## End Value
+
+📖 See [End Values](https://phollyer.github.io/elm-motion/animation/properties/overview/?h=start+values#end-values)
+for details.
 
 @docs toHW, toH, toW
 
@@ -100,15 +89,24 @@ for details.
 
 ## Timing
 
+📖 See [Animation Timing](https://phollyer.github.io/elm-motion/animation/concepts/timing/)
+for details.
+
 @docs delay, duration, speed
 
 
 ## Easing
 
+📖 See [Easing](https://phollyer.github.io/elm-motion/animation/concepts/easing/)
+for details.
+
 @docs easing
 
 
 ## Spring
+
+📖 See [Spring](https://phollyer.github.io/elm-motion/animation/concepts/spring/)
+for details.
 
 @docs spring
 
@@ -118,7 +116,18 @@ for details.
 @docs cssUnit, cssUnitWidth, cssUnitHeight
 
 
-## Bounds
+## Resize
+
+Proportionally remap an in-flight size animation onto new width / height
+ranges from inside an engine's `onResize` callback.
+
+📖 See [Responsive Animations](https://phollyer.github.io/elm-motion/animation/concepts/responsive-animations/)
+for patterns and examples.
+
+@docs AxisRanges, bounds
+
+
+## Clamping
 
 Keep width and height within a range you choose.
 
@@ -647,7 +656,62 @@ cssUnitHeight =
 
 
 -- ============================================================
--- BOUNDS
+-- RESIZE
+-- ============================================================
+
+
+{-| Per-axis resize ranges. `Nothing` leaves an axis untouched.
+
+    { width = Just { min = 0, max = 400 }
+    , height = Nothing
+    }
+
+-}
+type alias AxisRanges =
+    { width : Maybe { min : Float, max : Float }
+    , height : Maybe { min : Float, max : Float }
+    }
+
+
+{-| Apply new size bounds for an anim group during resize.
+
+Pass this inside an engine's `onResize` builder:
+
+    Sub.onResize model.animState <|
+        Size.bounds "box"
+            { width = Just { min = 0, max = newWidth }
+            , height = Just { min = 0, max = newHeight }
+            }
+
+You can resize multiple anim groups in one call:
+
+    Sub.onResize model.animState <|
+        Size.bounds "box" boxBounds
+            >> Size.bounds "card" cardBounds
+
+Leave an axis as `Nothing` to ignore it. The engine proportionally remaps
+the in-flight animation onto the new range and pins its endpoints to it.
+
+Only callable from inside an engine's `onResize` callback - the `withBounds`
+capability on the builder type is what gates it.
+
+-}
+bounds : AnimGroupName -> AxisRanges -> AnimBuilder { eng | withBounds : () } -> AnimBuilder { eng | withBounds : () }
+bounds name ranges =
+    SB.for name >> SB.bounds (toBuilderRanges ranges) >> SB.build
+
+
+toBuilderRanges : AxisRanges -> IB.AxisRanges
+toBuilderRanges ranges =
+    { x = ranges.width
+    , y = ranges.height
+    , z = Nothing
+    }
+
+
+
+-- ============================================================
+-- CLAMPING
 -- ============================================================
 
 
