@@ -24,7 +24,7 @@ Legend:
   - Notes:
 - [x] Anim.Engine.Keyframe
   - Notes:
-- [ ] Anim.Engine.Sub
+- [x] Anim.Engine.Sub
   - Notes:
 - [ ] Anim.Engine.WAAPI
   - Notes:
@@ -56,7 +56,7 @@ Legend:
 
 ## Extras
 
-- [ ] Anim.Extra.Color
+- [x] Anim.Extra.Color
   - Notes:
 - [ ] Anim.Extra.TransformOrder
   - Notes:

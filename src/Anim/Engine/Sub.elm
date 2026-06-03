@@ -5,6 +5,7 @@ module Anim.Engine.Sub exposing
     , init
     , animate, retarget, onResize
     , AnimEvent(..)
+    , withProgressEvents
     , AnimMsg, update
     , subscriptions
     , attributes
@@ -20,7 +21,6 @@ module Anim.Engine.Sub exposing
     , freezeX, freezeY, freezeZ, freezeXY, freezeXZ, freezeYZ, freezeXYZ
     , unfreezeX, unfreezeY, unfreezeZ, unfreezeXY, unfreezeXZ, unfreezeYZ, unfreezeXYZ
     , anyRunning, isRunning, allComplete, isComplete, getProgress
-    , withProgressEvents
     , getPropertyCurrent, getPropertyEnd, getPropertyRange, getPropertyStart
     , getColorPropertyCurrent, getColorPropertyEnd, getColorPropertyRange, getColorPropertyStart
     , getOpacityRange, getOpacityStart, getOpacityEnd, getOpacityCurrent
@@ -34,7 +34,11 @@ module Anim.Engine.Sub exposing
 
 {-| A pure Elm subscription-based animation engine with full control, looping, and seamless mid-flight interruptions.
 
-This engine is a good fit when your app needs mid-flight values, progress, or frequent retargeting.
+The pure-Elm counterpart to the WAAPI engine. Same feature set — looping, retargeting, per-axis freezing, pause/resume,
+mid-flight queries, springs — but driven by Elm's `update` loop instead of the browser compositor. No JavaScript companion,
+no ports, and interpolated values are available synchronously on every frame.
+
+Reach for Sub when you want the WAAPI-like feature set but without the JS dependency.
 
 📖 For setup, examples, and behaviour details, see the
 [Sub Engine Documentation](https://phollyer.github.io/elm-motion/animation/engines/sub/)
@@ -74,6 +78,11 @@ and the
 # Events
 
 @docs AnimEvent
+
+
+## Progress Events
+
+@docs withProgressEvents
 
 📖 See [Event Reference](https://phollyer.github.io/elm-motion/animation/workflow/react/#event-reference) in the docs.
 
@@ -172,11 +181,6 @@ To render an animation, add `attributes` to the element you want to animate.
 @docs anyRunning, isRunning, allComplete, isComplete, getProgress
 
 📖 See [State Queries](https://phollyer.github.io/elm-motion/animation/engines/sub/#state-queries) in the docs.
-
-
-# Progress Events
-
-@docs withProgressEvents
 
 
 # Property Queries
@@ -332,15 +336,26 @@ animate =
 
 
 {-| Snap the properties in the builder to their new values. If
-currently animating, stop. Only the properties included in the new builder
+currently animating, stop. Only the properties included in the builder
 are affected, any other properties in the group will be left untouched.
 
 For multi-dimensional properties like `Translate`, `Scale` and `Size`, only the
 dimensions mentioned in the builder snap — the other dimensions continue along
 their original curve toward their original end value.
 
-Thi is useful if something changed in your app that invalidates the current state
-of an animation and it needs to change immediately.
+This is useful if something changed in your app that invalidates the current state
+of an animation and you need to change all or part of it immediately.
+
+    import Anim.Engine.Sub as Sub
+    import Anim.Property.Translate as Translate
+
+    { model
+        | animState =
+            Sub.retarget model.animState <|
+                Translate.for "animGroupName"
+                    >> Translate.toX 200 -- snaps to x = 200
+                    >> Translate.build
+    }
 
 -}
 retarget : AnimState -> (EngineBuilder -> EngineBuilder) -> AnimState
@@ -348,9 +363,10 @@ retarget =
     Internal.retarget
 
 
-{-| Update one or more animation groups after a resize.
+{-| Update one or more animation groups after a layout change, or resize event.
 
-Use this to set the new bounds for your animation groups.
+Use this to set the new pixel bounds for your animation groups, and the animations
+will adjust proportionally to the new bounds.
 
 Typical resize handler:
 
@@ -369,11 +385,16 @@ Typical resize handler:
             | trackPx = element.element.width
             , animState =
                 Sub.onResize model.animState <|
-                    Translate.bounds "box" bounds
-                        >> Translate.bounds "card" bounds
+                    Translate.bounds "boxAnim" bounds
+                        >> Translate.bounds "cardAnim" bounds
           }
         , Cmd.none
         )
+
+**Note**: all `bounds` are pixel values, regardless of the CSS unit used in your builder.
+It makes no sense to remap relative units, that's the browser's job, so this function will
+only target pixel values. Any non-pixel units are ignored. So if "boxAnim" is using `Unit.Cqh`
+for its axes, any new `bounds` will be ignored and the animation will continue as before.
 
 📖 For resize strategies and examples, see
 [Responsive Animations](https://phollyer.github.io/elm-motion/animation/concepts/responsive-animations/).
@@ -391,11 +412,6 @@ onResize =
 
 
 {-| Subscription animation lifecycle events.
-
-`Progress AnimGroupName Float` is only emitted when
-[`withProgressEvents`](#withProgressEvents) `True` was set on the builder
-passed to [`init`](#init).
-
 -}
 type AnimEvent
     = Started AnimGroupName
@@ -406,6 +422,38 @@ type AnimEvent
     | Resumed AnimGroupName
     | Iteration AnimGroupName Int
     | Progress AnimGroupName Float
+
+
+
+-- ============================================================
+-- PROGRESS EVENTS
+-- ============================================================
+
+
+{-| Opt in to per-frame `Progress` events.
+
+Off by default.
+
+Progress events can create a lot of noise in your update loop,
+especially when debugging the `Msg` flow in your app. Therefore
+they are suppressed by default and you need to explicitly opt in
+to receive them.
+
+Pass it to [`init`](#init), or any builder —
+the flag persists on the engine state and can be flipped on or off
+at any time.
+
+    Sub.init [ Sub.withProgressEvents True ]
+
+    -- or toggle later
+    Sub.animate model.animState <|
+        Sub.withProgressEvents True
+            >> fadeInBox
+
+-}
+withProgressEvents : Bool -> EngineBuilder -> EngineBuilder
+withProgressEvents =
+    Builder.setEmitProgress
 
 
 
@@ -441,11 +489,9 @@ Returns the updated state and a list of [AnimEvent](#AnimEvent)s for you to patt
                     ( animState, events ) =
                         Sub.update animMsg model.animState
                 in
-                handleAnimationEvents ({ model | animState = animState }, Cmd.none) events
-
-    handleAnimationEvents : (Model, Cmd Msg) -> List Sub.AnimEvent -> ( Model, Cmd Msg )
-    handleAnimationEvents =
-        List.foldl handleEvent
+                ( List.foldl handleEvent { model | animState = animState } events
+                , Cmd.none
+                )
 
     handleEvent : Sub.AnimEvent -> (Model, Cmd Msg) -> ( Model, Cmd Msg )
     handleEvent event (model, cmd) =
@@ -509,7 +555,9 @@ toControlAnimEvent event =
 
 {-| Subscribe to receive animation frame updates.
 
-Your animations will not run without this subscription.
+Your animations will not run without this subscription, and when
+no animations are running, this subscription is silent and has no
+performance impact.
 
     import Anim.Engine.Sub as Sub
 
@@ -1651,30 +1699,3 @@ Returns the end translate if the animation has completed.
 getTranslateCurrent : AnimGroupName -> AnimState -> Maybe { x : Float, y : Float, z : Float }
 getTranslateCurrent =
     Internal.getTranslateCurrent
-
-
-
--- ============================================================
--- PROGRESS EVENTS
--- ============================================================
-
-
-{-| Opt in to per-frame `Progress` events.
-
-Off by default. The Sub engine runs its animation loop on every
-`AnimationFrame` tick regardless, so this flag only controls whether
-`update` returns `Progress AnimGroupName Float` events to your `update`
-handler. Other lifecycle events (`Started`, `Ended`, `Iteration`, etc.)
-are unaffected.
-
-Pass it in [`init`](#init):
-
-    Sub.init [ Sub.withProgressEvents True ]
-
-Useful when you want to drive UI or trigger other animations from event
-flow rather than polling [`getProgress`](#getProgress) on every render.
-
--}
-withProgressEvents : Bool -> EngineBuilder -> EngineBuilder
-withProgressEvents =
-    Builder.setEmitProgress

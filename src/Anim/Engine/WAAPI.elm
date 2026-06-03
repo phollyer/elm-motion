@@ -428,11 +428,18 @@ Off by default. You don't always need per-frame progress updates from the Engine
 and they generate a lot of `Msg`s in your `update` function. If you do need them,
 you can turn them on with this setting.
 
-Pass it in [`init`](#init):
+Pass it to [`init`](#init), [`animate`](#animate), or [`retarget`](#retarget) —
+the flag persists on the engine state and can be flipped on or off at any
+time.
 
     WAAPI.init motionCmd
         motionMsg
         [ WAAPI.withProgressEvents True ]
+
+    -- or toggle later
+    WAAPI.animate model.animState <|
+        WAAPI.withProgressEvents True
+            >> fadeInBox
 
 Useful for debugging or driving progress UI directly from events. Leave it
 off for production unless you need it — `getProgress` gives the same
