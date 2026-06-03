@@ -33,9 +33,9 @@ module Anim.Engine.Sub exposing
     , getTranslateRange, getTranslateStart, getTranslateEnd, getTranslateCurrent
     )
 
-{-| Use a subscription-based animation engine with full Elm-side control.
+{-| A pure Elm subscription-based animation engine with full control.
 
-This engine is a good fit when your app needs current values, progress, or frequent retargeting.
+This engine is a good fit when your app needs mid-flight values, progress, or frequent retargeting.
 
 📖 For setup, examples, and behaviour details, see the
 [Sub Engine Documentation](https://phollyer.github.io/elm-motion/animation/engines/sub/)
@@ -54,8 +54,6 @@ and the
 
 
 ### Engine Builder
-
-Use this in type annotations when a builder function should only work with the Sub engine.
 
 @docs EngineBuilder
 

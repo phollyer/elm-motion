@@ -312,7 +312,7 @@ animate =
     Internal.animate
 
 
-{-| Update the target and move the element instantly to the new end values.
+{-| Update the target and snap to the new end values.
 
 Use this when you want to move an animation to a new state without animating.
 
@@ -336,7 +336,7 @@ type alias CurrentTargetId =
 
 {-| The ID of the element that started the event.
 
-This can be different from `CurrentTargetId` when the event bubbled from a child element.
+This will be different from `CurrentTargetId` if the event bubbled from a child element.
 
 -}
 type alias TargetId =
@@ -459,7 +459,7 @@ attributes =
 
     view model =
         div []
-            [ Keyframe.styleNode animState
+            [ Keyframe.styleNode model.animState
             , ...
             ]
 
@@ -478,7 +478,7 @@ styleNode =
 
     view model =
         div []
-            [ Keyframe.styleNodeFor "animGroupName" animState
+            [ Keyframe.styleNodeFor "animGroupName" model.animState
             , ...
             ]
 
@@ -535,8 +535,8 @@ events =
     import Html exposing (div, text)
 
     div
-        (Keyframe.attributes "myElement" model.animState
-            ++ Keyframe.eventsStopPropagation "myElement" KeyframeMsg
+        (Keyframe.attributes "animGroupName" animState
+            ++ Keyframe.eventsStopPropagation "animGroupName" KeyframeMsg
         )
         [ text "Animated element" ]
 
@@ -711,7 +711,7 @@ spring =
     responsivePanelMotion =
         cssUnit Unit.Vw
             >> slidePanelIn
-            >> growPanelHeight
+            >> growPanel
 
 -}
 cssUnit : Unit -> EngineBuilder -> EngineBuilder
@@ -724,8 +724,8 @@ cssUnit =
     responsiveDrawerMotion : AnimBuilder eng -> AnimBuilder eng
     responsiveDrawerMotion =
         cssUnitX Unit.Vw
-            >> slideDrawerX
-            >> alignDrawerLabelX
+            >> slidePanelIn
+            >> growPanel
 
 -}
 cssUnitX : Unit -> EngineBuilder -> EngineBuilder
@@ -738,8 +738,8 @@ cssUnitX =
     responsiveSheetMotion : AnimBuilder eng -> AnimBuilder eng
     responsiveSheetMotion =
         cssUnitY Unit.Vh
-            >> slideSheetY
-            >> alignSheetHeaderY
+            >> slidePanelIn
+            >> growPanel
 
 -}
 cssUnitY : Unit -> EngineBuilder -> EngineBuilder
@@ -752,8 +752,8 @@ cssUnitY =
     layeredSceneMotion : AnimBuilder eng -> AnimBuilder eng
     layeredSceneMotion =
         cssUnitZ Unit.Px
-            >> pushSceneBackgroundBack
-            >> bringFloatingCardForward
+            >> slidePanelIn
+            >> growPanel
 
 -}
 cssUnitZ : Unit -> EngineBuilder -> EngineBuilder
@@ -766,8 +766,8 @@ cssUnitZ =
     responsiveCardWidth : AnimBuilder eng -> AnimBuilder eng
     responsiveCardWidth =
         cssUnitWidth Unit.Vw
-            >> growCardWidth
-            >> settleCardSpacing
+            >> slidePanelIn
+            >> growPanel
 
 -}
 cssUnitWidth : Unit -> EngineBuilder -> EngineBuilder
@@ -780,8 +780,8 @@ cssUnitWidth =
     responsivePanelHeight : AnimBuilder eng -> AnimBuilder eng
     responsivePanelHeight =
         cssUnitHeight Unit.Vh
-            >> expandPanelHeight
-            >> alignPanelHeaderY
+            >> slidePanelIn
+            >> growPanel
 
 -}
 cssUnitHeight : Unit -> EngineBuilder -> EngineBuilder

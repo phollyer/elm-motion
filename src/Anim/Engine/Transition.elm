@@ -306,7 +306,7 @@ type alias CurrentTargetId =
 
 {-| The ID of the element that started the event.
 
-This can be different from `CurrentTargetId` when the event bubbled from a child element.
+This will be different from `CurrentTargetId` if the event bubbled from a child element.
 
 -}
 type alias TargetId =
@@ -503,7 +503,7 @@ eventsStopPropagation =
     responsivePanelMotion =
         cssUnit Unit.Vw
             >> slidePanelIn
-            >> growPanelHeight
+            >> growPanel
 
 -}
 cssUnit : Unit -> EngineBuilder -> EngineBuilder
@@ -516,8 +516,8 @@ cssUnit =
     responsiveDrawerMotion : AnimBuilder eng -> AnimBuilder eng
     responsiveDrawerMotion =
         cssUnitX Unit.Vw
-            >> slideDrawerX
-            >> alignDrawerLabelX
+            >> slidePanelIn
+            >> growPanel
 
 -}
 cssUnitX : Unit -> EngineBuilder -> EngineBuilder
@@ -530,8 +530,8 @@ cssUnitX =
     responsiveSheetMotion : AnimBuilder eng -> AnimBuilder eng
     responsiveSheetMotion =
         cssUnitY Unit.Vh
-            >> slideSheetY
-            >> alignSheetHeaderY
+            >> slidePanelIn
+            >> growPanel
 
 -}
 cssUnitY : Unit -> EngineBuilder -> EngineBuilder
@@ -544,8 +544,8 @@ cssUnitY =
     layeredSceneMotion : AnimBuilder eng -> AnimBuilder eng
     layeredSceneMotion =
         cssUnitZ Unit.Px
-            >> pushSceneBackgroundBack
-            >> bringFloatingCardForward
+            >> slidePanelIn
+            >> growPanel
 
 -}
 cssUnitZ : Unit -> EngineBuilder -> EngineBuilder
@@ -558,8 +558,8 @@ cssUnitZ =
     responsiveCardWidth : AnimBuilder eng -> AnimBuilder eng
     responsiveCardWidth =
         cssUnitWidth Unit.Vw
-            >> growCardWidth
-            >> settleCardSpacing
+            >> slidePanelIn
+            >> growPanel
 
 -}
 cssUnitWidth : Unit -> EngineBuilder -> EngineBuilder
@@ -572,8 +572,8 @@ cssUnitWidth =
     responsivePanelHeight : AnimBuilder eng -> AnimBuilder eng
     responsivePanelHeight =
         cssUnitHeight Unit.Vh
-            >> expandPanelHeight
-            >> alignPanelHeaderY
+            >> slidePanelIn
+            >> growPanel
 
 -}
 cssUnitHeight : Unit -> EngineBuilder -> EngineBuilder

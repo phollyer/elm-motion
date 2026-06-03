@@ -52,9 +52,9 @@ These settings are for Document timeline engines: Keyframe, Sub, Transition, and
 
 # CSS Units
 
-Set the CSS unit for built-in properties that use length values.
+Set the CSS unit for properties that use length values.
 
-This is useful when you want those properties to render in units like `rem`, `cqh` or `vw`, for example, instead of `px`, the default.
+This is useful when you want properties to render in units like `rem`, `cqh` or `vw`, for example, instead of `px`, the default.
 
 📖 See the property docs and [Responsive Animations](https://phollyer.github.io/elm-motion/animation/concepts/responsive-animations/)
 for more details.

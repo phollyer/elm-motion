@@ -20,9 +20,9 @@ Legend:
 
 ## Animation Engines
 
-- [ ] Anim.Engine.Transition
+- [x] Anim.Engine.Transition
   - Notes:
-- [ ] Anim.Engine.Keyframe
+- [x] Anim.Engine.Keyframe
   - Notes:
 - [ ] Anim.Engine.Sub
   - Notes:
