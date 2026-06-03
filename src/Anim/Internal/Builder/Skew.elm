@@ -180,18 +180,10 @@ fromY y (SkewBuilder config builder) =
 
 
 to : Skew -> SkewBuilder eng -> SkewBuilder eng
-to skew (SkewBuilder config builder) =
-    let
-        start =
-            Maybe.withDefault Skew.default config.start
-    in
+to value (SkewBuilder config builder) =
     SkewBuilder
-        { config
-            | start = Just start
-            , end = skew
-            , distance = Skew.distance start skew
-        }
-        builder
+        (setEnd value config)
+        (markAxes [ "x", "y" ] builder)
 
 
 toXY : Float -> Float -> SkewBuilder eng -> SkewBuilder eng
@@ -204,9 +196,13 @@ toX x (SkewBuilder config builder) =
     let
         y =
             Skew.getY config.end
+
+        newEnd =
+            Skew.fromTuple ( x, y )
     in
-    toXY x y <|
-        SkewBuilder config builder
+    SkewBuilder
+        (setEnd newEnd config)
+        (markAxes [ "x" ] builder)
 
 
 toY : Float -> SkewBuilder eng -> SkewBuilder eng
@@ -214,9 +210,40 @@ toY y (SkewBuilder config builder) =
     let
         x =
             Skew.getX config.end
+
+        newEnd =
+            Skew.fromTuple ( x, y )
     in
-    toXY x y <|
-        SkewBuilder config builder
+    SkewBuilder
+        (setEnd newEnd config)
+        (markAxes [ "y" ] builder)
+
+
+
+-- Private helpers shared by TO setters.
+
+
+setEnd : Skew -> SkewConfig -> SkewConfig
+setEnd newEnd config =
+    let
+        startVal =
+            Maybe.withDefault Skew.default config.start
+    in
+    { config
+        | start = Just startVal
+        , end = newEnd
+        , distance = Skew.distance startVal newEnd
+    }
+
+
+markAxes : List String -> AnimBuilder eng -> AnimBuilder eng
+markAxes axes builder =
+    case Builder.getCurrentAnimGroupName builder of
+        Just animGroupName ->
+            Builder.markTouchedAxes animGroupName "skew" axes builder
+
+        Nothing ->
+            builder
 
 
 

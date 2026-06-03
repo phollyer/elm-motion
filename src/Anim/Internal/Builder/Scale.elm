@@ -263,18 +263,10 @@ fromZ scaleZ (ScaleBuilder config builder) =
 
 
 to : Scale -> ScaleBuilder eng -> ScaleBuilder eng
-to endPos (ScaleBuilder config builder) =
-    let
-        startPos =
-            Maybe.withDefault Scale.default config.start
-    in
+to value (ScaleBuilder config builder) =
     ScaleBuilder
-        { config
-            | start = Just startPos
-            , end = endPos
-            , distance = Scale.distance startPos endPos
-        }
-        builder
+        (setEnd value config)
+        (markAxes [ "x", "y", "z" ] builder)
 
 
 toXYZ : Float -> Float -> Float -> ScaleBuilder eng -> ScaleBuilder eng
@@ -287,9 +279,13 @@ toXY x y (ScaleBuilder config builder) =
     let
         z =
             Scale.getZ config.end
+
+        newEnd =
+            Scale.fromTriple ( x, y, z )
     in
-    toXYZ x y z <|
-        ScaleBuilder config builder
+    ScaleBuilder
+        (setEnd newEnd config)
+        (markAxes [ "x", "y" ] builder)
 
 
 toXZ : Float -> Float -> ScaleBuilder eng -> ScaleBuilder eng
@@ -297,9 +293,13 @@ toXZ x z (ScaleBuilder config builder) =
     let
         y =
             Scale.getY config.end
+
+        newEnd =
+            Scale.fromTriple ( x, y, z )
     in
-    toXYZ x y z <|
-        ScaleBuilder config builder
+    ScaleBuilder
+        (setEnd newEnd config)
+        (markAxes [ "x", "z" ] builder)
 
 
 toX : Float -> ScaleBuilder eng -> ScaleBuilder eng
@@ -310,9 +310,13 @@ toX x (ScaleBuilder config builder) =
 
         z =
             Scale.getZ config.end
+
+        newEnd =
+            Scale.fromTriple ( x, y, z )
     in
-    toXYZ x y z <|
-        ScaleBuilder config builder
+    ScaleBuilder
+        (setEnd newEnd config)
+        (markAxes [ "x" ] builder)
 
 
 toYZ : Float -> Float -> ScaleBuilder eng -> ScaleBuilder eng
@@ -320,9 +324,13 @@ toYZ y z (ScaleBuilder config builder) =
     let
         x =
             Scale.getX config.end
+
+        newEnd =
+            Scale.fromTriple ( x, y, z )
     in
-    toXYZ x y z <|
-        ScaleBuilder config builder
+    ScaleBuilder
+        (setEnd newEnd config)
+        (markAxes [ "y", "z" ] builder)
 
 
 toY : Float -> ScaleBuilder eng -> ScaleBuilder eng
@@ -333,9 +341,13 @@ toY y (ScaleBuilder config builder) =
 
         z =
             Scale.getZ config.end
+
+        newEnd =
+            Scale.fromTriple ( x, y, z )
     in
-    toXYZ x y z <|
-        ScaleBuilder config builder
+    ScaleBuilder
+        (setEnd newEnd config)
+        (markAxes [ "y" ] builder)
 
 
 toZ : Float -> ScaleBuilder eng -> ScaleBuilder eng
@@ -346,9 +358,40 @@ toZ z (ScaleBuilder config builder) =
 
         y =
             Scale.getY config.end
+
+        newEnd =
+            Scale.fromTriple ( x, y, z )
     in
-    toXYZ x y z <|
-        ScaleBuilder config builder
+    ScaleBuilder
+        (setEnd newEnd config)
+        (markAxes [ "z" ] builder)
+
+
+
+-- Private helpers shared by TO setters.
+
+
+setEnd : Scale -> ScaleConfig -> ScaleConfig
+setEnd newEnd config =
+    let
+        startVal =
+            Maybe.withDefault Scale.default config.start
+    in
+    { config
+        | start = Just startVal
+        , end = newEnd
+        , distance = Scale.distance startVal newEnd
+    }
+
+
+markAxes : List String -> AnimBuilder eng -> AnimBuilder eng
+markAxes axes builder =
+    case Builder.getCurrentAnimGroupName builder of
+        Just animGroupName ->
+            Builder.markTouchedAxes animGroupName "scale" axes builder
+
+        Nothing ->
+            builder
 
 
 

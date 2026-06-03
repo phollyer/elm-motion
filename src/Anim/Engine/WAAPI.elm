@@ -359,6 +359,10 @@ stop.
 Only the properties included in the new builder are affected, any other properties
 in the group will be left untouched.
 
+For multi-dimensional properties (`Translate`, `Rotate`, `Scale`, `Skew`,
+`PerspectiveOrigin`, `Size`), only the dimensions mentioned in the builder snap —
+the other dimensions continue along their original curve toward their original end value.
+
 A `Cancelled` event is emitted for every property whose
 animation was previously playing and is retargeted.
 

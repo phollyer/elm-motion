@@ -194,24 +194,21 @@ fromY y (PerspectiveOriginBuilder config builder) =
 
 
 to : PerspectiveOrigin -> PerspectiveOriginBuilder eng -> PerspectiveOriginBuilder eng
-to perspectiveOrigin (PerspectiveOriginBuilder config builder) =
-    let
-        start =
-            Maybe.withDefault PerspectiveOrigin.default config.start
-    in
+to value (PerspectiveOriginBuilder config builder) =
     PerspectiveOriginBuilder
-        { config
-            | start = Just start
-            , end = perspectiveOrigin
-            , distance = PerspectiveOrigin.distance start perspectiveOrigin
-        }
-        builder
+        (setEnd value config)
+        (markAxes [ "x", "y" ] builder)
 
 
 toXY : Float -> Float -> PerspectiveOriginBuilder eng -> PerspectiveOriginBuilder eng
 toXY x y (PerspectiveOriginBuilder config builder) =
-    to (PerspectiveOrigin.fromRecord { x = x, y = y }) <|
-        PerspectiveOriginBuilder config builder
+    let
+        newEnd =
+            PerspectiveOrigin.fromRecord { x = x, y = y }
+    in
+    PerspectiveOriginBuilder
+        (setEnd newEnd config)
+        (markAxes [ "x", "y" ] builder)
 
 
 toX : Float -> PerspectiveOriginBuilder eng -> PerspectiveOriginBuilder eng
@@ -219,8 +216,13 @@ toX x (PerspectiveOriginBuilder config builder) =
     let
         y =
             PerspectiveOrigin.getY config.end
+
+        newEnd =
+            PerspectiveOrigin.fromRecord { x = x, y = y }
     in
-    toXY x y (PerspectiveOriginBuilder config builder)
+    PerspectiveOriginBuilder
+        (setEnd newEnd config)
+        (markAxes [ "x" ] builder)
 
 
 toY : Float -> PerspectiveOriginBuilder eng -> PerspectiveOriginBuilder eng
@@ -228,8 +230,40 @@ toY y (PerspectiveOriginBuilder config builder) =
     let
         x =
             PerspectiveOrigin.getX config.end
+
+        newEnd =
+            PerspectiveOrigin.fromRecord { x = x, y = y }
     in
-    toXY x y (PerspectiveOriginBuilder config builder)
+    PerspectiveOriginBuilder
+        (setEnd newEnd config)
+        (markAxes [ "y" ] builder)
+
+
+
+-- Private helpers shared by TO setters.
+
+
+setEnd : PerspectiveOrigin -> PerspectiveOriginConfig -> PerspectiveOriginConfig
+setEnd newEnd config =
+    let
+        startVal =
+            Maybe.withDefault PerspectiveOrigin.default config.start
+    in
+    { config
+        | start = Just startVal
+        , end = newEnd
+        , distance = PerspectiveOrigin.distance startVal newEnd
+    }
+
+
+markAxes : List String -> AnimBuilder eng -> AnimBuilder eng
+markAxes axes builder =
+    case Builder.getCurrentAnimGroupName builder of
+        Just animGroupName ->
+            Builder.markTouchedAxes animGroupName "perspectiveOrigin" axes builder
+
+        Nothing ->
+            builder
 
 
 

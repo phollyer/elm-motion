@@ -854,3 +854,225 @@ describe('retargetAnimation (WAAPI engine)', () => {
     });
 });
 
+describe('retargetAnimation per-axis continuation', () => {
+    function setupInflightTransform(animGroup, element, oldT, duration = 1000) {
+        const inflight = createFakeAnimation({ duration });
+        inflight.currentTime = oldT;
+        inflight.playState = 'running';
+        const resolvedValues = {
+            translate: { startX: 0, startY: 0, startZ: 0, endX: 100, endY: 100, endZ: 0, unitX: 'px', unitY: 'px', unitZ: 'px' },
+            scale: { startX: 1, startY: 1, startZ: 1, endX: 2, endY: 2, endZ: 1 },
+            rotate: { startX: 0, startY: 0, startZ: 0, endX: 90, endY: 0, endZ: 0 },
+            skew: { startX: 0, startY: 0, endX: 10, endY: 0 }
+        };
+        activeAnimations.set(animGroup, new Map([
+            ['transform', {
+                animation: inflight,
+                version: 1,
+                animGroup,
+                easingKeyframes: null,
+                transformProperties: [],
+                resolvedValues,
+                generation: 0,
+                propertyIndex: 0
+            }]
+        ]));
+        return inflight;
+    }
+
+    function setupInflightNonTransform(animGroup, type, resolvedNonTransform, oldT, duration = 1000) {
+        const inflight = createFakeAnimation({ duration });
+        inflight.currentTime = oldT;
+        inflight.playState = 'running';
+        activeAnimations.set(animGroup, new Map([
+            [type, {
+                animation: inflight,
+                version: 1,
+                animGroup,
+                easingKeyframes: null,
+                resolvedNonTransform,
+                generation: 0,
+                propertyIndex: 0
+            }]
+        ]));
+        return inflight;
+    }
+
+    it('builds continuation animation for scale per-axis (touched X, untouched Y)', () => {
+        const animGroup = 'box';
+        const element = makeElement({ animGroup });
+        installDom({ element, targetId: animGroup });
+        const inflight = setupInflightTransform(animGroup, element, 300);
+
+        retargetAnimation({
+            elements: {
+                [animGroup]: {
+                    properties: [{
+                        type: 'scale',
+                        endX: 3, endY: 1, endZ: 1,
+                        touchedX: true, touchedY: false, touchedZ: false,
+                        duration: 1000, easing: 'linear', version: 2
+                    }]
+                }
+            }
+        });
+
+        expect(inflight.cancelCalls).toBe(1);
+        expect(element.animate).toHaveBeenCalledTimes(1);
+        const [, options] = element.animate.mock.calls[0];
+        expect(options.delay).toBe(-300);
+        expect(options.duration).toBe(1000);
+    });
+
+    it('builds continuation animation for rotate per-axis (touched Z only)', () => {
+        const animGroup = 'box';
+        const element = makeElement({ animGroup });
+        installDom({ element, targetId: animGroup });
+        const inflight = setupInflightTransform(animGroup, element, 250);
+
+        retargetAnimation({
+            elements: {
+                [animGroup]: {
+                    properties: [{
+                        type: 'rotate',
+                        endX: 0, endY: 0, endZ: 180,
+                        touchedX: false, touchedY: false, touchedZ: true,
+                        duration: 1000, easing: 'linear', version: 2
+                    }]
+                }
+            }
+        });
+
+        expect(inflight.cancelCalls).toBe(1);
+        const [, options] = element.animate.mock.calls[0];
+        expect(options.delay).toBe(-250);
+    });
+
+    it('builds continuation animation for skew per-axis (touched Y, untouched X)', () => {
+        const animGroup = 'box';
+        const element = makeElement({ animGroup });
+        installDom({ element, targetId: animGroup });
+        const inflight = setupInflightTransform(animGroup, element, 400);
+
+        retargetAnimation({
+            elements: {
+                [animGroup]: {
+                    properties: [{
+                        type: 'skew',
+                        endX: 0, endY: 30,
+                        touchedX: false, touchedY: true,
+                        duration: 1000, easing: 'linear', version: 2
+                    }]
+                }
+            }
+        });
+
+        expect(inflight.cancelCalls).toBe(1);
+        const [, options] = element.animate.mock.calls[0];
+        expect(options.delay).toBe(-400);
+    });
+
+    it('builds continuation animation for size per-axis (touched width, untouched height)', () => {
+        const animGroup = 'box';
+        const element = makeElement({ animGroup });
+        installDom({ element, targetId: animGroup });
+        const inflight = setupInflightNonTransform(animGroup, 'size', {
+            type: 'size',
+            startWidth: 100, startHeight: 50,
+            endWidth: 200, endHeight: 150,
+            unitWidth: 'px', unitHeight: 'px'
+        }, 200);
+
+        retargetAnimation({
+            elements: {
+                [animGroup]: {
+                    properties: [{
+                        type: 'size',
+                        endWidth: 400, endHeight: 150,
+                        touchedWidth: true, touchedHeight: false,
+                        unitWidth: 'px', unitHeight: 'px',
+                        duration: 1000, easing: 'linear', version: 2
+                    }]
+                }
+            }
+        });
+
+        expect(inflight.cancelCalls).toBe(1);
+        expect(element.animate).toHaveBeenCalledTimes(1);
+        const [keyframes, options] = element.animate.mock.calls[0];
+        expect(options.delay).toBe(-200);
+        expect(options.duration).toBe(1000);
+        // Touched axis snapped: width start === end === 400
+        expect(keyframes[0].width).toBe('400px');
+        expect(keyframes[1].width).toBe('400px');
+        // Untouched axis preserved from in-flight: 50 -> 150
+        expect(keyframes[0].height).toBe('50px');
+        expect(keyframes[1].height).toBe('150px');
+    });
+
+    it('builds continuation animation for perspectiveOrigin per-axis (touched X, untouched Y)', () => {
+        const animGroup = 'box';
+        const element = makeElement({ animGroup });
+        installDom({ element, targetId: animGroup });
+        const inflight = setupInflightNonTransform(animGroup, 'perspectiveOrigin', {
+            type: 'perspectiveOrigin',
+            startX: 0, startY: 0,
+            endX: 50, endY: 50,
+            unitX: '%', unitY: '%'
+        }, 100);
+
+        retargetAnimation({
+            elements: {
+                [animGroup]: {
+                    properties: [{
+                        type: 'perspectiveOrigin',
+                        endX: 100, endY: 50,
+                        touchedX: true, touchedY: false,
+                        unitX: '%', unitY: '%',
+                        duration: 1000, easing: 'linear', version: 2
+                    }]
+                }
+            }
+        });
+
+        expect(inflight.cancelCalls).toBe(1);
+        const [keyframes, options] = element.animate.mock.calls[0];
+        expect(options.delay).toBe(-100);
+        // Touched X snapped to 100; untouched Y preserves 0 -> 50
+        expect(keyframes[0].perspectiveOrigin).toBe('100% 0%');
+        expect(keyframes[1].perspectiveOrigin).toBe('100% 50%');
+    });
+
+    it('falls back to full-snap when every axis is touched (no in-flight preservation needed)', () => {
+        const animGroup = 'box';
+        const element = makeElement({ animGroup });
+        installDom({ element, targetId: animGroup });
+        const inflight = setupInflightNonTransform(animGroup, 'size', {
+            type: 'size',
+            startWidth: 100, startHeight: 50,
+            endWidth: 200, endHeight: 150,
+            unitWidth: 'px', unitHeight: 'px'
+        }, 200);
+
+        retargetAnimation({
+            elements: {
+                [animGroup]: {
+                    properties: [{
+                        type: 'size',
+                        endWidth: 400, endHeight: 300,
+                        touchedWidth: true, touchedHeight: true,
+                        unitWidth: 'px', unitHeight: 'px',
+                        duration: 1000, easing: 'linear', version: 2
+                    }]
+                }
+            }
+        });
+
+        expect(inflight.cancelCalls).toBe(1);
+        // Full snap path uses inline style, not element.animate
+        expect(element.style.width).toBe('400px');
+        expect(element.style.height).toBe('300px');
+    });
+});
+
+

@@ -263,18 +263,10 @@ fromZ z (RotateBuilder config builder) =
 
 
 to : Rotate -> RotateBuilder eng -> RotateBuilder eng
-to endRotate (RotateBuilder config builder) =
-    let
-        start =
-            Maybe.withDefault Rotate.default config.start
-    in
+to value (RotateBuilder config builder) =
     RotateBuilder
-        { config
-            | start = Just start
-            , end = endRotate
-            , distance = Rotate.distance start endRotate
-        }
-        builder
+        (setEnd value config)
+        (markAxes [ "x", "y", "z" ] builder)
 
 
 toXYZ : Float -> Float -> Float -> RotateBuilder eng -> RotateBuilder eng
@@ -287,9 +279,13 @@ toXY x y (RotateBuilder config builder) =
     let
         z =
             Rotate.getZ config.end
+
+        newEnd =
+            Rotate.fromTriple ( x, y, z )
     in
-    toXYZ x y z <|
-        RotateBuilder config builder
+    RotateBuilder
+        (setEnd newEnd config)
+        (markAxes [ "x", "y" ] builder)
 
 
 toXZ : Float -> Float -> RotateBuilder eng -> RotateBuilder eng
@@ -297,9 +293,13 @@ toXZ x z (RotateBuilder config builder) =
     let
         y =
             Rotate.getY config.end
+
+        newEnd =
+            Rotate.fromTriple ( x, y, z )
     in
-    toXYZ x y z <|
-        RotateBuilder config builder
+    RotateBuilder
+        (setEnd newEnd config)
+        (markAxes [ "x", "z" ] builder)
 
 
 toX : Float -> RotateBuilder eng -> RotateBuilder eng
@@ -310,9 +310,13 @@ toX x (RotateBuilder config builder) =
 
         z =
             Rotate.getZ config.end
+
+        newEnd =
+            Rotate.fromTriple ( x, y, z )
     in
-    toXYZ x y z <|
-        RotateBuilder config builder
+    RotateBuilder
+        (setEnd newEnd config)
+        (markAxes [ "x" ] builder)
 
 
 toYZ : Float -> Float -> RotateBuilder eng -> RotateBuilder eng
@@ -320,9 +324,13 @@ toYZ y z (RotateBuilder config builder) =
     let
         x =
             Rotate.getX config.end
+
+        newEnd =
+            Rotate.fromTriple ( x, y, z )
     in
-    toXYZ x y z <|
-        RotateBuilder config builder
+    RotateBuilder
+        (setEnd newEnd config)
+        (markAxes [ "y", "z" ] builder)
 
 
 toY : Float -> RotateBuilder eng -> RotateBuilder eng
@@ -333,9 +341,13 @@ toY y (RotateBuilder config builder) =
 
         z =
             Rotate.getZ config.end
+
+        newEnd =
+            Rotate.fromTriple ( x, y, z )
     in
-    toXYZ x y z <|
-        RotateBuilder config builder
+    RotateBuilder
+        (setEnd newEnd config)
+        (markAxes [ "y" ] builder)
 
 
 toZ : Float -> RotateBuilder eng -> RotateBuilder eng
@@ -346,9 +358,40 @@ toZ z (RotateBuilder config builder) =
 
         y =
             Rotate.getY config.end
+
+        newEnd =
+            Rotate.fromTriple ( x, y, z )
     in
-    toXYZ x y z <|
-        RotateBuilder config builder
+    RotateBuilder
+        (setEnd newEnd config)
+        (markAxes [ "z" ] builder)
+
+
+
+-- Private helpers shared by TO setters.
+
+
+setEnd : Rotate -> RotateConfig -> RotateConfig
+setEnd newEnd config =
+    let
+        startVal =
+            Maybe.withDefault Rotate.default config.start
+    in
+    { config
+        | start = Just startVal
+        , end = newEnd
+        , distance = Rotate.distance startVal newEnd
+    }
+
+
+markAxes : List String -> AnimBuilder eng -> AnimBuilder eng
+markAxes axes builder =
+    case Builder.getCurrentAnimGroupName builder of
+        Just animGroupName ->
+            Builder.markTouchedAxes animGroupName "rotate" axes builder
+
+        Nothing ->
+            builder
 
 
 

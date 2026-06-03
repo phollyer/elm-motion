@@ -372,7 +372,7 @@ retarget (AnimState state animGroups) build =
         snapPropertyStates groupName maybeExisting freshAnimGroup =
             let
                 patchedGroup =
-                    preserveUntouchedTranslateConfig groupName maybeExisting freshAnimGroup
+                    preserveUntouchedAxesConfig groupName maybeExisting freshAnimGroup
 
                 touchedStates =
                     AnimGroup.getPropertyStates patchedGroup
@@ -392,76 +392,208 @@ retarget (AnimState state animGroups) build =
                 |> AnimGroup.setSnapshot snappedSnapshot
                 |> AnimGroup.setStatus AnimGroup.Complete
 
-        translateTouchedAxesFor : AnimGroupName -> Set String
-        translateTouchedAxesFor groupName =
-            Dict.get ( groupName, "translate" ) touchedAxes
+        touchedAxesFor : AnimGroupName -> String -> Set String
+        touchedAxesFor groupName propType =
+            Dict.get ( groupName, propType ) touchedAxes
                 |> Maybe.withDefault Set.empty
 
-        preserveUntouchedTranslateConfig : AnimGroupName -> Maybe AnimGroup -> AnimGroup -> AnimGroup
-        preserveUntouchedTranslateConfig groupName maybeExisting freshAnimGroup =
-            let
-                touched =
-                    translateTouchedAxesFor groupName
+        preserveUntouchedAxesConfig : AnimGroupName -> Maybe AnimGroup -> AnimGroup -> AnimGroup
+        preserveUntouchedAxesConfig groupName maybeExisting freshAnimGroup =
+            case maybeExisting of
+                Nothing ->
+                    freshAnimGroup
 
-                isFullyTouched =
-                    Set.member "x" touched && Set.member "y" touched && Set.member "z" touched
-            in
-            if isFullyTouched then
-                freshAnimGroup
+                Just existing ->
+                    let
+                        existingStates =
+                            AnimGroup.getPropertyStates existing
+
+                        states =
+                            AnimGroup.getPropertyStates freshAnimGroup
+
+                        patched =
+                            AnimGroups.map
+                                (\propType propState ->
+                                    patchAxesPropState
+                                        (touchedAxesFor groupName propType)
+                                        (AnimGroups.get propType existingStates)
+                                        propState
+                                )
+                                states
+                    in
+                    AnimGroup.setPropertyStates patched freshAnimGroup
+
+        patchAxesPropState : Set String -> Maybe AnimGroup.PropertyState -> AnimGroup.PropertyState -> AnimGroup.PropertyState
+        patchAxesPropState touched maybeExistingState propState =
+            if Set.isEmpty touched then
+                propState
 
             else
-                case Maybe.andThen translateEnd maybeExisting of
-                    Nothing ->
-                        freshAnimGroup
+                case ( propState.config, Maybe.map .config maybeExistingState ) of
+                    ( Builder.ProcessedTranslateConfig cfg, Just (Builder.ProcessedTranslateConfig prev) ) ->
+                        if isFullyTouchedXYZ touched then
+                            propState
 
-                    Just previousEnd ->
-                        overrideTranslateConfigEnds touched previousEnd freshAnimGroup
+                        else
+                            let
+                                previousRec =
+                                    Translate.toRecord prev.end
 
-        overrideTranslateConfigEnds : Set String -> Translate.Translate -> AnimGroup -> AnimGroup
-        overrideTranslateConfigEnds touched previousEnd group =
-            let
-                previousRec =
-                    Translate.toRecord previousEnd
+                                newEnd =
+                                    mergeXYZ touched previousRec Translate.toRecord Translate.fromRecord cfg.end
 
-                states =
-                    AnimGroup.getPropertyStates group
+                                newStart =
+                                    cfg.start
+                                        |> Maybe.map (\s -> mergeXYZ touched previousRec Translate.toRecord Translate.fromRecord s)
+                                        |> Maybe.withDefault newEnd
+                            in
+                            { propState
+                                | config =
+                                    Builder.ProcessedTranslateConfig
+                                        { cfg | start = Just newStart, end = newEnd }
+                            }
 
-                patched =
-                    AnimGroups.map
-                        (\propType propState ->
-                            if propType == "translate" then
-                                case propState.config of
-                                    Builder.ProcessedTranslateConfig cfg ->
-                                        let
-                                            newEnd =
-                                                mergeTranslate touched previousRec cfg.end
+                    ( Builder.ProcessedRotateConfig cfg, Just (Builder.ProcessedRotateConfig prev) ) ->
+                        if isFullyTouchedXYZ touched then
+                            propState
 
-                                            newStart =
-                                                cfg.start
-                                                    |> Maybe.map (mergeTranslate touched previousRec)
-                                                    |> Maybe.withDefault newEnd
-                                        in
-                                        { propState
-                                            | config =
-                                                Builder.ProcessedTranslateConfig
-                                                    { cfg | start = Just newStart, end = newEnd }
-                                        }
+                        else
+                            let
+                                previousRec =
+                                    Rotate.toRecord prev.end
 
-                                    _ ->
-                                        propState
+                                newEnd =
+                                    mergeXYZ touched previousRec Rotate.toRecord Rotate.fromRecord cfg.end
 
-                            else
-                                propState
-                        )
-                        states
-            in
-            AnimGroup.setPropertyStates patched group
+                                newStart =
+                                    cfg.start
+                                        |> Maybe.map (\s -> mergeXYZ touched previousRec Rotate.toRecord Rotate.fromRecord s)
+                                        |> Maybe.withDefault newEnd
+                            in
+                            { propState
+                                | config =
+                                    Builder.ProcessedRotateConfig
+                                        { cfg | start = Just newStart, end = newEnd }
+                            }
 
-        mergeTranslate : Set String -> { x : Float, y : Float, z : Float } -> Translate.Translate -> Translate.Translate
-        mergeTranslate touched previousRec t =
+                    ( Builder.ProcessedScaleConfig cfg, Just (Builder.ProcessedScaleConfig prev) ) ->
+                        if isFullyTouchedXYZ touched then
+                            propState
+
+                        else
+                            let
+                                previousRec =
+                                    Scale.toRecord prev.end
+
+                                newEnd =
+                                    mergeXYZ touched previousRec Scale.toRecord Scale.fromRecord cfg.end
+
+                                newStart =
+                                    cfg.start
+                                        |> Maybe.map (\s -> mergeXYZ touched previousRec Scale.toRecord Scale.fromRecord s)
+                                        |> Maybe.withDefault newEnd
+                            in
+                            { propState
+                                | config =
+                                    Builder.ProcessedScaleConfig
+                                        { cfg | start = Just newStart, end = newEnd }
+                            }
+
+                    ( Builder.ProcessedSkewConfig cfg, Just (Builder.ProcessedSkewConfig prev) ) ->
+                        if isFullyTouchedXY touched then
+                            propState
+
+                        else
+                            let
+                                previousRec =
+                                    Skew.toRecord prev.end
+
+                                newEnd =
+                                    mergeXY touched previousRec Skew.toRecord Skew.fromRecord cfg.end
+
+                                newStart =
+                                    cfg.start
+                                        |> Maybe.map (\s -> mergeXY touched previousRec Skew.toRecord Skew.fromRecord s)
+                                        |> Maybe.withDefault newEnd
+                            in
+                            { propState
+                                | config =
+                                    Builder.ProcessedSkewConfig
+                                        { cfg | start = Just newStart, end = newEnd }
+                            }
+
+                    ( Builder.ProcessedPerspectiveOriginConfig cfg, Just (Builder.ProcessedPerspectiveOriginConfig prev) ) ->
+                        if isFullyTouchedXY touched then
+                            propState
+
+                        else
+                            let
+                                previousRec =
+                                    PerspectiveOrigin.toRecord prev.end
+
+                                newEnd =
+                                    mergeXY touched previousRec PerspectiveOrigin.toRecord PerspectiveOrigin.fromRecord cfg.end
+
+                                newStart =
+                                    cfg.start
+                                        |> Maybe.map (\s -> mergeXY touched previousRec PerspectiveOrigin.toRecord PerspectiveOrigin.fromRecord s)
+                                        |> Maybe.withDefault newEnd
+                            in
+                            { propState
+                                | config =
+                                    Builder.ProcessedPerspectiveOriginConfig
+                                        { cfg | start = Just newStart, end = newEnd }
+                            }
+
+                    ( Builder.ProcessedSizeConfig cfg, Just (Builder.ProcessedSizeConfig prev) ) ->
+                        if isFullyTouchedWH touched then
+                            propState
+
+                        else
+                            let
+                                previousRec =
+                                    Size.toRecord prev.end
+
+                                newEnd =
+                                    mergeWH touched previousRec cfg.end
+
+                                newStart =
+                                    cfg.start
+                                        |> Maybe.map (mergeWH touched previousRec)
+                                        |> Maybe.withDefault newEnd
+                            in
+                            { propState
+                                | config =
+                                    Builder.ProcessedSizeConfig
+                                        { cfg | start = Just newStart, end = newEnd }
+                            }
+
+                    _ ->
+                        propState
+
+        isFullyTouchedXYZ : Set String -> Bool
+        isFullyTouchedXYZ touched =
+            Set.member "x" touched && Set.member "y" touched && Set.member "z" touched
+
+        isFullyTouchedXY : Set String -> Bool
+        isFullyTouchedXY touched =
+            Set.member "x" touched && Set.member "y" touched
+
+        isFullyTouchedWH : Set String -> Bool
+        isFullyTouchedWH touched =
+            Set.member "width" touched && Set.member "height" touched
+
+        mergeXYZ :
+            Set String
+            -> { x : Float, y : Float, z : Float }
+            -> (property -> { x : Float, y : Float, z : Float })
+            -> ({ x : Float, y : Float, z : Float } -> property)
+            -> property
+            -> property
+        mergeXYZ touched previousRec toRec fromRec value =
             let
                 rec =
-                    Translate.toRecord t
+                    toRec value
 
                 pick axis cur prev =
                     if Set.member axis touched then
@@ -470,25 +602,53 @@ retarget (AnimState state animGroups) build =
                     else
                         prev
             in
-            Translate.fromRecord
+            fromRec
                 { x = pick "x" rec.x previousRec.x
                 , y = pick "y" rec.y previousRec.y
                 , z = pick "z" rec.z previousRec.z
                 }
 
-        translateEnd : AnimGroup -> Maybe Translate.Translate
-        translateEnd group =
-            AnimGroup.getPropertyStates group
-                |> AnimGroups.get "translate"
-                |> Maybe.andThen
-                    (\propState ->
-                        case propState.config of
-                            Builder.ProcessedTranslateConfig cfg ->
-                                Just cfg.end
+        mergeXY :
+            Set String
+            -> { x : Float, y : Float }
+            -> (property -> { x : Float, y : Float })
+            -> ({ x : Float, y : Float } -> property)
+            -> property
+            -> property
+        mergeXY touched previousRec toRec fromRec value =
+            let
+                rec =
+                    toRec value
 
-                            _ ->
-                                Nothing
-                    )
+                pick axis cur prev =
+                    if Set.member axis touched then
+                        cur
+
+                    else
+                        prev
+            in
+            fromRec
+                { x = pick "x" rec.x previousRec.x
+                , y = pick "y" rec.y previousRec.y
+                }
+
+        mergeWH : Set String -> { width : Float, height : Float } -> Size.Size -> Size.Size
+        mergeWH touched previousRec value =
+            let
+                rec =
+                    Size.toRecord value
+
+                pick axis cur prev =
+                    if Set.member axis touched then
+                        cur
+
+                    else
+                        prev
+            in
+            Size.fromRecord
+                { width = pick "width" rec.width previousRec.width
+                , height = pick "height" rec.height previousRec.height
+                }
 
         insertSnap : AnimGroupName -> AnimGroup -> AnimGroups AnimGroup -> AnimGroups AnimGroup
         insertSnap animGroupName freshAnimGroup acc =

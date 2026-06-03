@@ -20,6 +20,11 @@ touched by the build. No `Started` event is emitted.
 import Anim.Engine.Sub as Sub
 import Anim.Internal.Engine.Sub as Internal
 import Anim.Property.Opacity as Opacity
+import Anim.Property.PerspectiveOrigin as PerspectiveOrigin
+import Anim.Property.Rotate as Rotate
+import Anim.Property.Scale as Scale
+import Anim.Property.Size as Size
+import Anim.Property.Skew as Skew
 import Anim.Property.Translate as Translate
 import Expect
 import Motion.Easing exposing (Easing(..))
@@ -86,6 +91,7 @@ suite =
     describe "Anim.Engine.Sub retarget"
         [ snapSemantics
         , scoping
+        , perAxisOtherProperties
         , timingIgnored
         , eventEmission
         ]
@@ -345,4 +351,287 @@ eventEmission =
                                     False
                         )
                     |> Expect.equal []
+        ]
+
+
+
+-- ============================================================
+-- PER-AXIS RETARGET ON OTHER MULTI-DIMENSIONAL PROPERTIES
+-- ============================================================
+
+
+{-| Per-axis retarget continuation must apply to every multi-dimensional
+property, not just `Translate`. For each property, animating one axis and
+then retargeting a different axis must:
+
+1.  Leave the in-flight axis still animating.
+2.  Pin the retargeted axis on the running animation to the new target.
+3.  Leave the in-flight axis's end value untouched.
+4.  Set the retargeted axis's end value to the new target.
+
+-}
+perAxisOtherProperties : Test
+perAxisOtherProperties =
+    let
+        rotateInit =
+            Sub.init [ Rotate.initXYZ "a" 0 0 0 ]
+
+        scaleInit =
+            Sub.init [ Scale.initXYZ "a" 1 1 1 ]
+
+        skewInit =
+            Sub.init [ Skew.initXY "a" 0 0 ]
+
+        perspectiveOriginInit =
+            Sub.init [ PerspectiveOrigin.initXY "a" 50 50 ]
+
+        sizeInit =
+            Sub.init [ Size.initHW "a" 100 100 ]
+
+        startRotateX state target =
+            Sub.animate state
+                (Rotate.for "a"
+                    >> Rotate.toX target
+                    >> Rotate.duration 1000
+                    >> Rotate.easing EaseInOut
+                    >> Rotate.build
+                )
+
+        snapRotateY state target =
+            Sub.retarget state
+                (Rotate.for "a"
+                    >> Rotate.toY target
+                    >> Rotate.build
+                )
+
+        startScaleX state target =
+            Sub.animate state
+                (Scale.for "a"
+                    >> Scale.toX target
+                    >> Scale.duration 1000
+                    >> Scale.easing EaseInOut
+                    >> Scale.build
+                )
+
+        snapScaleY state target =
+            Sub.retarget state
+                (Scale.for "a"
+                    >> Scale.toY target
+                    >> Scale.build
+                )
+
+        startSkewX state target =
+            Sub.animate state
+                (Skew.for "a"
+                    >> Skew.toX target
+                    >> Skew.duration 1000
+                    >> Skew.easing EaseInOut
+                    >> Skew.build
+                )
+
+        snapSkewY state target =
+            Sub.retarget state
+                (Skew.for "a"
+                    >> Skew.toY target
+                    >> Skew.build
+                )
+
+        startPerspectiveOriginX state target =
+            Sub.animate state
+                (PerspectiveOrigin.for "a"
+                    >> PerspectiveOrigin.toX target
+                    >> PerspectiveOrigin.duration 1000
+                    >> PerspectiveOrigin.easing EaseInOut
+                    >> PerspectiveOrigin.build
+                )
+
+        snapPerspectiveOriginY state target =
+            Sub.retarget state
+                (PerspectiveOrigin.for "a"
+                    >> PerspectiveOrigin.toY target
+                    >> PerspectiveOrigin.build
+                )
+
+        startSizeW state target =
+            Sub.animate state
+                (Size.for "a"
+                    >> Size.toW target
+                    >> Size.duration 1000
+                    >> Size.easing EaseInOut
+                    >> Size.build
+                )
+
+        snapSizeH state target =
+            Sub.retarget state
+                (Size.for "a"
+                    >> Size.toH target
+                    >> Size.build
+                )
+    in
+    describe "per-axis retarget continuation on other multi-dimensional properties"
+        [ describe "Rotate"
+            [ test "retarget on Y leaves the in-flight X axis still animating" <|
+                \_ ->
+                    rotateInit
+                        |> (\s -> startRotateX s 360)
+                        |> (\s -> snapRotateY s 90)
+                        |> Sub.isRunning "a"
+                        |> Expect.equal (Just True)
+            , test "retarget on Y pins Y on the running rotate animation to the new target" <|
+                \_ ->
+                    rotateInit
+                        |> (\s -> startRotateX s 360)
+                        |> (\s -> snapRotateY s 90)
+                        |> Sub.getRotateCurrent "a"
+                        |> Maybe.map .y
+                        |> Expect.equal (Just 90)
+            , test "retarget on Y leaves the in-flight X end value untouched" <|
+                \_ ->
+                    rotateInit
+                        |> (\s -> startRotateX s 360)
+                        |> (\s -> snapRotateY s 90)
+                        |> Sub.getRotateEnd "a"
+                        |> Maybe.map .x
+                        |> Expect.equal (Just 360)
+            , test "retarget on Y sets the rotate end Y value to the new target" <|
+                \_ ->
+                    rotateInit
+                        |> (\s -> startRotateX s 360)
+                        |> (\s -> snapRotateY s 90)
+                        |> Sub.getRotateEnd "a"
+                        |> Maybe.map .y
+                        |> Expect.equal (Just 90)
+            ]
+        , describe "Scale"
+            [ test "retarget on Y leaves the in-flight X axis still animating" <|
+                \_ ->
+                    scaleInit
+                        |> (\s -> startScaleX s 2)
+                        |> (\s -> snapScaleY s 0.5)
+                        |> Sub.isRunning "a"
+                        |> Expect.equal (Just True)
+            , test "retarget on Y pins Y on the running scale animation to the new target" <|
+                \_ ->
+                    scaleInit
+                        |> (\s -> startScaleX s 2)
+                        |> (\s -> snapScaleY s 0.5)
+                        |> Sub.getScaleCurrent "a"
+                        |> Maybe.map .y
+                        |> Expect.equal (Just 0.5)
+            , test "retarget on Y leaves the in-flight X end value untouched" <|
+                \_ ->
+                    scaleInit
+                        |> (\s -> startScaleX s 2)
+                        |> (\s -> snapScaleY s 0.5)
+                        |> Sub.getScaleEnd "a"
+                        |> Maybe.map .x
+                        |> Expect.equal (Just 2)
+            , test "retarget on Y sets the scale end Y value to the new target" <|
+                \_ ->
+                    scaleInit
+                        |> (\s -> startScaleX s 2)
+                        |> (\s -> snapScaleY s 0.5)
+                        |> Sub.getScaleEnd "a"
+                        |> Maybe.map .y
+                        |> Expect.equal (Just 0.5)
+            ]
+        , describe "Skew"
+            [ test "retarget on Y leaves the in-flight X axis still animating" <|
+                \_ ->
+                    skewInit
+                        |> (\s -> startSkewX s 30)
+                        |> (\s -> snapSkewY s 15)
+                        |> Sub.isRunning "a"
+                        |> Expect.equal (Just True)
+            , test "retarget on Y pins Y on the running skew animation to the new target" <|
+                \_ ->
+                    skewInit
+                        |> (\s -> startSkewX s 30)
+                        |> (\s -> snapSkewY s 15)
+                        |> Sub.getSkewCurrent "a"
+                        |> Maybe.map .y
+                        |> Expect.equal (Just 15)
+            , test "retarget on Y leaves the in-flight X end value untouched" <|
+                \_ ->
+                    skewInit
+                        |> (\s -> startSkewX s 30)
+                        |> (\s -> snapSkewY s 15)
+                        |> Sub.getSkewEnd "a"
+                        |> Maybe.map .x
+                        |> Expect.equal (Just 30)
+            , test "retarget on Y sets the skew end Y value to the new target" <|
+                \_ ->
+                    skewInit
+                        |> (\s -> startSkewX s 30)
+                        |> (\s -> snapSkewY s 15)
+                        |> Sub.getSkewEnd "a"
+                        |> Maybe.map .y
+                        |> Expect.equal (Just 15)
+            ]
+        , describe "PerspectiveOrigin"
+            [ test "retarget on Y leaves the in-flight X axis still animating" <|
+                \_ ->
+                    perspectiveOriginInit
+                        |> (\s -> startPerspectiveOriginX s 100)
+                        |> (\s -> snapPerspectiveOriginY s 25)
+                        |> Sub.isRunning "a"
+                        |> Expect.equal (Just True)
+            , test "retarget on Y pins Y on the running perspective-origin animation to the new target" <|
+                \_ ->
+                    perspectiveOriginInit
+                        |> (\s -> startPerspectiveOriginX s 100)
+                        |> (\s -> snapPerspectiveOriginY s 25)
+                        |> Sub.getPerspectiveOriginCurrent "a"
+                        |> Maybe.map .y
+                        |> Expect.equal (Just 25)
+            , test "retarget on Y leaves the in-flight X end value untouched" <|
+                \_ ->
+                    perspectiveOriginInit
+                        |> (\s -> startPerspectiveOriginX s 100)
+                        |> (\s -> snapPerspectiveOriginY s 25)
+                        |> Sub.getPerspectiveOriginEnd "a"
+                        |> Maybe.map .x
+                        |> Expect.equal (Just 100)
+            , test "retarget on Y sets the perspective-origin end Y value to the new target" <|
+                \_ ->
+                    perspectiveOriginInit
+                        |> (\s -> startPerspectiveOriginX s 100)
+                        |> (\s -> snapPerspectiveOriginY s 25)
+                        |> Sub.getPerspectiveOriginEnd "a"
+                        |> Maybe.map .y
+                        |> Expect.equal (Just 25)
+            ]
+        , describe "Size"
+            [ test "retarget on H leaves the in-flight W axis still animating" <|
+                \_ ->
+                    sizeInit
+                        |> (\s -> startSizeW s 300)
+                        |> (\s -> snapSizeH s 50)
+                        |> Sub.isRunning "a"
+                        |> Expect.equal (Just True)
+            , test "retarget on H pins H on the running size animation to the new target" <|
+                \_ ->
+                    sizeInit
+                        |> (\s -> startSizeW s 300)
+                        |> (\s -> snapSizeH s 50)
+                        |> Sub.getSizeCurrent "a"
+                        |> Maybe.map .height
+                        |> Expect.equal (Just 50)
+            , test "retarget on H leaves the in-flight W end value untouched" <|
+                \_ ->
+                    sizeInit
+                        |> (\s -> startSizeW s 300)
+                        |> (\s -> snapSizeH s 50)
+                        |> Sub.getSizeEnd "a"
+                        |> Maybe.map .width
+                        |> Expect.equal (Just 300)
+            , test "retarget on H sets the size end H value to the new target" <|
+                \_ ->
+                    sizeInit
+                        |> (\s -> startSizeW s 300)
+                        |> (\s -> snapSizeH s 50)
+                        |> Sub.getSizeEnd "a"
+                        |> Maybe.map .height
+                        |> Expect.equal (Just 50)
+            ]
         ]

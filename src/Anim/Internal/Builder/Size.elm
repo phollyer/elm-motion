@@ -199,18 +199,10 @@ fromW w (SizeBuilder config builder) =
 
 
 to : Size -> SizeBuilder eng -> SizeBuilder eng
-to size (SizeBuilder config builder) =
-    let
-        start =
-            Maybe.withDefault Size.default config.start
-    in
+to value (SizeBuilder config builder) =
     SizeBuilder
-        { config
-            | start = Just start
-            , end = size
-            , distance = Size.distance start size
-        }
-        builder
+        (setEnd value config)
+        (markAxes [ "width", "height" ] builder)
 
 
 toHW : Float -> Float -> SizeBuilder eng -> SizeBuilder eng
@@ -223,8 +215,13 @@ toH h (SizeBuilder config builder) =
     let
         w =
             Size.getW config.end
+
+        newEnd =
+            Size.fromTuple ( w, h )
     in
-    toHW h w (SizeBuilder config builder)
+    SizeBuilder
+        (setEnd newEnd config)
+        (markAxes [ "height" ] builder)
 
 
 toW : Float -> SizeBuilder eng -> SizeBuilder eng
@@ -232,8 +229,40 @@ toW w (SizeBuilder config builder) =
     let
         h =
             Size.getH config.end
+
+        newEnd =
+            Size.fromTuple ( w, h )
     in
-    toHW h w (SizeBuilder config builder)
+    SizeBuilder
+        (setEnd newEnd config)
+        (markAxes [ "width" ] builder)
+
+
+
+-- Private helpers shared by TO setters.
+
+
+setEnd : Size -> SizeConfig -> SizeConfig
+setEnd newEnd config =
+    let
+        startVal =
+            Maybe.withDefault Size.default config.start
+    in
+    { config
+        | start = Just startVal
+        , end = newEnd
+        , distance = Size.distance startVal newEnd
+    }
+
+
+markAxes : List String -> AnimBuilder eng -> AnimBuilder eng
+markAxes axes builder =
+    case Builder.getCurrentAnimGroupName builder of
+        Just animGroupName ->
+            Builder.markTouchedAxes animGroupName "size" axes builder
+
+        Nothing ->
+            builder
 
 
 

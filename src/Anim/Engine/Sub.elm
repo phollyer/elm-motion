@@ -337,13 +337,13 @@ animate =
     Internal.animate
 
 
-{-| Change the targeted properties instantly to their new values. If
+{-| Snap the properties in the builder to their new values. If
 currently animating, stop. Only the properties included in the new builder
 are affected, any other properties in the group will be left untouched.
 
-For `Translate`, only the axes mentioned in the builder snap — the other
-axes continue along their original easing curve toward their original end
-value. Other property types snap as a whole.
+For multi-dimensional properties like `Translate`, `Scale` and `Size`, only the
+dimensions mentioned in the builder snap — the other dimensions continue along
+their original curve toward their original end value.
 
 A `Cancelled` event is emitted for every property whose animation was
 previously playing and is retargeted.

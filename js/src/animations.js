@@ -1799,7 +1799,14 @@ function retargetElement(animGroup, elementConfig, resolvedElement = null) {
     }
 
     nonTransformProperties.forEach(property => {
-        cancelledAnything = snapNonTransformProperty(animGroup, element, property, elementAnims) || cancelledAnything;
+        const continuationApplied = retargetNonTransformWithContinuation(
+            animGroup, element, property, elementAnims
+        );
+        if (continuationApplied) {
+            cancelledAnything = true;
+        } else {
+            cancelledAnything = snapNonTransformProperty(animGroup, element, property, elementAnims) || cancelledAnything;
+        }
     });
 
     // Emit a single `cancelled` lifecycle event per group when at least
@@ -1858,30 +1865,23 @@ function readLiveTransform(animGroup, element, existing) {
     return getTransformState(animGroup, element);
 }
 
-const TRANSLATE_RETARGET_AXES = [
-    { axis: 'x', suffix: 'X' },
-    { axis: 'y', suffix: 'Y' },
-    { axis: 'z', suffix: 'Z' }
-];
-
 /**
  * Build a continuation transform animation when the retarget command
- * touches only a subset of translate axes and an in-flight transform
- * animation is mid-flight. Touched axes snap to the new target via flat
- * keyframes; untouched axes preserve the in-flight animation's original
- * (start, end, easing) so they continue smoothly toward their existing
- * target. The new WAAPI animation uses the same total duration as the
- * old one and starts with `delay: -oldT`, putting it at the same
- * progress where the old one was cancelled — for untouched axes this is
- * indistinguishable from the original animation continuing.
- *
- * Non-translate transform properties in the retarget command are
- * full-snapped (flat keyframes at their new target) — per-axis
- * continuation for rotate/scale/skew is out of scope for now.
+ * touches only a subset of axes on one or more bundled transform
+ * properties (translate / scale / rotate / skew) and an in-flight
+ * transform animation is mid-flight. Touched axes snap to the new
+ * target via flat keyframes; untouched axes preserve the in-flight
+ * animation's original (start, end, easing) so they continue smoothly
+ * toward their existing target. The new WAAPI animation uses the same
+ * total duration as the old one and starts with `delay: -oldT`,
+ * putting it at the same progress where the old one was cancelled —
+ * for untouched axes this is indistinguishable from the original
+ * animation continuing.
  *
  * Returns `true` when a continuation animation was built; `false` when
  * the caller should fall back to the full-snap path (no in-flight
- * animation, no translate in the command, or every axis is touched).
+ * animation, no touched-axis flags on any transform property in the
+ * command, or every axis is touched).
  */
 function retargetTransformWithContinuation(animGroup, element, transformProperties, elementAnims) {
     if (!elementAnims) return false;
@@ -1895,22 +1895,25 @@ function retargetTransformWithContinuation(animGroup, element, transformProperti
     const oldT = existing.animation.currentTime;
     if (!Number.isFinite(oldT) || oldT < 0 || oldT >= oldDuration) return false;
 
-    const translateProp = transformProperties.find(property => property.type === 'translate');
-    if (!translateProp) return false;
-
-    const hasAnyTouchedFlag = TRANSLATE_RETARGET_AXES.some(
-        ({ suffix }) => typeof translateProp[`touched${suffix}`] === 'boolean'
-    );
-    if (!hasAnyTouchedFlag) return false;
-
-    const hasAnyUntouched = TRANSLATE_RETARGET_AXES.some(
-        ({ suffix }) => translateProp[`touched${suffix}`] === false
-    );
-    if (!hasAnyUntouched) return false;
+    let hasAnyTouchedFlag = false;
+    let hasAnyUntouched = false;
+    for (const property of transformProperties) {
+        const axes = RESOLVED_TRANSFORM_AXES[property.type];
+        if (!axes) continue;
+        for (const { suffix } of axes) {
+            const flag = property[`touched${suffix}`];
+            if (typeof flag === 'boolean') {
+                hasAnyTouchedFlag = true;
+                if (flag === false) hasAnyUntouched = true;
+            }
+        }
+    }
+    if (!hasAnyTouchedFlag || !hasAnyUntouched) return false;
 
     // Shallow clone preserves old per-axis start/end/easing/units;
-    // mutations below only overwrite touched axes (translate) and
-    // full-snap axes (other transform properties).
+    // mutations below only overwrite touched axes (snap) and any
+    // transform property the retarget command does not address (left
+    // entirely as-is from the in-flight resolved values).
     const oldResolved = existing.resolvedValues;
     const resolved = {
         translate: { ...oldResolved.translate },
@@ -1919,35 +1922,49 @@ function retargetTransformWithContinuation(animGroup, element, transformProperti
         skew: { ...oldResolved.skew }
     };
 
-    TRANSLATE_RETARGET_AXES.forEach(({ suffix }) => {
-        if (translateProp[`touched${suffix}`] !== true) return;
-        const target = translateProp[`end${suffix}`];
-        if (!Number.isFinite(target)) return;
-        resolved.translate[`start${suffix}`] = target;
-        resolved.translate[`end${suffix}`] = target;
-    });
-
-    // Carry forward any user-supplied units on the retarget command; absent
-    // values keep the in-flight units to avoid unit-interpretation jumps.
-    ['unitX', 'unitY', 'unitZ'].forEach(key => {
-        const candidate = translateProp[key];
-        if (typeof candidate === 'string' && candidate.length > 0) {
-            resolved.translate[key] = candidate;
-        }
-    });
-
     transformProperties.forEach(property => {
-        if (property.type === 'translate') return;
         const target = resolved[property.type];
         const axes = RESOLVED_TRANSFORM_AXES[property.type];
         if (!target || !axes) return;
-        axes.forEach(({ suffix }) => {
-            const newEnd = property[`end${suffix}`];
-            if (!Number.isFinite(newEnd)) return;
-            target[`start${suffix}`] = newEnd;
-            target[`end${suffix}`] = newEnd;
-        });
+
+        const hasTouchedFlags = axes.some(
+            ({ suffix }) => typeof property[`touched${suffix}`] === 'boolean'
+        );
+
+        if (!hasTouchedFlags) {
+            // No per-axis flags on this property: full-snap every axis.
+            axes.forEach(({ suffix }) => {
+                const newEnd = property[`end${suffix}`];
+                if (!Number.isFinite(newEnd)) return;
+                target[`start${suffix}`] = newEnd;
+                target[`end${suffix}`] = newEnd;
+            });
+        } else {
+            // Per-axis flags present: only touched axes snap; untouched
+            // axes keep the in-flight start/end/easing.
+            axes.forEach(({ suffix }) => {
+                if (property[`touched${suffix}`] !== true) return;
+                const newEnd = property[`end${suffix}`];
+                if (!Number.isFinite(newEnd)) return;
+                target[`start${suffix}`] = newEnd;
+                target[`end${suffix}`] = newEnd;
+            });
+        }
     });
+
+    // Carry forward any user-supplied units on the retarget command for
+    // translate axes; absent values keep the in-flight units to avoid
+    // unit-interpretation jumps. (Translate is the only bundled
+    // transform property with per-axis CSS units.)
+    const translateProp = transformProperties.find(property => property.type === 'translate');
+    if (translateProp) {
+        ['unitX', 'unitY', 'unitZ'].forEach(key => {
+            const candidate = translateProp[key];
+            if (typeof candidate === 'string' && candidate.length > 0) {
+                resolved.translate[key] = candidate;
+            }
+        });
+    }
 
     cancelSilently(elementAnims, 'transform');
     cancelLegacyTransformAnimations(elementAnims);
@@ -2000,6 +2017,103 @@ function retargetTransformWithContinuation(animGroup, element, transformProperti
     };
     elementAnims.set('transform', entry);
     entry.updateFn = setupAnimationEvents(animGroup, 'transform', element, newAnimation, newVersion, resolved);
+
+    return true;
+}
+
+const NON_TRANSFORM_RETARGET_AXES = {
+    size: [
+        { suffix: 'Width', startKey: 'startWidth', endKey: 'endWidth' },
+        { suffix: 'Height', startKey: 'startHeight', endKey: 'endHeight' }
+    ],
+    perspectiveOrigin: [
+        { suffix: 'X', startKey: 'startX', endKey: 'endX' },
+        { suffix: 'Y', startKey: 'startY', endKey: 'endY' }
+    ]
+};
+
+/**
+ * Build a continuation animation for a non-transform multi-dimensional
+ * property (`size`, `perspectiveOrigin`) when the retarget command
+ * touches only a subset of its axes and an in-flight WAAPI animation
+ * is mid-flight. Touched axes snap to the new target (start = end =
+ * target so the per-axis curve is flat); untouched axes preserve the
+ * in-flight animation's start / end so they continue along the
+ * original easing curve. The new animation uses the same total
+ * duration and starts with `delay: -oldT`, putting it at the same
+ * progress where the old one was cancelled — for untouched axes this
+ * is indistinguishable from the original animation continuing.
+ *
+ * Returns `true` when a continuation animation was built; `false` when
+ * the caller should fall back to the full-snap path.
+ */
+function retargetNonTransformWithContinuation(animGroup, element, property, elementAnims) {
+    const axes = NON_TRANSFORM_RETARGET_AXES[property.type];
+    if (!axes) return false;
+    if (!elementAnims) return false;
+
+    const existing = elementAnims.get(property.type);
+    if (!existing || !existing.resolvedNonTransform || !existing.animation) return false;
+
+    const timing = existing.animation.effect?.getTiming();
+    const oldDuration = timing?.duration || 0;
+    if (!(oldDuration > 0)) return false;
+
+    const oldT = existing.animation.currentTime;
+    if (!Number.isFinite(oldT) || oldT < 0 || oldT >= oldDuration) return false;
+
+    const hasAnyTouchedFlag = axes.some(
+        ({ suffix }) => typeof property[`touched${suffix}`] === 'boolean'
+    );
+    if (!hasAnyTouchedFlag) return false;
+
+    const hasAnyUntouched = axes.some(
+        ({ suffix }) => property[`touched${suffix}`] === false
+    );
+    if (!hasAnyUntouched) return false;
+
+    // Shallow clone preserves the in-flight start/end/units; mutations
+    // below only overwrite touched axes.
+    const resolved = { ...existing.resolvedNonTransform };
+
+    axes.forEach(({ suffix, startKey, endKey }) => {
+        if (property[`touched${suffix}`] !== true) return;
+        const target = property[`end${suffix}`];
+        if (!Number.isFinite(target)) return;
+        resolved[startKey] = target;
+        resolved[endKey] = target;
+    });
+
+    cancelSilently(elementAnims, property.type);
+
+    const { keyframes, animationEasing } = buildPropertyKeyframes(
+        resolved,
+        existing.easingKeyframes || property.easingKeyframes,
+        property.easing
+    );
+    if (!keyframes) return false;
+
+    const newAnimation = element.animate(keyframes, {
+        duration: oldDuration,
+        delay: -oldT,
+        easing: animationEasing,
+        fill: 'forwards',
+        iterations: 1,
+        direction: 'normal'
+    });
+
+    const newVersion = (existing.version || 1) + 1;
+    const entry = {
+        animation: newAnimation,
+        version: newVersion,
+        animGroup: animGroup,
+        easingKeyframes: existing.easingKeyframes || property.easingKeyframes || null,
+        resolvedNonTransform: resolved,
+        generation: existing.generation,
+        propertyIndex: existing.propertyIndex
+    };
+    elementAnims.set(property.type, entry);
+    entry.updateFn = setupAnimationEvents(animGroup, property.type, element, newAnimation, newVersion, null);
 
     return true;
 }

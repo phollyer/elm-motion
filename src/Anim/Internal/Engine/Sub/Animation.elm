@@ -14,11 +14,11 @@ module Anim.Internal.Engine.Sub.Animation exposing
 import Anim.Internal.Builder exposing (Iterations(..))
 import Anim.Internal.Extra.Color exposing (Color)
 import Anim.Internal.Property.Opacity exposing (Opacity)
-import Anim.Internal.Property.PerspectiveOrigin exposing (PerspectiveOrigin)
-import Anim.Internal.Property.Rotate exposing (Rotate)
-import Anim.Internal.Property.Scale exposing (Scale)
-import Anim.Internal.Property.Size exposing (Size)
-import Anim.Internal.Property.Skew exposing (Skew)
+import Anim.Internal.Property.PerspectiveOrigin as PerspectiveOrigin exposing (PerspectiveOrigin)
+import Anim.Internal.Property.Rotate as Rotate exposing (Rotate)
+import Anim.Internal.Property.Scale as Scale exposing (Scale)
+import Anim.Internal.Property.Size as Size exposing (Size)
+import Anim.Internal.Property.Skew as Skew exposing (Skew)
 import Anim.Internal.Property.Translate as Translate exposing (Translate)
 import Anim.Internal.Unit exposing (ResolvedCssUnitAxes)
 import Set exposing (Set)
@@ -277,69 +277,214 @@ existing animation had no work left to do on untouched axes, so the
 fully stopped `snapped` animation is returned instead. The group's play
 state will then collapse to `Complete`.
 
-Only `Translate` participates in per-axis merging today. For every other
-property type the snapped animation is returned unchanged, matching the
-whole-property scoping the engine already applies.
+Multi-dimensional properties (`Translate`, `Rotate`, `Scale`, `Skew`,
+`PerspectiveOrigin`, `Size`) all participate in per-axis merging. Other
+property types are returned as the snapped animation unchanged, matching
+the whole-property scoping the engine already applies.
 
 -}
 replaceAxes : Set String -> Animation -> Animation -> Animation
 replaceAxes touchedAxes snapped existing =
     case ( snapped, existing ) of
         ( Translate _ snappedAnim, Translate units existingAnim ) ->
-            let
-                target =
-                    Translate.toRecord snappedAnim.end
-
-                existingStart =
-                    Translate.toRecord existingAnim.start
-
-                existingEnd =
-                    Translate.toRecord existingAnim.end
-
-                pick axis fallback =
-                    if Set.member axis touchedAxes then
-                        axisValue axis target
-
-                    else
-                        fallback
-
-                mergedStartRec =
-                    { x = pick "x" existingStart.x
-                    , y = pick "y" existingStart.y
-                    , z = pick "z" existingStart.z
-                    }
-
-                mergedEndRec =
-                    { x = pick "x" existingEnd.x
-                    , y = pick "y" existingEnd.y
-                    , z = pick "z" existingEnd.z
-                    }
-            in
-            if mergedStartRec == mergedEndRec then
+            mergeXYZ touchedAxes
+                Translate.toRecord
+                Translate.fromRecord
+                snappedAnim
+                existingAnim
                 snapped
+                (\anim -> Translate units anim)
 
-            else
-                Translate units
-                    { existingAnim
-                        | start = Translate.fromRecord mergedStartRec
-                        , end = Translate.fromRecord mergedEndRec
-                    }
+        ( Rotate snappedAnim, Rotate existingAnim ) ->
+            mergeXYZ touchedAxes
+                Rotate.toRecord
+                Rotate.fromRecord
+                snappedAnim
+                existingAnim
+                snapped
+                Rotate
+
+        ( Scale snappedAnim, Scale existingAnim ) ->
+            mergeXYZ touchedAxes
+                Scale.toRecord
+                Scale.fromRecord
+                snappedAnim
+                existingAnim
+                snapped
+                Scale
+
+        ( Skew snappedAnim, Skew existingAnim ) ->
+            mergeXY touchedAxes
+                Skew.toRecord
+                Skew.fromRecord
+                snappedAnim
+                existingAnim
+                snapped
+                Skew
+
+        ( PerspectiveOrigin _ snappedAnim, PerspectiveOrigin units existingAnim ) ->
+            mergeXY touchedAxes
+                PerspectiveOrigin.toRecord
+                PerspectiveOrigin.fromRecord
+                snappedAnim
+                existingAnim
+                snapped
+                (\anim -> PerspectiveOrigin units anim)
+
+        ( Size _ snappedAnim, Size units existingAnim ) ->
+            mergeWH touchedAxes
+                Size.toRecord
+                Size.fromRecord
+                snappedAnim
+                existingAnim
+                snapped
+                (\anim -> Size units anim)
 
         _ ->
             snapped
 
 
-axisValue : String -> { x : Float, y : Float, z : Float } -> Float
-axisValue axis record =
-    case axis of
-        "x" ->
-            record.x
+mergeXYZ :
+    Set String
+    -> (property -> { x : Float, y : Float, z : Float })
+    -> ({ x : Float, y : Float, z : Float } -> property)
+    -> PropertyAnimation property
+    -> PropertyAnimation property
+    -> Animation
+    -> (PropertyAnimation property -> Animation)
+    -> Animation
+mergeXYZ touchedAxes toRec fromRec snappedAnim existingAnim snapped wrap =
+    let
+        target =
+            toRec snappedAnim.end
 
-        "y" ->
-            record.y
+        existingStart =
+            toRec existingAnim.start
 
-        "z" ->
-            record.z
+        existingEnd =
+            toRec existingAnim.end
 
-        _ ->
-            0
+        pick axis fallback selector =
+            if Set.member axis touchedAxes then
+                selector target
+
+            else
+                fallback
+
+        mergedStartRec =
+            { x = pick "x" existingStart.x .x
+            , y = pick "y" existingStart.y .y
+            , z = pick "z" existingStart.z .z
+            }
+
+        mergedEndRec =
+            { x = pick "x" existingEnd.x .x
+            , y = pick "y" existingEnd.y .y
+            , z = pick "z" existingEnd.z .z
+            }
+    in
+    if mergedStartRec == mergedEndRec then
+        snapped
+
+    else
+        wrap
+            { existingAnim
+                | start = fromRec mergedStartRec
+                , end = fromRec mergedEndRec
+            }
+
+
+mergeXY :
+    Set String
+    -> (property -> { x : Float, y : Float })
+    -> ({ x : Float, y : Float } -> property)
+    -> PropertyAnimation property
+    -> PropertyAnimation property
+    -> Animation
+    -> (PropertyAnimation property -> Animation)
+    -> Animation
+mergeXY touchedAxes toRec fromRec snappedAnim existingAnim snapped wrap =
+    let
+        target =
+            toRec snappedAnim.end
+
+        existingStart =
+            toRec existingAnim.start
+
+        existingEnd =
+            toRec existingAnim.end
+
+        pick axis fallback selector =
+            if Set.member axis touchedAxes then
+                selector target
+
+            else
+                fallback
+
+        mergedStartRec =
+            { x = pick "x" existingStart.x .x
+            , y = pick "y" existingStart.y .y
+            }
+
+        mergedEndRec =
+            { x = pick "x" existingEnd.x .x
+            , y = pick "y" existingEnd.y .y
+            }
+    in
+    if mergedStartRec == mergedEndRec then
+        snapped
+
+    else
+        wrap
+            { existingAnim
+                | start = fromRec mergedStartRec
+                , end = fromRec mergedEndRec
+            }
+
+
+mergeWH :
+    Set String
+    -> (property -> { width : Float, height : Float })
+    -> ({ width : Float, height : Float } -> property)
+    -> PropertyAnimation property
+    -> PropertyAnimation property
+    -> Animation
+    -> (PropertyAnimation property -> Animation)
+    -> Animation
+mergeWH touchedAxes toRec fromRec snappedAnim existingAnim snapped wrap =
+    let
+        target =
+            toRec snappedAnim.end
+
+        existingStart =
+            toRec existingAnim.start
+
+        existingEnd =
+            toRec existingAnim.end
+
+        pick axis fallback selector =
+            if Set.member axis touchedAxes then
+                selector target
+
+            else
+                fallback
+
+        mergedStartRec =
+            { width = pick "width" existingStart.width .width
+            , height = pick "height" existingStart.height .height
+            }
+
+        mergedEndRec =
+            { width = pick "width" existingEnd.width .width
+            , height = pick "height" existingEnd.height .height
+            }
+    in
+    if mergedStartRec == mergedEndRec then
+        snapped
+
+    else
+        wrap
+            { existingAnim
+                | start = fromRec mergedStartRec
+                , end = fromRec mergedEndRec
+            }

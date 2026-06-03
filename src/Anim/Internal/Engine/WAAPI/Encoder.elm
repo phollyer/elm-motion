@@ -738,6 +738,7 @@ encodeProcessedPropertyConfig maybeVersions frozenAxes touchedAxes property =
                        , ( "unitY", Encode.string (InternalUnit.toCssSuffix config.cssUnit.y) )
                        , ( "duration", Encode.int config.duration )
                        ]
+                    ++ touchedAxesFields "perspectiveOrigin" [ ( "x", "touchedX" ), ( "y", "touchedY" ) ]
                     ++ encodeEasingWithKeyframes config.duration config.easing config.spring
                 )
 
@@ -756,6 +757,7 @@ encodeProcessedPropertyConfig maybeVersions frozenAxes touchedAxes property =
                        , ( "duration", Encode.int config.duration )
                        ]
                     ++ frozenAxesField "scale"
+                    ++ touchedAxesFields "scale" [ ( "x", "touchedX" ), ( "y", "touchedY" ), ( "z", "touchedZ" ) ]
                     ++ encodeEasingWithKeyframes config.duration config.easing config.spring
                 )
 
@@ -774,6 +776,7 @@ encodeProcessedPropertyConfig maybeVersions frozenAxes touchedAxes property =
                        , ( "duration", Encode.int config.duration )
                        ]
                     ++ frozenAxesField "rotate"
+                    ++ touchedAxesFields "rotate" [ ( "x", "touchedX" ), ( "y", "touchedY" ), ( "z", "touchedZ" ) ]
                     ++ encodeEasingWithKeyframes config.duration config.easing config.spring
                 )
 
@@ -820,6 +823,7 @@ encodeProcessedPropertyConfig maybeVersions frozenAxes touchedAxes property =
                        , ( "duration", Encode.int config.duration )
                        ]
                     ++ frozenAxesField "skew"
+                    ++ touchedAxesFields "skew" [ ( "x", "touchedX" ), ( "y", "touchedY" ) ]
                     ++ encodeEasingWithKeyframes config.duration config.easing config.spring
                 )
 
@@ -844,6 +848,7 @@ encodeProcessedPropertyConfig maybeVersions frozenAxes touchedAxes property =
                        , ( "unitHeight", Encode.string (InternalUnit.toCssSuffix config.cssUnit.y) )
                        , ( "duration", Encode.int config.duration )
                        ]
+                    ++ touchedAxesFields "size" [ ( "width", "touchedWidth" ), ( "height", "touchedHeight" ) ]
                     ++ encodeEasingWithKeyframes config.duration config.easing config.spring
                 )
 
