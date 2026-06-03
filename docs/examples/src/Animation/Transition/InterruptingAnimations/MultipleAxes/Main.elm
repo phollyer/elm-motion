@@ -62,7 +62,7 @@ init : ( Model, Cmd Msg )
 init =
     ( { animState =
             Transition.init
-                [ Translate.initXY animGroupName centerXCqw centerYCqh >> Translate.initUnitX Cqw >> Translate.initUnitY Cqh
+                [ Translate.initXY animGroupName centerXCqw centerYCqh >> Translate.cssUnitX Cqw >> Translate.cssUnitY Cqh
                 ]
       }
     , Cmd.none

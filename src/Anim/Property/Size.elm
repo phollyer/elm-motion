@@ -1,7 +1,7 @@
 module Anim.Property.Size exposing
     ( Builder, AnimGroupName
     , init, initHW, initW, initH
-    , initUnit, initUnitW, initUnitH
+    , cssUnit, cssUnitW, cssUnitH
     , for, build
     , fromHW, fromH, fromW, from
     , toHW, toH, toW
@@ -36,7 +36,7 @@ or 0 if not set.
 ## Initial Unit
 
 Set the length [Unit](Anim-Unit#Unit) used by `init*` calls earlier in the
-pipeline. Order matters - `initUnit*` only affects `init*` calls that appear
+pipeline. Order matters - `cssUnit*` only affects `init*` calls that appear
 before it in the pipeline. Defaults to `Px`.
 
     import Anim.Unit exposing (Unit(..))
@@ -45,14 +45,14 @@ before it in the pipeline. Defaults to `Px`.
         ( { animState =
                 Engine.init
                     [ Size.initHW "btn" 8 25
-                        >> Size.initUnitW Cqw
-                        >> Size.initUnitH Cqh
+                        >> Size.cssUnitW Cqw
+                        >> Size.cssUnitH Cqh
                     ]
           }
         , Cmd.none
         )
 
-@docs initUnit, initUnitW, initUnitH
+@docs cssUnit, cssUnitW, cssUnitH
 
 
 # Build
@@ -67,7 +67,7 @@ before it in the pipeline. Defaults to `Px`.
 
 When not set, the default will be used.
 
-📖 See [Start Values](https://phollyer.github.io/elm-motion/animation/properties/overview/?h=start+values#start-values)
+📖 See [Start Values](https://phollyer.github.io/elm-motion/animation/properties/overview/#start-values)
 for details.
 
 @docs fromHW, fromH, fromW, from
@@ -75,7 +75,7 @@ for details.
 
 ## End Value
 
-📖 See [End Values](https://phollyer.github.io/elm-motion/animation/properties/overview/?h=start+values#end-values)
+📖 See [End Values](https://phollyer.github.io/elm-motion/animation/properties/overview/#end-values)
 for details.
 
 @docs toHW, toH, toW
@@ -265,35 +265,37 @@ pipeline for `Size` values. Defaults to `Px`.
 
 Order matters - only `init*` calls upstream of this setter in the pipeline are
 affected; calls later in the pipeline keep their previously selected unit (or
-`Px`). Later per-axis setters ([`initUnitW`](#initUnitW),
-[`initUnitH`](#initUnitH)) override this setting on the relevant axis.
+`Px`). Later per-axis setters ([`cssUnitW`](#cssUnitW),
+[`cssUnitH`](#cssUnitH)) override this setting on the relevant axis.
 
     import Anim.Unit exposing (Unit(..))
 
     Engine.init
         [ Size.initHW "btn" 8 25
-            >> Size.initUnit Cqmin
+            >> Size.cssUnit Cqmin
         ]
 
 -}
-initUnit : Unit -> AnimBuilder eng -> AnimBuilder eng
-initUnit =
+cssUnit : Unit -> AnimBuilder eng -> AnimBuilder eng
+cssUnit =
     IB.setSizeInitCssUnit
 
 
-{-| Set the width-axis unit used by every subsequent `init*` call for `Size`
-values. Overrides any unit set by [`initUnit`](#initUnit) on the width axis.
+{-| Set the width-axis unit used by `init*` calls earlier in the pipeline for
+`Size` values. Overrides any unit set by [`cssUnit`](#cssUnit) on the width
+axis.
 -}
-initUnitW : Unit -> AnimBuilder eng -> AnimBuilder eng
-initUnitW =
+cssUnitW : Unit -> AnimBuilder eng -> AnimBuilder eng
+cssUnitW =
     IB.setSizeInitCssUnitWidth
 
 
-{-| Set the height-axis unit used by every subsequent `init*` call for `Size`
-values. Overrides any unit set by [`initUnit`](#initUnit) on the height axis.
+{-| Set the height-axis unit used by `init*` calls earlier in the pipeline for
+`Size` values. Overrides any unit set by [`cssUnit`](#cssUnit) on the height
+axis.
 -}
-initUnitH : Unit -> AnimBuilder eng -> AnimBuilder eng
-initUnitH =
+cssUnitH : Unit -> AnimBuilder eng -> AnimBuilder eng
+cssUnitH =
     IB.setSizeInitCssUnitHeight
 
 

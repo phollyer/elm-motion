@@ -1,13 +1,14 @@
-module Anim.Property.InitUnitSpec exposing (suite)
+module Anim.Property.CssUnitSpec exposing (suite)
 
-{-| Tests for `initUnit*` API across Translate, Size, and PerspectiveOrigin.
+{-| Tests for `cssUnit*` API across Translate, Size, and PerspectiveOrigin.
 
 Each property exposes:
 
-  - `initUnit` - set the unit for all subsequent `init*` calls
-  - per-axis variants that override `initUnit` on a specific axis
+    - `cssUnit` - set the unit for `init*` calls earlier in the pipeline
 
-Order matters - `initUnit*` only affects `init*` calls that follow it in
+  - per-axis variants that override `cssUnit` on a specific axis
+
+Order matters - `cssUnit*` only affects `init*` calls that appear before it in
 the pipeline. The rendered CSS unit is verified by inspecting the inline
 style output via the WAAPI engine's `attributes` function.
 
@@ -50,7 +51,7 @@ query state =
 
 suite : Test
 suite =
-    describe "Property.initUnit"
+    describe "Property.cssUnit"
         [ translateTests
         , sizeTests
         , perspectiveOriginTests
@@ -65,50 +66,50 @@ suite =
 
 translateTests : Test
 translateTests =
-    describe "Translate.initUnit"
-        [ test "default unit (Px) is used when initUnit is not called" <|
+    describe "Translate.cssUnit"
+        [ test "default unit (Px) is used when cssUnit is not called" <|
             \_ ->
                 initWith [ Translate.initXY "el" 50 25 ]
                     |> query
                     |> Query.has [ Selector.style "transform" "translate3d(50px, 25px, 0px)" ]
-        , test "initUnit sets the unit for subsequent initXY" <|
+        , test "cssUnit sets the unit for earlier initXY" <|
             \_ ->
                 initWith
                     [ Translate.initXY "el" 50 25
-                        >> Translate.initUnit Cqw
+                        >> Translate.cssUnit Cqw
                     ]
                     |> query
                     |> Query.has [ Selector.style "transform" "translate3d(50cqw, 25cqw, 0px)" ]
-        , test "initUnitX overrides initUnit on the X axis only" <|
+        , test "cssUnitX overrides cssUnit on the X axis only" <|
             \_ ->
                 initWith
                     [ Translate.initXY "el" 50 25
-                        >> Translate.initUnit Cqw
-                        >> Translate.initUnitX Vw
+                        >> Translate.cssUnit Cqw
+                        >> Translate.cssUnitX Vw
                     ]
                     |> query
                     |> Query.has [ Selector.style "transform" "translate3d(50vw, 25cqw, 0px)" ]
-        , test "initUnitY overrides initUnit on the Y axis only" <|
+        , test "cssUnitY overrides cssUnit on the Y axis only" <|
             \_ ->
                 initWith
                     [ Translate.initXY "el" 50 25
-                        >> Translate.initUnit Cqw
-                        >> Translate.initUnitY Vh
+                        >> Translate.cssUnit Cqw
+                        >> Translate.cssUnitY Vh
                     ]
                     |> query
                     |> Query.has [ Selector.style "transform" "translate3d(50cqw, 25vh, 0px)" ]
-        , test "initUnitZ sets the Z-axis unit" <|
+        , test "cssUnitZ sets the Z-axis unit" <|
             \_ ->
                 initWith
                     [ Translate.initXYZ "el" 0 0 10
-                        >> Translate.initUnitZ Vw
+                        >> Translate.cssUnitZ Vw
                     ]
                     |> query
                     |> Query.has [ Selector.style "transform" "translate3d(0px, 0px, 10vw)" ]
-        , test "order matters - initUnit before init has no effect" <|
+        , test "order matters - cssUnit before init has no effect" <|
             \_ ->
                 initWith
-                    [ Translate.initUnit Cqw
+                    [ Translate.cssUnit Cqw
                         >> Translate.initXY "el" 50 25
                     ]
                     |> query
@@ -124,8 +125,8 @@ translateTests =
 
 sizeTests : Test
 sizeTests =
-    describe "Size.initUnit"
-        [ test "default unit (Px) is used when initUnit is not called" <|
+    describe "Size.cssUnit"
+        [ test "default unit (Px) is used when cssUnit is not called" <|
             \_ ->
                 let
                     rendered =
@@ -136,13 +137,13 @@ sizeTests =
                     , \_ -> rendered |> Query.has [ Selector.style "width" "120px" ]
                     ]
                     ()
-        , test "initUnit sets the unit for subsequent initHW" <|
+        , test "cssUnit sets the unit for earlier initHW" <|
             \_ ->
                 let
                     rendered =
                         initWith
                             [ Size.initHW "el" 80 120
-                                >> Size.initUnit Cqmin
+                                >> Size.cssUnit Cqmin
                             ]
                             |> query
                 in
@@ -151,14 +152,14 @@ sizeTests =
                     , \_ -> rendered |> Query.has [ Selector.style "width" "120cqmin" ]
                     ]
                     ()
-        , test "initUnitW overrides initUnit on width only" <|
+        , test "cssUnitW overrides cssUnit on width only" <|
             \_ ->
                 let
                     rendered =
                         initWith
                             [ Size.initHW "el" 80 120
-                                >> Size.initUnit Cqmin
-                                >> Size.initUnitW Vw
+                                >> Size.cssUnit Cqmin
+                                >> Size.cssUnitW Vw
                             ]
                             |> query
                 in
@@ -167,14 +168,14 @@ sizeTests =
                     , \_ -> rendered |> Query.has [ Selector.style "width" "120vw" ]
                     ]
                     ()
-        , test "initUnitH overrides initUnit on height only" <|
+        , test "cssUnitH overrides cssUnit on height only" <|
             \_ ->
                 let
                     rendered =
                         initWith
                             [ Size.initHW "el" 80 120
-                                >> Size.initUnit Cqmin
-                                >> Size.initUnitH Vh
+                                >> Size.cssUnit Cqmin
+                                >> Size.cssUnitH Vh
                             ]
                             |> query
                 in
@@ -194,51 +195,51 @@ sizeTests =
 
 perspectiveOriginTests : Test
 perspectiveOriginTests =
-    describe "PerspectiveOrigin.initUnit"
-        [ test "default unit (Percent) is used when initUnit is not called" <|
+    describe "PerspectiveOrigin.cssUnit"
+        [ test "default unit (Percent) is used when cssUnit is not called" <|
             \_ ->
                 initWith [ PerspectiveOrigin.initXY "el" 50 75 ]
                     |> query
                     |> Query.has [ Selector.style "perspective-origin" "50% 75%" ]
-        , test "initUnit switches the unit for subsequent initXY" <|
+        , test "cssUnit switches the unit for earlier initXY" <|
             \_ ->
                 initWith
                     [ PerspectiveOrigin.initXY "el" 200 150
-                        >> PerspectiveOrigin.initUnit Px
+                        >> PerspectiveOrigin.cssUnit Px
                     ]
                     |> query
                     |> Query.has [ Selector.style "perspective-origin" "200px 150px" ]
-        , test "initUnitX overrides initUnit on the X axis only" <|
+        , test "cssUnitX overrides cssUnit on the X axis only" <|
             \_ ->
                 initWith
                     [ PerspectiveOrigin.initXY "el" 50 150
-                        >> PerspectiveOrigin.initUnit Px
-                        >> PerspectiveOrigin.initUnitX Percent
+                        >> PerspectiveOrigin.cssUnit Px
+                        >> PerspectiveOrigin.cssUnitX Percent
                     ]
                     |> query
                     |> Query.has [ Selector.style "perspective-origin" "50% 150px" ]
-        , test "initUnitY overrides initUnit on the Y axis only" <|
+        , test "cssUnitY overrides cssUnit on the Y axis only" <|
             \_ ->
                 initWith
                     [ PerspectiveOrigin.initXY "el" 200 50
-                        >> PerspectiveOrigin.initUnit Px
-                        >> PerspectiveOrigin.initUnitY Percent
+                        >> PerspectiveOrigin.cssUnit Px
+                        >> PerspectiveOrigin.cssUnitY Percent
                     ]
                     |> query
                     |> Query.has [ Selector.style "perspective-origin" "200px 50%" ]
-        , test "initX uses the unit selected by initUnitX" <|
+        , test "initX uses the unit selected by cssUnitX" <|
             \_ ->
                 initWith
                     [ PerspectiveOrigin.initX "el" 200
-                        >> PerspectiveOrigin.initUnitX Px
+                        >> PerspectiveOrigin.cssUnitX Px
                     ]
                     |> query
                     |> Query.has [ Selector.style "perspective-origin" "200px 50%" ]
-        , test "initY uses the unit selected by initUnitY" <|
+        , test "initY uses the unit selected by cssUnitY" <|
             \_ ->
                 initWith
                     [ PerspectiveOrigin.initY "el" 150
-                        >> PerspectiveOrigin.initUnitY Px
+                        >> PerspectiveOrigin.cssUnitY Px
                     ]
                     |> query
                     |> Query.has [ Selector.style "perspective-origin" "50% 150px" ]

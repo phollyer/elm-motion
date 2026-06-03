@@ -18,7 +18,7 @@ module Anim.Internal.Builder.CssUnitStore exposing
 opaque strings (one per axis or named dimension) — property modules look them
 up by the constants exposed below rather than raw strings.
 
-The store is populated by `init*` followed by `initUnit*` calls in each
+The store is populated by `init*` followed by `cssUnit*` calls in each
 property module's pipeline; consumed by `processProperty` and baseline
 extraction at render time so the same `Engine.init` list is order-independent
 within a property's own chain.

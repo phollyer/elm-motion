@@ -774,9 +774,9 @@ cssUnitHeight unit (AnimBuilder data) =
 
 
 -- Per-group, per-property init-time CSS unit overrides. The store is keyed
--- by `(animGroupName, slot)` and populated by the public `Translate.initUnit*`
--- / `Size.initUnit*` / `PerspectiveOrigin.initUnit*` families. Each property's
--- `for` registers its `currentGroup` so subsequent `initUnit*` calls in the
+-- by `(animGroupName, slot)` and populated by the public `Translate.cssUnit*`
+-- / `Size.cssUnit*` / `PerspectiveOrigin.cssUnit*` families. Each property's
+-- `for` registers its `currentGroup` so subsequent `cssUnit*` calls in the
 -- same chain know which group to attach to. Resolution happens at process
 -- and baseline time.
 

@@ -66,7 +66,7 @@ init =
     ( { animState =
             Sub.init
                 [ Translate.initX animGroupName centerXCqw
-                    >> Translate.initUnitX Cqw
+                    >> Translate.cssUnitX Cqw
                 , CustomColor.init animGroupName CustomColor.BackgroundColor <| Color.rgb 118 118 118
                 ]
       }

@@ -40,7 +40,7 @@ When no start value is configured, the default will be used.
 
 When not set, the default will be used.
 
-📖 See [Start Values](https://phollyer.github.io/elm-motion/animation/properties/overview/?h=start+values#start-values)
+📖 See [Start Values](https://phollyer.github.io/elm-motion/animation/properties/overview/#start-values)
 for details.
 
 @docs from

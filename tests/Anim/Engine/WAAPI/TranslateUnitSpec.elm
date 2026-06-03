@@ -1,7 +1,7 @@
 module Anim.Engine.WAAPI.TranslateUnitSpec exposing (suite)
 
 {-| Verifies that the WAAPI translate encoder emits a `unit` field reflecting
-the length unit configured via `Translate.initUnit`. The JS companion uses this
+the length unit configured via `Translate.cssUnit`. The JS companion uses this
 field to build `translate3d(...)` keyframe strings with the matching CSS unit
 (`px`, `%`, `vw`/`vh`, dynamic-viewport `dvw`/`dvh`/`svw`/`svh`/`lvw`/`lvh`,
 `rem`, `em`, container-query `cqi`/`cqb`/`cqw`/`cqh`/`cqmin`/`cqmax`); without
@@ -70,7 +70,7 @@ unitTest description maybeUnit expected =
                         Just unit ->
                             b
                                 |> Translate.initY "ball" 0
-                                |> Translate.initUnit unit
+                                |> Translate.cssUnit unit
 
                 processed =
                     Builder.init [ initStep, translateBuilder ] |> Builder.process

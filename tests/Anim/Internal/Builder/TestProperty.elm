@@ -1414,7 +1414,7 @@ perspectiveOriginClampTests =
             \_ ->
                 animBuilder
                     |> PerspectiveOrigin.initXY "test" 0 0
-                    |> PerspectiveOrigin.initUnit Unit.Px
+                    |> PerspectiveOrigin.cssUnit Unit.Px
                     |> (PerspectiveOrigin.for "test"
                             >> PerspectiveOrigin.clampX 0 100
                             >> PerspectiveOrigin.toX 500

@@ -94,8 +94,8 @@ suite =
                     state =
                         Sub.init
                             [ PerspectiveOrigin.initXY groupName 50 50
-                                >> PerspectiveOrigin.initUnitX Unit.Percent
-                                >> PerspectiveOrigin.initUnitY Unit.Px
+                                >> PerspectiveOrigin.cssUnitX Unit.Percent
+                                >> PerspectiveOrigin.cssUnitY Unit.Px
                             ]
                             |> (\s ->
                                     Sub.animate s

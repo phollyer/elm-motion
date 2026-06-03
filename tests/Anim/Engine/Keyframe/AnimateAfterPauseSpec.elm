@@ -34,7 +34,7 @@ toMsg _ =
 
 initial : Keyframe.AnimState
 initial =
-    Keyframe.init [ Translate.initY animGroup 0 >> Translate.initUnit Cqh ]
+    Keyframe.init [ Translate.initY animGroup 0 >> Translate.cssUnit Cqh ]
 
 
 dropBall : Keyframe.EngineBuilder -> Keyframe.EngineBuilder

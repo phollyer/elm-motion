@@ -56,7 +56,7 @@ init : ( Model, Cmd Msg )
 init =
     ( { animState =
             Sub.init
-                [ Translate.initY animGroup 0 >> Translate.initUnitY Cqh ]
+                [ Translate.initY animGroup 0 >> Translate.cssUnitY Cqh ]
       }
     , Cmd.none
     )

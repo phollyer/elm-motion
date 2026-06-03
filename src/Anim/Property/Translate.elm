@@ -8,7 +8,7 @@ module Anim.Property.Translate exposing
     , delay, duration, speed
     , easing
     , spring
-    , initUnit, initUnitX, initUnitY, initUnitZ
+    , cssUnit, cssUnitX, cssUnitY, cssUnitZ
     , Bounds, AxisBounds, bounds
     , setXYZ, setXY, setXZ, setX, setYZ, setY, setZ
     , clampX, clampY, clampZ, unclampX, unclampY, unclampZ
@@ -41,20 +41,18 @@ When no start value is configured for any axis, the default will be used for tha
 
 ## Start Value
 
-When not set, the default will be used.
-
-📖 See [Start Values](https://phollyer.github.io/elm-motion/animation/properties/overview/?h=start+values#start-values)
-for details.
-
 @docs fromXYZ, fromXY, fromXZ, fromX, fromYZ, fromY, fromZ
+
+📖 See [Start Values](https://phollyer.github.io/elm-motion/animation/properties/overview/#start-values)
+for details.
 
 
 ## End Value (Absolute)
 
-📖 See [End Values](https://phollyer.github.io/elm-motion/animation/properties/overview/?h=start+values#end-values)
-for details.
-
 @docs toXYZ, toXY, toXZ, toX, toYZ, toY, toZ
+
+📖 See [End Values](https://phollyer.github.io/elm-motion/animation/properties/overview/#end-values)
+for details.
 
 
 ## End Value (Relative)
@@ -65,10 +63,10 @@ Move by a delta instead of to a fixed position. The end value is
 Only available on the Sub and WAAPI engines. Calling them
 from a Transition or Keyframe builder results in a type error.
 
-📖 See [Start Values](https://phollyer.github.io/elm-motion/animation/properties/overview/?h=start+values#start-values)
-for full per-engine behaviour.
-
 @docs byXYZ, byXY, byXZ, byX, byYZ, byY, byZ
+
+📖 See [End Values](https://phollyer.github.io/elm-motion/animation/properties/overview/#end-values)
+for details.
 
 
 ## Timing
@@ -97,30 +95,9 @@ for details.
 
 ## CSS Units
 
+Set the CSS length unit(s) used in translate animations.
 
-### Initial Unit
-
-Set the length [Unit](Anim-Unit#Unit) used by `init*` calls earlier in the
-pipeline. Order matters - `initUnit*` only affects `init*` calls that appear
-before it in the pipeline. Defaults to `Px`.
-
-    import Anim.Unit exposing (Unit(..))
-
-    init _ =
-        ( { animState =
-                Engine.init
-                    [ Translate.initX "box" 50
-                        >> Translate.initUnit Cqw
-                        -- this X axis uses Cqw
-                        >> Translate.initUnitY Cqh
-                        -- later Y axes use Cqh instead of Cqw
-                        >> Translate.initXY "ball" 40 20
-                    ]
-          }
-        , Cmd.none
-        )
-
-@docs initUnit, initUnitX, initUnitY, initUnitZ
+@docs cssUnit, cssUnitX, cssUnitY, cssUnitZ
 
 
 ## Resize
@@ -265,56 +242,6 @@ initZ animationKey z animBuilder =
         |> TB.toZ z
         |> TB.build
         |> SB.registerTranslateInitAxes [ CssUnitStore.translateZ ]
-
-
-
--- Initial Unit
-
-
-{-| Set the length [Unit](Anim-Unit#Unit) used by `init*` calls earlier in the
-pipeline for `Translate` values. Defaults to `Px`.
-
-Order matters - only `init*` calls upstream of this setter in the pipeline are
-affected; calls later in the pipeline keep their previously selected unit (or
-`Px`). Later per-axis setters ([`initUnitX`](#initUnitX),
-[`initUnitY`](#initUnitY), [`initUnitZ`](#initUnitZ)) override this setting on
-the relevant axis.
-
-    import Anim.Unit exposing (Unit(..))
-
-    Engine.init
-        [ Translate.initX "box" 50
-            >> Translate.initUnit Cqw
-        ]
-
--}
-initUnit : Unit -> AnimBuilder eng -> AnimBuilder eng
-initUnit =
-    SB.setTranslateInitCssUnit
-
-
-{-| Set the X-axis unit used by every subsequent `init*` call for `Translate`
-values. Overrides any unit set by [`initUnit`](#initUnit) on the X axis.
--}
-initUnitX : Unit -> AnimBuilder eng -> AnimBuilder eng
-initUnitX =
-    SB.setTranslateInitCssUnitX
-
-
-{-| Set the Y-axis unit used by every subsequent `init*` call for `Translate`
-values. Overrides any unit set by [`initUnit`](#initUnit) on the Y axis.
--}
-initUnitY : Unit -> AnimBuilder eng -> AnimBuilder eng
-initUnitY =
-    SB.setTranslateInitCssUnitY
-
-
-{-| Set the Z-axis unit used by every subsequent `init*` call for `Translate`
-values. Overrides any unit set by [`initUnit`](#initUnit) on the Z axis.
--}
-initUnitZ : Unit -> AnimBuilder eng -> AnimBuilder eng
-initUnitZ =
-    SB.setTranslateInitCssUnitZ
 
 
 
@@ -655,6 +582,48 @@ easing =
 spring : Spring -> Builder { eng | withSpring : () } -> Builder { eng | withSpring : () }
 spring =
     TB.spring
+
+
+
+-- ============================================================
+-- CSS UNITS
+-- ============================================================
+
+
+{-| Set the length [Unit](Anim-Unit#Unit) for all axes.
+
+    import Anim.Unit exposing (Unit(..))
+
+    Engine.init
+        [ Translate.initX "box" 50
+            >> Translate.cssUnit Cqw
+        ]
+
+-}
+cssUnit : Unit -> AnimBuilder eng -> AnimBuilder eng
+cssUnit =
+    SB.setTranslateInitCssUnit
+
+
+{-| Set the length [Unit](Anim-Unit#Unit) for the X axis.
+-}
+cssUnitX : Unit -> AnimBuilder eng -> AnimBuilder eng
+cssUnitX =
+    SB.setTranslateInitCssUnitX
+
+
+{-| Set the length [Unit](Anim-Unit#Unit) for the Y axis.
+-}
+cssUnitY : Unit -> AnimBuilder eng -> AnimBuilder eng
+cssUnitY =
+    SB.setTranslateInitCssUnitY
+
+
+{-| Set the length [Unit](Anim-Unit#Unit) for the Z axis.
+-}
+cssUnitZ : Unit -> AnimBuilder eng -> AnimBuilder eng
+cssUnitZ =
+    SB.setTranslateInitCssUnitZ
 
 
 

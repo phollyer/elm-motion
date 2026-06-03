@@ -230,7 +230,7 @@ fromResolvedCssUnitAxes axes =
 
 {-| Fill empty axes of `axes` with the corresponding values from a stored
 baseline (a previous animation's user-configured units, in unresolved
-Maybe form). Used so the unit chosen at `initUnit*` time persists across
+Maybe form). Used so the unit chosen at `cssUnit*` time persists across
 subsequent `animate` calls that don't re-state a unit, while leaving
 empty axes untouched so engine-level `cssUnit*` defaults still win on
 axes the user never set.

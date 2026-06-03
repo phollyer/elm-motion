@@ -1,7 +1,7 @@
 module Anim.Engine.WAAPI.PerspectiveOriginUnitSpec exposing (suite)
 
 {-| Verifies that the WAAPI perspective-origin encoder emits a `unit` field
-reflecting the length unit configured via `PerspectiveOrigin.initUnit`. The JS
+reflecting the length unit configured via `PerspectiveOrigin.cssUnit`. The JS
 companion uses this field to build `perspective-origin: <x> <y>` keyframe
 strings with the matching CSS unit.
 -}
@@ -67,7 +67,7 @@ unitTest description maybeUnit expected =
                         Just unit ->
                             b
                                 |> PerspectiveOrigin.initXY "card" 0 0
-                                |> PerspectiveOrigin.initUnit unit
+                                |> PerspectiveOrigin.cssUnit unit
 
                 processed =
                     Builder.init [ initStep, originBuilder ] |> Builder.process

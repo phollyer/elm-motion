@@ -54,7 +54,7 @@ init =
     let
         animState =
             WAAPI.init motionCmd motionMsg <|
-                [ Translate.initY animGroup 0 >> Translate.initUnitY Cqh ]
+                [ Translate.initY animGroup 0 >> Translate.cssUnitY Cqh ]
     in
     ( { animState = animState }
     , Cmd.none

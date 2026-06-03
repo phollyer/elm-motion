@@ -37,7 +37,7 @@ init : ( Model, Cmd Msg )
 init =
     ( { animState =
             Keyframe.init
-                [ Translate.initY animGroup 0 >> Translate.initUnitY Cqh ]
+                [ Translate.initY animGroup 0 >> Translate.cssUnitY Cqh ]
       }
     , Cmd.none
     )

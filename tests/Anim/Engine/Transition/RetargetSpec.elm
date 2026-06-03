@@ -50,8 +50,8 @@ cqwInitState : Transition.AnimState
 cqwInitState =
     Transition.init
         [ Translate.initXY "el" 0 0
-            >> Translate.initUnitX Cqw
-            >> Translate.initUnitY Cqh
+            >> Translate.cssUnitX Cqw
+            >> Translate.cssUnitY Cqh
         ]
 
 

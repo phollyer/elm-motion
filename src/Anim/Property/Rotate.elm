@@ -43,7 +43,7 @@ or zero if not set.
 
 When not set, the default will be used.
 
-📖 See [Start Values](https://phollyer.github.io/elm-motion/animation/properties/overview/?h=start+values#start-values)
+📖 See [Start Values](https://phollyer.github.io/elm-motion/animation/properties/overview/#start-values)
 for details.
 
 @docs fromXYZ, fromXY, fromXZ, fromX, fromYZ, fromY, fromZ
@@ -51,7 +51,7 @@ for details.
 
 ## End Value
 
-📖 See [End Values](https://phollyer.github.io/elm-motion/animation/properties/overview/?h=start+values#end-values)
+📖 See [End Values](https://phollyer.github.io/elm-motion/animation/properties/overview/#end-values)
 for details.
 
 @docs toXYZ, toXY, toXZ, toX, toYZ, toY, toZ

@@ -41,9 +41,9 @@ init : ( Model, Cmd Msg )
 init =
     ( { animState =
             Transition.init
-                [ Size.initHW scaleButton baseHeight baseWidth >> Size.initUnit Cqmin
-                , Size.initHW sizeButton baseHeight baseWidth >> Size.initUnit Cqmin
-                , Size.initHW zButton baseHeight baseWidth >> Size.initUnit Cqmin
+                [ Size.initHW scaleButton baseHeight baseWidth >> Size.cssUnit Cqmin
+                , Size.initHW sizeButton baseHeight baseWidth >> Size.cssUnit Cqmin
+                , Size.initHW zButton baseHeight baseWidth >> Size.cssUnit Cqmin
                 ]
       }
     , Cmd.none

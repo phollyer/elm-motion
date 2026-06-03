@@ -45,7 +45,7 @@ module Anim.Property.CustomColor exposing
 
 ## Start Value
 
-📖 See [Start Values](https://phollyer.github.io/elm-motion/animation/properties/overview/?h=start+values#start-values)
+📖 See [Start Values](https://phollyer.github.io/elm-motion/animation/properties/overview/#start-values)
 for details.
 
 @docs from
@@ -53,7 +53,7 @@ for details.
 
 ## End Value
 
-📖 See [End Values](https://phollyer.github.io/elm-motion/animation/properties/overview/?h=start+values#end-values)
+📖 See [End Values](https://phollyer.github.io/elm-motion/animation/properties/overview/#end-values)
 for details.
 
 @docs to

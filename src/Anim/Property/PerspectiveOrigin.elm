@@ -1,7 +1,7 @@
 module Anim.Property.PerspectiveOrigin exposing
     ( Builder, AnimGroupName
     , initXY, initX, initY
-    , initUnit, initUnitX, initUnitY
+    , cssUnit, cssUnitX, cssUnitY
     , for, build
     , from, fromXY, fromX, fromY
     , to, toXY, toX, toY
@@ -16,7 +16,7 @@ module Anim.Property.PerspectiveOrigin exposing
 {-| Animate the CSS `perspective-origin` property, which controls the vanishing point
 for 3D transforms applied to a parent element.
 
-**Default unit**: `%`. Use [`initUnit`](#initUnit) to switch to other CSS length units.
+**Default unit**: `%`. Use [`cssUnit`](#cssUnit) to switch to other CSS length units.
 
 **Default value**: `50% 50%` (center of the element)
 
@@ -34,8 +34,8 @@ attribute yourself in your view.
 # Initialize
 
 The default unit for `perspective-origin` is `Percent`. Use
-[`initUnit`](#initUnit) (or [`initUnitX`](#initUnitX) /
-[`initUnitY`](#initUnitY)) to switch the unit used by `init*` calls earlier in
+[`cssUnit`](#cssUnit) (or [`cssUnitX`](#cssUnitX) /
+[`cssUnitY`](#cssUnitY)) to switch the unit used by `init*` calls earlier in
 the pipeline.
 
 @docs initXY, initX, initY
@@ -44,7 +44,7 @@ the pipeline.
 ## Initial Unit
 
 Set the length [Unit](Anim-Unit#Unit) used by `init*` calls earlier in the
-pipeline. Order matters - `initUnit*` only affects `init*` calls that appear
+pipeline. Order matters - `cssUnit*` only affects `init*` calls that appear
 before it in the pipeline. Defaults to `Percent`.
 
     import Anim.Unit exposing (Unit(..))
@@ -53,13 +53,13 @@ before it in the pipeline. Defaults to `Percent`.
         ( { animState =
                 Engine.init
                     [ PerspectiveOrigin.initXY "vp" 200 150
-                        >> PerspectiveOrigin.initUnit Px
+                        >> PerspectiveOrigin.cssUnit Px
                     ]
           }
         , Cmd.none
         )
 
-@docs initUnit, initUnitX, initUnitY
+@docs cssUnit, cssUnitX, cssUnitY
 
 
 # Build
@@ -74,7 +74,7 @@ before it in the pipeline. Defaults to `Percent`.
 
 When not set, the default will be used.
 
-📖 See [Start Values](https://phollyer.github.io/elm-motion/animation/properties/overview/?h=start+values#start-values)
+📖 See [Start Values](https://phollyer.github.io/elm-motion/animation/properties/overview/#start-values)
 for details.
 
 @docs from, fromXY, fromX, fromY
@@ -82,7 +82,7 @@ for details.
 
 ## End Value
 
-📖 See [End Values](https://phollyer.github.io/elm-motion/animation/properties/overview/?h=start+values#end-values)
+📖 See [End Values](https://phollyer.github.io/elm-motion/animation/properties/overview/#end-values)
 for details.
 
 @docs to, toXY, toX, toY
@@ -169,8 +169,8 @@ type alias Builder eng =
 
 
 {-| Set the initial perspective origin on both axes. Uses whichever
-[Unit](Anim-Unit#Unit) was most recently selected by [`initUnit`](#initUnit) /
-[`initUnitX`](#initUnitX) / [`initUnitY`](#initUnitY) upstream in the pipeline
+[Unit](Anim-Unit#Unit) was most recently selected by [`cssUnit`](#cssUnit) /
+[`cssUnitX`](#cssUnitX) / [`cssUnitY`](#cssUnitY) upstream in the pipeline
 (defaults to `Percent`).
 
     import Anim.Engine.* as Engine
@@ -194,8 +194,8 @@ initXY animationKey x y animBuilder =
 
 
 {-| Set the initial X-axis perspective origin. Uses whichever
-[Unit](Anim-Unit#Unit) was most recently selected by [`initUnit`](#initUnit) /
-[`initUnitX`](#initUnitX) upstream in the pipeline (defaults to `Percent`).
+[Unit](Anim-Unit#Unit) was most recently selected by [`cssUnit`](#cssUnit) /
+[`cssUnitX`](#cssUnitX) upstream in the pipeline (defaults to `Percent`).
 -}
 initX : AnimGroupName -> Float -> AnimBuilder eng -> AnimBuilder eng
 initX animationKey x animBuilder =
@@ -208,8 +208,8 @@ initX animationKey x animBuilder =
 
 
 {-| Set the initial Y-axis perspective origin. Uses whichever
-[Unit](Anim-Unit#Unit) was most recently selected by [`initUnit`](#initUnit) /
-[`initUnitY`](#initUnitY) upstream in the pipeline (defaults to `Percent`).
+[Unit](Anim-Unit#Unit) was most recently selected by [`cssUnit`](#cssUnit) /
+[`cssUnitY`](#cssUnitY) upstream in the pipeline (defaults to `Percent`).
 -}
 initY : AnimGroupName -> Float -> AnimBuilder eng -> AnimBuilder eng
 initY animationKey y animBuilder =
@@ -226,37 +226,37 @@ pipeline for `PerspectiveOrigin` values. Defaults to `Percent`.
 
 Order matters - only `init*` calls upstream of this setter in the pipeline are
 affected; calls later in the pipeline keep their previously selected unit (or
-`Percent`). Later per-axis setters ([`initUnitX`](#initUnitX),
-[`initUnitY`](#initUnitY)) override this setting on the relevant axis.
+`Percent`). Later per-axis setters ([`cssUnitX`](#cssUnitX),
+[`cssUnitY`](#cssUnitY)) override this setting on the relevant axis.
 
     import Anim.Unit exposing (Unit(..))
 
     Engine.init
         [ PerspectiveOrigin.initXY "vp" 200 150
-            >> PerspectiveOrigin.initUnit Px
+            >> PerspectiveOrigin.cssUnit Px
         ]
 
 -}
-initUnit : Unit.Unit -> AnimBuilder eng -> AnimBuilder eng
-initUnit =
+cssUnit : Unit.Unit -> AnimBuilder eng -> AnimBuilder eng
+cssUnit =
     IB.setPerspectiveOriginInitCssUnit
 
 
-{-| Set the X-axis unit used by every subsequent `init*` call for
-`PerspectiveOrigin` values. Overrides any unit set by [`initUnit`](#initUnit)
+{-| Set the X-axis unit used by `init*` calls earlier in the pipeline for
+`PerspectiveOrigin` values. Overrides any unit set by [`cssUnit`](#cssUnit)
 on the X axis.
 -}
-initUnitX : Unit.Unit -> AnimBuilder eng -> AnimBuilder eng
-initUnitX =
+cssUnitX : Unit.Unit -> AnimBuilder eng -> AnimBuilder eng
+cssUnitX =
     IB.setPerspectiveOriginInitCssUnitX
 
 
-{-| Set the Y-axis unit used by every subsequent `init*` call for
-`PerspectiveOrigin` values. Overrides any unit set by [`initUnit`](#initUnit)
+{-| Set the Y-axis unit used by `init*` calls earlier in the pipeline for
+`PerspectiveOrigin` values. Overrides any unit set by [`cssUnit`](#cssUnit)
 on the Y axis.
 -}
-initUnitY : Unit.Unit -> AnimBuilder eng -> AnimBuilder eng
-initUnitY =
+cssUnitY : Unit.Unit -> AnimBuilder eng -> AnimBuilder eng
+cssUnitY =
     IB.setPerspectiveOriginInitCssUnitY
 
 
