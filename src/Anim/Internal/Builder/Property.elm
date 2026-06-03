@@ -1,6 +1,5 @@
 module Anim.Internal.Builder.Property exposing
-    ( InheritedTiming
-    , applyFrozenAxes
+    ( applyFrozenAxes
     , clampAxis
     , cssUnit
     , cssUnitX
@@ -11,7 +10,6 @@ module Anim.Internal.Builder.Property exposing
     , duration
     , easing
     , for
-    , forContinuing
     , getCustomColorPropertyEnd
     , getCustomColorPropertyRange
     , getCustomColorPropertyStart
@@ -40,7 +38,6 @@ module Anim.Internal.Builder.Property exposing
     , getTranslateEnd
     , getTranslateRange
     , getTranslateStart
-    , seedCssUnit
     , setEnd
     , speed
     , spring
@@ -111,68 +108,8 @@ for :
     -> Config a
     -> AnimBuilder eng
     -> Config a
-for animGroupName propertyTypeTag extractBaseline extractExisting =
-    resolveFor Fresh animGroupName propertyTypeTag extractBaseline extractExisting (\_ -> Nothing)
-
-
-{-| Like [for](#for), but inherits `easing`, `spring`, `delay`, and `timing`
-from the previous animation's config; falls back to [for](#for) if there is
-no previous config.
--}
-forContinuing :
-    AnimGroupName
-    -> String
-    -> (PropertyBaselines -> Maybe a)
-    -> (Builder.PropertyConfig -> Maybe (Config a))
-    -> (Builder.ProcessedPropertyConfig -> Maybe InheritedTiming)
-    -> Config a
-    -> AnimBuilder eng
-    -> Config a
-forContinuing =
-    resolveFor Continuing
-
-
-type ForMode
-    = Fresh
-    | Continuing
-
-
-type alias InheritedTiming =
-    { timing : Maybe TimeSpec
-    , easing : Maybe Easing
-    , spring : Maybe Spring
-    , delay : Maybe Int
-    }
-
-
-resolveFor :
-    ForMode
-    -> AnimGroupName
-    -> String
-    -> (PropertyBaselines -> Maybe a)
-    -> (Builder.PropertyConfig -> Maybe (Config a))
-    -> (Builder.ProcessedPropertyConfig -> Maybe InheritedTiming)
-    -> Config a
-    -> AnimBuilder eng
-    -> Config a
-resolveFor mode animGroupName propertyTypeTag extractBaseline extractExisting extractProcessedTiming defaultConfig_ builder =
+for animGroupName _ extractBaseline extractExisting defaultConfig_ builder =
     let
-        -- Effective mode degrades Continuing to Fresh when the property is
-        -- not reported as currently running. This means `forContinuing`
-        -- behaves like `for` outside an engine-level `retarget` call, or
-        -- when the named property has already finished animating.
-        effectiveMode =
-            case mode of
-                Fresh ->
-                    Fresh
-
-                Continuing ->
-                    if Builder.isPropertyRunning animGroupName propertyTypeTag builder then
-                        Continuing
-
-                    else
-                        Fresh
-
         -- Stored baseline: previous animation's end values (where the animation WAS GOING).
         -- Used for `end` so that non-targeted axes continue to their original targets.
         baselineValue =
@@ -195,41 +132,9 @@ resolveFor mode animGroupName propertyTypeTag extractBaseline extractExisting ex
                         >> List.filterMap extractExisting
                         >> List.head
                     )
-
-        historicalTiming : Maybe InheritedTiming
-        historicalTiming =
-            case effectiveMode of
-                Fresh ->
-                    Nothing
-
-                Continuing ->
-                    builder
-                        |> Builder.getCurrentAnimationConfig animGroupName
-                        |> Maybe.andThen
-                            (.properties
-                                >> List.filterMap extractProcessedTiming
-                                >> List.head
-                            )
     in
     case existingConfig of
         Just config ->
-            let
-                ( inheritedEasing, inheritedSpring, inheritedDelay ) =
-                    case mode of
-                        Fresh ->
-                            ( Nothing, Nothing, Nothing )
-
-                        Continuing ->
-                            ( config.easing, config.spring, config.delay )
-
-                inheritedTiming =
-                    case mode of
-                        Fresh ->
-                            Nothing
-
-                        Continuing ->
-                            config.timing
-            in
             applyGlobalDefaults builder
                 { config
                     | start =
@@ -237,52 +142,38 @@ resolveFor mode animGroupName propertyTypeTag extractBaseline extractExisting ex
                             |> List.filterMap identity
                             |> List.head
                     , end = config.end
-                    , easing = inheritedEasing
-                    , spring = inheritedSpring
-                    , delay = inheritedDelay
-                    , timing = inheritedTiming
+                    , easing = Nothing
+                    , spring = Nothing
+                    , delay = Nothing
+                    , timing = Nothing
                     , distance = 0
                 }
 
         Nothing ->
-            let
-                seed =
-                    case historicalTiming of
-                        Just t ->
-                            { defaultConfig_
-                                | easing = t.easing
-                                , spring = t.spring
-                                , delay = t.delay
-                                , timing = t.timing
-                            }
-
-                        Nothing ->
-                            defaultConfig_
-            in
             case ( runtimeValue, baselineValue ) of
                 ( Just runtime, Just baseline ) ->
                     applyGlobalDefaults builder <|
-                        { seed
+                        { defaultConfig_
                             | start = Just runtime
                             , end = baseline
                         }
 
                 ( Just runtime, Nothing ) ->
                     applyGlobalDefaults builder <|
-                        { seed
+                        { defaultConfig_
                             | start = Just runtime
                             , end = runtime
                         }
 
                 ( Nothing, Just baseline ) ->
                     applyGlobalDefaults builder <|
-                        { seed
+                        { defaultConfig_
                             | start = Just baseline
                             , end = baseline
                         }
 
                 ( Nothing, Nothing ) ->
-                    applyGlobalDefaults builder seed
+                    applyGlobalDefaults builder defaultConfig_
 
 
 setEnd : a -> (a -> a -> Float) -> a -> { c | start : Maybe a, end : a, distance : Float } -> { c | start : Maybe a, end : a, distance : Float }
@@ -376,40 +267,6 @@ configsMatch prop1 prop2 =
 
         _ ->
             False
-
-
-{-| When `forContinuing` is called after the previous animate has already
-been processed (the normal retarget path), the config's `cssUnit` field
-starts empty because `clearAnimData` wiped `animation.animGroups`.
-
-Resurrect the per-axis units the previous animate stored on the baseline
-so a retarget that omits explicit `cssUnit*` calls inherits the prior
-unit choice instead of silently snapping to the property default (Px).
-
-If the caller has already set `cssUnit` (non-empty), or the baseline has
-no recorded units, the config is returned unchanged.
-
--}
-seedCssUnit :
-    AnimGroupName
-    -> (PropertyBaselines -> Maybe InternalUnit.ResolvedCssUnitAxes)
-    -> AnimBuilder eng
-    -> Config a
-    -> Config a
-seedCssUnit animGroupName extractBaselineUnits builder config =
-    if config.cssUnit == InternalUnit.emptyCssUnitAxes then
-        case
-            Builder.getBaseline animGroupName builder
-                |> Maybe.andThen extractBaselineUnits
-        of
-            Just resolved ->
-                { config | cssUnit = InternalUnit.fromResolvedCssUnitAxes resolved }
-
-            Nothing ->
-                config
-
-    else
-        config
 
 
 applyFrozenAxes :

@@ -24,7 +24,6 @@ module Anim.Internal.Builder.Translate exposing
     , duration
     , easing
     , for
-    , forContinuing
     , from
     , fromX
     , fromXY
@@ -110,38 +109,6 @@ for animGroupName builder =
 
         config =
             PropertyBuilder.for animGroupName "translate" PropertyBaselines.getTranslate extractExisting defaultConfig builder
-    in
-    TranslateBuilder config <|
-        Builder.for animGroupName builder
-
-
-forContinuing : String -> AnimBuilder eng -> TranslateBuilder eng
-forContinuing animGroupName builder =
-    let
-        extractExisting propertyConfig =
-            case propertyConfig of
-                Builder.TranslateConfig cfg ->
-                    Just cfg
-
-                _ ->
-                    Nothing
-
-        extractProcessedTiming processed =
-            case processed of
-                Builder.ProcessedTranslateConfig p ->
-                    Just
-                        { timing = Just p.timing
-                        , easing = Just p.easing
-                        , spring = p.spring
-                        , delay = Just p.delay
-                        }
-
-                _ ->
-                    Nothing
-
-        config =
-            PropertyBuilder.forContinuing animGroupName "translate" PropertyBaselines.getTranslate extractExisting extractProcessedTiming defaultConfig builder
-                |> PropertyBuilder.seedCssUnit animGroupName PropertyBaselines.getTranslateUnits builder
     in
     TranslateBuilder config <|
         Builder.for animGroupName builder

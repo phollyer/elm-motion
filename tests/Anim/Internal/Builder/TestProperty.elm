@@ -21,10 +21,8 @@ import Anim.Property.Size as Size
 import Anim.Property.Skew as Skew
 import Anim.Property.Translate as Translate
 import Anim.Unit as Unit
-import Dict
 import Expect
 import Motion.Easing exposing (Easing(..))
-import Set
 import Shared.TimeSpec exposing (TimeSpec(..))
 import Test exposing (..)
 
@@ -57,7 +55,6 @@ suite =
         , withTests
         , upsertTests
         , propertyGetters
-        , continueForTests
         , translateClampTests
         , rotateClampTests
         , scaleClampTests
@@ -680,28 +677,12 @@ getRangeValue =
 
 
 -- ============================================================
--- continueFor
+-- BATCH HELPERS
 -- ============================================================
 
 
-{-| Mimic what an Engine's `retarget` does after processing an animation:
-push it to history, merge baselines, clear in-progress data, then mark
-the named property as currently running on the given group so the next
-`continueFor` call inherits timing from history.
--}
-finishRetargetBatch : String -> List String -> Builder.AnimBuilder TestMode -> Builder.AnimBuilder TestMode
-finishRetargetBatch animGroupName runningProps builder =
-    builder
-        |> processAndStore
-        |> Builder.mergeBaselines
-        |> Builder.clearAnimData
-        |> Builder.injectRunningProperties
-            (Dict.singleton animGroupName (Set.fromList runningProps))
-
-
-{-| Mimic what an Engine's `animate` does after processing an animation
-(without injecting any running-property set). `continueFor` after this
-behaves like `for`.
+{-| Mimic what an Engine's `animate` does after processing an animation:
+push it to history, merge baselines, and clear in-progress data.
 -}
 finishAnimateBatch : Builder.AnimBuilder TestMode -> Builder.AnimBuilder TestMode
 finishAnimateBatch builder =
@@ -711,8 +692,7 @@ finishAnimateBatch builder =
         |> Builder.clearAnimData
 
 
-{-| Pull the first TranslateConfig out of the in-progress builder. Used to
-inspect what `continueFor` produced before the animation is processed.
+{-| Pull the first TranslateConfig out of the in-progress builder.
 -}
 firstTranslateConfig : Builder.AnimBuilder TestMode -> Maybe (Builder.AnimationConfig InternalTranslate.Translate)
 firstTranslateConfig builder =
@@ -727,139 +707,6 @@ firstTranslateConfig builder =
                         Nothing
             )
         |> List.head
-
-
-continueForTests : Test
-continueForTests =
-    let
-        firstAnim =
-            Translate.for "test"
-                >> Translate.toX 100
-                >> Translate.speed 50
-                >> Translate.easing BounceOut
-                >> Translate.delay 200
-                >> Translate.build
-
-        afterRetarget =
-            firstAnim >> finishRetargetBatch "test" [ "translate" ]
-
-        afterAnimate =
-            firstAnim >> finishAnimateBatch
-    in
-    describe "continueFor"
-        [ test "inherits timing from history when retarget reports translate as running" <|
-            \_ ->
-                animBuilder
-                    |> afterRetarget
-                    |> (Translate.continueFor "test"
-                            >> Translate.toX 300
-                            >> Translate.build
-                       )
-                    |> firstTranslateConfig
-                    |> Maybe.andThen .timing
-                    |> Expect.equal (Just (Speed 50))
-        , test "inherits easing from history when retarget reports translate as running" <|
-            \_ ->
-                animBuilder
-                    |> afterRetarget
-                    |> (Translate.continueFor "test"
-                            >> Translate.toX 300
-                            >> Translate.build
-                       )
-                    |> firstTranslateConfig
-                    |> Maybe.andThen .easing
-                    |> Expect.equal (Just BounceOut)
-        , test "inherits delay from history when retarget reports translate as running" <|
-            \_ ->
-                animBuilder
-                    |> afterRetarget
-                    |> (Translate.continueFor "test"
-                            >> Translate.toX 300
-                            >> Translate.build
-                       )
-                    |> firstTranslateConfig
-                    |> Maybe.andThen .delay
-                    |> Expect.equal (Just 200)
-        , test "uses the new target end value" <|
-            \_ ->
-                animBuilder
-                    |> afterRetarget
-                    |> (Translate.continueFor "test"
-                            >> Translate.toX 300
-                            >> Translate.build
-                       )
-                    |> firstTranslateConfig
-                    |> Maybe.map (.end >> InternalTranslate.toRecord)
-                    |> Expect.equal (Just { x = 300, y = 0, z = 0 })
-        , test "explicit timing override wins over inherited timing" <|
-            \_ ->
-                animBuilder
-                    |> afterRetarget
-                    |> (Translate.continueFor "test"
-                            >> Translate.toX 300
-                            >> Translate.speed 200
-                            >> Translate.build
-                       )
-                    |> firstTranslateConfig
-                    |> Maybe.andThen .timing
-                    |> Expect.equal (Just (Speed 200))
-        , test "explicit easing override wins over inherited easing" <|
-            \_ ->
-                animBuilder
-                    |> afterRetarget
-                    |> (Translate.continueFor "test"
-                            >> Translate.toX 300
-                            >> Translate.easing Linear
-                            >> Translate.build
-                       )
-                    |> firstTranslateConfig
-                    |> Maybe.andThen .easing
-                    |> Expect.equal (Just Linear)
-        , test "behaves like for when there is no history" <|
-            \_ ->
-                animBuilder
-                    |> (Translate.continueFor "test"
-                            >> Translate.toX 300
-                            >> Translate.build
-                       )
-                    |> firstTranslateConfig
-                    |> Maybe.andThen .timing
-                    |> Expect.equal Nothing
-        , test "does NOT inherit when called from animate (no running set injected)" <|
-            \_ ->
-                animBuilder
-                    |> afterAnimate
-                    |> (Translate.continueFor "test"
-                            >> Translate.toX 300
-                            >> Translate.build
-                       )
-                    |> firstTranslateConfig
-                    |> Maybe.andThen .timing
-                    |> Expect.equal Nothing
-        , test "does NOT inherit when retarget reports a different property running" <|
-            \_ ->
-                animBuilder
-                    |> firstAnim
-                    |> finishRetargetBatch "test" [ "opacity" ]
-                    |> (Translate.continueFor "test"
-                            >> Translate.toX 300
-                            >> Translate.build
-                       )
-                    |> firstTranslateConfig
-                    |> Maybe.andThen .timing
-                    |> Expect.equal Nothing
-        , test "for (without continueFor) does NOT inherit timing even with running set" <|
-            \_ ->
-                animBuilder
-                    |> afterRetarget
-                    |> (Translate.for "test"
-                            >> Translate.toX 300
-                            >> Translate.build
-                       )
-                    |> firstTranslateConfig
-                    |> Maybe.andThen .timing
-                    |> Expect.equal Nothing
-        ]
 
 
 

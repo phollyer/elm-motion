@@ -31,7 +31,6 @@ suite =
         [ propertyKeysTests
         , snapTests
         , scopingTests
-        , cssUnitTests
         , resetAfterRetargetTests
         ]
 
@@ -143,7 +142,7 @@ snapTests =
                        )
                     |> (\s ->
                             Transition.retarget s <|
-                                (Translate.continueFor "el"
+                                (Translate.for "el"
                                     >> Translate.toX 300
                                     >> Translate.build
                                 )
@@ -163,7 +162,7 @@ snapTests =
                        )
                     |> (\s ->
                             Transition.retarget s <|
-                                (Translate.continueFor "el"
+                                (Translate.for "el"
                                     >> Translate.toX 300
                                     >> Translate.build
                                 )
@@ -263,42 +262,6 @@ scopingTests =
 
 
 -- ============================================================
--- PER-AXIS CSS UNIT PRESERVATION
--- ============================================================
-
-
-cssUnitTests : Test
-cssUnitTests =
-    describe "retarget preserves per-axis cssUnit from the previous animation"
-        [ test "retarget Y only keeps X axis's Cqw unit in the snapped translate" <|
-            \_ ->
-                initState
-                    |> (\s ->
-                            Transition.animate s <|
-                                (Translate.for "el"
-                                    >> Translate.cssUnitX Cqw
-                                    >> Translate.cssUnitY Cqh
-                                    >> Translate.toXY 88 88
-                                    >> Translate.duration 5000
-                                    >> Translate.easing Linear
-                                    >> Translate.build
-                                )
-                       )
-                    |> (\s ->
-                            Transition.retarget s <|
-                                (Translate.continueFor "el"
-                                    >> Translate.toY 0
-                                    >> Translate.build
-                                )
-                       )
-                    |> stylesFor "el"
-                    |> Maybe.andThen (Styles.get "translate")
-                    |> Expect.equal (Just "88cqw 0cqh 0px")
-        ]
-
-
-
--- ============================================================
 -- RESET AFTER RETARGET
 -- ============================================================
 
@@ -322,7 +285,7 @@ resetAfterRetargetTests =
                        )
                     |> (\s ->
                             Transition.retarget s <|
-                                (Translate.continueFor "el"
+                                (Translate.for "el"
                                     >> Translate.toY 0
                                     >> Translate.build
                                 )
@@ -349,7 +312,7 @@ resetAfterRetargetTests =
                                )
                             |> (\inner ->
                                     Transition.retarget inner <|
-                                        (Translate.continueFor "el"
+                                        (Translate.for "el"
                                             >> Translate.toY 0
                                             >> Translate.build
                                         )
@@ -378,7 +341,7 @@ resetAfterRetargetTests =
                        )
                     |> (\s ->
                             Transition.retarget s <|
-                                (Translate.continueFor "el"
+                                (Translate.for "el"
                                     >> Translate.toY 0
                                     >> Translate.build
                                 )

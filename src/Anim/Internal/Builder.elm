@@ -89,8 +89,6 @@ module Anim.Internal.Builder exposing
     , initDefaults
     , initPlayback
     , injectCurrentStates
-    , injectRunningProperties
-    , isPropertyRunning
     , iterations
     , loopForever
     , markAxes
@@ -442,7 +440,6 @@ type alias PersistentState =
     { animationHistories : AnimGroups AnimationHistory
     , baselines : AnimGroups PropertyBaselines
     , runtimeBaselines : AnimGroups PropertyBaselines
-    , runningProperties : Dict AnimGroupName (Set String)
     , propertyClamps : Dict ( AnimGroupName, String, String ) ( Float, Float )
     }
 
@@ -602,7 +599,6 @@ initState =
     { animationHistories = AnimGroups.init
     , baselines = AnimGroups.init
     , runtimeBaselines = AnimGroups.init
-    , runningProperties = Dict.empty
     , propertyClamps = Dict.empty
     }
 
@@ -1415,36 +1411,6 @@ injectCurrentStates animGroups (AnimBuilder data) =
         }
 
 
-{-| Inject the set of currently-running property keys per animGroup.
-
-Engines call this from their `retarget` function to tell per-property
-`continueFor` resolvers which property animations are still in flight.
-The set is cleared by `clearAnimData` after the pipeline runs, so it
-lives only for the duration of one pipeline invocation.
-
--}
-injectRunningProperties : Dict AnimGroupName (Set String) -> AnimBuilder eng -> AnimBuilder eng
-injectRunningProperties running (AnimBuilder data) =
-    let
-        state =
-            data.state
-    in
-    AnimBuilder
-        { data
-            | state = { state | runningProperties = running }
-        }
-
-
-{-| True when the named property type is currently running on the given
-animGroup, as reported by the most recent `injectRunningProperties` call.
--}
-isPropertyRunning : AnimGroupName -> String -> AnimBuilder eng -> Bool
-isPropertyRunning animGroupName propertyKey (AnimBuilder data) =
-    Dict.get animGroupName data.state.runningProperties
-        |> Maybe.map (Set.member propertyKey)
-        |> Maybe.withDefault False
-
-
 {-| Get a clamp range for a (animGroup, propertyKey, axis) triple, if any.
 -}
 getClamp : AnimGroupName -> String -> String -> AnimBuilder eng -> Maybe ( Float, Float )
@@ -1495,9 +1461,6 @@ clearAnimData (AnimBuilder data) =
     let
         pb =
             data.playback
-
-        st =
-            data.state
     in
     AnimBuilder
         { data
@@ -1507,7 +1470,6 @@ clearAnimData (AnimBuilder data) =
                     | discreteEntryProperties = Dict.empty
                     , discreteExitProperties = Dict.empty
                 }
-            , state = { st | runningProperties = Dict.empty }
         }
 
 
@@ -1786,8 +1748,7 @@ propertyType prop =
 
 
 {-| Get the type tag of a ProcessedPropertyConfig. Mirrors `propertyType`
-but for the post-process variant. The returned string matches the keys
-used by `injectRunningProperties` / `isPropertyRunning`.
+but for the post-process variant.
 -}
 processedPropertyType : ProcessedPropertyConfig -> String
 processedPropertyType prop =

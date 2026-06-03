@@ -65,21 +65,27 @@ endXY =
 -- ANIMATION
 
 
+motion : Translate.Builder { eng | withTiming : () } -> Translate.Builder { eng | withTiming : () }
+motion =
+    Translate.cssUnitX Cqw
+        >> Translate.cssUnitY Cqh
+        >> Translate.duration 5000
+        >> Translate.easing Linear
+
+
 animateDiagonal : Keyframe.EngineBuilder -> Keyframe.EngineBuilder
 animateDiagonal =
     Translate.for animGroup
-        >> Translate.cssUnitX Cqw
-        >> Translate.cssUnitY Cqh
         >> Translate.toXY endXY endXY
-        >> Translate.duration 5000
-        >> Translate.easing Linear
+        >> motion
         >> Translate.build
 
 
 retargetYToTop : Keyframe.EngineBuilder -> Keyframe.EngineBuilder
 retargetYToTop =
-    Translate.continueFor animGroup
+    Translate.for animGroup
         >> Translate.toY 0
+        >> motion
         >> Translate.build
 
 

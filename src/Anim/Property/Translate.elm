@@ -3,7 +3,6 @@ module Anim.Property.Translate exposing
     , initXYZ, initXY, initXZ, initX, initYZ, initY, initZ
     , initUnit, initUnitX, initUnitY, initUnitZ
     , for, build
-    , continueFor
     , fromXYZ, fromXY, fromXZ, fromX, fromYZ, fromY, fromZ
     , toXYZ, toXY, toXZ, toX, toYZ, toY, toZ
     , byXYZ, byXY, byXZ, byX, byYZ, byY, byZ
@@ -45,9 +44,12 @@ the pipeline. Defaults to `Px`.
         ( { animState =
                 Engine.init
                     [ Translate.initUnit Cqw
+                        -- all axes use Cqw for their initial unit
                         >> Translate.initX "box" 50
-                    , Translate.initUnitX Cqw
+                        -- this X axis uses Cqw
                         >> Translate.initUnitY Cqh
+                        -- this Y axis uses Cqh instead of Cqw
+                        -- the X axis remains Cqw
                         >> Translate.initXY "ball" 40 20
                     ]
           }
@@ -60,11 +62,6 @@ the pipeline. Defaults to `Px`.
 # Build
 
 @docs for, build
-
-
-# Continue a Running Animation
-
-@docs continueFor
 
 
 # Configure
@@ -345,11 +342,6 @@ initZ animationKey z animBuilder =
 {-| Set the length [Unit](Anim-Unit#Unit) used by every subsequent `init*` call
 for `Translate` values. Defaults to `Px`.
 
-Order matters - only `init*` calls downstream of this setter in the pipeline
-are affected; calls upstream keep their previously selected unit (or `Px`).
-Later per-axis setters ([`initUnitX`](#initUnitX), [`initUnitY`](#initUnitY),
-[`initUnitZ`](#initUnitZ)) override this setting on the relevant axis.
-
     import Anim.Unit exposing (Unit(..))
 
     Engine.init
@@ -422,43 +414,6 @@ so you can continue configuring other property animations or execute the animati
 build : Builder eng -> AnimBuilder eng
 build =
     TB.build
-
-
-
--- ============================================================
--- CONTINUE A RUNNING ANIMATION
--- ============================================================
-
-
-{-| Like [for](#for), but inherits `easing`, `spring`, `delay`, and timing
-(`duration` / `speed`) from the previous translate animation on the same
-animation group.
-
-Use this when the surrounding world changed (e.g. window resize, parent
-relayout) and the animation should continue toward an updated target while
-keeping the same visual character.
-
-    -- on resize:
-    Translate.continueFor "box"
-        >> Translate.toX newTargetX
-        >> Translate.build
-
-Any of the four inherited fields can still be overridden by setting them
-explicitly after `continueFor`:
-
-    Translate.continueFor "box"
-        >> Translate.toX newTargetX
-        >> Translate.speed 200
-        -- override inherited timing
-        >> Translate.build
-
-If no previous translate animation exists for the group, `continueFor`
-behaves exactly like `for`.
-
--}
-continueFor : AnimGroupName -> AnimBuilder eng -> Builder eng
-continueFor =
-    TB.forContinuing
 
 
 
@@ -1051,6 +1006,11 @@ and relative `byX` moves stop at the boundary instead of pushing past it.
 
 Typical use is a resize handler that updates playfield bounds when the canvas changes:
 
+    motion : Translate.Builder { eng | withTiming : () } -> Translate.Builder { eng | withTiming : () }
+    motion =
+        Translate.duration 800
+            >> Translate.easing Easing.easeOutCubic
+
     update msg model =
         case msg of
             GotCanvas (Ok element) ->
@@ -1063,10 +1023,11 @@ Typical use is a resize handler that updates playfield bounds when the canvas ch
                 in
                 ( { model | canvasW = w, canvasH = h }
                 , WAAPI.retarget model.animState <|
-                    Translate.continueFor animGroupName
+                    Translate.for animGroupName
                         >> Translate.clampX 0 (w - boxWidth)
                         >> Translate.clampY 0 (h - boxWidth)
                         >> Translate.toXY (targetX model.xPos w) (targetY h)
+                        >> motion
                         >> Translate.build
                 )
 
