@@ -3,7 +3,6 @@ module Anim.Engine.Sub.PerspectiveOriginQueryTest exposing (suite)
 import Anim.Engine.Sub as Sub
 import Anim.Internal.Engine.Sub as Internal
 import Anim.Property.PerspectiveOrigin as PerspectiveOrigin
-import Anim.Unit as Unit
 import Expect
 import Motion.Easing exposing (Easing(..))
 import Test exposing (Test, describe, test)

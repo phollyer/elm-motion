@@ -2,7 +2,6 @@ module Anim.Engine.Keyframe.PerspectiveOriginQuerySpec exposing (suite)
 
 import Anim.Engine.Keyframe as Keyframe
 import Anim.Property.PerspectiveOrigin as PerspectiveOrigin
-import Anim.Unit as Unit
 import Expect
 import Motion.Easing exposing (Easing(..))
 import Test exposing (Test, describe, test)

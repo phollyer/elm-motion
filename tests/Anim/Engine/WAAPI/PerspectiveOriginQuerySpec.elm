@@ -2,7 +2,6 @@ module Anim.Engine.WAAPI.PerspectiveOriginQuerySpec exposing (suite)
 
 import Anim.Engine.WAAPI as WAAPI
 import Anim.Property.PerspectiveOrigin as PerspectiveOrigin
-import Anim.Unit as Unit
 import Expect
 import Json.Decode as Decode
 import Json.Encode as Encode
