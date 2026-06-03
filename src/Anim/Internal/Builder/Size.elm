@@ -5,9 +5,6 @@ module Anim.Internal.Builder.Size exposing
     , build
     , clampHeight
     , clampWidth
-    , cssUnit
-    , cssUnitHeight
-    , cssUnitWidth
     , delay
     , duration
     , easing
@@ -35,7 +32,7 @@ import Anim.Internal.Builder as Builder exposing (AnimBuilder)
 import Anim.Internal.Builder.Property as PropertyBuilder
 import Anim.Internal.Builder.PropertyBaselines as PropertyBaselines
 import Anim.Internal.Property.Size as Size exposing (Size)
-import Anim.Unit exposing (Unit)
+import Anim.Internal.Unit as InternalUnit
 import Motion.Easing exposing (Easing)
 import Motion.Spring exposing (Spring)
 import Shared.TimeSpec exposing (TimeSpec(..))
@@ -83,8 +80,15 @@ for animGroupName builder =
                 _ ->
                     Nothing
 
-        config =
+        baselineUnits =
+            Builder.getBaseline animGroupName builder
+                |> Maybe.andThen PropertyBaselines.getSizeConfiguredUnits
+
+        baseConfig =
             PropertyBuilder.for animGroupName "size" PropertyBaselines.getSize extractExisting defaultConfig builder
+
+        config =
+            { baseConfig | cssUnit = InternalUnit.mergeBaselineUnits baselineUnits baseConfig.cssUnit }
     in
     SizeBuilder config <|
         Builder.for animGroupName builder
@@ -314,21 +318,6 @@ easing easingFunction (SizeBuilder config builder) =
 spring : Spring -> SizeBuilder { eng | withSpring : () } -> SizeBuilder { eng | withSpring : () }
 spring s (SizeBuilder config builder) =
     SizeBuilder (PropertyBuilder.spring s config) builder
-
-
-cssUnit : Unit -> SizeBuilder eng -> SizeBuilder eng
-cssUnit unit (SizeBuilder config builder) =
-    SizeBuilder (PropertyBuilder.cssUnit unit config) builder
-
-
-cssUnitWidth : Unit -> SizeBuilder eng -> SizeBuilder eng
-cssUnitWidth unit (SizeBuilder config builder) =
-    SizeBuilder (PropertyBuilder.cssUnitX unit config) builder
-
-
-cssUnitHeight : Unit -> SizeBuilder eng -> SizeBuilder eng
-cssUnitHeight unit (SizeBuilder config builder) =
-    SizeBuilder (PropertyBuilder.cssUnitY unit config) builder
 
 
 {-| Seed the per-property `cssUnit` axes on the config from the AnimBuilder's

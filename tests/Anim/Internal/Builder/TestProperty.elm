@@ -40,6 +40,7 @@ type alias TestMode =
     , withAlternate : ()
     , withTransformOrder : ()
     , withProgressEvents : ()
+    , withLiveDelta : ()
     }
 
 
@@ -1412,8 +1413,9 @@ perspectiveOriginClampTests =
         , test "px unit is preserved across clamping" <|
             \_ ->
                 animBuilder
+                    |> PerspectiveOrigin.initUnit Unit.Px
+                    |> PerspectiveOrigin.initXY "test" 0 0
                     |> (PerspectiveOrigin.for "test"
-                            >> PerspectiveOrigin.cssUnit Unit.Px
                             >> PerspectiveOrigin.clampX 0 100
                             >> PerspectiveOrigin.toX 500
                             >> PerspectiveOrigin.build

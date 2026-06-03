@@ -141,7 +141,6 @@ color4 =
 moveBoxX : Float -> WAAPI.EngineBuilder -> WAAPI.EngineBuilder
 moveBoxX x =
     Translate.for animGroupName
-        >> Translate.cssUnit Cqw
         >> Translate.toX x
         >> Translate.speed 25
         >> Translate.easing BounceOut

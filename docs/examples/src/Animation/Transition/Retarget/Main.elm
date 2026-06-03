@@ -67,9 +67,7 @@ init =
 
 motion : Translate.Builder { eng | withTiming : () } -> Translate.Builder { eng | withTiming : () }
 motion =
-    Translate.cssUnitX Cqw
-        >> Translate.cssUnitY Cqh
-        >> Translate.duration 5000
+    Translate.duration 5000
         >> Translate.easing Linear
 
 

@@ -18,12 +18,17 @@ animGroup =
 moveBoxX : Float -> Keyframe.EngineBuilder -> Keyframe.EngineBuilder
 moveBoxX x =
     Translate.for animGroup
-        >> Translate.cssUnitX Cqw
-        >> Translate.cssUnitY Cqh
         >> Translate.toX x
         >> Translate.speed 100
         >> Translate.easing BounceOut
         >> Translate.build
+
+
+initBuilder : Keyframe.EngineBuilder -> Keyframe.EngineBuilder
+initBuilder =
+    Translate.initUnitX Cqw
+        >> Translate.initUnitY Cqh
+        >> Translate.initXY animGroup 0 0
 
 
 suite : Test
@@ -34,7 +39,7 @@ suite =
                 let
                     state =
                         Keyframe.animate
-                            (Keyframe.init [ Translate.initXY animGroup 0 0 ])
+                            (Keyframe.init [ initBuilder ])
                             (moveBoxX 88)
 
                     css =
@@ -47,7 +52,7 @@ suite =
                 let
                     state =
                         Keyframe.animate
-                            (Keyframe.init [ Translate.initXY animGroup 0 0 ])
+                            (Keyframe.init [ initBuilder ])
                             (moveBoxX 88)
 
                     css =
@@ -62,7 +67,7 @@ suite =
                 let
                     state =
                         Keyframe.animate
-                            (Keyframe.init [ Translate.initXY animGroup 0 0 ])
+                            (Keyframe.init [ initBuilder ])
                             (moveBoxX 88)
 
                     css =
@@ -77,7 +82,7 @@ suite =
                 let
                     afterMove =
                         Keyframe.animate
-                            (Keyframe.init [ Translate.initXY animGroup 0 0 ])
+                            (Keyframe.init [ initBuilder ])
                             (moveBoxX 88)
 
                     afterColor =

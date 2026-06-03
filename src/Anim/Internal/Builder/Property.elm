@@ -1,10 +1,6 @@
 module Anim.Internal.Builder.Property exposing
     ( applyFrozenAxes
     , clampAxis
-    , cssUnit
-    , cssUnitX
-    , cssUnitY
-    , cssUnitZ
     , defaultConfig
     , delay
     , duration
@@ -55,7 +51,6 @@ import Anim.Internal.Property.Size as Size
 import Anim.Internal.Property.Skew as Skew
 import Anim.Internal.Property.Translate as Translate
 import Anim.Internal.Unit as InternalUnit
-import Anim.Unit exposing (Unit)
 import Motion.Easing exposing (Easing)
 import Motion.Internal.Spring exposing (Spring)
 import Shared.TimeSpec exposing (TimeSpec(..))
@@ -425,38 +420,6 @@ spring :
     -> { config | easing : Maybe Easing, spring : Maybe Spring }
 spring spring_ config =
     { config | spring = Just spring_, easing = Nothing }
-
-
-cssUnit :
-    Unit
-    -> { config | cssUnit : InternalUnit.CssUnitAxes }
-    -> { config | cssUnit : InternalUnit.CssUnitAxes }
-cssUnit unit config =
-    { config | cssUnit = InternalUnit.setAllCssUnitAxes unit config.cssUnit }
-
-
-cssUnitX :
-    Unit
-    -> { config | cssUnit : InternalUnit.CssUnitAxes }
-    -> { config | cssUnit : InternalUnit.CssUnitAxes }
-cssUnitX unit config =
-    { config | cssUnit = InternalUnit.setCssUnitX unit config.cssUnit }
-
-
-cssUnitY :
-    Unit
-    -> { config | cssUnit : InternalUnit.CssUnitAxes }
-    -> { config | cssUnit : InternalUnit.CssUnitAxes }
-cssUnitY unit config =
-    { config | cssUnit = InternalUnit.setCssUnitY unit config.cssUnit }
-
-
-cssUnitZ :
-    Unit
-    -> { config | cssUnit : InternalUnit.CssUnitAxes }
-    -> { config | cssUnit : InternalUnit.CssUnitAxes }
-cssUnitZ unit config =
-    { config | cssUnit = InternalUnit.setCssUnitZ unit config.cssUnit }
 
 
 

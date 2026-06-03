@@ -16,10 +16,6 @@ module Anim.Internal.Builder.Translate exposing
     , clampX
     , clampY
     , clampZ
-    , cssUnit
-    , cssUnitX
-    , cssUnitY
-    , cssUnitZ
     , delay
     , duration
     , easing
@@ -60,7 +56,7 @@ import Anim.Internal.Builder as Builder exposing (AnimBuilder)
 import Anim.Internal.Builder.Property as PropertyBuilder
 import Anim.Internal.Builder.PropertyBaselines as PropertyBaselines
 import Anim.Internal.Property.Translate as Translate exposing (Translate)
-import Anim.Unit exposing (Unit)
+import Anim.Internal.Unit as InternalUnit
 import Motion.Easing exposing (Easing(..))
 import Motion.Spring exposing (Spring)
 import Shared.TimeSpec exposing (TimeSpec(..))
@@ -107,8 +103,15 @@ for animGroupName builder =
                 _ ->
                     Nothing
 
-        config =
+        baselineUnits =
+            Builder.getBaseline animGroupName builder
+                |> Maybe.andThen PropertyBaselines.getTranslateConfiguredUnits
+
+        baseConfig =
             PropertyBuilder.for animGroupName "translate" PropertyBaselines.getTranslate extractExisting defaultConfig builder
+
+        config =
+            { baseConfig | cssUnit = InternalUnit.mergeBaselineUnits baselineUnits baseConfig.cssUnit }
     in
     TranslateBuilder config <|
         Builder.for animGroupName builder
@@ -402,12 +405,12 @@ by delta (TranslateBuilder config builder) =
         (markAxes [ "x", "y", "z" ] builder)
 
 
-byXYZ : Float -> Float -> Float -> TranslateBuilder eng -> TranslateBuilder eng
+byXYZ : Float -> Float -> Float -> TranslateBuilder { eng | withLiveDelta : () } -> TranslateBuilder { eng | withLiveDelta : () }
 byXYZ dx dy dz =
     by (Translate.fromTriple ( dx, dy, dz ))
 
 
-byXY : Float -> Float -> TranslateBuilder eng -> TranslateBuilder eng
+byXY : Float -> Float -> TranslateBuilder { eng | withLiveDelta : () } -> TranslateBuilder { eng | withLiveDelta : () }
 byXY dx dy (TranslateBuilder config builder) =
     let
         startVal =
@@ -429,7 +432,7 @@ byXY dx dy (TranslateBuilder config builder) =
         (markAxes [ "x", "y" ] builder)
 
 
-byXZ : Float -> Float -> TranslateBuilder eng -> TranslateBuilder eng
+byXZ : Float -> Float -> TranslateBuilder { eng | withLiveDelta : () } -> TranslateBuilder { eng | withLiveDelta : () }
 byXZ dx dz (TranslateBuilder config builder) =
     let
         startVal =
@@ -451,7 +454,7 @@ byXZ dx dz (TranslateBuilder config builder) =
         (markAxes [ "x", "z" ] builder)
 
 
-byX : Float -> TranslateBuilder eng -> TranslateBuilder eng
+byX : Float -> TranslateBuilder { eng | withLiveDelta : () } -> TranslateBuilder { eng | withLiveDelta : () }
 byX dx (TranslateBuilder config builder) =
     let
         startVal =
@@ -473,7 +476,7 @@ byX dx (TranslateBuilder config builder) =
         (markAxes [ "x" ] builder)
 
 
-byYZ : Float -> Float -> TranslateBuilder eng -> TranslateBuilder eng
+byYZ : Float -> Float -> TranslateBuilder { eng | withLiveDelta : () } -> TranslateBuilder { eng | withLiveDelta : () }
 byYZ dy dz (TranslateBuilder config builder) =
     let
         startVal =
@@ -495,7 +498,7 @@ byYZ dy dz (TranslateBuilder config builder) =
         (markAxes [ "y", "z" ] builder)
 
 
-byY : Float -> TranslateBuilder eng -> TranslateBuilder eng
+byY : Float -> TranslateBuilder { eng | withLiveDelta : () } -> TranslateBuilder { eng | withLiveDelta : () }
 byY dy (TranslateBuilder config builder) =
     let
         startVal =
@@ -517,7 +520,7 @@ byY dy (TranslateBuilder config builder) =
         (markAxes [ "y" ] builder)
 
 
-byZ : Float -> TranslateBuilder eng -> TranslateBuilder eng
+byZ : Float -> TranslateBuilder { eng | withLiveDelta : () } -> TranslateBuilder { eng | withLiveDelta : () }
 byZ dz (TranslateBuilder config builder) =
     let
         startVal =
@@ -662,26 +665,6 @@ easing easing_ (TranslateBuilder config builder) =
 spring : Spring -> TranslateBuilder { eng | withSpring : () } -> TranslateBuilder { eng | withSpring : () }
 spring s (TranslateBuilder config builder) =
     TranslateBuilder (PropertyBuilder.spring s config) builder
-
-
-cssUnit : Unit -> TranslateBuilder eng -> TranslateBuilder eng
-cssUnit unit (TranslateBuilder config builder) =
-    TranslateBuilder (PropertyBuilder.cssUnit unit config) builder
-
-
-cssUnitX : Unit -> TranslateBuilder eng -> TranslateBuilder eng
-cssUnitX unit (TranslateBuilder config builder) =
-    TranslateBuilder (PropertyBuilder.cssUnitX unit config) builder
-
-
-cssUnitY : Unit -> TranslateBuilder eng -> TranslateBuilder eng
-cssUnitY unit (TranslateBuilder config builder) =
-    TranslateBuilder (PropertyBuilder.cssUnitY unit config) builder
-
-
-cssUnitZ : Unit -> TranslateBuilder eng -> TranslateBuilder eng
-cssUnitZ unit (TranslateBuilder config builder) =
-    TranslateBuilder (PropertyBuilder.cssUnitZ unit config) builder
 
 
 {-| Seed the per-property `cssUnit` axes on the config from the AnimBuilder's

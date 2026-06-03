@@ -59,7 +59,6 @@ suite =
                             |> (\s ->
                                     Sub.animate s
                                         (PerspectiveOrigin.for groupName
-                                            >> PerspectiveOrigin.cssUnit Unit.Percent
                                             >> PerspectiveOrigin.toXY 90 10
                                             >> PerspectiveOrigin.duration 1000
                                             >> PerspectiveOrigin.easing Linear
@@ -93,12 +92,14 @@ suite =
             \_ ->
                 let
                     state =
-                        Sub.init [ PerspectiveOrigin.initXY groupName 50 50 ]
+                        Sub.init
+                            [ PerspectiveOrigin.initUnitX Unit.Percent
+                                >> PerspectiveOrigin.initUnitY Unit.Px
+                                >> PerspectiveOrigin.initXY groupName 50 50
+                            ]
                             |> (\s ->
                                     Sub.animate s
                                         (PerspectiveOrigin.for groupName
-                                            >> PerspectiveOrigin.cssUnitX Unit.Percent
-                                            >> PerspectiveOrigin.cssUnitY Unit.Px
                                             >> PerspectiveOrigin.toXY 90 200
                                             >> PerspectiveOrigin.duration 1000
                                             >> PerspectiveOrigin.easing Linear

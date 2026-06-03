@@ -43,7 +43,16 @@ suite =
 
 initState : Transition.AnimState
 initState =
-    Transition.init []
+    Transition.init [ Translate.initXY "el" 0 0 ]
+
+
+cqwInitState : Transition.AnimState
+cqwInitState =
+    Transition.init
+        [ Translate.initUnitX Cqw
+            >> Translate.initUnitY Cqh
+            >> Translate.initXY "el" 0 0
+        ]
 
 
 stylesFor : String -> Transition.AnimState -> Maybe Styles
@@ -271,12 +280,10 @@ resetAfterRetargetTests =
     describe "reset after retarget returns to the original animate's start, not the retarget's synthesised start"
         [ test "animate XY 0->88, retarget Y to 0, reset -> snaps back to 0 0" <|
             \_ ->
-                initState
+                cqwInitState
                     |> (\s ->
                             Transition.animate s <|
                                 (Translate.for "el"
-                                    >> Translate.cssUnitX Cqw
-                                    >> Translate.cssUnitY Cqh
                                     >> Translate.toXY 88 88
                                     >> Translate.duration 5000
                                     >> Translate.easing Linear
@@ -302,8 +309,6 @@ resetAfterRetargetTests =
                             |> (\inner ->
                                     Transition.animate inner <|
                                         (Translate.for "el"
-                                            >> Translate.cssUnitX Cqw
-                                            >> Translate.cssUnitY Cqh
                                             >> Translate.toXY 88 88
                                             >> Translate.duration 5000
                                             >> Translate.easing Linear
@@ -319,7 +324,7 @@ resetAfterRetargetTests =
                                )
                             |> Transition.reset "el"
                 in
-                initState
+                cqwInitState
                     |> runCycle
                     |> runCycle
                     |> stylesFor "el"
@@ -327,12 +332,10 @@ resetAfterRetargetTests =
                     |> Expect.equal (Just "0cqw 0cqh 0px")
         , test "A→R→Reset→A - the next animate's start is the original anchor, not the retarget end" <|
             \_ ->
-                initState
+                cqwInitState
                     |> (\s ->
                             Transition.animate s <|
                                 (Translate.for "el"
-                                    >> Translate.cssUnitX Cqw
-                                    >> Translate.cssUnitY Cqh
                                     >> Translate.toXY 88 88
                                     >> Translate.duration 5000
                                     >> Translate.easing Linear
@@ -351,8 +354,6 @@ resetAfterRetargetTests =
                             -- Second animate: should be (0,0)->(88,88), not (88,0)->(88,88)
                             Transition.animate s <|
                                 (Translate.for "el"
-                                    >> Translate.cssUnitX Cqw
-                                    >> Translate.cssUnitY Cqh
                                     >> Translate.toXY 88 88
                                     >> Translate.duration 5000
                                     >> Translate.easing Linear

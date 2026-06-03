@@ -145,7 +145,6 @@ scaleDown =
 growSize : WAAPI.EngineBuilder -> WAAPI.EngineBuilder
 growSize =
     Size.for sizeButton
-        >> Size.cssUnit Cqmin
         >> Size.toHW hoverHeight hoverWidth
         >> Size.duration hoverDuration
         >> Size.easing hoverEasing
@@ -155,7 +154,6 @@ growSize =
 shrinkSize : WAAPI.EngineBuilder -> WAAPI.EngineBuilder
 shrinkSize =
     Size.for sizeButton
-        >> Size.cssUnit Cqmin
         >> Size.toHW baseHeight baseWidth
         >> Size.duration hoverDuration
         >> Size.easing unhoverEasing

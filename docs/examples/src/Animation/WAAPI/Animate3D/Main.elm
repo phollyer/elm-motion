@@ -331,7 +331,6 @@ moveFace : FaceConfig -> (Translate.Builder ForWAAPI -> Translate.Builder ForWAA
 moveFace config moveToBuilder =
     sharedTiming
         >> Translate.for config.groupName
-        >> Translate.cssUnit Cqmin
         >> moveToBuilder
         >> Translate.build
 
@@ -439,7 +438,6 @@ moveText : TextConfig -> Float -> Float -> WAAPI.EngineBuilder -> WAAPI.EngineBu
 moveText config toZ toRotate =
     sharedTiming
         >> Translate.for config.groupName
-        >> Translate.cssUnit Cqmin
         >> Translate.toZ toZ
         >> Translate.build
         >> Rotate.for config.groupName

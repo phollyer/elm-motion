@@ -44,12 +44,14 @@ suite =
                     |> Query.has [ Selector.style "transform" "translate3d(40cqw, 20cqh, 0px)" ]
         , test "translate animate cssUnit values render while running" <|
             \_ ->
-                Sub.init [ Translate.initXY "el" 0 0 ]
+                Sub.init
+                    [ Translate.initUnitX Unit.Vw
+                        >> Translate.initUnitY Unit.Vh
+                        >> Translate.initXY "el" 0 0
+                    ]
                     |> (\state ->
                             Sub.animate state
                                 (Translate.for "el"
-                                    >> Translate.cssUnitX Unit.Vw
-                                    >> Translate.cssUnitY Unit.Vh
                                     >> Translate.toXY 100 50
                                     >> Translate.duration 1000
                                     >> Translate.easing Linear
@@ -77,12 +79,14 @@ suite =
                     ()
         , test "perspective-origin animate cssUnit values render while running" <|
             \_ ->
-                Sub.init [ PerspectiveOrigin.initXY "el" 50 50 ]
+                Sub.init
+                    [ PerspectiveOrigin.initUnitX Unit.Vw
+                        >> PerspectiveOrigin.initUnitY Unit.Vh
+                        >> PerspectiveOrigin.initXY "el" 50 50
+                    ]
                     |> (\state ->
                             Sub.animate state
                                 (PerspectiveOrigin.for "el"
-                                    >> PerspectiveOrigin.cssUnitX Unit.Vw
-                                    >> PerspectiveOrigin.cssUnitY Unit.Vh
                                     >> PerspectiveOrigin.toXY 90 10
                                     >> PerspectiveOrigin.duration 1000
                                     >> PerspectiveOrigin.easing Linear

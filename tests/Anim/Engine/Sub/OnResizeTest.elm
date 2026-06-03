@@ -420,11 +420,13 @@ suite =
                 \_ ->
                     let
                         state =
-                            initialState
+                            Sub.init
+                                [ Translate.initUnitX Unit.Vw
+                                    >> Translate.initXY groupName 0 0
+                                ]
                                 |> (\s ->
                                         Sub.animate s
                                             (Translate.for groupName
-                                                >> Translate.cssUnit Unit.Vw
                                                 >> Translate.toX 100
                                                 >> Translate.duration 1000
                                                 >> Translate.easing Linear
@@ -455,12 +457,14 @@ suite =
                 \_ ->
                     let
                         state =
-                            initialState
+                            Sub.init
+                                [ Translate.initUnitX Unit.Vw
+                                    >> Translate.initUnitY Unit.Px
+                                    >> Translate.initXY groupName 0 0
+                                ]
                                 |> (\s ->
                                         Sub.animate s
                                             (Translate.for groupName
-                                                >> Translate.cssUnitX Unit.Vw
-                                                >> Translate.cssUnitY Unit.Px
                                                 >> Translate.toXY 100 80
                                                 >> Translate.duration 1000
                                                 >> Translate.easing Linear

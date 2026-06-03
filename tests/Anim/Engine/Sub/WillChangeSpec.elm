@@ -131,7 +131,6 @@ suite =
                     |> (\state ->
                             Sub.animate state
                                 (PerspectiveOrigin.for "el"
-                                    >> PerspectiveOrigin.cssUnit Unit.Percent
                                     >> PerspectiveOrigin.toXY 90 10
                                     >> PerspectiveOrigin.duration 500
                                     >> PerspectiveOrigin.build

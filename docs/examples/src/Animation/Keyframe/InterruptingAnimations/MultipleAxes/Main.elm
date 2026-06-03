@@ -124,8 +124,6 @@ moveBoxY y =
 moveBox : (Translate.Builder ForKeyframe -> Translate.Builder ForKeyframe) -> Keyframe.EngineBuilder -> Keyframe.EngineBuilder
 moveBox moveFunc =
     Translate.for animGroupName
-        >> Translate.cssUnitX Cqw
-        >> Translate.cssUnitY Cqh
         >> moveFunc
         >> Translate.speed 25
         >> Translate.easing QuintOut

@@ -194,6 +194,7 @@ type alias ForSub =
     , withAlternate : ()
     , withTransformOrder : ()
     , withProgressEvents : ()
+    , withLiveDelta : ()
     }
 
 
@@ -206,6 +207,7 @@ type alias ForWAAPI =
     , withAlternate : ()
     , withTransformOrder : ()
     , withProgressEvents : ()
+    , withLiveDelta : ()
     }
 
 
@@ -245,6 +247,7 @@ type alias ForResizeSub =
     , withAlternate : ()
     , withTransformOrder : ()
     , withProgressEvents : ()
+    , withLiveDelta : ()
     , withBounds : ()
     }
 
@@ -265,6 +268,7 @@ type alias ForResizeWAAPI =
     , withAlternate : ()
     , withTransformOrder : ()
     , withProgressEvents : ()
+    , withLiveDelta : ()
     , withBounds : ()
     }
 
@@ -1560,6 +1564,7 @@ extractPropertyBaseline defaults propConfig baselines =
                 |> PropertyBaselines.setTranslate cfg.end
                 |> PropertyBaselines.setTranslateUnits
                     (InternalUnit.resolveCssUnitAxes cfg.cssUnit defaults.globalCssUnit InternalUnit.default)
+                |> PropertyBaselines.setTranslateConfiguredUnits cfg.cssUnit
 
         RotateConfig cfg ->
             PropertyBaselines.setRotate cfg.end baselines
@@ -1578,12 +1583,14 @@ extractPropertyBaseline defaults propConfig baselines =
                 |> PropertyBaselines.setPerspectiveOrigin cfg.end
                 |> PropertyBaselines.setPerspectiveOriginUnits
                     (InternalUnit.resolveCssUnitAxes cfg.cssUnit defaults.globalCssUnit Percent)
+                |> PropertyBaselines.setPerspectiveOriginConfiguredUnits cfg.cssUnit
 
         SizeConfig cfg ->
             baselines
                 |> PropertyBaselines.setSize cfg.end
                 |> PropertyBaselines.setSizeUnits
                     (InternalUnit.resolveCssUnitAxes cfg.cssUnit defaults.globalSizeCssUnit InternalUnit.default)
+                |> PropertyBaselines.setSizeConfiguredUnits cfg.cssUnit
 
         CustomPropertyConfig cssName unit cfg ->
             PropertyBaselines.setCustomProperty cssName cfg.end unit baselines

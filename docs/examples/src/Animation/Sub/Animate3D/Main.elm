@@ -321,7 +321,6 @@ moveFace : FaceConfig -> (Translate.Builder ForSub -> Translate.Builder ForSub) 
 moveFace config moveToBuilder =
     sharedTiming
         >> Translate.for config.groupName
-        >> Translate.cssUnit Cqmin
         >> moveToBuilder
         >> Translate.build
 
@@ -429,7 +428,6 @@ moveText : TextConfig -> Float -> Float -> Sub.EngineBuilder -> Sub.EngineBuilde
 moveText config toZ toRotate =
     sharedTiming
         >> Translate.for config.groupName
-        >> Translate.cssUnit Cqmin
         >> Translate.toZ toZ
         >> Translate.build
         >> Rotate.for config.groupName

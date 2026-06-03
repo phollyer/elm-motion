@@ -9,7 +9,6 @@ module Anim.Property.Size exposing
     , delay, duration, speed
     , easing
     , spring
-    , cssUnit, cssUnitWidth, cssUnitHeight
     , Bounds, AxisBounds, bounds
     , clampWidth, clampHeight, unclampWidth, unclampHeight
     )
@@ -109,11 +108,6 @@ for details.
 for details.
 
 @docs spring
-
-
-## Unit
-
-@docs cssUnit, cssUnitWidth, cssUnitHeight
 
 
 ## Resize
@@ -600,58 +594,6 @@ and vice versa — they are mutually exclusive.
 spring : Spring -> Builder { eng | withSpring : () } -> Builder { eng | withSpring : () }
 spring =
     SB.spring
-
-
-
--- ============================================================
--- UNIT
--- ============================================================
-
-
-{-| Set the length [Unit](Anim-Unit#Unit) used to render width and height for
-this property.
-
-Defaults to `Px`. Setting a relative unit (`Percent`, `Vw`, `Vh`, `Rem`, `Em`)
-makes the browser re-evaluate the rendered size against current layout, so the
-animation follows resize automatically.
-
-    import Anim.Unit as Unit
-
-    myAnimation : AnimBuilder eng -> AnimBuilder eng
-    myAnimation =
-        Size.for "animGroupName"
-            >> Size.toHW 50 80
-            >> Size.cssUnit Unit.Percent
-            >> Size.build
-
-This setting takes precedence over any [length](Anim-Engine-WAAPI#cssUnit) set
-on the engine.
-
-`Sub` renders non-`Px` units normally. During `onResize` bounds remapping,
-only `Px` size axes are remapped; non-`Px` axes are left unchanged.
-
--}
-cssUnit : Unit -> Builder eng -> Builder eng
-cssUnit =
-    SB.cssUnit
-
-
-{-| Set the length [Unit](Anim-Unit#Unit) used to render the `width` value for
-this property. Overrides any unit set by [`cssUnit`](#cssUnit) or by the
-engine's `cssUnit`/`cssUnitWidth` setter for the width axis.
--}
-cssUnitWidth : Unit -> Builder eng -> Builder eng
-cssUnitWidth =
-    SB.cssUnitWidth
-
-
-{-| Set the length [Unit](Anim-Unit#Unit) used to render the `height` value
-for this property. Overrides any unit set by [`cssUnit`](#cssUnit) or by the
-engine's `cssUnit`/`cssUnitHeight` setter for the height axis.
--}
-cssUnitHeight : Unit -> Builder eng -> Builder eng
-cssUnitHeight =
-    SB.cssUnitHeight
 
 
 

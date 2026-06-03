@@ -4,11 +4,9 @@ module Anim.Engine.UnitCascadeSpec exposing (suite)
 
 Verifies the resolution order documented in `Anim.Unit`:
 
-1.  Property-level (`Translate.cssUnit`, `Size.cssUnit`,
-    `PerspectiveOrigin.cssUnit`)
-2.  Engine-level (`WAAPI.cssUnit`, `Transition.cssUnit`, `Keyframe.cssUnit`,
+1.  Engine-level (`WAAPI.cssUnit`, `Transition.cssUnit`, `Keyframe.cssUnit`,
     `ScrollTimeline.cssUnit`, `ViewTimeline.cssUnit`)
-3.  `Px` (built-in default) — except for `PerspectiveOrigin` which keeps
+2.  `Px` (built-in default) — except for `PerspectiveOrigin` which keeps
     its historical `Percent` default.
 
 -}
@@ -175,17 +173,6 @@ translateCascade =
                     |> animateTranslate
                     |> firstTranslateLength
                     |> Expect.equal (Just Unit.Rem)
-        , test "property-level Translate.cssUnit overrides engine default" <|
-            \_ ->
-                initBuilder
-                    |> WAAPI.cssUnit Unit.Vw
-                    |> (Translate.for "box"
-                            >> Translate.cssUnit Unit.Em
-                            >> Translate.toX 100
-                            >> Translate.build
-                       )
-                    |> firstTranslateLength
-                    |> Expect.equal (Just Unit.Em)
         ]
 
 
@@ -211,17 +198,6 @@ sizeCascade =
                     |> animateSize
                     |> firstSizeLength
                     |> Expect.equal (Just Unit.Vh)
-        , test "property-level Size.cssUnit overrides engine default" <|
-            \_ ->
-                initBuilder
-                    |> WAAPI.cssUnit Unit.Vh
-                    |> (Size.for "box"
-                            >> Size.cssUnit Unit.Percent
-                            >> Size.toW 200
-                            >> Size.build
-                       )
-                    |> firstSizeLength
-                    |> Expect.equal (Just Unit.Percent)
         ]
 
 
@@ -247,17 +223,6 @@ perspectiveOriginCascade =
                     |> animatePerspectiveOrigin
                     |> firstPerspectiveOriginLength
                     |> Expect.equal (Just Unit.Px)
-        , test "property-level PerspectiveOrigin.cssUnit overrides engine default" <|
-            \_ ->
-                initBuilder
-                    |> WAAPI.cssUnit Unit.Px
-                    |> (PerspectiveOrigin.for "scene"
-                            >> PerspectiveOrigin.cssUnit Unit.Vw
-                            >> PerspectiveOrigin.toX 25
-                            >> PerspectiveOrigin.build
-                       )
-                    |> firstPerspectiveOriginLength
-                    |> Expect.equal (Just Unit.Vw)
         ]
 
 

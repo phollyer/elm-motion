@@ -127,8 +127,6 @@ moveBoxY y =
 moveBox : (Translate.Builder ForSub -> Translate.Builder ForSub) -> Sub.EngineBuilder -> Sub.EngineBuilder
 moveBox moveFunc =
     Translate.for animGroupName
-        >> Translate.cssUnitX Cqw
-        >> Translate.cssUnitY Cqh
         >> moveFunc
         >> Translate.speed 25
         >> Translate.easing BounceOut

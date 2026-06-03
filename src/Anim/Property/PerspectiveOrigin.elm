@@ -3,7 +3,6 @@ module Anim.Property.PerspectiveOrigin exposing
     , initXY, initX, initY
     , initUnit, initUnitX, initUnitY
     , for, build
-    , cssUnit, cssUnitX, cssUnitY
     , from, fromXY, fromX, fromY
     , to, toXY, toX, toY
     , set, setXY, setX, setY
@@ -17,7 +16,7 @@ module Anim.Property.PerspectiveOrigin exposing
 {-| Animate the CSS `perspective-origin` property, which controls the vanishing point
 for 3D transforms applied to a parent element.
 
-**Default unit**: `%`. Use [`cssUnit`](#cssUnit) to switch to other CSS length units.
+**Default unit**: `%`. Use [`initUnit`](#initUnit) to switch to other CSS length units.
 
 **Default value**: `50% 50%` (center of the element)
 
@@ -69,15 +68,6 @@ the pipeline. Defaults to `Percent`.
 
 
 # Configure
-
-
-## Unit
-
-Use [`cssUnit`](#cssUnit) to select the CSS length unit (`Px`, `Percent`, `Vw`,
-`Vh`, `Rem`, `Em`) for all `from`, `to`, `toX`, and `toY` calls. Defaults to
-percentages.
-
-@docs cssUnit, cssUnitX, cssUnitY
 
 
 ## Start Value
@@ -304,59 +294,6 @@ so you can continue configuring other property animations or execute the animati
 build : Builder eng -> AnimBuilder eng
 build =
     PB.build
-
-
-
--- ============================================================
--- UNIT
--- ============================================================
-
-
-{-| Set the length [Unit](Anim-Unit#Unit) used to render this property's values.
-
-Defaults to `Px`. Setting a relative unit (`Percent`, `Vw`, `Vh`, `Rem`, `Em`)
-makes the browser re-evaluate the rendered perspective origin against current
-layout, so the animation follows resize automatically.
-
-    import Anim.Unit as Unit
-
-    myAnimation : AnimBuilder eng -> AnimBuilder eng
-    myAnimation =
-        PerspectiveOrigin.for "animGroupName"
-            >> PerspectiveOrigin.toXY 25 75
-            >> PerspectiveOrigin.cssUnit Unit.Percent
-            >> PerspectiveOrigin.build
-
-This setting takes precedence over any [length](Anim-Engine-WAAPI#cssUnit) set
-on the engine, and over the legacy [`px`](#px) / [`percent`](#percent)
-switchers (which only choose between pixels and percentages).
-
-`Sub` renders non-`Px` units normally. During `onResize` bounds remapping,
-only `Px` perspective-origin axes are remapped; non-`Px` axes are left
-unchanged.
-
--}
-cssUnit : Unit.Unit -> Builder eng -> Builder eng
-cssUnit =
-    PB.cssUnit
-
-
-{-| Set the length [Unit](Anim-Unit#Unit) used to render the X-axis
-perspective-origin value. Overrides any unit set by [`cssUnit`](#cssUnit) or by
-the engine's `cssUnit`/`cssUnitX` setter for the X axis.
--}
-cssUnitX : Unit.Unit -> Builder eng -> Builder eng
-cssUnitX =
-    PB.cssUnitX
-
-
-{-| Set the length [Unit](Anim-Unit#Unit) used to render the Y-axis
-perspective-origin value. Overrides any unit set by [`cssUnit`](#cssUnit) or by
-the engine's `cssUnit`/`cssUnitY` setter for the Y axis.
--}
-cssUnitY : Unit.Unit -> Builder eng -> Builder eng
-cssUnitY =
-    PB.cssUnitY
 
 
 

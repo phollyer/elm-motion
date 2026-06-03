@@ -1,7 +1,7 @@
 module Anim.Engine.WAAPI.PerspectiveOriginUnitSpec exposing (suite)
 
 {-| Verifies that the WAAPI perspective-origin encoder emits a `unit` field
-reflecting the length unit configured via `PerspectiveOrigin.cssUnit`. The JS
+reflecting the length unit configured via `PerspectiveOrigin.initUnit`. The JS
 companion uses this field to build `perspective-origin: <x> <y>` keyframe
 strings with the matching CSS unit.
 -}
@@ -12,9 +12,9 @@ import Anim.Internal.Engine.WAAPI.AnimGroup as AnimGroup
 import Anim.Internal.Engine.WAAPI.Encoder as Encoder
 import Anim.Property.PerspectiveOrigin as PerspectiveOrigin
 import Anim.Unit as Unit
+import Dict
 import Expect
 import Json.Decode as Decode
-import Dict
 import Json.Encode as Encode
 import Test exposing (Test, describe, test)
 
@@ -57,17 +57,20 @@ unitTest description maybeUnit expected =
                     PerspectiveOrigin.for "card"
                         >> PerspectiveOrigin.toXY 25 75
                         >> PerspectiveOrigin.duration 500
-                        >> (case maybeUnit of
-                                Nothing ->
-                                    identity
-
-                                Just unit ->
-                                    PerspectiveOrigin.cssUnit unit
-                           )
                         >> PerspectiveOrigin.build
 
+                initStep b =
+                    case maybeUnit of
+                        Nothing ->
+                            b |> PerspectiveOrigin.initXY "card" 0 0
+
+                        Just unit ->
+                            b
+                                |> PerspectiveOrigin.initUnit unit
+                                |> PerspectiveOrigin.initXY "card" 0 0
+
                 processed =
-                    Builder.init [ originBuilder ] |> Builder.process
+                    Builder.init [ initStep, originBuilder ] |> Builder.process
 
                 json =
                     Encoder.encode animGroups Dict.empty processed |> Encode.encode 0

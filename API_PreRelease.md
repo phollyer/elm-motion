@@ -58,16 +58,16 @@ Legend:
 
 - [x] Anim.Extra.Color
   - Notes:
-- [ ] Anim.Extra.TransformOrder
+- [x] Anim.Extra.TransformOrder
   - Notes:
-- [ ] Anim.Extra.View3D
+- [x] Anim.Extra.View3D
   - Notes:
 
 ## Motion
 
-- [ ] Motion.Easing
+- [x] Motion.Easing
   - Notes:
-- [ ] Motion.Spring
+- [x] Motion.Spring
   - Notes:
 
 ## Scroll

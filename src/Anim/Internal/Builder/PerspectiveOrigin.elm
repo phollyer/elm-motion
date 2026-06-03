@@ -5,9 +5,6 @@ module Anim.Internal.Builder.PerspectiveOrigin exposing
     , build
     , clampX
     , clampY
-    , cssUnit
-    , cssUnitX
-    , cssUnitY
     , delay
     , duration
     , easing
@@ -35,7 +32,7 @@ import Anim.Internal.Builder as Builder exposing (AnimBuilder)
 import Anim.Internal.Builder.Property as PropertyBuilder
 import Anim.Internal.Builder.PropertyBaselines as PropertyBaselines
 import Anim.Internal.Property.PerspectiveOrigin as PerspectiveOrigin exposing (PerspectiveOrigin)
-import Anim.Unit exposing (Unit)
+import Anim.Internal.Unit as InternalUnit
 import Motion.Easing exposing (Easing)
 import Motion.Spring exposing (Spring)
 
@@ -81,8 +78,15 @@ for animGroupName builder =
                 _ ->
                     Nothing
 
-        config =
+        baselineUnits =
+            Builder.getBaseline animGroupName builder
+                |> Maybe.andThen PropertyBaselines.getPerspectiveOriginConfiguredUnits
+
+        baseConfig =
             PropertyBuilder.for animGroupName "perspectiveOrigin" PropertyBaselines.getPerspectiveOrigin extractExisting defaultConfig builder
+
+        config =
+            { baseConfig | cssUnit = InternalUnit.mergeBaselineUnits baselineUnits baseConfig.cssUnit }
     in
     PerspectiveOriginBuilder config <|
         Builder.for animGroupName builder
@@ -336,21 +340,6 @@ spring s (PerspectiveOriginBuilder config builder) =
 -- ============================================================
 -- UNIT
 -- ============================================================
-
-
-cssUnit : Unit -> PerspectiveOriginBuilder eng -> PerspectiveOriginBuilder eng
-cssUnit unit (PerspectiveOriginBuilder config builder) =
-    PerspectiveOriginBuilder (PropertyBuilder.cssUnit unit config) builder
-
-
-cssUnitX : Unit -> PerspectiveOriginBuilder eng -> PerspectiveOriginBuilder eng
-cssUnitX unit (PerspectiveOriginBuilder config builder) =
-    PerspectiveOriginBuilder (PropertyBuilder.cssUnitX unit config) builder
-
-
-cssUnitY : Unit -> PerspectiveOriginBuilder eng -> PerspectiveOriginBuilder eng
-cssUnitY unit (PerspectiveOriginBuilder config builder) =
-    PerspectiveOriginBuilder (PropertyBuilder.cssUnitY unit config) builder
 
 
 {-| Seed the per-property `cssUnit` axes on the config from the AnimBuilder's

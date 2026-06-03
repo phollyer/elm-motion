@@ -7,26 +7,32 @@ module Anim.Internal.Builder.PropertyBaselines exposing
     , getCustomProperty
     , getOpacity
     , getPerspectiveOrigin
+    , getPerspectiveOriginConfiguredUnits
     , getPerspectiveOriginUnits
     , getRotate
     , getScale
     , getSize
+    , getSizeConfiguredUnits
     , getSizeUnits
     , getSkew
     , getTranslate
+    , getTranslateConfiguredUnits
     , getTranslateUnits
     , merge
     , setCustomColorProperty
     , setCustomProperty
     , setOpacity
     , setPerspectiveOrigin
+    , setPerspectiveOriginConfiguredUnits
     , setPerspectiveOriginUnits
     , setRotate
     , setScale
     , setSize
+    , setSizeConfiguredUnits
     , setSizeUnits
     , setSkew
     , setTranslate
+    , setTranslateConfiguredUnits
     , setTranslateUnits
     , updateCustomColorProperties
     , updateCustomProperties
@@ -60,13 +66,16 @@ type PropertyValue
     | OpacityValue Opacity
     | PerspectiveOriginValue PerspectiveOrigin
     | PerspectiveOriginUnitsValue InternalUnit.ResolvedCssUnitAxes
+    | PerspectiveOriginConfiguredUnitsValue InternalUnit.CssUnitAxes
     | RotateValue Rotate
     | ScaleValue Scale
     | SizeValue Size
     | SizeUnitsValue InternalUnit.ResolvedCssUnitAxes
+    | SizeConfiguredUnitsValue InternalUnit.CssUnitAxes
     | SkewValue Skew
     | TranslateValue Translate
     | TranslateUnitsValue InternalUnit.ResolvedCssUnitAxes
+    | TranslateConfiguredUnitsValue InternalUnit.CssUnitAxes
 
 
 
@@ -138,6 +147,21 @@ setSizeUnits units (PropertyBaselines dict) =
 setPerspectiveOriginUnits : InternalUnit.ResolvedCssUnitAxes -> PropertyBaselines -> PropertyBaselines
 setPerspectiveOriginUnits units (PropertyBaselines dict) =
     PropertyBaselines (Dict.insert "perspectiveOriginUnits" (PerspectiveOriginUnitsValue units) dict)
+
+
+setTranslateConfiguredUnits : InternalUnit.CssUnitAxes -> PropertyBaselines -> PropertyBaselines
+setTranslateConfiguredUnits axes (PropertyBaselines dict) =
+    PropertyBaselines (Dict.insert "translateConfiguredUnits" (TranslateConfiguredUnitsValue axes) dict)
+
+
+setSizeConfiguredUnits : InternalUnit.CssUnitAxes -> PropertyBaselines -> PropertyBaselines
+setSizeConfiguredUnits axes (PropertyBaselines dict) =
+    PropertyBaselines (Dict.insert "sizeConfiguredUnits" (SizeConfiguredUnitsValue axes) dict)
+
+
+setPerspectiveOriginConfiguredUnits : InternalUnit.CssUnitAxes -> PropertyBaselines -> PropertyBaselines
+setPerspectiveOriginConfiguredUnits axes (PropertyBaselines dict) =
+    PropertyBaselines (Dict.insert "perspectiveOriginConfiguredUnits" (PerspectiveOriginConfiguredUnitsValue axes) dict)
 
 
 
@@ -397,6 +421,48 @@ getPerspectiveOriginUnits (PropertyBaselines dict) =
             (\v ->
                 case v of
                     PerspectiveOriginUnitsValue u ->
+                        Just u
+
+                    _ ->
+                        Nothing
+            )
+
+
+getTranslateConfiguredUnits : PropertyBaselines -> Maybe InternalUnit.CssUnitAxes
+getTranslateConfiguredUnits (PropertyBaselines dict) =
+    Dict.get "translateConfiguredUnits" dict
+        |> Maybe.andThen
+            (\v ->
+                case v of
+                    TranslateConfiguredUnitsValue u ->
+                        Just u
+
+                    _ ->
+                        Nothing
+            )
+
+
+getSizeConfiguredUnits : PropertyBaselines -> Maybe InternalUnit.CssUnitAxes
+getSizeConfiguredUnits (PropertyBaselines dict) =
+    Dict.get "sizeConfiguredUnits" dict
+        |> Maybe.andThen
+            (\v ->
+                case v of
+                    SizeConfiguredUnitsValue u ->
+                        Just u
+
+                    _ ->
+                        Nothing
+            )
+
+
+getPerspectiveOriginConfiguredUnits : PropertyBaselines -> Maybe InternalUnit.CssUnitAxes
+getPerspectiveOriginConfiguredUnits (PropertyBaselines dict) =
+    Dict.get "perspectiveOriginConfiguredUnits" dict
+        |> Maybe.andThen
+            (\v ->
+                case v of
+                    PerspectiveOriginConfiguredUnitsValue u ->
                         Just u
 
                     _ ->

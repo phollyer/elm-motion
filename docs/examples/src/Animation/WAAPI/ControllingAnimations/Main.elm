@@ -54,7 +54,7 @@ init =
     let
         animState =
             WAAPI.init motionCmd motionMsg <|
-                [ Translate.initY animGroup 0 ]
+                [ Translate.initUnitY Cqh >> Translate.initY animGroup 0 ]
     in
     ( { animState = animState }
     , Cmd.none
@@ -85,7 +85,6 @@ ballSizeCqh =
 dropBall : WAAPI.EngineBuilder -> WAAPI.EngineBuilder
 dropBall =
     Translate.for animGroup
-        >> Translate.cssUnit Cqh
         >> Translate.fromY 0
         >> Translate.toY (100 - ballSize)
         >> Translate.speed 75

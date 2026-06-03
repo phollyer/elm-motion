@@ -13,9 +13,6 @@ right primitive for anything that should "feel physical": bouncy UI
 reveals, gesture-handoff momentum, anything where a tween's
 fixed-duration ramp would feel artificial.
 
-For ramp-shaped motion (fades, slides with a known duration, classic
-ease curves), use `Motion.Easing` instead.
-
 
 # The Spring type
 
@@ -153,18 +150,21 @@ noWobble =
 
 {-| Hand-tune a spring's physics.
 
-  - `stiffness` — Hooke's-law `k`. Higher is snappier. Typical
-    `100..400`. Must be `>= 0`.
-  - `damping` — viscous friction `c`. Higher is less wobbly. Typical
-    `10..40`. Must be `>= 0`.
-  - `mass` — oscillator mass. Typical `1.0`. Heavier feels more
-    sluggish. Must be `> 0`.
+  - `stiffness` — how strongly the spring pulls toward the target.
+    Higher is snappier, lower is loose. Typical `100..400`.
+    (Hooke's-law. Must be `>= 0`.)
+  - `damping` — how much friction slows the motion. Higher is less
+    wobbly, lower is bouncier. Typical `10..40`.
+    (Viscous friction. Must be `>= 0`.)
+  - `mass` — how heavy the thing feels. Heavier is more sluggish,
+    lighter is more reactive. Typical `1.0`. Must be `> 0`.
 
-The damping ratio `c / (2·√(k·m))` decides the regime:
+If you want to dial in a specific feel, the ratio
+`damping / (2·√(stiffness·mass))` controls the overall character:
 
-  - `< 1` — under-damped: oscillates and decays
-  - `= 1` — critically damped: fastest no-overshoot settle
-  - `> 1` — over-damped: slow no-overshoot approach
+  - less than `1` — bouncy: overshoots and oscillates before settling
+  - exactly `1` — crisp: fastest possible settle with no overshoot
+  - more than `1` — sluggish: eases in slowly without overshoot
 
 Inputs are clamped: stiffness and damping below 0 become 0, mass
 below 1e-6 becomes 1e-6.

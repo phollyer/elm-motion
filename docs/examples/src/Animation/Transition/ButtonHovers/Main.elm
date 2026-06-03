@@ -134,7 +134,6 @@ scaleDown =
 growSize : Transition.EngineBuilder -> Transition.EngineBuilder
 growSize =
     Size.for sizeButton
-        >> Size.cssUnit Cqmin
         >> Size.toHW hoverHeight hoverWidth
         >> Size.duration hoverDuration
         >> Size.easing hoverEasing
@@ -144,7 +143,6 @@ growSize =
 shrinkSize : Transition.EngineBuilder -> Transition.EngineBuilder
 shrinkSize =
     Size.for sizeButton
-        >> Size.cssUnit Cqmin
         >> Size.toHW baseHeight baseWidth
         >> Size.duration hoverDuration
         >> Size.easing unhoverEasing

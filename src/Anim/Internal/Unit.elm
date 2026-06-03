@@ -4,6 +4,7 @@ module Anim.Internal.Unit exposing
     , default
     , emptyCssUnitAxes
     , fromResolvedCssUnitAxes
+    , mergeBaselineUnits
     , resolveCssUnitAxes
     , setAllCssUnitAxes
     , setCssUnitX
@@ -225,6 +226,36 @@ emptyCssUnitAxes =
 fromResolvedCssUnitAxes : ResolvedCssUnitAxes -> CssUnitAxes
 fromResolvedCssUnitAxes axes =
     { x = Just axes.x, y = Just axes.y, z = Just axes.z }
+
+
+{-| Fill empty axes of `axes` with the corresponding values from a stored
+baseline (a previous animation's user-configured units, in unresolved
+Maybe form). Used so the unit chosen at `initUnit*` time persists across
+subsequent `animate` calls that don't re-state a unit, while leaving
+empty axes untouched so engine-level `cssUnit*` defaults still win on
+axes the user never set.
+-}
+mergeBaselineUnits : Maybe CssUnitAxes -> CssUnitAxes -> CssUnitAxes
+mergeBaselineUnits maybeBaseline axes =
+    case maybeBaseline of
+        Nothing ->
+            axes
+
+        Just baseline ->
+            { x = orMaybe axes.x baseline.x
+            , y = orMaybe axes.y baseline.y
+            , z = orMaybe axes.z baseline.z
+            }
+
+
+orMaybe : Maybe a -> Maybe a -> Maybe a
+orMaybe primary fallback =
+    case primary of
+        Just _ ->
+            primary
+
+        Nothing ->
+            fallback
 
 
 setAllCssUnitAxes : Unit -> CssUnitAxes -> CssUnitAxes

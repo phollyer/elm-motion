@@ -130,7 +130,6 @@ color4 =
 moveBoxX : Float -> Keyframe.EngineBuilder -> Keyframe.EngineBuilder
 moveBoxX x =
     Translate.for animGroupName
-        >> Translate.cssUnit Cqw
         >> Translate.toX x
         >> Translate.speed 25
         >> Translate.easing BounceOut

@@ -56,7 +56,7 @@ init : ( Model, Cmd Msg )
 init =
     ( { animState =
             Sub.init
-                [ Translate.initY animGroup 0 ]
+                [ Translate.initUnitY Cqh >> Translate.initY animGroup 0 ]
       }
     , Cmd.none
     )
@@ -69,7 +69,6 @@ init =
 dropBall : Sub.EngineBuilder -> Sub.EngineBuilder
 dropBall =
     Translate.for animGroup
-        >> Translate.cssUnit Cqh
         >> Translate.fromY 0
         >> Translate.toY (100 - ballSize)
         >> Translate.speed 75

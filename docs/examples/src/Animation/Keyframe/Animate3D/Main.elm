@@ -330,7 +330,6 @@ moveFace : FaceConfig -> (Translate.Builder ForKeyframe -> Translate.Builder For
 moveFace config moveToBuilder =
     sharedTiming
         >> Translate.for config.groupName
-        >> Translate.cssUnit Cqmin
         >> moveToBuilder
         >> Translate.build
 
@@ -423,7 +422,6 @@ moveText : TextConfig -> Float -> Float -> Keyframe.EngineBuilder -> Keyframe.En
 moveText config toZ toRotate =
     sharedTiming
         >> Translate.for config.groupName
-        >> Translate.cssUnit Cqmin
         >> Translate.toZ toZ
         >> Translate.build
         >> Rotate.for config.groupName
