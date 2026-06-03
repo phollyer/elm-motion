@@ -1,6 +1,5 @@
 module Anim.Internal.Builder.PerspectiveOrigin exposing
     ( PerspectiveOriginBuilder
-    , applyInitCssUnit
     , bounds
     , build
     , clampX
@@ -82,14 +81,23 @@ for animGroupName builder =
             Builder.getBaseline animGroupName builder
                 |> Maybe.andThen PropertyBaselines.getPerspectiveOriginConfiguredUnits
 
+        storeUnits =
+            Builder.getPerspectiveOriginInitCssUnitAxes animGroupName builder
+
         baseConfig =
             PropertyBuilder.for animGroupName "perspectiveOrigin" PropertyBaselines.getPerspectiveOrigin extractExisting defaultConfig builder
 
         config =
-            { baseConfig | cssUnit = InternalUnit.mergeBaselineUnits baselineUnits baseConfig.cssUnit }
+            { baseConfig
+                | cssUnit =
+                    InternalUnit.mergeBaselineUnits baselineUnits baseConfig.cssUnit
+                        |> InternalUnit.mergeBaselineUnits (Just storeUnits)
+            }
     in
     PerspectiveOriginBuilder config <|
-        Builder.for animGroupName builder
+        (Builder.for animGroupName builder
+            |> Builder.setPerspectiveOriginCurrentGroup animGroupName
+        )
 
 
 build : PerspectiveOriginBuilder eng -> AnimBuilder eng
@@ -334,24 +342,6 @@ easing easing_ (PerspectiveOriginBuilder config builder) =
 spring : Spring -> PerspectiveOriginBuilder { eng | withSpring : () } -> PerspectiveOriginBuilder { eng | withSpring : () }
 spring s (PerspectiveOriginBuilder config builder) =
     PerspectiveOriginBuilder (PropertyBuilder.spring s config) builder
-
-
-
--- ============================================================
--- UNIT
--- ============================================================
-
-
-{-| Seed the per-property `cssUnit` axes on the config from the AnimBuilder's
-stored init-time unit defaults. Called at the start of every public `init*`
-helper so values supplied during initialization are rendered with whatever
-`initUnit*` was active at that point in the pipeline.
--}
-applyInitCssUnit : PerspectiveOriginBuilder eng -> PerspectiveOriginBuilder eng
-applyInitCssUnit (PerspectiveOriginBuilder config builder) =
-    PerspectiveOriginBuilder
-        { config | cssUnit = Builder.getPerspectiveOriginInitCssUnit builder }
-        builder
 
 
 

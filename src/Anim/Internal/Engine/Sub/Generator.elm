@@ -27,11 +27,11 @@ import Shared.Spring as SpringSolver
 -- ============================================================
 
 
-init : Dict String Builder.DiscreteEntryProperty -> Dict String Builder.DiscreteExitProperty -> List Builder.PropertyConfig -> AnimGroup
-init discreteEntryProps discreteExitProps properties =
+init : Builder.DefaultsConfig -> Builder.AnimGroupName -> Dict String Builder.DiscreteEntryProperty -> Dict String Builder.DiscreteExitProperty -> List Builder.PropertyConfig -> AnimGroup
+init defaults animGroupName discreteEntryProps discreteExitProps properties =
     let
         processedProps =
-            Builder.processProperties Builder.initDefaults properties
+            Builder.processProperties defaults animGroupName properties
 
         animations =
             List.filterMap (toAnimation True) processedProps

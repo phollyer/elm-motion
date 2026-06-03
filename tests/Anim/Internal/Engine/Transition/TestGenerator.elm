@@ -42,14 +42,14 @@ initTests =
     describe "init"
         [ test "init with no properties creates AnimGroup with transition styles" <|
             \_ ->
-                Generator.init False Dict.empty Dict.empty []
+                Generator.init Builder.initDefaults "test" False Dict.empty Dict.empty []
                     |> (\animGroup ->
                             TransitionAnimGroup.getStyles animGroup
                                 |> Expect.notEqual Styles.empty
                        )
         , test "init with translate produces animation with non-empty styles" <|
             \_ ->
-                Generator.init False Dict.empty Dict.empty [ translateConfig ]
+                Generator.init Builder.initDefaults "test" False Dict.empty Dict.empty [ translateConfig ]
                     |> (\animGroup ->
                             TransitionAnimGroup.getStyles animGroup
                                 |> Expect.notEqual Styles.empty
@@ -60,7 +60,7 @@ initTests =
                     entry =
                         Dict.fromList [ ( "visibility", "visible" ) ]
                 in
-                Generator.init False entry Dict.empty [ translateConfig ]
+                Generator.init Builder.initDefaults "test" False entry Dict.empty [ translateConfig ]
                     |> (\animGroup ->
                             TransitionAnimGroup.getDiscreteEntry animGroup
                                 |> Dict.get "visibility"
@@ -76,7 +76,7 @@ generateAnimationTests =
             \_ ->
                 let
                     processedProps =
-                        Builder.processProperties Builder.initDefaults [ translateConfig ]
+                        Builder.processProperties Builder.initDefaults "test" [ translateConfig ]
                 in
                 Generator.generateAnimation False Dict.empty Dict.empty processedProps
                     |> (\animGroup ->
@@ -123,7 +123,7 @@ snapModeTests =
             \_ ->
                 let
                     processed =
-                        Builder.processProperties Builder.initDefaults [ snapTranslateConfig ]
+                        Builder.processProperties Builder.initDefaults "test" [ snapTranslateConfig ]
                 in
                 Generator.generate False Dict.empty Dict.empty processed
                     |> Expect.equal "none"
@@ -132,6 +132,7 @@ snapModeTests =
                 let
                     processed =
                         Builder.processProperties Builder.initDefaults
+                            "test"
                             [ opacityConfig Builder.Animate
                             , snapTranslateConfig
                             ]
@@ -149,7 +150,7 @@ snapModeTests =
             \_ ->
                 let
                     processed =
-                        Builder.processProperties Builder.initDefaults [ snapTranslateConfig ]
+                        Builder.processProperties Builder.initDefaults "test" [ snapTranslateConfig ]
                 in
                 Generator.generateAnimation False Dict.empty Dict.empty processed
                     |> (\animGroup ->

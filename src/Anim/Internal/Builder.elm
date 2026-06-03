@@ -1,6 +1,7 @@
 module Anim.Internal.Builder exposing
     ( AnimBuilder
     , AnimGroupConfig
+    , AnimGroupName
     , AnimationConfig
     , AnimationDirection(..)
     , AnimationMode(..)
@@ -62,6 +63,7 @@ module Anim.Internal.Builder exposing
     , getCurrentAnimGroupConfig
     , getCurrentAnimGroupName
     , getCurrentAnimationConfig
+    , getDefaults
     , getDelay
     , getDelayWithDefault
     , getDiscreteEntryProperties
@@ -72,17 +74,17 @@ module Anim.Internal.Builder exposing
     , getFrozenAxes
     , getIterations
     , getLatestAnimateConfig
-    , getPerspectiveOriginInitCssUnit
+    , getPerspectiveOriginInitCssUnitAxes
     , getRuntimeBaseline
     , getScrollAxis
     , getScrollEmitProgress
     , getScrollSource
-    , getSizeInitCssUnit
+    , getSizeInitCssUnitAxes
     , getSpring
     , getTimeSpec
     , getTimeSpecWithDefault
     , getTransformOrder
-    , getTranslateInitCssUnit
+    , getTranslateInitCssUnitAxes
     , getViewRangeEnd
     , getViewRangeStart
     , init
@@ -102,19 +104,25 @@ module Anim.Internal.Builder exposing
     , processedPropertyMode
     , processedPropertyType
     , processedTimings
+    , registerPerspectiveOriginInitAxes
+    , registerSizeInitAxes
+    , registerTranslateInitAxes
     , setAnimTarget
     , setBaselinesFromProcessedEnds
     , setClamp
     , setEmitProgress
+    , setPerspectiveOriginCurrentGroup
     , setPerspectiveOriginInitCssUnit
     , setPerspectiveOriginInitCssUnitX
     , setPerspectiveOriginInitCssUnitY
     , setScrollAxis
     , setScrollEmitProgress
     , setScrollSource
+    , setSizeCurrentGroup
     , setSizeInitCssUnit
     , setSizeInitCssUnitHeight
     , setSizeInitCssUnitWidth
+    , setTranslateCurrentGroup
     , setTranslateInitCssUnit
     , setTranslateInitCssUnitX
     , setTranslateInitCssUnitY
@@ -134,6 +142,7 @@ module Anim.Internal.Builder exposing
     )
 
 import Anim.Extra.TransformOrder exposing (TransformProperty(..))
+import Anim.Internal.Builder.CssUnitStore as CssUnitStore
 import Anim.Internal.Builder.PropertyBaselines as PropertyBaselines exposing (PropertyBaselines)
 import Anim.Internal.Engine.Shared.AnimGroups as AnimGroups exposing (AnimGroups)
 import Anim.Internal.Extra.Color as Color exposing (Color)
@@ -301,9 +310,11 @@ type alias DefaultsConfig =
     , globalCssUnit : InternalUnit.CssUnitAxes
     , globalSizeCssUnit : InternalUnit.CssUnitAxes
     , globalTransformOrder : Maybe (List TransformProperty)
-    , translateInitCssUnit : InternalUnit.CssUnitAxes
-    , sizeInitCssUnit : InternalUnit.CssUnitAxes
-    , perspectiveOriginInitCssUnit : InternalUnit.CssUnitAxes
+    , cssUnits : CssUnitStore.Store
+    , touchedInitSlots : Set ( String, String )
+    , translateCurrentGroup : Maybe AnimGroupName
+    , sizeCurrentGroup : Maybe AnimGroupName
+    , perspectiveOriginCurrentGroup : Maybe AnimGroupName
     }
 
 
@@ -573,9 +584,11 @@ initDefaults =
     , globalCssUnit = InternalUnit.emptyCssUnitAxes
     , globalSizeCssUnit = InternalUnit.emptyCssUnitAxes
     , globalTransformOrder = Nothing
-    , translateInitCssUnit = InternalUnit.emptyCssUnitAxes
-    , sizeInitCssUnit = InternalUnit.emptyCssUnitAxes
-    , perspectiveOriginInitCssUnit = InternalUnit.emptyCssUnitAxes
+    , cssUnits = CssUnitStore.empty
+    , touchedInitSlots = Set.empty
+    , translateCurrentGroup = Nothing
+    , sizeCurrentGroup = Nothing
+    , perspectiveOriginCurrentGroup = Nothing
     }
 
 
@@ -760,125 +773,174 @@ cssUnitHeight unit (AnimBuilder data) =
 
 
 
--- Per-property init-time CSS unit defaults. Set by the public
--- `Translate.initUnit*` / `Size.initUnit*` / `PerspectiveOrigin.initUnit*`
--- families; consumed by the corresponding `init*` value helpers when they
--- create the AnimationConfig.
+-- Per-group, per-property init-time CSS unit overrides. The store is keyed
+-- by `(animGroupName, slot)` and populated by the public `Translate.initUnit*`
+-- / `Size.initUnit*` / `PerspectiveOrigin.initUnit*` families. Each property's
+-- `for` registers its `currentGroup` so subsequent `initUnit*` calls in the
+-- same chain know which group to attach to. Resolution happens at process
+-- and baseline time.
+
+
+setTranslateCurrentGroup : AnimGroupName -> AnimBuilder eng -> AnimBuilder eng
+setTranslateCurrentGroup name (AnimBuilder data) =
+    let
+        defs =
+            data.defaults
+    in
+    AnimBuilder { data | defaults = { defs | translateCurrentGroup = Just name } }
+
+
+setSizeCurrentGroup : AnimGroupName -> AnimBuilder eng -> AnimBuilder eng
+setSizeCurrentGroup name (AnimBuilder data) =
+    let
+        defs =
+            data.defaults
+    in
+    AnimBuilder { data | defaults = { defs | sizeCurrentGroup = Just name } }
+
+
+setPerspectiveOriginCurrentGroup : AnimGroupName -> AnimBuilder eng -> AnimBuilder eng
+setPerspectiveOriginCurrentGroup name (AnimBuilder data) =
+    let
+        defs =
+            data.defaults
+    in
+    AnimBuilder { data | defaults = { defs | perspectiveOriginCurrentGroup = Just name } }
+
+
+writeCssUnit : Maybe AnimGroupName -> String -> Unit -> AnimBuilder eng -> AnimBuilder eng
+writeCssUnit maybeGroup slot unit (AnimBuilder data) =
+    case maybeGroup of
+        Nothing ->
+            AnimBuilder data
+
+        Just group ->
+            if Set.member ( group, slot ) data.defaults.touchedInitSlots then
+                let
+                    defs =
+                        data.defaults
+                in
+                AnimBuilder { data | defaults = { defs | cssUnits = CssUnitStore.set group slot unit defs.cssUnits } }
+
+            else
+                AnimBuilder data
+
+
+writeCssUnits : Maybe AnimGroupName -> List String -> Unit -> AnimBuilder eng -> AnimBuilder eng
+writeCssUnits maybeGroup slots unit builder =
+    List.foldl (\s b -> writeCssUnit maybeGroup s unit b) builder slots
+
+
+markInitTouched : Maybe AnimGroupName -> List String -> AnimBuilder eng -> AnimBuilder eng
+markInitTouched maybeGroup slots (AnimBuilder data) =
+    case maybeGroup of
+        Nothing ->
+            AnimBuilder data
+
+        Just group ->
+            let
+                defs =
+                    data.defaults
+
+                touched =
+                    List.foldl (\s -> Set.insert ( group, s )) defs.touchedInitSlots slots
+            in
+            AnimBuilder { data | defaults = { defs | touchedInitSlots = touched } }
+
+
+registerTranslateInitAxes : List String -> AnimBuilder eng -> AnimBuilder eng
+registerTranslateInitAxes slots ((AnimBuilder data) as builder) =
+    markInitTouched data.defaults.translateCurrentGroup slots builder
+
+
+registerSizeInitAxes : List String -> AnimBuilder eng -> AnimBuilder eng
+registerSizeInitAxes slots ((AnimBuilder data) as builder) =
+    markInitTouched data.defaults.sizeCurrentGroup slots builder
+
+
+registerPerspectiveOriginInitAxes : List String -> AnimBuilder eng -> AnimBuilder eng
+registerPerspectiveOriginInitAxes slots ((AnimBuilder data) as builder) =
+    markInitTouched data.defaults.perspectiveOriginCurrentGroup slots builder
 
 
 setTranslateInitCssUnit : Unit -> AnimBuilder eng -> AnimBuilder eng
-setTranslateInitCssUnit unit (AnimBuilder data) =
-    let
-        defs =
-            data.defaults
-    in
-    AnimBuilder
-        { data | defaults = { defs | translateInitCssUnit = InternalUnit.setAllCssUnitAxes unit defs.translateInitCssUnit } }
+setTranslateInitCssUnit unit ((AnimBuilder data) as builder) =
+    writeCssUnits data.defaults.translateCurrentGroup
+        [ CssUnitStore.translateX, CssUnitStore.translateY, CssUnitStore.translateZ ]
+        unit
+        builder
 
 
 setTranslateInitCssUnitX : Unit -> AnimBuilder eng -> AnimBuilder eng
-setTranslateInitCssUnitX unit (AnimBuilder data) =
-    let
-        defs =
-            data.defaults
-    in
-    AnimBuilder
-        { data | defaults = { defs | translateInitCssUnit = InternalUnit.setCssUnitX unit defs.translateInitCssUnit } }
+setTranslateInitCssUnitX unit ((AnimBuilder data) as builder) =
+    writeCssUnit data.defaults.translateCurrentGroup CssUnitStore.translateX unit builder
 
 
 setTranslateInitCssUnitY : Unit -> AnimBuilder eng -> AnimBuilder eng
-setTranslateInitCssUnitY unit (AnimBuilder data) =
-    let
-        defs =
-            data.defaults
-    in
-    AnimBuilder
-        { data | defaults = { defs | translateInitCssUnit = InternalUnit.setCssUnitY unit defs.translateInitCssUnit } }
+setTranslateInitCssUnitY unit ((AnimBuilder data) as builder) =
+    writeCssUnit data.defaults.translateCurrentGroup CssUnitStore.translateY unit builder
 
 
 setTranslateInitCssUnitZ : Unit -> AnimBuilder eng -> AnimBuilder eng
-setTranslateInitCssUnitZ unit (AnimBuilder data) =
-    let
-        defs =
-            data.defaults
-    in
-    AnimBuilder
-        { data | defaults = { defs | translateInitCssUnit = InternalUnit.setCssUnitZ unit defs.translateInitCssUnit } }
-
-
-getTranslateInitCssUnit : AnimBuilder eng -> InternalUnit.CssUnitAxes
-getTranslateInitCssUnit (AnimBuilder data) =
-    data.defaults.translateInitCssUnit
+setTranslateInitCssUnitZ unit ((AnimBuilder data) as builder) =
+    writeCssUnit data.defaults.translateCurrentGroup CssUnitStore.translateZ unit builder
 
 
 setSizeInitCssUnit : Unit -> AnimBuilder eng -> AnimBuilder eng
-setSizeInitCssUnit unit (AnimBuilder data) =
-    let
-        defs =
-            data.defaults
-    in
-    AnimBuilder
-        { data | defaults = { defs | sizeInitCssUnit = InternalUnit.setAllCssUnitAxes unit defs.sizeInitCssUnit } }
+setSizeInitCssUnit unit ((AnimBuilder data) as builder) =
+    writeCssUnits data.defaults.sizeCurrentGroup
+        [ CssUnitStore.sizeWidth, CssUnitStore.sizeHeight ]
+        unit
+        builder
 
 
 setSizeInitCssUnitWidth : Unit -> AnimBuilder eng -> AnimBuilder eng
-setSizeInitCssUnitWidth unit (AnimBuilder data) =
-    let
-        defs =
-            data.defaults
-    in
-    AnimBuilder
-        { data | defaults = { defs | sizeInitCssUnit = InternalUnit.setCssUnitX unit defs.sizeInitCssUnit } }
+setSizeInitCssUnitWidth unit ((AnimBuilder data) as builder) =
+    writeCssUnit data.defaults.sizeCurrentGroup CssUnitStore.sizeWidth unit builder
 
 
 setSizeInitCssUnitHeight : Unit -> AnimBuilder eng -> AnimBuilder eng
-setSizeInitCssUnitHeight unit (AnimBuilder data) =
-    let
-        defs =
-            data.defaults
-    in
-    AnimBuilder
-        { data | defaults = { defs | sizeInitCssUnit = InternalUnit.setCssUnitY unit defs.sizeInitCssUnit } }
-
-
-getSizeInitCssUnit : AnimBuilder eng -> InternalUnit.CssUnitAxes
-getSizeInitCssUnit (AnimBuilder data) =
-    data.defaults.sizeInitCssUnit
+setSizeInitCssUnitHeight unit ((AnimBuilder data) as builder) =
+    writeCssUnit data.defaults.sizeCurrentGroup CssUnitStore.sizeHeight unit builder
 
 
 setPerspectiveOriginInitCssUnit : Unit -> AnimBuilder eng -> AnimBuilder eng
-setPerspectiveOriginInitCssUnit unit (AnimBuilder data) =
-    let
-        defs =
-            data.defaults
-    in
-    AnimBuilder
-        { data | defaults = { defs | perspectiveOriginInitCssUnit = InternalUnit.setAllCssUnitAxes unit defs.perspectiveOriginInitCssUnit } }
+setPerspectiveOriginInitCssUnit unit ((AnimBuilder data) as builder) =
+    writeCssUnits data.defaults.perspectiveOriginCurrentGroup
+        [ CssUnitStore.perspectiveOriginX, CssUnitStore.perspectiveOriginY ]
+        unit
+        builder
 
 
 setPerspectiveOriginInitCssUnitX : Unit -> AnimBuilder eng -> AnimBuilder eng
-setPerspectiveOriginInitCssUnitX unit (AnimBuilder data) =
-    let
-        defs =
-            data.defaults
-    in
-    AnimBuilder
-        { data | defaults = { defs | perspectiveOriginInitCssUnit = InternalUnit.setCssUnitX unit defs.perspectiveOriginInitCssUnit } }
+setPerspectiveOriginInitCssUnitX unit ((AnimBuilder data) as builder) =
+    writeCssUnit data.defaults.perspectiveOriginCurrentGroup CssUnitStore.perspectiveOriginX unit builder
 
 
 setPerspectiveOriginInitCssUnitY : Unit -> AnimBuilder eng -> AnimBuilder eng
-setPerspectiveOriginInitCssUnitY unit (AnimBuilder data) =
-    let
-        defs =
-            data.defaults
-    in
-    AnimBuilder
-        { data | defaults = { defs | perspectiveOriginInitCssUnit = InternalUnit.setCssUnitY unit defs.perspectiveOriginInitCssUnit } }
+setPerspectiveOriginInitCssUnitY unit ((AnimBuilder data) as builder) =
+    writeCssUnit data.defaults.perspectiveOriginCurrentGroup CssUnitStore.perspectiveOriginY unit builder
 
 
-getPerspectiveOriginInitCssUnit : AnimBuilder eng -> InternalUnit.CssUnitAxes
-getPerspectiveOriginInitCssUnit (AnimBuilder data) =
-    data.defaults.perspectiveOriginInitCssUnit
+getTranslateInitCssUnitAxes : AnimGroupName -> AnimBuilder eng -> InternalUnit.CssUnitAxes
+getTranslateInitCssUnitAxes group (AnimBuilder data) =
+    CssUnitStore.getAxes group
+        { x = CssUnitStore.translateX, y = CssUnitStore.translateY, z = CssUnitStore.translateZ }
+        data.defaults.cssUnits
+
+
+getSizeInitCssUnitAxes : AnimGroupName -> AnimBuilder eng -> InternalUnit.CssUnitAxes
+getSizeInitCssUnitAxes group (AnimBuilder data) =
+    CssUnitStore.getAxes group
+        { x = CssUnitStore.sizeWidth, y = CssUnitStore.sizeHeight, z = "" }
+        data.defaults.cssUnits
+
+
+getPerspectiveOriginInitCssUnitAxes : AnimGroupName -> AnimBuilder eng -> InternalUnit.CssUnitAxes
+getPerspectiveOriginInitCssUnitAxes group (AnimBuilder data) =
+    CssUnitStore.getAxes group
+        { x = CssUnitStore.perspectiveOriginX, y = CssUnitStore.perspectiveOriginY, z = "" }
+        data.defaults.cssUnits
 
 
 transformOrder : List TransformProperty -> AnimBuilder { eng | withTransformOrder : () } -> AnimBuilder { eng | withTransformOrder : () }
@@ -1113,6 +1175,11 @@ getDiscreteExitProperties (AnimBuilder data) =
 getIterations : AnimBuilder eng -> Iterations
 getIterations (AnimBuilder data) =
     data.playback.iterations
+
+
+getDefaults : AnimBuilder eng -> DefaultsConfig
+getDefaults (AnimBuilder data) =
+    data.defaults
 
 
 getAnimationDirection : AnimBuilder eng -> AnimationDirection
@@ -1482,7 +1549,7 @@ mergeBaselines (AnimBuilder ({ state, animation, defaults } as data)) =
     let
         newBaselines =
             animation.animGroups
-                |> AnimGroups.map (\_ config -> extractBaselinesFromConfig defaults config)
+                |> AnimGroups.map (\groupName config -> extractBaselinesFromConfig defaults groupName config)
 
         mergeBoth key new old =
             AnimGroups.insert key (PropertyBaselines.merge old new)
@@ -1551,20 +1618,40 @@ updateBaselines key f (AnimBuilder data) =
         }
 
 
-extractBaselinesFromConfig : DefaultsConfig -> AnimGroupConfig -> PropertyBaselines
-extractBaselinesFromConfig defaults elementConfig =
-    List.foldl (extractPropertyBaseline defaults) PropertyBaselines.empty elementConfig.properties
+extractBaselinesFromConfig : DefaultsConfig -> AnimGroupName -> AnimGroupConfig -> PropertyBaselines
+extractBaselinesFromConfig defaults animGroupName elementConfig =
+    List.foldl (extractPropertyBaseline defaults animGroupName) PropertyBaselines.empty elementConfig.properties
 
 
-extractPropertyBaseline : DefaultsConfig -> PropertyConfig -> PropertyBaselines -> PropertyBaselines
-extractPropertyBaseline defaults propConfig baselines =
+extractPropertyBaseline : DefaultsConfig -> AnimGroupName -> PropertyConfig -> PropertyBaselines -> PropertyBaselines
+extractPropertyBaseline defaults animGroupName propConfig baselines =
+    let
+        translateUnits () =
+            InternalUnit.mergeBaselineUnits
+                (Just (translateStoreAxes defaults animGroupName))
+                (extractTranslateCssUnit propConfig)
+
+        sizeUnits () =
+            InternalUnit.mergeBaselineUnits
+                (Just (sizeStoreAxes defaults animGroupName))
+                (extractSizeCssUnit propConfig)
+
+        perspectiveOriginUnits () =
+            InternalUnit.mergeBaselineUnits
+                (Just (perspectiveOriginStoreAxes defaults animGroupName))
+                (extractPerspectiveOriginCssUnit propConfig)
+    in
     case propConfig of
         TranslateConfig cfg ->
+            let
+                merged =
+                    translateUnits ()
+            in
             baselines
                 |> PropertyBaselines.setTranslate cfg.end
                 |> PropertyBaselines.setTranslateUnits
-                    (InternalUnit.resolveCssUnitAxes cfg.cssUnit defaults.globalCssUnit InternalUnit.default)
-                |> PropertyBaselines.setTranslateConfiguredUnits cfg.cssUnit
+                    (InternalUnit.resolveCssUnitAxes merged defaults.globalCssUnit InternalUnit.default)
+                |> PropertyBaselines.setTranslateConfiguredUnits merged
 
         RotateConfig cfg ->
             PropertyBaselines.setRotate cfg.end baselines
@@ -1579,24 +1666,83 @@ extractPropertyBaseline defaults propConfig baselines =
             PropertyBaselines.setOpacity cfg.end baselines
 
         PerspectiveOriginConfig cfg ->
+            let
+                merged =
+                    perspectiveOriginUnits ()
+            in
             baselines
                 |> PropertyBaselines.setPerspectiveOrigin cfg.end
                 |> PropertyBaselines.setPerspectiveOriginUnits
-                    (InternalUnit.resolveCssUnitAxes cfg.cssUnit defaults.globalCssUnit Percent)
-                |> PropertyBaselines.setPerspectiveOriginConfiguredUnits cfg.cssUnit
+                    (InternalUnit.resolveCssUnitAxes merged defaults.globalCssUnit Percent)
+                |> PropertyBaselines.setPerspectiveOriginConfiguredUnits merged
 
         SizeConfig cfg ->
+            let
+                merged =
+                    sizeUnits ()
+            in
             baselines
                 |> PropertyBaselines.setSize cfg.end
                 |> PropertyBaselines.setSizeUnits
-                    (InternalUnit.resolveCssUnitAxes cfg.cssUnit defaults.globalSizeCssUnit InternalUnit.default)
-                |> PropertyBaselines.setSizeConfiguredUnits cfg.cssUnit
+                    (InternalUnit.resolveCssUnitAxes merged defaults.globalSizeCssUnit InternalUnit.default)
+                |> PropertyBaselines.setSizeConfiguredUnits merged
 
         CustomPropertyConfig cssName unit cfg ->
             PropertyBaselines.setCustomProperty cssName cfg.end unit baselines
 
         CustomColorPropertyConfig cssName cfg ->
             PropertyBaselines.setCustomColorProperty cssName cfg.end baselines
+
+
+translateStoreAxes : DefaultsConfig -> AnimGroupName -> InternalUnit.CssUnitAxes
+translateStoreAxes defaults animGroupName =
+    CssUnitStore.getAxes animGroupName
+        { x = CssUnitStore.translateX, y = CssUnitStore.translateY, z = CssUnitStore.translateZ }
+        defaults.cssUnits
+
+
+sizeStoreAxes : DefaultsConfig -> AnimGroupName -> InternalUnit.CssUnitAxes
+sizeStoreAxes defaults animGroupName =
+    CssUnitStore.getAxes animGroupName
+        { x = CssUnitStore.sizeWidth, y = CssUnitStore.sizeHeight, z = "" }
+        defaults.cssUnits
+
+
+perspectiveOriginStoreAxes : DefaultsConfig -> AnimGroupName -> InternalUnit.CssUnitAxes
+perspectiveOriginStoreAxes defaults animGroupName =
+    CssUnitStore.getAxes animGroupName
+        { x = CssUnitStore.perspectiveOriginX, y = CssUnitStore.perspectiveOriginY, z = "" }
+        defaults.cssUnits
+
+
+extractTranslateCssUnit : PropertyConfig -> InternalUnit.CssUnitAxes
+extractTranslateCssUnit propConfig =
+    case propConfig of
+        TranslateConfig cfg ->
+            cfg.cssUnit
+
+        _ ->
+            InternalUnit.emptyCssUnitAxes
+
+
+extractSizeCssUnit : PropertyConfig -> InternalUnit.CssUnitAxes
+extractSizeCssUnit propConfig =
+    case propConfig of
+        SizeConfig cfg ->
+            cfg.cssUnit
+
+        _ ->
+            InternalUnit.emptyCssUnitAxes
+
+
+extractPerspectiveOriginCssUnit : PropertyConfig -> InternalUnit.CssUnitAxes
+extractPerspectiveOriginCssUnit propConfig =
+    case propConfig of
+        PerspectiveOriginConfig cfg ->
+            cfg.cssUnit
+
+        _ ->
+            InternalUnit.emptyCssUnitAxes
 
 
 {-| Like `extractPropertyBaseline` but for already-processed property
@@ -2074,8 +2220,8 @@ process (AnimBuilder data) =
     , animationDirection = data.playback.animationDirection
     , groups =
         AnimGroups.map
-            (\_ group ->
-                { properties = processProperties data.defaults group.properties
+            (\groupName group ->
+                { properties = processProperties data.defaults groupName group.properties
                 , transformOrder =
                     case group.transformOrder of
                         Just _ ->
@@ -2089,13 +2235,38 @@ process (AnimBuilder data) =
     }
 
 
-processProperties : DefaultsConfig -> List PropertyConfig -> List ProcessedPropertyConfig
-processProperties defaults =
-    List.filterMap (processProperty defaults)
+processProperties : DefaultsConfig -> AnimGroupName -> List PropertyConfig -> List ProcessedPropertyConfig
+processProperties defaults animGroupName =
+    List.filterMap (processProperty defaults animGroupName)
 
 
-processProperty : DefaultsConfig -> PropertyConfig -> Maybe ProcessedPropertyConfig
-processProperty globalData property =
+processProperty : DefaultsConfig -> AnimGroupName -> PropertyConfig -> Maybe ProcessedPropertyConfig
+processProperty globalData animGroupName property =
+    let
+        mergeTranslate cfg =
+            { cfg
+                | cssUnit =
+                    InternalUnit.mergeBaselineUnits
+                        (Just (translateStoreAxes globalData animGroupName))
+                        cfg.cssUnit
+            }
+
+        mergeSize cfg =
+            { cfg
+                | cssUnit =
+                    InternalUnit.mergeBaselineUnits
+                        (Just (sizeStoreAxes globalData animGroupName))
+                        cfg.cssUnit
+            }
+
+        mergePerspectiveOrigin cfg =
+            { cfg
+                | cssUnit =
+                    InternalUnit.mergeBaselineUnits
+                        (Just (perspectiveOriginStoreAxes globalData animGroupName))
+                        cfg.cssUnit
+            }
+    in
     case property of
         CustomPropertyConfig cssName unit config ->
             Just <|
@@ -2142,7 +2313,7 @@ processProperty globalData property =
         PerspectiveOriginConfig config ->
             Just <|
                 processStandardAnimation
-                    { config = config
+                    { config = mergePerspectiveOrigin config
                     , globalData = globalData
                     , globalCssUnit = globalData.globalCssUnit
                     , defaultStart = PerspectiveOrigin.default
@@ -2184,7 +2355,7 @@ processProperty globalData property =
         SizeConfig config ->
             Just <|
                 processStandardAnimation
-                    { config = config
+                    { config = mergeSize config
                     , globalData = globalData
                     , globalCssUnit = globalData.globalSizeCssUnit
                     , defaultStart = Size.default
@@ -2212,7 +2383,7 @@ processProperty globalData property =
         TranslateConfig config ->
             Just <|
                 processStandardAnimation
-                    { config = config
+                    { config = mergeTranslate config
                     , globalData = globalData
                     , globalCssUnit = globalData.globalCssUnit
                     , defaultStart = Translate.default

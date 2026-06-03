@@ -63,9 +63,7 @@ init : ( Model, Cmd Msg )
 init =
     ( { animState =
             WAAPI.init motionCmd motionMsg <|
-                [ Translate.initUnitX Cqw
-                    >> Translate.initUnitY Cqh
-                    >> Translate.initXY animGroup 0 0
+                [ Translate.initXY animGroup 0 0 >> Translate.initUnitX Cqw >> Translate.initUnitY Cqh
                 ]
       }
     , Cmd.none

@@ -74,42 +74,42 @@ translateTests =
         , test "initUnit sets the unit for subsequent initXY" <|
             \_ ->
                 initWith
-                    [ Translate.initUnit Cqw
-                        >> Translate.initXY "el" 50 25
+                    [ Translate.initXY "el" 50 25
+                        >> Translate.initUnit Cqw
                     ]
                     |> query
                     |> Query.has [ Selector.style "transform" "translate3d(50cqw, 25cqw, 0px)" ]
         , test "initUnitX overrides initUnit on the X axis only" <|
             \_ ->
                 initWith
-                    [ Translate.initUnit Cqw
+                    [ Translate.initXY "el" 50 25
+                        >> Translate.initUnit Cqw
                         >> Translate.initUnitX Vw
-                        >> Translate.initXY "el" 50 25
                     ]
                     |> query
                     |> Query.has [ Selector.style "transform" "translate3d(50vw, 25cqw, 0px)" ]
         , test "initUnitY overrides initUnit on the Y axis only" <|
             \_ ->
                 initWith
-                    [ Translate.initUnit Cqw
+                    [ Translate.initXY "el" 50 25
+                        >> Translate.initUnit Cqw
                         >> Translate.initUnitY Vh
-                        >> Translate.initXY "el" 50 25
                     ]
                     |> query
                     |> Query.has [ Selector.style "transform" "translate3d(50cqw, 25vh, 0px)" ]
         , test "initUnitZ sets the Z-axis unit" <|
             \_ ->
                 initWith
-                    [ Translate.initUnitZ Vw
-                        >> Translate.initXYZ "el" 0 0 10
+                    [ Translate.initXYZ "el" 0 0 10
+                        >> Translate.initUnitZ Vw
                     ]
                     |> query
                     |> Query.has [ Selector.style "transform" "translate3d(0px, 0px, 10vw)" ]
-        , test "order matters - initUnit after init has no effect on the prior init" <|
+        , test "order matters - initUnit before init has no effect" <|
             \_ ->
                 initWith
-                    [ Translate.initXY "el" 50 25
-                        >> Translate.initUnit Cqw
+                    [ Translate.initUnit Cqw
+                        >> Translate.initXY "el" 50 25
                     ]
                     |> query
                     |> Query.has [ Selector.style "transform" "translate3d(50px, 25px, 0px)" ]
@@ -141,8 +141,8 @@ sizeTests =
                 let
                     rendered =
                         initWith
-                            [ Size.initUnit Cqmin
-                                >> Size.initHW "el" 80 120
+                            [ Size.initHW "el" 80 120
+                                >> Size.initUnit Cqmin
                             ]
                             |> query
                 in
@@ -156,9 +156,9 @@ sizeTests =
                 let
                     rendered =
                         initWith
-                            [ Size.initUnit Cqmin
+                            [ Size.initHW "el" 80 120
+                                >> Size.initUnit Cqmin
                                 >> Size.initUnitW Vw
-                                >> Size.initHW "el" 80 120
                             ]
                             |> query
                 in
@@ -172,9 +172,9 @@ sizeTests =
                 let
                     rendered =
                         initWith
-                            [ Size.initUnit Cqmin
+                            [ Size.initHW "el" 80 120
+                                >> Size.initUnit Cqmin
                                 >> Size.initUnitH Vh
-                                >> Size.initHW "el" 80 120
                             ]
                             |> query
                 in
@@ -203,42 +203,42 @@ perspectiveOriginTests =
         , test "initUnit switches the unit for subsequent initXY" <|
             \_ ->
                 initWith
-                    [ PerspectiveOrigin.initUnit Px
-                        >> PerspectiveOrigin.initXY "el" 200 150
+                    [ PerspectiveOrigin.initXY "el" 200 150
+                        >> PerspectiveOrigin.initUnit Px
                     ]
                     |> query
                     |> Query.has [ Selector.style "perspective-origin" "200px 150px" ]
         , test "initUnitX overrides initUnit on the X axis only" <|
             \_ ->
                 initWith
-                    [ PerspectiveOrigin.initUnit Px
+                    [ PerspectiveOrigin.initXY "el" 50 150
+                        >> PerspectiveOrigin.initUnit Px
                         >> PerspectiveOrigin.initUnitX Percent
-                        >> PerspectiveOrigin.initXY "el" 50 150
                     ]
                     |> query
                     |> Query.has [ Selector.style "perspective-origin" "50% 150px" ]
         , test "initUnitY overrides initUnit on the Y axis only" <|
             \_ ->
                 initWith
-                    [ PerspectiveOrigin.initUnit Px
+                    [ PerspectiveOrigin.initXY "el" 200 50
+                        >> PerspectiveOrigin.initUnit Px
                         >> PerspectiveOrigin.initUnitY Percent
-                        >> PerspectiveOrigin.initXY "el" 200 50
                     ]
                     |> query
                     |> Query.has [ Selector.style "perspective-origin" "200px 50%" ]
         , test "initX uses the unit selected by initUnitX" <|
             \_ ->
                 initWith
-                    [ PerspectiveOrigin.initUnitX Px
-                        >> PerspectiveOrigin.initX "el" 200
+                    [ PerspectiveOrigin.initX "el" 200
+                        >> PerspectiveOrigin.initUnitX Px
                     ]
                     |> query
                     |> Query.has [ Selector.style "perspective-origin" "200px 50%" ]
         , test "initY uses the unit selected by initUnitY" <|
             \_ ->
                 initWith
-                    [ PerspectiveOrigin.initUnitY Px
-                        >> PerspectiveOrigin.initY "el" 150
+                    [ PerspectiveOrigin.initY "el" 150
+                        >> PerspectiveOrigin.initUnitY Px
                     ]
                     |> query
                     |> Query.has [ Selector.style "perspective-origin" "50% 150px" ]

@@ -43,22 +43,22 @@ initTests =
     describe "init"
         [ test "empty properties produces AnimGroup with no animation" <|
             \_ ->
-                Generator.init Nothing Builder.Once Builder.Normal Generator.emptyDiscreteConfig "test" []
+                Generator.init Builder.initDefaults Nothing Builder.Once Builder.Normal Generator.emptyDiscreteConfig "test" []
                     |> KeyframeAnimGroup.getAnimation
                     |> Expect.equal Nothing
         , test "non-empty properties produces AnimGroup with animation" <|
             \_ ->
-                Generator.init Nothing Builder.Once Builder.Normal Generator.emptyDiscreteConfig "myAnim" [ translateConfig ]
+                Generator.init Builder.initDefaults Nothing Builder.Once Builder.Normal Generator.emptyDiscreteConfig "myAnim" [ translateConfig ]
                     |> KeyframeAnimGroup.getAnimation
                     |> Expect.notEqual Nothing
         , test "init creates an AnimGroup that is not active" <|
             \_ ->
-                Generator.init Nothing Builder.Once Builder.Normal Generator.emptyDiscreteConfig "myAnim" [ translateConfig ]
+                Generator.init Builder.initDefaults Nothing Builder.Once Builder.Normal Generator.emptyDiscreteConfig "myAnim" [ translateConfig ]
                     |> KeyframeAnimGroup.isActive
                     |> Expect.equal False
         , test "init creates an AnimGroup that is complete" <|
             \_ ->
-                Generator.init Nothing Builder.Once Builder.Normal Generator.emptyDiscreteConfig "myAnim" [ translateConfig ]
+                Generator.init Builder.initDefaults Nothing Builder.Once Builder.Normal Generator.emptyDiscreteConfig "myAnim" [ translateConfig ]
                     |> KeyframeAnimGroup.isRunning
                     |> Expect.equal False
         ]
@@ -69,7 +69,7 @@ keyframeContentTests =
     describe "keyframe content"
         [ test "keyframes string begins with @keyframes" <|
             \_ ->
-                Generator.init Nothing Builder.Once Builder.Normal Generator.emptyDiscreteConfig "myAnim" [ translateConfig ]
+                Generator.init Builder.initDefaults Nothing Builder.Once Builder.Normal Generator.emptyDiscreteConfig "myAnim" [ translateConfig ]
                     |> KeyframeAnimGroup.getAnimation
                     |> Maybe.map Animation.getKeyframes
                     |> Maybe.withDefault ""
@@ -77,7 +77,7 @@ keyframeContentTests =
                     |> Expect.equal True
         , test "keyframes string contains 0% step" <|
             \_ ->
-                Generator.init Nothing Builder.Once Builder.Normal Generator.emptyDiscreteConfig "myAnim" [ translateConfig ]
+                Generator.init Builder.initDefaults Nothing Builder.Once Builder.Normal Generator.emptyDiscreteConfig "myAnim" [ translateConfig ]
                     |> KeyframeAnimGroup.getAnimation
                     |> Maybe.map Animation.getKeyframes
                     |> Maybe.withDefault ""
@@ -85,7 +85,7 @@ keyframeContentTests =
                     |> Expect.equal True
         , test "keyframes string contains 100% step" <|
             \_ ->
-                Generator.init Nothing Builder.Once Builder.Normal Generator.emptyDiscreteConfig "myAnim" [ translateConfig ]
+                Generator.init Builder.initDefaults Nothing Builder.Once Builder.Normal Generator.emptyDiscreteConfig "myAnim" [ translateConfig ]
                     |> KeyframeAnimGroup.getAnimation
                     |> Maybe.map Animation.getKeyframes
                     |> Maybe.withDefault ""
@@ -93,7 +93,7 @@ keyframeContentTests =
                     |> Expect.equal True
         , test "keyframes string contains translate3d for translate property" <|
             \_ ->
-                Generator.init Nothing Builder.Once Builder.Normal Generator.emptyDiscreteConfig "myAnim" [ translateConfig ]
+                Generator.init Builder.initDefaults Nothing Builder.Once Builder.Normal Generator.emptyDiscreteConfig "myAnim" [ translateConfig ]
                     |> KeyframeAnimGroup.getAnimation
                     |> Maybe.map Animation.getKeyframes
                     |> Maybe.withDefault ""
@@ -101,7 +101,7 @@ keyframeContentTests =
                     |> Expect.equal True
         , test "keyframes string contains the animation name" <|
             \_ ->
-                Generator.init Nothing Builder.Once Builder.Normal Generator.emptyDiscreteConfig "uniqueAnimName" [ translateConfig ]
+                Generator.init Builder.initDefaults Nothing Builder.Once Builder.Normal Generator.emptyDiscreteConfig "uniqueAnimName" [ translateConfig ]
                     |> KeyframeAnimGroup.getAnimation
                     |> Maybe.map Animation.getKeyframes
                     |> Maybe.withDefault ""
@@ -111,12 +111,12 @@ keyframeContentTests =
             \_ ->
                 let
                     anim1 =
-                        Generator.init Nothing Builder.Once Builder.Normal Generator.emptyDiscreteConfig "firstAnim" [ translateConfig ]
+                        Generator.init Builder.initDefaults Nothing Builder.Once Builder.Normal Generator.emptyDiscreteConfig "firstAnim" [ translateConfig ]
                             |> KeyframeAnimGroup.getAnimation
                             |> Maybe.map Animation.getKeyframes
 
                     anim2 =
-                        Generator.init Nothing Builder.Once Builder.Normal Generator.emptyDiscreteConfig "secondAnim" [ translateConfig ]
+                        Generator.init Builder.initDefaults Nothing Builder.Once Builder.Normal Generator.emptyDiscreteConfig "secondAnim" [ translateConfig ]
                             |> KeyframeAnimGroup.getAnimation
                             |> Maybe.map Animation.getKeyframes
                 in
@@ -129,7 +129,7 @@ interpolationTests =
     describe "interpolation in keyframes"
         [ test "at 0% step, translate starts at origin" <|
             \_ ->
-                Generator.init Nothing Builder.Once Builder.Normal Generator.emptyDiscreteConfig "myAnim" [ translateConfig ]
+                Generator.init Builder.initDefaults Nothing Builder.Once Builder.Normal Generator.emptyDiscreteConfig "myAnim" [ translateConfig ]
                     |> KeyframeAnimGroup.getAnimation
                     |> Maybe.map Animation.getKeyframes
                     |> Maybe.withDefault ""
@@ -137,7 +137,7 @@ interpolationTests =
                     |> Expect.equal True
         , test "at 100% step, translate reaches end value" <|
             \_ ->
-                Generator.init Nothing Builder.Once Builder.Normal Generator.emptyDiscreteConfig "myAnim" [ translateConfig ]
+                Generator.init Builder.initDefaults Nothing Builder.Once Builder.Normal Generator.emptyDiscreteConfig "myAnim" [ translateConfig ]
                     |> KeyframeAnimGroup.getAnimation
                     |> Maybe.map Animation.getKeyframes
                     |> Maybe.withDefault ""
@@ -151,7 +151,7 @@ interpolationTests =
                         , exit = Dict.empty
                         }
                 in
-                Generator.init Nothing Builder.Once Builder.Normal discrete "myAnim" [ translateConfig ]
+                Generator.init Builder.initDefaults Nothing Builder.Once Builder.Normal discrete "myAnim" [ translateConfig ]
                     |> KeyframeAnimGroup.getAnimation
                     |> Expect.notEqual Nothing
         , test "no-op translate (same start and end) still produces animation" <|
@@ -170,7 +170,7 @@ interpolationTests =
                             , mode = Builder.Animate
                             }
                 in
-                Generator.init Nothing Builder.Once Builder.Normal Generator.emptyDiscreteConfig "noOp" [ noOpTranslate ]
+                Generator.init Builder.initDefaults Nothing Builder.Once Builder.Normal Generator.emptyDiscreteConfig "noOp" [ noOpTranslate ]
                     |> KeyframeAnimGroup.getAnimation
                     |> Expect.notEqual Nothing
         ]
@@ -196,7 +196,7 @@ snapModeTests =
     describe "Snap mode"
         [ test "Snap-only properties produce no @keyframes animation" <|
             \_ ->
-                Generator.init Nothing Builder.Once Builder.Normal Generator.emptyDiscreteConfig "snap" [ snapTranslateConfig ]
+                Generator.init Builder.initDefaults Nothing Builder.Once Builder.Normal Generator.emptyDiscreteConfig "snap" [ snapTranslateConfig ]
                     |> KeyframeAnimGroup.getAnimation
                     |> Expect.equal Nothing
         , test "Snap properties do not appear in keyframes when mixed with Animate" <|
@@ -215,7 +215,7 @@ snapModeTests =
                             , mode = Builder.Animate
                             }
                 in
-                Generator.init Nothing Builder.Once Builder.Normal Generator.emptyDiscreteConfig "mix" [ animateOpacity, snapTranslateConfig ]
+                Generator.init Builder.initDefaults Nothing Builder.Once Builder.Normal Generator.emptyDiscreteConfig "mix" [ animateOpacity, snapTranslateConfig ]
                     |> KeyframeAnimGroup.getAnimation
                     |> Maybe.map Animation.getKeyframes
                     |> Maybe.withDefault ""

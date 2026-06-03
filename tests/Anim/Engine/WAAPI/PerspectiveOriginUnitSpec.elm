@@ -66,8 +66,8 @@ unitTest description maybeUnit expected =
 
                         Just unit ->
                             b
-                                |> PerspectiveOrigin.initUnit unit
                                 |> PerspectiveOrigin.initXY "card" 0 0
+                                |> PerspectiveOrigin.initUnit unit
 
                 processed =
                     Builder.init [ initStep, originBuilder ] |> Builder.process

@@ -35,25 +35,25 @@ attribute yourself in your view.
 
 The default unit for `perspective-origin` is `Percent`. Use
 [`initUnit`](#initUnit) (or [`initUnitX`](#initUnitX) /
-[`initUnitY`](#initUnitY)) to switch the unit used by subsequent `init*`
-calls.
+[`initUnitY`](#initUnitY)) to switch the unit used by `init*` calls earlier in
+the pipeline.
 
 @docs initXY, initX, initY
 
 
 ## Initial Unit
 
-Set the length [Unit](Anim-Unit#Unit) used by subsequent `init*` calls.
-Order matters - `initUnit*` only affects `init*` calls that follow it in
-the pipeline. Defaults to `Percent`.
+Set the length [Unit](Anim-Unit#Unit) used by `init*` calls earlier in the
+pipeline. Order matters - `initUnit*` only affects `init*` calls that appear
+before it in the pipeline. Defaults to `Percent`.
 
     import Anim.Unit exposing (Unit(..))
 
     init _ =
         ( { animState =
                 Engine.init
-                    [ PerspectiveOrigin.initUnit Px
-                        >> PerspectiveOrigin.initXY "vp" 200 150
+                    [ PerspectiveOrigin.initXY "vp" 200 150
+                        >> PerspectiveOrigin.initUnit Px
                     ]
           }
         , Cmd.none
@@ -137,6 +137,7 @@ new bounds during `onResize`.
 -}
 
 import Anim.Internal.Builder as IB exposing (AnimBuilder)
+import Anim.Internal.Builder.CssUnitStore as CssUnitStore
 import Anim.Internal.Builder.PerspectiveOrigin as PB
 import Anim.Unit as Unit
 import Motion.Easing exposing (Easing)
@@ -186,10 +187,10 @@ initXY : AnimGroupName -> Float -> Float -> AnimBuilder eng -> AnimBuilder eng
 initXY animationKey x y animBuilder =
     animBuilder
         |> for animationKey
-        |> PB.applyInitCssUnit
         |> fromXY x y
         |> toXY x y
         |> build
+        |> IB.registerPerspectiveOriginInitAxes [ CssUnitStore.perspectiveOriginX, CssUnitStore.perspectiveOriginY ]
 
 
 {-| Set the initial X-axis perspective origin. Uses whichever
@@ -200,10 +201,10 @@ initX : AnimGroupName -> Float -> AnimBuilder eng -> AnimBuilder eng
 initX animationKey x animBuilder =
     animBuilder
         |> for animationKey
-        |> PB.applyInitCssUnit
         |> fromX x
         |> toX x
         |> build
+        |> IB.registerPerspectiveOriginInitAxes [ CssUnitStore.perspectiveOriginX ]
 
 
 {-| Set the initial Y-axis perspective origin. Uses whichever
@@ -214,25 +215,25 @@ initY : AnimGroupName -> Float -> AnimBuilder eng -> AnimBuilder eng
 initY animationKey y animBuilder =
     animBuilder
         |> for animationKey
-        |> PB.applyInitCssUnit
         |> fromY y
         |> toY y
         |> build
+        |> IB.registerPerspectiveOriginInitAxes [ CssUnitStore.perspectiveOriginY ]
 
 
-{-| Set the length [Unit](Anim-Unit#Unit) used by every subsequent `init*` call
-for `PerspectiveOrigin` values. Defaults to `Percent`.
+{-| Set the length [Unit](Anim-Unit#Unit) used by `init*` calls earlier in the
+pipeline for `PerspectiveOrigin` values. Defaults to `Percent`.
 
-Order matters - only `init*` calls downstream of this setter in the pipeline
-are affected; calls upstream keep their previously selected unit (or `Percent`).
-Later per-axis setters ([`initUnitX`](#initUnitX), [`initUnitY`](#initUnitY))
-override this setting on the relevant axis.
+Order matters - only `init*` calls upstream of this setter in the pipeline are
+affected; calls later in the pipeline keep their previously selected unit (or
+`Percent`). Later per-axis setters ([`initUnitX`](#initUnitX),
+[`initUnitY`](#initUnitY)) override this setting on the relevant axis.
 
     import Anim.Unit exposing (Unit(..))
 
     Engine.init
-        [ PerspectiveOrigin.initUnit Px
-            >> PerspectiveOrigin.initXY "vp" 200 150
+        [ PerspectiveOrigin.initXY "vp" 200 150
+            >> PerspectiveOrigin.initUnit Px
         ]
 
 -}

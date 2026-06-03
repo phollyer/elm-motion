@@ -59,17 +59,18 @@ type alias AnimGroupName =
 
 
 init :
-    Maybe (List TransformProperty)
+    Builder.DefaultsConfig
+    -> Maybe (List TransformProperty)
     -> Builder.Iterations
     -> Builder.AnimationDirection
     -> DiscreteConfig
     -> AnimGroupName
     -> List Builder.PropertyConfig
     -> AnimGroup
-init maybeOrder iterationCount direction discrete animGroupName properties =
+init defaults maybeOrder iterationCount direction discrete animGroupName properties =
     let
         processedProps =
-            Builder.processProperties Builder.initDefaults properties
+            Builder.processProperties defaults animGroupName properties
 
         name =
             generateName Nothing maybeOrder discrete animGroupName processedProps

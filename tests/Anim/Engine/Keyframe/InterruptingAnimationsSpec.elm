@@ -26,9 +26,9 @@ moveBoxX x =
 
 initBuilder : Keyframe.EngineBuilder -> Keyframe.EngineBuilder
 initBuilder =
-    Translate.initUnitX Cqw
+    Translate.initXY animGroup 0 0
+        >> Translate.initUnitX Cqw
         >> Translate.initUnitY Cqh
-        >> Translate.initXY animGroup 0 0
 
 
 suite : Test

@@ -183,8 +183,10 @@ init commandPort subscriptionPort propertyInitializers =
                     Builder.getAnimGroups builder
 
                 initGroup : AnimGroupName -> Builder.AnimGroupConfig -> AnimGroup
-                initGroup _ { properties } =
+                initGroup animGroupName { properties } =
                     Generator.init
+                        (Builder.getDefaults builder)
+                        animGroupName
                         (Builder.getDiscreteEntryProperties builder)
                         (Builder.getDiscreteExitProperties builder)
                         properties

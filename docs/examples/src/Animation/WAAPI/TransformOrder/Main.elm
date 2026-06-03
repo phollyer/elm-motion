@@ -54,9 +54,7 @@ init =
             WAAPI.init motionCmd motionMsg <|
                 List.concatMap
                     (\perm ->
-                        [ Translate.initUnitX Cqw
-                            >> Translate.initUnitY Cqh
-                            >> Translate.initXY (permutationKey perm) 0 0
+                        [ Translate.initXY (permutationKey perm) 0 0 >> Translate.initUnitX Cqw >> Translate.initUnitY Cqh
                         , Skew.initXY (permutationKey perm) 0 0
                         ]
                     )

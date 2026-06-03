@@ -41,12 +41,9 @@ init : ( Model, Cmd Msg )
 init =
     ( { animState =
             Keyframe.init
-                [ Size.initUnit Cqmin
-                    >> Size.initHW sizeButton baseHeight baseWidth
-                , Size.initUnit Cqmin
-                    >> Size.initHW scaleButton baseHeight baseWidth
-                , Size.initUnit Cqmin
-                    >> Size.initHW zButton baseHeight baseWidth
+                [ Size.initHW sizeButton baseHeight baseWidth >> Size.initUnit Cqmin
+                , Size.initHW scaleButton baseHeight baseWidth >> Size.initUnit Cqmin
+                , Size.initHW zButton baseHeight baseWidth >> Size.initUnit Cqmin
                 ]
       }
     , Cmd.none

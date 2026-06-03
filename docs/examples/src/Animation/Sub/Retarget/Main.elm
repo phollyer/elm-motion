@@ -52,9 +52,7 @@ init : ( Model, Cmd Msg )
 init =
     ( { animState =
             SubEngine.init
-                [ Translate.initUnitX Cqw
-                    >> Translate.initUnitY Cqh
-                    >> Translate.initXY animGroup 0 0
+                [ Translate.initXY animGroup 0 0 >> Translate.initUnitX Cqw >> Translate.initUnitY Cqh
                 ]
       }
     , Cmd.none

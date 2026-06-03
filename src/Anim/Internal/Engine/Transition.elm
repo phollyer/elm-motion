@@ -76,8 +76,10 @@ init : List (EngineBuilder -> EngineBuilder) -> AnimState
 init =
     let
         initGroup : EngineBuilder -> AnimGroupName -> Builder.AnimGroupConfig -> AnimGroup
-        initGroup builder _ { properties } =
+        initGroup builder animGroupName { properties } =
             Generator.init
+                (Builder.getDefaults builder)
+                animGroupName
                 (Builder.discreteTransitionsEnabled builder)
                 (Builder.getDiscreteEntryProperties builder)
                 (Builder.getDiscreteExitProperties builder)

@@ -421,8 +421,8 @@ suite =
                     let
                         state =
                             Sub.init
-                                [ Translate.initUnitX Unit.Vw
-                                    >> Translate.initXY groupName 0 0
+                                [ Translate.initXY groupName 0 0
+                                    >> Translate.initUnitX Unit.Vw
                                 ]
                                 |> (\s ->
                                         Sub.animate s
@@ -458,9 +458,9 @@ suite =
                     let
                         state =
                             Sub.init
-                                [ Translate.initUnitX Unit.Vw
+                                [ Translate.initXY groupName 0 0
+                                    >> Translate.initUnitX Unit.Vw
                                     >> Translate.initUnitY Unit.Px
-                                    >> Translate.initXY groupName 0 0
                                 ]
                                 |> (\s ->
                                         Sub.animate s

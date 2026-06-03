@@ -36,18 +36,18 @@ suite =
         [ test "translate initUnit values render in transform style" <|
             \_ ->
                 Sub.init
-                    [ Translate.initUnitX Unit.Cqw
+                    [ Translate.initXY "el" 40 20
+                        >> Translate.initUnitX Unit.Cqw
                         >> Translate.initUnitY Unit.Cqh
-                        >> Translate.initXY "el" 40 20
                     ]
                     |> rendered
                     |> Query.has [ Selector.style "transform" "translate3d(40cqw, 20cqh, 0px)" ]
         , test "translate animate cssUnit values render while running" <|
             \_ ->
                 Sub.init
-                    [ Translate.initUnitX Unit.Vw
+                    [ Translate.initXY "el" 0 0
+                        >> Translate.initUnitX Unit.Vw
                         >> Translate.initUnitY Unit.Vh
-                        >> Translate.initXY "el" 0 0
                     ]
                     |> (\state ->
                             Sub.animate state
@@ -66,9 +66,9 @@ suite =
                 let
                     q =
                         Sub.init
-                            [ Size.initUnitW Unit.Cqw
+                            [ Size.initHW "el" 80 120
+                                >> Size.initUnitW Unit.Cqw
                                 >> Size.initUnitH Unit.Cqh
-                                >> Size.initHW "el" 80 120
                             ]
                             |> rendered
                 in
@@ -80,9 +80,9 @@ suite =
         , test "perspective-origin animate cssUnit values render while running" <|
             \_ ->
                 Sub.init
-                    [ PerspectiveOrigin.initUnitX Unit.Vw
+                    [ PerspectiveOrigin.initXY "el" 50 50
+                        >> PerspectiveOrigin.initUnitX Unit.Vw
                         >> PerspectiveOrigin.initUnitY Unit.Vh
-                        >> PerspectiveOrigin.initXY "el" 50 50
                     ]
                     |> (\state ->
                             Sub.animate state

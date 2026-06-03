@@ -93,9 +93,9 @@ suite =
                 let
                     state =
                         Sub.init
-                            [ PerspectiveOrigin.initUnitX Unit.Percent
+                            [ PerspectiveOrigin.initXY groupName 50 50
+                                >> PerspectiveOrigin.initUnitX Unit.Percent
                                 >> PerspectiveOrigin.initUnitY Unit.Px
-                                >> PerspectiveOrigin.initXY groupName 50 50
                             ]
                             |> (\s ->
                                     Sub.animate s

@@ -35,18 +35,18 @@ or 0 if not set.
 
 ## Initial Unit
 
-Set the length [Unit](Anim-Unit#Unit) used by subsequent `init*` calls.
-Order matters - `initUnit*` only affects `init*` calls that follow it in
-the pipeline. Defaults to `Px`.
+Set the length [Unit](Anim-Unit#Unit) used by `init*` calls earlier in the
+pipeline. Order matters - `initUnit*` only affects `init*` calls that appear
+before it in the pipeline. Defaults to `Px`.
 
     import Anim.Unit exposing (Unit(..))
 
     init _ =
         ( { animState =
                 Engine.init
-                    [ Size.initUnitW Cqw
+                    [ Size.initHW "btn" 8 25
+                        >> Size.initUnitW Cqw
                         >> Size.initUnitH Cqh
-                        >> Size.initHW "btn" 8 25
                     ]
           }
         , Cmd.none
@@ -133,6 +133,7 @@ for patterns and examples.
 -}
 
 import Anim.Internal.Builder as IB exposing (AnimBuilder)
+import Anim.Internal.Builder.CssUnitStore as CssUnitStore
 import Anim.Internal.Builder.Size as SB
 import Anim.Unit exposing (Unit)
 import Motion.Easing exposing (Easing)
@@ -183,10 +184,10 @@ init : AnimGroupName -> Float -> AnimBuilder eng -> AnimBuilder eng
 init animationKey value animBuilder =
     animBuilder
         |> SB.for animationKey
-        |> SB.applyInitCssUnit
         |> fromHW value value
         |> SB.toHW value value
         |> SB.build
+        |> IB.registerSizeInitAxes [ CssUnitStore.sizeWidth, CssUnitStore.sizeHeight ]
 
 
 {-| Set the initial width and height.
@@ -205,10 +206,10 @@ initHW : AnimGroupName -> Float -> Float -> AnimBuilder eng -> AnimBuilder eng
 initHW animationKey h w animBuilder =
     animBuilder
         |> SB.for animationKey
-        |> SB.applyInitCssUnit
         |> fromHW h w
         |> SB.toHW h w
         |> SB.build
+        |> IB.registerSizeInitAxes [ CssUnitStore.sizeWidth, CssUnitStore.sizeHeight ]
 
 
 {-| Set the initial width.
@@ -227,10 +228,10 @@ initW : AnimGroupName -> Float -> AnimBuilder eng -> AnimBuilder eng
 initW animationKey w animBuilder =
     animBuilder
         |> SB.for animationKey
-        |> SB.applyInitCssUnit
         |> fromW w
         |> SB.toW w
         |> SB.build
+        |> IB.registerSizeInitAxes [ CssUnitStore.sizeWidth ]
 
 
 {-| Set the initial height.
@@ -249,29 +250,29 @@ initH : AnimGroupName -> Float -> AnimBuilder eng -> AnimBuilder eng
 initH animationKey h animBuilder =
     animBuilder
         |> SB.for animationKey
-        |> SB.applyInitCssUnit
         |> fromH h
         |> SB.toH h
         |> SB.build
+        |> IB.registerSizeInitAxes [ CssUnitStore.sizeHeight ]
 
 
 
 -- Initial Unit
 
 
-{-| Set the length [Unit](Anim-Unit#Unit) used by every subsequent `init*` call
-for `Size` values. Defaults to `Px`.
+{-| Set the length [Unit](Anim-Unit#Unit) used by `init*` calls earlier in the
+pipeline for `Size` values. Defaults to `Px`.
 
-Order matters - only `init*` calls downstream of this setter in the pipeline
-are affected; calls upstream keep their previously selected unit (or `Px`).
-Later per-axis setters ([`initUnitW`](#initUnitW),
+Order matters - only `init*` calls upstream of this setter in the pipeline are
+affected; calls later in the pipeline keep their previously selected unit (or
+`Px`). Later per-axis setters ([`initUnitW`](#initUnitW),
 [`initUnitH`](#initUnitH)) override this setting on the relevant axis.
 
     import Anim.Unit exposing (Unit(..))
 
     Engine.init
-        [ Size.initUnit Cqmin
-            >> Size.initHW "btn" 8 25
+        [ Size.initHW "btn" 8 25
+            >> Size.initUnit Cqmin
         ]
 
 -}

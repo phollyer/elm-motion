@@ -1,6 +1,5 @@
 module Anim.Internal.Builder.Size exposing
     ( SizeBuilder
-    , applyInitCssUnit
     , bounds
     , build
     , clampHeight
@@ -84,14 +83,23 @@ for animGroupName builder =
             Builder.getBaseline animGroupName builder
                 |> Maybe.andThen PropertyBaselines.getSizeConfiguredUnits
 
+        storeUnits =
+            Builder.getSizeInitCssUnitAxes animGroupName builder
+
         baseConfig =
             PropertyBuilder.for animGroupName "size" PropertyBaselines.getSize extractExisting defaultConfig builder
 
         config =
-            { baseConfig | cssUnit = InternalUnit.mergeBaselineUnits baselineUnits baseConfig.cssUnit }
+            { baseConfig
+                | cssUnit =
+                    InternalUnit.mergeBaselineUnits baselineUnits baseConfig.cssUnit
+                        |> InternalUnit.mergeBaselineUnits (Just storeUnits)
+            }
     in
     SizeBuilder config <|
-        Builder.for animGroupName builder
+        (Builder.for animGroupName builder
+            |> Builder.setSizeCurrentGroup animGroupName
+        )
 
 
 build : SizeBuilder eng -> AnimBuilder eng
@@ -318,18 +326,6 @@ easing easingFunction (SizeBuilder config builder) =
 spring : Spring -> SizeBuilder { eng | withSpring : () } -> SizeBuilder { eng | withSpring : () }
 spring s (SizeBuilder config builder) =
     SizeBuilder (PropertyBuilder.spring s config) builder
-
-
-{-| Seed the per-property `cssUnit` axes on the config from the AnimBuilder's
-stored init-time unit defaults. Called at the start of every public `init*`
-helper so values supplied during initialization are rendered with whatever
-`initUnit*` was active at that point in the pipeline.
--}
-applyInitCssUnit : SizeBuilder eng -> SizeBuilder eng
-applyInitCssUnit (SizeBuilder config builder) =
-    SizeBuilder
-        { config | cssUnit = Builder.getSizeInitCssUnit builder }
-        builder
 
 
 

@@ -1413,8 +1413,8 @@ perspectiveOriginClampTests =
         , test "px unit is preserved across clamping" <|
             \_ ->
                 animBuilder
-                    |> PerspectiveOrigin.initUnit Unit.Px
                     |> PerspectiveOrigin.initXY "test" 0 0
+                    |> PerspectiveOrigin.initUnit Unit.Px
                     |> (PerspectiveOrigin.for "test"
                             >> PerspectiveOrigin.clampX 0 100
                             >> PerspectiveOrigin.toX 500

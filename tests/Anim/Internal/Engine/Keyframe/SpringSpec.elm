@@ -65,7 +65,7 @@ keyframesFor : List Builder.PropertyConfig -> String
 keyframesFor properties =
     let
         processed =
-            Builder.processProperties Builder.initDefaults properties
+            Builder.processProperties Builder.initDefaults "test" properties
     in
     Generator.generateAnimation Nothing
         Builder.Once

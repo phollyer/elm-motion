@@ -14,11 +14,11 @@ import Dict exposing (Dict)
 -- ============================================================
 
 
-init : Dict String String -> Dict String Builder.DiscreteExitProperty -> List Builder.PropertyConfig -> AnimGroup
-init discreteEntryProps discreteExitProps properties =
+init : Builder.DefaultsConfig -> Builder.AnimGroupName -> Dict String String -> Dict String Builder.DiscreteExitProperty -> List Builder.PropertyConfig -> AnimGroup
+init defaults animGroupName discreteEntryProps discreteExitProps properties =
     let
         processedProps =
-            Builder.processProperties Builder.initDefaults properties
+            Builder.processProperties defaults animGroupName properties
     in
     AnimGroup.init
         |> AnimGroup.setSnapshot (endBounds processedProps)

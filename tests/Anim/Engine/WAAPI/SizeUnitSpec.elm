@@ -65,8 +65,8 @@ unitTest description maybeUnit expected =
 
                         Just unit ->
                             b
-                                |> Size.initUnit unit
                                 |> Size.initHW "card" 0 0
+                                |> Size.initUnit unit
 
                 processed =
                     Builder.init [ initStep, sizeBuilder ] |> Builder.process

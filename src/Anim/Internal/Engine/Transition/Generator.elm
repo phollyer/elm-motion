@@ -25,11 +25,11 @@ type alias AnimGroupName =
 -- ============================================================
 
 
-init : Bool -> Dict String String -> Dict String Builder.DiscreteExitProperty -> List Builder.PropertyConfig -> AnimGroup
-init discreteTransitions discreteEntry discreteExit properties =
+init : Builder.DefaultsConfig -> AnimGroupName -> Bool -> Dict String String -> Dict String Builder.DiscreteExitProperty -> List Builder.PropertyConfig -> AnimGroup
+init defaults animGroupName discreteTransitions discreteEntry discreteExit properties =
     let
         processedProps =
-            Builder.processProperties Builder.initDefaults properties
+            Builder.processProperties defaults animGroupName properties
     in
     AnimGroup.init
         |> AnimGroup.setDiscreteEntry discreteEntry

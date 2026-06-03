@@ -64,8 +64,7 @@ init =
                   -- sides and rotate. This is a fixed 3D depth
                   -- offset, unrelated to layout, so it stays
                   -- in pixels.
-                  Translate.initUnit Px
-                    >> Translate.initZ cubeGroupName 200
+                  Translate.initZ cubeGroupName 200 >> Translate.initUnit Px
 
                 -- Position each face in 3D space along the axis it faces.
                 -- Face offsets use `Cqmin` so the cube scales proportionally
@@ -73,24 +72,23 @@ init =
                 -- Front/Back faces move on Z (forward/backward)
                 -- Left/Right faces move on X (sideways)
                 -- Top/Bottom faces move on Y (up/down)
-                , Translate.initUnit Cqmin
-                    >> Translate.initZ frontFace.groupName depth
-                , Translate.initUnit Cqmin
-                    >> Translate.initZ backFace.groupName (depth * -1)
+                , Translate.initZ frontFace.groupName depth >> Translate.initUnit Cqmin
+                , Translate.initZ backFace.groupName (depth * -1)
+                    >> Translate.initUnit Cqmin
                     -- Rotate each face into position to build the cube
                     -- Front face is not rotated due to facing forward by default
                     >> Rotate.initY backFace.groupName 180
-                , Translate.initUnit Cqmin
-                    >> Translate.initX rightFace.groupName depth
+                , Translate.initX rightFace.groupName depth
+                    >> Translate.initUnit Cqmin
                     >> Rotate.initY rightFace.groupName 90
-                , Translate.initUnit Cqmin
-                    >> Translate.initX leftFace.groupName (-1 * depth)
+                , Translate.initX leftFace.groupName (-1 * depth)
+                    >> Translate.initUnit Cqmin
                     >> Rotate.initY leftFace.groupName -90
-                , Translate.initUnit Cqmin
-                    >> Translate.initY topFace.groupName (-1 * depth)
+                , Translate.initY topFace.groupName (-1 * depth)
+                    >> Translate.initUnit Cqmin
                     >> Rotate.initX topFace.groupName 90
-                , Translate.initUnit Cqmin
-                    >> Translate.initY bottomFace.groupName depth
+                , Translate.initY bottomFace.groupName depth
+                    >> Translate.initUnit Cqmin
                     >> Rotate.initX bottomFace.groupName -90
 
                 -- The text labels all start on the same plane as their faces

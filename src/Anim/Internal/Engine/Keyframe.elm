@@ -91,6 +91,7 @@ init =
                             Builder.getTransformOrder name builder
             in
             Generator.init
+                (Builder.getDefaults builder)
                 resolvedOrder
                 (Builder.getIterations builder)
                 (Builder.getAnimationDirection builder)

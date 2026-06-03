@@ -100,22 +100,20 @@ for details.
 
 ### Initial Unit
 
-Set the length [Unit](Anim-Unit#Unit) used by subsequent `init*` calls.
-Order matters - `initUnit*` only affects `init*` calls that follow it in
-the pipeline. Defaults to `Px`.
+Set the length [Unit](Anim-Unit#Unit) used by `init*` calls earlier in the
+pipeline. Order matters - `initUnit*` only affects `init*` calls that appear
+before it in the pipeline. Defaults to `Px`.
 
     import Anim.Unit exposing (Unit(..))
 
     init _ =
         ( { animState =
                 Engine.init
-                    [ Translate.initUnit Cqw
-                        -- all axes use Cqw for their initial unit
-                        >> Translate.initX "box" 50
+                    [ Translate.initX "box" 50
+                        >> Translate.initUnit Cqw
                         -- this X axis uses Cqw
                         >> Translate.initUnitY Cqh
-                        -- this Y axis uses Cqh instead of Cqw
-                        -- the X axis remains Cqw
+                        -- later Y axes use Cqh instead of Cqw
                         >> Translate.initXY "ball" 40 20
                     ]
           }
@@ -145,6 +143,7 @@ for patterns and examples.
 -}
 
 import Anim.Internal.Builder as SB exposing (AnimBuilder)
+import Anim.Internal.Builder.CssUnitStore as CssUnitStore
 import Anim.Internal.Builder.Translate as TB
 import Anim.Unit exposing (Unit)
 import Motion.Easing exposing (Easing)
@@ -190,12 +189,10 @@ type alias Builder eng =
 initXYZ : AnimGroupName -> Float -> Float -> Float -> AnimBuilder eng -> AnimBuilder eng
 initXYZ animationKey x y z =
     TB.for animationKey
-        >> TB.applyInitCssUnitX
-        >> TB.applyInitCssUnitY
-        >> TB.applyInitCssUnitZ
         >> fromXYZ x y z
         >> TB.toXYZ x y z
         >> TB.build
+        >> SB.registerTranslateInitAxes [ CssUnitStore.translateX, CssUnitStore.translateY, CssUnitStore.translateZ ]
 
 
 {-| Set the initial X and Y position. Z is left at its default.
@@ -204,11 +201,10 @@ initXY : AnimGroupName -> Float -> Float -> AnimBuilder eng -> AnimBuilder eng
 initXY animationKey x y animBuilder =
     animBuilder
         |> TB.for animationKey
-        |> TB.applyInitCssUnitX
-        |> TB.applyInitCssUnitY
         |> fromXY x y
         |> TB.toXY x y
         |> TB.build
+        |> SB.registerTranslateInitAxes [ CssUnitStore.translateX, CssUnitStore.translateY ]
 
 
 {-| Set the initial X and Z position. Y is left at its default.
@@ -217,11 +213,10 @@ initXZ : AnimGroupName -> Float -> Float -> AnimBuilder eng -> AnimBuilder eng
 initXZ animationKey x z animBuilder =
     animBuilder
         |> TB.for animationKey
-        |> TB.applyInitCssUnitX
-        |> TB.applyInitCssUnitZ
         |> fromXZ x z
         |> TB.toXZ x z
         |> TB.build
+        |> SB.registerTranslateInitAxes [ CssUnitStore.translateX, CssUnitStore.translateZ ]
 
 
 {-| Set the initial X position. Y and Z are left at their defaults.
@@ -230,10 +225,10 @@ initX : AnimGroupName -> Float -> AnimBuilder eng -> AnimBuilder eng
 initX animationKey x animBuilder =
     animBuilder
         |> TB.for animationKey
-        |> TB.applyInitCssUnitX
         |> fromX x
         |> TB.toX x
         |> TB.build
+        |> SB.registerTranslateInitAxes [ CssUnitStore.translateX ]
 
 
 {-| Set the initial Y and Z position. X is left at its default.
@@ -242,11 +237,10 @@ initYZ : AnimGroupName -> Float -> Float -> AnimBuilder eng -> AnimBuilder eng
 initYZ animationKey y z animBuilder =
     animBuilder
         |> TB.for animationKey
-        |> TB.applyInitCssUnitY
-        |> TB.applyInitCssUnitZ
         |> fromYZ y z
         |> TB.toYZ y z
         |> TB.build
+        |> SB.registerTranslateInitAxes [ CssUnitStore.translateY, CssUnitStore.translateZ ]
 
 
 {-| Set the initial Y position. X and Z are left at their defaults.
@@ -255,10 +249,10 @@ initY : AnimGroupName -> Float -> AnimBuilder eng -> AnimBuilder eng
 initY animationKey y animBuilder =
     animBuilder
         |> TB.for animationKey
-        |> TB.applyInitCssUnitY
         |> fromY y
         |> TB.toY y
         |> TB.build
+        |> SB.registerTranslateInitAxes [ CssUnitStore.translateY ]
 
 
 {-| Set the initial Z position. X and Y are left at their defaults.
@@ -267,24 +261,30 @@ initZ : AnimGroupName -> Float -> AnimBuilder eng -> AnimBuilder eng
 initZ animationKey z animBuilder =
     animBuilder
         |> TB.for animationKey
-        |> TB.applyInitCssUnitZ
         |> fromZ z
         |> TB.toZ z
         |> TB.build
+        |> SB.registerTranslateInitAxes [ CssUnitStore.translateZ ]
 
 
 
 -- Initial Unit
 
 
-{-| Set the length [Unit](Anim-Unit#Unit) used by every subsequent `init*` call
-for `Translate` values. Defaults to `Px`.
+{-| Set the length [Unit](Anim-Unit#Unit) used by `init*` calls earlier in the
+pipeline for `Translate` values. Defaults to `Px`.
+
+Order matters - only `init*` calls upstream of this setter in the pipeline are
+affected; calls later in the pipeline keep their previously selected unit (or
+`Px`). Later per-axis setters ([`initUnitX`](#initUnitX),
+[`initUnitY`](#initUnitY), [`initUnitZ`](#initUnitZ)) override this setting on
+the relevant axis.
 
     import Anim.Unit exposing (Unit(..))
 
     Engine.init
-        [ Translate.initUnit Cqw
-            >> Translate.initX "box" 50
+        [ Translate.initX "box" 50
+            >> Translate.initUnit Cqw
         ]
 
 -}

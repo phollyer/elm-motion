@@ -31,7 +31,7 @@ translateConfig =
 
 processedConfigs : List Builder.ProcessedPropertyConfig
 processedConfigs =
-    Builder.processProperties Builder.initDefaults [ translateConfig ]
+    Builder.processProperties Builder.initDefaults "test" [ translateConfig ]
 
 
 suite : Test
@@ -48,27 +48,27 @@ initTests =
     describe "init"
         [ test "init with no properties creates a Complete AnimGroup" <|
             \_ ->
-                SubGenerator.init Dict.empty Dict.empty []
+                SubGenerator.init Builder.initDefaults "test" Dict.empty Dict.empty []
                     |> SubAnimGroup.isComplete
                     |> Expect.equal True
         , test "init is not Running" <|
             \_ ->
-                SubGenerator.init Dict.empty Dict.empty []
+                SubGenerator.init Builder.initDefaults "test" Dict.empty Dict.empty []
                     |> SubAnimGroup.isRunning
                     |> Expect.equal False
         , test "init with translate property creates a Complete AnimGroup" <|
             \_ ->
-                SubGenerator.init Dict.empty Dict.empty [ translateConfig ]
+                SubGenerator.init Builder.initDefaults "test" Dict.empty Dict.empty [ translateConfig ]
                     |> SubAnimGroup.isComplete
                     |> Expect.equal True
         , test "init with translate property is not Running" <|
             \_ ->
-                SubGenerator.init Dict.empty Dict.empty [ translateConfig ]
+                SubGenerator.init Builder.initDefaults "test" Dict.empty Dict.empty [ translateConfig ]
                     |> SubAnimGroup.isRunning
                     |> Expect.equal False
         , test "default transform order is set on init" <|
             \_ ->
-                SubGenerator.init Dict.empty Dict.empty []
+                SubGenerator.init Builder.initDefaults "test" Dict.empty Dict.empty []
                     |> SubAnimGroup.getTransformOrder
                     |> List.isEmpty
                     |> Expect.equal False
@@ -138,7 +138,7 @@ snapModeTests =
             \_ ->
                 let
                     processed =
-                        Builder.processProperties Builder.initDefaults [ snapTranslateConfig ]
+                        Builder.processProperties Builder.initDefaults "test" [ snapTranslateConfig ]
                 in
                 SubGenerator.generateAnimation Builder.Once Builder.Normal Nothing Dict.empty Dict.empty Nothing processed
                     |> SubAnimGroup.getAnimations
@@ -149,7 +149,7 @@ snapModeTests =
             \_ ->
                 let
                     processed =
-                        Builder.processProperties Builder.initDefaults [ translateConfig ]
+                        Builder.processProperties Builder.initDefaults "test" [ translateConfig ]
                 in
                 SubGenerator.generateAnimation Builder.Once Builder.Normal Nothing Dict.empty Dict.empty Nothing processed
                     |> SubAnimGroup.getAnimations

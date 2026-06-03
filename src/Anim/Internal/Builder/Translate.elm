@@ -1,8 +1,5 @@
 module Anim.Internal.Builder.Translate exposing
     ( TranslateBuilder
-    , applyInitCssUnitX
-    , applyInitCssUnitY
-    , applyInitCssUnitZ
     , bounds
     , build
     , by
@@ -107,14 +104,23 @@ for animGroupName builder =
             Builder.getBaseline animGroupName builder
                 |> Maybe.andThen PropertyBaselines.getTranslateConfiguredUnits
 
+        storeUnits =
+            Builder.getTranslateInitCssUnitAxes animGroupName builder
+
         baseConfig =
             PropertyBuilder.for animGroupName "translate" PropertyBaselines.getTranslate extractExisting defaultConfig builder
 
         config =
-            { baseConfig | cssUnit = InternalUnit.mergeBaselineUnits baselineUnits baseConfig.cssUnit }
+            { baseConfig
+                | cssUnit =
+                    InternalUnit.mergeBaselineUnits baselineUnits baseConfig.cssUnit
+                        |> InternalUnit.mergeBaselineUnits (Just storeUnits)
+            }
     in
     TranslateBuilder config <|
-        Builder.for animGroupName builder
+        (Builder.for animGroupName builder
+            |> Builder.setTranslateCurrentGroup animGroupName
+        )
 
 
 build : TranslateBuilder eng -> AnimBuilder eng
@@ -665,53 +671,6 @@ easing easing_ (TranslateBuilder config builder) =
 spring : Spring -> TranslateBuilder { eng | withSpring : () } -> TranslateBuilder { eng | withSpring : () }
 spring s (TranslateBuilder config builder) =
     TranslateBuilder (PropertyBuilder.spring s config) builder
-
-
-{-| Seed the per-property `cssUnit` axes on the config from the AnimBuilder's
-stored init-time unit defaults. Called at the start of every public `init*`
-helper so values supplied during initialization are rendered with whatever
-`initUnit*` was active at that point in the pipeline.
--}
-applyInitCssUnitX : TranslateBuilder eng -> TranslateBuilder eng
-applyInitCssUnitX (TranslateBuilder config builder) =
-    let
-        initUnits =
-            Builder.getTranslateInitCssUnit builder
-
-        cssUnit_ =
-            config.cssUnit
-    in
-    TranslateBuilder
-        { config | cssUnit = { cssUnit_ | x = initUnits.x } }
-        builder
-
-
-applyInitCssUnitY : TranslateBuilder eng -> TranslateBuilder eng
-applyInitCssUnitY (TranslateBuilder config builder) =
-    let
-        initUnits =
-            Builder.getTranslateInitCssUnit builder
-
-        cssUnit_ =
-            config.cssUnit
-    in
-    TranslateBuilder
-        { config | cssUnit = { cssUnit_ | y = initUnits.y } }
-        builder
-
-
-applyInitCssUnitZ : TranslateBuilder eng -> TranslateBuilder eng
-applyInitCssUnitZ (TranslateBuilder config builder) =
-    let
-        initUnits =
-            Builder.getTranslateInitCssUnit builder
-
-        cssUnit_ =
-            config.cssUnit
-    in
-    TranslateBuilder
-        { config | cssUnit = { cssUnit_ | z = initUnits.z } }
-        builder
 
 
 
