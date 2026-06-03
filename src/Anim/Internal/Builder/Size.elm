@@ -120,8 +120,8 @@ applyClamps builder config =
                                 Size.toRecord value
                         in
                         Size.fromRecord
-                            { width = clampAxis cw r.width
-                            , height = clampAxis ch r.height
+                            { width = PropertyBuilder.clampAxis cw r.width
+                            , height = PropertyBuilder.clampAxis ch r.height
                             }
 
                     clampedStart =
@@ -138,16 +138,6 @@ applyClamps builder config =
                     , end = clampedEnd
                     , distance = Size.distance startForDistance clampedEnd
                 }
-
-
-clampAxis : Maybe ( Float, Float ) -> Float -> Float
-clampAxis range v =
-    case range of
-        Just ( lo, hi ) ->
-            clamp lo hi v
-
-        Nothing ->
-            v
 
 
 
@@ -396,9 +386,4 @@ unclampHeight =
 
 updateBuilderClamp : (String -> AnimBuilder eng -> AnimBuilder eng) -> SizeBuilder eng -> SizeBuilder eng
 updateBuilderClamp f (SizeBuilder config builder) =
-    case Builder.getCurrentAnimGroupName builder of
-        Just animGroupName ->
-            SizeBuilder config (f animGroupName builder)
-
-        Nothing ->
-            SizeBuilder config builder
+    SizeBuilder config (Builder.withCurrentAnimGroup f builder)

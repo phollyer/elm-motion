@@ -190,9 +190,9 @@ applyClamps builder config =
                 let
                     clampValue value =
                         Translate.fromTriple
-                            ( clampAxis cx (Translate.getX value)
-                            , clampAxis cy (Translate.getY value)
-                            , clampAxis cz (Translate.getZ value)
+                            ( PropertyBuilder.clampAxis cx (Translate.getX value)
+                            , PropertyBuilder.clampAxis cy (Translate.getY value)
+                            , PropertyBuilder.clampAxis cz (Translate.getZ value)
                             )
 
                     clampedStart =
@@ -209,16 +209,6 @@ applyClamps builder config =
                     , end = clampedEnd
                     , distance = Translate.distance startForDistance clampedEnd
                 }
-
-
-clampAxis : Maybe ( Float, Float ) -> Float -> Float
-clampAxis range v =
-    case range of
-        Just ( lo, hi ) ->
-            clamp lo hi v
-
-        Nothing ->
-            v
 
 
 
@@ -812,9 +802,4 @@ unclampZ =
 
 updateBuilderClamp : (String -> AnimBuilder eng -> AnimBuilder eng) -> TranslateBuilder eng -> TranslateBuilder eng
 updateBuilderClamp f (TranslateBuilder config builder) =
-    case Builder.getCurrentAnimGroupName builder of
-        Just animGroupName ->
-            TranslateBuilder config (f animGroupName builder)
-
-        Nothing ->
-            TranslateBuilder config builder
+    TranslateBuilder config (Builder.withCurrentAnimGroup f builder)

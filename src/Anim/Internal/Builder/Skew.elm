@@ -106,8 +106,8 @@ applyClamps builder config =
                 let
                     clampValue value =
                         Skew.fromTuple
-                            ( clampAxis cx (Skew.getX value)
-                            , clampAxis cy (Skew.getY value)
+                            ( PropertyBuilder.clampAxis cx (Skew.getX value)
+                            , PropertyBuilder.clampAxis cy (Skew.getY value)
                             )
 
                     clampedStart =
@@ -124,16 +124,6 @@ applyClamps builder config =
                     , end = clampedEnd
                     , distance = Skew.distance startForDistance clampedEnd
                 }
-
-
-clampAxis : Maybe ( Float, Float ) -> Float -> Float
-clampAxis range v =
-    case range of
-        Just ( lo, hi ) ->
-            clamp lo hi v
-
-        Nothing ->
-            v
 
 
 
@@ -330,9 +320,4 @@ unclampY =
 
 updateBuilderClamp : (String -> AnimBuilder eng -> AnimBuilder eng) -> SkewBuilder eng -> SkewBuilder eng
 updateBuilderClamp f (SkewBuilder config builder) =
-    case Builder.getCurrentAnimGroupName builder of
-        Just animGroupName ->
-            SkewBuilder config (f animGroupName builder)
-
-        Nothing ->
-            SkewBuilder config builder
+    SkewBuilder config (Builder.withCurrentAnimGroup f builder)

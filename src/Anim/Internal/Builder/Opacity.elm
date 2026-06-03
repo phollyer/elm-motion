@@ -213,9 +213,4 @@ unclamp =
 
 updateBuilderClamp : (String -> AnimBuilder eng -> AnimBuilder eng) -> OpacityBuilder eng -> OpacityBuilder eng
 updateBuilderClamp f (OpacityBuilder config builder) =
-    case Builder.getCurrentAnimGroupName builder of
-        Just animGroupName ->
-            OpacityBuilder config (f animGroupName builder)
-
-        Nothing ->
-            OpacityBuilder config builder
+    OpacityBuilder config (Builder.withCurrentAnimGroup f builder)

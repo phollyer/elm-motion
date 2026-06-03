@@ -118,8 +118,8 @@ applyClamps builder config =
                                 PerspectiveOrigin.toRecord value
                         in
                         PerspectiveOrigin.fromRecord
-                            { x = clampAxis cx r.x
-                            , y = clampAxis cy r.y
+                            { x = PropertyBuilder.clampAxis cx r.x
+                            , y = PropertyBuilder.clampAxis cy r.y
                             }
 
                     clampedStart =
@@ -136,16 +136,6 @@ applyClamps builder config =
                     , end = clampedEnd
                     , distance = PerspectiveOrigin.distance startForDistance clampedEnd
                 }
-
-
-clampAxis : Maybe ( Float, Float ) -> Float -> Float
-clampAxis range v =
-    case range of
-        Just ( lo, hi ) ->
-            clamp lo hi v
-
-        Nothing ->
-            v
 
 
 
@@ -403,9 +393,4 @@ unclampY =
 
 updateBuilderClamp : (String -> AnimBuilder eng -> AnimBuilder eng) -> PerspectiveOriginBuilder eng -> PerspectiveOriginBuilder eng
 updateBuilderClamp f (PerspectiveOriginBuilder config builder) =
-    case Builder.getCurrentAnimGroupName builder of
-        Just animGroupName ->
-            PerspectiveOriginBuilder config (f animGroupName builder)
-
-        Nothing ->
-            PerspectiveOriginBuilder config builder
+    PerspectiveOriginBuilder config (Builder.withCurrentAnimGroup f builder)

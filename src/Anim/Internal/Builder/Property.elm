@@ -1,6 +1,7 @@
 module Anim.Internal.Builder.Property exposing
     ( InheritedTiming
     , applyFrozenAxes
+    , clampAxis
     , cssUnit
     , cssUnitX
     , cssUnitY
@@ -611,6 +612,20 @@ getFloat : (t -> Float) -> Float -> Maybe t -> Float
 getFloat getAxis default =
     Maybe.map getAxis
         >> Maybe.withDefault default
+
+
+{-| Clamp a float to the supplied `(min, max)` range when one is
+present; otherwise return the value unchanged. Used by every
+multi-dim builder's `applyClamps` axis projection.
+-}
+clampAxis : Maybe ( Float, Float ) -> Float -> Float
+clampAxis range v =
+    case range of
+        Just ( lo, hi ) ->
+            clamp lo hi v
+
+        Nothing ->
+            v
 
 
 type alias AnimGroupName =

@@ -132,6 +132,7 @@ module Anim.Internal.Builder exposing
     , updateCurrentConfig
     , willChangeComposite
     , willChangeIndividual
+    , withCurrentAnimGroup
     )
 
 import Anim.Extra.TransformOrder exposing (TransformProperty(..))
@@ -1537,9 +1538,20 @@ mergeBaselines (AnimBuilder ({ state, animation, defaults } as data)) =
 
 markAxes : String -> List String -> AnimBuilder eng -> AnimBuilder eng
 markAxes key axes builder =
+    withCurrentAnimGroup (\animGroupName -> markTouchedAxes animGroupName key axes) builder
+
+
+{-| Run `f` against the current animation group's name when one is set;
+otherwise return the builder unchanged. Used by per-property builders to
+thread the current group name into operations like clamp updates and
+touched-axis marking without each call site reimplementing the
+`Maybe` plumbing.
+-}
+withCurrentAnimGroup : (String -> AnimBuilder eng -> AnimBuilder eng) -> AnimBuilder eng -> AnimBuilder eng
+withCurrentAnimGroup f builder =
     case getCurrentAnimGroupName builder of
         Just animGroupName ->
-            markTouchedAxes animGroupName key axes builder
+            f animGroupName builder
 
         Nothing ->
             builder

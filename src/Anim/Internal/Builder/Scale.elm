@@ -140,9 +140,9 @@ applyClamps builder config =
                 let
                     clampValue value =
                         Scale.fromTriple
-                            ( clampAxis cx (Scale.getX value)
-                            , clampAxis cy (Scale.getY value)
-                            , clampAxis cz (Scale.getZ value)
+                            ( PropertyBuilder.clampAxis cx (Scale.getX value)
+                            , PropertyBuilder.clampAxis cy (Scale.getY value)
+                            , PropertyBuilder.clampAxis cz (Scale.getZ value)
                             )
 
                     clampedStart =
@@ -159,16 +159,6 @@ applyClamps builder config =
                     , end = clampedEnd
                     , distance = Scale.distance startForDistance clampedEnd
                 }
-
-
-clampAxis : Maybe ( Float, Float ) -> Float -> Float
-clampAxis range v =
-    case range of
-        Just ( lo, hi ) ->
-            clamp lo hi v
-
-        Nothing ->
-            v
 
 
 
@@ -528,9 +518,4 @@ unclampZ =
 
 updateBuilderClamp : (String -> AnimBuilder eng -> AnimBuilder eng) -> ScaleBuilder eng -> ScaleBuilder eng
 updateBuilderClamp f (ScaleBuilder config builder) =
-    case Builder.getCurrentAnimGroupName builder of
-        Just animGroupName ->
-            ScaleBuilder config (f animGroupName builder)
-
-        Nothing ->
-            ScaleBuilder config builder
+    ScaleBuilder config (Builder.withCurrentAnimGroup f builder)

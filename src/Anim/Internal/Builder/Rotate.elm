@@ -140,9 +140,9 @@ applyClamps builder config =
                 let
                     clampValue value =
                         Rotate.fromTriple
-                            ( clampAxis cx (Rotate.getX value)
-                            , clampAxis cy (Rotate.getY value)
-                            , clampAxis cz (Rotate.getZ value)
+                            ( PropertyBuilder.clampAxis cx (Rotate.getX value)
+                            , PropertyBuilder.clampAxis cy (Rotate.getY value)
+                            , PropertyBuilder.clampAxis cz (Rotate.getZ value)
                             )
 
                     clampedStart =
@@ -159,16 +159,6 @@ applyClamps builder config =
                     , end = clampedEnd
                     , distance = Rotate.distance startForDistance clampedEnd
                 }
-
-
-clampAxis : Maybe ( Float, Float ) -> Float -> Float
-clampAxis range v =
-    case range of
-        Just ( lo, hi ) ->
-            clamp lo hi v
-
-        Nothing ->
-            v
 
 
 
@@ -513,9 +503,4 @@ unclampZ =
 
 updateBuilderClamp : (String -> AnimBuilder eng -> AnimBuilder eng) -> RotateBuilder eng -> RotateBuilder eng
 updateBuilderClamp f (RotateBuilder config builder) =
-    case Builder.getCurrentAnimGroupName builder of
-        Just animGroupName ->
-            RotateBuilder config (f animGroupName builder)
-
-        Nothing ->
-            RotateBuilder config builder
+    RotateBuilder config (Builder.withCurrentAnimGroup f builder)
