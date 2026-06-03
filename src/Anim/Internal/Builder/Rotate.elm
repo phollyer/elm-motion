@@ -373,25 +373,12 @@ toZ z (RotateBuilder config builder) =
 
 setEnd : Rotate -> RotateConfig -> RotateConfig
 setEnd newEnd config =
-    let
-        startVal =
-            Maybe.withDefault Rotate.default config.start
-    in
-    { config
-        | start = Just startVal
-        , end = newEnd
-        , distance = Rotate.distance startVal newEnd
-    }
+    PropertyBuilder.setEnd Rotate.default Rotate.distance newEnd config
 
 
 markAxes : List String -> AnimBuilder eng -> AnimBuilder eng
 markAxes axes builder =
-    case Builder.getCurrentAnimGroupName builder of
-        Just animGroupName ->
-            Builder.markTouchedAxes animGroupName "rotate" axes builder
-
-        Nothing ->
-            builder
+    Builder.markAxes "rotate" axes builder
 
 
 

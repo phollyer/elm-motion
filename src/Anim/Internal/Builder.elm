@@ -4,8 +4,8 @@ module Anim.Internal.Builder exposing
     , AnimationConfig
     , AnimationDirection(..)
     , AnimationMode(..)
-    , Bounds
     , AxisBounds
+    , Bounds
     , DefaultsConfig
     , DiscreteEntryProperty
     , DiscreteExitProperty
@@ -93,6 +93,7 @@ module Anim.Internal.Builder exposing
     , isPropertyRunning
     , iterations
     , loopForever
+    , markAxes
     , markTouchedAxes
     , mergeBaselines
     , normalizeTransformOrder
@@ -967,32 +968,32 @@ before any animate.
 -}
 getLatestAnimateConfig : AnimGroupName -> AnimBuilder eng -> Maybe ProcessedAnimGroupConfig
 getLatestAnimateConfig animGroupName (AnimBuilder data) =
-    case AnimGroups.get animGroupName data.state.animationHistories of
-        Nothing ->
-            Nothing
+    data.state.animationHistories
+        |> AnimGroups.get animGroupName
+        |> Maybe.andThen
+            (\h ->
+                let
+                    isAnimate entry =
+                        case entry.kind of
+                            AnimateKind ->
+                                True
 
-        Just h ->
-            let
-                isAnimate entry =
-                    case entry.kind of
-                        AnimateKind ->
-                            True
+                            RetargetKind ->
+                                False
+                in
+                (h.current :: h.history)
+                    |> List.filter isAnimate
+                    |> List.head
+                    |> Maybe.map .config
+                    |> (\result ->
+                            case result of
+                                Just _ ->
+                                    result
 
-                        RetargetKind ->
-                            False
-            in
-            (h.current :: h.history)
-                |> List.filter isAnimate
-                |> List.head
-                |> Maybe.map .config
-                |> (\result ->
-                        case result of
-                            Just _ ->
-                                result
-
-                            Nothing ->
-                                Just h.current.config
-                   )
+                                Nothing ->
+                                    Just h.current.config
+                       )
+            )
 
 
 
@@ -1532,6 +1533,16 @@ mergeBaselines (AnimBuilder ({ state, animation, defaults } as data)) =
             }
     in
     AnimBuilder { data | state = newState }
+
+
+markAxes : String -> List String -> AnimBuilder eng -> AnimBuilder eng
+markAxes key axes builder =
+    case getCurrentAnimGroupName builder of
+        Just animGroupName ->
+            markTouchedAxes animGroupName key axes builder
+
+        Nothing ->
+            builder
 
 
 {-| Amend the stored baselines for a single animGroup using a transform

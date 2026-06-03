@@ -103,7 +103,7 @@ for patterns and examples.
 
 -}
 
-import Anim.Internal.Builder as IB exposing (AnimBuilder)
+import Anim.Internal.Builder exposing (AnimBuilder)
 import Anim.Internal.Builder.Scale as SB
 import Motion.Easing exposing (Easing)
 import Motion.Spring exposing (Spring)

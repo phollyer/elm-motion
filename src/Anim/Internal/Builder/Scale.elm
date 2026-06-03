@@ -373,25 +373,12 @@ toZ z (ScaleBuilder config builder) =
 
 setEnd : Scale -> ScaleConfig -> ScaleConfig
 setEnd newEnd config =
-    let
-        startVal =
-            Maybe.withDefault Scale.default config.start
-    in
-    { config
-        | start = Just startVal
-        , end = newEnd
-        , distance = Scale.distance startVal newEnd
-    }
+    PropertyBuilder.setEnd Scale.default Scale.distance newEnd config
 
 
 markAxes : List String -> AnimBuilder eng -> AnimBuilder eng
 markAxes axes builder =
-    case Builder.getCurrentAnimGroupName builder of
-        Just animGroupName ->
-            Builder.markTouchedAxes animGroupName "scale" axes builder
-
-        Nothing ->
-            builder
+    Builder.markAxes "scale" axes builder
 
 
 

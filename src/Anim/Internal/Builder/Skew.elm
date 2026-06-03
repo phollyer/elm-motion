@@ -225,25 +225,12 @@ toY y (SkewBuilder config builder) =
 
 setEnd : Skew -> SkewConfig -> SkewConfig
 setEnd newEnd config =
-    let
-        startVal =
-            Maybe.withDefault Skew.default config.start
-    in
-    { config
-        | start = Just startVal
-        , end = newEnd
-        , distance = Skew.distance startVal newEnd
-    }
+    PropertyBuilder.setEnd Skew.default Skew.distance newEnd config
 
 
 markAxes : List String -> AnimBuilder eng -> AnimBuilder eng
 markAxes axes builder =
-    case Builder.getCurrentAnimGroupName builder of
-        Just animGroupName ->
-            Builder.markTouchedAxes animGroupName "skew" axes builder
-
-        Nothing ->
-            builder
+    Builder.markAxes "skew" axes builder
 
 
 

@@ -40,6 +40,7 @@ module Anim.Internal.Builder.Property exposing
     , getTranslateRange
     , getTranslateStart
     , seedCssUnit
+    , setEnd
     , speed
     , spring
     , upsert
@@ -281,6 +282,19 @@ resolveFor mode animGroupName propertyTypeTag extractBaseline extractExisting ex
 
                 ( Nothing, Nothing ) ->
                     applyGlobalDefaults builder seed
+
+
+setEnd : a -> (a -> a -> Float) -> a -> { c | start : Maybe a, end : a, distance : Float } -> { c | start : Maybe a, end : a, distance : Float }
+setEnd default_ distanceFn newEnd config =
+    let
+        startVal =
+            Maybe.withDefault default_ config.start
+    in
+    { config
+        | start = Just startVal
+        , end = newEnd
+        , distance = distanceFn startVal newEnd
+    }
 
 
 

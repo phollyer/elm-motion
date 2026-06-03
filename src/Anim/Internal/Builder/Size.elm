@@ -244,25 +244,12 @@ toW w (SizeBuilder config builder) =
 
 setEnd : Size -> SizeConfig -> SizeConfig
 setEnd newEnd config =
-    let
-        startVal =
-            Maybe.withDefault Size.default config.start
-    in
-    { config
-        | start = Just startVal
-        , end = newEnd
-        , distance = Size.distance startVal newEnd
-    }
+    PropertyBuilder.setEnd Size.default Size.distance newEnd config
 
 
 markAxes : List String -> AnimBuilder eng -> AnimBuilder eng
 markAxes axes builder =
-    case Builder.getCurrentAnimGroupName builder of
-        Just animGroupName ->
-            Builder.markTouchedAxes animGroupName "size" axes builder
-
-        Nothing ->
-            builder
+    Builder.markAxes "size" axes builder
 
 
 

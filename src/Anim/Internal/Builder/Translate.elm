@@ -588,25 +588,12 @@ byZ dz (TranslateBuilder config builder) =
 
 setEnd : Translate -> TranslateConfig -> TranslateConfig
 setEnd newEnd config =
-    let
-        startVal =
-            Maybe.withDefault Translate.default config.start
-    in
-    { config
-        | start = Just startVal
-        , end = newEnd
-        , distance = Translate.distance startVal newEnd
-    }
+    PropertyBuilder.setEnd Translate.default Translate.distance newEnd config
 
 
 markAxes : List String -> AnimBuilder eng -> AnimBuilder eng
 markAxes axes builder =
-    case Builder.getCurrentAnimGroupName builder of
-        Just animGroupName ->
-            Builder.markTouchedAxes animGroupName "translate" axes builder
-
-        Nothing ->
-            builder
+    Builder.markAxes "translate" axes builder
 
 
 
