@@ -377,7 +377,8 @@ type alias AnimMsg =
 
 {-| Handle messages from this engine.
 
-Returns the updated state and the event for this message.
+Returns the updated state and an event for this message, if one should
+be surfaced.
 
     import Anim.Engine.Keyframe as Keyframe
 
@@ -386,10 +387,18 @@ Returns the updated state and the event for this message.
         case msg of
             KeyframeMsg animMsg ->
                 let
-                    ( animState, event ) =
+                    ( animState, maybeEvent ) =
                         Keyframe.update animMsg model.animState
+
+                    nextModel =
+                        { model | animState = animState }
                 in
-                handleAnimationEvent event { model | animState = animState }
+                case maybeEvent of
+                    Just event ->
+                        handleAnimationEvent event nextModel
+
+                    Nothing ->
+                        ( nextModel, Cmd.none )
 
     handleAnimationEvent : Keyframe.AnimEvent -> Model -> ( Model, Cmd Msg )
     handleAnimationEvent event model =
@@ -397,10 +406,10 @@ Returns the updated state and the event for this message.
             ...
 
 -}
-update : AnimMsg -> AnimState -> ( AnimState, AnimEvent )
+update : AnimMsg -> AnimState -> ( AnimState, Maybe AnimEvent )
 update msg =
     Internal.update msg
-        >> Tuple.mapSecond toAnimEvent
+        >> Tuple.mapSecond (Maybe.map toAnimEvent)
 
 
 toAnimEvent : Internal.AnimEvent -> AnimEvent

@@ -386,11 +386,12 @@ For **ScrollTimeline** and **ViewTimeline**, `Ended` fires every time the scroll
 
 ### Cancelled
 
-Fired when an animation is interrupted before completion:
+Fired when an animation is interrupted by something outside the engine's control:
 
-- Another animation targets the same property
-- The element is removed from the DOM
-- `stop` or `reset` is called on the animation
+- The element is removed from the DOM mid-animation
+- A conflicting CSS rule or external animation displaces the running one
+- The browser invalidates the animation (e.g. tab discard, external `animation-*` style change)
+
 
 For **ScrollTimeline** and **ViewTimeline**, `Cancelled` also carries the progress value (0.0–1.0) at the time of cancellation.
 

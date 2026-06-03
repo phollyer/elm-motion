@@ -265,32 +265,6 @@ setSnapshot anims =
     AnimGroups.map (\_ anim -> { propertySnapshot = extractElementCurrentStates anim }) anims
 
 
-{-| Snap the named anim groups to the targets described by `build`, with no
-animation.
-
-For every property mentioned in `build`, the engine writes the target
-value as the new current position and stops that property's interpolation.
-Builder timing fields (`duration`, `delay`, `easing`, `spring`) are
-accepted but ignored — there is no animation to apply them to.
-
-For `Translate`, only the axes mentioned in `build` are snapped. Untouched
-axes keep their in-flight start / end and continue interpolating along the
-original easing curve, so a per-axis retarget redirects one axis while the
-others carry on. Other property types are snapped as a whole.
-
-Properties on the same anim group that are not mentioned in `build` keep
-running with their existing state.
-
-Emits a `Cancelled` [ControlEvent](#ControlEvent) for every animGroup that
-was previously `Running` and is touched by the build. No `Started` events
-are emitted.
-
-Use `retarget` to instantly reposition an element — e.g. after a layout
-change, a teleport, or to seed a new starting position before a follow-up
-`animate` call. For a smooth redirect from the current position toward a
-new target, use [animate](#animate) with a factored builder instead.
-
--}
 retarget : AnimState -> (EngineBuilder -> EngineBuilder) -> AnimState
 retarget (AnimState state animGroups) build =
     let
@@ -317,24 +291,6 @@ retarget (AnimState state animGroups) build =
                 )
                 Dict.empty
                 touchedAxesByGroup
-
-        touchedNames =
-            AnimGroups.names processed.groups
-
-        cancelledEvents =
-            touchedNames
-                |> List.filterMap
-                    (\animGroupName ->
-                        AnimGroups.get animGroupName animGroups
-                            |> Maybe.andThen
-                                (\existing ->
-                                    if AnimGroup.isRunning existing then
-                                        Just (Cancelled animGroupName (overallProgress existing))
-
-                                    else
-                                        Nothing
-                                )
-                    )
 
         snapAnimations : AnimGroup -> Animations.Animations
         snapAnimations animGroup =
@@ -448,7 +404,7 @@ retarget (AnimState state animGroups) build =
             builder
                 |> Builder.addRetargetToHistory processed
                 |> Builder.clearAnimData
-        , pendingControlEvents = state.pendingControlEvents ++ cancelledEvents
+        , pendingControlEvents = state.pendingControlEvents
         , lastResize = state.lastResize
         }
         nextAnimGroups
@@ -1593,7 +1549,7 @@ spring =
 
 stop : AnimGroupName -> AnimState -> AnimState
 stop animGroupName =
-    applyControlAction animGroupName Cancelled <|
+    applyControlActionSilent animGroupName <|
         \animGroup ->
             let
                 animations =
@@ -1689,6 +1645,31 @@ applyControlAction animGroupName toEvent transformGroups (AnimState state animGr
 
                         else
                             state.pendingControlEvents
+                }
+                updatedAnimGroups
+
+
+applyControlActionSilent :
+    AnimGroupName
+    -> (AnimGroup -> AnimGroups AnimGroup -> AnimGroups AnimGroup)
+    -> AnimState
+    -> AnimState
+applyControlActionSilent animGroupName transformGroups (AnimState state animGroups) =
+    case AnimGroups.get animGroupName animGroups of
+        Nothing ->
+            AnimState state animGroups
+
+        Just animGroup ->
+            let
+                updatedAnimGroups =
+                    transformGroups animGroup animGroups
+            in
+            AnimState
+                { state
+                    | subscriptionsActive =
+                        updatedAnimGroups
+                            |> AnimGroups.groups
+                            |> List.any AnimGroup.isRunning
                 }
                 updatedAnimGroups
 

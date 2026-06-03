@@ -226,7 +226,7 @@ In most cases only the group name is needed. `CurrentTargetId` and `TargetId` ma
 | `Run` | Transition is queued to run (before any delay) |
 | `Started` | Transition begins playing |
 | `Ended` | Transition completes |
-| `Cancelled` | Transition is cancelled before completing |
+| `Cancelled` | Transition is interrupted by something outside the engine's control. |
 
 📖 See [React](../workflow/react.md) for more info.
 

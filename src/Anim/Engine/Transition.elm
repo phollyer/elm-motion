@@ -343,7 +343,8 @@ type alias AnimMsg =
 
 {-| Handle messages from this engine.
 
-Returns the updated state and the event for this message.
+Returns the updated state and an event for this message, if one should
+be surfaced.
 
     import Anim.Engine.Transition as Transition
 
@@ -352,10 +353,18 @@ Returns the updated state and the event for this message.
         case msg of
             TransitionMsg animMsg ->
                 let
-                    ( animState, event ) =
+                    ( animState, maybeEvent ) =
                         Transition.update animMsg model.animState
+
+                    nextModel =
+                        { model | animState = animState }
                 in
-                handleAnimationEvent event { model | animState = animState }
+                case maybeEvent of
+                    Just event ->
+                        handleAnimationEvent event nextModel
+
+                    Nothing ->
+                        ( nextModel, Cmd.none )
 
     handleAnimationEvent : Transition.AnimEvent -> Model -> ( Model, Cmd Msg )
     handleAnimationEvent event model =
@@ -363,10 +372,10 @@ Returns the updated state and the event for this message.
             ...
 
 -}
-update : AnimMsg -> AnimState -> ( AnimState, AnimEvent )
+update : AnimMsg -> AnimState -> ( AnimState, Maybe AnimEvent )
 update msg =
     Internal.update msg
-        >> Tuple.mapSecond toAnimEvent
+        >> Tuple.mapSecond (Maybe.map toAnimEvent)
 
 
 toAnimEvent : Internal.AnimEvent -> AnimEvent

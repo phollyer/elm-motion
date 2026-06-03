@@ -3,8 +3,7 @@ module Anim.Engine.Sub exposing
     , AnimBuilder
     , EngineBuilder
     , init
-    , animate, retarget
-    , onResize
+    , animate, retarget, onResize
     , AnimEvent(..)
     , AnimMsg, update
     , subscriptions
@@ -33,7 +32,7 @@ module Anim.Engine.Sub exposing
     , getTranslateRange, getTranslateStart, getTranslateEnd, getTranslateCurrent
     )
 
-{-| A pure Elm subscription-based animation engine with full control.
+{-| A pure Elm subscription-based animation engine with full control, looping, and seamless mid-flight interruptions.
 
 This engine is a good fit when your app needs mid-flight values, progress, or frequent retargeting.
 
@@ -67,12 +66,7 @@ and the
 
 # Trigger
 
-@docs animate, retarget
-
-
-## Resize
-
-@docs onResize
+@docs animate, retarget, onResize
 
 📖 See [Triggering Animations](https://phollyer.github.io/elm-motion/animation/workflow/trigger/) in the docs.
 
@@ -345,11 +339,8 @@ For multi-dimensional properties like `Translate`, `Scale` and `Size`, only the
 dimensions mentioned in the builder snap — the other dimensions continue along
 their original curve toward their original end value.
 
-A `Cancelled` event is emitted for every property whose animation was
-previously playing and is retargeted.
-
-📖 For responsive and resize patterns, see
-[Responsive Animations](https://phollyer.github.io/elm-motion/animation/concepts/responsive-animations/).
+Thi is useful if something changed in your app that invalidates the current state
+of an animation and it needs to change immediately.
 
 -}
 retarget : AnimState -> (EngineBuilder -> EngineBuilder) -> AnimState
@@ -359,20 +350,17 @@ retarget =
 
 {-| Update one or more animation groups after a resize.
 
-Use this when your targets depend on measured pixel values and need to be recalculated.
-
-📖 For resize strategies and examples, see
-[Responsive Animations](https://phollyer.github.io/elm-motion/animation/concepts/responsive-animations/).
+Use this to set the new bounds for your animation groups.
 
 Typical resize handler:
 
     import Anim.Engine.Sub as Sub
     import Anim.Property.Translate as Translate
 
-    GotTrack (Ok element) ->
+    GotTrack (Ok { element }) ->
         let
             bounds =
-                { x = Just { min = 0, max = element.element.width - boxSize }
+                { x = Just { min = 0, max = element.width - boxSize }
                 , y = Nothing
                 , z = Nothing
                 }
@@ -386,6 +374,9 @@ Typical resize handler:
           }
         , Cmd.none
         )
+
+📖 For resize strategies and examples, see
+[Responsive Animations](https://phollyer.github.io/elm-motion/animation/concepts/responsive-animations/).
 
 -}
 onResize : AnimState -> (AnimBuilder Builder.ForResizeSub -> AnimBuilder Builder.ForResizeSub) -> AnimState
@@ -807,6 +798,10 @@ cssUnitHeight =
 
 
 {-| Stop a running animation by instantly jumping to its end state.
+
+`stop` is silent — no `Cancelled` event is emitted. `Cancelled` is
+reserved for genuine external interruptions (e.g. browser-level
+cancellation outside the engine's control).
 
     import Anim.Engine.Sub as Sub
 

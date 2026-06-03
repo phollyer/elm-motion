@@ -1788,13 +1788,12 @@ function retargetElement(animGroup, elementConfig, resolvedElement = null) {
 
     const elementAnims = activeAnimations.get(animGroup);
 
-    let cancelledAnything = false;
     if (transformProperties.length > 0) {
         const continuationApplied = retargetTransformWithContinuation(
             animGroup, element, transformProperties, elementAnims
         );
         if (!continuationApplied) {
-            cancelledAnything = snapTransformProperties(animGroup, element, transformProperties, elementAnims) || cancelledAnything;
+            snapTransformProperties(animGroup, element, transformProperties, elementAnims);
         }
     }
 
@@ -1802,22 +1801,10 @@ function retargetElement(animGroup, elementConfig, resolvedElement = null) {
         const continuationApplied = retargetNonTransformWithContinuation(
             animGroup, element, property, elementAnims
         );
-        if (continuationApplied) {
-            cancelledAnything = true;
-        } else {
-            cancelledAnything = snapNonTransformProperty(animGroup, element, property, elementAnims) || cancelledAnything;
+        if (!continuationApplied) {
+            snapNonTransformProperty(animGroup, element, property, elementAnims);
         }
     });
-
-    // Emit a single `cancelled` lifecycle event per group when at least
-    // one in-flight animation was actually killed by the snap. The
-    // per-property cancel listeners were short-circuited (see
-    // `cancelSilently`) precisely so they could not race the snap by
-    // pushing a stale mid-flight `propertyUpdate` that would regress the
-    // snapshot Elm already advanced to the target.
-    if (cancelledAnything) {
-        sendLifecycleEvent('cancelled', animGroup);
-    }
 }
 
 /**
@@ -1828,8 +1815,9 @@ function retargetElement(animGroup, elementConfig, resolvedElement = null) {
  * The listener guards every side-effect with `isActiveEntry()`, which
  * checks `activeAnimations.get(animGroup).get(propType).version`. By
  * deleting the entry before calling `.cancel()`, we make that lookup
- * fail and the listener exits silently. The snap emits its own
- * lifecycle event from `retargetElement` once for the whole group.
+ * fail and the listener exits silently. `retarget` is event-silent at
+ * the engine level — no `cancelled` lifecycle event is emitted for the
+ * snap.
  *
  * Returns `true` when an entry existed and was cancelled.
  */

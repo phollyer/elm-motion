@@ -8,6 +8,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Changed (breaking)
+
+- `Cancelled` is now reserved for genuine external interruptions (element removed from the DOM, browser-level cancellation, conflicting CSS). Engine-internal calls — `stop`, `retarget`, and the `transitioncancel` / `animationcancel` events those produce — no longer emit `Cancelled`.
+- `Anim.Engine.Transition.update` and `Anim.Engine.Keyframe.update` now return `( AnimState, Maybe AnimEvent )` (was `( AnimState, AnimEvent )`), matching `Anim.Engine.WAAPI.update`. Callers should pattern-match on the `Maybe`.
+
 ---
 
 ## [1.0.0] - 2026-05-30

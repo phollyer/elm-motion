@@ -49,7 +49,7 @@ eventPayload =
         ]
 
 
-simulate : String -> Result String Keyframe.AnimEvent
+simulate : String -> Result String (Maybe Keyframe.AnimEvent)
 simulate eventName =
     Html.div (Keyframe.attributes "box" animState ++ Keyframe.events GotAnim) []
         |> Query.fromHtml
@@ -68,9 +68,9 @@ suite =
         [ test "animationrun decodes into the Run AnimEvent" <|
             \_ ->
                 simulate "animationrun"
-                    |> Expect.equal (Ok (Keyframe.Run (Just "box") (Just "box") "box"))
+                    |> Expect.equal (Ok (Just (Keyframe.Run (Just "box") (Just "box") "box")))
         , test "animationstart still produces Started" <|
             \_ ->
                 simulate "animationstart"
-                    |> Expect.equal (Ok (Keyframe.Started (Just "box") (Just "box") "box"))
+                    |> Expect.equal (Ok (Just (Keyframe.Started (Just "box") (Just "box") "box")))
         ]

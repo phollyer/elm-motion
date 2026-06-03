@@ -12,8 +12,8 @@ curve toward their existing end value.
 Builder timing fields (`duration`, `delay`, `easing`, `spring`) are accepted
 but ignored.
 
-A `Cancelled` event is emitted for every group that was `Running` and is
-touched by the build. No `Started` event is emitted.
+`retarget` is silent: it emits no `Started`, `Cancelled`, or `Completed`
+events.
 
 -}
 
@@ -296,7 +296,7 @@ timingIgnored =
 eventEmission : Test
 eventEmission =
     describe "retarget event emission"
-        [ test "emits Cancelled for a previously-Running group" <|
+        [ test "does not emit Cancelled for a previously-Running retargeted group" <|
             \_ ->
                 initState
                     |> startTranslate "a" 500
@@ -308,14 +308,13 @@ eventEmission =
                     |> List.filter
                         (\ev ->
                             case ev of
-                                Sub.Cancelled name _ ->
-                                    name == "a"
+                                Sub.Cancelled _ _ ->
+                                    True
 
                                 _ ->
                                     False
                         )
-                    |> List.length
-                    |> Expect.equal 1
+                    |> Expect.equal []
         , test "does not emit Started for the retargeted group" <|
             \_ ->
                 initState

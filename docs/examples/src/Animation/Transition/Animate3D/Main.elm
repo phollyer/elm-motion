@@ -527,10 +527,18 @@ update msg model =
 
         GotTransitionsMsg animMsg ->
             let
-                ( animState, animEvent ) =
+                ( animState, maybeEvent ) =
                     Transition.update animMsg model.animState
+
+                nextModel =
+                    { model | animState = animState }
             in
-            ( handleEvent animEvent { model | animState = animState }
+            ( case maybeEvent of
+                Just animEvent ->
+                    handleEvent animEvent nextModel
+
+                Nothing ->
+                    nextModel
             , Cmd.none
             )
 

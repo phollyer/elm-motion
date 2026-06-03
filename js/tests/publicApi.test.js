@@ -205,6 +205,50 @@ describe('ElmMotion public API', () => {
         );
     });
 
+    it('does not emit a cancelled event when retarget interrupts a running WAAPI animation', async () => {
+        const animGroup = 'box-retarget-silent';
+        const animation = createFakeAnimation({ duration: 400 });
+        animation.currentTime = 200;
+
+        const element = {
+            id: animGroup,
+            animate: vi.fn(() => animation)
+        };
+        installDom({ element, targetId: animGroup });
+
+        const events = [];
+        const ports = createPorts((payload) => events.push(payload));
+        ElmMotion.init(ports.ports);
+
+        await ports.send({
+            type: 'animate',
+            elements: {
+                [animGroup]: {
+                    properties: [
+                        { type: 'opacity', startValue: 0, endValue: 1, duration: 400, easing: 'linear', version: 1 }
+                    ]
+                }
+            }
+        });
+
+        await ports.send({
+            type: 'retarget',
+            elements: {
+                [animGroup]: {
+                    properties: [
+                        { type: 'opacity', startValue: 0.5, endValue: 0.5, duration: 0, easing: 'linear', version: 2 }
+                    ]
+                }
+            }
+        });
+
+        const lifecycleStatuses = events
+            .filter((event) => event.type === 'animationUpdate')
+            .map((event) => event.payload?.status);
+
+        expect(lifecycleStatuses).not.toContain('cancelled');
+    });
+
     it('emits a single scroll-driven iteration event when all property animations complete the loop', async () => {
         const animGroup = 'box-scroll';
         const sourceId = 'source-scroll';

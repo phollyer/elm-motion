@@ -269,7 +269,7 @@ Every event carries the animation group name. Some events carry an additional va
 | ----- | ------------- |
 | `Started` | Animation begins playing |
 | `Ended` | Animation completes |
-| `Cancelled` | Animation is cancelled before completing |
+| `Cancelled` | Animation is interrupted by something outside the engine's control. |
 | `Iteration` | Each iteration completes (looping or alternating) |
 | `Progress` | Every frame while the animation is running |
 | `Paused` | `pause` is called on a running animation |

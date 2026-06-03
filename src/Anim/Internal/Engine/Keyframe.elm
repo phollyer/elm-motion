@@ -273,37 +273,46 @@ type AnimMsg
     | GotRun AnimGroupName CSS.SourceEventData
 
 
-update : AnimMsg -> AnimState -> ( AnimState, AnimEvent )
+update : AnimMsg -> AnimState -> ( AnimState, Maybe AnimEvent )
 update animMsg animState =
     case animMsg of
         GotPaused animGroupName ->
-            ( animState, Paused animGroupName )
+            ( animState, Just (Paused animGroupName) )
 
         GotResumed animGroupName ->
-            ( animState, Resumed animGroupName )
+            ( animState, Just (Resumed animGroupName) )
 
         GotRestarted animGroupName ->
-            ( animState, Restarted animGroupName )
+            ( animState, Just (Restarted animGroupName) )
 
         GotStarted animGroupName { currentTargetId, targetId } ->
             ( CSS.handleEvent AnimGroup.setPlayState (CSS.AnimationStarted animGroupName) animState
-            , Started currentTargetId targetId animGroupName
+            , Just (Started currentTargetId targetId animGroupName)
             )
 
         GotRun animGroupName { currentTargetId, targetId } ->
             ( CSS.handleEvent AnimGroup.setPlayState (CSS.AnimationRun animGroupName) animState
-            , Run currentTargetId targetId animGroupName
+            , Just (Run currentTargetId targetId animGroupName)
             )
 
         GotEnded animGroupName { currentTargetId, targetId } ->
             ( CSS.handleEvent AnimGroup.setPlayState (CSS.AnimationEnded animGroupName) animState
-            , Ended currentTargetId targetId animGroupName
+            , Just (Ended currentTargetId targetId animGroupName)
             )
 
         GotCancelled animGroupName { currentTargetId, targetId } ->
-            ( CSS.handleEvent AnimGroup.setPlayState (CSS.AnimationCancelled animGroupName) animState
-            , Cancelled currentTargetId targetId animGroupName
-            )
+            -- Browsers fire `animationcancel` whenever a CSS animation is
+            -- interrupted, including when our own `stop` / `retarget` /
+            -- `reset` set the group to a non-Running PlayState. We only
+            -- surface `Cancelled` for genuine external interruption — i.e.
+            -- the group was still Running when the DOM event arrived.
+            if isGroupRunning animGroupName animState then
+                ( CSS.handleEvent AnimGroup.setPlayState (CSS.AnimationCancelled animGroupName) animState
+                , Just (Cancelled currentTargetId targetId animGroupName)
+                )
+
+            else
+                ( animState, Nothing )
 
         GotIteration animGroupName { currentTargetId, targetId } ->
             let
@@ -318,8 +327,15 @@ update animMsg animState =
                         |> Maybe.withDefault 0
             in
             ( AnimState state animGroups
-            , Iteration currentTargetId targetId animGroupName count
+            , Just (Iteration currentTargetId targetId animGroupName count)
             )
+
+
+isGroupRunning : AnimGroupName -> AnimState -> Bool
+isGroupRunning animGroupName (AnimState _ animGroups) =
+    AnimGroups.get animGroupName animGroups
+        |> Maybe.map AnimGroup.isRunning
+        |> Maybe.withDefault False
 
 
 incrementIterationCount : AnimGroupName -> AnimState -> AnimState

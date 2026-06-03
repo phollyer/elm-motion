@@ -309,10 +309,6 @@ there is no animation to apply them to.
 Frozen axes are preserved: only unfrozen axes are snapped. Untouched
 properties on the same anim group continue running.
 
-The JS side emits a `Cancelled` [AnimEvent](#AnimEvent) for every
-property whose animation was previously playing and is touched by the
-build. No `Started` events are emitted.
-
 Use `retarget` to instantly reposition an element — e.g. after a layout
 change, a teleport, or to seed a new starting position before a follow-up
 `animate` call. For a smooth redirect from the current position toward a
@@ -350,8 +346,8 @@ retarget (AnimState state animGroups) build =
         -- Mark every property on the freshly generated (touched) group as
         -- Complete and advance its snapshot to the target value: the snap
         -- puts the property at its target with no animation pending. The
-        -- JS side will emit Cancelled for any previously-Running animation
-        -- when it cancels the WAAPI handle.
+        -- JS side cancels in-flight WAAPI handles silently — no Cancelled
+        -- AnimEvent is emitted for the retarget.
         --
         -- For per-axis-aware properties (translate), axes not mentioned in
         -- the retarget build keep the previously-running animation's end
