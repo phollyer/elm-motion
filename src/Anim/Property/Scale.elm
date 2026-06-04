@@ -4,12 +4,13 @@ module Anim.Property.Scale exposing
     , for, build
     , from, fromXYZ, fromXY, fromXZ, fromX, fromYZ, fromY, fromZ
     , to, toXYZ, toXY, toXZ, toX, toYZ, toY, toZ
-    , set, setXYZ, setXY, setXZ, setX, setYZ, setY, setZ
+    , byXYZ, byXY, byXZ, byX, byYZ, byY, byZ
     , delay, duration, speed
     , easing
     , spring
-    , clampX, clampY, clampZ, unclampX, unclampY, unclampZ
     , Bounds, AxisBounds, bounds
+    , clampX, clampY, clampZ, unclampX, unclampY, unclampZ
+    , set, setXYZ, setXY, setXZ, setX, setYZ, setY, setZ
     )
 
 {-| Scale elements along the X, Y, and Z axes.
@@ -50,7 +51,7 @@ for details.
 @docs from, fromXYZ, fromXY, fromXZ, fromX, fromYZ, fromY, fromZ
 
 
-## End Value
+## End Value (Absolute)
 
 📖 See [End Values](https://phollyer.github.io/elm-motion/animation/properties/overview/#end-values)
 for details.
@@ -58,9 +59,16 @@ for details.
 @docs to, toXYZ, toXY, toXZ, toX, toYZ, toY, toZ
 
 
-## Snap
+## End Value (Relative)
 
-@docs set, setXYZ, setXY, setXZ, setX, setYZ, setY, setZ
+Move by a delta on one or more axes instead of to a fixed scale. The end value
+is `current + delta` for each axis, where `current` is the configured start
+scale or the default when no start value has been set on that axis.
+
+@docs byXYZ, byXY, byXZ, byX, byYZ, byY, byZ
+
+📖 See [End Values](https://phollyer.github.io/elm-motion/animation/properties/overview/#end-values)
+for details.
 
 
 ## Timing
@@ -87,19 +95,37 @@ for details.
 @docs spring
 
 
-## Clamping
-
-Keep scale values on each axis within a range you choose.
+## Responsive Animations
 
 📖 See [Responsive Animations](https://phollyer.github.io/elm-motion/animation/concepts/responsive-animations/)
 for patterns and examples.
 
+
+### Bounds
+
+Keep scale values within a range you choose. Values outside the range are clamped
+to the nearest boundary. An animation that is within the bounds, either mid-flight or
+paused, will be remapped proportionally inside the bounds.
+
+@docs Bounds, AxisBounds, bounds
+
+
+## Clamping
+
+Keep scale values on each axis within a range you choose.
+
+Values outside the range are clamped to the nearest boundary.
+
+Similar to `bounds`, but without proportional remapping.
+
 @docs clampX, clampY, clampZ, unclampX, unclampY, unclampZ
 
 
-## Resize
+## Snap
 
-@docs Bounds, AxisBounds, bounds
+Snap to a specific scale, cancelling any in-flight animation on this property.
+
+@docs set, setXYZ, setXY, setXZ, setX, setYZ, setY, setZ
 
 -}
 
@@ -378,96 +404,42 @@ fromXYZ =
     SB.fromXYZ
 
 
-{-| Set the starting X and Y scale.
-
-    myAnimation : AnimBuilder eng -> AnimBuilder eng
-    myAnimation =
-        Scale.for "animGroupName"
-            >> Scale.fromXY 0.8 1.2
-            >> ... -- continue with animation
-
-The Z scale remains unchanged, or 1.0 if not set.
-
+{-| Set the starting X and Y scale. Z is left unchanged (or 1.0 if not set).
 -}
 fromXY : Float -> Float -> Builder eng -> Builder eng
 fromXY =
     SB.fromXY
 
 
-{-| Set the starting X and Z scale.
-
-    myAnimation : AnimBuilder eng -> AnimBuilder eng
-    myAnimation =
-        Scale.for "animGroupName"
-            >> Scale.fromXZ 0.8 0.9
-            >> ... -- continue with animation
-
-The Y scale remains unchanged, or 1.0 if not set.
-
+{-| Set the starting X and Z scale. Y is left unchanged (or 1.0 if not set).
 -}
 fromXZ : Float -> Float -> Builder eng -> Builder eng
 fromXZ =
     SB.fromXZ
 
 
-{-| Set the starting X-axis scale.
-
-    myAnimation : AnimBuilder eng -> AnimBuilder eng
-    myAnimation =
-        Scale.for "animGroupName"
-            >> Scale.fromX 0.8
-            >> ... -- continue with animation
-
-The Y and Z scales remain unchanged, or 1.0 if not set.
-
+{-| Set the starting X scale. Y and Z are left unchanged (or 1.0 if not set).
 -}
 fromX : Float -> Builder eng -> Builder eng
 fromX =
     SB.fromX
 
 
-{-| Set the starting Y and Z scale.
-
-    myAnimation : AnimBuilder eng -> AnimBuilder eng
-    myAnimation =
-        Scale.for "animGroupName"
-            >> Scale.fromYZ 1.2 0.9
-            >> ... -- continue with animation
-
-The X scale remains unchanged, or 1.0 if not set.
-
+{-| Set the starting Y and Z scale. X is left unchanged (or 1.0 if not set).
 -}
 fromYZ : Float -> Float -> Builder eng -> Builder eng
 fromYZ =
     SB.fromYZ
 
 
-{-| Set the starting Y-axis scale.
-
-    myAnimation : AnimBuilder eng -> AnimBuilder eng
-    myAnimation =
-        Scale.for "animGroupName"
-            >> Scale.fromY 1.2
-            >> ... -- continue with animation
-
-The X and Z scales remain unchanged, or 1.0 if not set.
-
+{-| Set the starting Y scale. X and Z are left unchanged (or 1.0 if not set).
 -}
 fromY : Float -> Builder eng -> Builder eng
 fromY =
     SB.fromY
 
 
-{-| Set the starting Z-axis scale.
-
-    myAnimation : AnimBuilder eng -> AnimBuilder eng
-    myAnimation =
-        Scale.for "animGroupName"
-            >> Scale.fromZ 1.1
-            >> ... -- continue with animation
-
-The X and Y scales remain unchanged, or 1.0 if not set.
-
+{-| Set the starting Z scale. X and Y are left unchanged (or 1.0 if not set).
 -}
 fromZ : Float -> Builder eng -> Builder eng
 fromZ =
@@ -480,7 +452,7 @@ fromZ =
 -- ============================================================
 
 
-{-| Set the target scale for the current animation group (uniform across all axes).
+{-| Set the target scale (uniform across all axes).
 
     myAnimation : AnimBuilder eng -> AnimBuilder eng
     myAnimation =
@@ -496,7 +468,7 @@ to targetScale =
     SB.toXYZ targetScale targetScale targetScale
 
 
-{-| Set the target X, Y, and Z scale for the current animation group.
+{-| Set the target X, Y, and Z scale.
 
     myAnimation : AnimBuilder eng -> AnimBuilder eng
     myAnimation =
@@ -510,96 +482,42 @@ toXYZ =
     SB.toXYZ
 
 
-{-| Set the target X and Y scale for the current animation group.
-
-    myAnimation : AnimBuilder eng -> AnimBuilder eng
-    myAnimation =
-        Scale.for "animGroupName"
-            >> Scale.toXY 1.5 2.0
-            >> ... -- continue with animation
-
-The Z scale remains unchanged, or 1.0 if not set.
-
+{-| Set the target X and Y scale. Z is left unchanged (or 1.0 if not set).
 -}
 toXY : Float -> Float -> Builder eng -> Builder eng
 toXY =
     SB.toXY
 
 
-{-| Set the target X and Z scale for the current animation group.
-
-    myAnimation : AnimBuilder eng -> AnimBuilder eng
-    myAnimation =
-        Scale.for "animGroupName"
-            >> Scale.toXZ 1.5 0.8
-            >> ... -- continue with animation
-
-The Y scale remains unchanged, or 1.0 if not set.
-
+{-| Set the target X and Z scale. Y is left unchanged (or 1.0 if not set).
 -}
 toXZ : Float -> Float -> Builder eng -> Builder eng
 toXZ =
     SB.toXZ
 
 
-{-| Set the target X-axis scale for the current animation group.
-
-    myAnimation : AnimBuilder eng -> AnimBuilder eng
-    myAnimation =
-        Scale.for "animGroupName"
-            >> Scale.toX 2.0
-            >> ... -- continue with animation
-
-The Y and Z scales remain unchanged, or 1.0 if not set.
-
+{-| Set the target X scale. Y and Z are left unchanged (or 1.0 if not set).
 -}
 toX : Float -> Builder eng -> Builder eng
 toX =
     SB.toX
 
 
-{-| Set the target Y and Z scale for the current animation group.
-
-    myAnimation : AnimBuilder eng -> AnimBuilder eng
-    myAnimation =
-        Scale.for "animGroupName"
-            >> Scale.toYZ 1.5 0.8
-            >> ... -- continue with animation
-
-The X scale remains unchanged, or 1.0 if not set.
-
+{-| Set the target Y and Z scale. X is left unchanged (or 1.0 if not set).
 -}
 toYZ : Float -> Float -> Builder eng -> Builder eng
 toYZ =
     SB.toYZ
 
 
-{-| Set the target Y-axis scale for the current animation group.
-
-    myAnimation : AnimBuilder eng -> AnimBuilder eng
-    myAnimation =
-        Scale.for "animGroupName"
-            >> Scale.toY 1.5
-            >> ... -- continue with animation
-
-The X and Z scales remain unchanged, or 1.0 if not set.
-
+{-| Set the target Y scale. X and Z are left unchanged (or 1.0 if not set).
 -}
 toY : Float -> Builder eng -> Builder eng
 toY =
     SB.toY
 
 
-{-| Set the target Z-axis scale for the current animation group.
-
-    myAnimation : AnimBuilder eng -> AnimBuilder eng
-    myAnimation =
-        Scale.for "animGroupName"
-            >> Scale.toZ 0.8
-            >> ... -- continue with animation
-
-The X and Y scales remain unchanged, or 1.0 if not set.
-
+{-| Set the target Z scale. X and Y are left unchanged (or 1.0 if not set).
 -}
 toZ : Float -> Builder eng -> Builder eng
 toZ =
@@ -612,8 +530,8 @@ toZ =
 -- ============================================================
 
 
-{-| Snap the uniform target scale silently, cancelling any
-in-flight animation on this property.
+{-| Snap to a uniform scale on all three axes silently, cancelling
+any in-flight animation on this property.
 -}
 set : Float -> Builder eng -> Builder eng
 set xyz =
@@ -671,19 +589,66 @@ setZ =
 
 
 -- ============================================================
+-- BY
+-- ============================================================
+
+
+{-| Move by a delta on the X, Y, and Z axes.
+-}
+byXYZ : Float -> Float -> Float -> Builder eng -> Builder eng
+byXYZ =
+    SB.byXYZ
+
+
+{-| Move by a delta on the X and Y axes. Z is unaffected.
+-}
+byXY : Float -> Float -> Builder eng -> Builder eng
+byXY =
+    SB.byXY
+
+
+{-| Move by a delta on the X and Z axes. Y is unaffected.
+-}
+byXZ : Float -> Float -> Builder eng -> Builder eng
+byXZ =
+    SB.byXZ
+
+
+{-| Move by a delta on the X axis. Y and Z are unaffected.
+-}
+byX : Float -> Builder eng -> Builder eng
+byX =
+    SB.byX
+
+
+{-| Move by a delta on the Y and Z axes. X is unaffected.
+-}
+byYZ : Float -> Float -> Builder eng -> Builder eng
+byYZ =
+    SB.byYZ
+
+
+{-| Move by a delta on the Y axis. X and Z are unaffected.
+-}
+byY : Float -> Builder eng -> Builder eng
+byY =
+    SB.byY
+
+
+{-| Move by a delta on the Z axis. X and Y are unaffected.
+-}
+byZ : Float -> Builder eng -> Builder eng
+byZ =
+    SB.byZ
+
+
+
+-- ============================================================
 -- TIMING
 -- ============================================================
 
 
 {-| Set the delay (milliseconds) before the animation starts.
-
-    myAnimation : AnimBuilder eng -> AnimBuilder eng
-    myAnimation =
-        Scale.for "animGroupName"
-            >> Scale.to 1.5
-            >> Scale.delay 500
-            >> ... -- continue with animation
-
 -}
 delay : Int -> Builder { eng | withTiming : () } -> Builder { eng | withTiming : () }
 delay =
@@ -691,14 +656,6 @@ delay =
 
 
 {-| Set the animation duration (milliseconds).
-
-    myAnimation : AnimBuilder eng -> AnimBuilder eng
-    myAnimation =
-        Scale.for "animGroupName"
-            >> Scale.to 1.5
-            >> Scale.duration 2000
-            >> ... -- continue with animation
-
 -}
 duration : Int -> Builder { eng | withTiming : () } -> Builder { eng | withTiming : () }
 duration =
@@ -707,17 +664,8 @@ duration =
 
 {-| The speed represents how much the scale factor changes per second.
 
-For example, lets take a scale animation from `1.0` to `5.0`.
-A speed of `2.0` means the scale will change by 2.0 units per second, so our animation will take 2 seconds to complete (1.0 -> 3.0 in 1 second, then 3.0 -> 5.0 in the next second).
-
-    myAnimation : AnimBuilder eng -> AnimBuilder eng
-    myAnimation =
-        Scale.for "animGroupName"
-            >> Scale.toXYZ 5.0 5.0 5.0
-            >> Scale.speed 2.0
-            >> ... -- continue with animation
-
-Similarly, a speed of `4.0` would complete the same animation in 1 second, and a speed of `1.0` would take 4 seconds.
+For example, a scale animation from `1.0` to `5.0` with a speed of `2.0`
+will take 2 seconds to complete.
 
 -}
 speed : Float -> Builder { eng | withTiming : () } -> Builder { eng | withTiming : () }
@@ -735,12 +683,7 @@ speed =
 
     import Easing exposing (Easing(..))
 
-    myAnimation : AnimBuilder eng -> AnimBuilder eng
-    myAnimation =
-        Scale.for "animGroupName"
-            >> Scale.to 1.5
-            >> Scale.easing EaseInOut
-            >> ... -- continue with animation
+    Scale.easing EaseInOut
 
 -}
 easing : Easing -> Builder eng -> Builder eng
@@ -754,27 +697,65 @@ easing =
 -- ============================================================
 
 
-{-| Drive this property with a spring instead of an easing curve.
-
-Spring-driven motion has _emergent_ duration: the motion ends when
-the value has settled at the target. Any `duration` or `speed` set on
-this property is ignored when a spring is used. `delay` is honoured.
-
-Setting `spring` clears any previously-set `easing` on this property,
-and vice versa — they are mutually exclusive.
+{-| Drive this property with a spring.
 
     import Motion.Spring as Spring
 
-    myAnimation : AnimBuilder eng -> AnimBuilder eng
-    myAnimation =
-        Scale.for "animGroupName"
-            >> Scale.to 1.5
-            >> Scale.spring Spring.wobbly
+    Scale.spring Spring.wobbly
 
 -}
 spring : Spring -> Builder { eng | withSpring : () } -> Builder { eng | withSpring : () }
 spring =
     SB.spring
+
+
+
+-- ============================================================
+-- RESIZE
+-- ============================================================
+
+
+{-| A numeric range with `min` and `max` boundaries.
+-}
+type alias Bounds =
+    { min : Float, max : Float }
+
+
+{-| Per-axis resize ranges. `Nothing` leaves an axis untouched.
+
+    { x = Just { min = 1, max = 2 }
+    , y = Nothing
+    , z = Nothing
+    }
+
+-}
+type alias AxisBounds =
+    { x : Maybe Bounds
+    , y : Maybe Bounds
+    , z : Maybe Bounds
+    }
+
+
+{-| Scale's contribution to a resize bounds directive for the named anim group.
+Compose inside an engine's `onResize` callback:
+
+    WAAPI.onResize model.animState <|
+        Scale.bounds "cube"
+            { x = Just { min = 1, max = newWidth / cubeSize }
+            , y = Just { min = 1, max = newHeight / cubeSize }
+            , z = Nothing
+            }
+
+You can resize multiple anim groups in one call by composing more entries.
+
+Leave an axis as `Nothing` to ignore it. Bounds are scale multipliers,
+not pixels. Only callable from inside an `onResize` callback - the
+`withBounds` capability on the builder type is what gates it.
+
+-}
+bounds : AnimGroupName -> AxisBounds -> AnimBuilder { eng | withBounds : () } -> AnimBuilder { eng | withBounds : () }
+bounds name ranges =
+    SB.for name >> SB.bounds ranges >> SB.build
 
 
 
@@ -836,52 +817,3 @@ unclampY =
 unclampZ : Builder eng -> Builder eng
 unclampZ =
     SB.unclampZ
-
-
-
--- ============================================================
--- RESIZE
--- ============================================================
-
-
-{-| A numeric range with `min` and `max` boundaries.
--}
-type alias Bounds =
-    { min : Float, max : Float }
-
-
-{-| Per-axis resize ranges. `Nothing` leaves an axis untouched.
-
-    { x = Just { min = 1, max = 2 }
-    , y = Nothing
-    , z = Nothing
-    }
-
--}
-type alias AxisBounds =
-    { x : Maybe Bounds
-    , y : Maybe Bounds
-    , z : Maybe Bounds
-    }
-
-
-{-| Scale's contribution to a resize bounds directive for the named anim group.
-Compose inside an engine's `onResize` callback:
-
-    WAAPI.onResize model.animState <|
-        Scale.bounds "cube"
-            { x = Just { min = 1, max = newWidth / cubeSize }
-            , y = Just { min = 1, max = newHeight / cubeSize }
-            , z = Nothing
-            }
-
-You can resize multiple anim groups in one call by composing more entries.
-
-Leave an axis as `Nothing` to ignore it. Bounds are scale multipliers,
-not pixels. Only callable from inside an `onResize` callback - the
-`withBounds` capability on the builder type is what gates it.
-
--}
-bounds : AnimGroupName -> AxisBounds -> AnimBuilder { eng | withBounds : () } -> AnimBuilder { eng | withBounds : () }
-bounds name ranges =
-    SB.for name >> SB.bounds ranges >> SB.build

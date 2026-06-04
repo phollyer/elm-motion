@@ -1,6 +1,7 @@
 module Anim.Internal.Builder.Opacity exposing
     ( OpacityBuilder
     , build
+    , by
     , clamp
     , delay
     , duration
@@ -113,6 +114,24 @@ applyClamps builder config =
 from : Opacity -> OpacityBuilder eng -> OpacityBuilder eng
 from opacity (OpacityBuilder config builder) =
     OpacityBuilder { config | start = Just opacity } builder
+
+
+by : Float -> OpacityBuilder eng -> OpacityBuilder eng
+by delta (OpacityBuilder config builder) =
+    let
+        startPos =
+            Maybe.withDefault Opacity.default config.start
+
+        endPos =
+            Opacity.fromFloat (Opacity.toFloat startPos + delta)
+    in
+    OpacityBuilder
+        { config
+            | start = Just startPos
+            , end = endPos
+            , distance = Opacity.distance startPos endPos
+        }
+        builder
 
 
 

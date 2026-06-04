@@ -4,11 +4,11 @@ module Anim.Property.Custom exposing
     , for, build
     , from
     , to
-    , set
     , delay, duration, speed
     , easing
     , spring
     , clamp, unclamp
+    , set
     )
 
 {-| Animate any numeric CSS property not covered by the first-class
@@ -35,7 +35,7 @@ property modules (Translate, Rotate, Scale etc.).
 
 ## Start Value
 
-📖 See [Start Values](https://phollyer.github.io/elm-motion/animation/properties/overview/#start-values)
+📖 See [Optional `from`](https://phollyer.github.io/elm-motion/animation/properties/overview/#optional-from)
 for details.
 
 @docs from
@@ -47,11 +47,6 @@ for details.
 for details.
 
 @docs to
-
-
-## Snap
-
-@docs set
 
 
 ## Timing
@@ -80,13 +75,18 @@ for details.
 
 ## Clamping
 
-Keep this property's value within a range you choose. Each custom property keeps its own range,
-even on the same animation group.
+Keep property values within a range you choose.
 
-📖 See [Responsive Animations](https://phollyer.github.io/elm-motion/animation/concepts/responsive-animations/)
-for patterns and examples.
+Values outside the range are clamped to the nearest boundary.
+
+The range stays in effect for all future animation calls until you call [unclamp](#unclamp).
 
 @docs clamp, unclamp
+
+
+## Snap
+
+@docs set
 
 -}
 
@@ -462,36 +462,8 @@ to =
 
 
 -- ============================================================
--- SET (snap)
--- ============================================================
-
-
-{-| Snap the value silently, cancelling any in-flight animation
-on this property.
--}
-set : Float -> Builder eng -> Builder eng
-set =
-    Internal.set
-
-
-
--- ============================================================
 -- TIMING
 -- ============================================================
-
-
-{-| Set the animation speed (units per second).
--}
-speed : Float -> Builder { eng | withTiming : () } -> Builder { eng | withTiming : () }
-speed =
-    Internal.speed
-
-
-{-| Set the animation duration (milliseconds).
--}
-duration : Int -> Builder { eng | withTiming : () } -> Builder { eng | withTiming : () }
-duration =
-    Internal.duration
 
 
 {-| Set the delay (milliseconds) before the animation starts.
@@ -501,6 +473,20 @@ delay =
     Internal.delay
 
 
+{-| Set the animation duration (milliseconds).
+-}
+duration : Int -> Builder { eng | withTiming : () } -> Builder { eng | withTiming : () }
+duration =
+    Internal.duration
+
+
+{-| Set the animation speed (units per second).
+-}
+speed : Float -> Builder { eng | withTiming : () } -> Builder { eng | withTiming : () }
+speed =
+    Internal.speed
+
+
 
 -- ============================================================
 -- EASING
@@ -508,6 +494,11 @@ delay =
 
 
 {-| Set the easing function.
+
+    import Easing exposing (Easing(..))
+
+    Property.easing EaseInOut
+
 -}
 easing : Easing -> Builder eng -> Builder eng
 easing =
@@ -520,24 +511,11 @@ easing =
 -- ============================================================
 
 
-{-| Drive this property with a spring instead of an easing curve.
+{-| Drive this property with a spring.
 
-Spring-driven motion has _emergent_ duration: the motion ends when
-the value has settled at the target. Any `duration` or `speed` set on
-this property is ignored when a spring is used. `delay` is honoured.
-
-Setting `spring` clears any previously-set `easing` on this property,
-and vice versa — they are mutually exclusive.
-
-    import Anim.Property.Custom as Property
-    import Anim.Unit exposing (Unit(..))
     import Motion.Spring as Spring
 
-    myAnimation : AnimBuilder eng -> AnimBuilder eng
-    myAnimation =
-        Property.for "box" (BorderRadius Px)
-            >> Property.to 16
-            >> Property.spring Spring.wobbly
+    Property.spring Spring.wobbly
 
 -}
 spring : Spring -> Builder { eng | withSpring : () } -> Builder { eng | withSpring : () }
@@ -547,19 +525,13 @@ spring =
 
 
 -- ============================================================
--- BOUNDS
+-- CLAMPING
 -- ============================================================
 
 
-{-| Keep this CSS property's value within `[min, max]` for this animation group.
+{-| Keep this CSS property's value within the min and max range.
 
-Each custom property keeps its own range, so different properties on the same
-animation group are independent. The range stays in effect for future
-`animate` / `retarget` calls until you call [unclamp](#unclamp).
 If `min > max`, the values are swapped.
-
-📖 See [Responsive Animations](https://phollyer.github.io/elm-motion/animation/concepts/responsive-animations/)
-for patterns and examples.
 
 -}
 clamp : Float -> Float -> Builder eng -> Builder eng
@@ -567,8 +539,22 @@ clamp =
     Internal.clamp
 
 
-{-| Remove the range for this CSS property on this animation group. Does nothing if no range is set.
+{-| Remove the range for this CSS property. Does nothing if no range is set.
 -}
 unclamp : Builder eng -> Builder eng
 unclamp =
     Internal.unclamp
+
+
+
+-- ============================================================
+-- SNAP
+-- ============================================================
+
+
+{-| Snap the value silently, cancelling any in-flight animation
+on this property.
+-}
+set : Float -> Builder eng -> Builder eng
+set =
+    Internal.set

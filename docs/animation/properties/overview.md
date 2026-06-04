@@ -61,10 +61,13 @@ This performs three functions:
 - It gives the Engine starting values to use for the first time the `animGroup` is animated
 - It ensures the Engine and your view are in sync
 
-!!! tip "`from*`"
-    All properties have either a `from` function, or a variety of `from*` functions that are property specific, or both. In general, these won't be needed, but are made available in order to override default Engine behaviour if required.
+### Optional `from`
 
-    If in doubt, start without; only add when needed.
+All properties have either a `from` function, or a variety of `from*` functions that are property specific, or both. In general, these won't be needed - the Engines will always start animations from the last known end state.
+
+The family of `from*` functions are made available in order to override this default Engine behaviour, and start your animations from a specific state.
+
+If in doubt, start without; only add when needed.
 
 
 ## End Values
@@ -72,6 +75,7 @@ This performs three functions:
 All animations need an end value.
 
 All properties have either a `to` function, or a variety of `to*` functions that are property specific, or both.
+`Translate` also has `by*` in order to translate by a delta value rather
 
 ??? example "View Source Code"
 

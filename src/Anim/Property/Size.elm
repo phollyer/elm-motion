@@ -1,16 +1,17 @@
 module Anim.Property.Size exposing
     ( Builder, AnimGroupName
     , init, initHW, initW, initH
-    , cssUnit, cssUnitW, cssUnitH
     , for, build
     , fromHW, fromH, fromW, from
     , toHW, toH, toW
-    , set, setHW, setH, setW
+    , byHW, byH, byW
     , delay, duration, speed
     , easing
     , spring
+    , cssUnit, cssUnitW, cssUnitH
     , Bounds, AxisBounds, bounds
     , clampWidth, clampHeight, unclampWidth, unclampHeight
+    , set, setHW, setH, setW
     )
 
 {-| Animate the width and height of elements.
@@ -33,28 +34,6 @@ or 0 if not set.
 @docs init, initHW, initW, initH
 
 
-## Initial Unit
-
-Set the length [Unit](Anim-Unit#Unit) used by `init*` calls earlier in the
-pipeline. Order matters - `cssUnit*` only affects `init*` calls that appear
-before it in the pipeline. Defaults to `Px`.
-
-    import Anim.Unit exposing (Unit(..))
-
-    init _ =
-        ( { animState =
-                Engine.init
-                    [ Size.initHW "btn" 8 25
-                        >> Size.cssUnitW Cqw
-                        >> Size.cssUnitH Cqh
-                    ]
-          }
-        , Cmd.none
-        )
-
-@docs cssUnit, cssUnitW, cssUnitH
-
-
 # Build
 
 @docs for, build
@@ -73,7 +52,7 @@ for details.
 @docs fromHW, fromH, fromW, from
 
 
-## End Value
+## End Value (Absolute)
 
 📖 See [End Values](https://phollyer.github.io/elm-motion/animation/properties/overview/#end-values)
 for details.
@@ -81,9 +60,16 @@ for details.
 @docs toHW, toH, toW
 
 
-## Snap
+## End Value (Relative)
 
-@docs set, setHW, setH, setW
+Move by a delta on width and height instead of to a fixed size. The end value
+is `current + delta` for each axis, where `current` is the configured start
+size or the default when no start value has been set on that axis.
+
+@docs byHW, byH, byW
+
+📖 See [End Values](https://phollyer.github.io/elm-motion/animation/properties/overview/#end-values)
+for details.
 
 
 ## Timing
@@ -110,13 +96,38 @@ for details.
 @docs spring
 
 
-## Resize
+## CSS Units
 
-Proportionally remap an in-flight size animation onto new width / height
-ranges from inside an engine's `onResize` callback.
+Set the CSS length unit(s) used by `init*` calls earlier in the
+pipeline. Order matters - `cssUnit*` only affects `init*` calls that
+appear before it in the pipeline. Defaults to `Px`.
+
+    import Anim.Unit exposing (Unit(..))
+
+    init _ =
+        ( { animState =
+                Engine.init
+                    [ Size.initHW "btn" 8 25
+                        >> Size.cssUnitW Cqw
+                        >> Size.cssUnitH Cqh
+                    ]
+          }
+        , Cmd.none
+        )
+
+@docs cssUnit, cssUnitW, cssUnitH
+
+
+## Responsive Animations
 
 📖 See [Responsive Animations](https://phollyer.github.io/elm-motion/animation/concepts/responsive-animations/)
 for patterns and examples.
+
+
+### Bounds
+
+Proportionally remap an in-flight size animation onto new width / height
+ranges from inside an engine's `onResize` callback.
 
 @docs Bounds, AxisBounds, bounds
 
@@ -125,10 +136,18 @@ for patterns and examples.
 
 Keep width and height within a range you choose.
 
-📖 See [Responsive Animations](https://phollyer.github.io/elm-motion/animation/concepts/responsive-animations/)
-for patterns and examples.
+Values outside the range are clamped to the nearest boundary.
+
+Similar to `bounds`, but without proportional remapping.
 
 @docs clampWidth, clampHeight, unclampWidth, unclampHeight
+
+
+## Snap
+
+Snap to a specific size, cancelling any in-flight animation on this property.
+
+@docs set, setHW, setH, setW
 
 -}
 
@@ -356,47 +375,23 @@ fromHW =
     SB.fromHW
 
 
-{-| Set the starting height, keeping the current width.
-
-    myAnimation : AnimBuilder eng -> AnimBuilder eng
-    myAnimation =
-        Size.for "animGroupName"
-            >> Size.fromH 150
-            >> ... -- continue with animation
-
-The width remains unchanged, or 0 if not set.
-
+{-| Set the starting height. Width is left unchanged (or 0 if not set).
 -}
 fromH : Float -> Builder eng -> Builder eng
 fromH =
     SB.fromH
 
 
-{-| Set the starting width, keeping the current height.
-
-    myAnimation : AnimBuilder eng -> AnimBuilder eng
-    myAnimation =
-        Size.for "animGroupName"
-            >> Size.fromW 250
-            >> ... -- continue with animation
-
-The height remains unchanged, or 0 if not set.
-
+{-| Set the starting width. Height is left unchanged (or 0 if not set).
 -}
 fromW : Float -> Builder eng -> Builder eng
 fromW =
     SB.fromW
 
 
-{-| Set the starting width and height to the same value.
+{-| Set both starting width and height to the same value.
 
-    myAnimation : AnimBuilder eng -> AnimBuilder eng
-    myAnimation =
-        Size.for "animGroupName"
-            >> Size.from 100
-            >> ... -- continue with animation
-
-This is equivalent to calling `fromHW 100 100`.
+This is equivalent to calling `fromHW value value`.
 
 -}
 from : Float -> Builder eng -> Builder eng
@@ -410,7 +405,7 @@ from value =
 -- ============================================================
 
 
-{-| Set the target height and width for the current animation group.
+{-| Set the target height and width.
 
     myAnimation : AnimBuilder eng -> AnimBuilder eng
     myAnimation =
@@ -424,32 +419,14 @@ toHW =
     SB.toHW
 
 
-{-| Set the target height for the current animation group, keeping the current target width.
-
-    myAnimation : AnimBuilder eng -> AnimBuilder eng
-    myAnimation =
-        Size.for "animGroupName"
-            >> Size.toH 150
-            >> ... -- continue with animation
-
-The width remains unchanged, or 0 if not set.
-
+{-| Set the target height. Width is left unchanged (or 0 if not set).
 -}
 toH : Float -> Builder eng -> Builder eng
 toH =
     SB.toH
 
 
-{-| Set the target width for the current animation group, keeping the current target height.
-
-    myAnimation : AnimBuilder eng -> AnimBuilder eng
-    myAnimation =
-        Size.for "animGroupName"
-            >> Size.toW 250
-            >> ... -- continue with animation
-
-The height remains unchanged, or 0 if not set.
-
+{-| Set the target width. Height is left unchanged (or 0 if not set).
 -}
 toW : Float -> Builder eng -> Builder eng
 toW =
@@ -462,33 +439,60 @@ toW =
 -- ============================================================
 
 
-{-| Snap the uniform target height and width values silently,
-cancelling any in-flight animation on this property.
+{-| Snap to a uniform width and height silently, cancelling any
+in-flight animation on this property.
 -}
 set : Float -> Builder eng -> Builder eng
 set hw =
     SB.setHW hw hw
 
 
-{-| Snap the target height and width values.
+{-| Snap target height and width values.
 -}
 setHW : Float -> Float -> Builder eng -> Builder eng
 setHW =
     SB.setHW
 
 
-{-| Snap the target height, preserving the current width.
+{-| Snap target height, preserving the current width.
 -}
 setH : Float -> Builder eng -> Builder eng
 setH =
     SB.setH
 
 
-{-| Snap the target width, preserving the current height.
+{-| Snap target width, preserving the current height.
 -}
 setW : Float -> Builder eng -> Builder eng
 setW =
     SB.setW
+
+
+
+-- ============================================================
+-- BY
+-- ============================================================
+
+
+{-| Move by a delta on height and width.
+-}
+byHW : Float -> Float -> Builder eng -> Builder eng
+byHW =
+    SB.byHW
+
+
+{-| Move by a delta on height. Width is unaffected.
+-}
+byH : Float -> Builder eng -> Builder eng
+byH =
+    SB.byH
+
+
+{-| Move by a delta on width. Height is unaffected.
+-}
+byW : Float -> Builder eng -> Builder eng
+byW =
+    SB.byW
 
 
 
@@ -498,14 +502,6 @@ setW =
 
 
 {-| Set the delay (milliseconds) before the animation starts.
-
-    myAnimation : AnimBuilder eng -> AnimBuilder eng
-    myAnimation =
-        Size.for "animGroupName"
-            >> Size.toHW 200 100
-            >> Size.delay 500
-            >> ... -- continue with animation
-
 -}
 delay : Int -> Builder { eng | withTiming : () } -> Builder { eng | withTiming : () }
 delay =
@@ -513,33 +509,16 @@ delay =
 
 
 {-| Set the animation duration (milliseconds).
-
-    myAnimation : AnimBuilder eng -> AnimBuilder eng
-    myAnimation =
-        Size.for "animGroupName"
-            >> Size.toHW 200 100
-            >> Size.duration 2000
-            >> ... -- continue with animation
-
 -}
 duration : Int -> Builder { eng | withTiming : () } -> Builder { eng | withTiming : () }
 duration =
     SB.duration
 
 
-{-| The speed represents how many pixels the element's size changes per second.
+{-| The speed represents how many units the element's size changes per second.
 
-For example, lets take a size animation from `(100, 100)` to `(200, 200)` assuming `Px` for the CSS Unit.
-A speed of `50.0` means the size will change by 50 pixels per second, so our animation will take 2 seconds to complete.
-
-    myAnimation : AnimBuilder eng -> AnimBuilder eng
-    myAnimation =
-        Size.for "animGroupName"
-            >> Size.toHW 200 200
-            >> Size.speed 50
-            >> ... -- continue with animation
-
-Similarly, a speed of `100.0` would complete the same animation in 1 second, and a speed of `25.0` would take 4 seconds.
+For example, a size animation from `(100, 100)` to `(200, 200)` with a speed
+of `50.0` will take 2 seconds to complete.
 
 -}
 speed : Float -> Builder { eng | withTiming : () } -> Builder { eng | withTiming : () }
@@ -557,12 +536,7 @@ speed =
 
     import Easing exposing (Easing(..))
 
-    myAnimation : AnimBuilder eng -> AnimBuilder eng
-    myAnimation =
-        Size.for "animGroupName"
-            >> Size.toHW 200 100
-            >> Size.easing EaseInOut
-            >> ... -- continue with animation
+    Size.easing EaseInOut
 
 -}
 easing : Easing -> Builder eng -> Builder eng
@@ -576,22 +550,11 @@ easing =
 -- ============================================================
 
 
-{-| Drive this property with a spring instead of an easing curve.
-
-Spring-driven motion has _emergent_ duration: the motion ends when
-the value has settled at the target. Any `duration` or `speed` set on
-this property is ignored when a spring is used. `delay` is honoured.
-
-Setting `spring` clears any previously-set `easing` on this property,
-and vice versa — they are mutually exclusive.
+{-| Drive this property with a spring.
 
     import Motion.Spring as Spring
 
-    myAnimation : AnimBuilder eng -> AnimBuilder eng
-    myAnimation =
-        Size.for "animGroupName"
-            >> Size.toHW 200 100
-            >> Size.spring Spring.wobbly
+    Size.spring Spring.wobbly
 
 -}
 spring : Spring -> Builder { eng | withSpring : () } -> Builder { eng | withSpring : () }
@@ -662,7 +625,7 @@ toBuilderRanges ranges =
 
 
 -- ============================================================
--- CLAMPING
+-- BOUNDS
 -- ============================================================
 
 

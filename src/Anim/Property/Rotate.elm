@@ -4,11 +4,12 @@ module Anim.Property.Rotate exposing
     , for, build
     , fromXYZ, fromXY, fromXZ, fromX, fromYZ, fromY, fromZ
     , toXYZ, toXY, toXZ, toX, toYZ, toY, toZ
-    , set, setXYZ, setXY, setXZ, setX, setYZ, setY, setZ
+    , byXYZ, byXY, byXZ, byX, byYZ, byY, byZ
     , delay, duration, speed
     , easing
     , spring
     , clampX, clampY, clampZ, unclampX, unclampY, unclampZ
+    , set, setXYZ, setXY, setXZ, setX, setYZ, setY, setZ
     )
 
 {-| Rotate elements around the X, Y, and Z axes.
@@ -49,7 +50,7 @@ for details.
 @docs fromXYZ, fromXY, fromXZ, fromX, fromYZ, fromY, fromZ
 
 
-## End Value
+## End Value (Absolute)
 
 📖 See [End Values](https://phollyer.github.io/elm-motion/animation/properties/overview/#end-values)
 for details.
@@ -57,9 +58,16 @@ for details.
 @docs toXYZ, toXY, toXZ, toX, toYZ, toY, toZ
 
 
-## Snap
+## End Value (Relative)
 
-@docs set, setXYZ, setXY, setXZ, setX, setYZ, setY, setZ
+Move by a delta on one or more axes instead of to a fixed rotation. The end
+value is `current + delta` for each axis, where `current` is the configured
+start rotation or the default when no start value has been set on that axis.
+
+@docs byXYZ, byXY, byXZ, byX, byYZ, byY, byZ
+
+📖 See [End Values](https://phollyer.github.io/elm-motion/animation/properties/overview/#end-values)
+for details.
 
 
 ## Timing
@@ -94,6 +102,13 @@ Keep rotate values on each axis within a range you choose.
 for patterns and examples.
 
 @docs clampX, clampY, clampZ, unclampX, unclampY, unclampZ
+
+
+## Snap
+
+Snap to a specific rotation, cancelling any in-flight animation on this property.
+
+@docs set, setXYZ, setXY, setXZ, setX, setYZ, setY, setZ
 
 -}
 
@@ -331,96 +346,42 @@ fromXYZ =
     RB.fromXYZ
 
 
-{-| Set the starting X and Y rotations (degrees).
-
-    myAnimation : AnimBuilder eng -> AnimBuilder eng
-    myAnimation =
-        Rotate.for "animGroupName"
-            >> Rotate.fromXY 45 90
-            >> ... -- continue with animation
-
-The Z rotation remains unchanged, or zero if not set.
-
+{-| Set the starting X and Y rotations (degrees). Z is left unchanged (or 0 if not set).
 -}
 fromXY : Float -> Float -> Builder eng -> Builder eng
 fromXY =
     RB.fromXY
 
 
-{-| Set the starting X and Z rotations (degrees).
-
-    myAnimation : AnimBuilder eng -> AnimBuilder eng
-    myAnimation =
-        Rotate.for "animGroupName"
-            >> Rotate.fromXZ 45 180
-            >> ... -- continue with animation
-
-The Y rotation remains unchanged, or zero if not set.
-
+{-| Set the starting X and Z rotations (degrees). Y is left unchanged (or 0 if not set).
 -}
 fromXZ : Float -> Float -> Builder eng -> Builder eng
 fromXZ =
     RB.fromXZ
 
 
-{-| Set the starting X-axis rotation (degrees).
-
-    myAnimation : AnimBuilder eng -> AnimBuilder eng
-    myAnimation =
-        Rotate.for "animGroupName"
-            >> Rotate.fromX 45
-            >> ... -- continue with animation
-
-The Y and Z rotations remain unchanged, or zero if not set.
-
+{-| Set the starting X rotation (degrees). Y and Z are left unchanged (or 0 if not set).
 -}
 fromX : Float -> Builder eng -> Builder eng
 fromX =
     RB.fromX
 
 
-{-| Set the starting Y and Z rotations (degrees).
-
-    myAnimation : AnimBuilder eng -> AnimBuilder eng
-    myAnimation =
-        Rotate.for "animGroupName"
-            >> Rotate.fromYZ 90 180
-            >> ... -- continue with animation
-
-The X rotation remains unchanged, or zero if not set.
-
+{-| Set the starting Y and Z rotations (degrees). X is left unchanged (or 0 if not set).
 -}
 fromYZ : Float -> Float -> Builder eng -> Builder eng
 fromYZ =
     RB.fromYZ
 
 
-{-| Set the starting Y-axis rotation (degrees).
-
-    myAnimation : AnimBuilder eng -> AnimBuilder eng
-    myAnimation =
-        Rotate.for "animGroupName"
-            >> Rotate.fromY 90
-            >> ... -- continue with animation
-
-The X and Z rotations remain unchanged, or zero if not set.
-
+{-| Set the starting Y rotation (degrees). X and Z are left unchanged (or 0 if not set).
 -}
 fromY : Float -> Builder eng -> Builder eng
 fromY =
     RB.fromY
 
 
-{-| Set the starting Z-axis rotation (degrees).
-
-    myAnimation : AnimBuilder eng -> AnimBuilder eng
-    myAnimation =
-        Rotate.for "animGroupName"
-            >> Rotate.fromZ 180
-            >> ... -- continue with animation
-
-The X and Y rotations remain unchanged, or zero if not set.
-
+{-| Set the starting Z rotation (degrees). X and Y are left unchanged (or 0 if not set).
 -}
 fromZ : Float -> Builder eng -> Builder eng
 fromZ =
@@ -433,7 +394,7 @@ fromZ =
 -- ============================================================
 
 
-{-| Set the target X, Y, and Z rotations for the current animation group (degrees).
+{-| Set the target X, Y, and Z rotations (degrees).
 
     myAnimation : AnimBuilder eng -> AnimBuilder eng
     myAnimation =
@@ -447,90 +408,42 @@ toXYZ =
     RB.toXYZ
 
 
-{-| Set the target X and Y rotations for the current animation group (degrees).
-
-    myAnimation : AnimBuilder eng -> AnimBuilder eng
-    myAnimation =
-        Rotate.for "animGroupName"
-            >> Rotate.toXY 45 90
-            >> ... -- continue with animation
-
+{-| Set the target X and Y rotations (degrees). Z is left unchanged (or 0 if not set).
 -}
 toXY : Float -> Float -> Builder eng -> Builder eng
 toXY =
     RB.toXY
 
 
-{-| Set the target X and Z rotations for the current animation group (degrees).
-
-    myAnimation : AnimBuilder eng -> AnimBuilder eng
-    myAnimation =
-        Rotate.for "animGroupName"
-            >> Rotate.toXZ 45 180
-            >> ... -- continue with animation
-
+{-| Set the target X and Z rotations (degrees). Y is left unchanged (or 0 if not set).
 -}
 toXZ : Float -> Float -> Builder eng -> Builder eng
 toXZ =
     RB.toXZ
 
 
-{-| Set the target X-axis rotation for the current animation group (degrees).
-
-    myAnimation : AnimBuilder eng -> AnimBuilder eng
-    myAnimation =
-        Rotate.for "animGroupName"
-            >> Rotate.toX 45
-            >> ... -- continue with animation
-
-The Y and Z rotations remain unchanged, or zero if not set.
-
+{-| Set the target X rotation (degrees). Y and Z are left unchanged (or 0 if not set).
 -}
 toX : Float -> Builder eng -> Builder eng
 toX =
     RB.toX
 
 
-{-| Set the target Y and Z rotations for the current animation group (degrees).
-
-    myAnimation : AnimBuilder eng -> AnimBuilder eng
-    myAnimation =
-        Rotate.for "animGroupName"
-            >> Rotate.toYZ 90 180
-            >> ... -- continue with animation
-
+{-| Set the target Y and Z rotations (degrees). X is left unchanged (or 0 if not set).
 -}
 toYZ : Float -> Float -> Builder eng -> Builder eng
 toYZ =
     RB.toYZ
 
 
-{-| Set the target Y-axis rotation for the current animation group (degrees).
-
-    myAnimation : AnimBuilder eng -> AnimBuilder eng
-    myAnimation =
-        Rotate.for "animGroupName"
-            >> Rotate.toY 90
-            >> ... -- continue with animation
-
-The X and Z rotations remain unchanged, or zero if not set.
-
+{-| Set the target Y rotation (degrees). X and Z are left unchanged (or 0 if not set).
 -}
 toY : Float -> Builder eng -> Builder eng
 toY =
     RB.toY
 
 
-{-| Set the target Z-axis rotation for the current animation group (degrees).
-
-    myAnimation : AnimBuilder eng -> AnimBuilder eng
-    myAnimation =
-        Rotate.for "animGroupName"
-            >> Rotate.toZ 180
-            >> ... -- continue with animation
-
-The X and Y rotations remain unchanged, or zero if not set.
-
+{-| Set the target Z rotation (degrees). X and Y are left unchanged (or 0 if not set).
 -}
 toZ : Float -> Builder eng -> Builder eng
 toZ =
@@ -543,7 +456,7 @@ toZ =
 -- ============================================================
 
 
-{-| Snap the uniform target rotation angles silently, cancelling
+{-| Snap to a uniform rotation on all three axes silently, cancelling
 any in-flight animation on this property.
 -}
 set : Float -> Builder eng -> Builder eng
@@ -602,58 +515,88 @@ setZ =
 
 
 -- ============================================================
+-- BY
+-- ============================================================
+
+
+{-| Move by a delta on the X, Y, and Z axes.
+-}
+byXYZ : Float -> Float -> Float -> Builder eng -> Builder eng
+byXYZ =
+    RB.byXYZ
+
+
+{-| Move by a delta on the X and Y axes. Z is unaffected.
+-}
+byXY : Float -> Float -> Builder eng -> Builder eng
+byXY =
+    RB.byXY
+
+
+{-| Move by a delta on the X and Z axes. Y is unaffected.
+-}
+byXZ : Float -> Float -> Builder eng -> Builder eng
+byXZ =
+    RB.byXZ
+
+
+{-| Move by a delta on the X axis. Y and Z are unaffected.
+-}
+byX : Float -> Builder eng -> Builder eng
+byX =
+    RB.byX
+
+
+{-| Move by a delta on the Y and Z axes. X is unaffected.
+-}
+byYZ : Float -> Float -> Builder eng -> Builder eng
+byYZ =
+    RB.byYZ
+
+
+{-| Move by a delta on the Y axis. X and Z are unaffected.
+-}
+byY : Float -> Builder eng -> Builder eng
+byY =
+    RB.byY
+
+
+{-| Move by a delta on the Z axis. X and Y are unaffected.
+-}
+byZ : Float -> Builder eng -> Builder eng
+byZ =
+    RB.byZ
+
+
+
+-- ============================================================
 -- TIMING
 -- ============================================================
 
 
-{-| The speed represents how many degrees the element rotates per second.
-
-For example, lets take a rotation animation from `0°` to `180°`.
-A speed of `90.0` means the element will rotate 90 degrees per second, so our animation will take 2 seconds to complete (0° -> 90° in 1 second, then 90° -> 180° in the next second).
-
-    myAnimation : AnimBuilder eng -> AnimBuilder eng
-    myAnimation =
-        Rotate.for "animGroupName"
-            >> Rotate.toZ 180
-            >> Rotate.speed 90
-            >> ... -- continue with animation
-
-Similarly, a speed of `180.0` would complete the same animation in 1 second, and a speed of `45.0` would take 4 seconds.
-
+{-| Set the delay (milliseconds) before the animation starts.
 -}
-speed : Float -> Builder { eng | withTiming : () } -> Builder { eng | withTiming : () }
-speed =
-    RB.speed
+delay : Int -> Builder { eng | withTiming : () } -> Builder { eng | withTiming : () }
+delay =
+    RB.delay
 
 
 {-| Set the animation duration (milliseconds).
-
-    myAnimation : AnimBuilder eng -> AnimBuilder eng
-    myAnimation =
-        Rotate.for "animGroupName"
-            >> Rotate.toZ 180
-            >> Rotate.duration 2000
-            >> ... -- continue with animation
-
 -}
 duration : Int -> Builder { eng | withTiming : () } -> Builder { eng | withTiming : () }
 duration =
     RB.duration
 
 
-{-| Set the delay (milliseconds) before the animation starts.
+{-| The speed represents how many degrees the element rotates per second.
 
-    myAnimation : AnimBuilder eng -> AnimBuilder eng
-    myAnimation =
-        Rotate.for "animGroupName"
-            >> Rotate.toZ 180
-            >> Rotate.delay 500
-            >> ... -- continue with animation
+For example, a rotation animation from `0°` to `180°` with a speed of `90.0`
+will take 2 seconds to complete.
 
 -}
-delay : Int -> Builder { eng | withTiming : () } -> Builder { eng | withTiming : () }
-delay =
-    RB.delay
+speed : Float -> Builder { eng | withTiming : () } -> Builder { eng | withTiming : () }
+speed =
+    RB.speed
 
 
 
@@ -666,12 +609,7 @@ delay =
 
     import Easing exposing (Easing(..))
 
-    myAnimation : AnimBuilder eng -> AnimBuilder eng
-    myAnimation =
-        Rotate.for "animGroupName"
-            >> Rotate.toZ 180
-            >> Rotate.easing EaseInOut
-            >> ... -- continue with animation
+    Rotate.easing EaseInOut
 
 -}
 easing : Easing -> Builder eng -> Builder eng
@@ -685,22 +623,11 @@ easing =
 -- ============================================================
 
 
-{-| Drive this property with a spring instead of an easing curve.
-
-Spring-driven motion has _emergent_ duration: the motion ends when
-the value has settled at the target. Any `duration` or `speed` set on
-this property is ignored when a spring is used. `delay` is honoured.
-
-Setting `spring` clears any previously-set `easing` on this property,
-and vice versa — they are mutually exclusive.
+{-| Drive this property with a spring.
 
     import Motion.Spring as Spring
 
-    myAnimation : AnimBuilder eng -> AnimBuilder eng
-    myAnimation =
-        Rotate.for "animGroupName"
-            >> Rotate.toZ 180
-            >> Rotate.spring Spring.wobbly
+    Rotate.spring Spring.wobbly
 
 -}
 spring : Spring -> Builder { eng | withSpring : () } -> Builder { eng | withSpring : () }

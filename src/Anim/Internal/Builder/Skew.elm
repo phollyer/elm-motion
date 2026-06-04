@@ -10,6 +10,9 @@ module Anim.Internal.Builder.Skew exposing
     , fromX
     , fromXY
     , fromY
+    , byXY
+    , byX
+    , byY
     , setX
     , setXY
     , setY
@@ -161,6 +164,30 @@ fromY y (SkewBuilder config builder) =
     in
     fromXY x y <|
         SkewBuilder config builder
+
+
+byXY : Float -> Float -> SkewBuilder eng -> SkewBuilder eng
+byXY deltaX deltaY (SkewBuilder config builder) =
+    let
+        startX =
+            PropertyBuilder.getFloat Skew.getX default config.start
+
+        startY =
+            PropertyBuilder.getFloat Skew.getY default config.start
+    in
+    SkewBuilder config builder
+        |> fromXY startX startY
+        |> toXY (startX + deltaX) (startY + deltaY)
+
+
+byX : Float -> SkewBuilder eng -> SkewBuilder eng
+byX deltaX =
+    byXY deltaX 0
+
+
+byY : Float -> SkewBuilder eng -> SkewBuilder eng
+byY deltaY =
+    byXY 0 deltaY
 
 
 

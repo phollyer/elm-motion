@@ -4,11 +4,12 @@ module Anim.Property.Skew exposing
     , for, build
     , fromXY, fromX, fromY
     , toXY, toX, toY
-    , setXY, setX, setY
+    , byXY, byX, byY
     , delay, duration, speed
     , easing
     , spring
     , clampX, clampY, unclampX, unclampY
+    , setXY, setX, setY
     )
 
 {-| Skew elements along the X and Y axes.
@@ -49,7 +50,7 @@ for details.
 @docs fromXY, fromX, fromY
 
 
-## End Value
+## End Value (Absolute)
 
 📖 See [End Values](https://phollyer.github.io/elm-motion/animation/properties/overview/#end-values)
 for details.
@@ -57,9 +58,16 @@ for details.
 @docs toXY, toX, toY
 
 
-## Snap
+## End Value (Relative)
 
-@docs setXY, setX, setY
+Move by a delta on the X and Y axes instead of to a fixed skew. The end value
+is `current + delta` for each axis, where `current` is the configured start
+skew or the default when no start value has been set on that axis.
+
+@docs byXY, byX, byY
+
+📖 See [End Values](https://phollyer.github.io/elm-motion/animation/properties/overview/#end-values)
+for details.
 
 
 ## Timing
@@ -94,6 +102,13 @@ Keep skew values on each axis within a range you choose.
 for patterns and examples.
 
 @docs clampX, clampY, unclampX, unclampY
+
+
+## Snap
+
+Snap to a specific skew, cancelling any in-flight animation on this property.
+
+@docs setXY, setX, setY
 
 -}
 
@@ -240,14 +255,14 @@ fromXY =
     SB.fromXY
 
 
-{-| Set the starting X skew (degrees).
+{-| Set the starting X skew (degrees). Y is left unchanged (or 0 if not set).
 -}
 fromX : Float -> Builder eng -> Builder eng
 fromX =
     SB.fromX
 
 
-{-| Set the starting Y skew (degrees).
+{-| Set the starting Y skew (degrees). X is left unchanged (or 0 if not set).
 -}
 fromY : Float -> Builder eng -> Builder eng
 fromY =
@@ -267,14 +282,14 @@ toXY =
     SB.toXY
 
 
-{-| Set the target X skew (degrees).
+{-| Set the target X skew (degrees). Y is left unchanged (or 0 if not set).
 -}
 toX : Float -> Builder eng -> Builder eng
 toX =
     SB.toX
 
 
-{-| Set the target Y skew (degrees).
+{-| Set the target Y skew (degrees). X is left unchanged (or 0 if not set).
 -}
 toY : Float -> Builder eng -> Builder eng
 toY =
@@ -287,22 +302,22 @@ toY =
 -- ============================================================
 
 
-{-| Snap skew to specified angles silently, cancelling any in-flight
-animation on this property.
+{-| Snap target X and Y skew angles silently, cancelling any
+in-flight animation on this property.
 -}
 setXY : Float -> Float -> Builder eng -> Builder eng
 setXY =
     SB.setXY
 
 
-{-| Snap the target X value, preserving the current Y value.
+{-| Snap target X angle, preserving the current Y angle.
 -}
 setX : Float -> Builder eng -> Builder eng
 setX =
     SB.setX
 
 
-{-| Snap the target Y value, preserving the current X value.
+{-| Snap target Y angle, preserving the current X angle.
 -}
 setY : Float -> Builder eng -> Builder eng
 setY =
@@ -311,55 +326,60 @@ setY =
 
 
 -- ============================================================
+-- BY
+-- ============================================================
+
+
+{-| Move by a delta on the X and Y axes.
+-}
+byXY : Float -> Float -> Builder eng -> Builder eng
+byXY =
+    SB.byXY
+
+
+{-| Move by a delta on the X axis. Y is unaffected.
+-}
+byX : Float -> Builder eng -> Builder eng
+byX =
+    SB.byX
+
+
+{-| Move by a delta on the Y axis. X is unaffected.
+-}
+byY : Float -> Builder eng -> Builder eng
+byY =
+    SB.byY
+
+
+
+-- ============================================================
 -- TIMING
 -- ============================================================
 
 
-{-| The speed represents how many degrees the skew changes per second.
-
-For example, a skew animation from `0` to `30` degrees with a speed of `15.0` will take 2 seconds to complete.
-
-    myAnimation : AnimBuilder eng -> AnimBuilder eng
-    myAnimation =
-        Skew.for "animGroupName"
-            >> Skew.toXY 30 0
-            >> Skew.speed 15.0
-            >> ... -- continue with animation
-
+{-| Set the delay (milliseconds) before the animation starts.
 -}
-speed : Float -> Builder { eng | withTiming : () } -> Builder { eng | withTiming : () }
-speed =
-    SB.speed
+delay : Int -> Builder { eng | withTiming : () } -> Builder { eng | withTiming : () }
+delay =
+    SB.delay
 
 
 {-| Set the animation duration (milliseconds).
-
-    myAnimation : AnimBuilder eng -> AnimBuilder eng
-    myAnimation =
-        Skew.for "animGroupName"
-            >> Skew.toXY 12 0
-            >> Skew.duration 2000
-            >> ... -- continue with animation
-
 -}
 duration : Int -> Builder { eng | withTiming : () } -> Builder { eng | withTiming : () }
 duration =
     SB.duration
 
 
-{-| Set the delay (milliseconds) before the animation starts.
+{-| The speed represents how many degrees the skew changes per second.
 
-    myAnimation : AnimBuilder eng -> AnimBuilder eng
-    myAnimation =
-        Skew.for "animGroupName"
-            >> Skew.toXY 12 0
-            >> Skew.delay 500
-            >> ... -- continue with animation
+For example, a skew animation from `0` to `30` degrees with a speed of `15.0`
+will take 2 seconds to complete.
 
 -}
-delay : Int -> Builder { eng | withTiming : () } -> Builder { eng | withTiming : () }
-delay =
-    SB.delay
+speed : Float -> Builder { eng | withTiming : () } -> Builder { eng | withTiming : () }
+speed =
+    SB.speed
 
 
 
@@ -372,12 +392,7 @@ delay =
 
     import Easing exposing (Easing(..))
 
-    myAnimation : AnimBuilder eng -> AnimBuilder eng
-    myAnimation =
-        Skew.for "animGroupName"
-            >> Skew.toXY 12 0
-            >> Skew.easing EaseInOut
-            >> ... -- continue with animation
+    Skew.easing EaseInOut
 
 -}
 easing : Easing -> Builder eng -> Builder eng
@@ -391,22 +406,11 @@ easing =
 -- ============================================================
 
 
-{-| Drive this property with a spring instead of an easing curve.
-
-Spring-driven motion has _emergent_ duration: the motion ends when
-the value has settled at the target. Any `duration` or `speed` set on
-this property is ignored when a spring is used. `delay` is honoured.
-
-Setting `spring` clears any previously-set `easing` on this property,
-and vice versa — they are mutually exclusive.
+{-| Drive this property with a spring.
 
     import Motion.Spring as Spring
 
-    myAnimation : AnimBuilder eng -> AnimBuilder eng
-    myAnimation =
-        Skew.for "animGroupName"
-            >> Skew.toXY 12 0
-            >> Skew.spring Spring.wobbly
+    Skew.spring Spring.wobbly
 
 -}
 spring : Spring -> Builder { eng | withSpring : () } -> Builder { eng | withSpring : () }

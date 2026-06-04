@@ -16,6 +16,13 @@ module Anim.Internal.Builder.Rotate exposing
     , fromY
     , fromYZ
     , fromZ
+    , byXYZ
+    , byXY
+    , byXZ
+    , byX
+    , byYZ
+    , byY
+    , byZ
     , set
     , setX
     , setXY
@@ -244,6 +251,53 @@ fromZ z (RotateBuilder config builder) =
     in
     fromXYZ x y z <|
         RotateBuilder config builder
+
+
+byXYZ : Float -> Float -> Float -> RotateBuilder eng -> RotateBuilder eng
+byXYZ deltaX deltaY deltaZ (RotateBuilder config builder) =
+    let
+        startX =
+            PropertyBuilder.getFloat Rotate.getX default config.start
+
+        startY =
+            PropertyBuilder.getFloat Rotate.getY default config.start
+
+        startZ =
+            PropertyBuilder.getFloat Rotate.getZ default config.start
+    in
+    RotateBuilder config builder
+        |> fromXYZ startX startY startZ
+        |> toXYZ (startX + deltaX) (startY + deltaY) (startZ + deltaZ)
+
+
+byXY : Float -> Float -> RotateBuilder eng -> RotateBuilder eng
+byXY deltaX deltaY =
+    byXYZ deltaX deltaY 0
+
+
+byXZ : Float -> Float -> RotateBuilder eng -> RotateBuilder eng
+byXZ deltaX deltaZ =
+    byXYZ deltaX 0 deltaZ
+
+
+byX : Float -> RotateBuilder eng -> RotateBuilder eng
+byX deltaX =
+    byXYZ deltaX 0 0
+
+
+byYZ : Float -> Float -> RotateBuilder eng -> RotateBuilder eng
+byYZ deltaY deltaZ =
+    byXYZ 0 deltaY deltaZ
+
+
+byY : Float -> RotateBuilder eng -> RotateBuilder eng
+byY deltaY =
+    byXYZ 0 deltaY 0
+
+
+byZ : Float -> RotateBuilder eng -> RotateBuilder eng
+byZ deltaZ =
+    byXYZ 0 0 deltaZ
 
 
 

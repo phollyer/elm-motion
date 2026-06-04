@@ -4,10 +4,10 @@ module Anim.Property.CustomColor exposing
     , for, build
     , from
     , to
-    , set
     , delay, duration, speed
     , easing
     , spring
+    , set
     )
 
 {-| Animate any CSS color property.
@@ -59,11 +59,6 @@ for details.
 @docs to
 
 
-## Snap
-
-@docs set
-
-
 ## Timing
 
 📖 See [Animation Timing](https://phollyer.github.io/elm-motion/animation/concepts/timing/)
@@ -86,6 +81,13 @@ for details.
 for details.
 
 @docs spring
+
+
+## Snap
+
+Snap to a specific color, cancelling any in-flight animation on this property.
+
+@docs set
 
 -}
 
@@ -338,11 +340,11 @@ set =
 -- ============================================================
 
 
-{-| Set the animation speed (0.0 to 1.0 range per second).
+{-| Set the delay (milliseconds) before the animation starts.
 -}
-speed : Float -> Builder { eng | withTiming : () } -> Builder { eng | withTiming : () }
-speed =
-    Internal.speed
+delay : Int -> Builder { eng | withTiming : () } -> Builder { eng | withTiming : () }
+delay =
+    Internal.delay
 
 
 {-| Set the animation duration (milliseconds).
@@ -352,11 +354,11 @@ duration =
     Internal.duration
 
 
-{-| Set the delay (milliseconds) before the animation starts.
+{-| Set the animation speed (0.0 to 1.0 range per second).
 -}
-delay : Int -> Builder { eng | withTiming : () } -> Builder { eng | withTiming : () }
-delay =
-    Internal.delay
+speed : Float -> Builder { eng | withTiming : () } -> Builder { eng | withTiming : () }
+speed =
+    Internal.speed
 
 
 
@@ -366,6 +368,11 @@ delay =
 
 
 {-| Set the easing function.
+
+    import Easing exposing (Easing(..))
+
+    CustomColor.easing EaseInOut
+
 -}
 easing : Easing -> Builder eng -> Builder eng
 easing =
@@ -378,24 +385,11 @@ easing =
 -- ============================================================
 
 
-{-| Drive this property with a spring instead of an easing curve.
+{-| Drive this property with a spring.
 
-Spring-driven motion has _emergent_ duration: the motion ends when
-the value has settled at the target. Any `duration` or `speed` set on
-this property is ignored when a spring is used. `delay` is honoured.
-
-Setting `spring` clears any previously-set `easing` on this property,
-and vice versa — they are mutually exclusive.
-
-    import Anim.Extra.Color as Color
-    import Anim.Property.CustomColor as CustomColor
     import Motion.Spring as Spring
 
-    myAnimation : AnimBuilder eng -> AnimBuilder eng
-    myAnimation =
-        CustomColor.for "box" BackgroundColor
-            >> CustomColor.to (Color.rgb 255 0 0)
-            >> CustomColor.spring Spring.wobbly
+    CustomColor.spring Spring.wobbly
 
 -}
 spring : Spring -> Builder { eng | withSpring : () } -> Builder { eng | withSpring : () }

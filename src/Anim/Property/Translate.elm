@@ -10,8 +10,8 @@ module Anim.Property.Translate exposing
     , spring
     , cssUnit, cssUnitX, cssUnitY, cssUnitZ
     , Bounds, AxisBounds, bounds
-    , setXYZ, setXY, setXZ, setX, setYZ, setY, setZ
     , clampX, clampY, clampZ, unclampX, unclampY, unclampZ
+    , setXYZ, setXY, setXZ, setX, setYZ, setY, setZ
     )
 
 {-| Move elements along the X, Y, and Z axes.
@@ -100,10 +100,24 @@ Set the CSS length unit(s) used in translate animations.
 @docs cssUnit, cssUnitX, cssUnitY, cssUnitZ
 
 
-## Resize
+## Responsive Animations
+
+When using responsive units like `%` or `Cqw`, the animation automatically responds
+to changes in screen or container size without extra configuration. However, when
+using fixed units like `Px`, the animation needs to be made aware of size changes
+in order to respond to them. This is done with the functions below.
+
+📖 See [Responsive Animations](https://phollyer.github.io/elm-motion/animation/concepts/responsive-animations/)
+for patterns and examples.
+
+
+### Bounds
+
+Keep translate values within a range you choose. Values outside the range are clamped
+to the nearest boundary. An animation that is within the bounds, either mid-flight or
+paused, will me remapped proportionally inside the bounds.
 
 @docs Bounds, AxisBounds, bounds
-@docs setXYZ, setXY, setXZ, setX, setYZ, setY, setZ
 
 
 ## Clamping
@@ -112,10 +126,16 @@ Keep translate values on each axis within a range you choose.
 
 Values outside the range are clamped to the nearest boundary.
 
-📖 See [Responsive Animations](https://phollyer.github.io/elm-motion/animation/concepts/responsive-animations/)
-for patterns and examples.
+Similar to `bounds`, but without proportional remapping.
 
 @docs clampX, clampY, clampZ, unclampX, unclampY, unclampZ
+
+
+## Snap
+
+Snap to a specific position, cancelling any in-flight animation on this property.
+
+@docs setXYZ, setXY, setXZ, setX, setYZ, setY, setZ
 
 -}
 
@@ -628,6 +648,62 @@ cssUnitZ =
 
 
 -- ============================================================
+-- RESIZE
+-- ============================================================
+
+
+{-| A numeric range with `min` and `max` boundaries.
+-}
+type alias Bounds =
+    { min : Float, max : Float }
+
+
+{-| Per-axis resize ranges. `Nothing` leaves an axis untouched.
+
+    { x = Just { min = 0, max = 100 }
+    , y = Nothing
+    , z = Nothing
+    }
+
+-}
+type alias AxisBounds =
+    { x : Maybe Bounds
+    , y : Maybe Bounds
+    , z : Maybe Bounds
+    }
+
+
+{-| Apply new translate bounds for an anim group during resize.
+
+Pass this inside an engine's `onResize` builder:
+
+    Sub.onResize model.animState <|
+        Translate.bounds "box"
+            { x = Just { min = 0, max = newWidth - boxSize }
+            , y = Nothing
+            , z = Nothing
+            }
+
+You can resize multiple anim groups in one call:
+
+    Sub.onResize model.animState <|
+        Translate.bounds "box" boxBounds
+            >> Translate.bounds "card" cardBounds
+
+The engine proportionally remaps the in-flight animation onto the new
+range and pins its endpoints to it.
+
+Only callable from inside an engine's `onResize` builder - calling it from
+anywhere else results in a type error.
+
+-}
+bounds : AnimGroupName -> AxisBounds -> AnimBuilder { eng | withBounds : () } -> AnimBuilder { eng | withBounds : () }
+bounds name ranges =
+    TB.for name >> TB.bounds ranges >> TB.build
+
+
+
+-- ============================================================
 -- BOUNDS
 -- ============================================================
 
@@ -713,59 +789,3 @@ unclampY =
 unclampZ : Builder eng -> Builder eng
 unclampZ =
     TB.unclampZ
-
-
-
--- ============================================================
--- RESIZE
--- ============================================================
-
-
-{-| A numeric range with `min` and `max` boundaries.
--}
-type alias Bounds =
-    { min : Float, max : Float }
-
-
-{-| Per-axis resize ranges. `Nothing` leaves an axis untouched.
-
-    { x = Just { min = 0, max = 100 }
-    , y = Nothing
-    , z = Nothing
-    }
-
--}
-type alias AxisBounds =
-    { x : Maybe Bounds
-    , y : Maybe Bounds
-    , z : Maybe Bounds
-    }
-
-
-{-| Apply new translate bounds for an anim group during resize.
-
-Pass this inside an engine's `onResize` builder:
-
-    Sub.onResize model.animState <|
-        Translate.bounds "box"
-            { x = Just { min = 0, max = newWidth - boxSize }
-            , y = Nothing
-            , z = Nothing
-            }
-
-You can resize multiple anim groups in one call:
-
-    Sub.onResize model.animState <|
-        Translate.bounds "box" boxBounds
-            >> Translate.bounds "card" cardBounds
-
-Leave an axis as `Nothing` to ignore it. The engine proportionally remaps
-the in-flight animation onto the new range and pins its endpoints to it.
-
-Only callable from inside an engine's `onResize` callback - the `withBounds`
-capability on the builder type is what gates it.
-
--}
-bounds : AnimGroupName -> AxisBounds -> AnimBuilder { eng | withBounds : () } -> AnimBuilder { eng | withBounds : () }
-bounds name ranges =
-    TB.for name >> TB.bounds ranges >> TB.build

@@ -12,6 +12,9 @@ module Anim.Internal.Builder.Size exposing
     , fromH
     , fromHW
     , fromW
+    , byHW
+    , byH
+    , byW
     , set
     , setH
     , setHW
@@ -184,6 +187,30 @@ fromH h (SizeBuilder config builder) =
     in
     fromHW h w (SizeBuilder config builder)
 
+
+
+byHW : Float -> Float -> SizeBuilder eng -> SizeBuilder eng
+byHW deltaH deltaW (SizeBuilder config builder) =
+    let
+        startH =
+            PropertyBuilder.getFloat Size.getH default config.start
+
+        startW =
+            PropertyBuilder.getFloat Size.getW default config.start
+    in
+    SizeBuilder config builder
+        |> fromHW startH startW
+        |> toHW (startH + deltaH) (startW + deltaW)
+
+
+byH : Float -> SizeBuilder eng -> SizeBuilder eng
+byH deltaH =
+    byHW deltaH 0
+
+
+byW : Float -> SizeBuilder eng -> SizeBuilder eng
+byW deltaW =
+    byHW 0 deltaW
 
 fromW : Float -> SizeBuilder eng -> SizeBuilder eng
 fromW w (SizeBuilder config builder) =

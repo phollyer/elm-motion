@@ -1107,6 +1107,16 @@ rotateClampTests =
                        )
                     |> startRecord
                     |> Expect.equal (Just { x = 0, y = 0, z = 0 })
+        , test "byXYZ adds the delta to the configured start rotation" <|
+            \_ ->
+                animBuilder
+                    |> (Rotate.for "test"
+                            >> Rotate.fromXYZ 10 20 30
+                            >> Rotate.byXYZ 5 -5 15
+                            >> Rotate.build
+                       )
+                    |> endRecord
+                    |> Expect.equal (Just { x = 15, y = 15, z = 45 })
         ]
 
 
@@ -1209,6 +1219,16 @@ scaleClampTests =
                        )
                     |> endRecord
                     |> Expect.equal (Just { x = 2, y = 1, z = 1 })
+        , test "byXYZ adds the delta to the configured start scale" <|
+            \_ ->
+                animBuilder
+                    |> (Scale.for "test"
+                            >> Scale.fromXYZ 1 2 3
+                            >> Scale.byXYZ 0.25 -0.5 1
+                            >> Scale.build
+                       )
+                    |> endRecord
+                    |> Expect.equal (Just { x = 1.25, y = 1.5, z = 4 })
         ]
 
 
@@ -1287,6 +1307,16 @@ skewClampTests =
                        )
                     |> endTuple
                     |> Expect.equal (Just ( 30, 0 ))
+        , test "byXY adds the delta to the configured start skew" <|
+            \_ ->
+                animBuilder
+                    |> (Skew.for "test"
+                            >> Skew.fromXY 10 20
+                            >> Skew.byXY 5 -10
+                            >> Skew.build
+                       )
+                    |> endTuple
+                    |> Expect.equal (Just ( 15, 10 ))
         ]
 
 
@@ -1338,6 +1368,16 @@ sizeClampTests =
                        )
                     |> endRecord
                     |> Expect.equal (Just { width = 200, height = 0 })
+        , test "byHW adds the delta to the configured start size" <|
+            \_ ->
+                animBuilder
+                    |> (Size.for "test"
+                            >> Size.fromHW 100 200
+                            >> Size.byHW 10 20
+                            >> Size.build
+                       )
+                    |> endRecord
+                    |> Expect.equal (Just { width = 220, height = 110 })
         , test "unclampWidth removes only width clamp" <|
             \_ ->
                 animBuilder
@@ -1410,6 +1450,16 @@ perspectiveOriginClampTests =
                        )
                     |> endRecord
                     |> Expect.equal (Just { x = 500, y = 60 })
+        , test "by adds the delta to the configured start perspective origin" <|
+            \_ ->
+                animBuilder
+                    |> (PerspectiveOrigin.for "test"
+                            >> PerspectiveOrigin.fromXY 10 20
+                            >> PerspectiveOrigin.by 5
+                            >> PerspectiveOrigin.build
+                       )
+                    |> endRecord
+                    |> Expect.equal (Just { x = 15, y = 25 })
         , test "px unit is preserved across clamping" <|
             \_ ->
                 animBuilder
@@ -1495,6 +1545,16 @@ opacityClampTests =
                        )
                     |> endValue
                     |> Expect.equal (Just 0.5)
+        , test "by adds the delta to the configured start opacity" <|
+            \_ ->
+                animBuilder
+                    |> (Opacity.for "test"
+                            >> Opacity.from 0.25
+                            >> Opacity.by 0.5
+                            >> Opacity.build
+                       )
+                    |> endValue
+                    |> Expect.equal (Just 0.75)
         , test "unclamp removes the clamp" <|
             \_ ->
                 animBuilder

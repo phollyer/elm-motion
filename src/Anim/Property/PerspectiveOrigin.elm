@@ -1,16 +1,17 @@
 module Anim.Property.PerspectiveOrigin exposing
     ( Builder, AnimGroupName
     , initXY, initX, initY
-    , cssUnit, cssUnitX, cssUnitY
     , for, build
     , from, fromXY, fromX, fromY
     , to, toXY, toX, toY
-    , set, setXY, setX, setY
+    , by, byXY, byX, byY
     , delay, duration, speed
     , easing
     , spring
-    , clampX, clampY, unclampX, unclampY
+    , cssUnit, cssUnitX, cssUnitY
     , Bounds, AxisBounds, bounds
+    , clampX, clampY, unclampX, unclampY
+    , set, setXY, setX, setY
     )
 
 {-| Animate the CSS `perspective-origin` property, which controls the vanishing point
@@ -41,27 +42,6 @@ the pipeline.
 @docs initXY, initX, initY
 
 
-## Initial Unit
-
-Set the length [Unit](Anim-Unit#Unit) used by `init*` calls earlier in the
-pipeline. Order matters - `cssUnit*` only affects `init*` calls that appear
-before it in the pipeline. Defaults to `Percent`.
-
-    import Anim.Unit exposing (Unit(..))
-
-    init _ =
-        ( { animState =
-                Engine.init
-                    [ PerspectiveOrigin.initXY "vp" 200 150
-                        >> PerspectiveOrigin.cssUnit Px
-                    ]
-          }
-        , Cmd.none
-        )
-
-@docs cssUnit, cssUnitX, cssUnitY
-
-
 # Build
 
 @docs for, build
@@ -80,7 +60,7 @@ for details.
 @docs from, fromXY, fromX, fromY
 
 
-## End Value
+## End Value (Absolute)
 
 📖 See [End Values](https://phollyer.github.io/elm-motion/animation/properties/overview/#end-values)
 for details.
@@ -88,9 +68,16 @@ for details.
 @docs to, toXY, toX, toY
 
 
-## Snap
+## End Value (Relative)
 
-@docs set, setXY, setX, setY
+Move by a delta instead of to a fixed perspective origin. The end value is
+`current + delta` for each axis, where `current` is the configured start value
+or the default when no start value has been set on that axis.
+
+@docs by, byXY, byX, byY
+
+📖 See [End Values](https://phollyer.github.io/elm-motion/animation/properties/overview/#end-values)
+for details.
 
 
 ## Timing
@@ -117,22 +104,57 @@ for details.
 @docs spring
 
 
-## Clamping
+## CSS Units
 
-Keep perspective-origin values on each axis within a range you choose.
+Set the length [Unit](Anim-Unit#Unit) used by `init*` calls earlier in the
+pipeline. Order matters - `cssUnit*` only affects `init*` calls that appear
+before it in the pipeline. Defaults to `Percent`.
+
+    import Anim.Unit exposing (Unit(..))
+
+    init _ =
+        ( { animState =
+                Engine.init
+                    [ PerspectiveOrigin.initXY "vp" 200 150
+                        >> PerspectiveOrigin.cssUnit Px
+                    ]
+          }
+        , Cmd.none
+        )
+
+@docs cssUnit, cssUnitX, cssUnitY
+
+
+## Responsive Animations
 
 📖 See [Responsive Animations](https://phollyer.github.io/elm-motion/animation/concepts/responsive-animations/)
 for patterns and examples.
 
-@docs clampX, clampY, unclampX, unclampY
 
-
-## Resize
+### Bounds
 
 Set how perspective-origin responds to viewport/container resize and provide
 new bounds during `onResize`.
 
 @docs Bounds, AxisBounds, bounds
+
+
+## Clamping
+
+Keep perspective-origin values on each axis within a range you choose.
+
+Values outside the range are clamped to the nearest boundary.
+
+Similar to `bounds`, but without proportional remapping.
+
+@docs clampX, clampY, unclampX, unclampY
+
+
+## Snap
+
+Snap to a specific perspective origin, cancelling any in-flight animation on this property.
+
+@docs set, setXY, setX, setY
 
 -}
 
@@ -371,7 +393,7 @@ toY =
 -- ============================================================
 
 
-{-| Snap the uniform target X and Y values silently, cancelling any
+{-| Snap to a uniform X and Y value silently, cancelling any
 in-flight animation on this property.
 -}
 set : Float -> Builder eng -> Builder eng
@@ -379,25 +401,59 @@ set xy =
     PB.setXY xy xy
 
 
-{-| Snap the target X and Y values.
+{-| Snap target X and Y values.
 -}
 setXY : Float -> Float -> Builder eng -> Builder eng
 setXY =
     PB.setXY
 
 
-{-| Snap the target X value, preserving the current Y value.
+{-| Snap target X value, preserving the current Y value.
 -}
 setX : Float -> Builder eng -> Builder eng
 setX =
     PB.setX
 
 
-{-| Snap the target Y value, preserving the current X value.
+{-| Snap target Y value, preserving the current X value.
 -}
 setY : Float -> Builder eng -> Builder eng
 setY =
     PB.setY
+
+
+
+-- ============================================================
+-- BY
+-- ============================================================
+
+
+{-| Move by a delta on both axes.
+-}
+by : Float -> Builder eng -> Builder eng
+by =
+    PB.by
+
+
+{-| Move by a delta on the X and Y axes.
+-}
+byXY : Float -> Float -> Builder eng -> Builder eng
+byXY =
+    PB.byXY
+
+
+{-| Move by a delta on the X axis. Y is unaffected.
+-}
+byX : Float -> Builder eng -> Builder eng
+byX =
+    PB.byX
+
+
+{-| Move by a delta on the Y axis. X is unaffected.
+-}
+byY : Float -> Builder eng -> Builder eng
+byY =
+    PB.byY
 
 
 
@@ -407,14 +463,6 @@ setY =
 
 
 {-| Set the delay (milliseconds) before the animation starts.
-
-    myAnimation : AnimBuilder eng -> AnimBuilder eng
-    myAnimation =
-        PerspectiveOrigin.for "animGroupName"
-            >> PerspectiveOrigin.to 200
-            >> PerspectiveOrigin.delay 500
-            >> ... -- continue with animation
-
 -}
 delay : Int -> Builder { eng | withTiming : () } -> Builder { eng | withTiming : () }
 delay =
@@ -422,14 +470,6 @@ delay =
 
 
 {-| Set the animation duration (milliseconds).
-
-    myAnimation : AnimBuilder eng -> AnimBuilder eng
-    myAnimation =
-        PerspectiveOrigin.for "animGroupName"
-            >> PerspectiveOrigin.to 200
-            >> PerspectiveOrigin.duration 2000
-            >> ... -- continue with animation
-
 -}
 duration : Int -> Builder { eng | withTiming : () } -> Builder { eng | withTiming : () }
 duration =
@@ -438,14 +478,8 @@ duration =
 
 {-| The speed represents how many units per second the perspective origin changes.
 
-For example, an animation from `0` to `200px` with a speed of `100.0` will take 2 seconds to complete.
-
-    myAnimation : AnimBuilder eng -> AnimBuilder eng
-    myAnimation =
-        PerspectiveOrigin.for "animGroupName"
-            >> PerspectiveOrigin.to 200
-            >> PerspectiveOrigin.speed 100
-            >> ... -- continue with animation
+For example, an animation from `0` to `200px` with a speed of `100.0`
+will take 2 seconds to complete.
 
 -}
 speed : Float -> Builder { eng | withTiming : () } -> Builder { eng | withTiming : () }
@@ -463,12 +497,7 @@ speed =
 
     import Easing exposing (Easing(..))
 
-    myAnimation : AnimBuilder eng -> AnimBuilder eng
-    myAnimation =
-        PerspectiveOrigin.for "animGroupName"
-            >> PerspectiveOrigin.to 200
-            >> PerspectiveOrigin.easing EaseInOut
-            >> ... -- continue with animation
+    PerspectiveOrigin.easing EaseInOut
 
 -}
 easing : Easing -> Builder eng -> Builder eng
@@ -482,27 +511,59 @@ easing =
 -- ============================================================
 
 
-{-| Drive this property with a spring instead of an easing curve.
-
-Spring-driven motion has _emergent_ duration: the motion ends when
-the value has settled at the target. Any `duration` or `speed` set on
-this property is ignored when a spring is used. `delay` is honoured.
-
-Setting `spring` clears any previously-set `easing` on this property,
-and vice versa — they are mutually exclusive.
+{-| Drive this property with a spring.
 
     import Motion.Spring as Spring
 
-    myAnimation : AnimBuilder eng -> AnimBuilder eng
-    myAnimation =
-        PerspectiveOrigin.for "animGroupName"
-            >> PerspectiveOrigin.to 200
-            >> PerspectiveOrigin.spring Spring.wobbly
+    PerspectiveOrigin.spring Spring.wobbly
 
 -}
 spring : Spring -> Builder { eng | withSpring : () } -> Builder { eng | withSpring : () }
 spring =
     PB.spring
+
+
+
+-- ============================================================
+-- RESIZE
+-- ============================================================
+
+
+{-| A numeric range with `min` and `max` boundaries.
+-}
+type alias Bounds =
+    { min : Float, max : Float }
+
+
+{-| Per-axis resize ranges. `Nothing` leaves an axis untouched.
+`z` is ignored for this property.
+
+    { x = Just { min = 0, max = 100 }
+    , y = Nothing
+    , z = Nothing
+    }
+
+-}
+type alias AxisBounds =
+    { x : Maybe Bounds
+    , y : Maybe Bounds
+    , z : Maybe Bounds
+    }
+
+
+{-| Perspective-origin's contribution to a resize bounds directive for the
+named anim group.
+
+Compose inside an engine's `onResize` callback.
+
+Leave an axis as `Nothing` to ignore it. `z` is ignored for this property.
+Only callable from inside an `onResize` callback - the `withBounds`
+capability on the builder type is what gates it.
+
+-}
+bounds : AnimGroupName -> AxisBounds -> AnimBuilder { eng | withBounds : () } -> AnimBuilder { eng | withBounds : () }
+bounds name ranges =
+    PB.for name >> PB.bounds ranges >> PB.build
 
 
 
@@ -548,46 +609,3 @@ unclampX =
 unclampY : Builder eng -> Builder eng
 unclampY =
     PB.unclampY
-
-
-
--- ============================================================
--- RESIZE
--- ============================================================
-
-
-{-| A numeric range with `min` and `max` boundaries.
--}
-type alias Bounds =
-    { min : Float, max : Float }
-
-
-{-| Per-axis resize ranges. `Nothing` leaves an axis untouched.
-`z` is ignored for this property.
-
-    { x = Just { min = 0, max = 100 }
-    , y = Nothing
-    , z = Nothing
-    }
-
--}
-type alias AxisBounds =
-    { x : Maybe Bounds
-    , y : Maybe Bounds
-    , z : Maybe Bounds
-    }
-
-
-{-| Perspective-origin's contribution to a resize bounds directive for the
-named anim group.
-
-Compose inside an engine's `onResize` callback.
-
-Leave an axis as `Nothing` to ignore it. `z` is ignored for this property.
-Only callable from inside an `onResize` callback - the `withBounds`
-capability on the builder type is what gates it.
-
--}
-bounds : AnimGroupName -> AxisBounds -> AnimBuilder { eng | withBounds : () } -> AnimBuilder { eng | withBounds : () }
-bounds name ranges =
-    PB.for name >> PB.bounds ranges >> PB.build

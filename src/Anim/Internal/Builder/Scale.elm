@@ -16,6 +16,13 @@ module Anim.Internal.Builder.Scale exposing
     , fromY
     , fromYZ
     , fromZ
+    , byXYZ
+    , byXY
+    , byXZ
+    , byX
+    , byYZ
+    , byY
+    , byZ
     , set
     , setX
     , setXY
@@ -244,6 +251,53 @@ fromZ scaleZ (ScaleBuilder config builder) =
     in
     fromXYZ x y scaleZ <|
         ScaleBuilder config builder
+
+
+byXYZ : Float -> Float -> Float -> ScaleBuilder eng -> ScaleBuilder eng
+byXYZ deltaX deltaY deltaZ (ScaleBuilder config builder) =
+    let
+        startX =
+            PropertyBuilder.getFloat Scale.getX default config.start
+
+        startY =
+            PropertyBuilder.getFloat Scale.getY default config.start
+
+        startZ =
+            PropertyBuilder.getFloat Scale.getZ default config.start
+    in
+    ScaleBuilder config builder
+        |> fromXYZ startX startY startZ
+        |> toXYZ (startX + deltaX) (startY + deltaY) (startZ + deltaZ)
+
+
+byXY : Float -> Float -> ScaleBuilder eng -> ScaleBuilder eng
+byXY deltaX deltaY =
+    byXYZ deltaX deltaY 0
+
+
+byXZ : Float -> Float -> ScaleBuilder eng -> ScaleBuilder eng
+byXZ deltaX deltaZ =
+    byXYZ deltaX 0 deltaZ
+
+
+byX : Float -> ScaleBuilder eng -> ScaleBuilder eng
+byX deltaX =
+    byXYZ deltaX 0 0
+
+
+byYZ : Float -> Float -> ScaleBuilder eng -> ScaleBuilder eng
+byYZ deltaY deltaZ =
+    byXYZ 0 deltaY deltaZ
+
+
+byY : Float -> ScaleBuilder eng -> ScaleBuilder eng
+byY deltaY =
+    byXYZ 0 deltaY 0
+
+
+byZ : Float -> ScaleBuilder eng -> ScaleBuilder eng
+byZ deltaZ =
+    byXYZ 0 0 deltaZ
 
 
 

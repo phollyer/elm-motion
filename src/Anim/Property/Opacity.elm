@@ -4,11 +4,12 @@ module Anim.Property.Opacity exposing
     , for, build
     , from
     , to
-    , set
+    , by
     , delay, duration, speed
     , easing
     , spring
     , clamp, unclamp
+    , set
     )
 
 {-| Animate the opacity of elements.
@@ -46,14 +47,24 @@ for details.
 @docs from
 
 
-## End Value
+## End Value (Absolute)
+
+📖 See [End Values](https://phollyer.github.io/elm-motion/animation/properties/overview/#end-values)
+for details.
 
 @docs to
 
 
-## Snap
+## End Value (Relative)
 
-@docs set
+Move by a delta instead of to a fixed opacity. The end value is
+`current + delta`, where `current` is the configured start opacity or the
+default when no start value has been set.
+
+@docs by
+
+📖 See [End Values](https://phollyer.github.io/elm-motion/animation/properties/overview/#end-values)
+for details.
 
 
 ## Timing
@@ -88,6 +99,13 @@ Keep opacity within a range you choose.
 for patterns and examples.
 
 @docs clamp, unclamp
+
+
+## Snap
+
+Snap to a specific opacity, cancelling any in-flight animation on this property.
+
+@docs set
 
 -}
 
@@ -224,23 +242,11 @@ to =
 
 
 -- ============================================================
--- SET
+-- SET (snap)
 -- ============================================================
 
 
-{-| Snap the opacity to a value silently, cancelling any in-flight
-animation on this property.
-
-Use this when a layout change or external event invalidates the
-current animation and you want the property to jump to a new value
-without interpolation.
-
-    myAnimation : AnimBuilder eng -> AnimBuilder eng
-    myAnimation =
-        Opacity.for "animGroupName"
-            >> Opacity.set 0
-            >> Opacity.build
-
+{-| Snap the opacity silently, cancelling any in-flight animation on this property.
 -}
 set : Float -> Builder eng -> Builder eng
 set =
@@ -249,57 +255,54 @@ set =
 
 
 -- ============================================================
+-- BY
+-- ============================================================
+
+
+{-| Move by a delta instead of to a fixed opacity.
+
+    myAnimation : AnimBuilder eng -> AnimBuilder eng
+    myAnimation =
+        Opacity.for "animGroupName"
+            >> Opacity.by 0.25
+            >> ... -- continue with animation
+
+-}
+by : Float -> Builder eng -> Builder eng
+by =
+    OB.by
+
+
+
+-- ============================================================
 -- TIMING
 -- ============================================================
 
 
-{-| Set the animation speed (opacity units per second).
-
-The speed represents how much the opacity value changes per second. Since opacity
-ranges from 0.0 (transparent) to 1.0 (opaque), a speed of `2.0` means the opacity
-will change by 2.0 units per second (e.g., from 0.0 to 1.0 takes 0.5 seconds).
-
-    myAnimation : AnimBuilder eng -> AnimBuilder eng
-    myAnimation =
-        Opacity.for "animGroupName"
-            >> Opacity.to 0.0
-            >> Opacity.speed 1.0
-            >> ... -- continue with animation
-
+{-| Set the delay (milliseconds) before the animation starts.
 -}
-speed : Float -> Builder { eng | withTiming : () } -> Builder { eng | withTiming : () }
-speed =
-    OB.speed
+delay : Int -> Builder { eng | withTiming : () } -> Builder { eng | withTiming : () }
+delay =
+    OB.delay
 
 
 {-| Set the animation duration (milliseconds).
-
-    myAnimation : AnimBuilder eng -> AnimBuilder eng
-    myAnimation =
-        Opacity.for "animGroupName"
-            >> Opacity.to 0.5
-            >> Opacity.duration 2000
-            >> ... -- continue with animation
-
 -}
 duration : Int -> Builder { eng | withTiming : () } -> Builder { eng | withTiming : () }
 duration =
     OB.duration
 
 
-{-| Set the delay (milliseconds) before the animation starts.
+{-| The speed represents how much the opacity value changes per second.
 
-    myAnimation : AnimBuilder eng -> AnimBuilder eng
-    myAnimation =
-        Opacity.for "animGroupName"
-            >> Opacity.to 0.5
-            >> Opacity.delay 500
-            >> ... -- continue with animation
+Since opacity ranges from 0.0 (transparent) to 1.0 (opaque), a speed of `2.0`
+means the opacity will change by 2.0 units per second (e.g., from 0.0 to 1.0
+takes 0.5 seconds).
 
 -}
-delay : Int -> Builder { eng | withTiming : () } -> Builder { eng | withTiming : () }
-delay =
-    OB.delay
+speed : Float -> Builder { eng | withTiming : () } -> Builder { eng | withTiming : () }
+speed =
+    OB.speed
 
 
 
@@ -312,12 +315,7 @@ delay =
 
     import Easing exposing (Easing(..))
 
-    myAnimation : AnimBuilder eng -> AnimBuilder eng
-    myAnimation =
-        Opacity.for "animGroupName"
-            >> Opacity.to 0.5
-            >> Opacity.easing EaseInOut
-            >> ... -- continue with animation
+    Opacity.easing EaseInOut
 
 -}
 easing : Easing -> Builder eng -> Builder eng
@@ -331,22 +329,11 @@ easing =
 -- ============================================================
 
 
-{-| Drive this property with a spring instead of an easing curve.
-
-Spring-driven motion has _emergent_ duration: the motion ends when
-the value has settled at the target. Any `duration` or `speed` set on
-this property is ignored when a spring is used. `delay` is honoured.
-
-Setting `spring` clears any previously-set `easing` on this property,
-and vice versa — they are mutually exclusive.
+{-| Drive this property with a spring.
 
     import Motion.Spring as Spring
 
-    myAnimation : AnimBuilder eng -> AnimBuilder eng
-    myAnimation =
-        Opacity.for "animGroupName"
-            >> Opacity.to 1.0
-            >> Opacity.spring Spring.wobbly
+    Opacity.spring Spring.wobbly
 
 -}
 spring : Spring -> Builder { eng | withSpring : () } -> Builder { eng | withSpring : () }

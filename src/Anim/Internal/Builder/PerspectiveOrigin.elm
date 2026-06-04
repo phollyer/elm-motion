@@ -12,6 +12,10 @@ module Anim.Internal.Builder.PerspectiveOrigin exposing
     , fromX
     , fromXY
     , fromY
+    , by
+    , byX
+    , byXY
+    , byY
     , set
     , setX
     , setXY
@@ -187,6 +191,35 @@ fromY y (PerspectiveOriginBuilder config builder) =
     in
     fromXY x y <|
         PerspectiveOriginBuilder config builder
+
+
+by : Float -> PerspectiveOriginBuilder eng -> PerspectiveOriginBuilder eng
+by delta =
+    byXY delta delta
+
+
+byXY : Float -> Float -> PerspectiveOriginBuilder eng -> PerspectiveOriginBuilder eng
+byXY deltaX deltaY (PerspectiveOriginBuilder config builder) =
+    let
+        startX =
+            PropertyBuilder.getFloat PerspectiveOrigin.getX default config.start
+
+        startY =
+            PropertyBuilder.getFloat PerspectiveOrigin.getY default config.start
+    in
+    PerspectiveOriginBuilder config builder
+        |> fromXY startX startY
+        |> toXY (startX + deltaX) (startY + deltaY)
+
+
+byX : Float -> PerspectiveOriginBuilder eng -> PerspectiveOriginBuilder eng
+byX deltaX =
+    byXY deltaX 0
+
+
+byY : Float -> PerspectiveOriginBuilder eng -> PerspectiveOriginBuilder eng
+byY deltaY =
+    byXY 0 deltaY
 
 
 
