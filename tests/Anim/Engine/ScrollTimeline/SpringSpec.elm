@@ -63,21 +63,21 @@ suite =
 -- ============================================================
 
 
-builderWithSpring : Spring.Spring -> ScrollTimelineInternal.TimelineBuilder
+builderWithSpring : Spring.Spring -> ScrollTimelineInternal.EngineBuilder
 builderWithSpring s =
     Builder.init []
         |> ScrollTimelineInternal.spring s
         |> applyOpacity
 
 
-applyOpacity : ScrollTimelineInternal.TimelineBuilder -> ScrollTimelineInternal.TimelineBuilder
+applyOpacity : ScrollTimelineInternal.EngineBuilder -> ScrollTimelineInternal.EngineBuilder
 applyOpacity =
     Opacity.for "el"
         >> Opacity.to 0.5
         >> Opacity.build
 
 
-extractOpacitySpring : ScrollTimelineInternal.TimelineBuilder -> Maybe (Maybe Spring.Spring)
+extractOpacitySpring : ScrollTimelineInternal.EngineBuilder -> Maybe (Maybe Spring.Spring)
 extractOpacitySpring builder =
     Builder.process builder
         |> .groups

@@ -153,7 +153,7 @@ to endValue (Builder cssName unit config builder) =
 -- ============================================================
 
 
-by : Float -> Builder eng -> Builder eng
+by : Float -> Builder { eng | withLiveDelta : () } -> Builder { eng | withLiveDelta : () }
 by delta (Builder cssName unit config builder) =
     let
         startValue =

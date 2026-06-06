@@ -61,13 +61,14 @@ See the [Properties Overview](overview.md) page for the shared usage patterns.
 
 | Function | Signature | Description |
 | -------- | --------- | ----------- |
-| `from` | `Float -> Builder -> Builder` | Starting value |
+| `from` | `Float -> Builder -> Builder` | Start value |
 
 ### End Value
 
 | Function | Signature | Description |
 | -------- | --------- | ----------- |
-| `to` | `Float -> Builder -> Builder` | Ending value |
+| `to` | `Float -> Builder -> Builder` | Absolute End value |
+| `by` | `Float -> Builder -> Builder` | Relative End value |
 
 ### Timing
 

@@ -62,8 +62,10 @@ for details.
 ### Relative
 
 Move by a delta instead of to a fixed opacity. The end value is
-`current + delta`, where `current` is the configured start opacity or the
-default when no start value has been set.
+`current + delta` where `current` is the live animated opacity.
+
+Only available on the Sub and WAAPI engines. Using these with any
+other engine results in a type error.
 
 @docs by
 
@@ -267,19 +269,6 @@ to =
 
 
 -- ============================================================
--- SET (snap)
--- ============================================================
-
-
-{-| Snap the opacity silently, cancelling any in-flight animation on this property.
--}
-set : Float -> Builder eng -> Builder eng
-set =
-    OB.set << O.fromFloat
-
-
-
--- ============================================================
 -- BY
 -- ============================================================
 
@@ -372,14 +361,7 @@ spring =
 -- ============================================================
 
 
-{-| Keep opacity within `[min, max]` for this animation group.
-
-The range stays in effect for future animations
-until you call [unclamp](#unclamp). If `min > max`, the values are swapped.
-
-📖 See [Responsive Animations](https://phollyer.github.io/elm-motion/animation/concepts/responsive-animations/)
-for patterns and examples.
-
+{-| Keep opacity within `min` and `max` values. If `min > max` the values are flipped.
 -}
 clamp : Float -> Float -> Builder eng -> Builder eng
 clamp =
@@ -391,3 +373,16 @@ clamp =
 unclamp : Builder eng -> Builder eng
 unclamp =
     OB.unclamp
+
+
+
+-- ============================================================
+-- SNAP
+-- ============================================================
+
+
+{-| Snap the opacity to a specific value.
+-}
+set : Float -> Builder eng -> Builder eng
+set =
+    OB.set << O.fromFloat

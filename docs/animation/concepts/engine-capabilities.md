@@ -71,8 +71,8 @@ Each Engine module exposes its own alias:
 - `Keyframe.EngineBuilder`
 - `Sub.EngineBuilder`
 - `WAAPI.EngineBuilder`
-- `ScrollTimeline.TimelineBuilder`
-- `ViewTimeline.TimelineBuilder`
+- `ScrollTimeline.EngineBuilder`
+- `ViewTimeline.EngineBuilder`
 
 ## Next Steps
 

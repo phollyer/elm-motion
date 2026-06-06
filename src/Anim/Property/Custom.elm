@@ -37,7 +37,7 @@ property modules (Translate, Rotate, Scale etc.).
 
 ## Start Value
 
-📖 See [Optional `from`](https://phollyer.github.io/elm-motion/animation/properties/overview/#optional-from)
+📖 See [Start Values](https://phollyer.github.io/elm-motion/animation/properties/overview/#start-values)
 for details.
 
 @docs from
@@ -48,19 +48,21 @@ for details.
 📖 See [End Values](https://phollyer.github.io/elm-motion/animation/properties/overview/#end-values)
 for details.
 
+
+### Absolute
+
 @docs to
 
 
-## End Value (Relative)
+### Relative
 
 Move by a delta instead of to a fixed value. The end value is
-`current + delta`, where `current` is the configured start value or `0`
-when no start value has been set.
+`current + delta`, where `current` is the live animated value.
+
+Only available on the Sub and WAAPI engines. Using these with
+any other engine results in a type error.
 
 @docs by
-
-📖 See [End Values](https://phollyer.github.io/elm-motion/animation/properties/overview/#end-values)
-for details.
 
 
 ## Timing
@@ -110,8 +112,10 @@ until you [Unclamp](#unclamp) it:
                 , cmd
                 )
 
-Useful if `to` values are coming from external sources, user input, slider values, external data
-and you need to keep them within a specific range, etc.
+Useful if `to` values are coming from external sources; user input, slider values, or external data
+etc, and you need to keep them within a specific range.
+
+Pairs well with [by](#by) for relative animations where the delta could push the value outside the desired range.
 
 
 ### Clamp
@@ -508,26 +512,17 @@ to =
 
 {-| Move by a delta instead of to a fixed value.
 
+    import Anim.Property.Custom as Property
+    import Anim.Unit exposing (Unit(..))
+
     myAnimation : AnimBuilder eng -> AnimBuilder eng
     myAnimation =
         Property.for "box" (Property.BorderRadius Px)
             >> Property.by 4
             >> Property.build
 
-The end value is `current + delta`, where `current` is the configured
-start value or `0` when no start value has been set.
-
-Combines with [`clamp`](#clamp) to keep accumulated deltas within
-bounds:
-
-    Property.for "box" (Property.BorderRadius Px)
-        >> Property.clamp 0 24
-        >> Property.by 8
-        -- repeated calls saturate at 24, never overshoot
-        >> Property.build
-
 -}
-by : Float -> Builder eng -> Builder eng
+by : Float -> Builder { eng | withLiveDelta : () } -> Builder { eng | withLiveDelta : () }
 by =
     Internal.by
 

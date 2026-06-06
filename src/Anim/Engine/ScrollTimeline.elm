@@ -1,5 +1,5 @@
 module Anim.Engine.ScrollTimeline exposing
-    ( TimelineBuilder, AnimGroupName
+    ( EngineBuilder, AnimGroupName
     , Container(..)
     , animate
     , AnimEvent(..)
@@ -29,7 +29,7 @@ and the
 
 # Types
 
-@docs TimelineBuilder, AnimGroupName
+@docs EngineBuilder, AnimGroupName
 
 
 # Trigger
@@ -131,8 +131,8 @@ import Motion.Spring exposing (Spring)
 
 {-| Builder type for scroll-driven animations.
 -}
-type alias TimelineBuilder =
-    Internal.TimelineBuilder
+type alias EngineBuilder =
+    Internal.EngineBuilder
 
 
 {-| Type alias for the animation group name.
@@ -169,7 +169,7 @@ type Container
             >> Opacity.build
 
 -}
-animate : (Encode.Value -> Cmd msg) -> Container -> (TimelineBuilder -> TimelineBuilder) -> Cmd msg
+animate : (Encode.Value -> Cmd msg) -> Container -> (EngineBuilder -> EngineBuilder) -> Cmd msg
 animate =
     Internal.animate containerToId
 
@@ -327,7 +327,7 @@ container scrolls horizontally.
             >> Opacity.build
 
 -}
-horizontal : TimelineBuilder -> TimelineBuilder
+horizontal : EngineBuilder -> EngineBuilder
 horizontal =
     Internal.horizontal
 
@@ -347,7 +347,7 @@ horizontal =
             >> nudgeBellIcon
 
 -}
-iterations : Int -> TimelineBuilder -> TimelineBuilder
+iterations : Int -> EngineBuilder -> EngineBuilder
 iterations =
     Builder.iterations
 
@@ -367,7 +367,7 @@ so calling it when `iterations` is unset or `1` automatically bumps
 before or after `alternate` is preserved.
 
 -}
-alternate : TimelineBuilder -> TimelineBuilder
+alternate : EngineBuilder -> EngineBuilder
 alternate =
     Builder.alternate
 
@@ -388,7 +388,7 @@ alternate =
             >> revealPrimaryCta
 
 -}
-easing : Easing -> TimelineBuilder -> TimelineBuilder
+easing : Easing -> EngineBuilder -> EngineBuilder
 easing =
     Builder.easing
 
@@ -408,7 +408,7 @@ easing =
             >> settleCardShadow
 
 -}
-spring : Spring -> TimelineBuilder -> TimelineBuilder
+spring : Spring -> EngineBuilder -> EngineBuilder
 spring =
     Builder.spring
 
@@ -428,7 +428,7 @@ spring =
             >> growPanelHeight
 
 -}
-cssUnit : Unit -> TimelineBuilder -> TimelineBuilder
+cssUnit : Unit -> EngineBuilder -> EngineBuilder
 cssUnit =
     Builder.cssUnit
 
@@ -442,7 +442,7 @@ cssUnit =
             >> alignDrawerLabelX
 
 -}
-cssUnitX : Unit -> TimelineBuilder -> TimelineBuilder
+cssUnitX : Unit -> EngineBuilder -> EngineBuilder
 cssUnitX =
     Builder.cssUnitX
 
@@ -456,7 +456,7 @@ cssUnitX =
             >> alignSheetHeaderY
 
 -}
-cssUnitY : Unit -> TimelineBuilder -> TimelineBuilder
+cssUnitY : Unit -> EngineBuilder -> EngineBuilder
 cssUnitY =
     Builder.cssUnitY
 
@@ -470,35 +470,35 @@ cssUnitY =
             >> bringFloatingCardForward
 
 -}
-cssUnitZ : Unit -> TimelineBuilder -> TimelineBuilder
+cssUnitZ : Unit -> EngineBuilder -> EngineBuilder
 cssUnitZ =
     Builder.cssUnitZ
 
 
 {-| Set the default length unit used for width values in ScrollTimeline animations.
 
-    responsiveCardWidth : TimelineBuilder -> TimelineBuilder
+    responsiveCardWidth : EngineBuilder -> EngineBuilder
     responsiveCardWidth =
         cssUnitWidth Unit.Vw
             >> growCardWidth
             >> settleCardSpacing
 
 -}
-cssUnitWidth : Unit -> TimelineBuilder -> TimelineBuilder
+cssUnitWidth : Unit -> EngineBuilder -> EngineBuilder
 cssUnitWidth =
     Builder.cssUnitWidth
 
 
 {-| Set the default length unit used for height values in ScrollTimeline animations.
 
-    responsivePanelHeight : TimelineBuilder -> TimelineBuilder
+    responsivePanelHeight : EngineBuilder -> EngineBuilder
     responsivePanelHeight =
         cssUnitHeight Unit.Vh
             >> expandPanelHeight
             >> alignPanelHeaderY
 
 -}
-cssUnitHeight : Unit -> TimelineBuilder -> TimelineBuilder
+cssUnitHeight : Unit -> EngineBuilder -> EngineBuilder
 cssUnitHeight =
     Builder.cssUnitHeight
 
@@ -524,7 +524,7 @@ Use this when you need a different order for specific visual effects.
             >> Translate.build
 
 -}
-transformOrder : List TransformProperty -> TimelineBuilder -> TimelineBuilder
+transformOrder : List TransformProperty -> EngineBuilder -> EngineBuilder
 transformOrder =
     Internal.transformOrder
 
@@ -549,7 +549,7 @@ to be set to a specific value while the animation is active.
             >> Opacity.build
 
 -}
-discreteEntry : String -> String -> TimelineBuilder -> TimelineBuilder
+discreteEntry : String -> String -> EngineBuilder -> EngineBuilder
 discreteEntry =
     Internal.discreteEntry
 
@@ -569,7 +569,7 @@ discreteEntry =
     > > Opacity.build
 
 -}
-discreteExit : String -> String -> String -> TimelineBuilder -> TimelineBuilder
+discreteExit : String -> String -> String -> EngineBuilder -> EngineBuilder
 discreteExit =
     Internal.discreteExit
 
@@ -598,6 +598,6 @@ While enabled, the engine emits one `Progress animGroup t` event per animation
 frame (typically ~60/sec) for every group that is currently in range.
 
 -}
-withProgressEvents : Bool -> TimelineBuilder -> TimelineBuilder
+withProgressEvents : Bool -> EngineBuilder -> EngineBuilder
 withProgressEvents =
     Internal.withProgressEvents

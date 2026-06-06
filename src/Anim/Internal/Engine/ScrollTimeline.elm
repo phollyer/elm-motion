@@ -1,7 +1,7 @@
 module Anim.Internal.Engine.ScrollTimeline exposing
     ( AnimEvent(..)
     , AnimMsg(..)
-    , TimelineBuilder
+    , EngineBuilder
     , alternate
     , animate
     , attributes
@@ -49,7 +49,7 @@ type alias AnimGroupName =
     String
 
 
-type alias TimelineBuilder =
+type alias EngineBuilder =
     Builder.AnimBuilder Builder.ForScroll
 
 
@@ -59,7 +59,7 @@ type alias TimelineBuilder =
 -- ============================================================
 
 
-animate : (a -> String) -> (Encode.Value -> Cmd msg) -> a -> (TimelineBuilder -> TimelineBuilder) -> Cmd msg
+animate : (a -> String) -> (Encode.Value -> Cmd msg) -> a -> (EngineBuilder -> EngineBuilder) -> Cmd msg
 animate containerToId sendToPort container pipeline =
     Builder.init [ pipeline ]
         |> Builder.setScrollSource (containerToId container)
@@ -178,7 +178,7 @@ attributes animGroupName =
 -- ============================================================
 
 
-horizontal : TimelineBuilder -> TimelineBuilder
+horizontal : EngineBuilder -> EngineBuilder
 horizontal =
     Builder.setScrollAxis "inline"
 
@@ -189,12 +189,12 @@ horizontal =
 -- ============================================================
 
 
-iterations : Int -> TimelineBuilder -> TimelineBuilder
+iterations : Int -> EngineBuilder -> EngineBuilder
 iterations =
     Builder.iterations
 
 
-alternate : TimelineBuilder -> TimelineBuilder
+alternate : EngineBuilder -> EngineBuilder
 alternate =
     Builder.alternate
 
@@ -205,7 +205,7 @@ alternate =
 -- ============================================================
 
 
-easing : Easing -> TimelineBuilder -> TimelineBuilder
+easing : Easing -> EngineBuilder -> EngineBuilder
 easing =
     Builder.easing
 
@@ -216,22 +216,22 @@ easing =
 -- ============================================================
 
 
-cssUnit : Unit -> TimelineBuilder -> TimelineBuilder
+cssUnit : Unit -> EngineBuilder -> EngineBuilder
 cssUnit =
     Builder.cssUnit
 
 
-cssUnitX : Unit -> TimelineBuilder -> TimelineBuilder
+cssUnitX : Unit -> EngineBuilder -> EngineBuilder
 cssUnitX =
     Builder.cssUnitX
 
 
-cssUnitY : Unit -> TimelineBuilder -> TimelineBuilder
+cssUnitY : Unit -> EngineBuilder -> EngineBuilder
 cssUnitY =
     Builder.cssUnitY
 
 
-cssUnitZ : Unit -> TimelineBuilder -> TimelineBuilder
+cssUnitZ : Unit -> EngineBuilder -> EngineBuilder
 cssUnitZ =
     Builder.cssUnitZ
 
@@ -242,7 +242,7 @@ cssUnitZ =
 -- ============================================================
 
 
-spring : Spring -> TimelineBuilder -> TimelineBuilder
+spring : Spring -> EngineBuilder -> EngineBuilder
 spring =
     Builder.spring
 
@@ -253,17 +253,17 @@ spring =
 -- ============================================================
 
 
-transformOrder : List TransformProperty -> TimelineBuilder -> TimelineBuilder
+transformOrder : List TransformProperty -> EngineBuilder -> EngineBuilder
 transformOrder =
     Builder.transformOrder
 
 
-discreteEntry : String -> String -> TimelineBuilder -> TimelineBuilder
+discreteEntry : String -> String -> EngineBuilder -> EngineBuilder
 discreteEntry =
     Builder.discreteEntry
 
 
-discreteExit : String -> String -> String -> TimelineBuilder -> TimelineBuilder
+discreteExit : String -> String -> String -> EngineBuilder -> EngineBuilder
 discreteExit =
     Builder.discreteExit
 
@@ -274,6 +274,6 @@ discreteExit =
 -- ============================================================
 
 
-withProgressEvents : Bool -> TimelineBuilder -> TimelineBuilder
+withProgressEvents : Bool -> EngineBuilder -> EngineBuilder
 withProgressEvents =
     Builder.setScrollEmitProgress

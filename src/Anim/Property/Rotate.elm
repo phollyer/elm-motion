@@ -59,9 +59,10 @@ for details.
 
 ### Relative
 
-Move by a delta on one or more axes instead of to a fixed rotation. The end
-value is `current + delta` for each axis, where `current` is the configured
-start rotation or the default when no start value has been set on that axis.
+Move by a delta instead of to a fixed rotation. The end
+value is `current + delta` where `current` is the live animated rotation.
+
+Only available on the Sub and WAAPI engines. Using these with any other engine results in a type error.
 
 @docs byXYZ, byXY, byXZ, byX, byYZ, byY, byZ
 
@@ -661,31 +662,21 @@ spring =
 -- ============================================================
 
 
-{-| Keep the X axis rotation within `[min, max]` for this animation group.
-
-The range stays in effect for future animations
-until you call [unclampX](#unclampX). If `min > max`, the values are swapped.
-
+{-| Keep the X axis rotation within `min` and `max` values. If `min > max` the values are flipped.
 -}
 clampX : Float -> Float -> Builder eng -> Builder eng
 clampX =
     RB.clampX
 
 
-{-| Keep the Y axis rotation within `[min, max]` for this animation group.
-
-See [clampX](#clampX) for behaviour.
-
+{-| Keep the Y axis rotation within `min` and `max` values. If `min > max` the values are flipped.
 -}
 clampY : Float -> Float -> Builder eng -> Builder eng
 clampY =
     RB.clampY
 
 
-{-| Keep the Z axis rotation within `[min, max]` for this animation group.
-
-See [clampX](#clampX) for behaviour.
-
+{-| Keep the Z axis rotation within `min` and `max` values. If `min > max` the values are flipped.
 -}
 clampZ : Float -> Float -> Builder eng -> Builder eng
 clampZ =

@@ -1,5 +1,5 @@
 module Anim.Engine.ViewTimeline exposing
-    ( TimelineBuilder, AnimGroupName
+    ( EngineBuilder, AnimGroupName
     , animate
     , AnimEvent(..)
     , AnimMsg, update
@@ -29,7 +29,7 @@ and the
 
 # Types
 
-@docs TimelineBuilder, AnimGroupName
+@docs EngineBuilder, AnimGroupName
 
 
 # Trigger
@@ -140,8 +140,8 @@ Use this in type annotations when a builder function should only work with ViewT
 for patterns and examples.
 
 -}
-type alias TimelineBuilder =
-    Internal.TimelineBuilder
+type alias EngineBuilder =
+    Internal.EngineBuilder
 
 
 {-| Type alias for the animation group name.
@@ -167,7 +167,7 @@ type alias AnimGroupName =
             >> Opacity.build
 
 -}
-animate : (Encode.Value -> Cmd msg) -> (TimelineBuilder -> TimelineBuilder) -> Cmd msg
+animate : (Encode.Value -> Cmd msg) -> (EngineBuilder -> EngineBuilder) -> Cmd msg
 animate =
     Internal.animate
 
@@ -315,7 +315,7 @@ container scrolls horizontally.
             >> Opacity.build
 
 -}
-horizontal : TimelineBuilder -> TimelineBuilder
+horizontal : EngineBuilder -> EngineBuilder
 horizontal =
     Internal.horizontal
 
@@ -370,7 +370,7 @@ Optional — defaults to `Cover 0 Perc` when not called.
     ViewTimeline.rangeStart (Entry 100 Perc)
 
 -}
-rangeStart : Range -> TimelineBuilder -> TimelineBuilder
+rangeStart : Range -> EngineBuilder -> EngineBuilder
 rangeStart range =
     Internal.rangeStart (rangeToString range)
 
@@ -386,7 +386,7 @@ Optional — defaults to `Cover 100 Perc` when not called.
     ViewTimeline.rangeEnd (Exit 100 Perc)
 
 -}
-rangeEnd : Range -> TimelineBuilder -> TimelineBuilder
+rangeEnd : Range -> EngineBuilder -> EngineBuilder
 rangeEnd range =
     Internal.rangeEnd (rangeToString range)
 
@@ -441,7 +441,7 @@ unitToString unit =
             >> nudgeBellIcon
 
 -}
-iterations : Int -> TimelineBuilder -> TimelineBuilder
+iterations : Int -> EngineBuilder -> EngineBuilder
 iterations =
     Builder.iterations
 
@@ -461,7 +461,7 @@ so calling it when `iterations` is unset or `1` automatically bumps
 before or after `alternate` is preserved.
 
 -}
-alternate : TimelineBuilder -> TimelineBuilder
+alternate : EngineBuilder -> EngineBuilder
 alternate =
     Builder.alternate
 
@@ -482,7 +482,7 @@ alternate =
             >> revealPrimaryCta
 
 -}
-easing : Easing -> TimelineBuilder -> TimelineBuilder
+easing : Easing -> EngineBuilder -> EngineBuilder
 easing =
     Builder.easing
 
@@ -502,7 +502,7 @@ easing =
             >> settleCardShadow
 
 -}
-spring : Spring -> TimelineBuilder -> TimelineBuilder
+spring : Spring -> EngineBuilder -> EngineBuilder
 spring =
     Builder.spring
 
@@ -522,7 +522,7 @@ spring =
             >> growPanelHeight
 
 -}
-cssUnit : LengthUnit.Unit -> TimelineBuilder -> TimelineBuilder
+cssUnit : LengthUnit.Unit -> EngineBuilder -> EngineBuilder
 cssUnit =
     Builder.cssUnit
 
@@ -536,7 +536,7 @@ cssUnit =
             >> alignDrawerLabelX
 
 -}
-cssUnitX : LengthUnit.Unit -> TimelineBuilder -> TimelineBuilder
+cssUnitX : LengthUnit.Unit -> EngineBuilder -> EngineBuilder
 cssUnitX =
     Builder.cssUnitX
 
@@ -550,7 +550,7 @@ cssUnitX =
             >> alignSheetHeaderY
 
 -}
-cssUnitY : LengthUnit.Unit -> TimelineBuilder -> TimelineBuilder
+cssUnitY : LengthUnit.Unit -> EngineBuilder -> EngineBuilder
 cssUnitY =
     Builder.cssUnitY
 
@@ -564,35 +564,35 @@ cssUnitY =
             >> bringFloatingCardForward
 
 -}
-cssUnitZ : LengthUnit.Unit -> TimelineBuilder -> TimelineBuilder
+cssUnitZ : LengthUnit.Unit -> EngineBuilder -> EngineBuilder
 cssUnitZ =
     Builder.cssUnitZ
 
 
 {-| Set the default length unit used for width values in ViewTimeline animations.
 
-    responsiveCardWidth : TimelineBuilder -> TimelineBuilder
+    responsiveCardWidth : EngineBuilder -> EngineBuilder
     responsiveCardWidth =
         cssUnitWidth LengthUnit.Vw
             >> growCardWidth
             >> settleCardSpacing
 
 -}
-cssUnitWidth : LengthUnit.Unit -> TimelineBuilder -> TimelineBuilder
+cssUnitWidth : LengthUnit.Unit -> EngineBuilder -> EngineBuilder
 cssUnitWidth =
     Builder.cssUnitWidth
 
 
 {-| Set the default length unit used for height values in ViewTimeline animations.
 
-    responsivePanelHeight : TimelineBuilder -> TimelineBuilder
+    responsivePanelHeight : EngineBuilder -> EngineBuilder
     responsivePanelHeight =
         cssUnitHeight LengthUnit.Vh
             >> expandPanelHeight
             >> alignPanelHeaderY
 
 -}
-cssUnitHeight : LengthUnit.Unit -> TimelineBuilder -> TimelineBuilder
+cssUnitHeight : LengthUnit.Unit -> EngineBuilder -> EngineBuilder
 cssUnitHeight =
     Builder.cssUnitHeight
 
@@ -618,7 +618,7 @@ Use this when you need a different order for specific visual effects.
             >> Translate.build
 
 -}
-transformOrder : List TransformProperty -> TimelineBuilder -> TimelineBuilder
+transformOrder : List TransformProperty -> EngineBuilder -> EngineBuilder
 transformOrder =
     Internal.transformOrder
 
@@ -643,7 +643,7 @@ to be set to a specific value while the animation is active.
             >> Opacity.build
 
 -}
-discreteEntry : String -> String -> TimelineBuilder -> TimelineBuilder
+discreteEntry : String -> String -> EngineBuilder -> EngineBuilder
 discreteEntry =
     Internal.discreteEntry
 
@@ -663,7 +663,7 @@ discreteEntry =
     > > Opacity.build
 
 -}
-discreteExit : String -> String -> String -> TimelineBuilder -> TimelineBuilder
+discreteExit : String -> String -> String -> EngineBuilder -> EngineBuilder
 discreteExit =
     Internal.discreteExit
 
@@ -692,6 +692,6 @@ While enabled, the engine emits one `Progress animGroup t` event per animation
 frame (typically ~60/sec) for every group that is currently in range.
 
 -}
-withProgressEvents : Bool -> TimelineBuilder -> TimelineBuilder
+withProgressEvents : Bool -> EngineBuilder -> EngineBuilder
 withProgressEvents =
     Internal.withProgressEvents

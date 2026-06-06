@@ -61,9 +61,10 @@ for details.
 
 ### Relative
 
-Move by a delta on the X and Y axes instead of to a fixed skew. The end value
-is `current + delta` for each axis, where `current` is the configured start
-skew or the default when no start value has been set on that axis.
+Move by a delta instead of to a fixed skew. The end value
+is `current + delta` where `current` is the live animated skew.
+
+Only available on the Sub and WAAPI engines. Using these with any other engine results in a type error.
 
 @docs byXY, byX, byY
 
@@ -321,12 +322,11 @@ toY =
 
 
 -- ============================================================
--- SET (snap)
+-- SNAP
 -- ============================================================
 
 
-{-| Snap target X and Y skew angles silently, cancelling any
-in-flight animation on this property.
+{-| Snap target X and Y skew angles.
 -}
 setXY : Float -> Float -> Builder eng -> Builder eng
 setXY =
@@ -447,24 +447,14 @@ spring =
 -- ============================================================
 
 
-{-| Keep the X axis skew within `[min, max]` for this animation group.
-
-The range stays in effect for future animations
-until you call [unclampX](#unclampX). If `min > max`, the values are swapped.
-
-📖 See [Responsive Animations](https://phollyer.github.io/elm-motion/animation/concepts/responsive-animations/)
-for patterns and examples.
-
+{-| Keep the X axis skew within `min` and `max` values. If `min > max` the values are flipped.
 -}
 clampX : Float -> Float -> Builder eng -> Builder eng
 clampX =
     SB.clampX
 
 
-{-| Keep the Y axis skew within `[min, max]` for this animation group.
-
-See [clampX](#clampX) for behaviour.
-
+{-| Keep the Y axis skew within `min` and `max` values. If `min > max` the values are flipped.
 -}
 clampY : Float -> Float -> Builder eng -> Builder eng
 clampY =

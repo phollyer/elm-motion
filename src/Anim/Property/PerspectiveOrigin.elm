@@ -18,14 +18,14 @@ module Anim.Property.PerspectiveOrigin exposing
 {-| Animate the CSS `perspective-origin` property, which controls the vanishing point
 for 3D transforms applied to a parent element.
 
-**Default unit**: `%`. Use [`cssUnit`](#cssUnit) to switch to other CSS length units.
+**Default unit**: `%`.
 
 **Default value**: `50% 50%` (center of the element)
 
 **Note**: This module is for _animating_ `perspective-origin`, if all you need is to
-set a static `perspective-origin` without animation, use the
-[View3D.perspectiveOrigin](Anim.Extra.View3D#perspectiveOrigin) function instead, or set the `style`
-attribute yourself in your view.
+set a static `perspective-origin`, use the
+[View3D.perspectiveOrigin](Anim.Extra.View3D#perspectiveOrigin) function instead, or
+set the `style` attribute yourself in your view.
 
 
 # Types
@@ -34,11 +34,6 @@ attribute yourself in your view.
 
 
 # Initialize
-
-The default unit for `perspective-origin` is `Percent`. Use
-[`cssUnit`](#cssUnit) (or [`cssUnitX`](#cssUnitX) /
-[`cssUnitY`](#cssUnitY)) to switch the unit used by `init*` calls earlier in
-the pipeline.
 
 @docs initXY, initX, initY
 
@@ -75,8 +70,9 @@ for details.
 ### Relative
 
 Move by a delta instead of to a fixed perspective origin. The end value is
-`current + delta` for each axis, where `current` is the configured start value
-or the default when no start value has been set on that axis.
+`current + delta` where `current` is the live animated position.
+
+Only available on the Sub and WAAPI engines. Using these with any other engine results in a type error.
 
 @docs by, byXY, byX, byY
 
@@ -107,26 +103,17 @@ for details.
 
 ## CSS Units
 
-Set the length [Unit](Anim-Unit#Unit) used by `init*` calls earlier in the
-pipeline. Order matters - `cssUnit*` only affects `init*` calls that appear
-before it in the pipeline. Defaults to `Percent`.
-
-    import Anim.Unit exposing (Unit(..))
-
-    init _ =
-        ( { animState =
-                Engine.init
-                    [ PerspectiveOrigin.initXY "vp" 200 150
-                        >> PerspectiveOrigin.cssUnit Px
-                    ]
-          }
-        , Cmd.none
-        )
+Set the length [Unit](Anim-Unit#Unit) for both axes.
 
 @docs cssUnit, cssUnitX, cssUnitY
 
 
 ## Responsive Animations
+
+When using responsive units like `%` or `Cqw`, the animation automatically responds
+to changes in screen or container size without extra configuration. However, when
+using fixed units like `Px`, the animation needs to be made aware of size changes
+in order to respond to them. This is done with the functions below.
 
 📖 See [Responsive Animations](https://phollyer.github.io/elm-motion/animation/concepts/responsive-animations/)
 for patterns and examples.
@@ -134,8 +121,9 @@ for patterns and examples.
 
 ### Bounds
 
-Set how perspective-origin responds to viewport/container resize and provide
-new bounds during `onResize`.
+Keep perspective origin values within a range you choose. Values outside the range are clamped
+to the nearest boundary. An animation that is within the bounds, either mid-flight or
+paused, will me remapped proportionally inside the bounds.
 
 @docs Bounds, AxisBounds, bounds
 
@@ -150,11 +138,6 @@ Similar to `bounds`, but without proportional remapping.
 
 The range stays in effect for future animations
 until you [Unclamp](#unclamp) it:
-
-    motion : PerspectiveOrigin.Builder { eng | withTiming : () } -> PerspectiveOrigin.Builder { eng | withTiming : () }
-    motion =
-        PerspectiveOrigin.duration 600
-            >> PerspectiveOrigin.easing Easing.easeOutCubic
 
     update msg model =
         case msg of
@@ -228,10 +211,7 @@ type alias Builder eng =
 -- ============================================================
 
 
-{-| Set the initial perspective origin on both axes. Uses whichever
-[Unit](Anim-Unit#Unit) was most recently selected by [`cssUnit`](#cssUnit) /
-[`cssUnitX`](#cssUnitX) / [`cssUnitY`](#cssUnitY) upstream in the pipeline
-(defaults to `Percent`).
+{-| Set the initial perspective origin on both axes.
 
     import Anim.Engine.* as Engine
     import Anim.Property.PerspectiveOrigin as PerspectiveOrigin
@@ -253,9 +233,7 @@ initXY animationKey x y animBuilder =
         |> IB.registerPerspectiveOriginInitAxes [ CssUnitStore.perspectiveOriginX, CssUnitStore.perspectiveOriginY ]
 
 
-{-| Set the initial X-axis perspective origin. Uses whichever
-[Unit](Anim-Unit#Unit) was most recently selected by [`cssUnit`](#cssUnit) /
-[`cssUnitX`](#cssUnitX) upstream in the pipeline (defaults to `Percent`).
+{-| Set the initial X-axis perspective origin.
 -}
 initX : AnimGroupName -> Float -> AnimBuilder eng -> AnimBuilder eng
 initX animationKey x animBuilder =
@@ -267,9 +245,7 @@ initX animationKey x animBuilder =
         |> IB.registerPerspectiveOriginInitAxes [ CssUnitStore.perspectiveOriginX ]
 
 
-{-| Set the initial Y-axis perspective origin. Uses whichever
-[Unit](Anim-Unit#Unit) was most recently selected by [`cssUnit`](#cssUnit) /
-[`cssUnitY`](#cssUnitY) upstream in the pipeline (defaults to `Percent`).
+{-| Set the initial Y-axis perspective origin.
 -}
 initY : AnimGroupName -> Float -> AnimBuilder eng -> AnimBuilder eng
 initY animationKey y animBuilder =
@@ -281,13 +257,7 @@ initY animationKey y animBuilder =
         |> IB.registerPerspectiveOriginInitAxes [ CssUnitStore.perspectiveOriginY ]
 
 
-{-| Set the length [Unit](Anim-Unit#Unit) used by `init*` calls earlier in the
-pipeline for `PerspectiveOrigin` values. Defaults to `Percent`.
-
-Order matters - only `init*` calls upstream of this setter in the pipeline are
-affected; calls later in the pipeline keep their previously selected unit (or
-`Percent`). Later per-axis setters ([`cssUnitX`](#cssUnitX),
-[`cssUnitY`](#cssUnitY)) override this setting on the relevant axis.
+{-| Set the length [Unit](Anim-Unit#Unit) for both axes.
 
     import Anim.Unit exposing (Unit(..))
 
@@ -302,18 +272,14 @@ cssUnit =
     IB.setPerspectiveOriginInitCssUnit
 
 
-{-| Set the X-axis unit used by `init*` calls earlier in the pipeline for
-`PerspectiveOrigin` values. Overrides any unit set by [`cssUnit`](#cssUnit)
-on the X axis.
+{-| Set the length [Unit](Anim-Unit#Unit) for the X axis.
 -}
 cssUnitX : Unit.Unit -> AnimBuilder eng -> AnimBuilder eng
 cssUnitX =
     IB.setPerspectiveOriginInitCssUnitX
 
 
-{-| Set the Y-axis unit used by `init*` calls earlier in the pipeline for
-`PerspectiveOrigin` values. Overrides any unit set by [`cssUnit`](#cssUnit)
-on the Y axis.
+{-| Set the length [Unit](Anim-Unit#Unit) for the Y axis.
 -}
 cssUnitY : Unit.Unit -> AnimBuilder eng -> AnimBuilder eng
 cssUnitY =
@@ -427,12 +393,11 @@ toY =
 
 
 -- ============================================================
--- SET (snap)
+-- SNAP
 -- ============================================================
 
 
-{-| Snap to a uniform X and Y value silently, cancelling any
-in-flight animation on this property.
+{-| Snap to a uniform X and Y value.
 -}
 set : Float -> Builder eng -> Builder eng
 set xy =
@@ -589,14 +554,28 @@ type alias AxisBounds =
     }
 
 
-{-| Perspective-origin's contribution to a resize bounds directive for the
-named anim group.
+{-| Apply new perspective-origin bounds for an anim group during resize.
 
-Compose inside an engine's `onResize` callback.
+Pass this inside an engine's `onResize` builder:
 
-Leave an axis as `Nothing` to ignore it. `z` is ignored for this property.
-Only callable from inside an `onResize` callback - the `withBounds`
-capability on the builder type is what gates it.
+    Sub.onResize model.animState <|
+        PerspectiveOrigin.bounds "box"
+            { x = Just { min = 0, max = newWidth - boxSize }
+            , y = Nothing
+            , z = Nothing
+            }
+
+You can set the bounds for multiple anim groups in one call:
+
+    Sub.onResize model.animState <|
+        PerspectiveOrigin.bounds "box" boxBounds
+            >> PerspectiveOrigin.bounds "card" cardBounds
+
+The engine proportionally remaps the in-flight animation onto the new
+range and pins its endpoints to it.
+
+Only callable from inside an engine's `onResize` builder - calling it from
+anywhere else results in a type error.
 
 -}
 bounds : AnimGroupName -> AxisBounds -> AnimBuilder { eng | withBounds : () } -> AnimBuilder { eng | withBounds : () }
@@ -610,25 +589,14 @@ bounds name ranges =
 -- ============================================================
 
 
-{-| Keep the X axis perspective-origin within `[min, max]` for this animation group.
-
-The range stays in effect for future animations
-until you call [unclampX](#unclampX). If `min > max`, the values are swapped.
-The active unit (percent or px) on each value is preserved.
-
-📖 See [Responsive Animations](https://phollyer.github.io/elm-motion/animation/concepts/responsive-animations/)
-for patterns and examples.
-
+{-| Keep the X axis perspective-origin within `min` and `max` values. If `min > max` the values are flipped.
 -}
 clampX : Float -> Float -> Builder eng -> Builder eng
 clampX =
     PB.clampX
 
 
-{-| Keep the Y axis perspective-origin within `[min, max]` for this animation group.
-
-See [clampX](#clampX) for behaviour.
-
+{-| Keep the Y axis perspective-origin within `min` and `max` values. If `min > max` the values are flipped.
 -}
 clampY : Float -> Float -> Builder eng -> Builder eng
 clampY =

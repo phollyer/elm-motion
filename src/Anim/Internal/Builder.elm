@@ -185,58 +185,58 @@ type alias ForTransition =
 
 type alias ForKeyframe =
     { forKeyframe : ()
-    , withTiming : ()
-    , withSpring : ()
-    , withLoopForever : ()
-    , withIterations : ()
     , withAlternate : ()
+    , withIterations : ()
+    , withLoopForever : ()
+    , withSpring : ()
+    , withTiming : ()
     , withTransformOrder : ()
     }
 
 
 type alias ForSub =
     { forSub : ()
-    , withTiming : ()
-    , withSpring : ()
-    , withLoopForever : ()
-    , withIterations : ()
     , withAlternate : ()
-    , withTransformOrder : ()
-    , withProgressEvents : ()
+    , withIterations : ()
     , withLiveDelta : ()
+    , withLoopForever : ()
+    , withProgressEvents : ()
+    , withSpring : ()
+    , withTiming : ()
+    , withTransformOrder : ()
     }
 
 
 type alias ForWAAPI =
     { forWAAPI : ()
-    , withTiming : ()
-    , withSpring : ()
-    , withLoopForever : ()
-    , withIterations : ()
     , withAlternate : ()
-    , withTransformOrder : ()
-    , withProgressEvents : ()
+    , withIterations : ()
     , withLiveDelta : ()
+    , withLoopForever : ()
+    , withProgressEvents : ()
+    , withSpring : ()
+    , withTiming : ()
+    , withTransformOrder : ()
     }
 
 
 type alias ForScroll =
     { forScroll : ()
-    , withSpring : ()
-    , withIterations : ()
     , withAlternate : ()
-    , withTransformOrder : ()
+    , withIterations : ()
     , withProgressEvents : ()
+    , withSpring : ()
+    , withTransformOrder : ()
     }
 
 
 type alias ForView =
     { forView : ()
-    , withSpring : ()
-    , withIterations : ()
     , withAlternate : ()
-    , withTransformOrder : ()
+    , withIterations : ()
     , withProgressEvents : ()
+    , withSpring : ()
+    , withTransformOrder : ()
     }
 
 
@@ -245,19 +245,19 @@ shape as [`ForSub`](#ForSub) plus `withBounds`, which unlocks the
 resize-only [`bounds`](Anim-Property-Translate#bounds) /
 [`position`](Anim-Property-Translate#position) functions. Inside a
 regular `Sub.animate` callback (which receives a `ForSub` builder), the
-absence of `withBounds` makes those calls a compile error.
+absence of `withBounds` makes those calls a type error.
 -}
 type alias ForResizeSub =
     { forSub : ()
-    , withTiming : ()
-    , withSpring : ()
-    , withLoopForever : ()
-    , withIterations : ()
     , withAlternate : ()
-    , withTransformOrder : ()
-    , withProgressEvents : ()
-    , withLiveDelta : ()
     , withBounds : ()
+    , withIterations : ()
+    , withLiveDelta : ()
+    , withLoopForever : ()
+    , withProgressEvents : ()
+    , withSpring : ()
+    , withTiming : ()
+    , withTransformOrder : ()
     }
 
 
@@ -266,19 +266,19 @@ shape as [`ForWAAPI`](#ForWAAPI) plus `withBounds`, which unlocks the
 resize-only [`bounds`](Anim-Property-Translate#bounds) /
 [`position`](Anim-Property-Translate#position) functions. Inside a
 regular `WAAPI.animate` callback (which receives a `ForWAAPI` builder),
-the absence of `withBounds` makes those calls a compile error.
+the absence of `withBounds` makes those calls a type error.
 -}
 type alias ForResizeWAAPI =
     { forWAAPI : ()
-    , withTiming : ()
-    , withSpring : ()
-    , withLoopForever : ()
-    , withIterations : ()
     , withAlternate : ()
-    , withTransformOrder : ()
-    , withProgressEvents : ()
-    , withLiveDelta : ()
     , withBounds : ()
+    , withIterations : ()
+    , withLiveDelta : ()
+    , withLoopForever : ()
+    , withProgressEvents : ()
+    , withSpring : ()
+    , withTiming : ()
+    , withTransformOrder : ()
     }
 
 

@@ -67,8 +67,9 @@ for details.
 ### Relative
 
 Move by a delta on width and height instead of to a fixed size. The end value
-is `current + delta` for each axis, where `current` is the configured start
-size or the default when no start value has been set on that axis.
+is `current + delta` where `current` is the live animated size.
+
+Only available on the Sub and WAAPI engines. Using these with any other engine results in a type error.
 
 @docs byHW, byH, byW
 
@@ -99,22 +100,7 @@ for details.
 
 ## CSS Units
 
-Set the CSS length unit(s) used by `init*` calls earlier in the
-pipeline. Order matters - `cssUnit*` only affects `init*` calls that
-appear before it in the pipeline. Defaults to `Px`.
-
-    import Anim.Unit exposing (Unit(..))
-
-    init _ =
-        ( { animState =
-                Engine.init
-                    [ Size.initHW "btn" 8 25
-                        >> Size.cssUnitW Cqw
-                        >> Size.cssUnitH Cqh
-                    ]
-          }
-        , Cmd.none
-        )
+Set the CSS length unit(s) used in size animations.
 
 @docs cssUnit, cssUnitW, cssUnitH
 
@@ -143,11 +129,6 @@ Similar to `bounds`, but without proportional remapping.
 
 The range stays in effect for future animations
 until you [Unclamp](#unclamp) it:
-
-    motion : Size.Builder { eng | withTiming : () } -> Size.Builder { eng | withTiming : () }
-    motion =
-        Size.duration 600
-            >> Size.easing Easing.easeOutCubic
 
     update msg model =
         case msg of
@@ -317,13 +298,7 @@ initH animationKey h animBuilder =
 -- Initial Unit
 
 
-{-| Set the length [Unit](Anim-Unit#Unit) used by `init*` calls earlier in the
-pipeline for `Size` values. Defaults to `Px`.
-
-Order matters - only `init*` calls upstream of this setter in the pipeline are
-affected; calls later in the pipeline keep their previously selected unit (or
-`Px`). Later per-axis setters ([`cssUnitW`](#cssUnitW),
-[`cssUnitH`](#cssUnitH)) override this setting on the relevant axis.
+{-| Set the length [Unit](Anim-Unit#Unit) for all sides.
 
     import Anim.Unit exposing (Unit(..))
 
@@ -338,18 +313,14 @@ cssUnit =
     IB.setSizeInitCssUnit
 
 
-{-| Set the width-axis unit used by `init*` calls earlier in the pipeline for
-`Size` values. Overrides any unit set by [`cssUnit`](#cssUnit) on the width
-axis.
+{-| Set the length [Unit](Anim-Unit#Unit) for the width.
 -}
 cssUnitW : Unit -> AnimBuilder eng -> AnimBuilder eng
 cssUnitW =
     IB.setSizeInitCssUnitWidth
 
 
-{-| Set the height-axis unit used by `init*` calls earlier in the pipeline for
-`Size` values. Overrides any unit set by [`cssUnit`](#cssUnit) on the height
-axis.
+{-| Set the length [Unit](Anim-Unit#Unit) for the height.
 -}
 cssUnitH : Unit -> AnimBuilder eng -> AnimBuilder eng
 cssUnitH =
@@ -473,12 +444,11 @@ toW =
 
 
 -- ============================================================
--- SET (snap)
+-- SNAP
 -- ============================================================
 
 
-{-| Snap to a uniform width and height silently, cancelling any
-in-flight animation on this property.
+{-| Snap to a uniform width and height.
 -}
 set : Float -> Builder eng -> Builder eng
 set hw =
@@ -641,11 +611,11 @@ You can set the bounds for multiple anim groups in one call:
         Size.bounds "box" boxBounds
             >> Size.bounds "card" cardBounds
 
-Leave an axis as `Nothing` to ignore it. The engine proportionally remaps
-the in-flight animation onto the new range and pins its endpoints to it.
+The engine proportionally remaps the in-flight animation onto the new
+range and pins its endpoints to it.
 
-Only callable from inside an engine's `onResize` callback - the `withBounds`
-capability on the builder type is what gates it.
+Only callable from inside an engine's `onResize` builder - calling it from
+anywhere else results in a type error.
 
 -}
 bounds : AnimGroupName -> AxisBounds -> AnimBuilder { eng | withBounds : () } -> AnimBuilder { eng | withBounds : () }
@@ -667,24 +637,14 @@ toBuilderRanges ranges =
 -- ============================================================
 
 
-{-| Keep width within `[min, max]` for this animation group.
-
-The range stays in effect for future animations
-until you call [unclampWidth](#unclampWidth). If `min > max`, the values are swapped.
-
-📖 See [Responsive Animations](https://phollyer.github.io/elm-motion/animation/concepts/responsive-animations/)
-for patterns and examples.
-
+{-| Keep width within `min` and `max` values. If `min > max` the values are flipped.
 -}
 clampWidth : Float -> Float -> Builder eng -> Builder eng
 clampWidth =
     SB.clampWidth
 
 
-{-| Keep height within `[min, max]` for this animation group.
-
-See [clampWidth](#clampWidth) for behaviour.
-
+{-| Keep height within `min` and `max` values. If `min > max` the values are flipped.
 -}
 clampHeight : Float -> Float -> Builder eng -> Builder eng
 clampHeight =

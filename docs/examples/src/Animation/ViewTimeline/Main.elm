@@ -37,7 +37,7 @@ main =
 ---8<-- [start:build]
 
 
-revealCard : String -> ViewTimeline.TimelineBuilder -> ViewTimeline.TimelineBuilder
+revealCard : String -> ViewTimeline.EngineBuilder -> ViewTimeline.EngineBuilder
 revealCard animGroupName =
     Opacity.for animGroupName
         >> Opacity.from 0

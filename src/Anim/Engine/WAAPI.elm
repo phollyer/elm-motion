@@ -44,6 +44,23 @@ and
 for details.
 
 
+# Ports
+
+To use this engine, you need to make your module a port module and set up two ports:
+
+    port module MyModule exposing (..)
+
+    import Json.Decode as Decode
+    import Json.Encode as Encode
+
+
+    -- Outgoing port to send animation commands to JavaScript
+    port motionCmd : Encode.Value -> Cmd msg
+
+    -- Incoming port to receive animation messages from JavaScript
+    port motionMsg : (Decode.Value -> msg) -> Sub msg
+
+
 # Types
 
 @docs AnimState, AnimGroupName
@@ -56,23 +73,21 @@ for details.
 
 ### Engine Builder
 
-Use this in type annotations when a builder function should only work with the WAAPI engine.
-
 @docs EngineBuilder
 
 
 # Initialize
 
-@docs init
-
 📖 See [Initialize](https://phollyer.github.io/elm-motion/animation/workflow/init/) for details.
+
+@docs init
 
 
 # Trigger
 
-@docs animate, fireAndForget, retarget
-
 📖 See [Triggering Animations](https://phollyer.github.io/elm-motion/animation/workflow/trigger/) for details.
+
+@docs animate, fireAndForget, retarget
 
 
 # Events
@@ -262,7 +277,11 @@ import Motion.Spring exposing (Spring)
 
 Keep this in your model.
 
-The `msg` type parameter is your `Msg` type.
+The `msg` type parameter is your `Msg` type. The engine uses it to
+type the `Cmd msg` values it sends to JavaScript through your command
+port, and to decode messages coming from JavaScript back into your
+`Msg` type. This allows messages to flow freely without needing to
+reach for `Cmd.map` or `Sub.map`.
 
     type alias Model =
         { animState : WAAPI.AnimState Msg }
@@ -304,24 +323,14 @@ type alias EngineBuilder =
 
 {-| Initialize animation state.
 
-Takes the command port, event port, and optional property initializers:
-
-    port motionCmd : Json.Encode.Value -> Cmd msg
-
-    port motionMsg : (Json.Decode.Value -> msg) -> Sub msg
+Takes the command port, message port, and a list of property initializers:
 
     import Anim.Engine.WAAPI as WAAPI
     import Anim.Property.Opacity as Opacity
-    import Anim.Property.Translate as Translate
 
-    -- Basic initialization
-    WAAPI.init motionCmd motionMsg []
-
-    -- With initial properties
-    WAAPI.init motionCmd
-        motionMsg
-        [ Translate.initXY "animGroupName" 100 50
-        , Opacity.init "animGroupName" 1.0
+    WAAPI.init motionCmd motionMsg <|
+        [ Opacity.init "animGroupName" 0.5
+        , ... -- any other property initializers
         ]
 
 -}

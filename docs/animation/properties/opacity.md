@@ -49,13 +49,14 @@ See the [Properties Overview](overview.md) page for the shared usage patterns.
 
 | Function | Signature | Description |
 | -------- | --------- | ----------- |
-| `from` | `Float -> Builder -> Builder` | Starting opacity (0.0 to 1.0) |
+| `from` | `Float -> Builder -> Builder` | Start value (0.0 to 1.0) |
 
 ### End Value
 
 | Function | Signature | Description |
 | -------- | --------- | ----------- |
-| `to` | `Float -> Builder -> Builder` | Ending opacity (0.0 to 1.0) |
+| `to` | `Float -> Builder -> Builder` | Absolute End value (0.0 to 1.0) |
+| `by` | `Float -> Builder -> Builder` | Relative End value |
 
 ### Timing
 

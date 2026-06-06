@@ -453,12 +453,11 @@ toZ =
 
 
 -- ============================================================
--- SET (snap)
+-- SNAP
 -- ============================================================
 
 
-{-| Snap target X, Y and Z values silently, cancelling any
-in-flight animation on this property.
+{-| Snap target X, Y and Z values silently
 -}
 setXYZ : Float -> Float -> Float -> Builder eng -> Builder eng
 setXYZ =
@@ -741,27 +740,21 @@ bounds name ranges =
 -- ============================================================
 
 
-{-| Keep the X axis translate within `[min, max]` for this animation group.
+{-| Keep the X axis translate within `min` and `max` values. If `min > max` the values are flipped.
 -}
 clampX : Float -> Float -> Builder eng -> Builder eng
 clampX =
     TB.clampX
 
 
-{-| Keep the Y axis translate within `[min, max]` for this animation group.
-
-See [clampX](#clampX) for behaviour and example.
-
+{-| Keep the Y axis translate within `min` and `max` values. If `min > max` the values are flipped.
 -}
 clampY : Float -> Float -> Builder eng -> Builder eng
 clampY =
     TB.clampY
 
 
-{-| Keep the Z axis translate within `[min, max]` for this animation group.
-
-See [clampX](#clampX) for behaviour and example.
-
+{-| Keep the Z axis translate within `min` and `max` values. If `min > max` the values are flipped.
 -}
 clampZ : Float -> Float -> Builder eng -> Builder eng
 clampZ =

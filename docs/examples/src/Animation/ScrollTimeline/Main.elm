@@ -46,7 +46,7 @@ progressBarAnim =
 ---8<-- [start:build]
 
 
-scrollProgress : ScrollTimeline.TimelineBuilder -> ScrollTimeline.TimelineBuilder
+scrollProgress : ScrollTimeline.EngineBuilder -> ScrollTimeline.EngineBuilder
 scrollProgress =
     Scale.for progressBarAnim
         >> Scale.fromX 0

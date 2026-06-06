@@ -62,9 +62,10 @@ for details.
 
 ### Relative
 
-Move by a delta on one or more axes instead of to a fixed scale. The end value
-is `current + delta` for each axis, where `current` is the configured start
-scale or the default when no start value has been set on that axis.
+Move by a delta instead of to a fixed scale. The end value
+is `current + delta` where `current` is the live animated scale.
+
+Only available on the Sub and WAAPI engines. Using these with any other engine results in a type error.
 
 @docs byXYZ, byXY, byXZ, byX, byYZ, byY, byZ
 
@@ -766,21 +767,28 @@ type alias AxisBounds =
     }
 
 
-{-| Scale's contribution to a resize bounds directive for the named anim group.
-Compose inside an engine's `onResize` callback:
+{-| Apply new scale bounds for an anim group during resize.
 
-    WAAPI.onResize model.animState <|
+Pass this inside an engine's `onResize` builder:
+
+    Sub.onResize model.animState <|
         Scale.bounds "cube"
             { x = Just { min = 1, max = newWidth / cubeSize }
             , y = Just { min = 1, max = newHeight / cubeSize }
             , z = Nothing
             }
 
-You can set the bounds for multiple anim groups in one call by composing more entries.
+You can set the bounds for multiple anim groups in one call:
 
-Leave an axis as `Nothing` to ignore it. Bounds are scale multipliers,
-not pixels. Only callable from inside an `onResize` callback - the
-`withBounds` capability on the builder type is what gates it.
+    Sub.onResize model.animState <|
+        Scale.bounds "box" boxBounds
+            >> Scale.bounds "card" cardBounds
+
+The engine proportionally remaps the in-flight animation onto the new
+range and pins its endpoints to it.
+
+Only callable from inside an engine's `onResize` builder - calling it from
+anywhere else results in a type error.
 
 -}
 bounds : AnimGroupName -> AxisBounds -> AnimBuilder { eng | withBounds : () } -> AnimBuilder { eng | withBounds : () }
@@ -794,34 +802,21 @@ bounds name ranges =
 -- ============================================================
 
 
-{-| Keep the X axis scale within `[min, max]` for this animation group.
-
-The range stays in effect for future animations
-until you call [unclampX](#unclampX). If `min > max`, the values are swapped.
-
-📖 See [Responsive Animations](https://phollyer.github.io/elm-motion/animation/concepts/responsive-animations/)
-for patterns and examples.
-
+{-| Keep the X axis scale within `min` and `max` values. If `min > max` the values are flipped.
 -}
 clampX : Float -> Float -> Builder eng -> Builder eng
 clampX =
     SB.clampX
 
 
-{-| Keep the Y axis scale within `[min, max]` for this animation group.
-
-See [clampX](#clampX) for behaviour.
-
+{-| Keep the Y axis scale within `min` and `max` values. If `min > max` the values are flipped.
 -}
 clampY : Float -> Float -> Builder eng -> Builder eng
 clampY =
     SB.clampY
 
 
-{-| Keep the Z axis scale within `[min, max]` for this animation group.
-
-See [clampX](#clampX) for behaviour.
-
+{-| Keep the Z axis scale within `min` and `max` values. If `min > max` the values are flipped.
 -}
 clampZ : Float -> Float -> Builder eng -> Builder eng
 clampZ =

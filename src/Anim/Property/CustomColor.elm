@@ -10,19 +10,12 @@ module Anim.Property.CustomColor exposing
     , set
     )
 
-{-| Animate any CSS color property.
+{-| Animate any CSS color property not covered by the first-class
+property modules.
 
-    import Anim.Extra.Color as Color
-    import Anim.Property.CustomColor as CustomColor
-    import Easing exposing (Easing(..))
+**Default**: transparent
 
-    myAnimation : AnimBuilder eng -> AnimBuilder eng
-    myAnimation =
-        CustomColor.for "box" BackgroundColor
-            >> CustomColor.to (Color.rgb 255 0 0)
-            >> CustomColor.duration 300
-            >> CustomColor.easing EaseInOut
-            >> CustomColor.build
+When no start value is configured, the default will be used.
 
 
 # Types
@@ -120,7 +113,10 @@ type alias Builder eng =
 
 Use the escape hatch `Custom` to animate any CSS color property not currently supported out of the box.
 
-    CustomColor.for "box" (Custom "property-name")
+    import Anim.Extra.Color as Color
+    import Anim.Property.CustomColor as CustomColor
+
+    CustomColor.for "box" (Custom "outline-color")
         >> CustomColor.to (Color.rgb 255 0 0)
         >> CustomColor.build
 
@@ -159,7 +155,7 @@ type ColorProperty
 -- ============================================================
 
 
-{-| Set the initial value for a custom color CSS property.
+{-| Set the initial color value.
 
 Use this to initialize the property in your Engine's `init` function.
 
@@ -195,6 +191,8 @@ init animGroupName cssProperty value animBuilder =
 
 
 {-| Turn the `AnimBuilder` into a custom color property animation `Builder`.
+
+The first argument is the animation group name, the second is the CSS property.
 
     myAnimation : AnimBuilder eng -> AnimBuilder eng
     myAnimation =
@@ -300,7 +298,7 @@ toCssPropertyName cssProperty =
 -- ============================================================
 
 
-{-| Set the starting color.
+{-| Set the starting color value.
 -}
 from : Color -> Builder eng -> Builder eng
 from =
@@ -313,7 +311,7 @@ from =
 -- ============================================================
 
 
-{-| Set the target color.
+{-| Set the target color value.
 -}
 to : Color -> Builder eng -> Builder eng
 to =
@@ -326,8 +324,7 @@ to =
 -- ============================================================
 
 
-{-| Snap the color silently, cancelling any in-flight animation
-on this property.
+{-| Snap to a specific color, cancelling any in-flight animation on this property.
 -}
 set : Color -> Builder eng -> Builder eng
 set =
@@ -354,7 +351,7 @@ duration =
     Internal.duration
 
 
-{-| Set the animation speed (0.0 to 1.0 range per second).
+{-| Set the animation speed (units per second).
 -}
 speed : Float -> Builder { eng | withTiming : () } -> Builder { eng | withTiming : () }
 speed =

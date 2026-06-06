@@ -35,23 +35,23 @@ Legend:
 
 ## Animation Properties
 
-- [ ] Anim.Property.Translate
+- [x] Anim.Property.Translate
   - Notes:
-- [ ] Anim.Property.Rotate
+- [x] Anim.Property.Rotate
   - Notes:
-- [ ] Anim.Property.Scale
+- [x] Anim.Property.Scale
   - Notes:
-- [ ] Anim.Property.Skew
+- [x] Anim.Property.Skew
   - Notes:
-- [ ] Anim.Property.Opacity
+- [x] Anim.Property.Opacity
   - Notes:
-- [ ] Anim.Property.Size
+- [x] Anim.Property.Size
   - Notes:
-- [ ] Anim.Property.PerspectiveOrigin
+- [x] Anim.Property.PerspectiveOrigin
   - Notes:
-- [ ] Anim.Property.Custom
+- [x] Anim.Property.Custom
   - Notes:
-- [ ] Anim.Property.CustomColor
+- [x] Anim.Property.CustomColor
   - Notes:
 
 ## Extras

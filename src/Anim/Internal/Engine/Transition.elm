@@ -138,9 +138,6 @@ insertAnimGroup animGroupsConfig animGroupName newAnimGroup acc =
                         |> Maybe.map (.properties >> toCssPropertyNames)
                         |> Maybe.withDefault []
 
-                -- Include discrete property names so old `display Xms`
-                -- entries are evicted from the merged transition list
-                -- when this animate retouches the discrete property.
                 discreteCssProps =
                     Dict.keys (AnimGroup.getDiscreteEntry newAnimGroup)
                         ++ Dict.keys (AnimGroup.getDiscreteExit newAnimGroup)
