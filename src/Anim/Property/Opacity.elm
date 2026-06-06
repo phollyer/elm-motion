@@ -8,7 +8,8 @@ module Anim.Property.Opacity exposing
     , delay, duration, speed
     , easing
     , spring
-    , clamp, unclamp
+    , clamp
+    , unclamp
     , set
     )
 
@@ -47,24 +48,24 @@ for details.
 @docs from
 
 
-## End Value (Absolute)
+## End Value
 
 📖 See [End Values](https://phollyer.github.io/elm-motion/animation/properties/overview/#end-values)
 for details.
 
+
+### Absolute
+
 @docs to
 
 
-## End Value (Relative)
+### Relative
 
 Move by a delta instead of to a fixed opacity. The end value is
 `current + delta`, where `current` is the configured start opacity or the
 default when no start value has been set.
 
 @docs by
-
-📖 See [End Values](https://phollyer.github.io/elm-motion/animation/properties/overview/#end-values)
-for details.
 
 
 ## Timing
@@ -95,10 +96,34 @@ for details.
 
 Keep opacity within a range you choose.
 
-📖 See [Responsive Animations](https://phollyer.github.io/elm-motion/animation/concepts/responsive-animations/)
-for patterns and examples.
+Values outside the range are clamped to the nearest boundary.
 
-@docs clamp, unclamp
+The range stays in effect for future animations
+until you [Unclamp](#unclamp) it:
+
+    update msg model =
+        case msg of
+            HoverEnded ->
+                let
+                    ( animState, cmd ) =
+                        WAAPI.animate model.animState <|
+                            Opacity.for animGroupName
+                                >> Opacity.clamp 0.2 1.0
+                                >> Opacity.build
+                in
+                ( { model | animState = animState }
+                , cmd
+                )
+
+
+### Clamp
+
+@docs clamp
+
+
+### Unclamp
+
+@docs unclamp
 
 
 ## Snap
@@ -349,7 +374,7 @@ spring =
 
 {-| Keep opacity within `[min, max]` for this animation group.
 
-The range stays in effect for future `animate` / `retarget` calls
+The range stays in effect for future animations
 until you call [unclamp](#unclamp). If `min > max`, the values are swapped.
 
 📖 See [Responsive Animations](https://phollyer.github.io/elm-motion/animation/concepts/responsive-animations/)

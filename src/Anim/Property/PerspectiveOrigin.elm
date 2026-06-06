@@ -10,7 +10,8 @@ module Anim.Property.PerspectiveOrigin exposing
     , spring
     , cssUnit, cssUnitX, cssUnitY
     , Bounds, AxisBounds, bounds
-    , clampX, clampY, unclampX, unclampY
+    , clampX, clampY
+    , unclampX, unclampY
     , set, setXY, setX, setY
     )
 
@@ -60,24 +61,24 @@ for details.
 @docs from, fromXY, fromX, fromY
 
 
-## End Value (Absolute)
+## End Value
 
 📖 See [End Values](https://phollyer.github.io/elm-motion/animation/properties/overview/#end-values)
 for details.
 
+
+### Absolute
+
 @docs to, toXY, toX, toY
 
 
-## End Value (Relative)
+### Relative
 
 Move by a delta instead of to a fixed perspective origin. The end value is
 `current + delta` for each axis, where `current` is the configured start value
 or the default when no start value has been set on that axis.
 
 @docs by, byXY, byX, byY
-
-📖 See [End Values](https://phollyer.github.io/elm-motion/animation/properties/overview/#end-values)
-for details.
 
 
 ## Timing
@@ -147,7 +148,44 @@ Values outside the range are clamped to the nearest boundary.
 
 Similar to `bounds`, but without proportional remapping.
 
-@docs clampX, clampY, unclampX, unclampY
+The range stays in effect for future animations
+until you [Unclamp](#unclamp) it:
+
+    motion : PerspectiveOrigin.Builder { eng | withTiming : () } -> PerspectiveOrigin.Builder { eng | withTiming : () }
+    motion =
+        PerspectiveOrigin.duration 600
+            >> PerspectiveOrigin.easing Easing.easeOutCubic
+
+    update msg model =
+        case msg of
+            GotCard (Ok { element }) ->
+                let
+                    w =
+                        element.width
+
+                    h =
+                        element.height
+
+                    ( animState, cmd ) =
+                        WAAPI.retarget model.animState <|
+                            PerspectiveOrigin.for animGroupName
+                                >> PerspectiveOrigin.clampX 0 w
+                                >> PerspectiveOrigin.clampY 0 h
+                                >> PerspectiveOrigin.build
+                in
+                ( { model | animState = animState }
+                , cmd
+                )
+
+
+### Clamp
+
+@docs clampX, clampY
+
+
+### Unclamp
+
+@docs unclampX, unclampY
 
 
 ## Snap
@@ -574,7 +612,7 @@ bounds name ranges =
 
 {-| Keep the X axis perspective-origin within `[min, max]` for this animation group.
 
-The range stays in effect for future `animate` / `retarget` calls
+The range stays in effect for future animations
 until you call [unclampX](#unclampX). If `min > max`, the values are swapped.
 The active unit (percent or px) on each value is preserved.
 

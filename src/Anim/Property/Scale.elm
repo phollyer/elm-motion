@@ -9,7 +9,8 @@ module Anim.Property.Scale exposing
     , easing
     , spring
     , Bounds, AxisBounds, bounds
-    , clampX, clampY, clampZ, unclampX, unclampY, unclampZ
+    , clampX, clampY, clampZ
+    , unclampX, unclampY, unclampZ
     , set, setXYZ, setXY, setXZ, setX, setYZ, setY, setZ
     )
 
@@ -18,9 +19,6 @@ module Anim.Property.Scale exposing
 **Default**: 1.0 (original size) for all axes
 
 When no start value is configured, the default will be used.
-
-Any axis that is not defined in the animation configuration will remain unchanged,
-or 1.0 if not set.
 
 
 # Types
@@ -51,24 +49,24 @@ for details.
 @docs from, fromXYZ, fromXY, fromXZ, fromX, fromYZ, fromY, fromZ
 
 
-## End Value (Absolute)
+## End Value
 
 📖 See [End Values](https://phollyer.github.io/elm-motion/animation/properties/overview/#end-values)
 for details.
 
+
+### Absolute
+
 @docs to, toXYZ, toXY, toXZ, toX, toYZ, toY, toZ
 
 
-## End Value (Relative)
+### Relative
 
 Move by a delta on one or more axes instead of to a fixed scale. The end value
 is `current + delta` for each axis, where `current` is the configured start
 scale or the default when no start value has been set on that axis.
 
 @docs byXYZ, byXY, byXZ, byX, byYZ, byY, byZ
-
-📖 See [End Values](https://phollyer.github.io/elm-motion/animation/properties/overview/#end-values)
-for details.
 
 
 ## Timing
@@ -118,7 +116,39 @@ Values outside the range are clamped to the nearest boundary.
 
 Similar to `bounds`, but without proportional remapping.
 
-@docs clampX, clampY, clampZ, unclampX, unclampY, unclampZ
+The range stays in effect for future animations
+until you [Unclamp](#unclamp) it:
+
+    motion : Scale.Builder { eng | withTiming : () } -> Scale.Builder { eng | withTiming : () }
+    motion =
+        Scale.duration 600
+            >> Scale.easing Easing.easeOutCubic
+
+    update msg model =
+        case msg of
+            ZoomChanged factor ->
+                let
+                    ( animState, cmd ) =
+                        WAAPI.retarget model.animState <|
+                            Scale.for animGroupName
+                                >> Scale.clampX 0.5 2.0
+                                >> Scale.clampY 0.5 2.0
+                                >> Scale.toXY factor factor
+                                >> Scale.build
+                in
+                ( { model | animState = animState }
+                , cmd
+                )
+
+
+### Clamp
+
+@docs clampX, clampY, clampZ
+
+
+### Unclamp
+
+@docs unclampX, unclampY, unclampZ
 
 
 ## Snap
@@ -746,7 +776,7 @@ Compose inside an engine's `onResize` callback:
             , z = Nothing
             }
 
-You can resize multiple anim groups in one call by composing more entries.
+You can set the bounds for multiple anim groups in one call by composing more entries.
 
 Leave an axis as `Nothing` to ignore it. Bounds are scale multipliers,
 not pixels. Only callable from inside an `onResize` callback - the
@@ -766,7 +796,7 @@ bounds name ranges =
 
 {-| Keep the X axis scale within `[min, max]` for this animation group.
 
-The range stays in effect for future `animate` / `retarget` calls
+The range stays in effect for future animations
 until you call [unclampX](#unclampX). If `min > max`, the values are swapped.
 
 📖 See [Responsive Animations](https://phollyer.github.io/elm-motion/animation/concepts/responsive-animations/)

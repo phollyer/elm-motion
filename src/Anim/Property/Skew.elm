@@ -8,7 +8,8 @@ module Anim.Property.Skew exposing
     , delay, duration, speed
     , easing
     , spring
-    , clampX, clampY, unclampX, unclampY
+    , clampX, clampY
+    , unclampX, unclampY
     , setXY, setX, setY
     )
 
@@ -17,9 +18,6 @@ module Anim.Property.Skew exposing
 **Default**: 0 degrees for both axes
 
 When no start value is configured for any axis, the default will be used.
-
-Any axis that is not defined in the animation configuration will remain unchanged,
-or zero if not set.
 
 
 # Types
@@ -50,24 +48,24 @@ for details.
 @docs fromXY, fromX, fromY
 
 
-## End Value (Absolute)
+## End Value
 
 📖 See [End Values](https://phollyer.github.io/elm-motion/animation/properties/overview/#end-values)
 for details.
 
+
+### Absolute
+
 @docs toXY, toX, toY
 
 
-## End Value (Relative)
+### Relative
 
 Move by a delta on the X and Y axes instead of to a fixed skew. The end value
 is `current + delta` for each axis, where `current` is the configured start
 skew or the default when no start value has been set on that axis.
 
 @docs byXY, byX, byY
-
-📖 See [End Values](https://phollyer.github.io/elm-motion/animation/properties/overview/#end-values)
-for details.
 
 
 ## Timing
@@ -98,10 +96,35 @@ for details.
 
 Keep skew values on each axis within a range you choose.
 
-📖 See [Responsive Animations](https://phollyer.github.io/elm-motion/animation/concepts/responsive-animations/)
-for patterns and examples.
+Values outside the range are clamped to the nearest boundary.
 
-@docs clampX, clampY, unclampX, unclampY
+The range stays in effect for future animations
+until you [Unclamp](#unclamp) it:
+
+    update msg model =
+        case msg of
+            TiltChanged xDeg yDeg ->
+                let
+                    ( animState, cmd ) =
+                        WAAPI.animate model.animState <|
+                            Skew.for animGroupName
+                                >> Skew.clampX -30 30
+                                >> Skew.clampY -30 30
+                                >> Skew.build
+                in
+                ( { model | animState = animState }
+                , cmd
+                )
+
+
+### Clamp
+
+@docs clampX, clampY
+
+
+### Unclamp
+
+@docs unclampX, unclampY
 
 
 ## Snap
@@ -426,7 +449,7 @@ spring =
 
 {-| Keep the X axis skew within `[min, max]` for this animation group.
 
-The range stays in effect for future `animate` / `retarget` calls
+The range stays in effect for future animations
 until you call [unclampX](#unclampX). If `min > max`, the values are swapped.
 
 📖 See [Responsive Animations](https://phollyer.github.io/elm-motion/animation/concepts/responsive-animations/)

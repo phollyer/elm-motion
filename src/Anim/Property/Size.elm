@@ -10,7 +10,8 @@ module Anim.Property.Size exposing
     , spring
     , cssUnit, cssUnitW, cssUnitH
     , Bounds, AxisBounds, bounds
-    , clampWidth, clampHeight, unclampWidth, unclampHeight
+    , clampWidth, clampHeight
+    , unclampWidth, unclampHeight
     , set, setHW, setH, setW
     )
 
@@ -52,24 +53,24 @@ for details.
 @docs fromHW, fromH, fromW, from
 
 
-## End Value (Absolute)
+## End Value
 
 📖 See [End Values](https://phollyer.github.io/elm-motion/animation/properties/overview/#end-values)
 for details.
 
+
+### Absolute
+
 @docs toHW, toH, toW
 
 
-## End Value (Relative)
+### Relative
 
 Move by a delta on width and height instead of to a fixed size. The end value
 is `current + delta` for each axis, where `current` is the configured start
 size or the default when no start value has been set on that axis.
 
 @docs byHW, byH, byW
-
-📖 See [End Values](https://phollyer.github.io/elm-motion/animation/properties/overview/#end-values)
-for details.
 
 
 ## Timing
@@ -140,7 +141,44 @@ Values outside the range are clamped to the nearest boundary.
 
 Similar to `bounds`, but without proportional remapping.
 
-@docs clampWidth, clampHeight, unclampWidth, unclampHeight
+The range stays in effect for future animations
+until you [Unclamp](#unclamp) it:
+
+    motion : Size.Builder { eng | withTiming : () } -> Size.Builder { eng | withTiming : () }
+    motion =
+        Size.duration 600
+            >> Size.easing Easing.easeOutCubic
+
+    update msg model =
+        case msg of
+            GotContainer (Ok { element }) ->
+                let
+                    w =
+                        element.width
+
+                    h =
+                        element.height
+
+                    ( animState, cmd ) =
+                        WAAPI.retarget model.animState <|
+                            Size.for animGroupName
+                                >> Size.clampWidth 0 w
+                                >> Size.clampHeight 0 h
+                                >> Size.build
+                in
+                ( { model | animState = animState }
+                , cmd
+                )
+
+
+### Clamp
+
+@docs clampWidth, clampHeight
+
+
+### Unclamp
+
+@docs unclampWidth, unclampHeight
 
 
 ## Snap
@@ -597,7 +635,7 @@ Pass this inside an engine's `onResize` builder:
             , height = Just { min = 0, max = newHeight }
             }
 
-You can resize multiple anim groups in one call:
+You can set the bounds for multiple anim groups in one call:
 
     Sub.onResize model.animState <|
         Size.bounds "box" boxBounds
@@ -631,7 +669,7 @@ toBuilderRanges ranges =
 
 {-| Keep width within `[min, max]` for this animation group.
 
-The range stays in effect for future `animate` / `retarget` calls
+The range stays in effect for future animations
 until you call [unclampWidth](#unclampWidth). If `min > max`, the values are swapped.
 
 📖 See [Responsive Animations](https://phollyer.github.io/elm-motion/animation/concepts/responsive-animations/)

@@ -8,7 +8,8 @@ module Anim.Property.Rotate exposing
     , delay, duration, speed
     , easing
     , spring
-    , clampX, clampY, clampZ, unclampX, unclampY, unclampZ
+    , clampX, clampY, clampZ
+    , unclampX, unclampY, unclampZ
     , set, setXYZ, setXY, setXZ, setX, setYZ, setY, setZ
     )
 
@@ -17,9 +18,6 @@ module Anim.Property.Rotate exposing
 **Default**: 0 degrees for all axes
 
 When no start value is configured for any axis, the default will be used for that axis.
-
-Any axis that is not defined in the animation configuration will remain unchanged,
-or zero if not set.
 
 
 # Types
@@ -42,32 +40,30 @@ or zero if not set.
 
 ## Start Value
 
-When not set, the default will be used.
-
 📖 See [Start Values](https://phollyer.github.io/elm-motion/animation/properties/overview/#start-values)
 for details.
 
 @docs fromXYZ, fromXY, fromXZ, fromX, fromYZ, fromY, fromZ
 
 
-## End Value (Absolute)
+## End Value
 
 📖 See [End Values](https://phollyer.github.io/elm-motion/animation/properties/overview/#end-values)
 for details.
 
+
+### Absolute
+
 @docs toXYZ, toXY, toXZ, toX, toYZ, toY, toZ
 
 
-## End Value (Relative)
+### Relative
 
 Move by a delta on one or more axes instead of to a fixed rotation. The end
 value is `current + delta` for each axis, where `current` is the configured
 start rotation or the default when no start value has been set on that axis.
 
 @docs byXYZ, byXY, byXZ, byX, byYZ, byY, byZ
-
-📖 See [End Values](https://phollyer.github.io/elm-motion/animation/properties/overview/#end-values)
-for details.
 
 
 ## Timing
@@ -98,10 +94,34 @@ for details.
 
 Keep rotate values on each axis within a range you choose.
 
-📖 See [Responsive Animations](https://phollyer.github.io/elm-motion/animation/concepts/responsive-animations/)
-for patterns and examples.
+Values outside the range are clamped to the nearest boundary.
 
-@docs clampX, clampY, clampZ, unclampX, unclampY, unclampZ
+The range stays in effect for future animations
+until you [Unclamp](#unclamp) it:
+
+    update msg model =
+        case msg of
+            KnobTurned angle ->
+                let
+                    ( animState, cmd ) =
+                        WAAPI.animate model.animState <|
+                            Rotate.for animGroupName
+                                >> Rotate.clampZ -90 90
+                                >> Rotate.build
+                in
+                ( { model | animState = animState }
+                , cmd
+                )
+
+
+### Clamp
+
+@docs clampX, clampY, clampZ
+
+
+### Unclamp
+
+@docs unclampX, unclampY, unclampZ
 
 
 ## Snap
@@ -643,11 +663,8 @@ spring =
 
 {-| Keep the X axis rotation within `[min, max]` for this animation group.
 
-The range stays in effect for future `animate` / `retarget` calls
+The range stays in effect for future animations
 until you call [unclampX](#unclampX). If `min > max`, the values are swapped.
-
-📖 See [Responsive Animations](https://phollyer.github.io/elm-motion/animation/concepts/responsive-animations/)
-for patterns and examples.
 
 -}
 clampX : Float -> Float -> Builder eng -> Builder eng

@@ -10,7 +10,8 @@ module Anim.Property.Translate exposing
     , spring
     , cssUnit, cssUnitX, cssUnitY, cssUnitZ
     , Bounds, AxisBounds, bounds
-    , clampX, clampY, clampZ, unclampX, unclampY, unclampZ
+    , clampX, clampY, clampZ
+    , unclampX, unclampY, unclampZ
     , setXYZ, setXY, setXZ, setX, setYZ, setY, setZ
     )
 
@@ -47,26 +48,26 @@ When no start value is configured for any axis, the default will be used for tha
 for details.
 
 
-## End Value (Absolute)
-
-@docs toXYZ, toXY, toXZ, toX, toYZ, toY, toZ
+## End Value
 
 📖 See [End Values](https://phollyer.github.io/elm-motion/animation/properties/overview/#end-values)
 for details.
 
 
-## End Value (Relative)
+### Absolute
+
+@docs toXYZ, toXY, toXZ, toX, toYZ, toY, toZ
+
+
+### Relative
 
 Move by a delta instead of to a fixed position. The end value is
 `current + delta`, where `current` is the live animated position.
 
-Only available on the Sub and WAAPI engines. Calling them
-from a Transition or Keyframe builder results in a type error.
+Only available on the Sub and WAAPI engines. Using these with
+any other engine results in a type error.
 
 @docs byXYZ, byXY, byXZ, byX, byYZ, byY, byZ
-
-📖 See [End Values](https://phollyer.github.io/elm-motion/animation/properties/overview/#end-values)
-for details.
 
 
 ## Timing
@@ -128,7 +129,39 @@ Values outside the range are clamped to the nearest boundary.
 
 Similar to `bounds`, but without proportional remapping.
 
-@docs clampX, clampY, clampZ, unclampX, unclampY, unclampZ
+The range stays in effect for future animations
+until you [Unclamp](#unclamp) it:
+
+    update msg model =
+        case msg of
+            GotCanvas (Ok { element }) ->
+                let
+                    w =
+                        element.width
+
+                    h =
+                        element.height
+
+                    ( animState, cmd ) =
+                        WAAPI.retarget model.animState <|
+                            Translate.for animGroupName
+                                >> Translate.clampX 0 (w - boxWidth)
+                                >> Translate.clampY 0 (h - boxWidth)
+                                >> Translate.build
+                in
+                ( { model | animState = animState }
+                , cmd
+                )
+
+
+### Clamp
+
+@docs clampX, clampY, clampZ
+
+
+### Unclamp
+
+@docs unclampX, unclampY, unclampZ
 
 
 ## Snap
@@ -192,7 +225,7 @@ initXYZ animationKey x y z =
         >> SB.registerTranslateInitAxes [ CssUnitStore.translateX, CssUnitStore.translateY, CssUnitStore.translateZ ]
 
 
-{-| Set the initial X and Y position. Z is left at its default.
+{-| Set the initial X and Y position.
 -}
 initXY : AnimGroupName -> Float -> Float -> AnimBuilder eng -> AnimBuilder eng
 initXY animationKey x y animBuilder =
@@ -204,7 +237,7 @@ initXY animationKey x y animBuilder =
         |> SB.registerTranslateInitAxes [ CssUnitStore.translateX, CssUnitStore.translateY ]
 
 
-{-| Set the initial X and Z position. Y is left at its default.
+{-| Set the initial X and Z position.
 -}
 initXZ : AnimGroupName -> Float -> Float -> AnimBuilder eng -> AnimBuilder eng
 initXZ animationKey x z animBuilder =
@@ -216,7 +249,7 @@ initXZ animationKey x z animBuilder =
         |> SB.registerTranslateInitAxes [ CssUnitStore.translateX, CssUnitStore.translateZ ]
 
 
-{-| Set the initial X position. Y and Z are left at their defaults.
+{-| Set the initial X position.
 -}
 initX : AnimGroupName -> Float -> AnimBuilder eng -> AnimBuilder eng
 initX animationKey x animBuilder =
@@ -228,7 +261,7 @@ initX animationKey x animBuilder =
         |> SB.registerTranslateInitAxes [ CssUnitStore.translateX ]
 
 
-{-| Set the initial Y and Z position. X is left at its default.
+{-| Set the initial Y and Z position.
 -}
 initYZ : AnimGroupName -> Float -> Float -> AnimBuilder eng -> AnimBuilder eng
 initYZ animationKey y z animBuilder =
@@ -240,7 +273,7 @@ initYZ animationKey y z animBuilder =
         |> SB.registerTranslateInitAxes [ CssUnitStore.translateY, CssUnitStore.translateZ ]
 
 
-{-| Set the initial Y position. X and Z are left at their defaults.
+{-| Set the initial Y position.
 -}
 initY : AnimGroupName -> Float -> AnimBuilder eng -> AnimBuilder eng
 initY animationKey y animBuilder =
@@ -252,7 +285,7 @@ initY animationKey y animBuilder =
         |> SB.registerTranslateInitAxes [ CssUnitStore.translateY ]
 
 
-{-| Set the initial Z position. X and Y are left at their defaults.
+{-| Set the initial Z position.
 -}
 initZ : AnimGroupName -> Float -> AnimBuilder eng -> AnimBuilder eng
 initZ animationKey z animBuilder =
@@ -684,7 +717,7 @@ Pass this inside an engine's `onResize` builder:
             , z = Nothing
             }
 
-You can resize multiple anim groups in one call:
+You can set the bounds for multiple anim groups in one call:
 
     Sub.onResize model.animState <|
         Translate.bounds "box" boxBounds
@@ -709,41 +742,6 @@ bounds name ranges =
 
 
 {-| Keep the X axis translate within `[min, max]` for this animation group.
-
-The range stays in effect for future `animate` / `retarget` calls
-until you call [unclampX](#unclampX). Values outside the range are clamped to the boundary,
-and relative `byX` moves stop at the boundary instead of pushing past it.
-
-Typical use is a resize handler that updates playfield bounds when the canvas changes:
-
-    motion : Translate.Builder { eng | withTiming : () } -> Translate.Builder { eng | withTiming : () }
-    motion =
-        Translate.duration 800
-            >> Translate.easing Easing.easeOutCubic
-
-    update msg model =
-        case msg of
-            GotCanvas (Ok element) ->
-                let
-                    w =
-                        element.element.width
-
-                    h =
-                        element.element.height
-                in
-                ( { model | canvasW = w, canvasH = h }
-                , WAAPI.retarget model.animState <|
-                    Translate.for animGroupName
-                        >> Translate.clampX 0 (w - boxWidth)
-                        >> Translate.clampY 0 (h - boxWidth)
-                        >> Translate.toXY (targetX model.xPos w) (targetY h)
-                        >> motion
-                        >> Translate.build
-                )
-
-📖 See [Responsive Animations](https://phollyer.github.io/elm-motion/animation/concepts/responsive-animations/)
-for more patterns.
-
 -}
 clampX : Float -> Float -> Builder eng -> Builder eng
 clampX =
