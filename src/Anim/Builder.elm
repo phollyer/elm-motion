@@ -83,7 +83,7 @@ The `eng` type parameter is a phantom type used to optionally constrain
 builder functions to specific engines or capabilities.
 
 📖 See [Engine Capabilities](https://phollyer.github.io/elm-motion/animation/concepts/engine-capabilities/)
-in the docs for detailed examples and patterns.
+for details.
 
 -}
 type alias AnimBuilder eng =

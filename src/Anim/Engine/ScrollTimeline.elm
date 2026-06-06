@@ -38,35 +38,35 @@ and the
 
 @docs animate
 
-📖 See [Triggering Animations](https://phollyer.github.io/elm-motion/animation/workflow/trigger/) in the docs.
+📖 See [Triggering Animations](https://phollyer.github.io/elm-motion/animation/workflow/trigger/) for details.
 
 
 # Events
 
 @docs AnimEvent
 
-📖 See [Event Reference](https://phollyer.github.io/elm-motion/animation/workflow/react/#event-reference) in the docs.
+📖 See [Event Reference](https://phollyer.github.io/elm-motion/animation/workflow/react/#event-reference) for details.
 
 
 # Update
 
 @docs AnimMsg, update
 
-📖 See [React](https://phollyer.github.io/elm-motion/animation/workflow/react/) in the docs.
+📖 See [React](https://phollyer.github.io/elm-motion/animation/workflow/react/) for details.
 
 
 # Subscriptions
 
 @docs subscriptions
 
-📖 See [Subscriptions](https://phollyer.github.io/elm-motion/animation/engines/scroll-timeline/#subscriptions) in the docs.
+📖 See [Subscriptions](https://phollyer.github.io/elm-motion/animation/engines/scroll-timeline/#subscriptions) for details.
 
 
 # View
 
 @docs attributes
 
-📖 See [Render](https://phollyer.github.io/elm-motion/animation/workflow/render/) in the docs.
+📖 See [Render](https://phollyer.github.io/elm-motion/animation/workflow/render/) for details.
 
 
 # Axis
@@ -83,7 +83,7 @@ and the
 
 @docs easing
 
-📖 See [Easing](https://phollyer.github.io/elm-motion/animation/concepts/easing/) in the docs.
+📖 See [Easing](https://phollyer.github.io/elm-motion/animation/concepts/easing/) for details.
 
 
 # Spring

@@ -30,7 +30,7 @@ The Scroll engine modules ([Cmd](Scroll-Engine-Cmd), [Task](Scroll-Engine-Task),
             >> Scroll.easing EaseInOut
             >> Scroll.build
 
-📖 See [Scroll Overview](https://phollyer.github.io/elm-motion/engines/scroll/overview/) section in the docs.
+📖 See [Scroll Overview](https://phollyer.github.io/elm-motion/engines/scroll/overview/) for details.
 
 
 # Build
@@ -50,12 +50,16 @@ The Scroll engine modules ([Cmd](Scroll-Engine-Cmd), [Task](Scroll-Engine-Task),
 
 # Element Targeting
 
-@docs toElement
+📖 See [Scroll to Element](https://phollyer.github.io/elm-motion/engines/scroll/overview/#scroll-to-element)
+for details.
 
-📖 See [Scroll to Element](https://phollyer.github.io/elm-motion/engines/scroll/overview/#scroll-to-element) in the docs.
+@docs toElement
 
 
 # Position Targeting
+
+📖 See [Scroll to Position](https://phollyer.github.io/elm-motion/engines/scroll/overview/#scroll-to-position)
+for details.
 
 @docs toCenter
 
@@ -68,8 +72,6 @@ The Scroll engine modules ([Cmd](Scroll-Engine-Cmd), [Task](Scroll-Engine-Task),
 ## Corners
 
 @docs toTopLeft, toTopRight, toBottomLeft, toBottomRight
-
-📖 See [Scroll to Position](https://phollyer.github.io/elm-motion/engines/scroll/overview/#scroll-to-position) in the docs.
 
 
 # Coordinate Targeting
@@ -91,9 +93,10 @@ The Scroll engine modules ([Cmd](Scroll-Engine-Cmd), [Task](Scroll-Engine-Task),
 
 # Offsets
 
-@docs withOffsetXY, withOffsetX, withOffsetY
+📖 See [Offset](https://phollyer.github.io/elm-motion/engines/scroll/overview/#offset)
+for details.
 
-📖 See [Offset](https://phollyer.github.io/elm-motion/engines/scroll/overview/#offset) in the docs.
+@docs withOffsetXY, withOffsetX, withOffsetY
 
 
 # Axis Selection
@@ -102,9 +105,10 @@ Use axis selection when you want to lock one direction and scroll
 in the other. Primarily for scrolling containers whose overflow is
 scrollable in both directions but you only want to scroll in one direction.
 
-@docs onBothAxes, onXAxis, onYAxis
+📖 See [Axis](https://phollyer.github.io/elm-motion/engines/scroll/overview/#axis)
+for details.
 
-📖 See [Axis](https://phollyer.github.io/elm-motion/engines/scroll/overview/#axis) in the docs.
+@docs onBothAxes, onXAxis, onYAxis
 
 -}
 

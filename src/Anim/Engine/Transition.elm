@@ -29,10 +29,11 @@ module Anim.Engine.Transition exposing
 
 This engine is a good fit for hover effects, focus effects, and other simple state changes.
 
-📖 For setup, examples, and behaviour details, see the
+📖 See
 [Transition Engine Documentation](https://phollyer.github.io/elm-motion/animation/engines/transition/)
-and the
-[Engine Overview](https://phollyer.github.io/elm-motion/animation/engines/overview/).
+and
+[Engine Overview](https://phollyer.github.io/elm-motion/animation/engines/overview/)
+for details.
 
 
 # Types
@@ -54,28 +55,28 @@ and the
 
 @docs init
 
-📖 See [Initialize](https://phollyer.github.io/elm-motion/animation/workflow/init/) in the docs.
+📖 See [Initialize](https://phollyer.github.io/elm-motion/animation/workflow/init/) for details.
 
 
 # Trigger
 
 @docs animate, retarget
 
-📖 See [Triggering Animations](https://phollyer.github.io/elm-motion/animation/workflow/trigger/) in the docs.
+📖 See [Triggering Animations](https://phollyer.github.io/elm-motion/animation/workflow/trigger/) for details.
 
 
 # Events
 
 @docs CurrentTargetId, TargetId, AnimEvent
 
-📖 See [Event Reference](https://phollyer.github.io/elm-motion/animation/workflow/react/#event-reference) in the docs.
+📖 See [Event Reference](https://phollyer.github.io/elm-motion/animation/workflow/react/#event-reference) for details.
 
 
 # Update
 
 @docs AnimMsg, update
 
-📖 See [React](https://phollyer.github.io/elm-motion/animation/workflow/react/) in the docs.
+📖 See [React](https://phollyer.github.io/elm-motion/animation/workflow/react/) for details.
 
 
 # View
@@ -84,14 +85,14 @@ To render a transition, add `attributes` to the element you want to animate.
 
 @docs attributes
 
-📖 See [Render](https://phollyer.github.io/elm-motion/animation/workflow/render/) in the docs.
+📖 See [Render](https://phollyer.github.io/elm-motion/animation/workflow/render/) for details.
 
 
 # Event Listeners
 
 @docs events, eventsStopPropagation
 
-📖 See [Event Reference](https://phollyer.github.io/elm-motion/animation/workflow/react/#event-reference) in the docs.
+📖 See [Event Reference](https://phollyer.github.io/elm-motion/animation/workflow/react/#event-reference) for details.
 
 
 # Unit
@@ -103,7 +104,7 @@ To render a transition, add `attributes` to the element you want to animate.
 
 @docs delay, duration, speed
 
-📖 See [Timing](https://phollyer.github.io/elm-motion/animation/concepts/timing/) in the docs.
+📖 See [Timing](https://phollyer.github.io/elm-motion/animation/concepts/timing/) for details.
 
 
 # Easing
@@ -115,26 +116,26 @@ To render a transition, add `attributes` to the element you want to animate.
 
 @docs stop, reset
 
-📖 See [Controlling Animations](https://phollyer.github.io/elm-motion/animation/concepts/controlling-animations/) in the docs.
+📖 See [Controlling Animations](https://phollyer.github.io/elm-motion/animation/concepts/controlling-animations/) for details.
 
 # Discrete Properties
 
 @docs discreteEntry, startingStyleNode, startingStyleNodeFor, discreteExit
 
-📖 See [Discrete Properties](https://phollyer.github.io/elm-motion/animation/concepts/discrete-properties/) in the docs.
+📖 See [Discrete Properties](https://phollyer.github.io/elm-motion/animation/concepts/discrete-properties/) for details.
 
 
 # State Queries
 
 @docs anyRunning, isRunning, allComplete, isComplete, isCancelled
 
-📖 See [State Queries](https://phollyer.github.io/elm-motion/animation/engines/transition/#state-queries) in the docs.
+📖 See [State Queries](https://phollyer.github.io/elm-motion/animation/engines/transition/#state-queries) for details.
 
 
 # Property Queries
 
 📖 See [Property Queries](https://phollyer.github.io/elm-motion/animation/engines/transition/#property-queries) and
-[Properties](https://phollyer.github.io/elm-motion/animation/properties/getting-started/) in the docs.
+[Properties](https://phollyer.github.io/elm-motion/animation/properties/getting-started/) for details.
 
 
 ## Custom Properties

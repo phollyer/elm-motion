@@ -8,10 +8,11 @@ module Scroll.Engine.Task exposing
 
 {-| Use scroll animations as Tasks when you want results or error handling.
 
-📖 For setup, examples, and behaviour details, see the
+📖 See
 [Scroll Task Engine Documentation](https://phollyer.github.io/elm-motion/engines/scroll/task/)
-and the
-[Scroll Overview](https://phollyer.github.io/elm-motion/engines/scroll/overview/).
+and
+[Scroll Overview](https://phollyer.github.io/elm-motion/engines/scroll/overview/)
+for details.
 
 Use the [Builder](Scroll-Builder) module to configure scroll targets.
 
@@ -32,14 +33,14 @@ Use the [Builder](Scroll-Builder) module to configure scroll targets.
 
 @docs delay, duration, speed
 
-📖 See [Timing](https://phollyer.github.io/elm-motion/animation/concepts/timing/) in the docs.
+📖 See [Timing](https://phollyer.github.io/elm-motion/animation/concepts/timing/) for details.
 
 
 # Easing
 
 @docs easing
 
-📖 See [Easing](https://phollyer.github.io/elm-motion/animation/concepts/easing/) in the docs.
+📖 See [Easing](https://phollyer.github.io/elm-motion/animation/concepts/easing/) for details.
 
 -}
 

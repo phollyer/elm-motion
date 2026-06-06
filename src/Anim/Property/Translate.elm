@@ -42,10 +42,10 @@ When no start value is configured for any axis, the default will be used for tha
 
 ## Start Value
 
-@docs fromXYZ, fromXY, fromXZ, fromX, fromYZ, fromY, fromZ
-
 📖 See [Start Values](https://phollyer.github.io/elm-motion/animation/properties/overview/#start-values)
 for details.
+
+@docs fromXYZ, fromXY, fromXZ, fromX, fromYZ, fromY, fromZ
 
 
 ## End Value
