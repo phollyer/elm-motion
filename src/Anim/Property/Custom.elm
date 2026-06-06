@@ -4,10 +4,12 @@ module Anim.Property.Custom exposing
     , for, build
     , from
     , to
+    , by
     , delay, duration, speed
     , easing
     , spring
-    , clamp, unclamp
+    , clamp
+    , unclamp
     , set
     )
 
@@ -49,6 +51,18 @@ for details.
 @docs to
 
 
+## End Value (Relative)
+
+Move by a delta instead of to a fixed value. The end value is
+`current + delta`, where `current` is the configured start value or `0`
+when no start value has been set.
+
+@docs by
+
+📖 See [End Values](https://phollyer.github.io/elm-motion/animation/properties/overview/#end-values)
+for details.
+
+
 ## Timing
 
 📖 See [Animation Timing](https://phollyer.github.io/elm-motion/animation/concepts/timing/)
@@ -79,9 +93,35 @@ Keep property values within a range you choose.
 
 Values outside the range are clamped to the nearest boundary.
 
-The range stays in effect for all future animation calls until you call [unclamp](#unclamp).
+The range stays in effect for future animations
+until you [Unclamp](#unclamp) it:
 
-@docs clamp, unclamp
+    update msg model =
+        case msg of
+            FontSizeChanged size ->
+                let
+                    ( animState, cmd ) =
+                        WAAPI.animate model.animState <|
+                            Custom.for animGroupName (Custom.FontSize Px)
+                                >> Custom.clamp 12 32
+                                >> Custom.build
+                in
+                ( { model | animState = animState }
+                , cmd
+                )
+
+Useful if `to` values are coming from external sources, user input, slider values, external data
+and you need to keep them within a specific range, etc.
+
+
+### Clamp
+
+@docs clamp
+
+
+### Unclamp
+
+@docs unclamp
 
 
 ## Snap
@@ -458,6 +498,38 @@ from =
 to : Float -> Builder eng -> Builder eng
 to =
     Internal.to
+
+
+
+-- ============================================================
+-- BY
+-- ============================================================
+
+
+{-| Move by a delta instead of to a fixed value.
+
+    myAnimation : AnimBuilder eng -> AnimBuilder eng
+    myAnimation =
+        Property.for "box" (Property.BorderRadius Px)
+            >> Property.by 4
+            >> Property.build
+
+The end value is `current + delta`, where `current` is the configured
+start value or `0` when no start value has been set.
+
+Combines with [`clamp`](#clamp) to keep accumulated deltas within
+bounds:
+
+    Property.for "box" (Property.BorderRadius Px)
+        >> Property.clamp 0 24
+        >> Property.by 8
+        -- repeated calls saturate at 24, never overshoot
+        >> Property.build
+
+-}
+by : Float -> Builder eng -> Builder eng
+by =
+    Internal.by
 
 
 

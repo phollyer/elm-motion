@@ -1,6 +1,7 @@
 module Anim.Internal.Property.Custom exposing
     ( Builder
     , build
+    , by
     , clamp
     , delay
     , duration
@@ -142,6 +143,31 @@ to endValue (Builder cssName unit config builder) =
             | end = endValue
             , distance = abs (endValue - startValue)
             , start = Just startValue
+        }
+        builder
+
+
+
+-- ============================================================
+-- BY
+-- ============================================================
+
+
+by : Float -> Builder eng -> Builder eng
+by delta (Builder cssName unit config builder) =
+    let
+        startValue =
+            Maybe.withDefault 0 config.start
+
+        endValue =
+            startValue + delta
+    in
+    Builder cssName
+        unit
+        { config
+            | start = Just startValue
+            , end = endValue
+            , distance = abs (endValue - startValue)
         }
         builder
 

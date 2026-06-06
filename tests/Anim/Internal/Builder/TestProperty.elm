@@ -1690,6 +1690,62 @@ customClampTests =
                        )
                     |> endValue "left"
                     |> Expect.equal (Just 200)
+        , test "by adds the delta to the configured start value" <|
+            \_ ->
+                animBuilder
+                    |> (Custom.for "test" (Custom.Left Unit.Px)
+                            >> Custom.from 100
+                            >> Custom.by 25
+                            >> Custom.build
+                       )
+                    |> endValue "left"
+                    |> Expect.equal (Just 125)
+        , test "by defaults the start to 0 when none is configured" <|
+            \_ ->
+                animBuilder
+                    |> (Custom.for "test" (Custom.Left Unit.Px)
+                            >> Custom.by 30
+                            >> Custom.build
+                       )
+                    |> endValue "left"
+                    |> Expect.equal (Just 30)
+        , test "by accumulates across animate batches via the carried start" <|
+            \_ ->
+                animBuilder
+                    |> (Custom.for "test" (Custom.Left Unit.Px)
+                            >> Custom.from 0
+                            >> Custom.by 10
+                            >> Custom.build
+                       )
+                    |> finishAnimateBatch
+                    |> (Custom.for "test" (Custom.Left Unit.Px)
+                            >> Custom.by 10
+                            >> Custom.build
+                       )
+                    |> endValue "left"
+                    |> Expect.equal (Just 20)
+        , test "clamp pins a by overshoot to the max boundary" <|
+            \_ ->
+                animBuilder
+                    |> (Custom.for "test" (Custom.Left Unit.Px)
+                            >> Custom.from 100
+                            >> Custom.clamp 0 120
+                            >> Custom.by 50
+                            >> Custom.build
+                       )
+                    |> endValue "left"
+                    |> Expect.equal (Just 120)
+        , test "clamp pins a negative by undershoot to the min boundary" <|
+            \_ ->
+                animBuilder
+                    |> (Custom.for "test" (Custom.Left Unit.Px)
+                            >> Custom.from 10
+                            >> Custom.clamp 0 100
+                            >> Custom.by -50
+                            >> Custom.build
+                       )
+                    |> endValue "left"
+                    |> Expect.equal (Just 0)
         ]
 
 
