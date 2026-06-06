@@ -41,7 +41,8 @@ Choose this engine when you want browser-driven animation with Elm state around 
 [WAAPI Engine Documentation](https://phollyer.github.io/elm-motion/animation/engines/waapi/)
 and
 [Engine Overview](https://phollyer.github.io/elm-motion/animation/engines/overview/)
-for details.
+for engine details, and [JS Installation](https://phollyer.github.io/elm-motion/installation/#waapi-javascript)
+for setup instructions.
 
 
 # Ports
@@ -126,6 +127,8 @@ Add `attributes` to the element you want to animate.
 
 
 # Responsive Animations
+
+📖 See [Responsive Animations](https://phollyer.github.io/elm-motion/animation/concepts/responsive-animations/#path-3-measured-pixel-values) for details.
 
 @docs onResize
 
@@ -275,11 +278,7 @@ import Motion.Spring exposing (Spring)
 
 Keep this in your model.
 
-The `msg` type parameter is your `Msg` type. The engine uses it to
-type the `Cmd msg` values it sends to JavaScript through your command
-port, and to decode messages coming from JavaScript back into your
-`Msg` type. This allows messages to flow freely without needing to
-reach for `Cmd.map` or `Sub.map`.
+The `msg` type parameter is your `Msg` type.
 
     type alias Model =
         { animState : WAAPI.AnimState Msg }
@@ -361,33 +360,7 @@ animate =
     Internal.animate
 
 
-{-| Change the targeted properties instantly to their new values. If currently animating,
-stop.
-
-Only the properties included in the new builder are affected, any other properties
-in the group will be left untouched.
-
-For multi-dimensional properties (`Translate`, `Rotate`, `Scale`, `Skew`,
-`PerspectiveOrigin`, `Size`), only the dimensions mentioned in the builder snap —
-the other dimensions continue along their original curve toward their original end value.
-
-    import Anim.Engine.WAAPI as WAAPI
-
-    let
-        ( animState, animCmd ) =
-            WAAPI.retarget model.animState retargetAnim
-    in
-    ( { model | animState = animState }, animCmd )
-
--}
-retarget : AnimState msg -> (EngineBuilder -> EngineBuilder) -> ( AnimState msg, Cmd msg )
-retarget =
-    Internal.retarget
-
-
 {-| Execute a fire-and-forget animation without state tracking.
-
-The animation runs entirely in the browser via the Web Animations API.
 
     import Anim.Engine.WAAPI as WAAPI
     import Json.Encode as Encode
@@ -396,12 +369,40 @@ The animation runs entirely in the browser via the Web Animations API.
 
     WAAPI.fireAndForget motionCmd entryAnim
 
-For state management and continuity, use [animate](#animate) instead.
+Useful if you don't need to track the animation state in your model or handle events
+from the engine, and just want to trigger an animation with a one-off command.
 
 -}
 fireAndForget : (Encode.Value -> Cmd msg) -> (EngineBuilder -> EngineBuilder) -> Cmd msg
 fireAndForget =
     Internal.fireAndForget
+
+
+{-| Change the targeted properties instantly to their new values. If currently animating,
+stop.
+
+This is a convenience function for immediately snapping properties or axes to new values
+without needing to construct a full animation builder with `animate`.
+
+Just target the properties or axes you want to change, and any properties or axes you
+don't mention will be left untouched - if mid-flight, they will continue.
+
+    import Anim.Engine.WAAPI as WAAPI
+    import Anim.Property.Translate as Translate
+
+    let
+        ( animState, animCmd ) =
+            WAAPI.retarget model.animState <|
+                Translate.for "animGroupName"
+                    >> Translate.toY 0
+                    >> Translate.build
+    in
+    ( { model | animState = animState }, animCmd )
+
+-}
+retarget : AnimState msg -> (EngineBuilder -> EngineBuilder) -> ( AnimState msg, Cmd msg )
+retarget =
+    Internal.retarget
 
 
 
@@ -620,12 +621,10 @@ attributes =
 
 
 {-| A resize handler that updates animation configurations in response to a
-layout change.
+layout changes.
 
-Compose the `bounds` setters from property modules that support resize
-(currently `Translate`, `Scale`, `PerspectiveOrigin`). Each entry
-retargets one property of one anim group; other properties and other
-groups are left alone.
+Pair this with the `bounds` functions in property modules in order to remap the
+properties to new element dimensions or positions on the fly.
 
 Example resize handler targeting two groups in one call:
 
@@ -640,10 +639,7 @@ Example resize handler targeting two groups in one call:
                     Translate.bounds "box" translateBounds
                         >> Scale.bounds "cube" scaleBounds
         in
-        ( { model
-            | trackPx = element.element.width
-            , animState = animState
-          }
+        ( { model | animState = animState }
         , animCmd
         )
 
@@ -663,7 +659,7 @@ onResize =
 
     notificationAttentionLoop : AnimBuilder eng -> AnimBuilder eng
     notificationAttentionLoop =
-        iterations 3
+        WAAPI.iterations 3
             >> pulseBadge
             >> nudgeBellIcon
 
@@ -698,8 +694,8 @@ loopForever =
 
     floatingCardLoop : AnimBuilder eng -> AnimBuilder eng
     floatingCardLoop =
-        iterations 4
-            >> alternate
+        WAAPI.iterations 4
+            >> WAAPI.alternate
             >> liftCard
             >> glowCardBorder
 

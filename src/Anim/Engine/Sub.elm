@@ -293,19 +293,14 @@ type alias EngineBuilder =
 -- ============================================================
 
 
-{-| Initialize animation state with optional property initializers.
+{-| Initialize animation state with a list of property initializers.
 
     import Anim.Engine.Sub as Sub
     import Anim.Property.Opacity as Opacity
-    import Anim.Property.Translate as Translate
 
-    -- Empty state
-    Sub.init []
-
-    -- With initial properties
     Sub.init
-        [ Translate.initXY "animGroupName" 100 50
-        , Opacity.init "animGroupName" 0.5
+        [ Opacity.init "animGroupName" 0.5
+        , ... -- other property initializers
         ]
 
 -}
@@ -334,16 +329,14 @@ animate =
     Internal.animate
 
 
-{-| Snap the properties in the builder to their new values. If
-currently animating, stop. Only the properties included in the builder
-are affected, any other properties in the group will be left untouched.
+{-| Change the targeted properties instantly to their new values. If currently animating,
+stop.
 
-For multi-dimensional properties like `Translate`, `Scale` and `Size`, only the
-dimensions mentioned in the builder snap — the other dimensions continue along
-their original curve toward their original end value.
+This is a convenience function for immediately snapping properties or axes to new values
+without needing to construct a full animation builder with `animate`.
 
-This is useful if something changed in your app that invalidates the current state
-of an animation and you need to change all or part of it immediately.
+Just target the properties or axes you want to change, and any properties or axes you
+don't mention will be left untouched - if mid-flight, they will continue.
 
     import Anim.Engine.Sub as Sub
     import Anim.Property.Translate as Translate
@@ -352,7 +345,7 @@ of an animation and you need to change all or part of it immediately.
         | animState =
             Sub.retarget model.animState <|
                 Translate.for "animGroupName"
-                    >> Translate.toX 200 -- snaps to x = 200
+                    >> Translate.toY 0
                     >> Translate.build
     }
 

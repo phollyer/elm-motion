@@ -63,17 +63,13 @@ endXY =
 -- ANIMATION
 
 
-motion : Translate.Builder { eng | withTiming : () } -> Translate.Builder { eng | withTiming : () }
-motion =
-    Translate.duration 5000
-        >> Translate.easing Linear
-
 
 animateDiagonal : Keyframe.EngineBuilder -> Keyframe.EngineBuilder
 animateDiagonal =
     Translate.for animGroup
         >> Translate.toXY endXY endXY
-        >> motion
+        >> Translate.duration 5000
+        >> Translate.easing Linear
         >> Translate.build
 
 
@@ -81,7 +77,6 @@ retargetYToTop : Keyframe.EngineBuilder -> Keyframe.EngineBuilder
 retargetYToTop =
     Translate.for animGroup
         >> Translate.toY 0
-        >> motion
         >> Translate.build
 
 

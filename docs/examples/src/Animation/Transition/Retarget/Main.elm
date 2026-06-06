@@ -62,18 +62,15 @@ init =
 
 -- ANIMATION
 
-
-motion : Translate.Builder { eng | withTiming : () } -> Translate.Builder { eng | withTiming : () }
-motion =
-    Translate.duration 5000
-        >> Translate.easing Linear
-
+    
 
 animateDiagonal : Transition.EngineBuilder -> Transition.EngineBuilder
 animateDiagonal =
     Translate.for animGroup
         >> Translate.toXY endXY endXY
-        >> motion
+        >> Translate.duration 5000
+        >> Translate.easing Linear
+
         >> Translate.build
 
 
@@ -81,7 +78,6 @@ retargetYToTop : Transition.EngineBuilder -> Transition.EngineBuilder
 retargetYToTop =
     Translate.for animGroup
         >> Translate.toY 0
-        >> motion
         >> Translate.build
 
 

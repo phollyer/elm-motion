@@ -241,19 +241,14 @@ type alias EngineBuilder =
 -- ============================================================
 
 
-{-| Initialize animation state with optional property initializers.
+{-| Initialize animation state with a list of property initializers.
 
     import Anim.Engine.Transition as Transition
     import Anim.Property.Opacity as Opacity
-    import Anim.Property.Translate as Translate
 
-    -- Empty state
-    Transition.init []
-
-    -- With initial properties
     Transition.init
-        [ Translate.initXY "animGroupName" 100 50
-        , Opacity.init "animGroupName" 0.5
+        [ Opacity.init "animGroupName" 0.5
+        , ... -- other property initializers
         ]
 
 -}
@@ -282,9 +277,25 @@ animate =
     Internal.animate
 
 
-{-| Update the target and snap to the new end values.
+{-| Change the targeted properties instantly to their new values. If currently animating,
+stop.
 
-Use this when you want to move an animation to a new state without animating.
+This is a convenience function for immediately snapping properties or axes to new values
+without needing to construct a full animation builder with `animate`.
+
+Just target the properties or axes you want to change. Any other properties or axes on
+the group will snap to their targeted end values if mid-flight.
+
+    import Anim.Engine.Transition as Transition
+    import Anim.Property.Translate as Translate
+
+    { model
+        | animState =
+            Transition.retarget model.animState <|
+                Translate.for "animGroupName"
+                    >> Translate.toY 0
+                    >> Translate.build
+    }
 
 -}
 retarget : AnimState -> (EngineBuilder -> EngineBuilder) -> AnimState
