@@ -57,30 +57,30 @@ for details.
 
 # Initialize
 
-@docs init
-
 📖 See [Initialize](https://phollyer.github.io/elm-motion/animation/workflow/init/) for details.
+
+@docs init
 
 
 # Trigger
 
-@docs animate, retarget
-
 📖 See [Triggering Animations](https://phollyer.github.io/elm-motion/animation/workflow/trigger/) for details.
+
+@docs animate, retarget
 
 
 # Events
 
-@docs CurrentTargetId, TargetId, AnimEvent
-
 📖 See [Event Reference](https://phollyer.github.io/elm-motion/animation/workflow/react/#event-reference) for details.
+
+@docs CurrentTargetId, TargetId, AnimEvent
 
 
 # Update
 
-@docs AnimMsg, update
-
 📖 See [React](https://phollyer.github.io/elm-motion/animation/workflow/react/) for details.
+
+@docs AnimMsg, update
 
 
 # View
@@ -99,9 +99,9 @@ for details.
 
 # Event Listeners
 
-@docs events, eventsStopPropagation
-
 📖 See [Events](https://phollyer.github.io/elm-motion/animation/engines/keyframes/#events) for details.
+
+@docs events, eventsStopPropagation
 
 
 # Unit
@@ -116,16 +116,16 @@ for details.
 
 # Timing
 
-@docs delay, duration, speed
-
 📖 See [Timing](https://phollyer.github.io/elm-motion/animation/concepts/timing/) for details.
+
+@docs delay, duration, speed
 
 
 # Easing
 
-@docs easing
-
 📖 See [Easing](https://phollyer.github.io/elm-motion/animation/concepts/easing/) for details.
+
+@docs easing
 
 
 # Spring
@@ -135,30 +135,30 @@ for details.
 
 # Animation Control
 
-@docs stop, reset, restart, pause, resume
-
 📖 See [Controlling Animations](https://phollyer.github.io/elm-motion/animation/concepts/controlling-animations/) for details.
+
+@docs stop, reset, restart, pause, resume
 
 
 # Discrete Properties
 
-@docs discreteEntry, discreteExit
-
 📖 See [Discrete Properties](https://phollyer.github.io/elm-motion/animation/concepts/discrete-properties/) for details.
+
+@docs discreteEntry, discreteExit
 
 
 # Transform Order
 
-@docs transformOrder
-
 📖 See [Transform Ordering](https://phollyer.github.io/elm-motion/animation/concepts/transform-order/) for details.
+
+@docs transformOrder
 
 
 # State Queries
 
-@docs anyRunning, isRunning, allComplete, isComplete, isCancelled
-
 📖 See [State Queries](https://phollyer.github.io/elm-motion/animation/engines/keyframes/#state-queries) for details.
+
+@docs anyRunning, isRunning, allComplete, isComplete, isCancelled
 
 
 # Property Queries

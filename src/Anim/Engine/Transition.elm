@@ -53,46 +53,44 @@ for details.
 
 # Initialize
 
-@docs init
-
 📖 See [Initialize](https://phollyer.github.io/elm-motion/animation/workflow/init/) for details.
+
+@docs init
 
 
 # Trigger
 
-@docs animate, retarget
-
 📖 See [Triggering Animations](https://phollyer.github.io/elm-motion/animation/workflow/trigger/) for details.
+
+@docs animate, retarget
 
 
 # Events
 
-@docs CurrentTargetId, TargetId, AnimEvent
-
 📖 See [Event Reference](https://phollyer.github.io/elm-motion/animation/workflow/react/#event-reference) for details.
+
+@docs CurrentTargetId, TargetId, AnimEvent
 
 
 # Update
 
-@docs AnimMsg, update
-
 📖 See [React](https://phollyer.github.io/elm-motion/animation/workflow/react/) for details.
+
+@docs AnimMsg, update
 
 
 # View
 
 To render a transition, add `attributes` to the element you want to animate.
 
-@docs attributes
-
 📖 See [Render](https://phollyer.github.io/elm-motion/animation/workflow/render/) for details.
+
+@docs attributes
 
 
 # Event Listeners
 
 @docs events, eventsStopPropagation
-
-📖 See [Event Reference](https://phollyer.github.io/elm-motion/animation/workflow/react/#event-reference) for details.
 
 
 # Unit
@@ -102,9 +100,9 @@ To render a transition, add `attributes` to the element you want to animate.
 
 # Timing
 
-@docs delay, duration, speed
-
 📖 See [Timing](https://phollyer.github.io/elm-motion/animation/concepts/timing/) for details.
+
+@docs delay, duration, speed
 
 
 # Easing
@@ -114,22 +112,23 @@ To render a transition, add `attributes` to the element you want to animate.
 
 # Animation Control
 
-@docs stop, reset
-
 📖 See [Controlling Animations](https://phollyer.github.io/elm-motion/animation/concepts/controlling-animations/) for details.
 
-# Discrete Properties
+@docs stop, reset
 
-@docs discreteEntry, startingStyleNode, startingStyleNodeFor, discreteExit
+
+# Discrete Properties
 
 📖 See [Discrete Properties](https://phollyer.github.io/elm-motion/animation/concepts/discrete-properties/) for details.
+
+@docs discreteEntry, startingStyleNode, startingStyleNodeFor, discreteExit
 
 
 # State Queries
 
-@docs anyRunning, isRunning, allComplete, isComplete, isCancelled
-
 📖 See [State Queries](https://phollyer.github.io/elm-motion/animation/engines/transition/#state-queries) for details.
+
+@docs anyRunning, isRunning, allComplete, isComplete, isCancelled
 
 
 # Property Queries

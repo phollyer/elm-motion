@@ -97,32 +97,32 @@ To use this engine, you need to make your module a port module and set up two po
 
 ## Progress Events
 
-@docs withProgressEvents, setUpdateThrottle
-
 📖 See [Event Reference](https://phollyer.github.io/elm-motion/animation/workflow/react/#event-reference) for details.
+
+@docs withProgressEvents, setUpdateThrottle
 
 
 # Update
 
-@docs AnimMsg, update
-
 📖 See [React](https://phollyer.github.io/elm-motion/animation/workflow/react/) for details.
+
+@docs AnimMsg, update
 
 
 # Subscriptions
 
-@docs subscriptions
-
 📖 See [Subscriptions](https://phollyer.github.io/elm-motion/animation/engines/waapi/#subscriptions) for details.
+
+@docs subscriptions
 
 
 # View
 
 Add `attributes` to the element you want to animate.
 
-@docs attributes
-
 📖 See [Render](https://phollyer.github.io/elm-motion/animation/workflow/render/) for details.
+
+@docs attributes
 
 
 # Responsive Animations
@@ -137,16 +137,16 @@ Add `attributes` to the element you want to animate.
 
 # Timing
 
-@docs delay, duration, speed
-
 📖 See [Timing](https://phollyer.github.io/elm-motion/animation/concepts/timing/) for details.
+
+@docs delay, duration, speed
 
 
 # Easing
 
-@docs easing
-
 📖 See [Easing](https://phollyer.github.io/elm-motion/animation/concepts/easing/) for details.
+
+@docs easing
 
 
 # Spring
@@ -161,46 +161,44 @@ Add `attributes` to the element you want to animate.
 
 # Animation Control
 
-@docs stop, reset, restart, pause, resume
-
 📖 See [Controlling Animations](https://phollyer.github.io/elm-motion/animation/concepts/controlling-animations/) for details.
+
+@docs stop, reset, restart, pause, resume
 
 
 # Discrete Properties
 
-@docs discreteEntry, discreteExit
-
 📖 See [Discrete Properties](https://phollyer.github.io/elm-motion/animation/concepts/discrete-properties/) for details.
+
+@docs discreteEntry, discreteExit
 
 
 # Transform Order
 
-@docs transformOrder
-
 📖 See [Transform Ordering](https://phollyer.github.io/elm-motion/animation/concepts/transform-order/) for details.
+
+@docs transformOrder
 
 
 # Freeze
 
+📖 See [Interrupting Animations](https://phollyer.github.io/elm-motion/animation/concepts/interrupting-animations/) for details.
+
 @docs FreezeProperty, translate, rotate, scale, skew
 
 @docs freezeX, freezeY, freezeZ, freezeXY, freezeXZ, freezeYZ, freezeXYZ
-
-📖 See [Interrupting Animations](https://phollyer.github.io/elm-motion/animation/concepts/interrupting-animations/) for details.
 
 
 # Unfreeze
 
 @docs unfreezeX, unfreezeY, unfreezeZ, unfreezeXY, unfreezeXZ, unfreezeYZ, unfreezeXYZ
 
-📖 See [Interrupting Animations](https://phollyer.github.io/elm-motion/animation/concepts/interrupting-animations/) for details.
-
 
 # State Queries
 
-@docs anyRunning, isRunning, allComplete, isComplete, getProgress
-
 📖 See [State Queries](https://phollyer.github.io/elm-motion/animation/engines/waapi/#state-queries) for details.
+
+@docs anyRunning, isRunning, allComplete, isComplete, getProgress
 
 
 # Property Queries

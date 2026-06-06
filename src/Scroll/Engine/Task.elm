@@ -31,16 +31,16 @@ Use the [Builder](Scroll-Builder) module to configure scroll targets.
 
 # Timing
 
-@docs delay, duration, speed
-
 📖 See [Timing](https://phollyer.github.io/elm-motion/animation/concepts/timing/) for details.
+
+@docs delay, duration, speed
 
 
 # Easing
 
-@docs easing
-
 📖 See [Easing](https://phollyer.github.io/elm-motion/animation/concepts/easing/) for details.
+
+@docs easing
 
 -}
 
