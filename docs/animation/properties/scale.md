@@ -65,7 +65,7 @@ See the [Properties Overview](overview.md) page for the shared usage patterns.
 | `fromY` | `Float -> Builder -> Builder` | Starting Y-axis scale |
 | `fromZ` | `Float -> Builder -> Builder` | Starting Z-axis scale |
 
-### End Value
+### End Value (Absolute)
 
 | Function | Signature | Description |
 | -------- | --------- | ----------- |
@@ -77,6 +77,18 @@ See the [Properties Overview](overview.md) page for the shared usage patterns.
 | `toYZ` | `Float -> Float -> Builder -> Builder` | Ending Y and Z scales |
 | `toY` | `Float -> Builder -> Builder` | Ending Y-axis scale |
 | `toZ` | `Float -> Builder -> Builder` | Ending Z-axis scale |
+
+### End Value (Relative)
+
+| Function | Signature | Description |
+| -------- | --------- | ----------- |
+| `byXYZ` | `Float -> Float -> Float -> Builder -> Builder` | Scale by X, Y, and Z amounts |
+| `byXY` | `Float -> Float -> Builder -> Builder` | Scale by X and Y amounts |
+| `byXZ` | `Float -> Float -> Builder -> Builder` | Scale by X and Z amounts |
+| `byX` | `Float -> Builder -> Builder` | Scale by X amount |
+| `byYZ` | `Float -> Float -> Builder -> Builder` | Scale by Y and Z amounts |
+| `byY` | `Float -> Builder -> Builder` | Scale by Y amount |
+| `byZ` | `Float -> Builder -> Builder` | Scale by Z amount |
 
 ### Timing
 

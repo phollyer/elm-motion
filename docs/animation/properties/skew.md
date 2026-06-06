@@ -55,13 +55,21 @@ See the [Properties Overview](overview.md) page for the shared usage patterns.
 | `fromX` | `Float -> Builder -> Builder` | Starting X skew (degrees) |
 | `fromY` | `Float -> Builder -> Builder` | Starting Y skew (degrees) |
 
-### End Value
+### End Value (Absolute)
 
 | Function | Signature | Description |
 | -------- | --------- | ----------- |
 | `toXY` | `Float -> Float -> Builder -> Builder` | Ending X and Y skew (degrees) |
 | `toX` | `Float -> Builder -> Builder` | Ending X skew (degrees) |
 | `toY` | `Float -> Builder -> Builder` | Ending Y skew (degrees) |
+
+### End Value (Relative)
+
+| Function | Signature | Description |
+| -------- | --------- | ----------- |
+| `byXY` | `Float -> Float -> Builder -> Builder` | Skew by X and Y amounts (degrees) |
+| `byX` | `Float -> Builder -> Builder` | Skew by X amount (degrees) |
+| `byY` | `Float -> Builder -> Builder` | Skew by Y amount (degrees) |
 
 ### Timing
 

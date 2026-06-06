@@ -59,13 +59,21 @@ See the [Properties Overview](overview.md) page for the shared usage patterns.
 | `fromH` | `Float -> Builder -> Builder` | Starting height (pixels) |
 | `fromW` | `Float -> Builder -> Builder` | Starting width (pixels) |
 
-### End Value
+### End Value (Absolute)
 
 | Function | Signature | Description |
 | -------- | --------- | ----------- |
 | `toHW` | `Float -> Float -> Builder -> Builder` | Ending height and width |
 | `toH` | `Float -> Builder -> Builder` | Ending height (pixels) |
 | `toW` | `Float -> Builder -> Builder` | Ending width (pixels) |
+
+### End Value (Relative)
+
+| Function | Signature | Description |
+| -------- | --------- | ----------- |
+| `byHW` | `Float -> Float -> Builder -> Builder` | Resize by height and width amounts |
+| `byH` | `Float -> Builder -> Builder` | Resize by height amount (pixels) |
+| `byW` | `Float -> Builder -> Builder` | Resize by width amount (pixels) |
 
 ### Timing
 
