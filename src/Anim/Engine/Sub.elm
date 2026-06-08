@@ -348,7 +348,10 @@ for =
     import Anim.Engine.Sub as Sub
 
     { model
-        | animState = Sub.animate model.animState entryAnim
+        | animState =
+            Sub.animate model.animState <|
+                Sub.for "animGroupName"
+                    >> entryAnim
     }
 
 -}

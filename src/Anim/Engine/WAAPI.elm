@@ -462,9 +462,12 @@ type AnimEvent
 
 {-| Opt in to per-frame `Progress` events.
 
-Off by default. You don't always need per-frame progress updates from the Engine,
-and they generate a lot of `Msg`s in your `update` function. If you do need them,
-you can turn them on with this setting.
+Off by default.
+
+Progress events can create a lot of noise in your update loop,
+especially when debugging the `Msg` flow in your app. Therefore
+they are suppressed by default and you need to explicitly opt in
+to receive them.
 
 This is a precedence function, so it can operate as a global setting for all
 groups in the builder chain, or you can set it on a per-group basis which
@@ -474,10 +477,6 @@ overrides any global setting for that group.
         >> WAAPI.for "box"
         >> WAAPI.withProgressEvents False -- overrides global for this group
         >> ... -- other builders
-
-Useful for debugging or driving progress UI directly from events. Leave it
-off for production unless you need it — `getProgress` gives the same
-information on demand without flooding your `update` with frame-rate events.
 
 -}
 withProgressEvents : Bool -> EngineBuilder -> EngineBuilder

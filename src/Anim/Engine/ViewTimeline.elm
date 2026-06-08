@@ -3,6 +3,7 @@ module Anim.Engine.ViewTimeline exposing
     , for
     , animate
     , AnimEvent(..)
+    , withProgressEvents
     , AnimMsg, update
     , subscriptions
     , attributes
@@ -14,7 +15,6 @@ module Anim.Engine.ViewTimeline exposing
     , cssUnit, cssUnitX, cssUnitY, cssUnitZ, cssUnitWidth, cssUnitHeight
     , discreteEntry, discreteExit
     , transformOrder
-    , withProgressEvents
     )
 
 {-| Use an element's position in the viewport to drive animation progress.
@@ -50,6 +50,11 @@ and the
 📖 See [Event Reference](https://phollyer.github.io/elm-motion/animation/workflow/react/#event-reference) for details.
 
 @docs AnimEvent
+
+
+## Progress Events
+
+@docs withProgressEvents
 
 
 # Update
@@ -122,11 +127,6 @@ for that group.
 # Transform Order
 
 @docs transformOrder
-
-
-# Progress Events
-
-@docs withProgressEvents
 
 -}
 
@@ -227,6 +227,36 @@ type AnimEvent
     | Iteration AnimGroupName Int
     | Progress AnimGroupName Float
     | AnimError String
+
+
+
+-- ============================================================
+-- PROGRESS EVENTS
+-- ============================================================
+
+
+{-| Opt in to per-frame `Progress` events.
+
+Off by default.
+
+Progress events can create a lot of noise in your update loop,
+especially when debugging the `Msg` flow in your app. Therefore
+they are suppressed by default and you need to explicitly opt in
+to receive them.
+
+This is a precedence function, so it can operate as a global setting for all
+groups in the builder chain, or you can set it on a per-group basis which
+overrides any global setting for that group.
+
+    ViewTimeline.withProgressEvents True -- global setting
+        >> ViewTimeline.for "box"
+        >> ViewTimeline.withProgressEvents False -- overrides global for this group
+        >> ... -- other builders
+
+-}
+withProgressEvents : Bool -> EngineBuilder -> EngineBuilder
+withProgressEvents =
+    Internal.withProgressEvents
 
 
 
@@ -694,38 +724,3 @@ discreteEntry =
 discreteExit : String -> String -> String -> EngineBuilder -> EngineBuilder
 discreteExit =
     Internal.discreteExit
-
-
-
--- ============================================================
--- PROGRESS EVENTS
--- ============================================================
-
-
-{-| Opt in to per-frame `Progress` events while the element is in range.
-
-Off by default — view-driven animations render entirely on the GPU and do not
-need progress messages to draw. Turn this on when you want to react to the
-element's position in the viewport from Elm (for example, to trigger another
-animation, mark a milestone, or update a progress badge).
-
-This is a precedence function, so it can operate as a global setting for all
-groups in the builder chain, or you can set it on a per-group basis which
-overrides any global setting for that group.
-
-    ViewTimeline.animate motionCmd <|
-        ViewTimeline.withProgressEvents True -- global setting
-            >> ViewTimeline.for "hero-card"
-            >> ViewTimeline.withProgressEvents False -- overrides global for this group
-            >> Opacity.begin
-            >> Opacity.from 0
-            >> Opacity.to 1
-            >> Opacity.end
-
-While enabled, the engine emits one `Progress animGroup t` event per animation
-frame (typically ~60/sec) for every group that is currently in range.
-
--}
-withProgressEvents : Bool -> EngineBuilder -> EngineBuilder
-withProgressEvents =
-    Internal.withProgressEvents
