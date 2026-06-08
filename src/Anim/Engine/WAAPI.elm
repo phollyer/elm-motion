@@ -203,11 +203,11 @@ for that group.
 Freeze an axis to hold it in place while other axes or properties animate.
 
 This is a precedence function, so it can operate as a global setting for all groups in the builder chain, or you
-can set it on a per-group basis which overrides any global setting for that group.
+can add a per-group freeze on top of the inherited global frozen axes for that group.
 
-    WAAPI.freezeX -- global setting
+    WAAPI.freezeX [ WAAPI.translate ] -- global setting
         >> WAAPI.for "box"
-        >> WAAPI.freezeY -- overrides global for this group
+        >> WAAPI.freezeX [ WAAPI.rotate ] -- adds to the inherited global freeze for this group
         >> ... -- other builders
 
 📖 See [Interrupting Animations](https://phollyer.github.io/elm-motion/animation/concepts/interrupting-animations/) for details.
@@ -222,11 +222,11 @@ can set it on a per-group basis which overrides any global setting for that grou
 Unfreeze an axis to allow it to animate.
 
 This is a precedence function, so it can operate as a global setting for all groups in the builder chain, or you
-can set it on a per-group basis which overrides any global setting for that group.
+can remove axes on a per-group basis from the inherited global frozen axes for that group.
 
-    WAAPI.unfreezeX -- global setting
+    WAAPI.freezeX [ WAAPI.translate ] -- global setting
         >> WAAPI.for "box"
-        >> WAAPI.unfreezeY -- overrides global for this group
+        >> WAAPI.unfreezeX [ WAAPI.translate ] -- removes the inherited global freeze for this group
         >> ... -- other builders
 
 @docs unfreezeX, unfreezeY, unfreezeZ, unfreezeXY, unfreezeXZ, unfreezeYZ, unfreezeXYZ
