@@ -6,7 +6,6 @@ module Anim.Internal.Engine.WAAPI.Encoder exposing
     , encodeRestart
     , encodeRetarget
     , encodeScroll
-    , encodeSetProgressThrottle
     , encodeSnap
     , encodeView
     )
@@ -175,6 +174,7 @@ encodeAnimateLike typeTag animGroups touchedAxes processed =
                             Nothing
                             Nothing
                             Nothing
+                            config.updateThrottleMs
                             config.frozenAxes
                             config.discreteEntryProperties
                             config.discreteExitProperties
@@ -253,6 +253,7 @@ encodeRestart iterationsConfig directionConfig animGroup configGroup =
                             Nothing
                             Nothing
                             Nothing
+                            config.updateThrottleMs
                             config.frozenAxes
                             config.discreteEntryProperties
                             config.discreteExitProperties
@@ -297,6 +298,7 @@ encodeProcessedData data =
                             Nothing
                             Nothing
                             Nothing
+                            config.updateThrottleMs
                             config.frozenAxes
                             config.discreteEntryProperties
                             config.discreteExitProperties
@@ -370,18 +372,6 @@ encodeCommandWithProperties commandType animGroupName maybeProperties =
                     []
     in
     Encode.object (baseFields ++ propertyField)
-
-
-{-| Encode a `setUpdateThrottle` command. Global JS-side setting that caps
-the rate of per-frame `propertyUpdate` events sent back to Elm. Not tied to
-any animGroup. Pass 0 to disable throttling.
--}
-encodeSetProgressThrottle : Int -> Encode.Value
-encodeSetProgressThrottle intervalMs =
-    Encode.object
-        [ ( "type", Encode.string "setUpdateThrottle" )
-        , ( "intervalMs", Encode.int intervalMs )
-        ]
 
 
 
@@ -459,6 +449,7 @@ encodeProcessedAnimGroupConfig :
     -> Maybe String
     -> Maybe String
     -> Maybe Bool
+    -> Int
     -> Dict.Dict String (List String)
     -> Dict.Dict String String
     -> Dict.Dict String Builder.DiscreteExitProperty
@@ -467,7 +458,7 @@ encodeProcessedAnimGroupConfig :
     -> Builder.AnimationDirection
     -> List Builder.ProcessedPropertyConfig
     -> Encode.Value
-encodeProcessedAnimGroupConfig animGroupName targetId propertyState transformOrder_ transformBaseline viewRangeStart viewRangeEnd emitProgress_ frozenAxes discreteEntryProperties discreteExitProperties touchedAxes iterations_ direction_ propertyConfigs =
+encodeProcessedAnimGroupConfig animGroupName targetId propertyState transformOrder_ transformBaseline viewRangeStart viewRangeEnd emitProgress_ updateThrottleMs frozenAxes discreteEntryProperties discreteExitProperties touchedAxes iterations_ direction_ propertyConfigs =
     let
         baseFields =
             [ ( "properties", Encode.list (encodeProcessedPropertyConfig propertyState frozenAxes touchedAxes) propertyConfigs )
@@ -498,6 +489,13 @@ encodeProcessedAnimGroupConfig animGroupName targetId propertyState transformOrd
                 |> Maybe.map (\enabled -> [ ( "emitProgress", Encode.bool enabled ) ])
                 |> Maybe.withDefault []
 
+        updateThrottleField =
+            if updateThrottleMs > 0 then
+                [ ( "throttleIntervalMs", Encode.int updateThrottleMs ) ]
+
+            else
+                []
+
         discreteEntryField =
             encodeDiscreteEntryFields discreteEntryProperties
 
@@ -512,7 +510,7 @@ encodeProcessedAnimGroupConfig animGroupName targetId propertyState transformOrd
                 value ->
                     [ ( "willChange", Encode.string value ) ]
     in
-    Encode.object (baseFields ++ orderField ++ baselineField ++ viewRangeFields ++ emitProgressField ++ discreteEntryField ++ discreteExitField ++ willChangeField)
+    Encode.object (baseFields ++ orderField ++ baselineField ++ viewRangeFields ++ emitProgressField ++ updateThrottleField ++ discreteEntryField ++ discreteExitField ++ willChangeField)
 
 
 {-| Encode the Elm-side transform snapshot baseline (init values plus any
@@ -1097,6 +1095,7 @@ encodeScroll builder =
                             config.viewRangeStart
                             config.viewRangeEnd
                             (Just emitProgress)
+                            config.updateThrottleMs
                             config.frozenAxes
                             config.discreteEntryProperties
                             config.discreteExitProperties
@@ -1184,6 +1183,7 @@ encodeView builder =
                             (Builder.getViewRangeStartFor animGroupName builder)
                             (Builder.getViewRangeEndFor animGroupName builder)
                             (Just emitProgress)
+                            config.updateThrottleMs
                             config.frozenAxes
                             config.discreteEntryProperties
                             config.discreteExitProperties

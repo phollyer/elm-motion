@@ -591,7 +591,10 @@ export function processElementAnimation(animGroup, elementConfig, globalOptions 
         nextPropertyIndex: 0,
         lastIteration: 0,
         propertyIterations: [],
-        propertyConfigs: []
+        propertyConfigs: [],
+        throttleIntervalMs: (typeof elementConfig.throttleIntervalMs === 'number' && Number.isFinite(elementConfig.throttleIntervalMs) && elementConfig.throttleIntervalMs > 0)
+            ? elementConfig.throttleIntervalMs
+            : 0
     });
 
     if (transformProperties.length > 0) {

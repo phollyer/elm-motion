@@ -90,6 +90,8 @@ module Anim.Internal.Builder exposing
     , getTimeSpecWithDefault
     , getTransformOrder
     , getTranslateInitCssUnitAxes
+    , getUpdateThrottle
+    , getUpdateThrottleFor
     , getViewRangeEnd
     , getViewRangeEndFor
     , getViewRangeStart
@@ -135,6 +137,7 @@ module Anim.Internal.Builder exposing
     , setTranslateInitCssUnitX
     , setTranslateInitCssUnitY
     , setTranslateInitCssUnitZ
+    , setUpdateThrottle
     , setViewRangeEnd
     , setViewRangeStart
     , speed
@@ -301,6 +304,7 @@ type alias BuilderData =
     , state : PersistentState
     , scrollDriven : ScrollDrivenConfig
     , emitProgress : Bool
+    , updateThrottleMs : Int
     }
 
 
@@ -351,6 +355,7 @@ type alias AnimGroupConfig =
     , viewRangeStart : Maybe String
     , viewRangeEnd : Maybe String
     , emitProgress : Maybe Bool
+    , updateThrottleMs : Maybe Int
     , frozenAxes : Maybe (Dict String (List String))
     , discreteEntryProperties : Maybe (Dict String DiscreteEntryProperty)
     , discreteExitProperties : Maybe (Dict String DiscreteExitProperty)
@@ -364,6 +369,7 @@ type alias ProcessedAnimGroupConfig =
     , viewRangeStart : Maybe String
     , viewRangeEnd : Maybe String
     , emitProgress : Maybe Bool
+    , updateThrottleMs : Int
     , frozenAxes : Dict String (List String)
     , discreteEntryProperties : Dict String DiscreteEntryProperty
     , discreteExitProperties : Dict String DiscreteExitProperty
@@ -600,6 +606,7 @@ init =
             , state = initState
             , scrollDriven = initScrollDrivenConfig
             , emitProgress = False
+            , updateThrottleMs = 0
             }
 
 
@@ -992,6 +999,7 @@ transformOrder order ((AnimBuilder data) as builder) =
                             , viewRangeStart = Nothing
                             , viewRangeEnd = Nothing
                             , emitProgress = Nothing
+                            , updateThrottleMs = Nothing
                             , frozenAxes = Nothing
                             , discreteEntryProperties = Nothing
                             , discreteExitProperties = Nothing
@@ -1136,6 +1144,7 @@ iterations count (AnimBuilder data) =
                 , viewRangeStart = Nothing
                 , viewRangeEnd = Nothing
                 , emitProgress = Nothing
+                , updateThrottleMs = Nothing
                 , frozenAxes = Nothing
                 , discreteEntryProperties = Nothing
                 , discreteExitProperties = Nothing
@@ -1161,6 +1170,7 @@ loopForever (AnimBuilder data) =
                 , viewRangeStart = Nothing
                 , viewRangeEnd = Nothing
                 , emitProgress = Nothing
+                , updateThrottleMs = Nothing
                 , frozenAxes = Nothing
                 , discreteEntryProperties = Nothing
                 , discreteExitProperties = Nothing
@@ -1201,6 +1211,7 @@ alternate (AnimBuilder data) =
                 , viewRangeStart = Nothing
                 , viewRangeEnd = Nothing
                 , emitProgress = Nothing
+                , updateThrottleMs = Nothing
                 , frozenAxes = Nothing
                 , discreteEntryProperties = Nothing
                 , discreteExitProperties = Nothing
@@ -1268,6 +1279,7 @@ discreteEntry propertyName value (AnimBuilder data) =
                             , viewRangeStart = Nothing
                             , viewRangeEnd = Nothing
                             , emitProgress = Nothing
+                            , updateThrottleMs = Nothing
                             , frozenAxes = Nothing
                             , discreteEntryProperties = Nothing
                             , discreteExitProperties = Nothing
@@ -1322,6 +1334,7 @@ discreteExit propertyName from to (AnimBuilder data) =
                             , viewRangeStart = Nothing
                             , viewRangeEnd = Nothing
                             , emitProgress = Nothing
+                            , updateThrottleMs = Nothing
                             , frozenAxes = Nothing
                             , discreteEntryProperties = Nothing
                             , discreteExitProperties = Nothing
@@ -1446,6 +1459,7 @@ freezeAxes axes properties (AnimBuilder data) =
                 , viewRangeStart = Nothing
                 , viewRangeEnd = Nothing
                 , emitProgress = Nothing
+                , updateThrottleMs = Nothing
                 , frozenAxes = Just (applyFreezeAxesToDict baseFrozenAxes)
                 , discreteEntryProperties = Nothing
                 , discreteExitProperties = Nothing
@@ -1493,6 +1507,7 @@ unfreezeAxes axes properties (AnimBuilder data) =
                 , viewRangeStart = Nothing
                 , viewRangeEnd = Nothing
                 , emitProgress = Nothing
+                , updateThrottleMs = Nothing
                 , frozenAxes = Just (applyUnfreezeAxesToDict baseFrozenAxes)
                 , discreteEntryProperties = Nothing
                 , discreteExitProperties = Nothing
@@ -1626,6 +1641,7 @@ getCurrentAnimGroupConfig (AnimBuilder data) =
             , viewRangeStart = data.scrollDriven.viewRangeStart
             , viewRangeEnd = data.scrollDriven.viewRangeEnd
             , emitProgress = Nothing
+            , updateThrottleMs = Just data.updateThrottleMs
             , frozenAxes = Just data.animation.frozenAxes
             , discreteEntryProperties = Just data.playback.discreteEntryProperties
             , discreteExitProperties = Just data.playback.discreteExitProperties
@@ -1657,6 +1673,13 @@ getCurrentAnimGroupConfig (AnimBuilder data) =
 
                                     Nothing ->
                                         data.scrollDriven.viewRangeEnd
+                            , updateThrottleMs =
+                                case config.updateThrottleMs of
+                                    Just groupThrottleMs ->
+                                        Just groupThrottleMs
+
+                                    Nothing ->
+                                        Just data.updateThrottleMs
                             , frozenAxes =
                                 case config.frozenAxes of
                                     Just groupFrozenAxes ->
@@ -1687,6 +1710,7 @@ getCurrentAnimGroupConfig (AnimBuilder data) =
                     , viewRangeStart = data.scrollDriven.viewRangeStart
                     , viewRangeEnd = data.scrollDriven.viewRangeEnd
                     , emitProgress = Nothing
+                    , updateThrottleMs = Just data.updateThrottleMs
                     , frozenAxes = Just data.animation.frozenAxes
                     , discreteEntryProperties = Just data.playback.discreteEntryProperties
                     , discreteExitProperties = Just data.playback.discreteExitProperties
@@ -2209,6 +2233,13 @@ updateCurrentConfig config (AnimBuilder data) =
 
                                         Nothing ->
                                             existing.emitProgress
+                                , updateThrottleMs =
+                                    case config.updateThrottleMs of
+                                        Just _ ->
+                                            config.updateThrottleMs
+
+                                        Nothing ->
+                                            existing.updateThrottleMs
                                 , frozenAxes =
                                     case config.frozenAxes of
                                         Just _ ->
@@ -2613,6 +2644,7 @@ process (AnimBuilder data) =
                 , viewRangeStart = group.viewRangeStart
                 , viewRangeEnd = group.viewRangeEnd
                 , emitProgress = group.emitProgress
+                , updateThrottleMs = Maybe.withDefault data.updateThrottleMs group.updateThrottleMs
                 , frozenAxes =
                     case group.frozenAxes of
                         Just axes ->
@@ -3115,6 +3147,7 @@ setViewRangeStart range (AnimBuilder data) =
                 , viewRangeStart = Just range
                 , viewRangeEnd = Nothing
                 , emitProgress = Nothing
+                , updateThrottleMs = Nothing
                 , frozenAxes = Nothing
                 , discreteEntryProperties = Nothing
                 , discreteExitProperties = Nothing
@@ -3142,6 +3175,7 @@ setViewRangeEnd range (AnimBuilder data) =
                 , viewRangeStart = Nothing
                 , viewRangeEnd = Just range
                 , emitProgress = Nothing
+                , updateThrottleMs = Nothing
                 , frozenAxes = Nothing
                 , discreteEntryProperties = Nothing
                 , discreteExitProperties = Nothing
@@ -3281,6 +3315,7 @@ setScrollEmitProgress enabled (AnimBuilder data) =
                 , viewRangeStart = Nothing
                 , viewRangeEnd = Nothing
                 , emitProgress = Just enabled
+                , updateThrottleMs = Nothing
                 , frozenAxes = Nothing
                 , discreteEntryProperties = Nothing
                 , discreteExitProperties = Nothing
@@ -3316,6 +3351,32 @@ getEmitProgressFor animGroupName ((AnimBuilder data) as builder) =
         |> Maybe.withDefault (Maybe.withDefault globalEnabled fromCurrentConfig)
 
 
+{-| Get the global fallback throttle interval in milliseconds for WAAPI
+`propertyUpdate` emissions.
+-}
+getUpdateThrottle : AnimBuilder eng -> Int
+getUpdateThrottle (AnimBuilder data) =
+    data.updateThrottleMs
+
+
+{-| Resolve per-group throttle interval in milliseconds.
+Group-level value overrides the global default when present.
+-}
+getUpdateThrottleFor : AnimGroupName -> AnimBuilder eng -> Int
+getUpdateThrottleFor animGroupName ((AnimBuilder data) as builder) =
+    let
+        fromHistory =
+            getCurrentAnimationConfig animGroupName builder
+                |> Maybe.map .updateThrottleMs
+
+        fromCurrentConfig =
+            getAnimGroupConfig animGroupName builder
+                |> Maybe.andThen .updateThrottleMs
+    in
+    fromHistory
+        |> Maybe.withDefault (Maybe.withDefault data.updateThrottleMs fromCurrentConfig)
+
+
 {-| Enable or disable per-frame `Progress` events. Off by default — the JS
 port still delivers `propertyUpdate` messages so engine state stays in sync,
 but `update` returns `Nothing` instead of `Just (Progress ...)` when disabled.
@@ -3334,6 +3395,37 @@ setEmitProgress enabled (AnimBuilder data) =
                 , viewRangeStart = Nothing
                 , viewRangeEnd = Nothing
                 , emitProgress = Just enabled
+                , updateThrottleMs = Nothing
+                , frozenAxes = Nothing
+                , discreteEntryProperties = Nothing
+                , discreteExitProperties = Nothing
+                }
+                (AnimBuilder data)
+
+
+{-| Set the minimum interval in milliseconds between per-frame WAAPI
+`propertyUpdate` emissions.
+
+This is a precedence function:
+before `for` it sets the global default, and after `for` it sets a
+group-specific override.
+
+-}
+setUpdateThrottle : Int -> AnimBuilder { eng | withProgressEvents : () } -> AnimBuilder { eng | withProgressEvents : () }
+setUpdateThrottle intervalMs (AnimBuilder data) =
+    case data.animation.currentAnimGroup of
+        Nothing ->
+            AnimBuilder { data | updateThrottleMs = intervalMs }
+
+        Just _ ->
+            updateCurrentConfig
+                { properties = []
+                , playback = Nothing
+                , transformOrder = Nothing
+                , viewRangeStart = Nothing
+                , viewRangeEnd = Nothing
+                , emitProgress = Nothing
+                , updateThrottleMs = Just intervalMs
                 , frozenAxes = Nothing
                 , discreteEntryProperties = Nothing
                 , discreteExitProperties = Nothing

@@ -4,7 +4,7 @@ module Anim.Engine.ScrollTimeline exposing
     , Container(..)
     , animate
     , AnimEvent(..)
-    , withProgressEvents
+    , withProgressEvents, setUpdateThrottle
     , AnimMsg, update
     , subscriptions
     , attributes
@@ -56,7 +56,7 @@ and the
 
 ## Progress Events
 
-@docs withProgressEvents
+@docs withProgressEvents, setUpdateThrottle
 
 
 # Update
@@ -269,6 +269,30 @@ overrides any global setting for that group.
 withProgressEvents : Bool -> EngineBuilder -> EngineBuilder
 withProgressEvents =
     Internal.withProgressEvents
+
+
+{-| Set the minimum interval in milliseconds between per-frame
+`propertyUpdate` emissions from the JavaScript runtime.
+
+This is a precedence function, so it can operate as a global setting for all
+groups in the builder chain, or you can set it on a per-group basis which
+overrides any global setting for that group.
+
+    - Pass `0` (the default) to emit on every `requestAnimationFrame` tick.
+    - Pass a positive number of milliseconds to cap the emission rate, e.g.
+        `16` for ~60 Hz, `33` for ~30 Hz.
+
+        ScrollTimeline.setUpdateThrottle 33 -- global default
+                >> ScrollTimeline.for "hero"
+                >> ScrollTimeline.setUpdateThrottle 0 -- dense updates for interactions
+                >> ScrollTimeline.for "background"
+                >> ScrollTimeline.setUpdateThrottle 50 -- lower traffic for passive motion
+                >> ... -- other builders
+
+-}
+setUpdateThrottle : Int -> EngineBuilder -> EngineBuilder
+setUpdateThrottle =
+        Builder.setUpdateThrottle
 
 
 

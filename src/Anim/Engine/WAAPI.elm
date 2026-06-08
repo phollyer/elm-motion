@@ -36,7 +36,7 @@ module Anim.Engine.WAAPI exposing
 
 {-| Use the Web Animations API through ports.
 
-Choose this engine when you want browser-driven animation with Elm state around it.
+Choose this engine when you want browser-driven animation with the maximum feature set.
 
 📖 See
 [WAAPI Engine Documentation](https://phollyer.github.io/elm-motion/animation/engines/waapi/)
@@ -504,27 +504,35 @@ withProgressEvents =
     Builder.setEmitProgress
 
 
-{-| Cap the rate at which the JavaScript runtime sends per-frame
-updates back to Elm.
+{-| Set the minimum interval in milliseconds between per-frame
+`propertyUpdate` emissions from the JavaScript runtime.
 
 The visual animation is driven by the browser compositor and is **never**
 affected by this setting - it only controls how much port traffic is generated.
 
-  - Pass `0` (the default) to emit on every `requestAnimationFrame` tick,
-    matching the display refresh rate (60 Hz, 120 Hz, 144 Hz, …).
-  - Pass a positive number of milliseconds to cap the emission rate, e.g.
-    `16` for ~60 Hz, `33` for ~30 Hz. Useful when many simultaneous
-    animations on a high-refresh display would otherwise generate excessive
-    port traffic.
+This is a precedence function, so it can operate as a global setting for all
+groups in the builder chain, or you can set it on a per-group basis which
+overrides any global setting for that group.
 
-The value is global to the JS runtime, shared across all animations
-in the app, and equivalent to calling `ElmMotion.setPropertyUpdateThrottle(ms)`
-directly from JavaScript.
+    - Pass `0` (the default) to emit on every `requestAnimationFrame` tick,
+        matching the display refresh rate (60 Hz, 120 Hz, 144 Hz, …).
+    - Pass a positive number of milliseconds to cap the emission rate, e.g.
+        `16` for ~60 Hz, `33` for ~30 Hz.
+
+**Note**: Higher throttle values reduce Elm-side mid-flight precision for
+queries and interruption bookkeeping.
+
+        WAAPI.setUpdateThrottle 33 -- global default
+                >> WAAPI.for "hero"
+                >> WAAPI.setUpdateThrottle 0 -- dense updates for interactions
+                >> WAAPI.for "background"
+                >> WAAPI.setUpdateThrottle 50 -- lower traffic for passive motion
+                >> ... -- other builders
 
 -}
-setUpdateThrottle : Int -> AnimState msg -> Cmd msg
+setUpdateThrottle : Int -> EngineBuilder -> EngineBuilder
 setUpdateThrottle =
-    Internal.setUpdateThrottle
+    Builder.setUpdateThrottle
 
 
 

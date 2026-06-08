@@ -6,7 +6,8 @@ export const activeAnimations = new Map();
 
 // Animation group lifecycle tracking.
 // Map<animGroup, { totalProperties, completedProperties, started, generation,
-//                  nextPropertyIndex, lastIteration, propertyIterations, propertyConfigs }>
+//                  nextPropertyIndex, lastIteration, propertyIterations,
+//                  propertyConfigs, throttleIntervalMs }>
 export const animationGroups = new Map();
 
 // Last-known correct transform values per animation group (in original CSS units).

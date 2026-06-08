@@ -392,7 +392,12 @@ export function setupAnimationEvents(animGroup, propertyType, element, animation
 
         const now = performance.now();
         const playStateAtTick = animation.playState;
-        if (propertyUpdateIntervalMs <= 0 || now - lastTime >= propertyUpdateIntervalMs) {
+        const groupThrottleMs = animationGroups.get(animGroup)?.throttleIntervalMs;
+        const effectiveThrottleMs = (typeof groupThrottleMs === 'number' && Number.isFinite(groupThrottleMs) && groupThrottleMs > 0)
+            ? groupThrottleMs
+            : propertyUpdateIntervalMs;
+
+        if (effectiveThrottleMs <= 0 || now - lastTime >= effectiveThrottleMs) {
             const entry = getEntry();
             if (entry && entry.version === version) {
                 updateGroupIterationState(animGroup, entry.generation, entry.propertyIndex, animation);

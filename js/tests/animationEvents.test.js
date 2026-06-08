@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { commitAnimatedStyles, setupAnimationEvents } from '../src/animationEvents.js';
+import { commitAnimatedStyles, setPropertyUpdateThrottle, setupAnimationEvents } from '../src/animationEvents.js';
 import { activeAnimations, animationGroups, clearAllState, portsRef } from '../src/state.js';
 import { cleanupDom, createFakeAnimation, installDom } from './_publicApiHelpers.js';
 
@@ -202,5 +202,98 @@ describe('setupAnimationEvents propertyUpdate isAnimating', () => {
         const propertyUpdates = sent.filter((m) => m.type === 'propertyUpdate');
         expect(propertyUpdates).toHaveLength(1);
         expect(propertyUpdates[0].isAnimating).toBe(true);
+    });
+});
+
+describe('setupAnimationEvents per-group throttle', () => {
+    afterEach(() => {
+        setPropertyUpdateThrottle(0);
+        clearAllState();
+        portsRef.ports = null;
+        cleanupDom();
+    });
+
+    it('uses per-group throttle over global fallback', () => {
+        const scheduled = [];
+        const rafFn = vi.fn((cb) => {
+            scheduled.push(cb);
+            return scheduled.length;
+        });
+
+        const element = {
+            id: 'box',
+            style: { setProperty() { } },
+            getBoundingClientRect: () => ({ width: 100, height: 50 })
+        };
+        installDom({ element, targetId: 'box' });
+        global.requestAnimationFrame = rafFn;
+        if (global.window) {
+            global.window.requestAnimationFrame = rafFn;
+        }
+        global.performance = { now: () => 200 };
+
+        const sent = [];
+        portsRef.ports = { motionMsg: { send: (msg) => sent.push(msg) } };
+
+        setPropertyUpdateThrottle(100);
+
+        const makeAnimation = () => {
+            const animation = createFakeAnimation({ duration: 1000 });
+            animation.playState = 'paused';
+            animation.currentTime = 500;
+            return animation;
+        };
+
+        const fastAnimation = makeAnimation();
+        activeAnimations.set('fast', new Map([[
+            'opacity',
+            {
+                animation: fastAnimation,
+                version: 1,
+                animGroup: 'fast',
+                generation: 1,
+                propertyIndex: 0,
+                updateFn: vi.fn()
+            }
+        ]]));
+        animationGroups.set('fast', {
+            generation: 1,
+            propertyIterations: [0],
+            lastIteration: 0,
+            propertyConfigs: [{ duration: 1000 }],
+            throttleIntervalMs: 50
+        });
+
+        const slowAnimation = makeAnimation();
+        activeAnimations.set('slow', new Map([[
+            'opacity',
+            {
+                animation: slowAnimation,
+                version: 1,
+                animGroup: 'slow',
+                generation: 1,
+                propertyIndex: 0,
+                updateFn: vi.fn()
+            }
+        ]]));
+        animationGroups.set('slow', {
+            generation: 1,
+            propertyIterations: [0],
+            lastIteration: 0,
+            propertyConfigs: [{ duration: 1000 }],
+            throttleIntervalMs: 300
+        });
+
+        setupAnimationEvents('fast', 'opacity', element, fastAnimation, 1, null);
+        setupAnimationEvents('slow', 'opacity', element, slowAnimation, 1, null);
+
+        if (scheduled.length > 0) {
+            scheduled.forEach((cb) => cb());
+        }
+
+        const updates = sent.filter((m) => m.type === 'propertyUpdate');
+        const groups = updates.map((m) => m.animGroup);
+        expect(groups).toContain('fast');
+        expect(groups).not.toContain('slow');
     });
 });

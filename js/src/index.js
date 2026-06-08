@@ -100,9 +100,6 @@ const COMMAND_HANDLERS = {
     },
     resume: function (commandData) {
         resumeAnimation(commandData.elementId, commandData.properties);
-    },
-    setUpdateThrottle: function (commandData) {
-        setPropertyUpdateThrottle(commandData.intervalMs);
     }
 };
 
