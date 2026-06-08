@@ -760,8 +760,7 @@ discreteEntry =
 
 Exit animations need to hold their initial state
 until the very end of the animation, at which point they flip to the final state.
-
-Therefore you need to set both the `from` and `to` values for the property.
+Therefore you need to set both entry and exit values for the property.
 
 Use when an element is disappearing (e.g., going from
 `display: block` to `display: none`).

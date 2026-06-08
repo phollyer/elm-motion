@@ -705,20 +705,24 @@ discreteEntry =
     Internal.discreteEntry
 
 
-{-| Flip a discrete CSS property when the animation completes.
+{-| Add a discrete CSS property for exit animations.
 
-  - `from` — the value to hold during the animation
+Exit animations need to hold their initial state
+until the very end of the animation, at which point they flip to the final state.
+Therefore you need to set both entry and exit values for the property.
 
-  - `to` — the value to apply when the animation finishes
+Use when an element is disappearing (e.g., going from
+`display: block` to `display: none`).
+
+    import Anim.Engine.ViewTimeline as ViewTimeline
+    import Anim.Property.Opacity as Opacity
 
     ViewTimeline.animate motionCmd <|
-    ViewTimeline.discreteExit "display" "block" "none"
-
-    > > ViewTimeline.for "box"
-    > > Opacity.begin
-    > > Opacity.from 1
-    > > Opacity.to 0
-    > > Opacity.end
+        ViewTimeline.discreteExit "display" "block" "none"
+            >> ViewTimeline.for "box"
+            >> Opacity.begin
+            >> Opacity.to 0
+            >> Opacity.end
 
 -}
 discreteExit : String -> String -> String -> EngineBuilder -> EngineBuilder
