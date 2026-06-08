@@ -486,24 +486,17 @@ update msg (AnimState state animGroups) =
                 allEvents =
                     List.concat events
 
-                emitProgress =
-                    Builder.getEmitProgress state.builder
-
                 filteredEvents =
-                    if emitProgress then
+                    List.filter
+                        (\e ->
+                            case e of
+                                Progress animGroupName _ ->
+                                    Builder.getEmitProgressFor animGroupName state.builder
+
+                                _ ->
+                                    True
+                        )
                         allEvents
-
-                    else
-                        List.filter
-                            (\e ->
-                                case e of
-                                    Progress _ _ ->
-                                        False
-
-                                    _ ->
-                                        True
-                            )
-                            allEvents
 
                 stillRunning =
                     updatedGroups

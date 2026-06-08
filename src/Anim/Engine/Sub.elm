@@ -119,6 +119,15 @@ To render an animation, add `attributes` to the element you want to animate.
 
 # Playback
 
+These functions are precedence functions, so they can operate as a global setting for all groups in the
+builder chain, or you can set them on a per-group basis which overrides any global setting
+for that group.
+
+    Sub.iterations 3 -- global setting
+        >> Sub.for "box"
+        >> Sub.iterations 5 -- overrides global for this group
+        >> ... -- other builders
+
 @docs iterations, loopForever, alternate
 
 
@@ -451,16 +460,14 @@ especially when debugging the `Msg` flow in your app. Therefore
 they are suppressed by default and you need to explicitly opt in
 to receive them.
 
-Pass it to [`init`](#init), or any builder —
-the flag persists on the engine state and can be flipped on or off
-at any time.
+This is a precedence function, so it can operate as a global setting for all
+groups in the builder chain, or you can set it on a per-group basis which
+overrides any global setting for that group.
 
-    Sub.init [ Sub.withProgressEvents True ]
-
-    -- or toggle later
-    Sub.animate model.animState <|
-        Sub.withProgressEvents True
-            >> fadeInBox
+    Sub.withProgressEvents True -- global setting
+        >> Sub.for "box"
+        >> Sub.withProgressEvents False -- overrides global for this group
+        >> ... -- other builders
 
 -}
 withProgressEvents : Bool -> EngineBuilder -> EngineBuilder
@@ -615,16 +622,6 @@ attributes =
 
 
 {-| Set how many times an animation should repeat.
-
-Applies to the currently selected animation group in the builder chain.
-
-    notificationAttentionLoop : Sub.EngineBuilder -> Sub.EngineBuilder
-    notificationAttentionLoop =
-        Sub.for "badge"
-            >> Sub.iterations 3
-            >> pulseBadge
-            >> nudgeBellIcon
-
 -}
 iterations : Int -> EngineBuilder -> EngineBuilder
 iterations =
@@ -632,22 +629,6 @@ iterations =
 
 
 {-| Make an animation loop infinitely.
-
-Applies to the currently selected animation group in the builder chain.
-
-    import Anim.Engine.Sub as Sub
-    import Anim.Property.Opacity as Opacity
-
-    pulse : Sub.EngineBuilder -> Sub.EngineBuilder
-    pulse =
-        Sub.for "box"
-            >> Sub.loopForever
-            >> Opacity.begin
-            >> Opacity.to 0.2
-            >> Opacity.end
-
-    Sub.animate model.animState pulse
-
 -}
 loopForever : EngineBuilder -> EngineBuilder
 loopForever =
@@ -655,16 +636,6 @@ loopForever =
 
 
 {-| Make an animation alternate direction on each iteration.
-
-Applies to the currently selected animation group in the builder chain.
-
-    floatingCardLoop : Sub.EngineBuilder -> Sub.EngineBuilder
-    floatingCardLoop =
-        Sub.for "card"
-            >> Sub.iterations 4
-            >> Sub.alternate
-            >> liftCard
-            >> glowCardBorder
 
 `alternate` only has a visible effect when the animation runs more than once,
 so calling it when `iterations` is unset or `1` automatically bumps
@@ -992,19 +963,23 @@ discreteExit =
 
 {-| Set the transform order.
 
-The transform order specifies how translate, rotate, skew and scale transforms
+The transform order specifies how `translate`, `rotate`, `skew` and `scale` transforms
 are combined. Start the list with the transform to apply first.
 
-When called after `for`, it applies to that animation group only.
-When called before selecting a group, it sets the global default.
+This is a precedence function, so it can operate as a global setting for all groups in the
+builder chain, or you can set it on a per-group basis which overrides any global setting
+for that group.
 
 Any missing transforms are automatically appended in the default order
-(Translate → Rotate → Skew → Scale).
+(`Translate` → `Rotate` → `Skew` → `Scale`).
 
     import Anim.Engine.Sub as Sub
     import Anim.Extra.TransformOrder exposing (TransformProperty(..))
 
-    Sub.transformOrder [ Scale, Rotate, Translate, Skew ]
+    Sub.transformOrder [ Scale, Rotate, Translate, Skew ] -- global setting
+        >> Sub.for "box"
+        >> Sub.transformOrder [ Rotate, Translate ] -- overrides global for this group
+        >> ... -- other builders
 
 -}
 transformOrder : List TransformProperty -> EngineBuilder -> EngineBuilder

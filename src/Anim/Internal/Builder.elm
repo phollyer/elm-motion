@@ -71,6 +71,7 @@ module Anim.Internal.Builder exposing
     , getEasing
     , getEasingWithDefault
     , getEmitProgress
+    , getEmitProgressFor
     , getFrozenAxes
     , getIterations
     , getLatestAnimateConfig
@@ -78,6 +79,7 @@ module Anim.Internal.Builder exposing
     , getRuntimeBaseline
     , getScrollAxis
     , getScrollEmitProgress
+    , getScrollEmitProgressFor
     , getScrollSource
     , getSizeInitCssUnitAxes
     , getSpring
@@ -341,6 +343,7 @@ type alias AnimGroupConfig =
     { properties : List PropertyConfig
     , playback : Maybe GroupPlaybackConfig
     , transformOrder : Maybe (List TransformProperty)
+    , emitProgress : Maybe Bool
     }
 
 
@@ -348,6 +351,7 @@ type alias ProcessedAnimGroupConfig =
     { properties : List ProcessedPropertyConfig
     , playback : Maybe GroupPlaybackConfig
     , transformOrder : Maybe (List TransformProperty)
+    , emitProgress : Maybe Bool
     }
 
 
@@ -967,7 +971,7 @@ transformOrder order ((AnimBuilder data) as builder) =
                             { existing | transformOrder = normalizedOrder }
 
                         Nothing ->
-                            { properties = [], playback = Nothing, transformOrder = normalizedOrder }
+                            { properties = [], playback = Nothing, transformOrder = normalizedOrder, emitProgress = Nothing }
             in
             builder
                 |> updateCurrentConfig nextConfig
@@ -1105,6 +1109,7 @@ iterations count (AnimBuilder data) =
                 { properties = []
                 , playback = Just { iterations = Just (Times count), animationDirection = Nothing }
                 , transformOrder = Nothing
+                , emitProgress = Nothing
                 }
                 (AnimBuilder data)
 
@@ -1124,6 +1129,7 @@ loopForever (AnimBuilder data) =
                 { properties = []
                 , playback = Just { iterations = Just Infinite, animationDirection = Nothing }
                 , transformOrder = Nothing
+                , emitProgress = Nothing
                 }
                 (AnimBuilder data)
 
@@ -1158,6 +1164,7 @@ alternate (AnimBuilder data) =
                 { properties = []
                 , playback = Just { iterations = Nothing, animationDirection = Just Alternate }
                 , transformOrder = Nothing
+                , emitProgress = Nothing
                 }
                 (AnimBuilder data)
 
@@ -1424,7 +1431,7 @@ getCurrentAnimGroupConfig : AnimBuilder eng -> AnimGroupConfig
 getCurrentAnimGroupConfig (AnimBuilder data) =
     case data.animation.currentAnimGroup of
         Nothing ->
-            { properties = [], playback = Nothing, transformOrder = data.defaults.globalTransformOrder }
+            { properties = [], playback = Nothing, transformOrder = data.defaults.globalTransformOrder, emitProgress = Nothing }
 
         Just animGroupName ->
             AnimGroups.get animGroupName data.animation.animGroups
@@ -1440,7 +1447,7 @@ getCurrentAnimGroupConfig (AnimBuilder data) =
                                         data.defaults.globalTransformOrder
                         }
                     )
-                |> Maybe.withDefault { properties = [], playback = Nothing, transformOrder = data.defaults.globalTransformOrder }
+                |> Maybe.withDefault { properties = [], playback = Nothing, transformOrder = data.defaults.globalTransformOrder, emitProgress = Nothing }
 
 
 getAnimGroupConfig : AnimGroupName -> AnimBuilder eng -> Maybe AnimGroupConfig
@@ -1938,6 +1945,13 @@ updateCurrentConfig config (AnimBuilder data) =
                                         Nothing ->
                                             existing.playback
                                 , transformOrder = mergedOrder
+                                , emitProgress =
+                                    case config.emitProgress of
+                                        Just _ ->
+                                            config.emitProgress
+
+                                        Nothing ->
+                                            existing.emitProgress
                             }
 
                         Nothing ->
@@ -2310,6 +2324,7 @@ process (AnimBuilder data) =
 
                         Nothing ->
                             data.defaults.globalTransformOrder
+                , emitProgress = group.emitProgress
                 }
             )
             data.animation.animGroups
@@ -2835,17 +2850,44 @@ getScrollEmitProgress (AnimBuilder data) =
     data.scrollDriven.emitProgress
 
 
+{-| Resolve per-group progress-event opt-in for scroll/view timelines.
+Group-level value overrides the global default when present.
+-}
+getScrollEmitProgressFor : AnimGroupName -> AnimBuilder eng -> Bool
+getScrollEmitProgressFor animGroupName ((AnimBuilder data) as builder) =
+    let
+        globalEnabled =
+            data.scrollDriven.emitProgress
+
+        fromCurrentConfig =
+            getAnimGroupConfig animGroupName builder
+                |> Maybe.andThen .emitProgress
+    in
+    Maybe.withDefault globalEnabled fromCurrentConfig
+
+
 {-| Enable or disable per-frame `Progress` events for scroll/view-driven
 animations. Off by default so the port stays quiet unless callers actively
 opt in.
 -}
 setScrollEmitProgress : Bool -> AnimBuilder { eng | withProgressEvents : () } -> AnimBuilder { eng | withProgressEvents : () }
 setScrollEmitProgress enabled (AnimBuilder data) =
-    let
-        sd =
-            data.scrollDriven
-    in
-    AnimBuilder { data | scrollDriven = { sd | emitProgress = enabled } }
+    case data.animation.currentAnimGroup of
+        Nothing ->
+            let
+                sd =
+                    data.scrollDriven
+            in
+            AnimBuilder { data | scrollDriven = { sd | emitProgress = enabled } }
+
+        Just _ ->
+            updateCurrentConfig
+                { properties = []
+                , playback = Nothing
+                , transformOrder = Nothing
+                , emitProgress = Just enabled
+                }
+                (AnimBuilder data)
 
 
 {-| Get the per-frame `Progress` event opt-in flag.
@@ -2855,10 +2897,42 @@ getEmitProgress (AnimBuilder data) =
     data.emitProgress
 
 
+{-| Resolve per-group progress-event opt-in.
+Group-level value overrides the global default when present.
+-}
+getEmitProgressFor : AnimGroupName -> AnimBuilder eng -> Bool
+getEmitProgressFor animGroupName ((AnimBuilder data) as builder) =
+    let
+        globalEnabled =
+            data.emitProgress
+
+        fromHistory =
+            getCurrentAnimationConfig animGroupName builder
+                |> Maybe.andThen .emitProgress
+
+        fromCurrentConfig =
+            getAnimGroupConfig animGroupName builder
+                |> Maybe.andThen .emitProgress
+    in
+    fromHistory
+        |> Maybe.withDefault (Maybe.withDefault globalEnabled fromCurrentConfig)
+
+
 {-| Enable or disable per-frame `Progress` events. Off by default — the JS
 port still delivers `propertyUpdate` messages so engine state stays in sync,
 but `update` returns `Nothing` instead of `Just (Progress ...)` when disabled.
 -}
 setEmitProgress : Bool -> AnimBuilder { eng | withProgressEvents : () } -> AnimBuilder { eng | withProgressEvents : () }
 setEmitProgress enabled (AnimBuilder data) =
-    AnimBuilder { data | emitProgress = enabled }
+    case data.animation.currentAnimGroup of
+        Nothing ->
+            AnimBuilder { data | emitProgress = enabled }
+
+        Just _ ->
+            updateCurrentConfig
+                { properties = []
+                , playback = Nothing
+                , transformOrder = Nothing
+                , emitProgress = Just enabled
+                }
+                (AnimBuilder data)

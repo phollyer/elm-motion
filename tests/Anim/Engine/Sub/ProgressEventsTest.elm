@@ -85,4 +85,55 @@ suite =
                 events
                     |> List.filter isProgress
                     |> Expect.equalLists []
+        , test "group override True emits Progress when global default is False" <|
+            \_ ->
+                let
+                    state =
+                        Sub.init
+                            [ Sub.withProgressEvents False
+                            , Translate.initXY groupName 0 0
+                            ]
+                            |> (\s ->
+                                    Sub.animate s
+                                        (Sub.for groupName
+                                            >> Sub.withProgressEvents True
+                                            >> Translate.begin
+                                            >> Translate.toX 100
+                                            >> Translate.duration 1000
+                                            >> Translate.end
+                                        )
+                               )
+
+                    ( _, events ) =
+                        tick 16 state
+                in
+                events
+                    |> List.filter isProgress
+                    |> List.length
+                    |> Expect.greaterThan 0
+        , test "group override False suppresses Progress when global default is True" <|
+            \_ ->
+                let
+                    state =
+                        Sub.init
+                            [ Sub.withProgressEvents True
+                            , Translate.initXY groupName 0 0
+                            ]
+                            |> (\s ->
+                                    Sub.animate s
+                                        (Sub.for groupName
+                                            >> Sub.withProgressEvents False
+                                            >> Translate.begin
+                                            >> Translate.toX 100
+                                            >> Translate.duration 1000
+                                            >> Translate.end
+                                        )
+                               )
+
+                    ( _, events ) =
+                        tick 16 state
+                in
+                events
+                    |> List.filter isProgress
+                    |> Expect.equalLists []
         ]

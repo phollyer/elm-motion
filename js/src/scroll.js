@@ -368,7 +368,7 @@ function buildSharedTimelineOptions(commandData) {
         },
         discreteEntry: commandData.discreteEntry || {},
         discreteExit: commandData.discreteExit || {},
-        emitProgress: !!commandData.emitProgress
+        defaultEmitProgress: !!commandData.emitProgress
     };
 }
 
@@ -468,12 +468,16 @@ export function processScrollDrivenData(commandData) {
     }
 
     const timeline = new ScrollTimeline({ source: sourceElement, axis: axis });
-    const { playbackOptions, discreteEntry, discreteExit, emitProgress } = buildSharedTimelineOptions(commandData);
+    const { playbackOptions, discreteEntry, discreteExit, defaultEmitProgress } = buildSharedTimelineOptions(commandData);
 
     Object.entries(commandData.elements).forEach(function ([animGroup, elementConfig]) {
         const targetId = elementConfig.target || animGroup;
         const element = resolveTimelineTarget(targetId, animGroup, 'scrollDriven', 'ScrollTimeline');
         if (!element) return;
+        const emitProgress =
+            typeof elementConfig.emitProgress === 'boolean'
+                ? elementConfig.emitProgress
+                : defaultEmitProgress;
         applyScrollDrivenAnimation(animGroup, element, elementConfig, timeline, null, playbackOptions, 'scrollTimeline', discreteEntry, discreteExit, emitProgress);
     });
 }
@@ -501,9 +505,13 @@ export function processViewDrivenData(commandData) {
     const timelineConfig = commandData.timeline || {};
     const axis = timelineConfig.axis || 'block';
     const rangeOptions = buildViewRangeOptions(timelineConfig);
-    const { playbackOptions, discreteEntry, discreteExit, emitProgress } = buildSharedTimelineOptions(commandData);
+    const { playbackOptions, discreteEntry, discreteExit, defaultEmitProgress } = buildSharedTimelineOptions(commandData);
 
     Object.entries(commandData.elements).forEach(function ([animGroup, elementConfig]) {
+        const emitProgress =
+            typeof elementConfig.emitProgress === 'boolean'
+                ? elementConfig.emitProgress
+                : defaultEmitProgress;
         applyViewDrivenForEntry(animGroup, elementConfig, axis, rangeOptions, playbackOptions, discreteEntry, discreteExit, emitProgress);
     });
 }

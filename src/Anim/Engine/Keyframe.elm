@@ -117,6 +117,15 @@ for details.
 
 # Playback
 
+These functions are precedence functions, so they can operate as a global setting for all groups in the
+builder chain, or you can set them on a per-group basis which overrides any global setting
+for that group.
+
+    Keyframe.iterations 3 -- global setting
+        >> Keyframe.for "box"
+        >> Keyframe.iterations 5 -- overrides global for this group
+        >> ... -- other builders
+
 @docs iterations, loopForever, alternate
 
 
@@ -606,16 +615,6 @@ eventsStopPropagation =
 
 
 {-| Set how many times an animation should repeat.
-
-Applies to the currently selected animation group in the builder chain.
-
-    notificationAttentionLoop : Keyframe.EngineBuilder -> Keyframe.EngineBuilder
-    notificationAttentionLoop =
-        Keyframe.for "badge"
-            >> Keyframe.iterations 3
-            >> pulseBadge
-            >> nudgeBellIcon
-
 -}
 iterations : Int -> EngineBuilder -> EngineBuilder
 iterations =
@@ -623,22 +622,6 @@ iterations =
 
 
 {-| Make an animation loop infinitely.
-
-Applies to the currently selected animation group in the builder chain.
-
-    import Anim.Engine.Keyframe as Keyframe
-    import Anim.Property.Opacity as Opacity
-
-    pulse : Keyframe.EngineBuilder -> Keyframe.EngineBuilder
-    pulse =
-        Keyframe.for "box"
-            >> Keyframe.loopForever
-            >> Opacity.begin
-            >> Opacity.to 0.2
-            >> Opacity.end
-
-    Keyframe.animate model.animState pulse
-
 -}
 loopForever : EngineBuilder -> EngineBuilder
 loopForever =
@@ -647,20 +630,12 @@ loopForever =
 
 {-| Make an animation alternate direction on each iteration.
 
-Applies to the currently selected animation group in the builder chain.
-
-    floatingCardLoop : Keyframe.EngineBuilder -> Keyframe.EngineBuilder
-    floatingCardLoop =
-        Keyframe.for "card"
-            >> Keyframe.iterations 4
-            >> Keyframe.alternate
-            >> liftCard
-            >> glowCardBorder
-
-`alternate` only has a visible effect when the animation runs more than once,
+Only has a visible effect when the animation runs more than once,
 so calling it when `iterations` is unset or `1` automatically bumps
-`iterations` to `2`. An explicit `iterations` count (or `loopForever`) set
-before or after `alternate` is preserved.
+`iterations` to `2`.
+
+An explicit `iterations` count (or `loopForever`) set before or after
+`alternate` is preserved.
 
 -}
 alternate : EngineBuilder -> EngineBuilder
@@ -990,19 +965,23 @@ discreteExit =
 
 {-| Set the transform order.
 
-The transform order specifies how translate, rotate, skew and scale transforms
+The transform order specifies how `translate`, `rotate`, `skew` and `scale` transforms
 are combined. Start the list with the transform to apply first.
 
-When called after `for`, it applies to that animation group only.
-When called before selecting a group, it sets the global default.
+This is a precedence function, so it can operate as a global setting for all groups in the
+builder chain, or you can set it on a per-group basis which overrides any global setting
+for that group.
 
 Any missing transforms are automatically appended in the default order
-(Translate → Rotate → Skew → Scale).
+(`Translate` → `Rotate` → `Skew` → `Scale`).
 
     import Anim.Engine.Keyframe as Keyframe
     import Anim.Extra.TransformOrder exposing (TransformProperty(..))
 
-    Keyframe.transformOrder [ Scale, Rotate, Translate, Skew ]
+    Keyframe.transformOrder [ Scale, Rotate, Translate, Skew ] -- global setting
+        >> Keyframe.for "box"
+        >> Keyframe.transformOrder [ Rotate, Translate ] -- overrides global for this group
+        >> ... -- other builders
 
 -}
 transformOrder : List TransformProperty -> EngineBuilder -> EngineBuilder

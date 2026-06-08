@@ -40,6 +40,38 @@ suite =
                         WAAPI.update (propertyUpdateMsg "box" 0.42) animState
                 in
                 Expect.equal Nothing maybeEvent
+        , test "group override True emits Progress when global default is False" <|
+            \_ ->
+                let
+                    initialState =
+                        WAAPI.init dummyCmd dummySub [ WAAPI.withProgressEvents False ]
+
+                    ( animState, _ ) =
+                        WAAPI.animate initialState
+                            (WAAPI.for "box"
+                                >> WAAPI.withProgressEvents True
+                            )
+
+                    ( _, maybeEvent ) =
+                        WAAPI.update (propertyUpdateMsg "box" 0.42) animState
+                in
+                Expect.equal (Just (WAAPI.Progress "box" 0.42)) maybeEvent
+        , test "group override False suppresses Progress when global default is True" <|
+            \_ ->
+                let
+                    initialState =
+                        WAAPI.init dummyCmd dummySub [ WAAPI.withProgressEvents True ]
+
+                    ( animState, _ ) =
+                        WAAPI.animate initialState
+                            (WAAPI.for "box"
+                                >> WAAPI.withProgressEvents False
+                            )
+
+                    ( _, maybeEvent ) =
+                        WAAPI.update (propertyUpdateMsg "box" 0.42) animState
+                in
+                Expect.equal Nothing maybeEvent
         ]
 
 

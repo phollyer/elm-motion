@@ -85,6 +85,15 @@ and the
 
 # Playback
 
+These functions are precedence functions, so they can operate as a global setting for all groups in the
+builder chain, or you can set them on a per-group basis which overrides any global setting
+for that group.
+
+    ViewTimeline.iterations 3 -- global setting
+        >> ViewTimeline.for "box"
+        >> ViewTimeline.iterations 5 -- overrides global for this group
+        >> ... -- other builders
+
 @docs iterations, alternate
 
 
@@ -455,19 +464,6 @@ unitToString unit =
 
 
 {-| Set how many times an animation should repeat.
-
-Use a finite value here. View timelines map progress through a finite
-range, so this controls how many passes are distributed across that range.
-
-Applies to the currently selected animation group in the builder chain.
-
-    notificationAttentionLoop : ViewTimeline.EngineBuilder -> ViewTimeline.EngineBuilder
-    notificationAttentionLoop =
-        ViewTimeline.for "badge"
-            >> ViewTimeline.iterations 3
-            >> pulseBadge
-            >> nudgeBellIcon
-
 -}
 iterations : Int -> EngineBuilder -> EngineBuilder
 iterations =
@@ -475,16 +471,6 @@ iterations =
 
 
 {-| Make an animation alternate direction on each iteration.
-
-Applies to the currently selected animation group in the builder chain.
-
-    floatingCardLoop : ViewTimeline.EngineBuilder -> ViewTimeline.EngineBuilder
-    floatingCardLoop =
-        ViewTimeline.for "card"
-            >> ViewTimeline.iterations 4
-            >> ViewTimeline.alternate
-            >> liftCard
-            >> glowCardBorder
 
 `alternate` only has a visible effect when the animation runs more than once,
 so calling it when `iterations` is unset or `1` automatically bumps
@@ -634,19 +620,24 @@ cssUnitHeight =
 -- ============================================================
 
 
-{-| Override the order in which transform functions are applied.
+{-| Set the transform order.
 
-By default, transforms are applied in the order: translate → rotate → skew → scale.
-Use this when you need a different order for specific visual effects.
+The transform order specifies how `translate`, `rotate`, `skew` and `scale` transforms
+are combined. Start the list with the transform to apply first.
 
-When called after `for`, it applies to that animation group only.
-When called before selecting a group, it sets the global default.
+This is a precedence function, so it can operate as a global setting for all groups in the
+builder chain, or you can set it on a per-group basis which overrides any global setting
+for that group.
+
+Any missing transforms are automatically appended in the default order
+(`Translate` → `Rotate` → `Skew` → `Scale`).
 
     import Anim.Extra.TransformOrder exposing (TransformProperty(..))
 
     ViewTimeline.animate motionCmd <|
-        ViewTimeline.for "box"
-            >> ViewTimeline.transformOrder [ Scale, Rotate, Translate ]
+        ViewTimeline.transformOrder [ Scale, Rotate, Translate, Skew ] -- global setting
+            >> ViewTimeline.for "box"
+            >> ViewTimeline.transformOrder [ Rotate, Translate ] -- overrides global for this group
             >> Translate.begin
             >> Translate.fromXY 0 0
             >> Translate.toXY 100 0
@@ -718,9 +709,14 @@ need progress messages to draw. Turn this on when you want to react to the
 element's position in the viewport from Elm (for example, to trigger another
 animation, mark a milestone, or update a progress badge).
 
+This is a precedence function, so it can operate as a global setting for all
+groups in the builder chain, or you can set it on a per-group basis which
+overrides any global setting for that group.
+
     ViewTimeline.animate motionCmd <|
-        ViewTimeline.withProgressEvents True
+        ViewTimeline.withProgressEvents True -- global setting
             >> ViewTimeline.for "hero-card"
+            >> ViewTimeline.withProgressEvents False -- overrides global for this group
             >> Opacity.begin
             >> Opacity.from 0
             >> Opacity.to 1

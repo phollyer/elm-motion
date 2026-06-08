@@ -792,8 +792,11 @@ update msg ((AnimState state animGroups) as animState) =
                                                 >> List.any (\prop -> prop.status == AnimGroup.Running)
                                             )
 
+                                shouldEmitProgress =
+                                    Builder.getEmitProgressFor animUpdate.animGroupName state.builder
+
                                 progressEvent =
-                                    if Builder.getEmitProgress state.builder then
+                                    if shouldEmitProgress then
                                         Just (Progress animUpdate.animGroupName animUpdate.progress)
 
                                     else

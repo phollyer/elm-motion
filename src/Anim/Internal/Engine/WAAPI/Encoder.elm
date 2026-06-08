@@ -174,6 +174,7 @@ encodeAnimateLike typeTag animGroups frozenAxes touchedAxes processed =
                             (Just propertyStatesGroup)
                             (Just animTransformOrder)
                             (encodeTransformBaseline snapshot)
+                            Nothing
                             frozenAxes
                             (touchedAxesForGroup animGroupName touchedAxes)
                             playback.iterations
@@ -247,6 +248,7 @@ encodeRestart iterationsConfig directionConfig animGroup configGroup =
                             (Just elementProps)
                             (Just elemTransformOrder)
                             (encodeTransformBaseline snapshot)
+                            Nothing
                             Dict.empty
                             Dict.empty
                             playback.iterations
@@ -283,6 +285,7 @@ encodeProcessedData data =
                         , encodeProcessedAnimGroupConfig
                             animGroupName
                             animGroupName
+                            Nothing
                             Nothing
                             Nothing
                             Nothing
@@ -443,13 +446,14 @@ encodeProcessedAnimGroupConfig :
     -> Maybe (AnimGroups PropertyState)
     -> Maybe (List TransformProperty)
     -> Maybe Encode.Value
+    -> Maybe Bool
     -> Dict.Dict String (List String)
     -> Dict.Dict String (Set String)
     -> Builder.Iterations
     -> Builder.AnimationDirection
     -> List Builder.ProcessedPropertyConfig
     -> Encode.Value
-encodeProcessedAnimGroupConfig animGroupName targetId propertyState transformOrder_ transformBaseline frozenAxes touchedAxes iterations_ direction_ propertyConfigs =
+encodeProcessedAnimGroupConfig animGroupName targetId propertyState transformOrder_ transformBaseline emitProgress_ frozenAxes touchedAxes iterations_ direction_ propertyConfigs =
     let
         baseFields =
             [ ( "properties", Encode.list (encodeProcessedPropertyConfig propertyState frozenAxes touchedAxes) propertyConfigs )
@@ -469,6 +473,11 @@ encodeProcessedAnimGroupConfig animGroupName targetId propertyState transformOrd
                 |> Maybe.map (\baseline -> [ ( "transformBaseline", baseline ) ])
                 |> Maybe.withDefault []
 
+        emitProgressField =
+            emitProgress_
+                |> Maybe.map (\enabled -> [ ( "emitProgress", Encode.bool enabled ) ])
+                |> Maybe.withDefault []
+
         willChangeField =
             case Builder.willChangeComposite propertyConfigs of
                 "" ->
@@ -477,7 +486,7 @@ encodeProcessedAnimGroupConfig animGroupName targetId propertyState transformOrd
                 value ->
                     [ ( "willChange", Encode.string value ) ]
     in
-    Encode.object (baseFields ++ orderField ++ baselineField ++ willChangeField)
+    Encode.object (baseFields ++ orderField ++ baselineField ++ emitProgressField ++ willChangeField)
 
 
 {-| Encode the Elm-side transform snapshot baseline (init values plus any
@@ -1048,6 +1057,9 @@ encodeScroll builder =
                                     processed.iterations
                                     processed.animationDirection
                                     config.playback
+
+                            emitProgress =
+                                Maybe.withDefault (Builder.getScrollEmitProgressFor animGroupName builder) config.emitProgress
                         in
                         ( animGroupName
                         , encodeProcessedAnimGroupConfig
@@ -1056,6 +1068,7 @@ encodeScroll builder =
                             Nothing
                             config.transformOrder
                             Nothing
+                            (Just emitProgress)
                             Dict.empty
                             Dict.empty
                             playback.iterations
@@ -1127,6 +1140,9 @@ encodeView builder =
                                     processed.iterations
                                     processed.animationDirection
                                     config.playback
+
+                            emitProgress =
+                                Maybe.withDefault (Builder.getScrollEmitProgressFor animGroupName builder) config.emitProgress
                         in
                         ( animGroupName
                         , encodeProcessedAnimGroupConfig
@@ -1135,6 +1151,7 @@ encodeView builder =
                             Nothing
                             config.transformOrder
                             Nothing
+                            (Just emitProgress)
                             Dict.empty
                             Dict.empty
                             playback.iterations

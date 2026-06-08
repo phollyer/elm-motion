@@ -141,6 +141,15 @@ Add `attributes` to the element you want to animate.
 
 # Playback
 
+These functions are precedence functions, so they can operate as a global setting for all groups in the
+builder chain, or you can set them on a per-group basis which overrides any global setting
+for that group.
+
+    WAAPI.iterations 3 -- global setting
+        >> WAAPI.for "box"
+        >> WAAPI.iterations 5 -- overrides global for this group
+        >> ... -- other builders
+
 @docs iterations, loopForever, alternate
 
 
@@ -457,18 +466,14 @@ Off by default. You don't always need per-frame progress updates from the Engine
 and they generate a lot of `Msg`s in your `update` function. If you do need them,
 you can turn them on with this setting.
 
-Pass it to [`init`](#init), [`animate`](#animate), or [`retarget`](#retarget) —
-the flag persists on the engine state and can be flipped on or off at any
-time.
+This is a precedence function, so it can operate as a global setting for all
+groups in the builder chain, or you can set it on a per-group basis which
+overrides any global setting for that group.
 
-    WAAPI.init motionCmd
-        motionMsg
-        [ WAAPI.withProgressEvents True ]
-
-    -- or toggle later
-    WAAPI.animate model.animState <|
-        WAAPI.withProgressEvents True
-            >> fadeInBox
+    WAAPI.withProgressEvents True -- global setting
+        >> WAAPI.for "box"
+        >> WAAPI.withProgressEvents False -- overrides global for this group
+        >> ... -- other builders
 
 Useful for debugging or driving progress UI directly from events. Leave it
 off for production unless you need it — `getProgress` gives the same
@@ -676,17 +681,6 @@ onResize =
 
 
 {-| Set how many times an animation should repeat.
-
-Applies to the currently selected animation group in the builder chain.
-Select a group with `WAAPI.for` before setting playback.
-
-    notificationAttentionLoop : WAAPI.EngineBuilder -> WAAPI.EngineBuilder
-    notificationAttentionLoop =
-        WAAPI.for "badge"
-            >> WAAPI.iterations 3
-            >> pulseBadge
-            >> nudgeBellIcon
-
 -}
 iterations : Int -> EngineBuilder -> EngineBuilder
 iterations =
@@ -694,22 +688,6 @@ iterations =
 
 
 {-| Make an animation loop infinitely.
-
-Applies to the currently selected animation group in the builder chain.
-
-    import Anim.Engine.WAAPI as WAAPI
-    import Anim.Property.Opacity as Opacity
-
-    pulse : WAAPI.EngineBuilder -> WAAPI.EngineBuilder
-    pulse =
-        WAAPI.for "box"
-            >> WAAPI.loopForever
-            >> Opacity.begin
-            >> Opacity.to 0.2
-            >> Opacity.end
-
-    WAAPI.animate model.animState pulse
-
 -}
 loopForever : EngineBuilder -> EngineBuilder
 loopForever =
@@ -717,16 +695,6 @@ loopForever =
 
 
 {-| Make an animation alternate direction on each iteration.
-
-Applies to the currently selected animation group in the builder chain.
-
-    floatingCardLoop : WAAPI.EngineBuilder -> WAAPI.EngineBuilder
-    floatingCardLoop =
-        WAAPI.for "card"
-            >> WAAPI.iterations 4
-            >> WAAPI.alternate
-            >> liftCard
-            >> glowCardBorder
 
 `alternate` only has a visible effect when the animation runs more than once,
 so calling it when `iterations` is unset or `1` automatically bumps
@@ -1070,19 +1038,23 @@ discreteExit =
 
 {-| Set the transform order.
 
-The transform order specifies how translate, rotate, skew and scale transforms
+The transform order specifies how `translate`, `rotate`, `skew` and `scale` transforms
 are combined. Start the list with the transform to apply first.
 
-When called after `for`, it applies to that animation group only.
-When called before selecting a group, it sets the global default.
+This is a precedence function, so it can operate as a global setting for all groups in the
+builder chain, or you can set it on a per-group basis which overrides any global setting
+for that group.
 
 Any missing transforms are automatically appended in the default order
-(Translate → Rotate → Skew → Scale).
+(`Translate` → `Rotate` → `Skew` → `Scale`).
 
     import Anim.Engine.WAAPI as WAAPI
     import Anim.Extra.TransformOrder exposing (TransformProperty(..))
 
-    WAAPI.transformOrder [ Scale, Rotate, Translate, Skew ]
+    WAAPI.transformOrder [ Scale, Rotate, Translate, Skew ] -- global setting
+        >> WAAPI.for "box"
+        >> WAAPI.transformOrder [ Rotate, Translate ] -- overrides global for this group
+        >> ... -- other builders
 
 -}
 transformOrder : List TransformProperty -> EngineBuilder -> EngineBuilder
