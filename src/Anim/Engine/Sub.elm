@@ -202,7 +202,7 @@ Unfreeze an axis to allow it to animate.
 This is a precedence function, so it can operate as a global setting for all groups in the builder chain, or you
 can remove axes on a per-group basis from the inherited global frozen axes for that group.
 
-    Sub.freezeX [ Sub.translate ] -- global setting
+    Sub.freezeX [ Sub.translate ] -- global freeze setting
         >> Sub.for "box"
         >> Sub.unfreezeX [ Sub.translate ] -- removes the inherited global freeze for this group
         >> ... -- other builders
