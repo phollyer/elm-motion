@@ -698,10 +698,14 @@ transformOrder =
 Used for non-interpolatable properties like `display` or `visibility` that need
 to be set to a specific value while the animation is active.
 
+These functions are precedence functions, so they can operate as a global setting for all groups
+in the builder chain, or you can set them on a per-group basis which overrides any global setting for
+that group.
+
     ViewTimeline.animate motionCmd <|
         ViewTimeline.discreteEntry "display" "block"
-            >> ViewTimeline.discreteEntry "visibility" "visible"
             >> ViewTimeline.for "box"
+            >> ViewTimeline.discreteEntry "visibility" "visible"
             >> Opacity.begin
             >> Opacity.from 0
             >> Opacity.to 1
@@ -718,6 +722,10 @@ discreteEntry =
 Exit animations need to hold their initial state
 until the very end of the animation, at which point they flip to the final state.
 Therefore you need to set both entry and exit values for the property.
+
+These functions are precedence functions, so they can operate as a global setting
+for all groups in the builder chain, or you can set them on a per-group basis
+which overrides any global setting for that group.
 
 Use when an element is disappearing (e.g., going from
 `display: block` to `display: none`).

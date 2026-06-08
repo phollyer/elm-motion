@@ -915,6 +915,10 @@ The value is applied at every step of the animation, ensuring the element is
 immediately in the target state when the animation starts. The browser already
 knows the element's pre-animation state from its own CSS.
 
+These functions are precedence functions, so they can operate as a global setting
+for all groups in the builder chain, or you can set them on a per-group basis
+which overrides any global setting for that group.
+
     import Anim.Engine.Keyframe as Keyframe
     import Anim.Property.Opacity as Opacity
 
@@ -937,6 +941,10 @@ discreteEntry =
 Exit animations need to hold their initial state
 until the very end of the animation, at which point they flip to the final state.
 Therefore you need to set both entry and exit values for the property.
+
+These functions are precedence functions, so they can operate as a global setting
+for all groups in the builder chain, or you can set them on a per-group basis
+which overrides any global setting for that group.
 
 Use when an element is disappearing (e.g., going from
 `display: block` to `display: none`):

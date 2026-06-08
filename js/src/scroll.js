@@ -220,10 +220,13 @@ function attachScrollDrivenListeners(animGroup, animations, engine, element, dis
  * Builds start/end keyframes from each property config and calls element.animate().
  */
 function applyScrollDrivenAnimation(animGroup, element, elementConfig, timeline, rangeOptions, playbackOptions, engine, discreteEntry, discreteExit, emitProgress) {
+    const effectiveDiscreteEntry = Object.assign({}, discreteEntry || {}, elementConfig.discreteEntry || {});
+    const effectiveDiscreteExit = Object.assign({}, discreteExit || {}, elementConfig.discreteExit || {});
+
     // Apply discrete entry styles immediately so the element is in the correct
     // state when the animation begins.
-    if (discreteEntry) {
-        Object.entries(discreteEntry).forEach(function ([prop, value]) {
+    if (effectiveDiscreteEntry) {
+        Object.entries(effectiveDiscreteEntry).forEach(function ([prop, value]) {
             element.style[prop] = value;
         });
     }
@@ -352,7 +355,7 @@ function applyScrollDrivenAnimation(animGroup, element, elementConfig, timeline,
     }
 
     if (animations.length > 0 && engine) {
-        attachScrollDrivenListeners(animGroup, animations, engine, element, discreteExit || {}, !!emitProgress);
+        attachScrollDrivenListeners(animGroup, animations, engine, element, effectiveDiscreteExit || {}, !!emitProgress);
     }
 }
 

@@ -78,8 +78,8 @@ init =
             let
                 discrete : DiscreteConfig
                 discrete =
-                    { entry = Builder.getDiscreteEntryProperties builder
-                    , exit = Builder.getDiscreteExitProperties builder
+                    { entry = Builder.getDiscreteEntryPropertiesFor name builder
+                    , exit = Builder.getDiscreteExitPropertiesFor name builder
                     }
 
                 resolvedOrder =
@@ -195,8 +195,8 @@ runPipeline finaliseBuilder (AnimState state animGroups) transform =
             let
                 discrete : DiscreteConfig
                 discrete =
-                    { entry = Builder.getDiscreteEntryProperties builder
-                    , exit = Builder.getDiscreteExitProperties builder
+                    { entry = Builder.getDiscreteEntryPropertiesFor animGroupName builder
+                    , exit = Builder.getDiscreteExitPropertiesFor animGroupName builder
                     }
 
                 currentCounter =
@@ -548,8 +548,8 @@ restartAnimation animGroupName properties (AnimState state animGroups) =
 
         discrete : DiscreteConfig
         discrete =
-            { entry = Builder.getDiscreteEntryProperties state.builder
-            , exit = Builder.getDiscreteExitProperties state.builder
+            { entry = Builder.getDiscreteEntryPropertiesFor animGroupName state.builder
+            , exit = Builder.getDiscreteExitPropertiesFor animGroupName state.builder
             }
 
         animGroup =

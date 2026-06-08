@@ -770,6 +770,114 @@ describe('ElmMotion public API', () => {
         expect(events).toEqual([]);
     });
 
+    it('merges per-element discrete entry and exit settings over the timeline defaults', async () => {
+        const root = globalThis;
+        const elements = new Map();
+        const sourceId = 'source-scroll-discrete';
+
+        function registerElement(id, animation) {
+            const element = {
+                id,
+                style: {},
+                animate: vi.fn(() => animation)
+            };
+            elements.set(id, element);
+            return element;
+        }
+
+        const firstAnimation = createFakeAnimation();
+        const secondAnimation = createFakeAnimation();
+        const firstElement = registerElement('section-a', firstAnimation);
+        const secondElement = registerElement('section-b', secondAnimation);
+        elements.set(sourceId, { id: sourceId });
+
+        root.CSS = { escape: (value) => value };
+        root.performance = { now: () => 100 };
+        root.requestAnimationFrame = vi.fn(() => 1);
+        root.cancelAnimationFrame = vi.fn();
+        root.document = {
+            documentElement: { id: 'document' },
+            head: { appendChild() { } },
+            createElement() {
+                return {
+                    setAttribute() { },
+                    addEventListener() { },
+                    onload: null,
+                    onerror: null
+                };
+            },
+            querySelector(selector) {
+                const targetMatch = selector.match(/^\[data-anim-target="(.+)"\]$/);
+                if (!targetMatch) return null;
+                return elements.get(targetMatch[1]) || null;
+            },
+            querySelectorAll(selector) {
+                const targetMatch = selector.match(/^\[data-anim-target="(.+)"\]$/);
+                if (!targetMatch) return [];
+                const element = elements.get(targetMatch[1]);
+                return element ? [element] : [];
+            },
+            getElementById(id) {
+                return elements.get(id) || null;
+            }
+        };
+        root.window = {
+            getComputedStyle() {
+                return {
+                    opacity: '0.4',
+                    width: '100px',
+                    height: '50px',
+                    getPropertyValue(prop) {
+                        if (prop === '--progress') return '12';
+                        if (prop === 'color') return 'rgb(255, 255, 255)';
+                        if (prop === 'background-color') return 'rgb(0, 0, 0)';
+                        return '';
+                    }
+                };
+            },
+            ScrollTimeline: class ScrollTimeline {
+                constructor(config) {
+                    this.config = config;
+                }
+            }
+        };
+        root.ScrollTimeline = root.window.ScrollTimeline;
+
+        const ports = createPorts(() => { });
+        ElmMotion.init(ports.ports);
+
+        await ports.send({
+            type: 'scrollDriven',
+            iterations: { type: 'times', count: 1 },
+            timeline: { source: sourceId, axis: 'block' },
+            discreteEntry: { display: 'block' },
+            discreteExit: { display: { from: 'block', to: 'none' } },
+            elements: {
+                'section-a': {
+                    properties: [
+                        { type: 'opacity', startValue: 0, endValue: 1, duration: 300, easing: 'linear', version: 1 }
+                    ],
+                    discreteEntry: { display: 'flex' },
+                    discreteExit: { display: { from: 'flex', to: 'grid' } }
+                },
+                'section-b': {
+                    properties: [
+                        { type: 'opacity', startValue: 0, endValue: 1, duration: 300, easing: 'linear', version: 1 }
+                    ]
+                }
+            }
+        });
+
+        expect(firstElement.style.display).toBe('flex');
+        expect(secondElement.style.display).toBe('block');
+
+        firstAnimation.finish();
+        secondAnimation.finish();
+
+        expect(firstElement.style.display).toBe('grid');
+        expect(secondElement.style.display).toBe('none');
+    });
+
     it('handles stop, reset, and restart commands through the public API', async () => {
         const elements = new Map();
         const sourceMap = new Map();

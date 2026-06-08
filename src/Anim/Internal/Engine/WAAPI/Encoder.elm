@@ -176,6 +176,8 @@ encodeAnimateLike typeTag animGroups touchedAxes processed =
                             Nothing
                             Nothing
                             config.frozenAxes
+                            config.discreteEntryProperties
+                            config.discreteExitProperties
                             (touchedAxesForGroup animGroupName touchedAxes)
                             playback.iterations
                             playback.animationDirection
@@ -252,6 +254,8 @@ encodeRestart iterationsConfig directionConfig animGroup configGroup =
                             Nothing
                             Nothing
                             config.frozenAxes
+                            config.discreteEntryProperties
+                            config.discreteExitProperties
                             Dict.empty
                             playback.iterations
                             playback.animationDirection
@@ -294,6 +298,8 @@ encodeProcessedData data =
                             Nothing
                             Nothing
                             config.frozenAxes
+                            config.discreteEntryProperties
+                            config.discreteExitProperties
                             Dict.empty
                             playback.iterations
                             playback.animationDirection
@@ -454,12 +460,14 @@ encodeProcessedAnimGroupConfig :
     -> Maybe String
     -> Maybe Bool
     -> Dict.Dict String (List String)
+    -> Dict.Dict String String
+    -> Dict.Dict String Builder.DiscreteExitProperty
     -> Dict.Dict String (Set String)
     -> Builder.Iterations
     -> Builder.AnimationDirection
     -> List Builder.ProcessedPropertyConfig
     -> Encode.Value
-encodeProcessedAnimGroupConfig animGroupName targetId propertyState transformOrder_ transformBaseline viewRangeStart viewRangeEnd emitProgress_ frozenAxes touchedAxes iterations_ direction_ propertyConfigs =
+encodeProcessedAnimGroupConfig animGroupName targetId propertyState transformOrder_ transformBaseline viewRangeStart viewRangeEnd emitProgress_ frozenAxes discreteEntryProperties discreteExitProperties touchedAxes iterations_ direction_ propertyConfigs =
     let
         baseFields =
             [ ( "properties", Encode.list (encodeProcessedPropertyConfig propertyState frozenAxes touchedAxes) propertyConfigs )
@@ -490,6 +498,12 @@ encodeProcessedAnimGroupConfig animGroupName targetId propertyState transformOrd
                 |> Maybe.map (\enabled -> [ ( "emitProgress", Encode.bool enabled ) ])
                 |> Maybe.withDefault []
 
+        discreteEntryField =
+            encodeDiscreteEntryFields discreteEntryProperties
+
+        discreteExitField =
+            encodeDiscreteExitFields discreteExitProperties
+
         willChangeField =
             case Builder.willChangeComposite propertyConfigs of
                 "" ->
@@ -498,7 +512,7 @@ encodeProcessedAnimGroupConfig animGroupName targetId propertyState transformOrd
                 value ->
                     [ ( "willChange", Encode.string value ) ]
     in
-    Encode.object (baseFields ++ orderField ++ baselineField ++ viewRangeFields ++ emitProgressField ++ willChangeField)
+    Encode.object (baseFields ++ orderField ++ baselineField ++ viewRangeFields ++ emitProgressField ++ discreteEntryField ++ discreteExitField ++ willChangeField)
 
 
 {-| Encode the Elm-side transform snapshot baseline (init values plus any
@@ -1084,6 +1098,8 @@ encodeScroll builder =
                             config.viewRangeEnd
                             (Just emitProgress)
                             config.frozenAxes
+                            config.discreteEntryProperties
+                            config.discreteExitProperties
                             Dict.empty
                             playback.iterations
                             playback.animationDirection
@@ -1169,6 +1185,8 @@ encodeView builder =
                             (Builder.getViewRangeEndFor animGroupName builder)
                             (Just emitProgress)
                             config.frozenAxes
+                            config.discreteEntryProperties
+                            config.discreteExitProperties
                             Dict.empty
                             playback.iterations
                             playback.animationDirection

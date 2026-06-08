@@ -81,8 +81,8 @@ init =
                 (Builder.getDefaults builder)
                 animGroupName
                 (Builder.discreteTransitionsEnabled builder)
-                (Builder.getDiscreteEntryProperties builder)
-                (Builder.getDiscreteExitProperties builder)
+                (Builder.getDiscreteEntryPropertiesFor animGroupName builder)
+                (Builder.getDiscreteExitPropertiesFor animGroupName builder)
                 properties
     in
     CSS.init initGroup
@@ -100,10 +100,10 @@ animate =
 
 
 generateAnimGroup : Maybe (List TransformProperty) -> EngineBuilder -> AnimGroupName -> { a | properties : List Builder.ProcessedPropertyConfig } -> AnimGroup
-generateAnimGroup _ builder _ { properties } =
+generateAnimGroup _ builder animGroupName { properties } =
     let
         freshEntry =
-            Builder.getDiscreteEntryProperties builder
+            Builder.getDiscreteEntryPropertiesFor animGroupName builder
 
         -- `@starting-style` is only useful for ENTRY transitions
         -- (element becoming rendered). Only emit starting styles
@@ -120,7 +120,7 @@ generateAnimGroup _ builder _ { properties } =
     Generator.generateAnimation
         (Builder.discreteTransitionsEnabled builder)
         freshEntry
-        (Builder.getDiscreteExitProperties builder)
+        (Builder.getDiscreteExitPropertiesFor animGroupName builder)
         properties
         |> AnimGroup.setStartingStyles startingStylesForThisAnimate
 

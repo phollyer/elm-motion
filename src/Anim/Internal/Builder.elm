@@ -68,7 +68,9 @@ module Anim.Internal.Builder exposing
     , getDelay
     , getDelayWithDefault
     , getDiscreteEntryProperties
+    , getDiscreteEntryPropertiesFor
     , getDiscreteExitProperties
+    , getDiscreteExitPropertiesFor
     , getEasing
     , getEasingWithDefault
     , getEmitProgress
@@ -350,6 +352,8 @@ type alias AnimGroupConfig =
     , viewRangeEnd : Maybe String
     , emitProgress : Maybe Bool
     , frozenAxes : Maybe (Dict String (List String))
+    , discreteEntryProperties : Maybe (Dict String DiscreteEntryProperty)
+    , discreteExitProperties : Maybe (Dict String DiscreteExitProperty)
     }
 
 
@@ -361,6 +365,8 @@ type alias ProcessedAnimGroupConfig =
     , viewRangeEnd : Maybe String
     , emitProgress : Maybe Bool
     , frozenAxes : Dict String (List String)
+    , discreteEntryProperties : Dict String DiscreteEntryProperty
+    , discreteExitProperties : Dict String DiscreteExitProperty
     }
 
 
@@ -987,6 +993,8 @@ transformOrder order ((AnimBuilder data) as builder) =
                             , viewRangeEnd = Nothing
                             , emitProgress = Nothing
                             , frozenAxes = Nothing
+                            , discreteEntryProperties = Nothing
+                            , discreteExitProperties = Nothing
                             }
             in
             builder
@@ -1129,6 +1137,8 @@ iterations count (AnimBuilder data) =
                 , viewRangeEnd = Nothing
                 , emitProgress = Nothing
                 , frozenAxes = Nothing
+                , discreteEntryProperties = Nothing
+                , discreteExitProperties = Nothing
                 }
                 (AnimBuilder data)
 
@@ -1152,6 +1162,8 @@ loopForever (AnimBuilder data) =
                 , viewRangeEnd = Nothing
                 , emitProgress = Nothing
                 , frozenAxes = Nothing
+                , discreteEntryProperties = Nothing
+                , discreteExitProperties = Nothing
                 }
                 (AnimBuilder data)
 
@@ -1190,6 +1202,8 @@ alternate (AnimBuilder data) =
                 , viewRangeEnd = Nothing
                 , emitProgress = Nothing
                 , frozenAxes = Nothing
+                , discreteEntryProperties = Nothing
+                , discreteExitProperties = Nothing
                 }
                 (AnimBuilder data)
 
@@ -1227,19 +1241,48 @@ immediately in the target state.
 -}
 discreteEntry : String -> String -> AnimBuilder eng -> AnimBuilder eng
 discreteEntry propertyName value (AnimBuilder data) =
-    let
-        pb =
-            data.playback
-    in
-    AnimBuilder
-        { data
-            | playback =
-                { pb
-                    | discreteTransitions = True
-                    , discreteEntryProperties =
-                        Dict.insert propertyName value pb.discreteEntryProperties
+    case data.animation.currentAnimGroup of
+        Nothing ->
+            let
+                pb =
+                    data.playback
+            in
+            AnimBuilder
+                { data
+                    | playback =
+                        { pb
+                            | discreteTransitions = True
+                            , discreteEntryProperties =
+                                Dict.insert propertyName value pb.discreteEntryProperties
+                        }
                 }
-        }
+
+        Just animGroupName ->
+            let
+                currentGroupConfig =
+                    AnimGroups.get animGroupName data.animation.animGroups
+                        |> Maybe.withDefault
+                            { properties = []
+                            , playback = Nothing
+                            , transformOrder = Nothing
+                            , viewRangeStart = Nothing
+                            , viewRangeEnd = Nothing
+                            , emitProgress = Nothing
+                            , frozenAxes = Nothing
+                            , discreteEntryProperties = Nothing
+                            , discreteExitProperties = Nothing
+                            }
+
+                currentEntryProperties =
+                    currentGroupConfig.discreteEntryProperties
+                        |> Maybe.withDefault Dict.empty
+            in
+            updateCurrentConfig
+                { currentGroupConfig
+                    | discreteEntryProperties =
+                        Just (Dict.insert propertyName value currentEntryProperties)
+                }
+                (AnimBuilder data)
 
 
 {-| Add a discrete CSS property for exit animations.
@@ -1252,19 +1295,48 @@ when the animation ends.
 -}
 discreteExit : String -> String -> String -> AnimBuilder eng -> AnimBuilder eng
 discreteExit propertyName from to (AnimBuilder data) =
-    let
-        pb =
-            data.playback
-    in
-    AnimBuilder
-        { data
-            | playback =
-                { pb
-                    | discreteTransitions = True
-                    , discreteExitProperties =
-                        Dict.insert propertyName { from = from, to = to } pb.discreteExitProperties
+    case data.animation.currentAnimGroup of
+        Nothing ->
+            let
+                pb =
+                    data.playback
+            in
+            AnimBuilder
+                { data
+                    | playback =
+                        { pb
+                            | discreteTransitions = True
+                            , discreteExitProperties =
+                                Dict.insert propertyName { from = from, to = to } pb.discreteExitProperties
+                        }
                 }
-        }
+
+        Just animGroupName ->
+            let
+                currentGroupConfig =
+                    AnimGroups.get animGroupName data.animation.animGroups
+                        |> Maybe.withDefault
+                            { properties = []
+                            , playback = Nothing
+                            , transformOrder = Nothing
+                            , viewRangeStart = Nothing
+                            , viewRangeEnd = Nothing
+                            , emitProgress = Nothing
+                            , frozenAxes = Nothing
+                            , discreteEntryProperties = Nothing
+                            , discreteExitProperties = Nothing
+                            }
+
+                currentExitProperties =
+                    currentGroupConfig.discreteExitProperties
+                        |> Maybe.withDefault Dict.empty
+            in
+            updateCurrentConfig
+                { currentGroupConfig
+                    | discreteExitProperties =
+                        Just (Dict.insert propertyName { from = from, to = to } currentExitProperties)
+                }
+                (AnimBuilder data)
 
 
 getDiscreteEntryProperties : AnimBuilder eng -> Dict String String
@@ -1275,6 +1347,30 @@ getDiscreteEntryProperties (AnimBuilder data) =
 getDiscreteExitProperties : AnimBuilder eng -> Dict String DiscreteExitProperty
 getDiscreteExitProperties (AnimBuilder data) =
     data.playback.discreteExitProperties
+
+
+getDiscreteEntryPropertiesFor : AnimGroupName -> AnimBuilder eng -> Dict String DiscreteEntryProperty
+getDiscreteEntryPropertiesFor animGroupName builder =
+    case getAnimGroupConfig animGroupName builder of
+        Just config ->
+            config.discreteEntryProperties
+                |> Maybe.map (\groupDiscrete -> Dict.union groupDiscrete (getDiscreteEntryProperties builder))
+                |> Maybe.withDefault (getDiscreteEntryProperties builder)
+
+        Nothing ->
+            getDiscreteEntryProperties builder
+
+
+getDiscreteExitPropertiesFor : AnimGroupName -> AnimBuilder eng -> Dict String DiscreteExitProperty
+getDiscreteExitPropertiesFor animGroupName builder =
+    case getAnimGroupConfig animGroupName builder of
+        Just config ->
+            config.discreteExitProperties
+                |> Maybe.map (\groupDiscrete -> Dict.union groupDiscrete (getDiscreteExitProperties builder))
+                |> Maybe.withDefault (getDiscreteExitProperties builder)
+
+        Nothing ->
+            getDiscreteExitProperties builder
 
 
 getIterations : AnimBuilder eng -> Iterations
@@ -1351,6 +1447,8 @@ freezeAxes axes properties (AnimBuilder data) =
                 , viewRangeEnd = Nothing
                 , emitProgress = Nothing
                 , frozenAxes = Just (applyFreezeAxesToDict baseFrozenAxes)
+                , discreteEntryProperties = Nothing
+                , discreteExitProperties = Nothing
                 }
                 (AnimBuilder data)
 
@@ -1396,6 +1494,8 @@ unfreezeAxes axes properties (AnimBuilder data) =
                 , viewRangeEnd = Nothing
                 , emitProgress = Nothing
                 , frozenAxes = Just (applyUnfreezeAxesToDict baseFrozenAxes)
+                , discreteEntryProperties = Nothing
+                , discreteExitProperties = Nothing
                 }
                 (AnimBuilder data)
 
@@ -1527,6 +1627,8 @@ getCurrentAnimGroupConfig (AnimBuilder data) =
             , viewRangeEnd = data.scrollDriven.viewRangeEnd
             , emitProgress = Nothing
             , frozenAxes = Just data.animation.frozenAxes
+            , discreteEntryProperties = Just data.playback.discreteEntryProperties
+            , discreteExitProperties = Just data.playback.discreteExitProperties
             }
 
         Just animGroupName ->
@@ -1562,6 +1664,20 @@ getCurrentAnimGroupConfig (AnimBuilder data) =
 
                                     Nothing ->
                                         Just data.animation.frozenAxes
+                            , discreteEntryProperties =
+                                case config.discreteEntryProperties of
+                                    Just groupDiscreteEntry ->
+                                        Just (Dict.union groupDiscreteEntry data.playback.discreteEntryProperties)
+
+                                    Nothing ->
+                                        Just data.playback.discreteEntryProperties
+                            , discreteExitProperties =
+                                case config.discreteExitProperties of
+                                    Just groupDiscreteExit ->
+                                        Just (Dict.union groupDiscreteExit data.playback.discreteExitProperties)
+
+                                    Nothing ->
+                                        Just data.playback.discreteExitProperties
                         }
                     )
                 |> Maybe.withDefault
@@ -1572,6 +1688,8 @@ getCurrentAnimGroupConfig (AnimBuilder data) =
                     , viewRangeEnd = data.scrollDriven.viewRangeEnd
                     , emitProgress = Nothing
                     , frozenAxes = Just data.animation.frozenAxes
+                    , discreteEntryProperties = Just data.playback.discreteEntryProperties
+                    , discreteExitProperties = Just data.playback.discreteExitProperties
                     }
 
 
@@ -2098,6 +2216,28 @@ updateCurrentConfig config (AnimBuilder data) =
 
                                         Nothing ->
                                             existing.frozenAxes
+                                , discreteEntryProperties =
+                                    case config.discreteEntryProperties of
+                                        Just newDiscreteEntry ->
+                                            Just
+                                                (Dict.union
+                                                    newDiscreteEntry
+                                                    (Maybe.withDefault Dict.empty existing.discreteEntryProperties)
+                                                )
+
+                                        Nothing ->
+                                            existing.discreteEntryProperties
+                                , discreteExitProperties =
+                                    case config.discreteExitProperties of
+                                        Just newDiscreteExit ->
+                                            Just
+                                                (Dict.union
+                                                    newDiscreteExit
+                                                    (Maybe.withDefault Dict.empty existing.discreteExitProperties)
+                                                )
+
+                                        Nothing ->
+                                            existing.discreteExitProperties
                             }
 
                         Nothing ->
@@ -2480,6 +2620,20 @@ process (AnimBuilder data) =
 
                         Nothing ->
                             data.animation.frozenAxes
+                , discreteEntryProperties =
+                    case group.discreteEntryProperties of
+                        Just overrides ->
+                            Dict.union overrides data.playback.discreteEntryProperties
+
+                        Nothing ->
+                            data.playback.discreteEntryProperties
+                , discreteExitProperties =
+                    case group.discreteExitProperties of
+                        Just overrides ->
+                            Dict.union overrides data.playback.discreteExitProperties
+
+                        Nothing ->
+                            data.playback.discreteExitProperties
                 }
             )
             data.animation.animGroups
@@ -2962,6 +3116,8 @@ setViewRangeStart range (AnimBuilder data) =
                 , viewRangeEnd = Nothing
                 , emitProgress = Nothing
                 , frozenAxes = Nothing
+                , discreteEntryProperties = Nothing
+                , discreteExitProperties = Nothing
                 }
                 (AnimBuilder data)
 
@@ -2987,6 +3143,8 @@ setViewRangeEnd range (AnimBuilder data) =
                 , viewRangeEnd = Just range
                 , emitProgress = Nothing
                 , frozenAxes = Nothing
+                , discreteEntryProperties = Nothing
+                , discreteExitProperties = Nothing
                 }
                 (AnimBuilder data)
 
@@ -3124,6 +3282,8 @@ setScrollEmitProgress enabled (AnimBuilder data) =
                 , viewRangeEnd = Nothing
                 , emitProgress = Just enabled
                 , frozenAxes = Nothing
+                , discreteEntryProperties = Nothing
+                , discreteExitProperties = Nothing
                 }
                 (AnimBuilder data)
 
@@ -3175,5 +3335,7 @@ setEmitProgress enabled (AnimBuilder data) =
                 , viewRangeEnd = Nothing
                 , emitProgress = Just enabled
                 , frozenAxes = Nothing
+                , discreteEntryProperties = Nothing
+                , discreteExitProperties = Nothing
                 }
                 (AnimBuilder data)
