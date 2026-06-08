@@ -58,11 +58,12 @@ init =
 
 animateTo : Float -> Easing -> Keyframe.EngineBuilder -> Keyframe.EngineBuilder
 animateTo x easing =
-    Translate.for animGroup
+    Keyframe.for animGroup
+        >> Translate.begin
         >> Translate.toX x
         >> Translate.speed 350
         >> Translate.easing easing
-        >> Translate.build
+        >> Translate.end
 
 
 

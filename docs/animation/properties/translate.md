@@ -15,10 +15,10 @@ Move elements in 2D or 3D space by animating their position.
 
     slideRight : AnimBuilder eng -> AnimBuilder eng
     slideRight =
-        Translate.for "animGroup"
+        Translate.begin
             >> Translate.toX 100
             >> Translate.duration 500
-            >> Translate.build
+            >> Translate.end
     ```
 
 See the [Properties Overview](overview.md) page for the shared usage patterns.

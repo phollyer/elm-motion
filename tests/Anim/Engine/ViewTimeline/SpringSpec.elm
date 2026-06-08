@@ -70,9 +70,10 @@ builderWithSpring s =
 
 applyOpacity : ViewTimelineInternal.EngineBuilder -> ViewTimelineInternal.EngineBuilder
 applyOpacity =
-    Opacity.for "el"
+    Builder.for "el"
+        >> Opacity.begin
         >> Opacity.to 0.5
-        >> Opacity.build
+        >> Opacity.end
 
 
 extractOpacitySpring : ViewTimelineInternal.EngineBuilder -> Maybe (Maybe Spring.Spring)

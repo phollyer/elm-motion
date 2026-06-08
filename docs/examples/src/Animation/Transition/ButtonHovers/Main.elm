@@ -112,56 +112,62 @@ unhoverEasing =
 
 scaleUp : Transition.EngineBuilder -> Transition.EngineBuilder
 scaleUp =
-    Scale.for scaleButton
+    Transition.for scaleButton
+        >> Scale.begin
         >> Scale.to 1.1
         >> Scale.duration hoverDuration
         >> Scale.easing hoverEasing
-        >> Scale.build
+        >> Scale.end
 
 
 scaleDown : Transition.EngineBuilder -> Transition.EngineBuilder
 scaleDown =
-    Scale.for scaleButton
+    Transition.for scaleButton
+        >> Scale.begin
         >> Scale.to 1
         >> Scale.duration hoverDuration
         >> Scale.easing unhoverEasing
-        >> Scale.build
+        >> Scale.end
 
 
 growSize : Transition.EngineBuilder -> Transition.EngineBuilder
 growSize =
-    Size.for sizeButton
+    Transition.for sizeButton
+        >> Size.begin
         >> Size.toHW hoverHeight hoverWidth
         >> Size.duration hoverDuration
         >> Size.easing hoverEasing
-        >> Size.build
+        >> Size.end
 
 
 shrinkSize : Transition.EngineBuilder -> Transition.EngineBuilder
 shrinkSize =
-    Size.for sizeButton
+    Transition.for sizeButton
+        >> Size.begin
         >> Size.toHW baseHeight baseWidth
         >> Size.duration hoverDuration
         >> Size.easing unhoverEasing
-        >> Size.build
+        >> Size.end
 
 
 liftUp : Transition.EngineBuilder -> Transition.EngineBuilder
 liftUp =
-    Translate.for zButton
+    Transition.for zButton
+        >> Translate.begin
         >> Translate.toZ 60
         >> Translate.duration hoverDuration
         >> Translate.easing hoverEasing
-        >> Translate.build
+        >> Translate.end
 
 
 setDown : Transition.EngineBuilder -> Transition.EngineBuilder
 setDown =
-    Translate.for zButton
+    Transition.for zButton
+        >> Translate.begin
         >> Translate.toZ 0
         >> Translate.duration hoverDuration
         >> Translate.easing unhoverEasing
-        >> Translate.build
+        >> Translate.end
 
 
 

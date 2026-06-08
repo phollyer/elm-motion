@@ -121,20 +121,22 @@ color4 =
 
 moveBoxX : Float -> Sub.EngineBuilder -> Sub.EngineBuilder
 moveBoxX x =
-    Translate.for animGroupName
+    Sub.for animGroupName
+        >> Translate.begin
         >> Translate.toX x
         >> Translate.speed 25
         >> Translate.easing BounceOut
-        >> Translate.build
+        >> Translate.end
 
 
 changeColor : Color -> Sub.EngineBuilder -> Sub.EngineBuilder
 changeColor color =
-    CustomColor.for animGroupName CustomColor.BackgroundColor
+    Sub.for animGroupName
+        >> CustomColor.begin CustomColor.BackgroundColor
         >> CustomColor.to color
         >> CustomColor.duration 3000
         >> CustomColor.easing Linear
-        >> CustomColor.build
+        >> CustomColor.end
 
 
 

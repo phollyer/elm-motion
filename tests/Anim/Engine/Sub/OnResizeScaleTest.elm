@@ -30,11 +30,12 @@ initialState =
 
 scaleX : Float -> Sub.EngineBuilder -> Sub.EngineBuilder
 scaleX target =
-    Scale.for groupName
+    Sub.for groupName
+        >> Scale.begin
         >> Scale.toX target
         >> Scale.duration 1000
         >> Scale.easing Linear
-        >> Scale.build
+        >> Scale.end
 
 
 step : Float -> Sub.AnimState -> Sub.AnimState
@@ -154,16 +155,17 @@ suite =
                         initialState
                             |> (\s ->
                                     Sub.animate s
-                                        (Translate.for groupName
+                                        (Sub.for groupName
+                                            >> Translate.begin
                                             >> Translate.toX 100
                                             >> Translate.duration 1000
                                             >> Translate.easing Linear
-                                            >> Translate.build
-                                            >> Scale.for groupName
+                                            >> Translate.end
+                                            >> Scale.begin
                                             >> Scale.toX 4
                                             >> Scale.duration 1000
                                             >> Scale.easing Linear
-                                            >> Scale.build
+                                            >> Scale.end
                                         )
                                )
                             |> runPast 1500
@@ -208,16 +210,18 @@ suite =
                             ]
                             |> (\s ->
                                     Sub.animate s
-                                        (Scale.for groupName
+                                        (Sub.for groupName
+                                            >> Scale.begin
                                             >> Scale.toX 5
                                             >> Scale.duration 1000
                                             >> Scale.easing Linear
-                                            >> Scale.build
-                                            >> Scale.for secondGroup
+                                            >> Scale.end
+                                            >> Sub.for secondGroup
+                                            >> Scale.begin
                                             >> Scale.toX 5
                                             >> Scale.duration 1000
                                             >> Scale.easing Linear
-                                            >> Scale.build
+                                            >> Scale.end
                                         )
                                )
                             |> runPast 1500

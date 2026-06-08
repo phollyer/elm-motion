@@ -92,14 +92,15 @@ propertyKeysTests =
                 initState
                     |> (\s ->
                             Transition.animate s <|
-                                (Translate.for "el"
+                                (Transition.for "el"
+                                    >> Translate.begin
                                     >> Translate.toX 100
                                     >> Translate.duration 500
-                                    >> Translate.build
-                                    >> Opacity.for "el"
+                                    >> Translate.end
+                                    >> Opacity.begin
                                     >> Opacity.to 0.5
                                     >> Opacity.duration 500
-                                    >> Opacity.build
+                                    >> Opacity.end
                                 )
                        )
                     |> propertyKeysFor "el"
@@ -109,18 +110,20 @@ propertyKeysTests =
                 initState
                     |> (\s ->
                             Transition.animate s <|
-                                (Translate.for "el"
+                                (Transition.for "el"
+                                    >> Translate.begin
                                     >> Translate.toX 100
                                     >> Translate.duration 500
-                                    >> Translate.build
+                                    >> Translate.end
                                 )
                        )
                     |> (\s ->
                             Transition.animate s <|
-                                (Opacity.for "el"
+                                (Transition.for "el"
+                                    >> Opacity.begin
                                     >> Opacity.to 0.5
                                     >> Opacity.duration 500
-                                    >> Opacity.build
+                                    >> Opacity.end
                                 )
                        )
                     |> propertyKeysFor "el"
@@ -142,18 +145,20 @@ snapTests =
                 initState
                     |> (\s ->
                             Transition.animate s <|
-                                (Translate.for "el"
+                                (Transition.for "el"
+                                    >> Translate.begin
                                     >> Translate.toX 100
                                     >> Translate.duration 500
                                     >> Translate.easing BounceOut
-                                    >> Translate.build
+                                    >> Translate.end
                                 )
                        )
                     |> (\s ->
                             Transition.retarget s <|
-                                (Translate.for "el"
+                                (Transition.for "el"
+                                    >> Translate.begin
                                     >> Translate.toX 300
-                                    >> Translate.build
+                                    >> Translate.end
                                 )
                        )
                     |> transitionCss "el"
@@ -163,17 +168,19 @@ snapTests =
                 initState
                     |> (\s ->
                             Transition.animate s <|
-                                (Translate.for "el"
+                                (Transition.for "el"
+                                    >> Translate.begin
                                     >> Translate.toX 100
                                     >> Translate.duration 500
-                                    >> Translate.build
+                                    >> Translate.end
                                 )
                        )
                     |> (\s ->
                             Transition.retarget s <|
-                                (Translate.for "el"
+                                (Transition.for "el"
+                                    >> Translate.begin
                                     >> Translate.toX 300
-                                    >> Translate.build
+                                    >> Translate.end
                                 )
                        )
                     |> stylesFor "el"
@@ -185,9 +192,10 @@ snapTests =
                 initState
                     |> (\s ->
                             Transition.retarget s <|
-                                (Translate.for "el"
+                                (Transition.for "el"
+                                    >> Translate.begin
                                     >> Translate.toX 250
-                                    >> Translate.build
+                                    >> Translate.end
                                 )
                        )
                     |> transitionCss "el"
@@ -197,17 +205,19 @@ snapTests =
                 initState
                     |> (\s ->
                             Transition.animate s <|
-                                (Opacity.for "el"
+                                (Transition.for "el"
+                                    >> Opacity.begin
                                     >> Opacity.to 1
                                     >> Opacity.duration 500
-                                    >> Opacity.build
+                                    >> Opacity.end
                                 )
                        )
                     |> (\s ->
                             Transition.retarget s <|
-                                (Opacity.for "el"
+                                (Transition.for "el"
+                                    >> Opacity.begin
                                     >> Opacity.to 0
-                                    >> Opacity.build
+                                    >> Opacity.end
                                 )
                        )
                     |> stylesFor "el"
@@ -230,17 +240,19 @@ scopingTests =
                 initState
                     |> (\s ->
                             Transition.animate s <|
-                                (Translate.for "a"
+                                (Transition.for "a"
+                                    >> Translate.begin
                                     >> Translate.toX 100
                                     >> Translate.duration 500
-                                    >> Translate.build
+                                    >> Translate.end
                                 )
                        )
                     |> (\s ->
                             Transition.retarget s <|
-                                (Translate.for "b"
+                                (Transition.for "b"
+                                    >> Translate.begin
                                     >> Translate.toX 300
-                                    >> Translate.build
+                                    >> Translate.end
                                 )
                        )
                     |> transitionCss "a"
@@ -251,17 +263,19 @@ scopingTests =
                 initState
                     |> (\s ->
                             Transition.animate s <|
-                                (Translate.for "a"
+                                (Transition.for "a"
+                                    >> Translate.begin
                                     >> Translate.toX 100
                                     >> Translate.duration 500
-                                    >> Translate.build
+                                    >> Translate.end
                                 )
                        )
                     |> (\s ->
                             Transition.retarget s <|
-                                (Translate.for "b"
+                                (Transition.for "b"
+                                    >> Translate.begin
                                     >> Translate.toX 300
-                                    >> Translate.build
+                                    >> Translate.end
                                 )
                        )
                     |> transitionCss "b"
@@ -283,18 +297,20 @@ resetAfterRetargetTests =
                 cqwInitState
                     |> (\s ->
                             Transition.animate s <|
-                                (Translate.for "el"
+                                (Transition.for "el"
+                                    >> Translate.begin
                                     >> Translate.toXY 88 88
                                     >> Translate.duration 5000
                                     >> Translate.easing Linear
-                                    >> Translate.build
+                                    >> Translate.end
                                 )
                        )
                     |> (\s ->
                             Transition.retarget s <|
-                                (Translate.for "el"
+                                (Transition.for "el"
+                                    >> Translate.begin
                                     >> Translate.toY 0
-                                    >> Translate.build
+                                    >> Translate.end
                                 )
                        )
                     |> Transition.reset "el"
@@ -308,18 +324,20 @@ resetAfterRetargetTests =
                         s
                             |> (\inner ->
                                     Transition.animate inner <|
-                                        (Translate.for "el"
+                                        (Transition.for "el"
+                                            >> Translate.begin
                                             >> Translate.toXY 88 88
                                             >> Translate.duration 5000
                                             >> Translate.easing Linear
-                                            >> Translate.build
+                                            >> Translate.end
                                         )
                                )
                             |> (\inner ->
                                     Transition.retarget inner <|
-                                        (Translate.for "el"
+                                        (Transition.for "el"
+                                            >> Translate.begin
                                             >> Translate.toY 0
-                                            >> Translate.build
+                                            >> Translate.end
                                         )
                                )
                             |> Transition.reset "el"
@@ -335,29 +353,32 @@ resetAfterRetargetTests =
                 cqwInitState
                     |> (\s ->
                             Transition.animate s <|
-                                (Translate.for "el"
+                                (Transition.for "el"
+                                    >> Translate.begin
                                     >> Translate.toXY 88 88
                                     >> Translate.duration 5000
                                     >> Translate.easing Linear
-                                    >> Translate.build
+                                    >> Translate.end
                                 )
                        )
                     |> (\s ->
                             Transition.retarget s <|
-                                (Translate.for "el"
+                                (Transition.for "el"
+                                    >> Translate.begin
                                     >> Translate.toY 0
-                                    >> Translate.build
+                                    >> Translate.end
                                 )
                        )
                     |> Transition.reset "el"
                     |> (\s ->
                             -- Second animate: should be (0,0)->(88,88), not (88,0)->(88,88)
                             Transition.animate s <|
-                                (Translate.for "el"
+                                (Transition.for "el"
+                                    >> Translate.begin
                                     >> Translate.toXY 88 88
                                     >> Translate.duration 5000
                                     >> Translate.easing Linear
-                                    >> Translate.build
+                                    >> Translate.end
                                 )
                        )
                     |> stylesFor "el"

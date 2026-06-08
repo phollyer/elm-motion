@@ -54,20 +54,22 @@ animGroup =
 
 fadeIn : Transition.EngineBuilder -> Transition.EngineBuilder
 fadeIn =
-    Opacity.for animGroup
+    Transition.for animGroup
+        >> Opacity.begin
         >> Opacity.to 1
         >> Opacity.duration 800
         >> Opacity.easing QuartIn
-        >> Opacity.build
+        >> Opacity.end
 
 
 fadeOut : Transition.EngineBuilder -> Transition.EngineBuilder
 fadeOut =
-    Opacity.for animGroup
+    Transition.for animGroup
+        >> Opacity.begin
         >> Opacity.to 0
         >> Opacity.duration 800
         >> Opacity.easing CubicIn
-        >> Opacity.build
+        >> Opacity.end
 
 
 

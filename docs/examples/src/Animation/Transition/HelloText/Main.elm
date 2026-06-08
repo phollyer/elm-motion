@@ -62,10 +62,11 @@ groupName =
 
 fadeIn : Transition.EngineBuilder -> Transition.EngineBuilder
 fadeIn =
-    Opacity.for groupName
+    Transition.for groupName
+        >> Opacity.begin
         >> Opacity.to 1
         >> Opacity.duration 5000
-        >> Opacity.build
+        >> Opacity.end
 
 
 

@@ -70,12 +70,14 @@ pulse =
         >> Sub.alternate
         >> Sub.duration 1000
         >> Sub.easing EaseInOut
-        >> Scale.for groupName
+        >> Sub.for groupName
+        >> Scale.begin
         >> Scale.to 0.4
-        >> Scale.build
-        >> Opacity.for groupName
+        >> Scale.end
+        >> Sub.for groupName
+        >> Opacity.begin
         >> Opacity.to 0.3
-        >> Opacity.build
+        >> Opacity.end
 
 
 

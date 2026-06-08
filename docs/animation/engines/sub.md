@@ -36,10 +36,11 @@ Here's a general workflow to get up an running quickly.
 
     fadeIn : Sub.AnimBuilder eng -> Sub.AnimBuilder eng
     fadeIn =
-        Opacity.for "card"
+        Sub.for "card"
+            >> Opacity.begin
             >> Opacity.to 1
             >> Opacity.duration 350
-            >> Opacity.build
+            >> Opacity.end
     ```
 
 ### 2. Initialize
@@ -279,10 +280,11 @@ Set `iterations`, `loopForever`, and `alternate` in the animation builder.
     spinForever =
         Sub.loopForever
             >> Sub.alternate
-            >> Rotate.for "icon"
+            >> Sub.for "icon"
+            >> Rotate.begin
             >> Rotate.toZ 360
             >> Rotate.duration 1000
-            >> Rotate.build
+            >> Rotate.end
     ```
 
 📖 See [Playback](../concepts/playback.md) for the full `looping`, `iterations`, and `alternate` API with live examples.
@@ -301,9 +303,10 @@ Set the default `duration`, `speed`, and `delay`. Inherited by every property th
     fadeIn =
         Sub.delay 500
             >> Sub.duration 800
-            >> Opacity.for "card"
+            >> Sub.for "card"
+            >> Opacity.begin
             >> Opacity.to 1
-            >> Opacity.build
+            >> Opacity.end
     ```
 
 📖 See [Timing](../concepts/timing.md) for more info.
@@ -319,11 +322,12 @@ Set the default easing for all properties that don't override it:
     ```elm
     fadeIn =
         Sub.easing CubicInOut
-            >> Opacity.for "card"
+            >> Sub.for "card"
+            >> Opacity.begin
             >> Opacity.to 1
             >> Opacity.duration 300
             >> Opacity.delay 50
-            >> Opacity.build
+            >> Opacity.end
     ```
 
 📖 See [Easing](../concepts/easing.md) for all available easing functions.
@@ -339,9 +343,10 @@ Set the default spring for all properties that don't override it: The motion end
     ```elm
     bouncyReveal =
         Sub.spring Spring.wobbly
-            >> Opacity.for "card"
+            >> Sub.for "card"
+            >> Opacity.begin
             >> Opacity.to 1
-            >> Opacity.build
+            >> Opacity.end
     ```
 
 📖 See [Spring](../concepts/spring.md) for the full preset list and tuning guidance.
@@ -394,7 +399,8 @@ Use `transformOrder` to set the order in which transform properties are applied 
 
     animateBox =
         Sub.transformOrder [ Scale, Rotate, Translate ]
-            >> Translate.for "box"
+            >> Sub.for "box"
+            >> Translate.begin
             >> ...
     ```
 
@@ -409,9 +415,10 @@ Freeze one or more transform axes so they stop updating during subsequent frames
     ```elm
     Sub.animate model.animState <|
         Sub.freezeX [ Sub.translate ]
-            >> Translate.for "box"
+            >> Sub.for "box"
+            >> Translate.begin
             >> Translate.toY 0
-            >> Translate.build
+            >> Translate.end
     ```
 
 📖 See [Freezing Axes with `freeze*`](../concepts/interrupting-animations.md#freezing-axes-with-freeze) for more info.

@@ -17,7 +17,7 @@ import Anim.Internal.Builder.PropertyBaselines as PropertyBaselines exposing (Pr
 import Anim.Internal.Engine.Shared.AnimGroups as AnimGroups exposing (AnimGroups)
 import Anim.Internal.Engine.WAAPI.AnimGroup as AnimGroup exposing (AnimGroup, PropertyState)
 import Anim.Internal.Engine.WAAPI.Generator as Generator
-import Anim.Internal.Extra.Color as Color exposing (Color(..))
+import Anim.Internal.Extra.Color as Color
 import Anim.Internal.Property.Opacity as Opacity
 import Anim.Internal.Property.PerspectiveOrigin as PerspectiveOrigin
 import Anim.Internal.Property.Rotate as Rotate
@@ -160,6 +160,12 @@ encodeAnimateLike typeTag animGroups frozenAxes touchedAxes processed =
                                 animGroup
                                     |> Maybe.map AnimGroup.getPropertySnapshot
                                     |> Maybe.withDefault PropertyBaselines.empty
+
+                            playback =
+                                Builder.resolvePlayback
+                                    processed.iterations
+                                    processed.animationDirection
+                                    config.playback
                         in
                         ( animGroupName
                         , encodeProcessedAnimGroupConfig
@@ -170,6 +176,8 @@ encodeAnimateLike typeTag animGroups frozenAxes touchedAxes processed =
                             (encodeTransformBaseline snapshot)
                             frozenAxes
                             (touchedAxesForGroup animGroupName touchedAxes)
+                            playback.iterations
+                            playback.animationDirection
                             config.properties
                         )
                     )
@@ -225,6 +233,12 @@ encodeRestart iterationsConfig directionConfig animGroup configGroup =
                                 elementAnim
                                     |> Maybe.map AnimGroup.getPropertySnapshot
                                     |> Maybe.withDefault PropertyBaselines.empty
+
+                            playback =
+                                Builder.resolvePlayback
+                                    iterationsConfig
+                                    directionConfig
+                                    config.playback
                         in
                         ( animGroupName
                         , encodeProcessedAnimGroupConfig
@@ -235,6 +249,8 @@ encodeRestart iterationsConfig directionConfig animGroup configGroup =
                             (encodeTransformBaseline snapshot)
                             Dict.empty
                             Dict.empty
+                            playback.iterations
+                            playback.animationDirection
                             config.properties
                         )
                     )
@@ -256,6 +272,13 @@ encodeProcessedData data =
                 |> AnimGroups.toList
                 |> List.map
                     (\( animGroupName, config ) ->
+                        let
+                            playback =
+                                Builder.resolvePlayback
+                                    data.iterations
+                                    data.animationDirection
+                                    config.playback
+                        in
                         ( animGroupName
                         , encodeProcessedAnimGroupConfig
                             animGroupName
@@ -265,6 +288,8 @@ encodeProcessedData data =
                             Nothing
                             Dict.empty
                             Dict.empty
+                            playback.iterations
+                            playback.animationDirection
                             config.properties
                         )
                     )
@@ -274,39 +299,6 @@ encodeProcessedData data =
         , ( "elements", Encode.object processedProperties )
         , ( "iterations", encodeIterations data.iterations )
         , ( "direction", encodeAnimationDirection data.animationDirection )
-        ]
-
-
-{-| Encode a command with an optional property filter (`Nothing` = all properties).
--}
-encodeCommandWithProperties : String -> String -> Maybe (List String) -> Encode.Value
-encodeCommandWithProperties commandType animGroupName maybeProperties =
-    let
-        baseFields =
-            [ ( "type", Encode.string commandType )
-            , ( "elementId", Encode.string animGroupName )
-            ]
-
-        propertyField =
-            case maybeProperties of
-                Just props ->
-                    [ ( "properties", Encode.list Encode.string props ) ]
-
-                Nothing ->
-                    []
-    in
-    Encode.object (baseFields ++ propertyField)
-
-
-{-| Encode a `setUpdateThrottle` command. Global JS-side setting that caps
-the rate of per-frame `propertyUpdate` events sent back to Elm. Not tied to
-any animGroup. Pass 0 to disable throttling.
--}
-encodeSetProgressThrottle : Int -> Encode.Value
-encodeSetProgressThrottle intervalMs =
-    Encode.object
-        [ ( "type", Encode.string "setUpdateThrottle" )
-        , ( "intervalMs", Encode.int intervalMs )
         ]
 
 
@@ -344,6 +336,39 @@ encodeAnimationDirection direction =
 
         Alternate ->
             Encode.string "alternate"
+
+
+{-| Encode a command with an optional property filter (`Nothing` = all properties).
+-}
+encodeCommandWithProperties : String -> String -> Maybe (List String) -> Encode.Value
+encodeCommandWithProperties commandType animGroupName maybeProperties =
+    let
+        baseFields =
+            [ ( "type", Encode.string commandType )
+            , ( "elementId", Encode.string animGroupName )
+            ]
+
+        propertyField =
+            case maybeProperties of
+                Just props ->
+                    [ ( "properties", Encode.list Encode.string props ) ]
+
+                Nothing ->
+                    []
+    in
+    Encode.object (baseFields ++ propertyField)
+
+
+{-| Encode a `setUpdateThrottle` command. Global JS-side setting that caps
+the rate of per-frame `propertyUpdate` events sent back to Elm. Not tied to
+any animGroup. Pass 0 to disable throttling.
+-}
+encodeSetProgressThrottle : Int -> Encode.Value
+encodeSetProgressThrottle intervalMs =
+    Encode.object
+        [ ( "type", Encode.string "setUpdateThrottle" )
+        , ( "intervalMs", Encode.int intervalMs )
+        ]
 
 
 
@@ -420,14 +445,18 @@ encodeProcessedAnimGroupConfig :
     -> Maybe Encode.Value
     -> Dict.Dict String (List String)
     -> Dict.Dict String (Set String)
+    -> Builder.Iterations
+    -> Builder.AnimationDirection
     -> List Builder.ProcessedPropertyConfig
     -> Encode.Value
-encodeProcessedAnimGroupConfig animGroupName targetId propertyState transformOrder_ transformBaseline frozenAxes touchedAxes propertyConfigs =
+encodeProcessedAnimGroupConfig animGroupName targetId propertyState transformOrder_ transformBaseline frozenAxes touchedAxes iterations_ direction_ propertyConfigs =
     let
         baseFields =
             [ ( "properties", Encode.list (encodeProcessedPropertyConfig propertyState frozenAxes touchedAxes) propertyConfigs )
             , ( "animGroup", Encode.string animGroupName )
             , ( "target", Encode.string targetId )
+            , ( "iterations", encodeIterations iterations_ )
+            , ( "direction", encodeAnimationDirection direction_ )
             ]
 
         orderField =
@@ -1013,6 +1042,13 @@ encodeScroll builder =
                 |> AnimGroups.toList
                 |> List.map
                     (\( animGroupName, config ) ->
+                        let
+                            playback =
+                                Builder.resolvePlayback
+                                    processed.iterations
+                                    processed.animationDirection
+                                    config.playback
+                        in
                         ( animGroupName
                         , encodeProcessedAnimGroupConfig
                             animGroupName
@@ -1022,6 +1058,8 @@ encodeScroll builder =
                             Nothing
                             Dict.empty
                             Dict.empty
+                            playback.iterations
+                            playback.animationDirection
                             config.properties
                         )
                     )
@@ -1083,6 +1121,13 @@ encodeView builder =
                 |> AnimGroups.toList
                 |> List.map
                     (\( animGroupName, config ) ->
+                        let
+                            playback =
+                                Builder.resolvePlayback
+                                    processed.iterations
+                                    processed.animationDirection
+                                    config.playback
+                        in
                         ( animGroupName
                         , encodeProcessedAnimGroupConfig
                             animGroupName
@@ -1092,6 +1137,8 @@ encodeView builder =
                             Nothing
                             Dict.empty
                             Dict.empty
+                            playback.iterations
+                            playback.animationDirection
                             config.properties
                         )
                     )

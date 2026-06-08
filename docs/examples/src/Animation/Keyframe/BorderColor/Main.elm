@@ -57,20 +57,22 @@ animGroup =
 
 toRed : Keyframe.EngineBuilder -> Keyframe.EngineBuilder
 toRed =
-    CustomColor.for animGroup CustomColor.BorderColor
+    Keyframe.for animGroup
+        >> CustomColor.begin CustomColor.BorderColor
         >> CustomColor.to (Color.rgb 239 68 68)
         >> CustomColor.duration 800
         >> CustomColor.easing CubicInOut
-        >> CustomColor.build
+        >> CustomColor.end
 
 
 toBlue : Keyframe.EngineBuilder -> Keyframe.EngineBuilder
 toBlue =
-    CustomColor.for animGroup CustomColor.BorderColor
+    Keyframe.for animGroup
+        >> CustomColor.begin CustomColor.BorderColor
         >> CustomColor.to (Color.rgb 59 130 246)
         >> CustomColor.duration 800
         >> CustomColor.easing CubicInOut
-        >> CustomColor.build
+        >> CustomColor.end
 
 
 

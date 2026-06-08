@@ -59,10 +59,11 @@ Annotate the builder with a specific Engine's `EngineBuilder` type and the compi
 ```elm
 heroEntrance : AnimGroupName -> Transition.EngineBuilder -> Transition.EngineBuilder
 heroEntrance group =
-    Opacity.for group
+    Transition.for group
+        >> Opacity.begin
         >> Opacity.to 1
         >> Opacity.duration 400
-        >> Opacity.build
+        >> Opacity.end
 ```
 
 Each Engine module exposes its own alias:

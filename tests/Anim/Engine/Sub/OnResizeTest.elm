@@ -33,11 +33,12 @@ initialState =
 
 moveX : Float -> Sub.EngineBuilder -> Sub.EngineBuilder
 moveX target =
-    Translate.for groupName
+    Sub.for groupName
+        >> Translate.begin
         >> Translate.toX target
         >> Translate.duration 1000
         >> Translate.easing Linear
-        >> Translate.build
+        >> Translate.end
 
 
 step : Float -> Sub.AnimState -> Sub.AnimState
@@ -365,11 +366,12 @@ suite =
                     let
                         easedMove : Sub.EngineBuilder -> Sub.EngineBuilder
                         easedMove =
-                            Translate.for groupName
+                            Sub.for groupName
+                                >> Translate.begin
                                 >> Translate.toX 500
                                 >> Translate.duration 1000
                                 >> Translate.easing CubicOut
-                                >> Translate.build
+                                >> Translate.end
 
                         paused =
                             initialState
@@ -426,11 +428,12 @@ suite =
                                 ]
                                 |> (\s ->
                                         Sub.animate s
-                                            (Translate.for groupName
+                                            (Sub.for groupName
+                                                >> Translate.begin
                                                 >> Translate.toX 100
                                                 >> Translate.duration 1000
                                                 >> Translate.easing Linear
-                                                >> Translate.build
+                                                >> Translate.end
                                             )
                                    )
                                 |> step 500
@@ -464,11 +467,12 @@ suite =
                                 ]
                                 |> (\s ->
                                         Sub.animate s
-                                            (Translate.for groupName
+                                            (Sub.for groupName
+                                                >> Translate.begin
                                                 >> Translate.toXY 100 80
                                                 >> Translate.duration 1000
                                                 >> Translate.easing Linear
-                                                >> Translate.build
+                                                >> Translate.end
                                             )
                                    )
                                 |> step 500
@@ -503,14 +507,15 @@ suite =
                             Sub.init [ Translate.initXY groupName 0 0 ]
                                 |> (\s ->
                                         Sub.animate s
-                                            (Translate.for groupName
+                                            (Sub.for groupName
+                                                >> Translate.begin
                                                 >> Translate.toX 500
                                                 >> Translate.duration 1000
-                                                >> Translate.build
-                                                >> Opacity.for groupName
+                                                >> Translate.end
+                                                >> Opacity.begin
                                                 >> Opacity.to 0.5
                                                 >> Opacity.duration 1000
-                                                >> Opacity.build
+                                                >> Opacity.end
                                             )
                                    )
                                 |> step 500
@@ -537,11 +542,12 @@ suite =
                 pingPong target =
                     Sub.loopForever
                         >> Sub.alternate
-                        >> Translate.for groupName
+                        >> Sub.for groupName
+                        >> Translate.begin
                         >> Translate.toX target
                         >> Translate.duration 1000
                         >> Translate.easing Linear
-                        >> Translate.build
+                        >> Translate.end
               in
               describe "Proportional preserves the full new range across leg boundaries"
                 [ test "after resize, the box reaches both new extremes" <|
@@ -591,11 +597,12 @@ suite =
                             easedPingPong =
                                 Sub.loopForever
                                     >> Sub.alternate
-                                    >> Translate.for groupName
+                                    >> Sub.for groupName
+                                    >> Translate.begin
                                     >> Translate.toX 500
                                     >> Translate.duration 1000
                                     >> Translate.easing CubicOut
-                                    >> Translate.build
+                                    >> Translate.end
 
                             running =
                                 initialState

@@ -39,18 +39,19 @@ applyBuilder pipeline =
 
 basePipeline : WAAPI.EngineBuilder -> WAAPI.EngineBuilder
 basePipeline =
-    Translate.for "el"
+    WAAPI.for "el"
+        >> Translate.begin
         >> Translate.toXY 100 50
         >> Translate.duration 500
-        >> Translate.build
-        >> Rotate.for "el"
+        >> Translate.end
+        >> Rotate.begin
         >> Rotate.toZ 90
         >> Rotate.duration 500
-        >> Rotate.build
-        >> Scale.for "el"
+        >> Rotate.end
+        >> Scale.begin
         >> Scale.toXY 2 2
         >> Scale.duration 500
-        >> Scale.build
+        >> Scale.end
 
 
 suite : Test

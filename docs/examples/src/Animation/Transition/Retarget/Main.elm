@@ -65,18 +65,20 @@ init =
 
 animateDiagonal : Transition.EngineBuilder -> Transition.EngineBuilder
 animateDiagonal =
-    Translate.for animGroup
+    Transition.for animGroup
+        >> Translate.begin
         >> Translate.toXY endXY endXY
         >> Translate.duration 5000
         >> Translate.easing Linear
-        >> Translate.build
+        >> Translate.end
 
 
 retargetYToTop : Transition.EngineBuilder -> Transition.EngineBuilder
 retargetYToTop =
-    Translate.for animGroup
+    Transition.for animGroup
+        >> Translate.begin
         >> Translate.toY 0
-        >> Translate.build
+        >> Translate.end
 
 
 

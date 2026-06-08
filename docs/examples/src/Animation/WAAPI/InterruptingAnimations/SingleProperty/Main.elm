@@ -108,11 +108,12 @@ toColor4 =
 
 colorBox : (CustomColor.Builder ForWAAPI -> CustomColor.Builder ForWAAPI) -> WAAPI.EngineBuilder -> WAAPI.EngineBuilder
 colorBox moveFunc =
-    CustomColor.for animGroupName CustomColor.BackgroundColor
+    WAAPI.for animGroupName
+        >> CustomColor.begin CustomColor.BackgroundColor
         >> moveFunc
         >> CustomColor.duration 3000
         >> CustomColor.easing Linear
-        >> CustomColor.build
+        >> CustomColor.end
 
 
 

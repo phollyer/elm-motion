@@ -63,18 +63,20 @@ standardTiming =
 
 toRed : Sub.EngineBuilder -> Sub.EngineBuilder
 toRed =
-    CustomColor.for animGroup CustomColor.BorderColor
+    Sub.for animGroup
+        >> CustomColor.begin CustomColor.BorderColor
         >> CustomColor.to (Color.rgb 239 68 68)
         >> standardTiming
-        >> CustomColor.build
+        >> CustomColor.end
 
 
 toBlue : Sub.EngineBuilder -> Sub.EngineBuilder
 toBlue =
-    CustomColor.for animGroup CustomColor.BorderColor
+    Sub.for animGroup
+        >> CustomColor.begin CustomColor.BorderColor
         >> CustomColor.to (Color.rgb 59 130 246)
         >> standardTiming
-        >> CustomColor.build
+        >> CustomColor.end
 
 
 

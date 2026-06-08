@@ -64,10 +64,11 @@ init =
 
 animateTo : Float -> Spring -> Sub.EngineBuilder -> Sub.EngineBuilder
 animateTo x spring =
-    Translate.for animGroup
+    Sub.for animGroup
+        >> Translate.begin
         >> Translate.toX x
         >> Translate.spring spring
-        >> Translate.build
+        >> Translate.end
 
 
 

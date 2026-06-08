@@ -1,7 +1,7 @@
 module Animation.Sub.Retarget.Main exposing (main)
 
 import Anim.Builder exposing (AnimBuilder)
-import Anim.Engine.Sub as SubEngine
+import Anim.Engine.Sub as Sub
 import Anim.Property.Translate as Translate
 import Anim.Unit exposing (Unit(..))
 import Browser
@@ -30,7 +30,7 @@ main =
 
 
 type alias Model =
-    { animState : SubEngine.AnimState }
+    { animState : Sub.AnimState }
 
 
 animGroup : String
@@ -51,7 +51,7 @@ endXY =
 init : ( Model, Cmd Msg )
 init =
     ( { animState =
-            SubEngine.init
+            Sub.init
                 [ Translate.initXY animGroup 0 0 >> Translate.cssUnitX Cqw >> Translate.cssUnitY Cqh
                 ]
       }
@@ -63,20 +63,22 @@ init =
 -- ANIMATION
 
 
-animateDiagonal : SubEngine.EngineBuilder -> SubEngine.EngineBuilder
+animateDiagonal : Sub.EngineBuilder -> Sub.EngineBuilder
 animateDiagonal =
-    Translate.for animGroup
+    Sub.for animGroup
+        >> Translate.begin
         >> Translate.toXY endXY endXY
         >> Translate.duration 5000
         >> Translate.easing Linear
-        >> Translate.build
+        >> Translate.end
 
 
-retargetYToTop : SubEngine.EngineBuilder -> SubEngine.EngineBuilder
+retargetYToTop : Sub.EngineBuilder -> Sub.EngineBuilder
 retargetYToTop =
-    Translate.for animGroup
+    Sub.for animGroup
+        >> Translate.begin
         >> Translate.toY 0
-        >> Translate.build
+        >> Translate.end
 
 
 
@@ -87,7 +89,7 @@ type Msg
     = Animate
     | RetargetY
     | Reset
-    | GotSubMsg SubEngine.AnimMsg
+    | GotSubMsg Sub.AnimMsg
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -96,24 +98,24 @@ update msg model =
         GotSubMsg subMsg ->
             let
                 ( newAnimState, _ ) =
-                    SubEngine.update subMsg model.animState
+                    Sub.update subMsg model.animState
             in
             ( { model | animState = newAnimState }
             , Cmd.none
             )
 
         Animate ->
-            ( { model | animState = SubEngine.animate model.animState animateDiagonal }
+            ( { model | animState = Sub.animate model.animState animateDiagonal }
             , Cmd.none
             )
 
         RetargetY ->
-            ( { model | animState = SubEngine.retarget model.animState retargetYToTop }
+            ( { model | animState = Sub.retarget model.animState retargetYToTop }
             , Cmd.none
             )
 
         Reset ->
-            ( { model | animState = SubEngine.reset animGroup model.animState }
+            ( { model | animState = Sub.reset animGroup model.animState }
             , Cmd.none
             )
 
@@ -124,7 +126,7 @@ update msg model =
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
-    SubEngine.subscriptions GotSubMsg model.animState
+    Sub.subscriptions GotSubMsg model.animState
 
 
 
@@ -145,7 +147,7 @@ view model =
         ]
 
 
-animationArea : SubEngine.AnimState -> Html msg
+animationArea : Sub.AnimState -> Html msg
 animationArea animState =
     div
         [ class "example-canvas--fluid"
@@ -155,7 +157,7 @@ animationArea animState =
         , style "border-radius" "8px"
         ]
         [ div
-            (SubEngine.attributes animGroup animState
+            (Sub.attributes animGroup animState
                 ++ [ style "position" "absolute"
                    , style "top" "0"
                    , style "left" "0"

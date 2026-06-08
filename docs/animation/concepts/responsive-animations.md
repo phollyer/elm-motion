@@ -27,13 +27,13 @@ Elm Motion exposes the full set of relative units through [`Anim.Unit`](https://
     ```elm
     dropBall : AnimBuilder eng -> AnimBuilder eng
     dropBall =
-        Translate.for "ball"
+        Translate.begin
             >> Translate.cssUnit Cqh
             >> Translate.fromY 0
             >> Translate.toY 88
             >> Translate.speed 75
             >> Translate.easing BounceOut
-            >> Translate.build
+            >> Translate.end
     ```
 
     `1cqh` is `1%` of the nearest containment context's block size, so the ball drops 88% of the container's height regardless of how the container is sized, and it travels at 75% of the height per second. If you change `cssUnit`, adjust the numeric values accordingly.

@@ -268,11 +268,12 @@ bottomFace =
 
 rotateCube : Float -> Sub.EngineBuilder -> Sub.EngineBuilder
 rotateCube to =
-    Rotate.for cubeGroupName
+    Sub.for cubeGroupName
+        >> Rotate.begin
         >> Rotate.toXYZ to to to
         >> Rotate.easing BackInOut
         >> Rotate.duration 8000
-        >> Rotate.build
+        >> Rotate.end
 
 
 rotateCubeClockwise : Sub.EngineBuilder -> Sub.EngineBuilder
@@ -318,9 +319,10 @@ sharedTiming =
 moveFace : FaceConfig -> (Translate.Builder ForSub -> Translate.Builder ForSub) -> Sub.EngineBuilder -> Sub.EngineBuilder
 moveFace config moveToBuilder =
     sharedTiming
-        >> Translate.for config.groupName
+        >> Sub.for config.groupName
+        >> Translate.begin
         >> moveToBuilder
-        >> Translate.build
+        >> Translate.end
 
 
 
@@ -425,12 +427,14 @@ textMoveAmount =
 moveText : TextConfig -> Float -> Float -> Sub.EngineBuilder -> Sub.EngineBuilder
 moveText config toZ toRotate =
     sharedTiming
-        >> Translate.for config.groupName
+        >> Sub.for config.groupName
+        >> Translate.begin
         >> Translate.toZ toZ
-        >> Translate.build
-        >> Rotate.for config.groupName
+        >> Translate.end
+        >> Sub.for config.groupName
+        >> Rotate.begin
         >> Rotate.toZ toRotate
-        >> Rotate.build
+        >> Rotate.end
 
 
 moveTextsOut : Sub.EngineBuilder -> Sub.EngineBuilder

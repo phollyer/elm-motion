@@ -66,12 +66,13 @@ ballSizeCqh =
 
 dropBall : Keyframe.EngineBuilder -> Keyframe.EngineBuilder
 dropBall =
-    Translate.for animGroup
+    Keyframe.for animGroup
+        >> Translate.begin
         >> Translate.fromY 0
         >> Translate.toY (100 - ballSize)
         >> Translate.speed 75
         >> Translate.easing BounceOut
-        >> Translate.build
+        >> Translate.end
 
 
 

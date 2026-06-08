@@ -21,11 +21,12 @@ baseState =
 animatedState : Sub.AnimState
 animatedState =
     Sub.animate baseState <|
-        PerspectiveOrigin.for groupName
+        Sub.for groupName
+            >> PerspectiveOrigin.begin
             >> PerspectiveOrigin.toXY 90 10
             >> PerspectiveOrigin.duration 1000
             >> PerspectiveOrigin.easing Linear
-            >> PerspectiveOrigin.build
+            >> PerspectiveOrigin.end
 
 
 step : Float -> Sub.AnimState -> Sub.AnimState

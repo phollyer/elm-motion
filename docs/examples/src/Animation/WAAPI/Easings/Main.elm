@@ -69,11 +69,12 @@ init =
 
 animateTo : Float -> Easing -> WAAPI.EngineBuilder -> WAAPI.EngineBuilder
 animateTo x easing =
-    Translate.for animGroup
+    WAAPI.for animGroup
+        >> Translate.begin
         >> Translate.toX x
         >> Translate.speed 350
         >> Translate.easing easing
-        >> Translate.build
+        >> Translate.end
 
 
 

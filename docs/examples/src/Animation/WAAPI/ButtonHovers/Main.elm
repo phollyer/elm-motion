@@ -123,56 +123,62 @@ unhoverEasing =
 
 scaleUp : WAAPI.EngineBuilder -> WAAPI.EngineBuilder
 scaleUp =
-    Scale.for scaleButton
+    WAAPI.for scaleButton
+        >> Scale.begin
         >> Scale.to 1.1
         >> Scale.duration hoverDuration
         >> Scale.easing hoverEasing
-        >> Scale.build
+        >> Scale.end
 
 
 scaleDown : WAAPI.EngineBuilder -> WAAPI.EngineBuilder
 scaleDown =
-    Scale.for scaleButton
+    WAAPI.for scaleButton
+        >> Scale.begin
         >> Scale.to 1
         >> Scale.duration hoverDuration
         >> Scale.easing unhoverEasing
-        >> Scale.build
+        >> Scale.end
 
 
 growSize : WAAPI.EngineBuilder -> WAAPI.EngineBuilder
 growSize =
-    Size.for sizeButton
+    WAAPI.for sizeButton
+        >> Size.begin
         >> Size.toHW hoverHeight hoverWidth
         >> Size.duration hoverDuration
         >> Size.easing hoverEasing
-        >> Size.build
+        >> Size.end
 
 
 shrinkSize : WAAPI.EngineBuilder -> WAAPI.EngineBuilder
 shrinkSize =
-    Size.for sizeButton
+    WAAPI.for sizeButton
+        >> Size.begin
         >> Size.toHW baseHeight baseWidth
         >> Size.duration hoverDuration
         >> Size.easing unhoverEasing
-        >> Size.build
+        >> Size.end
 
 
 liftUp : WAAPI.EngineBuilder -> WAAPI.EngineBuilder
 liftUp =
-    Translate.for zButton
+    WAAPI.for zButton
+        >> Translate.begin
         >> Translate.toZ 60
         >> Translate.duration hoverDuration
         >> Translate.easing hoverEasing
-        >> Translate.build
+        >> Translate.end
 
 
 setDown : WAAPI.EngineBuilder -> WAAPI.EngineBuilder
 setDown =
-    Translate.for zButton
+    WAAPI.for zButton
+        >> Translate.begin
         >> Translate.toZ 0
         >> Translate.duration hoverDuration
         >> Translate.easing unhoverEasing
-        >> Translate.build
+        >> Translate.end
 
 
 

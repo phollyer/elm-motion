@@ -42,10 +42,11 @@ suite =
                 Keyframe.init [ Translate.initXY "el" 0 0 ]
                     |> (\state ->
                             Keyframe.animate state
-                                (Translate.for "el"
+                                (Keyframe.for "el"
+                                    >> Translate.begin
                                     >> Translate.toXY 100 0
                                     >> Translate.duration 500
-                                    >> Translate.build
+                                    >> Translate.end
                                 )
                        )
                     |> rendered
@@ -55,10 +56,11 @@ suite =
                 Keyframe.init [ Scale.init "el" 1 ]
                     |> (\state ->
                             Keyframe.animate state
-                                (Scale.for "el"
+                                (Keyframe.for "el"
+                                    >> Scale.begin
                                     >> Scale.to 1.5
                                     >> Scale.duration 500
-                                    >> Scale.build
+                                    >> Scale.end
                                 )
                        )
                     |> rendered
@@ -73,22 +75,23 @@ suite =
                     ]
                     |> (\state ->
                             Keyframe.animate state
-                                (Translate.for "el"
+                                (Keyframe.for "el"
+                                    >> Translate.begin
                                     >> Translate.toXY 100 0
                                     >> Translate.duration 500
-                                    >> Translate.build
-                                    >> Rotate.for "el"
+                                    >> Translate.end
+                                    >> Rotate.begin
                                     >> Rotate.toZ 45
                                     >> Rotate.duration 500
-                                    >> Rotate.build
-                                    >> Scale.for "el"
+                                    >> Rotate.end
+                                    >> Scale.begin
                                     >> Scale.to 1.5
                                     >> Scale.duration 500
-                                    >> Scale.build
-                                    >> Skew.for "el"
+                                    >> Scale.end
+                                    >> Skew.begin
                                     >> Skew.toXY 10 5
                                     >> Skew.duration 500
-                                    >> Skew.build
+                                    >> Skew.end
                                 )
                        )
                     |> rendered
@@ -101,14 +104,15 @@ suite =
                     ]
                     |> (\state ->
                             Keyframe.animate state
-                                (Opacity.for "el"
+                                (Keyframe.for "el"
+                                    >> Opacity.begin
                                     >> Opacity.to 1
                                     >> Opacity.duration 500
-                                    >> Opacity.build
-                                    >> Translate.for "el"
+                                    >> Opacity.end
+                                    >> Translate.begin
                                     >> Translate.toXY 100 0
                                     >> Translate.duration 500
-                                    >> Translate.build
+                                    >> Translate.end
                                 )
                        )
                     |> rendered
@@ -118,10 +122,11 @@ suite =
                 Keyframe.init [ Size.initHW "el" 100 100 ]
                     |> (\state ->
                             Keyframe.animate state
-                                (Size.for "el"
+                                (Keyframe.for "el"
+                                    >> Size.begin
                                     >> Size.toHW 200 150
                                     >> Size.duration 500
-                                    >> Size.build
+                                    >> Size.end
                                 )
                        )
                     |> rendered
@@ -131,10 +136,11 @@ suite =
                 Keyframe.init [ PerspectiveOrigin.initXY "el" 50 50 ]
                     |> (\state ->
                             Keyframe.animate state
-                                (PerspectiveOrigin.for "el"
+                                (Keyframe.for "el"
+                                    >> PerspectiveOrigin.begin
                                     >> PerspectiveOrigin.toXY 90 10
                                     >> PerspectiveOrigin.duration 500
-                                    >> PerspectiveOrigin.build
+                                    >> PerspectiveOrigin.end
                                 )
                        )
                     |> rendered
@@ -144,10 +150,11 @@ suite =
                 Keyframe.init [ Custom.init "el" (Custom.BorderRadius Unit.Px) 0 ]
                     |> (\state ->
                             Keyframe.animate state
-                                (Custom.for "el" (Custom.BorderRadius Unit.Px)
+                                (Keyframe.for "el"
+                                    >> Custom.begin (Custom.BorderRadius Unit.Px)
                                     >> Custom.to 10
                                     >> Custom.duration 500
-                                    >> Custom.build
+                                    >> Custom.end
                                 )
                        )
                     |> rendered

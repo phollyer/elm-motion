@@ -44,11 +44,12 @@ initBuilder =
     Builder.init []
 
 
-animateOpacityTo : Float -> WAAPI.AnimBuilder eng -> WAAPI.AnimBuilder eng
+animateOpacityTo : Float -> WAAPI.EngineBuilder -> WAAPI.EngineBuilder
 animateOpacityTo target =
-    Opacity.for "el"
+    WAAPI.for "el"
+        >> Opacity.begin
         >> Opacity.to target
-        >> Opacity.build
+        >> Opacity.end
 
 
 extractOpacitySpring : Builder.AnimBuilder eng -> Maybe (Maybe Spring.Spring)
@@ -122,10 +123,11 @@ globalSpringTests =
             \_ ->
                 initBuilder
                     |> WAAPI.spring Spring.wobbly
-                    |> (Opacity.for "el"
+                    |> (WAAPI.for "el"
+                            >> Opacity.begin
                             >> Opacity.to 0.5
                             >> Opacity.spring Spring.stiff
-                            >> Opacity.build
+                            >> Opacity.end
                        )
                     |> extractOpacitySpring
                     |> Expect.equal (Just (Just Spring.stiff))

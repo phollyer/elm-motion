@@ -1,7 +1,7 @@
 module Anim.Property.Scale exposing
     ( Builder, AnimGroupName
     , init, initXYZ, initXY, initXZ, initX, initYZ, initY, initZ
-    , for, build
+    , begin, end
     , from, fromXYZ, fromXY, fromXZ, fromX, fromYZ, fromY, fromZ
     , to, toXYZ, toXY, toXZ, toX, toYZ, toY, toZ
     , byXYZ, byXY, byXZ, byX, byYZ, byY, byZ
@@ -33,7 +33,7 @@ When no start value is configured, the default will be used.
 
 # Build
 
-@docs for, build
+@docs begin, end
 
 
 # Configure
@@ -131,11 +131,11 @@ until you [Unclamp](#unclamp) it:
                 let
                     ( animState, cmd ) =
                         WAAPI.retarget model.animState <|
-                            Scale.for animGroupName
+                            Scale.begin
                                 >> Scale.clampX 0.5 2.0
                                 >> Scale.clampY 0.5 2.0
                                 >> Scale.toXY factor factor
-                                >> Scale.build
+                                >> Scale.end
                 in
                 ( { model | animState = animState }
                 , cmd
@@ -160,7 +160,7 @@ Snap to a specific scale, cancelling any in-flight animation on this property.
 
 -}
 
-import Anim.Internal.Builder exposing (AnimBuilder)
+import Anim.Internal.Builder as IB exposing (AnimBuilder)
 import Anim.Internal.Builder.Scale as SB
 import Motion.Easing exposing (Easing)
 import Motion.Spring exposing (Spring)
@@ -374,13 +374,18 @@ Use this to start configuring a scale animation.
 
     myAnimation : AnimBuilder eng -> AnimBuilder eng
     myAnimation =
-        Scale.for "animGroupName"
+        Scale.begin
             >> ... -- Configure and build the animation
 
 -}
-for : AnimGroupName -> AnimBuilder eng -> Builder eng
-for =
-    SB.for
+begin : AnimBuilder eng -> Builder eng
+begin animBuilder =
+    case IB.getCurrentAnimGroupName animBuilder of
+        Just animGroupName ->
+            SB.for animGroupName animBuilder
+
+        Nothing ->
+            SB.for "" animBuilder
 
 
 {-| Complete the [Builder](#Builder) animation configuration and return an `AnimBuilder`
@@ -388,14 +393,14 @@ so you can continue configuring other property animations or execute the animati
 
     myAnimation : AnimBuilder eng -> AnimBuilder eng
     myAnimation =
-        Scale.for "animGroupName"
+        Scale.begin
             >> ... -- configure the animation with from, to, duration, easing, etc.
-            >> Scale.build
+            >> Scale.end
             >> ... -- continue with animation
 
 -}
-build : Builder eng -> AnimBuilder eng
-build =
+end : Builder eng -> AnimBuilder eng
+end =
     SB.build
 
 
@@ -409,7 +414,7 @@ build =
 
     myAnimation : AnimBuilder eng -> AnimBuilder eng
     myAnimation =
-        Scale.for "animGroupName"
+        Scale.begin
             >> Scale.from 0.8
             >> ... -- continue with animation
 
@@ -425,7 +430,7 @@ from uniformScale =
 
     myAnimation : AnimBuilder eng -> AnimBuilder eng
     myAnimation =
-        Scale.for "animGroupName"
+        Scale.begin
             >> Scale.fromXYZ 0.8 1.2 0.9
             >> ... -- continue with animation
 
@@ -487,7 +492,7 @@ fromZ =
 
     myAnimation : AnimBuilder eng -> AnimBuilder eng
     myAnimation =
-        Scale.for "animGroupName"
+        Scale.begin
             >> Scale.to 1.5
             >> ... -- continue with animation
 
@@ -503,7 +508,7 @@ to targetScale =
 
     myAnimation : AnimBuilder eng -> AnimBuilder eng
     myAnimation =
-        Scale.for "animGroupName"
+        Scale.begin
             >> Scale.toXYZ 1.5 2.0 0.8
             >> ... -- continue with animation
 

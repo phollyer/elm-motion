@@ -60,18 +60,18 @@ standardTiming =
 
 roundCorners : Keyframe.EngineBuilder -> Keyframe.EngineBuilder
 roundCorners =
-    Property.for animGroup (Property.BorderRadius Px)
+    Property.begin (Property.BorderRadius Px)
         >> Property.to 48
         >> standardTiming
-        >> Property.build
+        >> Property.end
 
 
 squareCorners : Keyframe.EngineBuilder -> Keyframe.EngineBuilder
 squareCorners =
-    Property.for animGroup (Property.BorderRadius Px)
+    Property.begin (Property.BorderRadius Px)
         >> Property.to 0
         >> standardTiming
-        >> Property.build
+        >> Property.end
 
 
 
@@ -87,12 +87,22 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         TriggerRound ->
-            ( { model | animState = Keyframe.animate model.animState roundCorners }
+            ( { model
+                | animState =
+                    Keyframe.animate model.animState <|
+                        Keyframe.for animGroup
+                            >> roundCorners
+              }
             , Cmd.none
             )
 
         TriggerSquare ->
-            ( { model | animState = Keyframe.animate model.animState squareCorners }
+            ( { model
+                | animState =
+                    Keyframe.animate model.animState <|
+                        Keyframe.for animGroup
+                            >> squareCorners
+              }
             , Cmd.none
             )
 

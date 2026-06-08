@@ -29,9 +29,10 @@ suite =
         [ test "encodeSnap tags the payload with type=snap" <|
             \_ ->
                 Builder.init
-                    [ Translate.for "cube"
+                    [ Builder.for "cube"
+                        >> Translate.begin
                         >> Translate.setX 100
-                        >> Translate.build
+                        >> Translate.end
                     ]
                     |> Builder.process
                     |> Encoder.encodeSnap AnimGroups.init Dict.empty
@@ -40,9 +41,10 @@ suite =
         , test "encodeSnap includes the snapped property's end value" <|
             \_ ->
                 Builder.init
-                    [ Translate.for "cube"
+                    [ Builder.for "cube"
+                        >> Translate.begin
                         >> Translate.setX 250
-                        >> Translate.build
+                        >> Translate.end
                     ]
                     |> Builder.process
                     |> Encoder.encodeSnap AnimGroups.init Dict.empty
@@ -52,9 +54,10 @@ suite =
         , test "encode (animate command) excludes Snap-mode properties" <|
             \_ ->
                 Builder.init
-                    [ Translate.for "cube"
+                    [ Builder.for "cube"
+                        >> Translate.begin
                         >> Translate.setX 100
-                        >> Translate.build
+                        >> Translate.end
                     ]
                     |> Builder.process
                     |> Encoder.encode AnimGroups.init Dict.empty
@@ -63,13 +66,14 @@ suite =
         , test "encode includes Animate-mode property when mixed with Snap" <|
             \_ ->
                 Builder.init
-                    [ Opacity.for "cube"
+                    [ Builder.for "cube"
+                        >> Opacity.begin
                         >> Opacity.to 0.5
                         >> Opacity.duration 200
-                        >> Opacity.build
-                        >> Translate.for "cube"
+                        >> Opacity.end
+                        >> Translate.begin
                         >> Translate.setX 100
-                        >> Translate.build
+                        >> Translate.end
                     ]
                     |> Builder.process
                     |> Encoder.encode AnimGroups.init Dict.empty
@@ -78,13 +82,14 @@ suite =
         , test "encodeSnap includes only Snap-mode property when mixed with Animate" <|
             \_ ->
                 Builder.init
-                    [ Opacity.for "cube"
+                    [ Builder.for "cube"
+                        >> Opacity.begin
                         >> Opacity.to 0.5
                         >> Opacity.duration 200
-                        >> Opacity.build
-                        >> Translate.for "cube"
+                        >> Opacity.end
+                        >> Translate.begin
                         >> Translate.setX 100
-                        >> Translate.build
+                        >> Translate.end
                     ]
                     |> Builder.process
                     |> Encoder.encodeSnap AnimGroups.init Dict.empty

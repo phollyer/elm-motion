@@ -4,20 +4,21 @@ This page mainly covers the shared patterns that are used by each Property. For 
 
 ## Builder Pattern
 
-Every property uses the same pattern: target an animation group, set values, configure timing, and build.
+Every property uses the same pattern: target an animation group, set values, configure timing, and finish the property builder.
 
 ??? example "View Source Code"
 
     ```elm
     animationFunction : AnimBuilder eng -> AnimBuilder eng
     animationFunction =
-        Property.for animGroup              -- Animation group name (required)
+        Engine.for animGroup                -- Animation group name (required)
+            >> Property.begin
             >> Property.from startValue     -- Optional starting value
             >> Property.to endValue         -- Property specific alternatives to `to` are available
             >> Property.delay 100           -- ms
             >> Property.duration 500        -- ms, or `Property.speed 50` (units per second)
             >> Property.easing BounceOut    -- or `Property.spring wobbly`
-            >> Property.build               -- Finalize (required)
+            >> Property.end                 -- Finalize (required)
     ```
 
 📖 See [The Builder Pattern](../workflow/build.md#the-builder-pattern) for more information.
@@ -33,7 +34,7 @@ Properties are added to an animation group by providing the group name as a stri
     ```elm
     myAnimation : AnimBuilder eng -> AnimBuilder eng
     myAnimation =
-        Translate.for "myGroup"
+        Translate.begin
             >> ... -- Continue configuring the animation
     ```
 
@@ -82,19 +83,19 @@ All properties have either a `to` function, or a variety of `to*` functions that
     ```elm
     myAnimation : AnimBuilder eng -> AnimBuilder eng
     myAnimation =
-        Opacity.for "animGroup"
+        Opacity.begin
             >> Opacity.to 1
             >> ... -- Continue configuring the animation
 
     myAnimation : AnimBuilder eng -> AnimBuilder eng
     myAnimation =
-        Size.for "animGroup"
+        Size.begin
             >> Size.toHW 150 120
             >> ... -- Continue configuring the animation
 
     myAnimation : AnimBuilder eng -> AnimBuilder eng
     myAnimation =
-        Translate.for "animGroup"
+        Translate.begin
             >> Translate.toXYZ 120 150 100
             >> ... -- Continue configuring the animation
     ```
@@ -112,7 +113,7 @@ All properties have an `easing` function which takes an `Easing` type variant. T
 
     slideInAnimation : AnimBuilder eng -> AnimBuilder eng
     alideInAnimation =
-        Translate.for "sidebarAnim"
+        Translate.begin
             >> Translate.toX 0
             >> Translate.easing BounceOut
             >> ... -- Continue configuring the animation
@@ -133,7 +134,7 @@ All properties have a `spring` function which takes a `Spring`. This will overri
 
     bouncyReveal : AnimBuilder eng -> AnimBuilder eng
     bouncyReveal =
-        Translate.for "panel"
+        Translate.begin
             >> Translate.toX 0
             >> Translate.spring Spring.wobbly
             >> ... -- Continue configuring the animation
@@ -152,7 +153,7 @@ All properties have a `delay` function which takes an `Int` representing millise
     ```elm
     fadeInAfterDelay : AnimBuilder eng -> AnimBuilder eng
     fadeInAfterDelay =
-        Opacity.for "contentAnim"
+        Opacity.begin
             >> Opacity.to 1
             >> Opacity.delay 300
             >> ... -- Continue configuring the animation
@@ -173,7 +174,7 @@ All properties have a `duration` function which takes an `Int` representing mill
     ```elm
     slideIn : AnimBuilder eng -> AnimBuilder eng
     slideIn =
-        Translate.for "panelAnim"
+        Translate.begin
             >> Translate.toX 0
             >> Translate.duration 500
             >> ... -- Continue configuring the animation
@@ -193,7 +194,7 @@ All properties have a `speed` function which takes a `Float`. The unit depends o
     ```elm
     moveToTarget : Float -> AnimBuilder eng -> AnimBuilder eng
     moveToTarget targetX =
-        Translate.for "cursorAnim"
+        Translate.begin
             >> Translate.toX targetX
             >> Translate.speed 500
             >> ... -- Continue configuring the animation
@@ -213,15 +214,15 @@ All properties have a `speed` function which takes a `Float`. The unit depends o
     ```elm
     myAnimation : AnimBuilder eng -> AnimBuilder eng
     myAnimation =
-        Translate.for "myGroup"
+        Translate.begin
             >> Translate.toX 100
-            >> Translate.build              -- Returns AnimBuilder eng
-            >> Opacity.for "myGroup"        -- Start next property
+            >> Translate.end              -- Returns AnimBuilder eng
+            >> Opacity.begin
             >> Opacity.to 1
-            >> Opacity.build                -- Returns AnimBuilder eng
-            >> Translate.for "myOtherGroup" -- Start another group
+            >> Opacity.end                -- Returns AnimBuilder eng
+            >> Translate.begin
             >> Translate.toY 200
-            >> Translate.build              -- Returns AnimBuilder eng
+            >> Translate.end              -- Returns AnimBuilder eng
     ```
 
 📖 See [The Builder Pattern](../workflow/build.md#the-builder-pattern) for more information.

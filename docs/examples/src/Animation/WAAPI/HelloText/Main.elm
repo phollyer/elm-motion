@@ -83,10 +83,11 @@ groupName =
 
 fadeIn : WAAPI.EngineBuilder -> WAAPI.EngineBuilder
 fadeIn =
-    Opacity.for groupName
+    WAAPI.for groupName
+        >> Opacity.begin
         >> Opacity.to 1
         >> Opacity.duration 5000
-        >> Opacity.build
+        >> Opacity.end
 
 
 

@@ -1707,15 +1707,19 @@ export function processAnimationData(animationData) {
     const isRestart = animationData.isRestart || false;
 
     Object.entries(animationData.elements).forEach(([animGroup, elementConfig]) => {
+        const elementOptions = {
+            iterations: parseIterations(elementConfig.iterations ?? globalOptions.iterations),
+            direction: elementConfig.direction || globalOptions.direction
+        };
         const targets = findAllAnimTargets(animGroup);
         if (targets.length <= 1) {
-            processElementAnimation(animGroup, elementConfig, globalOptions, isRestart);
+            processElementAnimation(animGroup, elementConfig, elementOptions, isRestart);
             return;
         }
 
         targets.forEach((element, index) => {
             const uniqueId = element.id || (animGroup + '__multi_' + index);
-            processElementAnimation(uniqueId, elementConfig, globalOptions, isRestart, element);
+            processElementAnimation(uniqueId, elementConfig, elementOptions, isRestart, element);
         });
     });
 }

@@ -97,11 +97,12 @@ toColor4 =
 
 colorBox : (CustomColor.Builder ForSub -> CustomColor.Builder ForSub) -> Sub.EngineBuilder -> Sub.EngineBuilder
 colorBox moveFunc =
-    CustomColor.for animGroupName CustomColor.BackgroundColor
+    Sub.for animGroupName
+        >> CustomColor.begin CustomColor.BackgroundColor
         >> moveFunc
         >> CustomColor.duration 3000
         >> CustomColor.easing Linear
-        >> CustomColor.build
+        >> CustomColor.end
 
 
 

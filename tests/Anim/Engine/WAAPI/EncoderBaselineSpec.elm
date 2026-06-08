@@ -20,9 +20,9 @@ import Anim.Internal.Engine.WAAPI.Encoder as Encoder
 import Anim.Internal.Property.Scale as Scale
 import Anim.Internal.Property.Translate as Translate
 import Anim.Property.Rotate as Rotate
+import Dict
 import Expect
 import Json.Decode as Decode
-import Dict
 import Json.Encode as Encode
 import Test exposing (Test, describe, test)
 
@@ -121,10 +121,11 @@ suite =
 
 rotateBuilder : Builder.AnimBuilder { eng | withTiming : () } -> Builder.AnimBuilder { eng | withTiming : () }
 rotateBuilder =
-    Rotate.for "cube"
+    Builder.for "cube"
+        >> Rotate.begin
         >> Rotate.toZ 90
         >> Rotate.duration 200
-        >> Rotate.build
+        >> Rotate.end
 
 
 elementsField : String -> Decode.Decoder a -> Decode.Decoder a

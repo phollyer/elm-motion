@@ -45,24 +45,36 @@ Define your animations once, then run them with any Engine.
 -- Define once
 fadeIn : AnimBuilder eng -> AnimBuilder eng
 fadeIn =
-    Opacity.for "entranceAnim"
+    Opacity.begin
         >> Opacity.from 0
         >> Opacity.to 1
         >> Opacity.duration 300
-        >> Opacity.build
+        >> Opacity.end
 
 -- Use with any Engine
-Transition.animate model.animState fadeIn
+Transition.animate model.animState <|
+    Transition.for "entranceAnim"
+        >> fadeIn
 
-Keyframe.animate model.animState fadeIn
+Keyframe.animate model.animState <|
+    Keyframe.for "entranceAnim"
+        >> fadeIn
 
-Sub.animate model.animState fadeIn
+Sub.animate model.animState <|
+    Sub.for "entranceAnim"
+        >> fadeIn
 
-WAAPI.animate model.animState fadeIn
+WAAPI.animate model.animState <|
+    WAAPI.for "entranceAnim"
+        >> fadeIn
 
-ScrollTimeline.animate motionCmd Document fadeIn
+ScrollTimeline.animate motionCmd Document <|
+    ScrollTimeline.for "entranceAnim"
+        >> fadeIn
 
-ViewTimeline.animate motionCmd fadeIn
+ViewTimeline.animate motionCmd <|
+    ViewTimeline.for "entranceAnim"
+        >> fadeIn
 ```
 
 ### Composability
@@ -80,19 +92,20 @@ standardTiming =
 -- Define animations
 fadeIn : AnimBuilder eng -> AnimBuilder eng
 fadeIn =
-    Opacity.for "headerEntranceAnim"
+    Opacity.begin
         >> Opacity.to 1
-        >> Opacity.build
+        >> Opacity.end
 
 slideIn : AnimBuilder eng -> AnimBuilder eng
 slideIn =
-    Translate.for "sidebarEntranceAnim"
+    Translate.begin
         >> Translate.toX 0
-        >> Translate.build
+        >> Translate.end
 
 -- Compose together
 Transition.animate model.animState <|
-    standardTiming
+    Transition.for "headerEntranceAnim"
+        >> standardTiming
         >> fadeIn
         >> slideIn
 
@@ -166,7 +179,7 @@ init =
 -- 2. Define your animation
 fadeInHeader : AnimBuilder eng -> AnimBuilder eng
 fadeInHeader =
-    Opacity.for "headerAnim"
+    Opacity.begin
         >> Opacity.to 1
         >> Opacity.duration 400
         >> Opacity.build
@@ -181,7 +194,11 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         Animate ->
-            ( { model | animState = Transition.animate model.animState fadeInHeader }
+            ( { model | animState = 
+                Transition.animate model.animState <|
+                    Transition.for "headerAnim"
+                        >> fadeInHeader
+              }
             , Cmd.none
             )
 
@@ -264,7 +281,7 @@ Full documentation at **[phollyer.github.io/elm-motion](https://phollyer.github.
 
 ## 📋 Roadmap — in no particular order or timeframe
 
-- CSS Transitions - bake complex easings, and maybe springs, into the css `linear` easing function
+- CSS Transitions - potentially bake complex easings, and maybe springs, into the css `linear` easing function
 - Full WAAPI coverage
 - FLIP Engine
 - Canvas Engine

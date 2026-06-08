@@ -14,10 +14,11 @@ groupName =
 
 buildAnim : Sub.EngineBuilder -> Sub.EngineBuilder
 buildAnim =
-    Translate.for groupName
+    Sub.for groupName
+        >> Translate.begin
         >> Translate.toX 100
         >> Translate.duration 1000
-        >> Translate.build
+        >> Translate.end
 
 
 tick : Float -> Sub.AnimState -> ( Sub.AnimState, List Sub.AnimEvent )

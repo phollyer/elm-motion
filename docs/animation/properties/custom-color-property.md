@@ -24,10 +24,9 @@ Animate any color CSS property.
 
     borderColorAnimation : AnimBuilder eng -> AnimBuilder eng
     borderColorAnimation =
-        CustomColor.for "animGroup" CustomColor.BorderColor
-            >> CustomColor.to (Color.rgb 255 0 0)
+        CustomColor.begin CustomColor.BorderColor            >> CustomColor.to (Color.rgb 255 0 0)
             >> CustomColor.duration 500
-            >> CustomColor.build
+            >> CustomColor.end
     ```
 
 See the [Properties Overview](overview.md) page for the shared usage patterns.

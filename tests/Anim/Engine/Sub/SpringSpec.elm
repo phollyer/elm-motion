@@ -43,11 +43,12 @@ initBuilder =
     Builder.init []
 
 
-animateOpacityTo : Float -> Sub.AnimBuilder eng -> Sub.AnimBuilder eng
+animateOpacityTo : Float -> Sub.EngineBuilder -> Sub.EngineBuilder
 animateOpacityTo target =
-    Opacity.for "el"
+    Sub.for "el"
+        >> Opacity.begin
         >> Opacity.to target
-        >> Opacity.build
+        >> Opacity.end
 
 
 extractOpacitySpring : Builder.AnimBuilder eng -> Maybe (Maybe Spring.Spring)
@@ -153,10 +154,11 @@ perPropertySpringTests =
         [ test "sets the spring on the processed config" <|
             \_ ->
                 initBuilder
-                    |> (Opacity.for "el"
+                    |> (Sub.for "el"
+                            >> Opacity.begin
                             >> Opacity.to 0.5
                             >> Opacity.spring Spring.wobbly
-                            >> Opacity.build
+                            >> Opacity.end
                        )
                     |> extractOpacitySpring
                     |> Expect.equal (Just (Just Spring.wobbly))
@@ -164,10 +166,11 @@ perPropertySpringTests =
             \_ ->
                 initBuilder
                     |> Sub.easing EaseInOut
-                    |> (Opacity.for "el"
+                    |> (Sub.for "el"
+                            >> Opacity.begin
                             >> Opacity.to 0.5
                             >> Opacity.spring Spring.wobbly
-                            >> Opacity.build
+                            >> Opacity.end
                        )
                     |> extractOpacitySpring
                     |> Expect.equal (Just (Just Spring.wobbly))
@@ -210,22 +213,24 @@ mutualExclusionTests =
                 -- spring set last; the spring should win and the
                 -- ProcessedAnimationConfig.spring should be populated.
                 initBuilder
-                    |> (Opacity.for "el"
+                    |> (Sub.for "el"
+                            >> Opacity.begin
                             >> Opacity.to 0.5
                             >> Opacity.easing EaseInOut
                             >> Opacity.spring Spring.wobbly
-                            >> Opacity.build
+                            >> Opacity.end
                        )
                     |> extractOpacitySpring
                     |> Expect.equal (Just (Just Spring.wobbly))
         , test "per-property Opacity.easing clears Opacity.spring" <|
             \_ ->
                 initBuilder
-                    |> (Opacity.for "el"
+                    |> (Sub.for "el"
+                            >> Opacity.begin
                             >> Opacity.to 0.5
                             >> Opacity.spring Spring.wobbly
                             >> Opacity.easing EaseInOut
-                            >> Opacity.build
+                            >> Opacity.end
                        )
                     |> extractOpacitySpring
                     |> Expect.equal (Just Nothing)

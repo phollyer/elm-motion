@@ -15,10 +15,10 @@ Scale elements uniformly or independently on each axis.
 
     grow : AnimBuilder eng -> AnimBuilder eng
     grow =
-        Scale.for "animGroup"
+        Scale.begin
             >> Scale.to 1.5
             >> Scale.duration 300
-            >> Scale.build
+            >> Scale.end
     ```
 
 See the [Properties Overview](overview.md) page for the shared usage patterns.

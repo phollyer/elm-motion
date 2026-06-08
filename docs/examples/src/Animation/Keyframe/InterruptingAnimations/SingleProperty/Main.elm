@@ -97,11 +97,12 @@ toColor4 =
 
 colorBox : (CustomColor.Builder ForKeyframe -> CustomColor.Builder ForKeyframe) -> (Keyframe.EngineBuilder -> Keyframe.EngineBuilder)
 colorBox moveFunc =
-    CustomColor.for animGroupName CustomColor.BackgroundColor
+    Keyframe.for animGroupName
+        >> CustomColor.begin CustomColor.BackgroundColor
         >> moveFunc
         >> CustomColor.duration 3000
         >> CustomColor.easing Linear
-        >> CustomColor.build
+        >> CustomColor.end
 
 
 

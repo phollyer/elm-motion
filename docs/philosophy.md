@@ -45,11 +45,11 @@ Define your animations once.
     -- Define once
     fadeIn : AnimBuilder eng -> AnimBuilder eng
     fadeIn =
-        Opacity.for "entranceAnim"
+        Opacity.begin
             >> Opacity.from 0
             >> Opacity.to 1
             >> Opacity.duration 300
-            >> Opacity.build
+            >> Opacity.end
     ```
 
 Then use with any engine.

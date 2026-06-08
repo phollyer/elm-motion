@@ -1,7 +1,7 @@
 module Anim.Property.Size exposing
     ( Builder, AnimGroupName
     , init, initHW, initW, initH
-    , for, build
+    , begin, end
     , fromHW, fromH, fromW, from
     , toHW, toH, toW
     , byHW, byH, byW
@@ -37,7 +37,7 @@ or 0 if not set.
 
 # Build
 
-@docs for, build
+@docs begin, end
 
 
 # Configure
@@ -142,10 +142,10 @@ until you [Unclamp](#unclamp) it:
 
                     ( animState, cmd ) =
                         WAAPI.retarget model.animState <|
-                            Size.for animGroupName
+                            Size.begin
                                 >> Size.clampWidth 0 w
                                 >> Size.clampHeight 0 h
-                                >> Size.build
+                                >> Size.end
                 in
                 ( { model | animState = animState }
                 , cmd
@@ -339,13 +339,18 @@ Use this to start configuring a size animation.
 
     myAnimation : AnimBuilder eng -> AnimBuilder eng
     myAnimation =
-        Size.for "animGroupName"
+        Size.begin
             >> ... -- Configure and build the animation
 
 -}
-for : AnimGroupName -> AnimBuilder eng -> Builder eng
-for =
-    SB.for
+begin : AnimBuilder eng -> Builder eng
+begin animBuilder =
+    case IB.getCurrentAnimGroupName animBuilder of
+        Just animGroupName ->
+            SB.for animGroupName animBuilder
+
+        Nothing ->
+            SB.for "" animBuilder
 
 
 {-| Complete the [Builder](#Builder) animation configuration and return an `AnimBuilder`
@@ -353,14 +358,14 @@ so you can continue configuring other property animations or execute the animati
 
     myAnimation : AnimBuilder eng -> AnimBuilder eng
     myAnimation =
-        Size.for "animGroupName"
+        Size.begin
             >> ... -- configure the animation with from, to, duration, easing, etc.
-            >> Size.build
+            >> Size.end
             >> ... -- continue with animation
 
 -}
-build : Builder eng -> AnimBuilder eng
-build =
+end : Builder eng -> AnimBuilder eng
+end =
     SB.build
 
 
@@ -374,7 +379,7 @@ build =
 
     myAnimation : AnimBuilder eng -> AnimBuilder eng
     myAnimation =
-        Size.for "animGroupName"
+        Size.begin
             >> Size.fromHW 200 100
             >> ... -- continue with animation
 
@@ -418,7 +423,7 @@ from value =
 
     myAnimation : AnimBuilder eng -> AnimBuilder eng
     myAnimation =
-        Size.for "animGroupName"
+        Size.begin
             >> Size.toHW 200 100
             >> ... -- continue with animation
 

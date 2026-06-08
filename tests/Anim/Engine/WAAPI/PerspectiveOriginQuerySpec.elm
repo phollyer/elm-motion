@@ -39,11 +39,12 @@ animatedState : WAAPI.AnimState msg
 animatedState =
     initWith [ PerspectiveOrigin.initXY groupName 50 50 ]
         |> animate
-            (PerspectiveOrigin.for groupName
+            (WAAPI.for groupName
+                >> PerspectiveOrigin.begin
                 >> PerspectiveOrigin.toXY 90 10
                 >> PerspectiveOrigin.duration 1000
                 >> PerspectiveOrigin.easing Linear
-                >> PerspectiveOrigin.build
+                >> PerspectiveOrigin.end
             )
 
 

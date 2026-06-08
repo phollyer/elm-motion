@@ -42,10 +42,11 @@ suite =
                 Transition.init [ Translate.initXY "el" 0 0 ]
                     |> (\state ->
                             Transition.animate state
-                                (Translate.for "el"
+                                (Transition.for "el"
+                                    >> Translate.begin
                                     >> Translate.toXY 100 0
                                     >> Translate.duration 500
-                                    >> Translate.build
+                                    >> Translate.end
                                 )
                        )
                     |> rendered
@@ -55,10 +56,11 @@ suite =
                 Transition.init [ Scale.init "el" 1 ]
                     |> (\state ->
                             Transition.animate state
-                                (Scale.for "el"
+                                (Transition.for "el"
+                                    >> Scale.begin
                                     >> Scale.to 1.5
                                     >> Scale.duration 500
-                                    >> Scale.build
+                                    >> Scale.end
                                 )
                        )
                     |> rendered
@@ -68,10 +70,11 @@ suite =
                 Transition.init [ Rotate.initZ "el" 0 ]
                     |> (\state ->
                             Transition.animate state
-                                (Rotate.for "el"
+                                (Transition.for "el"
+                                    >> Rotate.begin
                                     >> Rotate.toZ 90
                                     >> Rotate.duration 500
-                                    >> Rotate.build
+                                    >> Rotate.end
                                 )
                        )
                     |> rendered
@@ -84,17 +87,19 @@ suite =
                     ]
                     |> (\state ->
                             Transition.animate state
-                                (Rotate.for "el"
+                                (Transition.for "el"
+                                    >> Rotate.begin
                                     >> Rotate.toZ 45
                                     >> Rotate.duration 500
-                                    >> Rotate.build
+                                    >> Rotate.end
                                 )
                                 |> (\s ->
                                         Transition.animate s
-                                            (Skew.for "el"
+                                            (Transition.for "el"
+                                                >> Skew.begin
                                                 >> Skew.toXY 10 5
                                                 >> Skew.duration 500
-                                                >> Skew.build
+                                                >> Skew.end
                                             )
                                    )
                        )
@@ -108,17 +113,19 @@ suite =
                     ]
                     |> (\state ->
                             Transition.animate state
-                                (Opacity.for "el"
+                                (Transition.for "el"
+                                    >> Opacity.begin
                                     >> Opacity.to 1
                                     >> Opacity.duration 500
-                                    >> Opacity.build
+                                    >> Opacity.end
                                 )
                                 |> (\s ->
                                         Transition.animate s
-                                            (Translate.for "el"
+                                            (Transition.for "el"
+                                                >> Translate.begin
                                                 >> Translate.toXY 100 0
                                                 >> Translate.duration 500
-                                                >> Translate.build
+                                                >> Translate.end
                                             )
                                    )
                        )
@@ -129,10 +136,11 @@ suite =
                 Transition.init [ Size.initHW "el" 100 100 ]
                     |> (\state ->
                             Transition.animate state
-                                (Size.for "el"
+                                (Transition.for "el"
+                                    >> Size.begin
                                     >> Size.toHW 200 150
                                     >> Size.duration 500
-                                    >> Size.build
+                                    >> Size.end
                                 )
                        )
                     |> rendered
@@ -142,10 +150,11 @@ suite =
                 Transition.init [ PerspectiveOrigin.initXY "el" 50 50 ]
                     |> (\state ->
                             Transition.animate state
-                                (PerspectiveOrigin.for "el"
+                                (Transition.for "el"
+                                    >> PerspectiveOrigin.begin
                                     >> PerspectiveOrigin.toXY 90 10
                                     >> PerspectiveOrigin.duration 500
-                                    >> PerspectiveOrigin.build
+                                    >> PerspectiveOrigin.end
                                 )
                        )
                     |> rendered
@@ -155,10 +164,11 @@ suite =
                 Transition.init [ Custom.init "el" (Custom.BorderRadius Unit.Px) 0 ]
                     |> (\state ->
                             Transition.animate state
-                                (Custom.for "el" (Custom.BorderRadius Unit.Px)
+                                (Transition.for "el"
+                                    >> Custom.begin (Custom.BorderRadius Unit.Px)
                                     >> Custom.to 10
                                     >> Custom.duration 500
-                                    >> Custom.build
+                                    >> Custom.end
                                 )
                        )
                     |> rendered

@@ -1,7 +1,7 @@
 module Anim.Property.Custom exposing
     ( Builder, AnimGroupName, Property(..)
     , init
-    , for, build
+    , begin, end
     , from
     , to
     , by
@@ -29,7 +29,7 @@ property modules (Translate, Rotate, Scale etc.).
 
 # Build
 
-@docs for, build
+@docs begin, end
 
 
 # Configure
@@ -104,9 +104,9 @@ until you [Unclamp](#unclamp) it:
                 let
                     ( animState, cmd ) =
                         WAAPI.animate model.animState <|
-                            Custom.for animGroupName (Custom.FontSize Px)
+                            Custom.begin Px)
                                 >> Custom.clamp 12 32
-                                >> Custom.build
+                                >> Custom.end
                 in
                 ( { model | animState = animState }
                 , cmd
@@ -134,7 +134,7 @@ Pairs well with [by](#by) for relative animations where the delta could push the
 
 -}
 
-import Anim.Internal.Builder exposing (AnimBuilder)
+import Anim.Internal.Builder as IB exposing (AnimBuilder)
 import Anim.Internal.Property.Custom as Internal
 import Anim.Internal.Unit as InternalUnit
 import Anim.Unit exposing (Unit)
@@ -462,19 +462,24 @@ The first argument is the animation group name, the second is the CSS property.
             >> Property.build
 
 -}
-for : AnimGroupName -> Property -> AnimBuilder eng -> Builder eng
-for animGroupName cssProperty =
+begin : Property -> AnimBuilder eng -> Builder eng
+begin cssProperty animBuilder =
     let
         ( name, unit ) =
             toCssArgs cssProperty
     in
-    Internal.for animGroupName name unit
+    case IB.getCurrentAnimGroupName animBuilder of
+        Just animGroupName ->
+            Internal.for animGroupName name unit animBuilder
+
+        Nothing ->
+            Internal.for "" name unit animBuilder
 
 
 {-| Complete the animation configuration and return an `AnimBuilder`.
 -}
-build : Builder eng -> AnimBuilder eng
-build =
+end : Builder eng -> AnimBuilder eng
+end =
     Internal.build
 
 

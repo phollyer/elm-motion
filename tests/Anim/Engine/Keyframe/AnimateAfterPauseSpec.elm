@@ -39,12 +39,13 @@ initial =
 
 dropBall : Keyframe.EngineBuilder -> Keyframe.EngineBuilder
 dropBall =
-    Translate.for animGroup
+    Keyframe.for animGroup
+        >> Translate.begin
         >> Translate.fromY 0
         >> Translate.toY 88
         >> Translate.speed 100
         >> Translate.easing BounceOut
-        >> Translate.build
+        >> Translate.end
 
 
 renderedStyle : Keyframe.AnimState -> Query.Single ()

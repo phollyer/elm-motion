@@ -23,10 +23,10 @@ Animate any numeric CSS property with a unit. This is an escape hatch for CSS pr
 
     borderRadiusAnimation : AnimBuilder eng -> AnimBuilder eng
     borderRadiusAnimation =
-        Property.for "animGroup" (BorderRadius Px)
+        Property.begin (BorderRadius Px)
             >> Property.to 24
             >> Property.duration 500
-            >> Property.build
+            >> Property.end
     ```
 
 See the [Properties Overview](overview.md) page for the shared usage patterns.
@@ -54,8 +54,8 @@ See the [Properties Overview](overview.md) page for the shared usage patterns.
 
 | Function | Signature | Description |
 | -------- | --------- | ----------- |
-| `for` | `AnimGroupName -> Property -> AnimBuilder eng -> Builder eng` | Start building — takes group name and CSS property (with unit embedded) |
-| `build` | `Builder eng -> AnimBuilder eng` | Finish building |
+| `begin` | `Property -> AnimBuilder eng -> Builder eng` | Start building — takes CSS property (with unit embedded), using the currently selected animation group |
+| `end` | `Builder eng -> AnimBuilder eng` | Finish building |
 
 ### Start Value
 

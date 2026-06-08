@@ -32,11 +32,12 @@ initialState =
 
 moveX : Float -> Sub.EngineBuilder -> Sub.EngineBuilder
 moveX target =
-    Translate.for groupName
+    Sub.for groupName
+        >> Translate.begin
         >> Translate.toX target
         >> Translate.duration 1000
         >> Translate.easing Linear
-        >> Translate.build
+        >> Translate.end
 
 
 step : Float -> Sub.AnimState -> Sub.AnimState

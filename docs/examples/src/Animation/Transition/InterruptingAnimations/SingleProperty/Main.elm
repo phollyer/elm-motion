@@ -96,11 +96,12 @@ toColor4 =
 
 colorBox : (CustomColor.Builder ForTransition -> CustomColor.Builder ForTransition) -> Transition.EngineBuilder -> Transition.EngineBuilder
 colorBox moveFunc =
-    CustomColor.for animGroupName CustomColor.BackgroundColor
+    Transition.for animGroupName
+        >> CustomColor.begin CustomColor.BackgroundColor
         >> moveFunc
         >> CustomColor.duration 3000
         >> CustomColor.easing Linear
-        >> CustomColor.build
+        >> CustomColor.end
 
 
 

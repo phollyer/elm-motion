@@ -1,5 +1,6 @@
 module Anim.Engine.ScrollTimeline exposing
     ( EngineBuilder, AnimGroupName
+    , for
     , Container(..)
     , animate
     , AnimEvent(..)
@@ -30,6 +31,11 @@ and the
 # Types
 
 @docs EngineBuilder, AnimGroupName
+
+
+# Target
+
+@docs for
 
 
 # Trigger
@@ -158,15 +164,30 @@ type Container
     | Container String
 
 
+{-| Select the animation group that subsequent property builders will target.
+
+    ScrollTimeline.for "hero-card"
+        >> Opacity.begin
+        >> Opacity.from 0
+        >> Opacity.to 1
+        >> Opacity.end
+
+-}
+for : AnimGroupName -> EngineBuilder -> EngineBuilder
+for =
+    Builder.for
+
+
 {-| Fire-and-forget scroll-driven animation using the browser's `ScrollTimeline`.
 
     port motionCmd : Encode.Value -> Cmd msg
 
     ScrollTimeline.animate motionCmd (Container "scroller") <|
-        Opacity.for "hero-card"
+        ScrollTimeline.for "hero-card"
+            >> Opacity.begin
             >> Opacity.from 0
             >> Opacity.to 1
-            >> Opacity.build
+            >> Opacity.end
 
 -}
 animate : (Encode.Value -> Cmd msg) -> Container -> (EngineBuilder -> EngineBuilder) -> Cmd msg
@@ -321,10 +342,11 @@ container scrolls horizontally.
     -- Animate based on horizontal scroll position in a carousel
     ScrollTimeline.animate motionCmd (Container "carousel") <|
         ScrollTimeline.horizontal
-            >> Opacity.for "slide"
+            >> ScrollTimeline.for "slide"
+            >> Opacity.begin
             >> Opacity.from 0
             >> Opacity.to 1
-            >> Opacity.build
+            >> Opacity.end
 
 -}
 horizontal : EngineBuilder -> EngineBuilder
@@ -340,9 +362,15 @@ horizontal =
 
 {-| Set how many times an animation should repeat.
 
-    notificationAttentionLoop : AnimBuilder eng -> AnimBuilder eng
+Use a finite value here. Scroll timelines map progress through a finite
+range, so this controls how many passes are distributed across that range.
+
+Applies to the currently selected animation group in the builder chain.
+
+    notificationAttentionLoop : ScrollTimeline.EngineBuilder -> ScrollTimeline.EngineBuilder
     notificationAttentionLoop =
-        iterations 3
+        ScrollTimeline.for "badge"
+            >> ScrollTimeline.iterations 3
             >> pulseBadge
             >> nudgeBellIcon
 
@@ -354,17 +382,20 @@ iterations =
 
 {-| Make an animation alternate direction on each iteration.
 
-    floatingCardLoop : AnimBuilder eng -> AnimBuilder eng
+Applies to the currently selected animation group in the builder chain.
+
+    floatingCardLoop : ScrollTimeline.EngineBuilder -> ScrollTimeline.EngineBuilder
     floatingCardLoop =
-        iterations 4
-            >> alternate
+        ScrollTimeline.for "card"
+            >> ScrollTimeline.iterations 4
+            >> ScrollTimeline.alternate
             >> liftCard
             >> glowCardBorder
 
 `alternate` only has a visible effect when the animation runs more than once,
 so calling it when `iterations` is unset or `1` automatically bumps
-`iterations` to `2`. An explicit `iterations` count (or `loopForever`) set
-before or after `alternate` is preserved.
+`iterations` to `2`. An explicit `iterations` count set before or after
+`alternate` is preserved.
 
 -}
 alternate : EngineBuilder -> EngineBuilder
@@ -518,10 +549,11 @@ Use this when you need a different order for specific visual effects.
 
     ScrollTimeline.animate motionCmd (Container "scroller") <|
         ScrollTimeline.transformOrder [ Scale, Rotate, Translate ]
-            >> Translate.for "box"
+            >> ScrollTimeline.for "box"
+            >> Translate.begin
             >> Translate.fromXY 0 0
             >> Translate.toXY 100 0
-            >> Translate.build
+            >> Translate.end
 
 -}
 transformOrder : List TransformProperty -> EngineBuilder -> EngineBuilder
@@ -543,10 +575,11 @@ to be set to a specific value while the animation is active.
     ScrollTimeline.animate motionCmd (Container "scroller") <|
         ScrollTimeline.discreteEntry "display" "block"
             >> ScrollTimeline.discreteEntry "visibility" "visible"
-            >> Opacity.for "box"
+            >> ScrollTimeline.for "box"
+            >> Opacity.begin
             >> Opacity.from 0
             >> Opacity.to 1
-            >> Opacity.build
+            >> Opacity.end
 
 -}
 discreteEntry : String -> String -> EngineBuilder -> EngineBuilder
@@ -563,10 +596,11 @@ discreteEntry =
     ScrollTimeline.animate motionCmd (Container "scroller") <|
     ScrollTimeline.discreteExit "display" "block" "none"
 
-    > > Opacity.for "box"
+    > > ScrollTimeline.for "box"
+    > > Opacity.begin
     > > Opacity.from 1
     > > Opacity.to 0
-    > > Opacity.build
+    > > Opacity.end
 
 -}
 discreteExit : String -> String -> String -> EngineBuilder -> EngineBuilder
@@ -589,10 +623,11 @@ a milestone, or update a progress badge).
 
     ScrollTimeline.animate motionCmd (Container "scroller") <|
         ScrollTimeline.withProgressEvents True
-            >> Opacity.for "hero-card"
+            >> ScrollTimeline.for "hero-card"
+            >> Opacity.begin
             >> Opacity.from 0
             >> Opacity.to 1
-            >> Opacity.build
+            >> Opacity.end
 
 While enabled, the engine emits one `Progress animGroup t` event per animation
 frame (typically ~60/sec) for every group that is currently in range.

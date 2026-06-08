@@ -107,6 +107,7 @@ module Anim.Internal.Builder exposing
     , registerPerspectiveOriginInitAxes
     , registerSizeInitAxes
     , registerTranslateInitAxes
+    , resolvePlayback
     , setAnimTarget
     , setBaselinesFromProcessedEnds
     , setClamp
@@ -338,13 +339,21 @@ type alias AnimGroupData =
 
 type alias AnimGroupConfig =
     { properties : List PropertyConfig
+    , playback : Maybe GroupPlaybackConfig
     , transformOrder : Maybe (List TransformProperty)
     }
 
 
 type alias ProcessedAnimGroupConfig =
     { properties : List ProcessedPropertyConfig
+    , playback : Maybe GroupPlaybackConfig
     , transformOrder : Maybe (List TransformProperty)
+    }
+
+
+type alias GroupPlaybackConfig =
+    { iterations : Maybe Iterations
+    , animationDirection : Maybe AnimationDirection
     }
 
 
@@ -1067,44 +1076,92 @@ getLatestAnimateConfig animGroupName (AnimBuilder data) =
 
 iterations : Int -> AnimBuilder { eng | withIterations : () } -> AnimBuilder { eng | withIterations : () }
 iterations count (AnimBuilder data) =
-    let
-        pb =
-            data.playback
-    in
-    AnimBuilder { data | playback = { pb | iterations = Times count } }
+    case data.animation.currentAnimGroup of
+        Nothing ->
+            let
+                pb =
+                    data.playback
+            in
+            AnimBuilder { data | playback = { pb | iterations = Times count } }
+
+        Just _ ->
+            updateCurrentConfig
+                { properties = []
+                , playback = Just { iterations = Just (Times count), animationDirection = Nothing }
+                , transformOrder = Nothing
+                }
+                (AnimBuilder data)
 
 
 loopForever : AnimBuilder { eng | withLoopForever : () } -> AnimBuilder { eng | withLoopForever : () }
 loopForever (AnimBuilder data) =
-    let
-        pb =
-            data.playback
-    in
-    AnimBuilder { data | playback = { pb | iterations = Infinite } }
+    case data.animation.currentAnimGroup of
+        Nothing ->
+            let
+                pb =
+                    data.playback
+            in
+            AnimBuilder { data | playback = { pb | iterations = Infinite } }
+
+        Just _ ->
+            updateCurrentConfig
+                { properties = []
+                , playback = Just { iterations = Just Infinite, animationDirection = Nothing }
+                , transformOrder = Nothing
+                }
+                (AnimBuilder data)
 
 
 alternate : AnimBuilder { eng | withAlternate : () } -> AnimBuilder { eng | withAlternate : () }
 alternate (AnimBuilder data) =
-    let
-        pb =
-            data.playback
+    case data.animation.currentAnimGroup of
+        Nothing ->
+            let
+                pb =
+                    data.playback
 
-        bumpedIterations =
-            case pb.iterations of
-                Once ->
-                    Times 2
+                bumpedIterations =
+                    case pb.iterations of
+                        Once ->
+                            Times 2
 
-                _ ->
-                    pb.iterations
-    in
-    AnimBuilder
-        { data
-            | playback =
-                { pb
-                    | animationDirection = Alternate
-                    , iterations = bumpedIterations
+                        _ ->
+                            pb.iterations
+            in
+            AnimBuilder
+                { data
+                    | playback =
+                        { pb
+                            | animationDirection = Alternate
+                            , iterations = bumpedIterations
+                        }
                 }
-        }
+
+        Just _ ->
+            updateCurrentConfig
+                { properties = []
+                , playback = Just { iterations = Nothing, animationDirection = Just Alternate }
+                , transformOrder = Nothing
+                }
+                (AnimBuilder data)
+
+
+resolvePlayback :
+    Iterations
+    -> AnimationDirection
+    -> Maybe { iterations : Maybe Iterations, animationDirection : Maybe AnimationDirection }
+    -> { iterations : Iterations, animationDirection : AnimationDirection }
+resolvePlayback globalIterations globalDirection maybePlayback =
+    case maybePlayback of
+        Nothing ->
+            { iterations = globalIterations
+            , animationDirection = globalDirection
+            }
+
+        Just playback ->
+            { iterations = Maybe.withDefault globalIterations playback.iterations
+            , animationDirection = Maybe.withDefault globalDirection playback.animationDirection
+            }
 
 
 discreteTransitionsEnabled : AnimBuilder eng -> Bool
@@ -1351,7 +1408,7 @@ getCurrentAnimGroupConfig : AnimBuilder eng -> AnimGroupConfig
 getCurrentAnimGroupConfig (AnimBuilder data) =
     case data.animation.currentAnimGroup of
         Nothing ->
-            { properties = [], transformOrder = data.defaults.globalTransformOrder }
+            { properties = [], playback = Nothing, transformOrder = data.defaults.globalTransformOrder }
 
         Just animGroupName ->
             AnimGroups.get animGroupName data.animation.animGroups
@@ -1367,7 +1424,7 @@ getCurrentAnimGroupConfig (AnimBuilder data) =
                                         config.transformOrder
                         }
                     )
-                |> Maybe.withDefault { properties = [], transformOrder = data.defaults.globalTransformOrder }
+                |> Maybe.withDefault { properties = [], playback = Nothing, transformOrder = data.defaults.globalTransformOrder }
 
 
 getAnimGroupConfig : AnimGroupName -> AnimBuilder eng -> Maybe AnimGroupConfig
@@ -1596,7 +1653,7 @@ function.
 Used by engines that need to update baselines outside the normal `animate`
 pipeline — for example, after a resize that shifts the in-flight
 animation's end target. Subsequent builders look up the new end via
-`getBaseline` (so that `Translate.for >> Translate.toY` and friends inherit
+`getBaseline` (so that `Translate.begin
 the resized X/Z values), and that lookup must reflect the post-resize
 target rather than the pre-resize one captured by the prior `animate`.
 
@@ -1857,6 +1914,13 @@ updateCurrentConfig config (AnimBuilder data) =
                             in
                             { existing
                                 | properties = filteredExisting ++ config.properties
+                                , playback =
+                                    case config.playback of
+                                        Just _ ->
+                                            config.playback
+
+                                        Nothing ->
+                                            existing.playback
                                 , transformOrder = mergedOrder
                             }
 
@@ -2222,6 +2286,7 @@ process (AnimBuilder data) =
         AnimGroups.map
             (\groupName group ->
                 { properties = processProperties data.defaults groupName group.properties
+                , playback = group.playback
                 , transformOrder =
                     case group.transformOrder of
                         Just _ ->

@@ -16,10 +16,11 @@ animatedState =
     Transition.init [ PerspectiveOrigin.initXY groupName 50 50 ]
         |> (\state ->
                 Transition.animate state <|
-                    PerspectiveOrigin.for groupName
+                    Transition.for groupName
+                        >> PerspectiveOrigin.begin
                         >> PerspectiveOrigin.toXY 90 10
                         >> PerspectiveOrigin.duration 1000
-                        >> PerspectiveOrigin.build
+                        >> PerspectiveOrigin.end
            )
 
 

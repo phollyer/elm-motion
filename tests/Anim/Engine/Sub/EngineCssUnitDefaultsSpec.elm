@@ -36,11 +36,12 @@ suite =
                             Sub.animate state
                                 (Sub.cssUnitX Unit.Vw
                                     >> Sub.cssUnitY Unit.Vh
-                                    >> Translate.for "el"
+                                    >> Sub.for "el"
+                                    >> Translate.begin
                                     >> Translate.toXY 100 50
                                     >> Translate.duration 1000
                                     >> Translate.easing Linear
-                                    >> Translate.build
+                                    >> Translate.end
                                 )
                        )
                     |> step 500
@@ -53,11 +54,12 @@ suite =
                             Sub.animate state
                                 (Sub.cssUnitX Unit.Vw
                                     >> Sub.cssUnitY Unit.Vh
-                                    >> Size.for "el"
+                                    >> Sub.for "el"
+                                    >> Size.begin
                                     >> Size.toHW 200 400
                                     >> Size.duration 1000
                                     >> Size.easing Linear
-                                    >> Size.build
+                                    >> Size.end
                                 )
                        )
                     |> step 500
@@ -73,11 +75,12 @@ suite =
                             Sub.animate state
                                 (Sub.cssUnitWidth Unit.Vw
                                     >> Sub.cssUnitHeight Unit.Vh
-                                    >> Size.for "el"
+                                    >> Sub.for "el"
+                                    >> Size.begin
                                     >> Size.toHW 200 400
                                     >> Size.duration 1000
                                     >> Size.easing Linear
-                                    >> Size.build
+                                    >> Size.end
                                 )
                        )
                     |> step 500
@@ -93,11 +96,12 @@ suite =
                             Sub.animate state
                                 (Sub.cssUnitX Unit.Vw
                                     >> Sub.cssUnitY Unit.Vh
-                                    >> PerspectiveOrigin.for "el"
+                                    >> Sub.for "el"
+                                    >> PerspectiveOrigin.begin
                                     >> PerspectiveOrigin.toXY 90 10
                                     >> PerspectiveOrigin.duration 1000
                                     >> PerspectiveOrigin.easing Linear
-                                    >> PerspectiveOrigin.build
+                                    >> PerspectiveOrigin.end
                                 )
                        )
                     |> step 500

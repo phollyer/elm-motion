@@ -36,10 +36,11 @@ Here's a general workflow to get up an running quickly.
 
     fadeIn : Transition.AnimBuilder eng -> Transition.AnimBuilder eng
     fadeIn =
-        Opacity.for "card"
+        Transition.for "card"
+            >> Opacity.begin
             >> Opacity.to 1
             >> Opacity.duration 300
-            >> Opacity.build
+            >> Opacity.end
     ```
 
 ### 2. Initialize
@@ -284,9 +285,10 @@ Set the default `duration`, `speed`, and `delay`. Inherited by every property th
     fadeIn =
         Transition.delay 500
             >> Transition.duration 800
-            >> Opacity.for "card"
+            >> Transition.for "card"
+            >> Opacity.begin
             >> Opacity.to 1
-            >> Opacity.build
+            >> Opacity.end
     ```
 
 📖 See [Timing](../concepts/timing.md) for more info.
@@ -305,11 +307,12 @@ Set the default easing for all properties that don't override it:
     ```elm
     fadeIn =
         Transition.easing CubicInOut
-            >> Opacity.for "card"
+            >> Transition.for "card"
+            >> Opacity.begin
             >> Opacity.to 1
             >> Opacity.duration 300
             >> Opacity.delay 50
-            >> Opacity.build
+            >> Opacity.end
     ```
 
 📖 See [Easing](../concepts/easing.md) for all available easing functions.
@@ -343,15 +346,17 @@ For entry animations, include `startingStyleNode` in your view. This generates `
     ```elm
     fadeIn : AnimBuilder eng -> AnimBuilder eng
     fadeIn =
-        Opacity.for "box"
+        Transition.for "box"
+            >> Opacity.begin
             >> Opacity.to 1
-            >> Opacity.build
+            >> Opacity.end
 
     fadeOut : AnimBuilder eng -> AnimBuilder eng
     fadeOut =
-        Opacity.for "box"
+        Transition.for "box"
+            >> Opacity.begin
             >> Opacity.to 0
-            >> Opacity.build
+            >> Opacity.end
 
     update : Msg -> Model -> (Model, Cmd Msg)
     update msg model =

@@ -57,10 +57,11 @@ unitTest description maybeUnit expected =
                         |> AnimGroups.insert "ball" AnimGroup.init
 
                 translateBuilder =
-                    Translate.for "ball"
+                    Builder.for "ball"
+                        >> Translate.begin
                         >> Translate.toY 62
                         >> Translate.duration 500
-                        >> Translate.build
+                        >> Translate.end
 
                 initStep b =
                     case maybeUnit of

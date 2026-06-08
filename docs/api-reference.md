@@ -84,10 +84,11 @@ ViewTimeline.animate motionCmd myAnimation
 All properties follow this pattern:
 
 ```elm
-Property.for "element-id"
-    |> Property.from startValue
-    |> Property.to endValue
-    |> Property.duration ms
-    |> Property.easing easing
-    |> Property.build
+Engine.for "element-id"
+    >> Property.begin
+    >> Property.from startValue
+    >> Property.to endValue
+    >> Property.duration ms
+    >> Property.easing easing
+    >> Property.end
 ```

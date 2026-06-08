@@ -15,10 +15,10 @@ Fade elements in and out by animating their opacity value.
 
     fadeIn : AnimBuilder eng -> AnimBuilder eng
     fadeIn =
-        Opacity.for "animGroup"
+        Opacity.begin
             >> Opacity.to 1
             >> Opacity.duration 500
-            >> Opacity.build
+            >> Opacity.end
     ```
 
 See the [Properties Overview](overview.md) page for the shared usage patterns.

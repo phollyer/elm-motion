@@ -3,6 +3,7 @@ module Anim.Engine.Keyframe exposing
     , AnimBuilder
     , EngineBuilder
     , init
+    , for
     , animate, retarget
     , CurrentTargetId, TargetId, AnimEvent(..)
     , AnimMsg, update
@@ -60,6 +61,11 @@ for details.
 📖 See [Initialize](https://phollyer.github.io/elm-motion/animation/workflow/init/) for details.
 
 @docs init
+
+
+# Target
+
+@docs for
 
 
 # Trigger
@@ -259,6 +265,8 @@ type alias AnimGroupName =
 
 Use this in type annotations when a builder function should only work with this engine.
 
+Equivalent to `AnimBuilder ForKeyframe`.
+
 📖 See [Engine Capabilities](https://phollyer.github.io/elm-motion/animation/concepts/engine-capabilities/)
 for patterns and examples.
 
@@ -273,7 +281,7 @@ type alias EngineBuilder =
 -- ============================================================
 
 
-{-| Initialize animation state with optional property initializers.
+{-| Initialize the engine state with optional property initializers.
 
     import Anim.Engine.Keyframe as Keyframe
     import Anim.Property.Opacity as Opacity
@@ -287,6 +295,25 @@ type alias EngineBuilder =
 init : List (EngineBuilder -> EngineBuilder) -> AnimState
 init =
     Internal.init
+
+
+
+-- ============================================================
+-- TARGET
+-- ============================================================
+
+
+{-| Select the animation group that subsequent property builders will target.
+
+    Keyframe.for "animGroupName"
+        >> Opacity.begin
+        >> Opacity.to 0.2
+        >> Opacity.end
+
+-}
+for : AnimGroupName -> EngineBuilder -> EngineBuilder
+for =
+    Builder.for
 
 
 
@@ -324,9 +351,10 @@ the group will snap to their targeted end values if mid-flight.
     { model
         | animState =
             Keyframe.retarget model.animState <|
-                Translate.for "animGroupName"
+                Keyframe.for "animGroupName"
+                    >> Translate.begin
                     >> Translate.toY 0
-                    >> Translate.build
+                    >> Translate.end
     }
 
 -}
@@ -576,9 +604,12 @@ eventsStopPropagation =
 
 {-| Set how many times an animation should repeat.
 
-    notificationAttentionLoop : AnimBuilder eng -> AnimBuilder eng
+Applies to the currently selected animation group in the builder chain.
+
+    notificationAttentionLoop : Keyframe.EngineBuilder -> Keyframe.EngineBuilder
     notificationAttentionLoop =
-        iterations 3
+        Keyframe.for "badge"
+            >> Keyframe.iterations 3
             >> pulseBadge
             >> nudgeBellIcon
 
@@ -590,18 +621,20 @@ iterations =
 
 {-| Make an animation loop infinitely.
 
+Applies to the currently selected animation group in the builder chain.
+
     import Anim.Engine.Keyframe as Keyframe
     import Anim.Property.Opacity as Opacity
 
     pulse : Keyframe.EngineBuilder -> Keyframe.EngineBuilder
     pulse =
-        Opacity.for "box"
+        Keyframe.for "box"
+            >> Keyframe.loopForever
+            >> Opacity.begin
             >> Opacity.to 0.2
-            >> Opacity.build
+            >> Opacity.end
 
-    Keyframe.animate model.animState <|
-        Keyframe.loopForever
-            >> pulse
+    Keyframe.animate model.animState pulse
 
 -}
 loopForever : EngineBuilder -> EngineBuilder
@@ -611,10 +644,13 @@ loopForever =
 
 {-| Make an animation alternate direction on each iteration.
 
-    floatingCardLoop : AnimBuilder eng -> AnimBuilder eng
+Applies to the currently selected animation group in the builder chain.
+
+    floatingCardLoop : Keyframe.EngineBuilder -> Keyframe.EngineBuilder
     floatingCardLoop =
-        iterations 4
-            >> alternate
+        Keyframe.for "card"
+            >> Keyframe.iterations 4
+            >> Keyframe.alternate
             >> liftCard
             >> glowCardBorder
 
@@ -907,9 +943,10 @@ knows the element's pre-animation state from its own CSS.
     Keyframe.animate model.animState <|
         Keyframe.discreteEntry "display" "block"
             >> Keyframe.discreteEntry "pointer-events" "auto"
-            >> Opacity.for "box"
+            >> Keyframe.for "box"
+            >> Opacity.begin
             >> Opacity.to 1
-            >> Opacity.build
+            >> Opacity.end
 
 -}
 discreteEntry : String -> String -> EngineBuilder -> EngineBuilder
@@ -932,9 +969,10 @@ Use when an element is disappearing (e.g., going from
 
     Keyframe.animate model.animState <|
         Keyframe.discreteExit "display" "block" "none"
-            >> Opacity.for "box"
+            >> Keyframe.for "box"
+            >> Opacity.begin
             >> Opacity.to 0
-            >> Opacity.build
+            >> Opacity.end
 
 -}
 discreteExit : String -> String -> String -> EngineBuilder -> EngineBuilder

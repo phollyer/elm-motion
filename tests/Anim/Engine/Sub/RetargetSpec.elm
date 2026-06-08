@@ -49,29 +49,32 @@ initState =
 startTranslate : String -> Float -> Sub.AnimState -> Sub.AnimState
 startTranslate groupName target state =
     Sub.animate state <|
-        (Translate.for groupName
+        (Sub.for groupName
+            >> Translate.begin
             >> Translate.toX target
             >> Translate.duration 1000
             >> Translate.easing EaseInOut
-            >> Translate.build
+            >> Translate.end
         )
 
 
 snapTranslate : String -> Float -> Sub.AnimState -> Sub.AnimState
 snapTranslate groupName target state =
     Sub.retarget state <|
-        (Translate.for groupName
+        (Sub.for groupName
+            >> Translate.begin
             >> Translate.toX target
-            >> Translate.build
+            >> Translate.end
         )
 
 
 snapTranslateY : String -> Float -> Sub.AnimState -> Sub.AnimState
 snapTranslateY groupName target state =
     Sub.retarget state <|
-        (Translate.for groupName
+        (Sub.for groupName
+            >> Translate.begin
             >> Translate.toY target
-            >> Translate.build
+            >> Translate.end
         )
 
 
@@ -198,10 +201,11 @@ scoping =
                 let
                     startOpacity state =
                         Sub.animate state <|
-                            (Opacity.for "a"
+                            (Sub.for "a"
+                                >> Opacity.begin
                                 >> Opacity.to 0
                                 >> Opacity.duration 1000
-                                >> Opacity.build
+                                >> Opacity.end
                             )
                 in
                 initState
@@ -259,10 +263,11 @@ timingIgnored =
                     snapWithLongDuration =
                         Sub.retarget
                             (startTranslate "a" 500 initState)
-                            (Translate.for "a"
+                            (Sub.for "a"
+                                >> Translate.begin
                                 >> Translate.toX 250
                                 >> Translate.duration 10000
-                                >> Translate.build
+                                >> Translate.end
                             )
                 in
                 snapWithLongDuration
@@ -275,10 +280,11 @@ timingIgnored =
                     snapWithDelay =
                         Sub.retarget
                             (startTranslate "a" 500 initState)
-                            (Translate.for "a"
+                            (Sub.for "a"
+                                >> Translate.begin
                                 >> Translate.toX 250
                                 >> Translate.delay 5000
-                                >> Translate.build
+                                >> Translate.end
                             )
                 in
                 snapWithDelay
@@ -389,82 +395,92 @@ perAxisOtherProperties =
 
         startRotateX state target =
             Sub.animate state
-                (Rotate.for "a"
+                (Sub.for "a"
+                    >> Rotate.begin
                     >> Rotate.toX target
                     >> Rotate.duration 1000
                     >> Rotate.easing EaseInOut
-                    >> Rotate.build
+                    >> Rotate.end
                 )
 
         snapRotateY state target =
             Sub.retarget state
-                (Rotate.for "a"
+                (Sub.for "a"
+                    >> Rotate.begin
                     >> Rotate.toY target
-                    >> Rotate.build
+                    >> Rotate.end
                 )
 
         startScaleX state target =
             Sub.animate state
-                (Scale.for "a"
+                (Sub.for "a"
+                    >> Scale.begin
                     >> Scale.toX target
                     >> Scale.duration 1000
                     >> Scale.easing EaseInOut
-                    >> Scale.build
+                    >> Scale.end
                 )
 
         snapScaleY state target =
             Sub.retarget state
-                (Scale.for "a"
+                (Sub.for "a"
+                    >> Scale.begin
                     >> Scale.toY target
-                    >> Scale.build
+                    >> Scale.end
                 )
 
         startSkewX state target =
             Sub.animate state
-                (Skew.for "a"
+                (Sub.for "a"
+                    >> Skew.begin
                     >> Skew.toX target
                     >> Skew.duration 1000
                     >> Skew.easing EaseInOut
-                    >> Skew.build
+                    >> Skew.end
                 )
 
         snapSkewY state target =
             Sub.retarget state
-                (Skew.for "a"
+                (Sub.for "a"
+                    >> Skew.begin
                     >> Skew.toY target
-                    >> Skew.build
+                    >> Skew.end
                 )
 
         startPerspectiveOriginX state target =
             Sub.animate state
-                (PerspectiveOrigin.for "a"
+                (Sub.for "a"
+                    >> PerspectiveOrigin.begin
                     >> PerspectiveOrigin.toX target
                     >> PerspectiveOrigin.duration 1000
                     >> PerspectiveOrigin.easing EaseInOut
-                    >> PerspectiveOrigin.build
+                    >> PerspectiveOrigin.end
                 )
 
         snapPerspectiveOriginY state target =
             Sub.retarget state
-                (PerspectiveOrigin.for "a"
+                (Sub.for "a"
+                    >> PerspectiveOrigin.begin
                     >> PerspectiveOrigin.toY target
-                    >> PerspectiveOrigin.build
+                    >> PerspectiveOrigin.end
                 )
 
         startSizeW state target =
             Sub.animate state
-                (Size.for "a"
+                (Sub.for "a"
+                    >> Size.begin
                     >> Size.toW target
                     >> Size.duration 1000
                     >> Size.easing EaseInOut
-                    >> Size.build
+                    >> Size.end
                 )
 
         snapSizeH state target =
             Sub.retarget state
-                (Size.for "a"
+                (Sub.for "a"
+                    >> Size.begin
                     >> Size.toH target
-                    >> Size.build
+                    >> Size.end
                 )
     in
     describe "per-axis retarget continuation on other multi-dimensional properties"

@@ -64,18 +64,20 @@ standardTiming =
 
 toRed : Transition.EngineBuilder -> Transition.EngineBuilder
 toRed =
-    CustomColor.for animGroup CustomColor.BorderColor
+    Transition.for animGroup
+        >> CustomColor.begin CustomColor.BorderColor
         >> CustomColor.to (Color.rgb 239 68 68)
         >> standardTiming
-        >> CustomColor.build
+        >> CustomColor.end
 
 
 toBlue : Transition.EngineBuilder -> Transition.EngineBuilder
 toBlue =
-    CustomColor.for animGroup CustomColor.BorderColor
+    Transition.for animGroup
+        >> CustomColor.begin CustomColor.BorderColor
         >> CustomColor.to (Color.rgb 59 130 246)
         >> standardTiming
-        >> CustomColor.build
+        >> CustomColor.end
 
 
 

@@ -27,11 +27,12 @@ animState =
     Keyframe.init [ Opacity.init "box" 0 ]
         |> (\state ->
                 Keyframe.animate state
-                    (Opacity.for "box"
+                    (Keyframe.for "box"
+                        >> Opacity.begin
                         >> Opacity.to 1
                         >> Opacity.duration 500
                         >> Opacity.delay 200
-                        >> Opacity.build
+                        >> Opacity.end
                     )
            )
 

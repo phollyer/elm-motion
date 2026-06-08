@@ -39,14 +39,15 @@ main =
 
 revealCard : String -> ViewTimeline.EngineBuilder -> ViewTimeline.EngineBuilder
 revealCard animGroupName =
-    Opacity.for animGroupName
+    ViewTimeline.for animGroupName
+        >> Opacity.begin
         >> Opacity.from 0
         >> Opacity.to 1
-        >> Opacity.build
-        >> Translate.for animGroupName
+        >> Opacity.end
+        >> Translate.begin
         >> Translate.fromY 100
         >> Translate.toY 0
-        >> Translate.build
+        >> Translate.end
 
 
 

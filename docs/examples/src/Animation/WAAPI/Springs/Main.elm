@@ -75,10 +75,11 @@ init =
 
 animateTo : Float -> Spring -> WAAPI.EngineBuilder -> WAAPI.EngineBuilder
 animateTo x spring =
-    Translate.for animGroup
+    WAAPI.for animGroup
+        >> Translate.begin
         >> Translate.toX x
         >> Translate.spring spring
-        >> Translate.build
+        >> Translate.end
 
 
 

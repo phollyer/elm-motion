@@ -23,18 +23,18 @@ The library codebase, and all the examples use function composition extensively.
     fadeIn : AnimBuilder eng -> AnimBuilder eng
     fadeIn animBuilder =
         animBuilder
-            |> Opacity.for groupName
+            |> Opacity.begin
             |> Opacity.to 1
             |> Opacity.duration 5000
-            |> Opacity.build
+            |> Opacity.end
 
     -- Using function composition (>>)
     fadeIn : AnimBuilder eng -> AnimBuilder eng
     fadeIn =
-        Opacity.for groupName
+        Opacity.begin
             >> Opacity.to 1
             >> Opacity.duration 5000
-            >> Opacity.build
+            >> Opacity.end
     ```
 
     Both produce identical results. Because these builders are all functions of type `AnimBuilder eng -> AnimBuilder eng`, they compose naturally with `>>`. This codebase prefers the composition style because it keeps builder definitions concise and usually reads more cleanly than threading an explicit `animBuilder` through a pipeline.

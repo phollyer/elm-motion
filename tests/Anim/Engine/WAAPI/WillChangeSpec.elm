@@ -39,66 +39,71 @@ suite =
         [ test "animate: single transform collapses to 'transform'" <|
             \_ ->
                 encodeAnimate
-                    (Translate.for "cube"
+                    (Builder.for "cube"
+                        >> Translate.begin
                         >> Translate.toXY 100 0
                         >> Translate.duration 200
-                        >> Translate.build
+                        >> Translate.end
                     )
                     |> decodeWillChange "cube"
                     |> Expect.equal (Just "transform")
         , test "animate: multiple transform families still collapse to 'transform'" <|
             \_ ->
                 encodeAnimate
-                    (Translate.for "cube"
+                    (Builder.for "cube"
+                        >> Translate.begin
                         >> Translate.toXY 100 0
                         >> Translate.duration 200
-                        >> Translate.build
-                        >> Rotate.for "cube"
+                        >> Translate.end
+                        >> Rotate.begin
                         >> Rotate.toZ 45
                         >> Rotate.duration 200
-                        >> Rotate.build
-                        >> Scale.for "cube"
+                        >> Rotate.end
+                        >> Scale.begin
                         >> Scale.to 1.5
                         >> Scale.duration 200
-                        >> Scale.build
-                        >> Skew.for "cube"
+                        >> Scale.end
+                        >> Skew.begin
                         >> Skew.toXY 10 5
                         >> Skew.duration 200
-                        >> Skew.build
+                        >> Skew.end
                     )
                     |> decodeWillChange "cube"
                     |> Expect.equal (Just "transform")
         , test "animate: opacity + translate produces 'opacity, transform'" <|
             \_ ->
                 encodeAnimate
-                    (Opacity.for "cube"
+                    (Builder.for "cube"
+                        >> Opacity.begin
                         >> Opacity.to 1
                         >> Opacity.duration 200
-                        >> Opacity.build
-                        >> Translate.for "cube"
+                        >> Opacity.end
+                        >> Translate.begin
                         >> Translate.toXY 100 0
                         >> Translate.duration 200
-                        >> Translate.build
+                        >> Translate.end
                     )
                     |> decodeWillChange "cube"
                     |> Expect.equal (Just "opacity, transform")
         , test "animate: size emits 'width, height'" <|
             \_ ->
                 encodeAnimate
-                    (Size.for "cube"
+                    (Builder.for "cube"
+                        >> Size.begin
                         >> Size.toHW 200 150
                         >> Size.duration 200
-                        >> Size.build
+                        >> Size.end
                     )
                     |> decodeWillChange "cube"
                     |> Expect.equal (Just "width, height")
         , test "animate: custom property uses its CSS name" <|
             \_ ->
                 encodeAnimate
-                    (Custom.for "cube" (Custom.BorderRadius Unit.Px)
+                    (Builder.for "cube"
+                        >> Custom.begin (Custom.BorderRadius Unit.Px)
                         >> Custom.to 10
                         >> Custom.duration 200
-                        >> Custom.build
+                        >> Custom.end
                     )
                     |> decodeWillChange "cube"
                     |> Expect.equal (Just "border-radius")
@@ -108,21 +113,23 @@ suite =
         , test "scrollDriven: emits the same composite value" <|
             \_ ->
                 encodeScroll
-                    (Translate.for "cube"
+                    (Builder.for "cube"
+                        >> Translate.begin
                         >> Translate.toXY 0 200
-                        >> Translate.build
-                        >> Opacity.for "cube"
+                        >> Translate.end
+                        >> Opacity.begin
                         >> Opacity.to 1
-                        >> Opacity.build
+                        >> Opacity.end
                     )
                     |> decodeWillChange "cube"
                     |> Expect.equal (Just "transform, opacity")
         , test "viewDriven: emits the same composite value" <|
             \_ ->
                 encodeView
-                    (Scale.for "cube"
+                    (Builder.for "cube"
+                        >> Scale.begin
                         >> Scale.to 2
-                        >> Scale.build
+                        >> Scale.end
                     )
                     |> decodeWillChange "cube"
                     |> Expect.equal (Just "transform")

@@ -39,15 +39,15 @@ These properties trigger browser repaints and/or reflows. Use them when needed, 
 
     borderRadiusAnimation : AnimBuilder eng -> AnimBuilder eng
     borderRadiusAnimation =
-        CustomProperty.for "box" (BorderRadius "px")
+        CustomProperty.begin (BorderRadius "px")
             >> CustomProperty.to 24
-            >> CustomProperty.build
+            >> CustomProperty.end
 
     borderColorAnimation : AnimBuilder eng -> AnimBuilder eng
     borderColorAnimation =
-        CustomColor.for "box" BorderColor
+        CustomColor.begin BorderColor
             >> CustomColor.to (Color.rgb 255 0 0)
-            >> CustomColor.build
+            >> CustomColor.end
     ```
 
 ## Property Functions

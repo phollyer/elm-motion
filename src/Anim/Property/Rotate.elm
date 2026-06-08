@@ -1,7 +1,7 @@
 module Anim.Property.Rotate exposing
     ( Builder, AnimGroupName
     , initXYZ, initXY, initXZ, initX, initYZ, initY, initZ
-    , for, build
+    , begin, end
     , fromXYZ, fromXY, fromXZ, fromX, fromYZ, fromY, fromZ
     , toXYZ, toXY, toXZ, toX, toYZ, toY, toZ
     , byXYZ, byXY, byXZ, byX, byYZ, byY, byZ
@@ -32,7 +32,7 @@ When no start value is configured for any axis, the default will be used for tha
 
 # Build
 
-@docs for, build
+@docs begin, end
 
 
 # Configure
@@ -106,9 +106,9 @@ until you [Unclamp](#unclamp) it:
                 let
                     ( animState, cmd ) =
                         WAAPI.animate model.animState <|
-                            Rotate.for animGroupName
+                            Rotate.begin
                                 >> Rotate.clampZ -90 90
-                                >> Rotate.build
+                                >> Rotate.end
                 in
                 ( { model | animState = animState }
                 , cmd
@@ -133,7 +133,7 @@ Snap to a specific rotation, cancelling any in-flight animation on this property
 
 -}
 
-import Anim.Internal.Builder exposing (AnimBuilder)
+import Anim.Internal.Builder as IB exposing (AnimBuilder)
 import Anim.Internal.Builder.Rotate as RB
 import Motion.Easing exposing (Easing)
 import Motion.Spring exposing (Spring)
@@ -178,10 +178,10 @@ type alias Builder eng =
 initXYZ : AnimGroupName -> Float -> Float -> Float -> AnimBuilder eng -> AnimBuilder eng
 initXYZ animationKey x y z animBuilder =
     animBuilder
-        |> for animationKey
+        |> RB.for animationKey
         |> fromXYZ x y z
         |> toXYZ x y z
-        |> build
+        |> RB.build
 
 
 {-| Set the initial X and Y rotation.
@@ -199,10 +199,10 @@ initXYZ animationKey x y z animBuilder =
 initXY : AnimGroupName -> Float -> Float -> AnimBuilder eng -> AnimBuilder eng
 initXY animationKey x y animBuilder =
     animBuilder
-        |> for animationKey
+        |> RB.for animationKey
         |> fromXY x y
         |> toXY x y
-        |> build
+        |> RB.build
 
 
 {-| Set the initial X and Z rotation.
@@ -220,10 +220,10 @@ initXY animationKey x y animBuilder =
 initXZ : AnimGroupName -> Float -> Float -> AnimBuilder eng -> AnimBuilder eng
 initXZ animationKey x z animBuilder =
     animBuilder
-        |> for animationKey
+        |> RB.for animationKey
         |> fromXZ x z
         |> toXZ x z
-        |> build
+        |> RB.build
 
 
 {-| Set the initial X rotation.
@@ -241,10 +241,10 @@ initXZ animationKey x z animBuilder =
 initX : AnimGroupName -> Float -> AnimBuilder eng -> AnimBuilder eng
 initX animationKey x animBuilder =
     animBuilder
-        |> for animationKey
+        |> RB.for animationKey
         |> fromX x
         |> toX x
-        |> build
+        |> RB.build
 
 
 {-| Set the initial Y and Z rotation.
@@ -262,10 +262,10 @@ initX animationKey x animBuilder =
 initYZ : AnimGroupName -> Float -> Float -> AnimBuilder eng -> AnimBuilder eng
 initYZ animationKey y z animBuilder =
     animBuilder
-        |> for animationKey
+        |> RB.for animationKey
         |> fromYZ y z
         |> toYZ y z
-        |> build
+        |> RB.build
 
 
 {-| Set the initial Y rotation.
@@ -283,10 +283,10 @@ initYZ animationKey y z animBuilder =
 initY : AnimGroupName -> Float -> AnimBuilder eng -> AnimBuilder eng
 initY animationKey y animBuilder =
     animBuilder
-        |> for animationKey
+        |> RB.for animationKey
         |> fromY y
         |> toY y
-        |> build
+        |> RB.build
 
 
 {-| Set the initial Z rotation.
@@ -304,10 +304,10 @@ initY animationKey y animBuilder =
 initZ : AnimGroupName -> Float -> AnimBuilder eng -> AnimBuilder eng
 initZ animationKey z animBuilder =
     animBuilder
-        |> for animationKey
+        |> RB.for animationKey
         |> fromZ z
         |> toZ z
-        |> build
+        |> RB.build
 
 
 
@@ -322,13 +322,18 @@ Use this to start configuring a rotate animation.
 
     myAnimation : AnimBuilder eng -> AnimBuilder eng
     myAnimation =
-        Rotate.for "animGroupName"
+        Rotate.begin
             >> ... -- Configure and build the animation
 
 -}
-for : AnimGroupName -> AnimBuilder eng -> Builder eng
-for =
-    RB.for
+begin : AnimBuilder eng -> Builder eng
+begin animBuilder =
+    case IB.getCurrentAnimGroupName animBuilder of
+        Just animGroupName ->
+            RB.for animGroupName animBuilder
+
+        Nothing ->
+            RB.for "" animBuilder
 
 
 {-| Complete the [Builder](#Builder) animation configuration and return an `AnimBuilder`
@@ -336,14 +341,14 @@ so you can continue configuring other property animations or execute the animati
 
     myAnimation : AnimBuilder eng -> AnimBuilder eng
     myAnimation =
-        Rotate.for "animGroupName"
+        Rotate.begin
             >> ... -- configure the animation with from, to, duration, easing, etc.
-            >> Rotate.build
+            >> Rotate.end
             >> ... -- continue with animation
 
 -}
-build : Builder eng -> AnimBuilder eng
-build =
+end : Builder eng -> AnimBuilder eng
+end =
     RB.build
 
 
@@ -357,7 +362,7 @@ build =
 
     myAnimation : AnimBuilder eng -> AnimBuilder eng
     myAnimation =
-        Rotate.for "animGroupName"
+        Rotate.begin
             >> Rotate.fromXYZ 45 90 180
             >> ... -- continue with animation
 
@@ -419,7 +424,7 @@ fromZ =
 
     myAnimation : AnimBuilder eng -> AnimBuilder eng
     myAnimation =
-        Rotate.for "animGroupName"
+        Rotate.begin
             >> Rotate.toXYZ 45 90 180
             >> ... -- continue with animation
 

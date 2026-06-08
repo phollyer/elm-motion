@@ -278,11 +278,12 @@ bottomFace =
 
 rotateCube : Float -> WAAPI.EngineBuilder -> WAAPI.EngineBuilder
 rotateCube to =
-    Rotate.for cubeGroupName
+    WAAPI.for cubeGroupName
+        >> Rotate.begin
         >> Rotate.toXYZ to to to
         >> Rotate.easing BackInOut
         >> Rotate.duration 8000
-        >> Rotate.build
+        >> Rotate.end
 
 
 rotateCubeClockwise : WAAPI.EngineBuilder -> WAAPI.EngineBuilder
@@ -328,9 +329,10 @@ sharedTiming =
 moveFace : FaceConfig -> (Translate.Builder ForWAAPI -> Translate.Builder ForWAAPI) -> WAAPI.EngineBuilder -> WAAPI.EngineBuilder
 moveFace config moveToBuilder =
     sharedTiming
-        >> Translate.for config.groupName
+        >> WAAPI.for config.groupName
+        >> Translate.begin
         >> moveToBuilder
-        >> Translate.build
+        >> Translate.end
 
 
 
@@ -435,12 +437,14 @@ textMoveAmount =
 moveText : TextConfig -> Float -> Float -> WAAPI.EngineBuilder -> WAAPI.EngineBuilder
 moveText config toZ toRotate =
     sharedTiming
-        >> Translate.for config.groupName
+        >> WAAPI.for config.groupName
+        >> Translate.begin
         >> Translate.toZ toZ
-        >> Translate.build
-        >> Rotate.for config.groupName
+        >> Translate.end
+        >> WAAPI.for config.groupName
+        >> Rotate.begin
         >> Rotate.toZ toRotate
-        >> Rotate.build
+        >> Rotate.end
 
 
 moveTextsOut : WAAPI.EngineBuilder -> WAAPI.EngineBuilder

@@ -46,11 +46,12 @@ pingPong : Sub.EngineBuilder -> Sub.EngineBuilder
 pingPong =
     Sub.loopForever
         >> Sub.alternate
-        >> Translate.for groupName
+        >> Sub.for groupName
+        >> Translate.begin
         >> Translate.toX 100
         >> Translate.duration 1000
         >> Translate.easing Linear
-        >> Translate.build
+        >> Translate.end
 
 
 step : Float -> Sub.AnimState -> Sub.AnimState

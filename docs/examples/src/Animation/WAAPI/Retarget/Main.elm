@@ -76,18 +76,20 @@ init =
 
 animateDiagonal : WAAPI.EngineBuilder -> WAAPI.EngineBuilder
 animateDiagonal =
-    Translate.for animGroup
+    WAAPI.for animGroup
+        >> Translate.begin
         >> Translate.toXY endXY endXY
         >> Translate.duration 5000
         >> Translate.easing Linear
-        >> Translate.build
+        >> Translate.end
 
 
 retargetYToTop : WAAPI.EngineBuilder -> WAAPI.EngineBuilder
 retargetYToTop =
-    Translate.for animGroup
+    WAAPI.for animGroup
+        >> Translate.begin
         >> Translate.toY 0
-        >> Translate.build
+        >> Translate.end
 
 
 

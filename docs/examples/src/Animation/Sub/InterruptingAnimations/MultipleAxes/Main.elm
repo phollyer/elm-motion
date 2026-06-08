@@ -131,11 +131,12 @@ moveBoxY y =
 
 moveBox : (Translate.Builder ForSub -> Translate.Builder ForSub) -> Sub.EngineBuilder -> Sub.EngineBuilder
 moveBox moveFunc =
-    Translate.for animGroupName
+    Sub.for animGroupName
+        >> Translate.begin
         >> moveFunc
         >> Translate.speed targetSpeed
         >> Translate.easing QuintOut
-        >> Translate.build
+        >> Translate.end
 
 
 

@@ -112,56 +112,62 @@ unhoverEasing =
 
 scaleUp : Keyframe.EngineBuilder -> Keyframe.EngineBuilder
 scaleUp =
-    Scale.for scaleButton
+    Keyframe.for scaleButton
+        >> Scale.begin
         >> Scale.to 1.1
         >> Scale.duration hoverDuration
         >> Scale.easing hoverEasing
-        >> Scale.build
+        >> Scale.end
 
 
 scaleDown : Keyframe.EngineBuilder -> Keyframe.EngineBuilder
 scaleDown =
-    Scale.for scaleButton
+    Keyframe.for scaleButton
+        >> Scale.begin
         >> Scale.to 1
         >> Scale.duration hoverDuration
         >> Scale.easing unhoverEasing
-        >> Scale.build
+        >> Scale.end
 
 
 growSize : Keyframe.EngineBuilder -> Keyframe.EngineBuilder
 growSize =
-    Size.for sizeButton
+    Keyframe.for sizeButton
+        >> Size.begin
         >> Size.toHW hoverHeight hoverWidth
         >> Size.duration hoverDuration
         >> Size.easing hoverEasing
-        >> Size.build
+        >> Size.end
 
 
 shrinkSize : Keyframe.EngineBuilder -> Keyframe.EngineBuilder
 shrinkSize =
-    Size.for sizeButton
+    Keyframe.for sizeButton
+        >> Size.begin
         >> Size.toHW baseHeight baseWidth
         >> Size.duration hoverDuration
         >> Size.easing unhoverEasing
-        >> Size.build
+        >> Size.end
 
 
 liftUp : Keyframe.EngineBuilder -> Keyframe.EngineBuilder
 liftUp =
-    Translate.for zButton
+    Keyframe.for zButton
+        >> Translate.begin
         >> Translate.toZ 60
         >> Translate.duration hoverDuration
         >> Translate.easing hoverEasing
-        >> Translate.build
+        >> Translate.end
 
 
 setDown : Keyframe.EngineBuilder -> Keyframe.EngineBuilder
 setDown =
-    Translate.for zButton
+    Keyframe.for zButton
+        >> Translate.begin
         >> Translate.toZ 0
         >> Translate.duration hoverDuration
         >> Translate.easing unhoverEasing
-        >> Translate.build
+        >> Translate.end
 
 
 

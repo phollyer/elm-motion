@@ -70,12 +70,14 @@ pulse =
         >> Keyframe.alternate
         >> Keyframe.duration 1000
         >> Keyframe.easing EaseInOut
-        >> Scale.for groupName
+        >> Keyframe.for groupName
+        >> Scale.begin
         >> Scale.to 0.4
-        >> Scale.build
-        >> Opacity.for groupName
+        >> Scale.end
+        >> Keyframe.for groupName
+        >> Opacity.begin
         >> Opacity.to 0.3
-        >> Opacity.build
+        >> Opacity.end
 
 
 

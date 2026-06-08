@@ -26,10 +26,11 @@ Play the animation `n` times in the same direction. The element returns to its `
 
     ```elm
     Keyframe.iterations 3
-        >> Opacity.for "blink"
+        >> Keyframe.for "blink"
+        >> Opacity.begin
         >> Opacity.to 0
         >> Opacity.duration 250
-        >> Opacity.build
+        >> Opacity.end
     ```
 
 After three plays the animation ends and the element rests at the final value.
@@ -42,10 +43,11 @@ Repeat the animation indefinitely.
 
     ```elm
     Sub.loopForever
-        >> Rotate.for "spinner"
+        >> Sub.for "spinner"
+        >> Rotate.begin
         >> Rotate.toZ 360
         >> Rotate.duration 1000
-        >> Rotate.build
+        >> Rotate.end
     ```
 
 ## Alternate
@@ -62,11 +64,12 @@ Reverse direction on every iteration boundary. The classic ping-pong:
     ```elm
     WAAPI.loopForever
         >> WAAPI.alternate
-        >> Translate.for "bounce"
+        >> WAAPI.for "bounce"
+        >> Translate.begin
         >> Translate.toY -40
         >> Translate.duration 500
         >> Translate.easing EaseInOut
-        >> Translate.build
+        >> Translate.end
     ```
 
 !!! info "Alternate implies at least two iterations"

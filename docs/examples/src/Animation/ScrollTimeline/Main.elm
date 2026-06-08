@@ -48,14 +48,15 @@ progressBarAnim =
 
 scrollProgress : ScrollTimeline.EngineBuilder -> ScrollTimeline.EngineBuilder
 scrollProgress =
-    Scale.for progressBarAnim
+    ScrollTimeline.for progressBarAnim
+        >> Scale.begin
         >> Scale.fromX 0
         >> Scale.toX 1
-        >> Scale.build
-        >> CustomColor.for progressBarAnim BackgroundColor
+        >> Scale.end
+        >> CustomColor.begin BackgroundColor
         >> CustomColor.from Color.red
         >> CustomColor.to Color.green
-        >> CustomColor.build
+        >> CustomColor.end
 
 
 

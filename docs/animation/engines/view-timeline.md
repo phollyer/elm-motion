@@ -33,10 +33,11 @@ Set `rangeStart` and `rangeEnd` to control when the animation begins and ends.
     reveal =
         ViewTimeline.rangeStart (ViewTimeline.Entry 0 ViewTimeline.Perc)
             >> ViewTimeline.rangeEnd (ViewTimeline.Entry 100 ViewTimeline.Perc)
-            >> Opacity.for "section"
+            >> ViewTimeline.for "section"
+            >> Opacity.begin
             >> Opacity.from 0
             >> Opacity.to 1
-            >> Opacity.build
+            >> Opacity.end
     ```
 
 ### 2. Render
@@ -232,10 +233,11 @@ Vertical tracking is the default. Use `horizontal` in the animation pipeline whe
     ```elm
     ViewTimeline.animate motionCmd <|
         ViewTimeline.horizontal
-            >> Opacity.for "slide"
+            >> ViewTimeline.for "slide"
+            >> Opacity.begin
             >> Opacity.from 0
             >> Opacity.to 1
-            >> Opacity.build
+            >> Opacity.end
     ```
 
 ### Range
@@ -280,9 +282,10 @@ Set the default easing for all properties that don't override it:
     ```elm
     fadeIn =
         ViewTimeline.easing CubicInOut
-            >> Opacity.for "card"
+            >> ViewTimeline.for "card"
+            >> Opacity.begin
             >> Opacity.to 1
-            >> Opacity.build
+            >> Opacity.end
     ```
 
 📖 See [Easing](../concepts/easing.md) for available easing functions.
@@ -296,9 +299,10 @@ Set the default spring for all properties that don't override it: The spring's m
     ```elm
     bouncyReveal =
         ViewTimeline.spring Spring.wobbly
-            >> Opacity.for "card"
+            >> ViewTimeline.for "card"
+            >> Opacity.begin
             >> Opacity.to 1
-            >> Opacity.build
+            >> Opacity.end
     ```
 
 📖 See [Spring](../concepts/spring.md) for the full preset list and tuning guidance.
@@ -320,7 +324,8 @@ Use `transformOrder` to set the order in which transform properties are applied.
 
     ViewTimeline.animate motionCmd <|
         ViewTimeline.transformOrder [ Scale, Rotate, Translate ]
-            >> Translate.for "slide"
+            >> ViewTimeline.for "slide"
+            >> Translate.begin
             >> ...
     ```
 

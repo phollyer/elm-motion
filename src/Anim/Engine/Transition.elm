@@ -3,6 +3,7 @@ module Anim.Engine.Transition exposing
     , AnimBuilder
     , EngineBuilder
     , init
+    , for
     , animate, retarget
     , CurrentTargetId, TargetId, AnimEvent(..)
     , AnimMsg, update
@@ -58,6 +59,11 @@ for details.
 @docs init
 
 
+# Target
+
+@docs for
+
+
 # Trigger
 
 📖 See [Triggering Animations](https://phollyer.github.io/elm-motion/animation/workflow/trigger/) for details.
@@ -106,6 +112,8 @@ To render a transition, add `attributes` to the element you want to animate.
 
 
 # Easing
+
+📖 See [Easing](https://phollyer.github.io/elm-motion/animation/concepts/easing/) for details.
 
 @docs easing
 
@@ -241,7 +249,7 @@ type alias EngineBuilder =
 -- ============================================================
 
 
-{-| Initialize animation state with a list of property initializers.
+{-| Initialize the engine state with a list of property initializers.
 
     import Anim.Engine.Transition as Transition
     import Anim.Property.Opacity as Opacity
@@ -255,6 +263,19 @@ type alias EngineBuilder =
 init : List (EngineBuilder -> EngineBuilder) -> AnimState
 init =
     Internal.init
+
+
+{-| Select the animation group that subsequent property builders will target.
+
+    Transition.for "animGroupName"
+        >> Opacity.begin
+        >> Opacity.to 0.2
+        >> Opacity.end
+
+-}
+for : AnimGroupName -> EngineBuilder -> EngineBuilder
+for =
+    Builder.for
 
 
 
@@ -292,9 +313,10 @@ the group will snap to their targeted end values if mid-flight.
     { model
         | animState =
             Transition.retarget model.animState <|
-                Translate.for "animGroupName"
+                Transition.for "animGroupName"
+                    >> Translate.begin
                     >> Translate.toY 0
-                    >> Translate.build
+                    >> Translate.end
     }
 
 -}
@@ -723,9 +745,10 @@ what values to transition from.
 
     Transition.animate model.animState <|
         Transition.discreteEntry "display" "block"
-            >> Opacity.for "box"
+            >> Transition.for "box"
+            >> Opacity.begin
             >> Opacity.to 1
-            >> Opacity.build
+            >> Opacity.end
 
 -}
 discreteEntry : String -> String -> EngineBuilder -> EngineBuilder
@@ -748,9 +771,10 @@ Use when an element is disappearing (e.g., going from
 
     Transition.animate model.animState <|
         Transition.discreteExit "display" "block" "none"
-            >> Opacity.for "box"
+            >> Transition.for "box"
+            >> Opacity.begin
             >> Opacity.to 0
-            >> Opacity.build
+            >> Opacity.end
 
 -}
 discreteExit : String -> String -> String -> EngineBuilder -> EngineBuilder

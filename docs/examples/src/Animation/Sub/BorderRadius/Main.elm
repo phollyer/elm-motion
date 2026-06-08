@@ -60,18 +60,18 @@ standardTiming =
 
 roundCorners : Sub.EngineBuilder -> Sub.EngineBuilder
 roundCorners =
-    Property.for animGroup (Property.BorderRadius Px)
+    Property.begin (Property.BorderRadius Px)
         >> Property.to 48
         >> standardTiming
-        >> Property.build
+        >> Property.end
 
 
 squareCorners : Sub.EngineBuilder -> Sub.EngineBuilder
 squareCorners =
-    Property.for animGroup (Property.BorderRadius Px)
+    Property.begin (Property.BorderRadius Px)
         >> Property.to 0
         >> standardTiming
-        >> Property.build
+        >> Property.end
 
 
 
@@ -97,12 +97,22 @@ update msg model =
             )
 
         TriggerRound ->
-            ( { model | animState = Sub.animate model.animState roundCorners }
+            ( { model
+                | animState =
+                    Sub.animate model.animState <|
+                        Sub.for animGroup
+                            >> roundCorners
+              }
             , Cmd.none
             )
 
         TriggerSquare ->
-            ( { model | animState = Sub.animate model.animState squareCorners }
+            ( { model
+                | animState =
+                    Sub.animate model.animState <|
+                        Sub.for animGroup
+                            >> squareCorners
+              }
             , Cmd.none
             )
 

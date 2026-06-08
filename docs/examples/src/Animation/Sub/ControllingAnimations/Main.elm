@@ -68,12 +68,13 @@ init =
 
 dropBall : Sub.EngineBuilder -> Sub.EngineBuilder
 dropBall =
-    Translate.for animGroup
+    Sub.for animGroup
+        >> Translate.begin
         >> Translate.fromY 0
         >> Translate.toY (100 - ballSize)
         >> Translate.speed 75
         >> Translate.easing BounceOut
-        >> Translate.build
+        >> Translate.end
 
 
 

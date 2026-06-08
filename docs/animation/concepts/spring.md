@@ -92,10 +92,10 @@ A spring can be set at either level, with the same precedence rules as easing:
 
     bouncyReveal : AnimBuilder eng -> AnimBuilder eng
     bouncyReveal =
-        Translate.for "panel"
+        Translate.begin
             >> Translate.toX 0
             >> Translate.spring Spring.wobbly
-            >> Translate.build
+            >> Translate.end
     ```
 
 ## Next Steps

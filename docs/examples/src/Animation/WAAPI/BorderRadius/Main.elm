@@ -71,18 +71,18 @@ standardTiming =
 
 roundCorners : WAAPI.EngineBuilder -> WAAPI.EngineBuilder
 roundCorners =
-    Property.for animGroup (Property.BorderRadius Px)
+    Property.begin (Property.BorderRadius Px)
         >> Property.to 48
         >> standardTiming
-        >> Property.build
+        >> Property.end
 
 
 squareCorners : WAAPI.EngineBuilder -> WAAPI.EngineBuilder
 squareCorners =
-    Property.for animGroup (Property.BorderRadius Px)
+    Property.begin (Property.BorderRadius Px)
         >> Property.to 0
         >> standardTiming
-        >> Property.build
+        >> Property.end
 
 
 
@@ -110,7 +110,9 @@ update msg model =
         TriggerRound ->
             let
                 ( newAnimState, cmd ) =
-                    WAAPI.animate model.animState roundCorners
+                    WAAPI.animate model.animState <|
+                        WAAPI.for animGroup
+                            >> roundCorners
             in
             ( { model | animState = newAnimState }
             , cmd
@@ -119,7 +121,9 @@ update msg model =
         TriggerSquare ->
             let
                 ( newAnimState, cmd ) =
-                    WAAPI.animate model.animState squareCorners
+                    WAAPI.animate model.animState <|
+                        WAAPI.for animGroup
+                            >> squareCorners
             in
             ( { model | animState = newAnimState }
             , cmd

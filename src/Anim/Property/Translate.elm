@@ -1,7 +1,7 @@
 module Anim.Property.Translate exposing
     ( Builder, AnimGroupName
     , initXYZ, initXY, initXZ, initX, initYZ, initY, initZ
-    , for, build
+    , begin, end
     , fromXYZ, fromXY, fromXZ, fromX, fromYZ, fromY, fromZ
     , toXYZ, toXY, toXZ, toX, toYZ, toY, toZ
     , byXYZ, byXY, byXZ, byX, byYZ, byY, byZ
@@ -34,7 +34,7 @@ When no start value is configured for any axis, the default will be used for tha
 
 # Build
 
-@docs for, build
+@docs begin, end
 
 
 # Configure
@@ -144,10 +144,10 @@ until you [Unclamp](#unclamp) it:
 
                     ( animState, cmd ) =
                         WAAPI.retarget model.animState <|
-                            Translate.for animGroupName
+                            Translate.begin
                                 >> Translate.clampX 0 (w - boxWidth)
                                 >> Translate.clampY 0 (h - boxWidth)
-                                >> Translate.build
+                                >> Translate.end
                 in
                 ( { model | animState = animState }
                 , cmd
@@ -309,13 +309,18 @@ Use this to start configuring a translate animation.
 
     myAnimation : AnimBuilder eng -> AnimBuilder eng
     myAnimation =
-        Translate.for "animGroupName"
+        Translate.begin
             >> ... -- Configure and build the animation
 
 -}
-for : AnimGroupName -> AnimBuilder eng -> Builder eng
-for =
-    TB.for
+begin : AnimBuilder eng -> Builder eng
+begin animBuilder =
+    case SB.getCurrentAnimGroupName animBuilder of
+        Just animGroupName ->
+            TB.for animGroupName animBuilder
+
+        Nothing ->
+            TB.for "" animBuilder
 
 
 {-| Complete the [Builder](#Builder) animation configuration and return an `AnimBuilder`
@@ -323,14 +328,14 @@ so you can continue configuring other property animations or execute the animati
 
     myAnimation : AnimBuilder eng -> AnimBuilder eng
     myAnimation =
-        Translate.for "animGroupName"
+        Translate.begin
             >> ... -- configure the animation with from, to, duration, easing, etc.
-            >> Translate.build
+            >> Translate.end
             >> ... -- continue with animation
 
 -}
-build : Builder eng -> AnimBuilder eng
-build =
+end : Builder eng -> AnimBuilder eng
+end =
     TB.build
 
 
@@ -344,7 +349,7 @@ build =
 
     myAnimation : AnimBuilder eng -> AnimBuilder eng
     myAnimation =
-        Translate.for "animGroupName"
+        Translate.begin
             >> Translate.fromXYZ 100 20 50
             >> ... -- continue with animation
 
@@ -516,7 +521,7 @@ setZ =
 
     myAnimation : AnimBuilder { eng | withLiveDelta : () } -> AnimBuilder { eng | withLiveDelta : () }
     myAnimation =
-        Translate.for "animGroupName"
+        Translate.begin
             >> Translate.byXYZ 50 -25 10
             >> ... -- continue with animation
 

@@ -15,10 +15,10 @@ Skew elements along the X and Y axes.
 
     tilt : AnimBuilder eng -> AnimBuilder eng
     tilt =
-        Skew.for "animGroup"
+        Skew.begin
             >> Skew.toXY 12 0
             >> Skew.duration 400
-            >> Skew.build
+            >> Skew.end
     ```
 
 See the [Properties Overview](overview.md) page for the shared usage patterns.

@@ -74,18 +74,20 @@ standardTiming =
 
 toRed : WAAPI.EngineBuilder -> WAAPI.EngineBuilder
 toRed =
-    CustomColor.for animGroup CustomColor.BorderColor
+    WAAPI.for animGroup
+        >> CustomColor.begin CustomColor.BorderColor
         >> CustomColor.to (Color.rgb 239 68 68)
         >> standardTiming
-        >> CustomColor.build
+        >> CustomColor.end
 
 
 toBlue : WAAPI.EngineBuilder -> WAAPI.EngineBuilder
 toBlue =
-    CustomColor.for animGroup CustomColor.BorderColor
+    WAAPI.for animGroup
+        >> CustomColor.begin CustomColor.BorderColor
         >> CustomColor.to (Color.rgb 59 130 246)
         >> standardTiming
-        >> CustomColor.build
+        >> CustomColor.end
 
 
 

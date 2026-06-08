@@ -62,10 +62,11 @@ groupName =
 
 fadeIn : Sub.EngineBuilder -> Sub.EngineBuilder
 fadeIn =
-    Opacity.for groupName
+    Sub.for groupName
+        >> Opacity.begin
         >> Opacity.to 1
         >> Opacity.duration 5000
-        >> Opacity.build
+        >> Opacity.end
 
 
 

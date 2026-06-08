@@ -15,10 +15,10 @@ Rotate elements around the X, Y, and Z axes.
 
     spin : AnimBuilder eng -> AnimBuilder eng
     spin =
-        Rotate.for "animGroup"
+        Rotate.begin
             >> Rotate.toZ 360
             >> Rotate.duration 1000
-            >> Rotate.build
+            >> Rotate.end
     ```
 
 See the [Properties Overview](overview.md) page for the shared usage patterns.

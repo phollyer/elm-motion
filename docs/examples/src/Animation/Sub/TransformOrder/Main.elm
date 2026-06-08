@@ -169,44 +169,36 @@ permutationColor perm =
 -- ANIMATION
 
 
-moveOut : Permutation -> AnimBuilder eng -> AnimBuilder eng
-moveOut perm =
-    let
-        key =
-            permutationKey perm
-    in
-    Translate.for key
+moveOut : AnimBuilder eng -> AnimBuilder eng
+moveOut =
+    Translate.begin
         >> Translate.toXY 24 10
-        >> Translate.build
-        >> Rotate.for key
+        >> Translate.end
+        >> Rotate.begin
         >> Rotate.toZ 45
-        >> Rotate.build
-        >> Skew.for key
+        >> Rotate.end
+        >> Skew.begin
         >> Skew.toXY 15 9
-        >> Skew.build
-        >> Scale.for key
+        >> Skew.end
+        >> Scale.begin
         >> Scale.toXY 1.5 0.8
-        >> Scale.build
+        >> Scale.end
 
 
-reset : Permutation -> AnimBuilder eng -> AnimBuilder eng
-reset perm =
-    let
-        key =
-            permutationKey perm
-    in
-    Translate.for key
+reset : AnimBuilder eng -> AnimBuilder eng
+reset =
+    Translate.begin
         >> Translate.toXY 0 0
-        >> Translate.build
-        >> Rotate.for key
+        >> Translate.end
+        >> Rotate.begin
         >> Rotate.toZ 0
-        >> Rotate.build
-        >> Skew.for key
+        >> Rotate.end
+        >> Skew.begin
         >> Skew.toXY 0 0
-        >> Skew.build
-        >> Scale.for key
+        >> Skew.end
+        >> Scale.begin
         >> Scale.toXY 1 1
-        >> Scale.build
+        >> Scale.end
 
 
 engineDefaults : Permutation -> Sub.EngineBuilder -> Sub.EngineBuilder
@@ -247,7 +239,8 @@ update msg model =
                 | animState =
                     Sub.animate model.animState <|
                         engineDefaults perm
-                            >> moveOut perm
+                            >> Sub.for (permutationKey perm)
+                            >> moveOut
               }
             , Cmd.none
             )
@@ -257,7 +250,8 @@ update msg model =
                 | animState =
                     Sub.animate model.animState <|
                         engineDefaults perm
-                            >> reset perm
+                            >> Sub.for (permutationKey perm)
+                            >> reset
               }
             , Cmd.none
             )
@@ -269,7 +263,8 @@ update msg model =
                         List.foldl
                             (\perm acc ->
                                 engineDefaults perm
-                                    >> moveOut perm
+                                    >> Sub.for (permutationKey perm)
+                                    >> moveOut
                                     >> acc
                             )
                             identity
@@ -285,7 +280,8 @@ update msg model =
                         List.foldl
                             (\perm acc ->
                                 engineDefaults perm
-                                    >> reset perm
+                                    >> Sub.for (permutationKey perm)
+                                    >> reset
                                     >> acc
                             )
                             identity

@@ -51,11 +51,12 @@ suite =
                     ]
                     |> (\state ->
                             Sub.animate state
-                                (Translate.for "el"
+                                (Sub.for "el"
+                                    >> Translate.begin
                                     >> Translate.toXY 100 50
                                     >> Translate.duration 1000
                                     >> Translate.easing Linear
-                                    >> Translate.build
+                                    >> Translate.end
                                 )
                        )
                     |> step 500
@@ -86,11 +87,12 @@ suite =
                     ]
                     |> (\state ->
                             Sub.animate state
-                                (PerspectiveOrigin.for "el"
+                                (Sub.for "el"
+                                    >> PerspectiveOrigin.begin
                                     >> PerspectiveOrigin.toXY 90 10
                                     >> PerspectiveOrigin.duration 1000
                                     >> PerspectiveOrigin.easing Linear
-                                    >> PerspectiveOrigin.build
+                                    >> PerspectiveOrigin.end
                                 )
                        )
                     |> step 500

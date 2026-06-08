@@ -1,7 +1,7 @@
 module Anim.Property.CustomColor exposing
     ( Builder, AnimGroupName, ColorProperty(..)
     , init
-    , for, build
+    , begin, end
     , from
     , to
     , delay, duration, speed
@@ -30,7 +30,7 @@ When no start value is configured, the default will be used.
 
 # Build
 
-@docs for, build
+@docs begin, end
 
 
 # Configure
@@ -85,7 +85,7 @@ Snap to a specific color, cancelling any in-flight animation on this property.
 -}
 
 import Anim.Extra.Color exposing (Color)
-import Anim.Internal.Builder exposing (AnimBuilder)
+import Anim.Internal.Builder as IB exposing (AnimBuilder)
 import Anim.Internal.Property.CustomColor as Internal
 import Motion.Easing exposing (Easing)
 import Motion.Spring exposing (Spring)
@@ -116,9 +116,9 @@ Use the escape hatch `Custom` to animate any CSS color property not currently su
     import Anim.Extra.Color as Color
     import Anim.Property.CustomColor as CustomColor
 
-    CustomColor.for "box" (Custom "outline-color")
+    CustomColor.begin (Custom "outline-color")
         >> CustomColor.to (Color.rgb 255 0 0)
-        >> CustomColor.build
+        >> CustomColor.end
 
 -}
 type ColorProperty
@@ -196,20 +196,25 @@ The first argument is the animation group name, the second is the CSS property.
 
     myAnimation : AnimBuilder eng -> AnimBuilder eng
     myAnimation =
-        CustomColor.for "box" TextColor
+        CustomColor.begin TextColor
             >> CustomColor.to (Color.rgb 255 0 0)
-            >> CustomColor.build
+            >> CustomColor.end
 
 -}
-for : AnimGroupName -> ColorProperty -> AnimBuilder eng -> Builder eng
-for animGroupName cssProperty =
-    Internal.for animGroupName (toCssPropertyName cssProperty)
+begin : ColorProperty -> AnimBuilder eng -> Builder eng
+begin cssProperty animBuilder =
+    case IB.getCurrentAnimGroupName animBuilder of
+        Just animGroupName ->
+            Internal.for animGroupName (toCssPropertyName cssProperty) animBuilder
+
+        Nothing ->
+            Internal.for "" (toCssPropertyName cssProperty) animBuilder
 
 
 {-| Complete the animation configuration and return an `AnimBuilder`.
 -}
-build : Builder eng -> AnimBuilder eng
-build =
+end : Builder eng -> AnimBuilder eng
+end =
     Internal.build
 
 

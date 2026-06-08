@@ -1,7 +1,7 @@
 module Anim.Property.PerspectiveOrigin exposing
     ( Builder, AnimGroupName
     , initXY, initX, initY
-    , for, build
+    , begin, end
     , from, fromXY, fromX, fromY
     , to, toXY, toX, toY
     , by, byXY, byX, byY
@@ -40,7 +40,7 @@ set the `style` attribute yourself in your view.
 
 # Build
 
-@docs for, build
+@docs begin, end
 
 
 # Configure
@@ -151,10 +151,10 @@ until you [Unclamp](#unclamp) it:
 
                     ( animState, cmd ) =
                         WAAPI.retarget model.animState <|
-                            PerspectiveOrigin.for animGroupName
+                            PerspectiveOrigin.begin
                                 >> PerspectiveOrigin.clampX 0 w
                                 >> PerspectiveOrigin.clampY 0 h
-                                >> PerspectiveOrigin.build
+                                >> PerspectiveOrigin.end
                 in
                 ( { model | animState = animState }
                 , cmd
@@ -226,10 +226,10 @@ type alias Builder eng =
 initXY : AnimGroupName -> Float -> Float -> AnimBuilder eng -> AnimBuilder eng
 initXY animationKey x y animBuilder =
     animBuilder
-        |> for animationKey
+        |> PB.for animationKey
         |> fromXY x y
         |> toXY x y
-        |> build
+        |> PB.build
         |> IB.registerPerspectiveOriginInitAxes [ CssUnitStore.perspectiveOriginX, CssUnitStore.perspectiveOriginY ]
 
 
@@ -238,10 +238,10 @@ initXY animationKey x y animBuilder =
 initX : AnimGroupName -> Float -> AnimBuilder eng -> AnimBuilder eng
 initX animationKey x animBuilder =
     animBuilder
-        |> for animationKey
+        |> PB.for animationKey
         |> fromX x
         |> toX x
-        |> build
+        |> PB.build
         |> IB.registerPerspectiveOriginInitAxes [ CssUnitStore.perspectiveOriginX ]
 
 
@@ -250,10 +250,10 @@ initX animationKey x animBuilder =
 initY : AnimGroupName -> Float -> AnimBuilder eng -> AnimBuilder eng
 initY animationKey y animBuilder =
     animBuilder
-        |> for animationKey
+        |> PB.for animationKey
         |> fromY y
         |> toY y
-        |> build
+        |> PB.build
         |> IB.registerPerspectiveOriginInitAxes [ CssUnitStore.perspectiveOriginY ]
 
 
@@ -298,13 +298,18 @@ Use this to start configuring a perspective origin animation.
 
     myAnimation : AnimBuilder eng -> AnimBuilder eng
     myAnimation =
-        PerspectiveOrigin.for "animGroupName"
+        PerspectiveOrigin.begin
             >> ... -- Configure and build the animation
 
 -}
-for : AnimGroupName -> AnimBuilder eng -> Builder eng
-for =
-    PB.for
+begin : AnimBuilder eng -> Builder eng
+begin animBuilder =
+    case IB.getCurrentAnimGroupName animBuilder of
+        Just animGroupName ->
+            PB.for animGroupName animBuilder
+
+        Nothing ->
+            PB.for "" animBuilder
 
 
 {-| Complete the [Builder](#Builder) animation configuration and return an `AnimBuilder`
@@ -312,14 +317,14 @@ so you can continue configuring other property animations or execute the animati
 
     myAnimation : AnimBuilder eng -> AnimBuilder eng
     myAnimation =
-        PerspectiveOrigin.for "animGroupName"
+        PerspectiveOrigin.begin
             >> ... -- configure the animation with from, to, duration, easing, etc.
-            >> PerspectiveOrigin.build
+            >> PerspectiveOrigin.end
             >> ... -- continue with animation
 
 -}
-build : Builder eng -> AnimBuilder eng
-build =
+end : Builder eng -> AnimBuilder eng
+end =
     PB.build
 
 

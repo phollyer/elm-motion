@@ -36,10 +36,11 @@ Here's a general workflow to get up an running quickly.
 
     fadeIn : String -> WAAPI.AnimBuilder eng -> WAAPI.AnimBuilder eng
     fadeIn animGroup =
-        Opacity.for animGroup
+        WAAPI.for animGroup
+            >> Opacity.begin
             >> Opacity.to 1
             >> Opacity.duration 300
-            >> Opacity.build
+            >> Opacity.end
     ```
 
 ### 2. Initialize
@@ -325,10 +326,11 @@ Set `iterations`, `loopForever`, and `alternate` in the animation builder.
     spinForever =
         WAAPI.loopForever
             >> WAAPI.alternate
-            >> Rotate.for "icon"
+            >> WAAPI.for "icon"
+            >> Rotate.begin
             >> Rotate.toZ 360
             >> Rotate.duration 1000
-            >> Rotate.build
+            >> Rotate.end
     ```
 
 📖 See [Playback](../concepts/playback.md) for the full `looping`, `iterations`, and `alternate` API with live examples.
@@ -347,9 +349,10 @@ Set the default `duration`, `speed`, and `delay`. Inherited by every property th
     fadeIn =
         WAAPI.delay 500
             >> WAAPI.duration 800
-            >> Opacity.for "card"
+            >> WAAPI.for "card"
+            >> Opacity.begin
             >> Opacity.to 1
-            >> Opacity.build
+            >> Opacity.end
     ```
 
 📖 See [Timing](../concepts/timing.md) for more info.
@@ -365,11 +368,12 @@ Set the default easing for all properties that don't override it:
     ```elm
     fadeIn =
         WAAPI.easing CubicInOut
-            >> Opacity.for "card"
+            >> WAAPI.for "card"
+            >> Opacity.begin
             >> Opacity.to 1
             >> Opacity.duration 300
             >> Opacity.delay 50
-            >> Opacity.build
+            >> Opacity.end
     ```
 
 📖 See [Easing](../concepts/easing.md) for all available easing functions.
@@ -385,9 +389,10 @@ Set the default spring for all properties that don't override it: The motion end
     ```elm
     bouncyReveal =
         WAAPI.spring Spring.wobbly
-            >> Opacity.for "card"
+            >> WAAPI.for "card"
+            >> Opacity.begin
             >> Opacity.to 1
-            >> Opacity.build
+            >> Opacity.end
     ```
 
 📖 See [Spring](../concepts/spring.md) for the full preset list and tuning guidance.
@@ -423,7 +428,8 @@ Use `transformOrder` to set the order in which transform properties are applied 
 
     animateBox =
         WAAPI.transformOrder [ Scale, Rotate, Translate ]
-            >> Translate.for "box"
+            >> WAAPI.for "box"
+            >> Translate.begin
             >> ...
     ```
 
@@ -442,10 +448,11 @@ Freeze individual axes of transform properties so they remain fixed during an an
     slideRight : WAAPI.AnimBuilder eng -> WAAPI.AnimBuilder eng
     slideRight =
         WAAPI.freezeY [ WAAPI.translate ]
-            >> Translate.for "box"
+            >> WAAPI.for "box"
+            >> Translate.begin
             >> Translate.toX 200
             >> Translate.duration 400
-            >> Translate.build
+            >> Translate.end
     ```
 
 Call `unfreezeY` (or the matching `unfreeze*` variant) in a subsequent animation to release the frozen axis.

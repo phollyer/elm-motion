@@ -1,5 +1,6 @@
 module Anim.Engine.ViewTimeline exposing
     ( EngineBuilder, AnimGroupName
+    , for
     , animate
     , AnimEvent(..)
     , AnimMsg, update
@@ -30,6 +31,11 @@ and the
 # Types
 
 @docs EngineBuilder, AnimGroupName
+
+
+# Target
+
+@docs for
 
 
 # Trigger
@@ -94,7 +100,7 @@ and the
 @docs spring
 
 
-# Length Unit
+# Unit
 
 @docs cssUnit, cssUnitX, cssUnitY, cssUnitZ, cssUnitWidth, cssUnitHeight
 
@@ -156,15 +162,30 @@ type alias AnimGroupName =
 -- ============================================================
 
 
+{-| Select the animation group that subsequent property builders will target.
+
+    ViewTimeline.for "hero-card"
+        >> Opacity.begin
+        >> Opacity.from 0
+        >> Opacity.to 1
+        >> Opacity.end
+
+-}
+for : AnimGroupName -> EngineBuilder -> EngineBuilder
+for =
+    Builder.for
+
+
 {-| Fire-and-forget view-driven animation using the browser's `ViewTimeline`.
 
     port motionCmd : Encode.Value -> Cmd msg
 
     ViewTimeline.animate motionCmd <|
-        Opacity.for "hero-card"
+        ViewTimeline.for "hero-card"
+            >> Opacity.begin
             >> Opacity.from 0
             >> Opacity.to 1
-            >> Opacity.build
+            >> Opacity.end
 
 -}
 animate : (Encode.Value -> Cmd msg) -> (EngineBuilder -> EngineBuilder) -> Cmd msg
@@ -309,10 +330,11 @@ container scrolls horizontally.
     -- Animate an element entering from the side in a horizontal layout
     ViewTimeline.animate motionCmd <|
         ViewTimeline.horizontal
-            >> Opacity.for "slide"
+            >> ViewTimeline.for "slide"
+            >> Opacity.begin
             >> Opacity.from 0
             >> Opacity.to 1
-            >> Opacity.build
+            >> Opacity.end
 
 -}
 horizontal : EngineBuilder -> EngineBuilder
@@ -434,9 +456,15 @@ unitToString unit =
 
 {-| Set how many times an animation should repeat.
 
-    notificationAttentionLoop : AnimBuilder eng -> AnimBuilder eng
+Use a finite value here. View timelines map progress through a finite
+range, so this controls how many passes are distributed across that range.
+
+Applies to the currently selected animation group in the builder chain.
+
+    notificationAttentionLoop : ViewTimeline.EngineBuilder -> ViewTimeline.EngineBuilder
     notificationAttentionLoop =
-        iterations 3
+        ViewTimeline.for "badge"
+            >> ViewTimeline.iterations 3
             >> pulseBadge
             >> nudgeBellIcon
 
@@ -448,17 +476,20 @@ iterations =
 
 {-| Make an animation alternate direction on each iteration.
 
-    floatingCardLoop : AnimBuilder eng -> AnimBuilder eng
+Applies to the currently selected animation group in the builder chain.
+
+    floatingCardLoop : ViewTimeline.EngineBuilder -> ViewTimeline.EngineBuilder
     floatingCardLoop =
-        iterations 4
-            >> alternate
+        ViewTimeline.for "card"
+            >> ViewTimeline.iterations 4
+            >> ViewTimeline.alternate
             >> liftCard
             >> glowCardBorder
 
 `alternate` only has a visible effect when the animation runs more than once,
 so calling it when `iterations` is unset or `1` automatically bumps
-`iterations` to `2`. An explicit `iterations` count (or `loopForever`) set
-before or after `alternate` is preserved.
+`iterations` to `2`. An explicit `iterations` count set before or after
+`alternate` is preserved.
 
 -}
 alternate : EngineBuilder -> EngineBuilder
@@ -612,10 +643,11 @@ Use this when you need a different order for specific visual effects.
 
     ViewTimeline.animate motionCmd <|
         ViewTimeline.transformOrder [ Scale, Rotate, Translate ]
-            >> Translate.for "box"
+            >> ViewTimeline.for "box"
+            >> Translate.begin
             >> Translate.fromXY 0 0
             >> Translate.toXY 100 0
-            >> Translate.build
+            >> Translate.end
 
 -}
 transformOrder : List TransformProperty -> EngineBuilder -> EngineBuilder
@@ -637,10 +669,11 @@ to be set to a specific value while the animation is active.
     ViewTimeline.animate motionCmd <|
         ViewTimeline.discreteEntry "display" "block"
             >> ViewTimeline.discreteEntry "visibility" "visible"
-            >> Opacity.for "box"
+            >> ViewTimeline.for "box"
+            >> Opacity.begin
             >> Opacity.from 0
             >> Opacity.to 1
-            >> Opacity.build
+            >> Opacity.end
 
 -}
 discreteEntry : String -> String -> EngineBuilder -> EngineBuilder
@@ -657,10 +690,11 @@ discreteEntry =
     ViewTimeline.animate motionCmd <|
     ViewTimeline.discreteExit "display" "block" "none"
 
-    > > Opacity.for "box"
+    > > ViewTimeline.for "box"
+    > > Opacity.begin
     > > Opacity.from 1
     > > Opacity.to 0
-    > > Opacity.build
+    > > Opacity.end
 
 -}
 discreteExit : String -> String -> String -> EngineBuilder -> EngineBuilder
@@ -683,10 +717,11 @@ animation, mark a milestone, or update a progress badge).
 
     ViewTimeline.animate motionCmd <|
         ViewTimeline.withProgressEvents True
-            >> Opacity.for "hero-card"
+            >> ViewTimeline.for "hero-card"
+            >> Opacity.begin
             >> Opacity.from 0
             >> Opacity.to 1
-            >> Opacity.build
+            >> Opacity.end
 
 While enabled, the engine emits one `Progress animGroup t` event per animation
 frame (typically ~60/sec) for every group that is currently in range.

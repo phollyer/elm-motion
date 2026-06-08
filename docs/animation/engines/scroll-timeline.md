@@ -28,10 +28,11 @@ Here's a general workflow to get up an running quickly.
 
     scrollAnimation : ScrollTimeline.AnimBuilder eng -> ScrollTimeline.AnimBuilder eng
     scrollAnimation =
-        Opacity.for "progress"
+        ScrollTimeline.for "progress"
+            >> Opacity.begin
             >> Opacity.from 0
             >> Opacity.to 1
-            >> Opacity.build
+            >> Opacity.end
     ```
 
 ### 2. Render
@@ -227,10 +228,11 @@ Vertical scroll is the default. Use `horizontal` in the animation pipeline when 
     ```elm
     ScrollTimeline.animate motionCmd (Container "carousel") <|
         ScrollTimeline.horizontal
-            >> Opacity.for "slide"
+            >> ScrollTimeline.for "slide"
+            >> Opacity.begin
             >> Opacity.from 0
             >> Opacity.to 1
-            >> Opacity.build
+            >> Opacity.end
     ```
 
 ### Playback
@@ -248,9 +250,10 @@ Set the default easing for all properties that don't override it:
     ```elm
     fadeIn =
         ScrollTimeline.easing CubicInOut
-            >> Opacity.for "card"
+            >> ScrollTimeline.for "card"
+            >> Opacity.begin
             >> Opacity.to 1
-            >> Opacity.build
+            >> Opacity.end
     ```
 
 📖 See [Easing](../concepts/easing.md) for available easing functions.
@@ -264,9 +267,10 @@ Set the default spring for all properties that don't override it: The spring's m
     ```elm
     bouncyReveal =
         ScrollTimeline.spring Spring.wobbly
-            >> Opacity.for "card"
+            >> ScrollTimeline.for "card"
+            >> Opacity.begin
             >> Opacity.to 1
-            >> Opacity.build
+            >> Opacity.end
     ```
 
 📖 See [Spring](../concepts/spring.md) for the full preset list and tuning guidance.
@@ -288,7 +292,8 @@ Use `transformOrder` to set the order in which transform properties are applied.
 
     ScrollTimeline.animate motionCmd (Container "carousel") <|
         ScrollTimeline.transformOrder [ Scale, Rotate, Translate ]
-            >> Translate.for "slide"
+            >> ScrollTimeline.for "slide"
+            >> Translate.begin
             >> ...
     ```
 

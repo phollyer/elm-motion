@@ -415,17 +415,22 @@ describe('processAnimationData (WAAPI engine)', () => {
         expect(elementTransformOrders.get(animGroup)).toEqual(['rotate', 'translate', 'scale']);
     });
 
-    it('passes through global iteration and direction options', () => {
+    it('uses per-group iteration and direction options', () => {
         const animGroup = 'box-iters';
         const animation = createFakeAnimation({ duration: 200 });
         const element = makeElement({ animGroup, animations: [animation] });
         installDom({ element, targetId: animGroup });
 
+        const iterations = { type: 'times', count: 3 };
+        const direction = 'alternate';
+
         processAnimationData({
-            iterations: { type: 'times', count: 3 },
-            direction: 'alternate',
+            iterations,
+            direction,
             elements: {
                 [animGroup]: {
+                    iterations,
+                    direction,
                     properties: [
                         {
                             type: 'translate',
@@ -440,7 +445,7 @@ describe('processAnimationData (WAAPI engine)', () => {
 
         const [, options] = element.animate.mock.calls[0];
         expect(options.iterations).toBe(3);
-        expect(options.direction).toBe('alternate');
+        expect(options.direction).toBe(direction);
     });
 
     it('expands a group with multiple matching DOM targets into per-element animations', () => {

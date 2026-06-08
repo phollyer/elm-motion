@@ -28,11 +28,12 @@ initialState =
 
 sizeWH : Float -> Float -> Sub.EngineBuilder -> Sub.EngineBuilder
 sizeWH width height =
-    Size.for groupName
+    Sub.for groupName
+        >> Size.begin
         >> Size.toHW height width
         >> Size.duration 1000
         >> Size.easing Linear
-        >> Size.build
+        >> Size.end
 
 
 step : Float -> Sub.AnimState -> Sub.AnimState
@@ -202,16 +203,18 @@ suite =
                             ]
                             |> (\s ->
                                     Sub.animate s
-                                        (Size.for groupName
+                                        (Sub.for groupName
+                                            >> Size.begin
                                             >> Size.toHW 600 500
                                             >> Size.duration 1000
                                             >> Size.easing Linear
-                                            >> Size.build
-                                            >> Size.for secondGroup
+                                            >> Size.end
+                                            >> Sub.for secondGroup
+                                            >> Size.begin
                                             >> Size.toHW 600 500
                                             >> Size.duration 1000
                                             >> Size.easing Linear
-                                            >> Size.build
+                                            >> Size.end
                                         )
                                )
                             |> runPast 1500

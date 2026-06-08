@@ -90,11 +90,18 @@ init =
                         Nothing ->
                             Builder.getTransformOrder name builder
             in
+            let
+                playback =
+                    Builder.resolvePlayback
+                        (Builder.getIterations builder)
+                        (Builder.getAnimationDirection builder)
+                        config.playback
+            in
             Generator.init
                 (Builder.getDefaults builder)
                 resolvedOrder
-                (Builder.getIterations builder)
-                (Builder.getAnimationDirection builder)
+                playback.iterations
+                playback.animationDirection
                 discrete
                 name
                 config.properties
@@ -197,11 +204,18 @@ runPipeline finaliseBuilder (AnimState state animGroups) transform =
                         |> Maybe.map AnimGroup.getRestartCounter
                         |> Maybe.withDefault 0
             in
+            let
+                playback =
+                    Builder.resolvePlayback
+                        (Builder.getIterations builder)
+                        (Builder.getAnimationDirection builder)
+                        config.playback
+            in
             Generator.generateRestart
                 currentCounter
                 config.transformOrder
-                (Builder.getIterations builder)
-                (Builder.getAnimationDirection builder)
+                playback.iterations
+                playback.animationDirection
                 (Builder.getBaseline animGroupName builder)
                 discrete
                 animGroupName

@@ -3,6 +3,7 @@ module Anim.Engine.Sub exposing
     , AnimBuilder
     , EngineBuilder
     , init
+    , for
     , animate, retarget, onResize
     , AnimEvent(..)
     , withProgressEvents
@@ -67,6 +68,11 @@ for details.
 📖 See [Initialize](https://phollyer.github.io/elm-motion/animation/workflow/init/) for details.
 
 @docs init
+
+
+# Target
+
+@docs for
 
 
 # Trigger
@@ -135,7 +141,7 @@ To render an animation, add `attributes` to the element you want to animate.
 @docs spring
 
 
-# Units
+# Unit
 
 @docs cssUnit, cssUnitX, cssUnitY, cssUnitZ, cssUnitWidth, cssUnitHeight
 
@@ -293,7 +299,7 @@ type alias EngineBuilder =
 -- ============================================================
 
 
-{-| Initialize animation state with a list of property initializers.
+{-| Initialize the engine state with a list of property initializers.
 
     import Anim.Engine.Sub as Sub
     import Anim.Property.Opacity as Opacity
@@ -307,6 +313,19 @@ type alias EngineBuilder =
 init : List (EngineBuilder -> EngineBuilder) -> AnimState
 init =
     Internal.init
+
+
+{-| Select the animation group that subsequent property builders will target.
+
+    Sub.for "animGroupName"
+        >> Opacity.begin
+        >> Opacity.to 0.2
+        >> Opacity.end
+
+-}
+for : AnimGroupName -> EngineBuilder -> EngineBuilder
+for =
+    Builder.for
 
 
 
@@ -344,9 +363,10 @@ don't mention will be left untouched - if mid-flight, they will continue.
     { model
         | animState =
             Sub.retarget model.animState <|
-                Translate.for "animGroupName"
+                Sub.for "animGroupName"
+                    >> Translate.begin
                     >> Translate.toY 0
-                    >> Translate.build
+                    >> Translate.end
     }
 
 -}
@@ -596,9 +616,12 @@ attributes =
 
 {-| Set how many times an animation should repeat.
 
-    notificationAttentionLoop : AnimBuilder eng -> AnimBuilder eng
+Applies to the currently selected animation group in the builder chain.
+
+    notificationAttentionLoop : Sub.EngineBuilder -> Sub.EngineBuilder
     notificationAttentionLoop =
-        iterations 3
+        Sub.for "badge"
+            >> Sub.iterations 3
             >> pulseBadge
             >> nudgeBellIcon
 
@@ -610,18 +633,20 @@ iterations =
 
 {-| Make an animation loop infinitely.
 
+Applies to the currently selected animation group in the builder chain.
+
     import Anim.Engine.Sub as Sub
     import Anim.Property.Opacity as Opacity
 
     pulse : Sub.EngineBuilder -> Sub.EngineBuilder
     pulse =
-        Opacity.for "box"
+        Sub.for "box"
+            >> Sub.loopForever
+            >> Opacity.begin
             >> Opacity.to 0.2
-            >> Opacity.build
+            >> Opacity.end
 
-    Sub.animate model.animState <|
-        Sub.loopForever
-            >> pulse
+    Sub.animate model.animState pulse
 
 -}
 loopForever : EngineBuilder -> EngineBuilder
@@ -631,10 +656,13 @@ loopForever =
 
 {-| Make an animation alternate direction on each iteration.
 
-    floatingCardLoop : AnimBuilder eng -> AnimBuilder eng
+Applies to the currently selected animation group in the builder chain.
+
+    floatingCardLoop : Sub.EngineBuilder -> Sub.EngineBuilder
     floatingCardLoop =
-        iterations 4
-            >> alternate
+        Sub.for "card"
+            >> Sub.iterations 4
+            >> Sub.alternate
             >> liftCard
             >> glowCardBorder
 
@@ -919,9 +947,10 @@ the animation. Use this when an element is appearing (e.g., going from
     Sub.animate model.animState <|
         Sub.discreteEntry "display" "block"
             >> Sub.discreteEntry "visibility" "visible"
-            >> Opacity.for "box"
+            >> Sub.for "box"
+            >> Opacity.begin
             >> Opacity.to 1
-            >> Opacity.build
+            >> Opacity.end
 
 -}
 discreteEntry : String -> String -> EngineBuilder -> EngineBuilder
@@ -944,9 +973,10 @@ Use when an element is disappearing (e.g., going from
 
     Sub.animate model.animState <|
         Sub.discreteExit "display" "block" "none"
-            >> Opacity.for "box"
+            >> Sub.for "box"
+            >> Opacity.begin
             >> Opacity.to 0
-            >> Opacity.build
+            >> Opacity.end
 
 -}
 discreteExit : String -> String -> String -> EngineBuilder -> EngineBuilder
@@ -1032,9 +1062,10 @@ The named axis indicates which axis will remain frozen while you animate the oth
 
     Sub.animate model.animState <|
         Sub.freezeX [ Sub.translate ]
-            >> Translate.for "box"
+            >> Sub.for "box"
+            >> Translate.begin
             >> Translate.toY 0
-            >> Translate.build
+            >> Translate.end
 
 -}
 freezeX : List FreezeProperty -> EngineBuilder -> EngineBuilder

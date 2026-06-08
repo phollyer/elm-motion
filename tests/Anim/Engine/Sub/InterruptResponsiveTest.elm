@@ -41,12 +41,13 @@ initialState =
 
 moveX : Float -> Float -> Sub.EngineBuilder -> Sub.EngineBuilder
 moveX from to_ =
-    Translate.for groupName
+    Sub.for groupName
+        >> Translate.begin
         >> Translate.fromX from
         >> Translate.toX to_
         >> Translate.speed 100
         >> Translate.easing BounceOut
-        >> Translate.build
+        >> Translate.end
 
 
 

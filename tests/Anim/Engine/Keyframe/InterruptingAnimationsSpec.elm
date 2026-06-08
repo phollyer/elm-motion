@@ -17,11 +17,12 @@ animGroup =
 
 moveBoxX : Float -> Keyframe.EngineBuilder -> Keyframe.EngineBuilder
 moveBoxX x =
-    Translate.for animGroup
+    Keyframe.for animGroup
+        >> Translate.begin
         >> Translate.toX x
         >> Translate.speed 100
         >> Translate.easing BounceOut
-        >> Translate.build
+        >> Translate.end
 
 
 initBuilder : Keyframe.EngineBuilder -> Keyframe.EngineBuilder
@@ -87,10 +88,11 @@ suite =
 
                     afterColor =
                         Keyframe.animate afterMove <|
-                            (CustomColor.for animGroup CustomColor.BackgroundColor
+                            (Keyframe.for animGroup
+                                >> CustomColor.begin CustomColor.BackgroundColor
                                 >> CustomColor.to (Color.rgb 255 0 0)
                                 >> CustomColor.duration 500
-                                >> CustomColor.build
+                                >> CustomColor.end
                             )
 
                     css =

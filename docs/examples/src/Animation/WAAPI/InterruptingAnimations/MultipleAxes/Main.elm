@@ -148,11 +148,12 @@ moveBoxY y =
 
 moveBox : (Translate.Builder ForWAAPI -> Translate.Builder ForWAAPI) -> WAAPI.EngineBuilder -> WAAPI.EngineBuilder
 moveBox moveFunc =
-    Translate.for animGroup
+    WAAPI.for animGroup
+        >> Translate.begin
         >> moveFunc
         >> Translate.speed 25
         >> Translate.easing QuintOut
-        >> Translate.build
+        >> Translate.end
 
 
 

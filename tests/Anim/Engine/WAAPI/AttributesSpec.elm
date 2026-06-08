@@ -133,9 +133,10 @@ animatedTests =
             \_ ->
                 initWith []
                     |> animate
-                        (Opacity.for "el"
+                        (WAAPI.for "el"
+                            >> Opacity.begin
                             >> Opacity.to 0.5
-                            >> Opacity.build
+                            >> Opacity.end
                         )
                     |> query
                     |> Query.hasNot [ Selector.style "opacity" "0.5" ]
@@ -147,9 +148,10 @@ animatedTests =
                 -- `transform` is never empty when the bridge takes over.
                 initWith []
                     |> animate
-                        (Translate.for "el"
+                        (WAAPI.for "el"
+                            >> Translate.begin
                             >> Translate.toX 100
-                            >> Translate.build
+                            >> Translate.end
                         )
                     |> query
                     |> Query.has [ Selector.style "transform" "translate3d(0px, 0px, 0px)" ]
@@ -157,9 +159,10 @@ animatedTests =
             \_ ->
                 initWith []
                     |> animate
-                        (Rotate.for "el"
+                        (WAAPI.for "el"
+                            >> Rotate.begin
                             >> Rotate.toZ 360
-                            >> Rotate.build
+                            >> Rotate.end
                         )
                     |> query
                     |> Query.has [ Selector.style "transform" "rotateZ(0deg)" ]
@@ -167,9 +170,10 @@ animatedTests =
             \_ ->
                 initWith []
                     |> animate
-                        (Opacity.for "el"
+                        (WAAPI.for "el"
+                            >> Opacity.begin
                             >> Opacity.to 0.5
-                            >> Opacity.build
+                            >> Opacity.end
                         )
                     |> query
                     |> Query.has [ Selector.attribute (Html.Attributes.attribute "data-anim-target" "el") ]
@@ -189,9 +193,10 @@ mixedKindTests =
             \_ ->
                 initWith [ Translate.initX "el" 100 ]
                     |> animate
-                        (Opacity.for "el"
+                        (WAAPI.for "el"
+                            >> Opacity.begin
                             >> Opacity.to 0.5
-                            >> Opacity.build
+                            >> Opacity.end
                         )
                     |> query
                     |> Expect.all
@@ -202,9 +207,10 @@ mixedKindTests =
             \_ ->
                 initWith [ Opacity.init "el" 0.5 ]
                     |> animate
-                        (Translate.for "el"
+                        (WAAPI.for "el"
+                            >> Translate.begin
                             >> Translate.toX 100
-                            >> Translate.build
+                            >> Translate.end
                         )
                     |> query
                     |> Expect.all
@@ -232,9 +238,10 @@ transformSlotTests =
                 -- between Elm's render and the JS bridge's inline write.
                 initWith [ Translate.initX "el" 100 ]
                     |> animate
-                        (Rotate.for "el"
+                        (WAAPI.for "el"
+                            >> Rotate.begin
                             >> Rotate.toZ 360
-                            >> Rotate.build
+                            >> Rotate.end
                         )
                     |> query
                     |> Query.has
@@ -266,9 +273,10 @@ transformSlotTests =
             \_ ->
                 initWith [ Translate.initZ "el" 200 ]
                     |> animate
-                        (Rotate.for "el"
+                        (WAAPI.for "el"
+                            >> Rotate.begin
                             >> Rotate.toX 360
-                            >> Rotate.build
+                            >> Rotate.end
                         )
                     |> query
                     |> Query.has

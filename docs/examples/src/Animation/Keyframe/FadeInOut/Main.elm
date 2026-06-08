@@ -55,10 +55,11 @@ animGroup =
 
 fadeTo : Float -> Keyframe.EngineBuilder -> Keyframe.EngineBuilder
 fadeTo to =
-    Opacity.for animGroup
+    Keyframe.for animGroup
+        >> Opacity.begin
         >> Opacity.to to
         >> Opacity.duration 2500
-        >> Opacity.build
+        >> Opacity.end
 
 
 fadeIn : Keyframe.EngineBuilder -> Keyframe.EngineBuilder

@@ -55,22 +55,24 @@ animGroup =
 
 fadeIn : Keyframe.EngineBuilder -> Keyframe.EngineBuilder
 fadeIn =
-    Opacity.for animGroup
+    Keyframe.for animGroup
+        >> Opacity.begin
         >> Opacity.from 0
         >> Opacity.to 1
         >> Opacity.duration 800
         >> Opacity.easing QuartIn
-        >> Opacity.build
+        >> Opacity.end
 
 
 fadeOut : Keyframe.EngineBuilder -> Keyframe.EngineBuilder
 fadeOut =
-    Opacity.for animGroup
+    Keyframe.for animGroup
+        >> Opacity.begin
         >> Opacity.from 1
         >> Opacity.to 0
         >> Opacity.duration 800
         >> Opacity.easing CubicIn
-        >> Opacity.build
+        >> Opacity.end
 
 
 

@@ -70,12 +70,13 @@ ballSizeCqh =
 
 dropBall : Transition.EngineBuilder -> Transition.EngineBuilder
 dropBall =
-    Translate.for animGroup
+    Transition.for animGroup
+        >> Translate.begin
         >> Translate.fromY 0
         >> Translate.toY (100 - ballSize)
         >> Translate.speed 75
         >> Translate.easing BounceOut
-        >> Translate.build
+        >> Translate.end
 
 
 

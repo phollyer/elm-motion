@@ -65,18 +65,20 @@ endXY =
 
 animateDiagonal : Keyframe.EngineBuilder -> Keyframe.EngineBuilder
 animateDiagonal =
-    Translate.for animGroup
+    Keyframe.for animGroup
+        >> Translate.begin
         >> Translate.toXY endXY endXY
         >> Translate.duration 5000
         >> Translate.easing Linear
-        >> Translate.build
+        >> Translate.end
 
 
 retargetYToTop : Keyframe.EngineBuilder -> Keyframe.EngineBuilder
 retargetYToTop =
-    Translate.for animGroup
+    Keyframe.for animGroup
+        >> Translate.begin
         >> Translate.toY 0
-        >> Translate.build
+        >> Translate.end
 
 
 

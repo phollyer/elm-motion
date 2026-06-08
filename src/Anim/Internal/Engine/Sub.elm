@@ -217,9 +217,16 @@ animate (AnimState state animGroups) build =
 
         generateAnimGroup : AnimGroupName -> Builder.ProcessedAnimGroupConfig -> AnimGroup
         generateAnimGroup animGroupName config =
+            let
+                playback =
+                    Builder.resolvePlayback
+                        processed.iterations
+                        processed.animationDirection
+                        config.playback
+            in
             Generator.generateAnimation
-                processed.iterations
-                processed.animationDirection
+                playback.iterations
+                playback.animationDirection
                 config.transformOrder
                 (Builder.getDiscreteEntryProperties builder)
                 (Builder.getDiscreteExitProperties builder)
@@ -301,9 +308,16 @@ retarget (AnimState state animGroups) build =
 
         generateAnimGroup : AnimGroupName -> Builder.ProcessedAnimGroupConfig -> AnimGroup
         generateAnimGroup animGroupName config =
+            let
+                playback =
+                    Builder.resolvePlayback
+                        processed.iterations
+                        processed.animationDirection
+                        config.playback
+            in
             Generator.generateAnimation
-                processed.iterations
-                processed.animationDirection
+                playback.iterations
+                playback.animationDirection
                 config.transformOrder
                 (Builder.getDiscreteEntryProperties builder)
                 (Builder.getDiscreteExitProperties builder)

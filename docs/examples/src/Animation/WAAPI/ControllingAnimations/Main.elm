@@ -84,12 +84,13 @@ ballSizeCqh =
 
 dropBall : WAAPI.EngineBuilder -> WAAPI.EngineBuilder
 dropBall =
-    Translate.for animGroup
+    WAAPI.for animGroup
+        >> Translate.begin
         >> Translate.fromY 0
         >> Translate.toY (100 - ballSize)
         >> Translate.speed 75
         >> Translate.easing BounceOut
-        >> Translate.build
+        >> Translate.end
 
 
 

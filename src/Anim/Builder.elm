@@ -36,6 +36,8 @@ that should work across engines, or when you don't want to commit to a specific 
 ## Timing
 
 These settings are for Document timeline engines: Keyframe, Sub, Transition, and WAAPI.
+They make no sense when applied to Scroll and View timelines, and will raise a type error
+if used in builders for those engines.
 
 @docs delay, duration, speed
 

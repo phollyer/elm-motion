@@ -1,7 +1,7 @@
 module Anim.Property.Opacity exposing
     ( Builder, AnimGroupName
     , init
-    , for, build
+    , begin, end
     , from
     , to
     , by
@@ -32,7 +32,7 @@ When no start value is configured, the default will be used.
 
 # Build
 
-@docs for, build
+@docs begin, end
 
 
 # Configure
@@ -109,9 +109,9 @@ until you [Unclamp](#unclamp) it:
                 let
                     ( animState, cmd ) =
                         WAAPI.animate model.animState <|
-                            Opacity.for animGroupName
+                            Opacity.begin
                                 >> Opacity.clamp 0.2 1.0
-                                >> Opacity.build
+                                >> Opacity.end
                 in
                 ( { model | animState = animState }
                 , cmd
@@ -136,7 +136,7 @@ Snap to a specific opacity, cancelling any in-flight animation on this property.
 
 -}
 
-import Anim.Internal.Builder exposing (AnimBuilder)
+import Anim.Internal.Builder as IB exposing (AnimBuilder)
 import Anim.Internal.Builder.Opacity as OB
 import Anim.Internal.Property.Opacity as O
 import Motion.Easing exposing (Easing)
@@ -202,13 +202,18 @@ Use this to start configuring an opacity animation.
 
     myAnimation : AnimBuilder eng -> AnimBuilder eng
     myAnimation =
-        Opacity.for "animGroupName"
+        Opacity.begin
             >> ... -- Configure and build the animation
 
 -}
-for : AnimGroupName -> AnimBuilder eng -> Builder eng
-for =
-    OB.for
+begin : AnimBuilder eng -> Builder eng
+begin animBuilder =
+    case IB.getCurrentAnimGroupName animBuilder of
+        Just animGroupName ->
+            OB.for animGroupName animBuilder
+
+        Nothing ->
+            OB.for "" animBuilder
 
 
 {-| Complete the [Builder](#Builder) animation configuration and return an `AnimBuilder`
@@ -216,14 +221,14 @@ so you can continue configuring other property animations or execute the animati
 
     myAnimation : AnimBuilder eng -> AnimBuilder eng
     myAnimation =
-        Opacity.for "animGroupName"
+        Opacity.begin
             >> ... -- configure the animation with from, to, duration, easing, etc.
-            >> Opacity.build
+            >> Opacity.end
             >> ... -- continue with animation
 
 -}
-build : Builder eng -> AnimBuilder eng
-build =
+end : Builder eng -> AnimBuilder eng
+end =
     OB.build
 
 
@@ -237,7 +242,7 @@ build =
 
     myAnimation : AnimBuilder eng -> AnimBuilder eng
     myAnimation =
-        Opacity.for "animGroupName"
+        Opacity.begin
             >> Opacity.from 1.0
             >> ... -- continue with animation
 
@@ -257,7 +262,7 @@ from =
 
     myAnimation : AnimBuilder eng -> AnimBuilder eng
     myAnimation =
-        Opacity.for "animGroupName"
+        Opacity.begin
             >> Opacity.to 0.5
             >> ... -- continue with animation
 
@@ -277,7 +282,7 @@ to =
 
     myAnimation : AnimBuilder eng -> AnimBuilder eng
     myAnimation =
-        Opacity.for "animGroupName"
+        Opacity.begin
             >> Opacity.by 0.25
             >> ... -- continue with animation
 

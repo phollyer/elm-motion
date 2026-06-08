@@ -36,10 +36,11 @@ Here's a general workflow to get up an running quickly.
 
     fadeIn : Keyframe.AnimBuilder eng -> Keyframe.AnimBuilder eng
     fadeIn =
-        Opacity.for "card"
+        Keyframe.for "card"
+            >> Opacity.begin
             >> Opacity.to 1
             >> Opacity.duration 300
-            >> Opacity.build
+            >> Opacity.end
     ```
 
 ### 2. Initialize
@@ -281,10 +282,11 @@ Set `iterations`, `loopForever`, and `alternate` in the animation builder.
     spinForever =
         Keyframe.loopForever
             >> Keyframe.alternate
-            >> Rotate.for "icon"
+            >> Keyframe.for "icon"
+            >> Rotate.begin
             >> Rotate.toZ 360
             >> Rotate.duration 1000
-            >> Rotate.build
+            >> Rotate.end
     ```
 
 📖 See [Playback](../concepts/playback.md) for the full `looping`, `iterations`, and `alternate` API with live examples.
@@ -303,9 +305,10 @@ Set the default `duration`, `speed`, and `delay`. Inherited by every property th
     fadeIn =
         Keyframe.delay 500
             >> Keyframe.duration 800
-            >> Opacity.for "card"
+            >> Keyframe.for "card"
+            >> Opacity.begin
             >> Opacity.to 1
-            >> Opacity.build
+            >> Opacity.end
     ```
 
 📖 See [Timing](../concepts/timing.md) for more info.
@@ -321,11 +324,12 @@ Set the default easing for all properties that don't override it:
     ```elm
     fadeIn =
         Keyframe.easing CubicInOut
-            >> Opacity.for "card"
+            >> Keyframe.for "card"
+            >> Opacity.begin
             >> Opacity.to 1
             >> Opacity.duration 300
             >> Opacity.delay 50
-            >> Opacity.build
+            >> Opacity.end
     ```
 
 📖 See [Easing](../concepts/easing.md) for all available easing functions.
@@ -343,9 +347,10 @@ Set the default spring for all properties that don't override it:
     ```elm
     bouncyReveal =
         Keyframe.spring Spring.wobbly
-            >> Opacity.for "card"
+            >> Keyframe.for "card"
+            >> Opacity.begin
             >> Opacity.to 1
-            >> Opacity.build
+            >> Opacity.end
     ```
 
 📖 See [Spring](../concepts/spring.md) for the full preset list and tuning guidance.
@@ -410,7 +415,8 @@ Use `transformOrder` to set the order in which transform properties are applied 
 
     animateBox =
         Keyframe.transformOrder [ Scale, Rotate, Translate ]
-            >> Translate.for "box"
+            >> Keyframe.for "box"
+            >> Translate.begin
             >> ...
     ```
 

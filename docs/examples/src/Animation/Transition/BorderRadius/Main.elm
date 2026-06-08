@@ -61,18 +61,18 @@ standardTiming =
 
 roundCorners : Transition.EngineBuilder -> Transition.EngineBuilder
 roundCorners =
-    Property.for animGroup (Property.BorderRadius Px)
+    Property.begin (Property.BorderRadius Px)
         >> Property.to 48
         >> standardTiming
-        >> Property.build
+        >> Property.end
 
 
 squareCorners : Transition.EngineBuilder -> Transition.EngineBuilder
 squareCorners =
-    Property.for animGroup (Property.BorderRadius Px)
+    Property.begin (Property.BorderRadius Px)
         >> Property.to 0
         >> standardTiming
-        >> Property.build
+        >> Property.end
 
 
 
@@ -89,12 +89,22 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         TriggerRound ->
-            ( { model | animState = Transition.animate model.animState roundCorners }
+            ( { model
+                | animState =
+                    Transition.animate model.animState <|
+                        Transition.for animGroup
+                            >> roundCorners
+              }
             , Cmd.none
             )
 
         TriggerSquare ->
-            ( { model | animState = Transition.animate model.animState squareCorners }
+            ( { model
+                | animState =
+                    Transition.animate model.animState <|
+                        Transition.for animGroup
+                            >> squareCorners
+              }
             , Cmd.none
             )
 

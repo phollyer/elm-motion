@@ -41,10 +41,11 @@ suite =
                 Sub.init [ Translate.initXY "el" 0 0 ]
                     |> (\state ->
                             Sub.animate state
-                                (Translate.for "el"
+                                (Sub.for "el"
+                                    >> Translate.begin
                                     >> Translate.toXY 100 0
                                     >> Translate.duration 500
-                                    >> Translate.build
+                                    >> Translate.end
                                 )
                        )
                     |> rendered
@@ -54,10 +55,11 @@ suite =
                 Sub.init [ Scale.init "el" 1 ]
                     |> (\state ->
                             Sub.animate state
-                                (Scale.for "el"
+                                (Sub.for "el"
+                                    >> Scale.begin
                                     >> Scale.to 1.5
                                     >> Scale.duration 500
-                                    >> Scale.build
+                                    >> Scale.end
                                 )
                        )
                     |> rendered
@@ -72,22 +74,23 @@ suite =
                     ]
                     |> (\state ->
                             Sub.animate state
-                                (Translate.for "el"
+                                (Sub.for "el"
+                                    >> Translate.begin
                                     >> Translate.toXY 100 0
                                     >> Translate.duration 500
-                                    >> Translate.build
-                                    >> Rotate.for "el"
+                                    >> Translate.end
+                                    >> Rotate.begin
                                     >> Rotate.toZ 45
                                     >> Rotate.duration 500
-                                    >> Rotate.build
-                                    >> Scale.for "el"
+                                    >> Rotate.end
+                                    >> Scale.begin
                                     >> Scale.to 1.5
                                     >> Scale.duration 500
-                                    >> Scale.build
-                                    >> Skew.for "el"
+                                    >> Scale.end
+                                    >> Skew.begin
                                     >> Skew.toXY 10 5
                                     >> Skew.duration 500
-                                    >> Skew.build
+                                    >> Skew.end
                                 )
                        )
                     |> rendered
@@ -100,14 +103,15 @@ suite =
                     ]
                     |> (\state ->
                             Sub.animate state
-                                (Opacity.for "el"
+                                (Sub.for "el"
+                                    >> Opacity.begin
                                     >> Opacity.to 1
                                     >> Opacity.duration 500
-                                    >> Opacity.build
-                                    >> Translate.for "el"
+                                    >> Opacity.end
+                                    >> Translate.begin
                                     >> Translate.toXY 100 0
                                     >> Translate.duration 500
-                                    >> Translate.build
+                                    >> Translate.end
                                 )
                        )
                     |> rendered
@@ -117,10 +121,11 @@ suite =
                 Sub.init [ Size.initHW "el" 100 100 ]
                     |> (\state ->
                             Sub.animate state
-                                (Size.for "el"
+                                (Sub.for "el"
+                                    >> Size.begin
                                     >> Size.toHW 200 150
                                     >> Size.duration 500
-                                    >> Size.build
+                                    >> Size.end
                                 )
                        )
                     |> rendered
@@ -130,10 +135,11 @@ suite =
                 Sub.init [ PerspectiveOrigin.initXY "el" 50 50 ]
                     |> (\state ->
                             Sub.animate state
-                                (PerspectiveOrigin.for "el"
+                                (Sub.for "el"
+                                    >> PerspectiveOrigin.begin
                                     >> PerspectiveOrigin.toXY 90 10
                                     >> PerspectiveOrigin.duration 500
-                                    >> PerspectiveOrigin.build
+                                    >> PerspectiveOrigin.end
                                 )
                        )
                     |> rendered
@@ -143,10 +149,11 @@ suite =
                 Sub.init [ Custom.init "el" (Custom.BorderRadius Unit.Px) 0 ]
                     |> (\state ->
                             Sub.animate state
-                                (Custom.for "el" (Custom.BorderRadius Unit.Px)
+                                (Sub.for "el"
+                                    >> Custom.begin (Custom.BorderRadius Unit.Px)
                                     >> Custom.to 10
                                     >> Custom.duration 500
-                                    >> Custom.build
+                                    >> Custom.end
                                 )
                        )
                     |> rendered

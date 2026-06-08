@@ -54,40 +54,44 @@ Sets a CSS property value when the animation **starts**. Use this when an elemen
         ```elm
         fadeIn =
             Transition.discreteEntry "display" "flex"
-                >> Opacity.for "box"
+                >> Transition.for "box"
+                >> Opacity.begin
                 >> Opacity.to 1
                 >> Opacity.duration 800
-                >> Opacity.build
+                >> Opacity.end
         ```
     === "Keyfram"
     
         ```elm
         fadeIn =
             Keyframe.discreteEntry "display" "flex"
-                >> Opacity.for "box"
+                >> Keyframe.for "box"
+                >> Opacity.begin
                 >> Opacity.to 1
                 >> Opacity.duration 800
-                >> Opacity.build
+                >> Opacity.end
         ```
     === "Sub"
     
         ```elm
         fadeIn =
             Sub.discreteEntry "display" "flex"
-                >> Opacity.for "box"
+                >> Sub.for "box"
+                >> Opacity.begin
                 >> Opacity.to 1
                 >> Opacity.duration 800
-                >> Opacity.build
+                >> Opacity.end
         ```
     === "WAAPI"
     
         ```elm
         fadeIn =
             WAAPI.discreteEntry "display" "flex"
-                >> Opacity.for "box"
+                >> WAAPI.for "box"
+                >> Opacity.begin
                 >> Opacity.to 1
                 >> Opacity.duration 800
-                >> Opacity.build
+                >> Opacity.end
         ```
 
 The value is applied from the first frame and held throughout the animation.
@@ -164,10 +168,11 @@ Sets a CSS property value for exit animations. It holds the `from` value during 
         ```elm
         fadeOut =
             Transition.discreteExit "display" "flex" "none"
-                >> Opacity.for "box"
+                >> Transition.for "box"
+                >> Opacity.begin
                 >> Opacity.to 0
                 >> Opacity.duration 800
-                >> Opacity.build
+                >> Opacity.end
         ```
 
     === "Keyframe"
@@ -175,10 +180,11 @@ Sets a CSS property value for exit animations. It holds the `from` value during 
         ```elm
         fadeOut =
             Keyframe.discreteExit "display" "flex" "none"
-                >> Opacity.for "box"
+                >> Keyframe.for "box"
+                >> Opacity.begin
                 >> Opacity.to 0
                 >> Opacity.duration 800
-                >> Opacity.build
+                >> Opacity.end
         ```
 
     === "Sub"
@@ -186,10 +192,11 @@ Sets a CSS property value for exit animations. It holds the `from` value during 
         ```elm
         fadeOut =
             Sub.discreteExit "display" "flex" "none"
-                >> Opacity.for "box"
+                >> Sub.for "box"
+                >> Opacity.begin
                 >> Opacity.to 0
                 >> Opacity.duration 800
-                >> Opacity.build
+                >> Opacity.end
         ```
 
     === "WAAPI"
@@ -197,10 +204,11 @@ Sets a CSS property value for exit animations. It holds the `from` value during 
         ```elm
         fadeOut =
             WAAPI.discreteExit "display" "flex" "none"
-                >> Opacity.for "box"
+                >> WAAPI.for "box"
+                >> Opacity.begin
                 >> Opacity.to 0
                 >> Opacity.duration 800
-                >> Opacity.build
+                >> Opacity.end
         ```
 
 The three arguments are: property name, value during animation, value after animation ends.

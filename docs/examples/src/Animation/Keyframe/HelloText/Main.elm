@@ -62,10 +62,11 @@ groupName =
 
 fadeIn : Keyframe.EngineBuilder -> Keyframe.EngineBuilder
 fadeIn =
-    Opacity.for groupName
+    Keyframe.for groupName
+        >> Opacity.begin
         >> Opacity.to 1
         >> Opacity.duration 5000
-        >> Opacity.build
+        >> Opacity.end
 
 
 

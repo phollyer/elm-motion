@@ -55,10 +55,11 @@ animGroup =
 
 fadeTo : Float -> Transition.EngineBuilder -> Transition.EngineBuilder
 fadeTo to =
-    Opacity.for animGroup
+    Transition.for animGroup
+        >> Opacity.begin
         >> Opacity.to to
         >> Opacity.duration 2500
-        >> Opacity.build
+        >> Opacity.end
 
 
 fadeIn : Transition.EngineBuilder -> Transition.EngineBuilder

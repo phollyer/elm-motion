@@ -55,10 +55,11 @@ animGroup =
 
 fadeTo : Float -> Sub.EngineBuilder -> Sub.EngineBuilder
 fadeTo to =
-    Opacity.for animGroup
+    Sub.for animGroup
+        >> Opacity.begin
         >> Opacity.to to
         >> Opacity.duration 2500
-        >> Opacity.build
+        >> Opacity.end
 
 
 fadeIn : Sub.EngineBuilder -> Sub.EngineBuilder

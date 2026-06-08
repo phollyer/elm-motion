@@ -39,24 +39,25 @@ animateAll : (Sub.EngineBuilder -> Sub.EngineBuilder) -> Sub.AnimState -> Sub.An
 animateAll extra state =
     Sub.animate state
         (extra
-            >> Translate.for "el"
+            >> Sub.for "el"
+            >> Translate.begin
             >> Translate.fromXY 0 0
             >> Translate.toXY 100 50
             >> Translate.duration 1000
             >> Translate.easing Linear
-            >> Translate.build
-            >> Rotate.for "el"
+            >> Translate.end
+            >> Rotate.begin
             >> Rotate.fromZ 0
             >> Rotate.toZ 90
             >> Rotate.duration 1000
             >> Rotate.easing Linear
-            >> Rotate.build
-            >> Scale.for "el"
+            >> Rotate.end
+            >> Scale.begin
             >> Scale.fromXY 1 1
             >> Scale.toXY 2 2
             >> Scale.duration 1000
             >> Scale.easing Linear
-            >> Scale.build
+            >> Scale.end
         )
 
 

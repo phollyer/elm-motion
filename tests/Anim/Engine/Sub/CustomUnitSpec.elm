@@ -32,11 +32,12 @@ suite =
                     [ Custom.init "el" (Custom.BorderRadius Unit.Vw) 0 ]
                     |> (\state ->
                             Sub.animate state
-                                (Custom.for "el" (Custom.BorderRadius Unit.Vw)
+                                (Sub.for "el"
+                                    >> Custom.begin (Custom.BorderRadius Unit.Vw)
                                     >> Custom.to 20
                                     >> Custom.duration 1000
                                     >> Custom.easing Linear
-                                    >> Custom.build
+                                    >> Custom.end
                                 )
                        )
                     |> step 500
@@ -48,11 +49,12 @@ suite =
                     [ Custom.init "el" (Custom.Custom "letter-spacing" "ch") 0 ]
                     |> (\state ->
                             Sub.animate state
-                                (Custom.for "el" (Custom.Custom "letter-spacing" "ch")
+                                (Sub.for "el"
+                                    >> Custom.begin (Custom.Custom "letter-spacing" "ch")
                                     >> Custom.to 2
                                     >> Custom.duration 1000
                                     >> Custom.easing Linear
-                                    >> Custom.build
+                                    >> Custom.end
                                 )
                        )
                     |> step 500

@@ -18,10 +18,10 @@ Animate the width and height of elements.
 
     expandBox : AnimBuilder eng -> AnimBuilder eng
     expandBox =
-        Size.for "animGroup"
+        Size.begin
             >> Size.toHW 150 200
             >> Size.duration 300
-            >> Size.build
+            >> Size.end
     ```
 
 See the [Properties Overview](overview.md) page for the shared usage patterns.

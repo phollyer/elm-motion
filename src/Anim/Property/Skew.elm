@@ -1,7 +1,7 @@
 module Anim.Property.Skew exposing
     ( Builder, AnimGroupName
     , initXY, initX, initY
-    , for, build
+    , begin, end
     , fromXY, fromX, fromY
     , toXY, toX, toY
     , byXY, byX, byY
@@ -32,7 +32,7 @@ When no start value is configured for any axis, the default will be used.
 
 # Build
 
-@docs for, build
+@docs begin, end
 
 
 # Configure
@@ -108,10 +108,10 @@ until you [Unclamp](#unclamp) it:
                 let
                     ( animState, cmd ) =
                         WAAPI.animate model.animState <|
-                            Skew.for animGroupName
+                            Skew.begin
                                 >> Skew.clampX -30 30
                                 >> Skew.clampY -30 30
-                                >> Skew.build
+                                >> Skew.end
                 in
                 ( { model | animState = animState }
                 , cmd
@@ -136,7 +136,7 @@ Snap to a specific skew, cancelling any in-flight animation on this property.
 
 -}
 
-import Anim.Internal.Builder exposing (AnimBuilder)
+import Anim.Internal.Builder as IB exposing (AnimBuilder)
 import Anim.Internal.Builder.Skew as SB
 import Motion.Easing exposing (Easing)
 import Motion.Spring exposing (Spring)
@@ -166,21 +166,6 @@ type alias Builder eng =
 -- ============================================================
 
 
-{-| Turn the `AnimBuilder` into a skew animation `Builder` for the specified animation group.
-
-Use this to start configuring a skew animation.
-
-    myAnimation : AnimBuilder eng -> AnimBuilder eng
-    myAnimation =
-        Skew.for "animGroupName"
-            >> ... -- Configure and build the animation
-
--}
-for : AnimGroupName -> AnimBuilder eng -> Builder eng
-for =
-    SB.for
-
-
 {-| Set the initial X and Y skew.
 
     import Anim.Engine.* as Engine
@@ -196,10 +181,10 @@ for =
 initXY : AnimGroupName -> Float -> Float -> AnimBuilder eng -> AnimBuilder eng
 initXY animationKey x y animBuilder =
     animBuilder
-        |> for animationKey
+        |> SB.for animationKey
         |> fromXY x y
         |> toXY x y
-        |> build
+        |> SB.build
 
 
 {-| Set the initial X skew.
@@ -217,10 +202,10 @@ initXY animationKey x y animBuilder =
 initX : AnimGroupName -> Float -> AnimBuilder eng -> AnimBuilder eng
 initX animationKey x animBuilder =
     animBuilder
-        |> for animationKey
+        |> SB.for animationKey
         |> fromX x
         |> toX x
-        |> build
+        |> SB.build
 
 
 {-| Set the initial Y skew.
@@ -238,10 +223,10 @@ initX animationKey x animBuilder =
 initY : AnimGroupName -> Float -> AnimBuilder eng -> AnimBuilder eng
 initY animationKey y animBuilder =
     animBuilder
-        |> for animationKey
+        |> SB.for animationKey
         |> fromY y
         |> toY y
-        |> build
+        |> SB.build
 
 
 
@@ -250,19 +235,39 @@ initY animationKey y animBuilder =
 -- ============================================================
 
 
+{-| Turn the `AnimBuilder` into a skew animation `Builder` for the specified animation group.
+
+Use this to start configuring a skew animation.
+
+    myAnimation : AnimBuilder eng -> AnimBuilder eng
+    myAnimation =
+        Skew.begin
+            >> ... -- Configure and build the animation
+
+-}
+begin : AnimBuilder eng -> Builder eng
+begin animBuilder =
+    case IB.getCurrentAnimGroupName animBuilder of
+        Just animGroupName ->
+            SB.for animGroupName animBuilder
+
+        Nothing ->
+            SB.for "" animBuilder
+
+
 {-| Complete the [Builder](#Builder) animation configuration and return an `AnimBuilder`
 so you can continue configuring other property animations or execute the animation with an Engine.
 
     myAnimation : AnimBuilder eng -> AnimBuilder eng
     myAnimation =
-        Skew.for "animGroupName"
+        Skew.begin
             >> ... -- configure the animation with from, to, duration, easing, etc.
-            >> Skew.build
+            >> Skew.end
             >> ... -- continue with animation
 
 -}
-build : Builder eng -> AnimBuilder eng
-build =
+end : Builder eng -> AnimBuilder eng
+end =
     SB.build
 
 

@@ -53,10 +53,11 @@ unitTest description maybeUnit expected =
                         |> AnimGroups.insert "card" AnimGroup.init
 
                 sizeBuilder =
-                    Size.for "card"
+                    Builder.for "card"
+                        >> Size.begin
                         >> Size.toHW 100 200
                         >> Size.duration 500
-                        >> Size.build
+                        >> Size.end
 
                 initStep b =
                     case maybeUnit of

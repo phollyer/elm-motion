@@ -306,11 +306,12 @@ selectAnimation targetAmount state =
 
 rotateCube : Float -> Transition.EngineBuilder -> Transition.EngineBuilder
 rotateCube to =
-    Rotate.for cubeGroupName
+    Transition.for cubeGroupName
+        >> Rotate.begin
         >> Rotate.toXYZ to to to
         >> Rotate.easing BackInOut
         >> Rotate.duration 8000
-        >> Rotate.build
+        >> Rotate.end
 
 
 rotateCubeClockwise : Transition.EngineBuilder -> Transition.EngineBuilder
@@ -356,9 +357,10 @@ sharedTiming =
 moveFace : FaceConfig -> (Translate.Builder ForTransition -> Translate.Builder ForTransition) -> Transition.EngineBuilder -> Transition.EngineBuilder
 moveFace config moveToBuilder =
     sharedTiming
-        >> Translate.for config.groupName
+        >> Transition.for config.groupName
+        >> Translate.begin
         >> moveToBuilder
-        >> Translate.build
+        >> Translate.end
 
 
 
@@ -464,12 +466,14 @@ textMoveAmount =
 moveText : TextConfig -> Float -> Float -> Transition.EngineBuilder -> Transition.EngineBuilder
 moveText config toZ toRotate =
     sharedTiming
-        >> Translate.for config.groupName
+        >> Transition.for config.groupName
+        >> Translate.begin
         >> Translate.toZ toZ
-        >> Translate.build
-        >> Rotate.for config.groupName
+        >> Translate.end
+        >> Transition.for config.groupName
+        >> Rotate.begin
         >> Rotate.toZ toRotate
-        >> Rotate.build
+        >> Rotate.end
 
 
 moveTextsOut : Transition.EngineBuilder -> Transition.EngineBuilder
@@ -572,11 +576,12 @@ update msg model =
                     -- the dedicated `scaleGroupName` element, so the
                     -- per-face open/close animations are not disturbed.
                     Transition.animate model.animState <|
-                        (Scale.for scaleGroupName
+                        (Transition.for scaleGroupName
+                            >> Scale.begin
                             >> Scale.toXYZ newScale newScale newScale
                             >> Scale.duration 150
                             >> Scale.easing Linear
-                            >> Scale.build
+                            >> Scale.end
                         )
               }
             , Cmd.none
@@ -585,9 +590,10 @@ update msg model =
 
 scaleTo : Float -> Transition.EngineBuilder -> Transition.EngineBuilder
 scaleTo s =
-    Scale.for scaleGroupName
+    Transition.for scaleGroupName
+        >> Scale.begin
         >> Scale.toXYZ s s s
-        >> Scale.build
+        >> Scale.end
 
 
 {-| Mirrors the stage's CSS `min(90vw, 90vh)` sizing, then divides by

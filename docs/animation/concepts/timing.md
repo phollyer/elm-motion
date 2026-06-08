@@ -18,10 +18,10 @@ Set a fixed animation time in milliseconds:
 ??? example "View Source Code"
 
     ```elm
-    Opacity.for "boxAnim"
+    Opacity.begin
         >> Opacity.to 1
         >> Opacity.duration 300  -- Always 300ms
-        >> Opacity.build
+        >> Opacity.end
     ```
 
 Duration should be the default choice for most animations. Fades, color changes, and UI effects benefit from consistent timing.
@@ -33,10 +33,10 @@ Set a rate of change per second (assuming `Px` as the CSS Unit):
 ??? example "View Source Code"
 
     ```elm
-    Translate.for "boxAnim"
+    Translate.begin
         >> Translate.toX 100
         >> Translate.speed 200  -- 200 pixels per second
-        >> Translate.build
+        >> Translate.end
     ```
 
 Moving 100 pixels at 200px/s takes 500ms. Moving 400 pixels takes 2000ms.

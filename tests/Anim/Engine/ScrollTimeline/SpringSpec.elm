@@ -72,9 +72,10 @@ builderWithSpring s =
 
 applyOpacity : ScrollTimelineInternal.EngineBuilder -> ScrollTimelineInternal.EngineBuilder
 applyOpacity =
-    Opacity.for "el"
+    Builder.for "el"
+        >> Opacity.begin
         >> Opacity.to 0.5
-        >> Opacity.build
+        >> Opacity.end
 
 
 extractOpacitySpring : ScrollTimelineInternal.EngineBuilder -> Maybe (Maybe Spring.Spring)

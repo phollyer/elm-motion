@@ -3,6 +3,7 @@ module Anim.Engine.WAAPI exposing
     , AnimBuilder
     , EngineBuilder
     , init
+    , for
     , animate, fireAndForget, retarget
     , AnimEvent(..)
     , withProgressEvents, setUpdateThrottle
@@ -82,6 +83,11 @@ To use this engine, you need to make your module a port module and set up two po
 📖 See [Initialize](https://phollyer.github.io/elm-motion/animation/workflow/init/) for details.
 
 @docs init
+
+
+# Target
+
+@docs for
 
 
 # Trigger
@@ -318,7 +324,7 @@ type alias EngineBuilder =
 -- ============================================================
 
 
-{-| Initialize animation state.
+{-| Initialize the engine state.
 
 Takes the command port, message port, and a list of property initializers:
 
@@ -334,6 +340,19 @@ Takes the command port, message port, and a list of property initializers:
 init : (Encode.Value -> Cmd msg) -> ((Decode.Value -> msg) -> Sub msg) -> List (EngineBuilder -> EngineBuilder) -> AnimState msg
 init =
     Internal.init
+
+
+{-| Select the animation group that subsequent property builders will target.
+
+    WAAPI.for "animGroupName"
+        >> Opacity.begin
+        >> Opacity.to 0.2
+        >> Opacity.end
+
+-}
+for : AnimGroupName -> EngineBuilder -> EngineBuilder
+for =
+    Builder.for
 
 
 
@@ -393,9 +412,10 @@ don't mention will be left untouched - if mid-flight, they will continue.
     let
         ( animState, animCmd ) =
             WAAPI.retarget model.animState <|
-                Translate.for "animGroupName"
+                WAAPI.for "animGroupName"
+                    >> Translate.begin
                     >> Translate.toY 0
-                    >> Translate.build
+                    >> Translate.end
     in
     ( { model | animState = animState }, animCmd )
 
@@ -657,9 +677,13 @@ onResize =
 
 {-| Set how many times an animation should repeat.
 
-    notificationAttentionLoop : AnimBuilder eng -> AnimBuilder eng
+Applies to the currently selected animation group in the builder chain.
+Select a group with `WAAPI.for` before setting playback.
+
+    notificationAttentionLoop : WAAPI.EngineBuilder -> WAAPI.EngineBuilder
     notificationAttentionLoop =
-        WAAPI.iterations 3
+        WAAPI.for "badge"
+            >> WAAPI.iterations 3
             >> pulseBadge
             >> nudgeBellIcon
 
@@ -671,18 +695,20 @@ iterations =
 
 {-| Make an animation loop infinitely.
 
+Applies to the currently selected animation group in the builder chain.
+
     import Anim.Engine.WAAPI as WAAPI
     import Anim.Property.Opacity as Opacity
 
     pulse : WAAPI.EngineBuilder -> WAAPI.EngineBuilder
     pulse =
-        Opacity.for "box"
+        WAAPI.for "box"
+            >> WAAPI.loopForever
+            >> Opacity.begin
             >> Opacity.to 0.2
-            >> Opacity.build
+            >> Opacity.end
 
-    WAAPI.animate model.animState <|
-        WAAPI.loopForever
-            >> pulse
+    WAAPI.animate model.animState pulse
 
 -}
 loopForever : EngineBuilder -> EngineBuilder
@@ -692,9 +718,12 @@ loopForever =
 
 {-| Make an animation alternate direction on each iteration.
 
-    floatingCardLoop : AnimBuilder eng -> AnimBuilder eng
+Applies to the currently selected animation group in the builder chain.
+
+    floatingCardLoop : WAAPI.EngineBuilder -> WAAPI.EngineBuilder
     floatingCardLoop =
-        WAAPI.iterations 4
+        WAAPI.for "card"
+            >> WAAPI.iterations 4
             >> WAAPI.alternate
             >> liftCard
             >> glowCardBorder
@@ -996,9 +1025,10 @@ the animation. Use this when an element is appearing (e.g., going from
     WAAPI.animate model.animState <|
         WAAPI.discreteEntry "display" "block"
             >> WAAPI.discreteEntry "visibility" "visible"
-            >> Opacity.for "box"
+            >> WAAPI.for "box"
+            >> Opacity.begin
             >> Opacity.to 1
-            >> Opacity.build
+            >> Opacity.end
 
 -}
 discreteEntry : String -> String -> EngineBuilder -> EngineBuilder
@@ -1021,9 +1051,10 @@ Use when an element is disappearing (e.g., going from
 
     WAAPI.animate model.animState <|
         WAAPI.discreteExit "display" "block" "none"
-            >> Opacity.for "box"
+            >> WAAPI.for "box"
+            >> Opacity.begin
             >> Opacity.to 0
-            >> Opacity.build
+            >> Opacity.end
 
 -}
 discreteExit : String -> String -> String -> EngineBuilder -> EngineBuilder
@@ -1111,9 +1142,10 @@ The named axis indicates which axis will remain frozen while you animate the oth
         ( animState, animCmd ) =
             WAAPI.animate model.animState <|
                 WAAPI.freezeX [ WAAPI.translate ]
-                    >> Translate.for "box"
+                    >> WAAPI.for "box"
+                    >> Translate.begin
                     >> Translate.toY 0
-                    >> Translate.build
+                    >> Translate.end
     in
     ( { model | animState = animState }, animCmd )
 

@@ -66,20 +66,22 @@ animGroup =
 
 fadeIn : WAAPI.EngineBuilder -> WAAPI.EngineBuilder
 fadeIn =
-    Opacity.for animGroup
+    WAAPI.for animGroup
+        >> Opacity.begin
         >> Opacity.to 1
         >> Opacity.duration 800
         >> Opacity.easing QuartIn
-        >> Opacity.build
+        >> Opacity.end
 
 
 fadeOut : WAAPI.EngineBuilder -> WAAPI.EngineBuilder
 fadeOut =
-    Opacity.for animGroup
+    WAAPI.for animGroup
+        >> Opacity.begin
         >> Opacity.to 0
         >> Opacity.duration 800
         >> Opacity.easing CubicIn
-        >> Opacity.build
+        >> Opacity.end
 
 
 

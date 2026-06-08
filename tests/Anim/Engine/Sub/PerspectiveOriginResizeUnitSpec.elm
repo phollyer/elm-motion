@@ -58,11 +58,12 @@ suite =
                         Sub.init [ PerspectiveOrigin.initXY groupName 50 50 ]
                             |> (\s ->
                                     Sub.animate s
-                                        (PerspectiveOrigin.for groupName
+                                        (Sub.for groupName
+                                            >> PerspectiveOrigin.begin
                                             >> PerspectiveOrigin.toXY 90 10
                                             >> PerspectiveOrigin.duration 1000
                                             >> PerspectiveOrigin.easing Linear
-                                            >> PerspectiveOrigin.build
+                                            >> PerspectiveOrigin.end
                                         )
                                )
                             |> step 500
@@ -99,11 +100,12 @@ suite =
                             ]
                             |> (\s ->
                                     Sub.animate s
-                                        (PerspectiveOrigin.for groupName
+                                        (Sub.for groupName
+                                            >> PerspectiveOrigin.begin
                                             >> PerspectiveOrigin.toXY 90 200
                                             >> PerspectiveOrigin.duration 1000
                                             >> PerspectiveOrigin.easing Linear
-                                            >> PerspectiveOrigin.build
+                                            >> PerspectiveOrigin.end
                                         )
                                )
                             |> step 500

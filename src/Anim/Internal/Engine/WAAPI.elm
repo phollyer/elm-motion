@@ -234,9 +234,16 @@ animate (AnimState state animGroups) build =
 
         generateAnimGroup : AnimGroupName -> Builder.ProcessedAnimGroupConfig -> AnimGroup
         generateAnimGroup animGroupName config =
+            let
+                playback =
+                    Builder.resolvePlayback
+                        processed.iterations
+                        processed.animationDirection
+                        config.playback
+            in
             Generator.generateAnimation
-                processed.iterations
-                processed.animationDirection
+                playback.iterations
+                playback.animationDirection
                 config.transformOrder
                 (Builder.getDiscreteEntryProperties builder)
                 (Builder.getDiscreteExitProperties builder)
@@ -336,9 +343,16 @@ retarget (AnimState state animGroups) build =
 
         generateAnimGroup : AnimGroupName -> Builder.ProcessedAnimGroupConfig -> AnimGroup
         generateAnimGroup animGroupName config =
+            let
+                playback =
+                    Builder.resolvePlayback
+                        processed.iterations
+                        processed.animationDirection
+                        config.playback
+            in
             Generator.generateAnimation
-                processed.iterations
-                processed.animationDirection
+                playback.iterations
+                playback.animationDirection
                 config.transformOrder
                 (Builder.getDiscreteEntryProperties builder)
                 (Builder.getDiscreteExitProperties builder)
@@ -1120,7 +1134,7 @@ applyTranslateResize animGroupName previousBounds bounds ((AnimState state animG
                             animGroups
 
                     -- Sync the stored baseline to the resized end. `Builder.getBaseline`
-                    -- feeds `Translate.for` so the next `animate` reads the post-resize
+                    -- feeds `Translate.begin` so the next `animate` reads the post-resize
                     -- target — otherwise `toY h` / `toX w` would inherit the pre-resize
                     -- coordinate for the axis it doesn't explicitly set and animate the
                     -- box off-screen.

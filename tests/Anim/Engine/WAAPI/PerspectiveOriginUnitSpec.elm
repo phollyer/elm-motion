@@ -54,10 +54,11 @@ unitTest description maybeUnit expected =
                         |> AnimGroups.insert "card" AnimGroup.init
 
                 originBuilder =
-                    PerspectiveOrigin.for "card"
+                    Builder.for "card"
+                        >> PerspectiveOrigin.begin
                         >> PerspectiveOrigin.toXY 25 75
                         >> PerspectiveOrigin.duration 500
-                        >> PerspectiveOrigin.build
+                        >> PerspectiveOrigin.end
 
                 initStep b =
                     case maybeUnit of

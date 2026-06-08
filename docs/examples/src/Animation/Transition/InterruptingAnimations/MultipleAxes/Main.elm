@@ -131,11 +131,12 @@ moveBoxY y =
 
 moveBox : (Translate.Builder ForTransition -> Translate.Builder ForTransition) -> Transition.EngineBuilder -> Transition.EngineBuilder
 moveBox moveFunc =
-    Translate.for animGroupName
+    Transition.for animGroupName
+        >> Translate.begin
         >> moveFunc
         >> Translate.speed 25
         >> Translate.easing QuintOut
-        >> Translate.build
+        >> Translate.end
 
 
 

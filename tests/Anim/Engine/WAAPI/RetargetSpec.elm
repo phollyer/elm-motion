@@ -57,11 +57,12 @@ initState =
 startTranslate : String -> Float -> WAAPI.AnimState msg -> WAAPI.AnimState msg
 startTranslate groupName target state =
     WAAPI.animate state
-        (Translate.for groupName
+        (WAAPI.for groupName
+            >> Translate.begin
             >> Translate.toX target
             >> Translate.duration 1000
             >> Translate.easing EaseInOut
-            >> Translate.build
+            >> Translate.end
         )
         |> Tuple.first
 
@@ -69,9 +70,10 @@ startTranslate groupName target state =
 snapTranslate : String -> Float -> WAAPI.AnimState msg -> WAAPI.AnimState msg
 snapTranslate groupName target state =
     WAAPI.retarget state
-        (Translate.for groupName
+        (WAAPI.for groupName
+            >> Translate.begin
             >> Translate.toX target
-            >> Translate.build
+            >> Translate.end
         )
         |> Tuple.first
 
@@ -193,9 +195,10 @@ scoping =
                     |> startTranslate "a" 500
                     |> (\state ->
                             WAAPI.retarget state
-                                (Translate.for "a"
+                                (WAAPI.for "a"
+                                    >> Translate.begin
                                     >> Translate.toY 250
-                                    >> Translate.build
+                                    >> Translate.end
                                 )
                                 |> Tuple.first
                        )
@@ -208,9 +211,10 @@ scoping =
                     |> startTranslate "a" 500
                     |> (\state ->
                             WAAPI.retarget state
-                                (Translate.for "a"
+                                (WAAPI.for "a"
+                                    >> Translate.begin
                                     >> Translate.toY 250
-                                    >> Translate.build
+                                    >> Translate.end
                                 )
                                 |> Tuple.first
                        )
@@ -235,10 +239,11 @@ timingIgnored =
                     snapWithLongDuration =
                         WAAPI.retarget
                             (startTranslate "a" 500 initState)
-                            (Translate.for "a"
+                            (WAAPI.for "a"
+                                >> Translate.begin
                                 >> Translate.toX 250
                                 >> Translate.duration 10000
-                                >> Translate.build
+                                >> Translate.end
                             )
                             |> Tuple.first
                 in
@@ -252,10 +257,11 @@ timingIgnored =
                     snapWithDelay =
                         WAAPI.retarget
                             (startTranslate "a" 500 initState)
-                            (Translate.for "a"
+                            (WAAPI.for "a"
+                                >> Translate.begin
                                 >> Translate.toX 250
                                 >> Translate.delay 5000
-                                >> Translate.build
+                                >> Translate.end
                             )
                             |> Tuple.first
                 in
@@ -320,9 +326,10 @@ animGroupsFor name =
 translateProcessed : String -> Float -> Builder.ProcessedAnimationData
 translateProcessed groupName target =
     Builder.init
-        [ Translate.for groupName
+        [ Builder.for groupName
+            >> Translate.begin
             >> Translate.toX target
             >> Translate.duration 500
-            >> Translate.build
+            >> Translate.end
         ]
         |> Builder.process

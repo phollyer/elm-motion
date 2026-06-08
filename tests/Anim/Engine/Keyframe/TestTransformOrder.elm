@@ -19,19 +19,20 @@ suite =
                         Keyframe.animate (Keyframe.init []) <|
                             (Keyframe.duration 1000
                                 >> Keyframe.easing Easing.Linear
+                                >> Keyframe.for "test-element"
                                 -- First: Position
-                                >> Position.for "test-element"
+                                >> Position.begin
                                 >> Position.toXY 100 50
-                                >> Position.build
+                                >> Position.end
                                 -- Second: Rotate
-                                >> Rotate.for "test-element"
+                                >> Rotate.begin
                                 >> Rotate.toZ 45
-                                >> Rotate.build
+                                >> Rotate.end
                                 -- Third: Scale
-                                >> Scale.for "test-element"
+                                >> Scale.begin
                                 >> Scale.fromXY 1.0 1.0
                                 >> Scale.toXY 1.5 1.2
-                                >> Scale.build
+                                >> Scale.end
                             )
                 in
                 Keyframe.maybeString "test-element" animations

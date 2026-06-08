@@ -89,12 +89,14 @@ pulse =
         >> WAAPI.alternate
         >> WAAPI.duration 1000
         >> WAAPI.easing EaseInOut
-        >> Scale.for groupName
+        >> WAAPI.for groupName
+        >> Scale.begin
         >> Scale.to 0.4
-        >> Scale.build
-        >> Opacity.for groupName
+        >> Scale.end
+        >> WAAPI.for groupName
+        >> Opacity.begin
         >> Opacity.to 0.3
-        >> Opacity.build
+        >> Opacity.end
 
 
 
