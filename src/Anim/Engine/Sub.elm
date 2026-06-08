@@ -178,6 +178,16 @@ for that group.
 
 # Freeze
 
+Freeze an axis to hold it in place while other axes or properties animate.
+
+This is a precedence function, so it can operate as a global setting for all groups in the builder chain, or you
+can set it on a per-group basis which overrides any global setting for that group.
+
+    Sub.freezeX -- global setting
+        >> Sub.for "box"
+        >> Sub.freezeY -- overrides global for this group
+        >> ... -- other builders
+
 📖 See [Interrupting Animations](https://phollyer.github.io/elm-motion/animation/concepts/interruptions/) for details.
 
 @docs FreezeProperty, translate, rotate, scale, skew
@@ -186,6 +196,16 @@ for that group.
 
 
 # Unfreeze
+
+Unfreeze an axis to allow it to animate.
+
+This is a precedence function, so it can operate as a global setting for all groups in the builder chain, or you
+can set it on a per-group basis which overrides any global setting for that group.
+
+    Sub.unfreezeX -- global setting
+        >> Sub.for "box"
+        >> Sub.unfreezeY -- overrides global for this group
+        >> ... -- other builders
 
 @docs unfreezeX, unfreezeY, unfreezeZ, unfreezeXY, unfreezeXZ, unfreezeYZ, unfreezeXYZ
 
