@@ -9,6 +9,15 @@ The Keyframe, Sub, and WAAPI engines expose a `transformOrder` function which ta
 
 Use these to change the transform order that is applied to your animations.
 
+## Scope
+
+`transformOrder` has dual scope:
+
+- Call it after selecting a group with `for` to set that group's transform order.
+- Call it before selecting a group to set the global default used by groups that do not set their own order.
+
+Group-level order takes precedence over the global default.
+
 ## Default Order
 
 Elm Motion uses **Translate → Rotate → Skew → Scale** as the default order when no order is specified with the `transformOrder` function.
@@ -77,31 +86,37 @@ There are 6 boxes in the center, each one is triggered with the **same** animati
     === "Keyframe"
 
         ```elm
-        import Anim.Engine.CSS.Keyframe as Keyframe exposing (TransformProperty(..))
+        import Anim.Engine.Keyframe as Keyframe
+        import Anim.Extra.TransformOrder exposing (TransformProperty(..))
 
         Keyframe.animate model.animState <|
-            Keyframe.transformOrder [ Rotate, Translate, Scale ]
-                >> ... -- animations
+            Keyframe.for "box"
+                >> Keyframe.transformOrder [ Rotate, Translate, Scale ]
+                >> ... -- properties
         ```
 
     === "Sub"
 
         ```elm
-        import Anim.Engine.Sub as Sub exposing (TransformProperty(..))
+        import Anim.Engine.Sub as Sub
+        import Anim.Extra.TransformOrder exposing (TransformProperty(..))
 
         Sub.animate model.animState <|
-            Sub.transformOrder [ Rotate, Translate, Scale ]
-                >> ... -- animations
+            Sub.for "box"
+                >> Sub.transformOrder [ Rotate, Translate, Scale ]
+                >> ... -- properties
         ```
 
     === "WAAPI"
 
         ```elm
-        import Anim.Engine.WAAPI as WAAPI exposing (TransformProperty(..))
+        import Anim.Engine.WAAPI as WAAPI
+        import Anim.Extra.TransformOrder exposing (TransformProperty(..))
 
-        WAAPI.animate model.animState <|
-            WAAPI.transformOrder [ Rotate, Translate, Scale ]
-                >> ... -- animations
+        WAAPI.animate motionCmd <|
+            WAAPI.for "box"
+                >> WAAPI.transformOrder [ Rotate, Translate, Scale ]
+                >> ... -- properties
         ```
 
 ### Autofill

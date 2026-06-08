@@ -1073,6 +1073,9 @@ discreteExit =
 The transform order specifies how translate, rotate, skew and scale transforms
 are combined. Start the list with the transform to apply first.
 
+When called after `for`, it applies to that animation group only.
+When called before selecting a group, it sets the global default.
+
 Any missing transforms are automatically appended in the default order
 (Translate → Rotate → Skew → Scale).
 

@@ -406,7 +406,10 @@ The Keyframe engine bakes discrete properties into the generated `@keyframes` ru
 
 ### Transform Order
 
-Use `transformOrder` to set the order in which transform properties are applied for the next animation.
+Use `transformOrder` to set the order in which transform properties are applied.
+
+Call it after `for` to set the current animation group's order.
+Call it before selecting a group to set the global default for groups that do not override it.
 
 ??? example "View Source Code"
 
@@ -414,8 +417,8 @@ Use `transformOrder` to set the order in which transform properties are applied 
     import Anim.Extra.TransformOrder exposing (TransformProperty(..))
 
     animateBox =
-        Keyframe.transformOrder [ Scale, Rotate, Translate ]
-            >> Keyframe.for "box"
+        Keyframe.for "box"
+            >> Keyframe.transformOrder [ Scale, Rotate, Translate ]
             >> Translate.begin
             >> ...
     ```

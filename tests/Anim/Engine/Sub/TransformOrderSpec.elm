@@ -107,4 +107,38 @@ suite =
                         [ Selector.style "transform"
                             "scaleX(1.5) scaleY(1.5) translate3d(50px, 25px, 0px) rotateZ(45deg)"
                         ]
+        , test "group transformOrder set after for overrides an earlier global transformOrder" <|
+            \_ ->
+                Sub.init [ Translate.initXY "el" 0 0 ]
+                    |> (\state ->
+                            Sub.animate state
+                                (Sub.transformOrder [ Translate, Rotate, Skew, Scale ]
+                                    >> Sub.for "el"
+                                    >> Sub.transformOrder [ Scale, Rotate, Translate, Skew ]
+                                    >> Translate.begin
+                                    >> Translate.fromXY 0 0
+                                    >> Translate.toXY 100 50
+                                    >> Translate.duration 1000
+                                    >> Translate.easing Linear
+                                    >> Translate.end
+                                    >> Rotate.begin
+                                    >> Rotate.fromZ 0
+                                    >> Rotate.toZ 90
+                                    >> Rotate.duration 1000
+                                    >> Rotate.easing Linear
+                                    >> Rotate.end
+                                    >> Scale.begin
+                                    >> Scale.fromXY 1 1
+                                    >> Scale.toXY 2 2
+                                    >> Scale.duration 1000
+                                    >> Scale.easing Linear
+                                    >> Scale.end
+                                )
+                       )
+                    |> step 500
+                    |> rendered
+                    |> Query.has
+                        [ Selector.style "transform"
+                            "scaleX(1.5) scaleY(1.5) rotateZ(45deg) translate3d(50px, 25px, 0px)"
+                        ]
         ]

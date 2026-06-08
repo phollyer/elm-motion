@@ -145,6 +145,35 @@ overrideTests =
                             |> Builder.getTransformOrder "el"
                 in
                 orderBefore |> Expect.equal orderAfter
+        , test "transformOrder after for applies to current group while other groups inherit global" <|
+            \_ ->
+                let
+                    globalOrder =
+                        [ Translate, Rotate, Skew, Scale ]
+
+                    perGroupOrder =
+                        [ Scale, Rotate, Translate, Skew ]
+
+                    builder =
+                        applyBuilder
+                            (WAAPI.transformOrder globalOrder
+                                >> WAAPI.for "el"
+                                >> WAAPI.transformOrder perGroupOrder
+                                >> Translate.begin
+                                >> Translate.toXY 100 50
+                                >> Translate.duration 500
+                                >> Translate.end
+                                >> WAAPI.for "el-2"
+                                >> Translate.begin
+                                >> Translate.toXY 10 5
+                                >> Translate.duration 500
+                                >> Translate.end
+                            )
+                in
+                ( Builder.getTransformOrder "el" builder
+                , Builder.getTransformOrder "el-2" builder
+                )
+                    |> Expect.equal ( Just perGroupOrder, Just globalOrder )
         , test "fireAndForget accepts a transformOrder-configured pipeline without crashing" <|
             \_ ->
                 let

@@ -639,11 +639,14 @@ cssUnitHeight =
 By default, transforms are applied in the order: translate → rotate → skew → scale.
 Use this when you need a different order for specific visual effects.
 
+When called after `for`, it applies to that animation group only.
+When called before selecting a group, it sets the global default.
+
     import Anim.Extra.TransformOrder exposing (TransformProperty(..))
 
     ViewTimeline.animate motionCmd <|
-        ViewTimeline.transformOrder [ Scale, Rotate, Translate ]
-            >> ViewTimeline.for "box"
+        ViewTimeline.for "box"
+            >> ViewTimeline.transformOrder [ Scale, Rotate, Translate ]
             >> Translate.begin
             >> Translate.fromXY 0 0
             >> Translate.toXY 100 0

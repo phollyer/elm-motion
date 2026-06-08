@@ -317,14 +317,17 @@ The ViewTimeline engine manages discrete properties as inline styles. `discreteE
 
 Use `transformOrder` to set the order in which transform properties are applied.
 
+Call it after `for` to set the current animation group's order.
+Call it before selecting a group to set the global default for groups that do not override it.
+
 ??? example "View Source Code"
 
     ```elm
     import Anim.Extra.TransformOrder exposing (TransformProperty(..))
 
     ViewTimeline.animate motionCmd <|
-        ViewTimeline.transformOrder [ Scale, Rotate, Translate ]
-            >> ViewTimeline.for "slide"
+        ViewTimeline.for "slide"
+            >> ViewTimeline.transformOrder [ Scale, Rotate, Translate ]
             >> Translate.begin
             >> ...
     ```

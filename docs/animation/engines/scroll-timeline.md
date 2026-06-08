@@ -285,14 +285,17 @@ The ScrollTimeline engine manages discrete properties as inline styles. `discret
 
 Use `transformOrder` to set the order in which transform properties are applied.
 
+Call it after `for` to set the current animation group's order.
+Call it before selecting a group to set the global default for groups that do not override it.
+
 ??? example "View Source Code"
 
     ```elm
     import Anim.Extra.TransformOrder exposing (TransformProperty(..))
 
     ScrollTimeline.animate motionCmd (Container "carousel") <|
-        ScrollTimeline.transformOrder [ Scale, Rotate, Translate ]
-            >> ScrollTimeline.for "slide"
+        ScrollTimeline.for "slide"
+            >> ScrollTimeline.transformOrder [ Scale, Rotate, Translate ]
             >> Translate.begin
             >> ...
     ```

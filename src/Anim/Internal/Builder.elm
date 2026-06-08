@@ -953,16 +953,32 @@ getPerspectiveOriginInitCssUnitAxes group (AnimBuilder data) =
 
 
 transformOrder : List TransformProperty -> AnimBuilder { eng | withTransformOrder : () } -> AnimBuilder { eng | withTransformOrder : () }
-transformOrder order (AnimBuilder data) =
+transformOrder order ((AnimBuilder data) as builder) =
     let
         normalizedOrder =
             Just (normalizeTransformOrder order)
-
-        defs =
-            data.defaults
     in
-    AnimBuilder
-        { data | defaults = { defs | globalTransformOrder = normalizedOrder } }
+    case data.animation.currentAnimGroup of
+        Just animGroupName ->
+            let
+                nextConfig =
+                    case AnimGroups.get animGroupName data.animation.animGroups of
+                        Just existing ->
+                            { existing | transformOrder = normalizedOrder }
+
+                        Nothing ->
+                            { properties = [], playback = Nothing, transformOrder = normalizedOrder }
+            in
+            builder
+                |> updateCurrentConfig nextConfig
+
+        Nothing ->
+            let
+                defs =
+                    data.defaults
+            in
+            AnimBuilder
+                { data | defaults = { defs | globalTransformOrder = normalizedOrder } }
 
 
 normalizeTransformOrder : List TransformProperty -> List TransformProperty
@@ -1416,12 +1432,12 @@ getCurrentAnimGroupConfig (AnimBuilder data) =
                     (\config ->
                         { config
                             | transformOrder =
-                                case data.defaults.globalTransformOrder of
-                                    Just globalOrder ->
-                                        Just globalOrder
+                                case config.transformOrder of
+                                    Just groupOrder ->
+                                        Just groupOrder
 
                                     Nothing ->
-                                        config.transformOrder
+                                        data.defaults.globalTransformOrder
                         }
                     )
                 |> Maybe.withDefault { properties = [], playback = Nothing, transformOrder = data.defaults.globalTransformOrder }

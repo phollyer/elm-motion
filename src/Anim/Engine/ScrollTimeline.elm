@@ -591,11 +591,14 @@ discreteExit =
 By default, transforms are applied in the order: translate → rotate → skew → scale.
 Use this when you need a different order for specific visual effects.
 
+When called after `for`, it applies to that animation group only.
+When called before selecting a group, it sets the global default.
+
     import Anim.Extra.TransformOrder exposing (TransformProperty(..))
 
     ScrollTimeline.animate motionCmd (Container "scroller") <|
-        ScrollTimeline.transformOrder [ Scale, Rotate, Translate ]
-            >> ScrollTimeline.for "box"
+        ScrollTimeline.for "box"
+            >> ScrollTimeline.transformOrder [ Scale, Rotate, Translate ]
             >> Translate.begin
             >> Translate.fromXY 0 0
             >> Translate.toXY 100 0

@@ -390,7 +390,10 @@ The Sub engine manages discrete properties as inline styles. `discreteEntry` val
 
 ### Transform Order
 
-Use `transformOrder` to set the order in which transform properties are applied for the next animation.
+Use `transformOrder` to set the order in which transform properties are applied.
+
+Call it after `for` to set the current animation group's order.
+Call it before selecting a group to set the global default for groups that do not override it.
 
 ??? example "View Source Code"
 
@@ -398,8 +401,8 @@ Use `transformOrder` to set the order in which transform properties are applied 
     import Anim.Extra.TransformOrder exposing (TransformProperty(..))
 
     animateBox =
-        Sub.transformOrder [ Scale, Rotate, Translate ]
-            >> Sub.for "box"
+        Sub.for "box"
+            >> Sub.transformOrder [ Scale, Rotate, Translate ]
             >> Translate.begin
             >> ...
     ```
