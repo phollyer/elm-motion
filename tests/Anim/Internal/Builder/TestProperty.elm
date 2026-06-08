@@ -302,14 +302,16 @@ getStartValue =
         [ getStartTests
             { label = "getBackgroundColorStart"
             , buildWithFrom =
-                CustomColor.for "test" BackgroundColor
+                Builder.for "test"
+                    >> CustomColor.begin BackgroundColor
                     >> CustomColor.from (Color.rgba 100 200 50 1)
                     >> CustomColor.to Color.red
-                    >> CustomColor.build
+                    >> CustomColor.end
             , buildWithoutFrom =
-                CustomColor.for "test" BackgroundColor
+                Builder.for "test"
+                    >> CustomColor.begin BackgroundColor
                     >> CustomColor.to Color.red
-                    >> CustomColor.build
+                    >> CustomColor.end
             , getter = \animGroup builder -> Property.getCustomColorPropertyStart animGroup "background-color" builder
             , expectedFrom = Color.rgba 100 200 50 1
             , expectedDefault = Color.rgba 255 255 255 0
@@ -318,28 +320,32 @@ getStartValue =
             { label = "getFontColorStart"
             , getter = \animGroup builder -> Property.getCustomColorPropertyStart animGroup "color" builder
             , buildWithFrom =
-                CustomColor.for "test" TextColor
+                Builder.for "test"
+                    >> CustomColor.begin TextColor
                     >> CustomColor.from (Color.rgba 100 200 50 1)
                     >> CustomColor.to Color.red
-                    >> CustomColor.build
+                    >> CustomColor.end
             , expectedFrom = Color.rgba 100 200 50 1
             , buildWithoutFrom =
-                CustomColor.for "test" TextColor
+                Builder.for "test"
+                    >> CustomColor.begin TextColor
                     >> CustomColor.to Color.red
-                    >> CustomColor.build
+                    >> CustomColor.end
             , expectedDefault = Color.rgba 255 255 255 0
             }
         , getStartTests
             { label = "getOpacityStart"
             , buildWithFrom =
-                Opacity.for "test"
+                Builder.for "test"
+                    >> Opacity.begin
                     >> Opacity.from 0.5
                     >> Opacity.to 0
-                    >> Opacity.build
+                    >> Opacity.end
             , buildWithoutFrom =
-                Opacity.for "test"
+                Builder.for "test"
+                    >> Opacity.begin
                     >> Opacity.to 0
-                    >> Opacity.build
+                    >> Opacity.end
             , getter = Property.getOpacityStart
             , expectedFrom = 0.5
             , expectedDefault = 1.0
@@ -347,14 +353,16 @@ getStartValue =
         , getStartTests
             { label = "getRotateStart"
             , buildWithFrom =
-                Rotate.for "test"
+                Builder.for "test"
+                    >> Rotate.begin
                     >> Rotate.fromXYZ 10 20 30
                     >> Rotate.toXYZ 100 200 300
-                    >> Rotate.build
+                    >> Rotate.end
             , buildWithoutFrom =
-                Rotate.for "test"
+                Builder.for "test"
+                    >> Rotate.begin
                     >> Rotate.toXYZ 100 200 300
-                    >> Rotate.build
+                    >> Rotate.end
             , getter = Property.getRotateStart
             , expectedFrom = { x = 10, y = 20, z = 30 }
             , expectedDefault = { x = 0, y = 0, z = 0 }
@@ -362,14 +370,16 @@ getStartValue =
         , getStartTests
             { label = "getScaleStart"
             , buildWithFrom =
-                Scale.for "test"
+                Builder.for "test"
+                    >> Scale.begin
                     >> Scale.fromXYZ 2 3 4
                     >> Scale.toXYZ 5 6 7
-                    >> Scale.build
+                    >> Scale.end
             , buildWithoutFrom =
-                Scale.for "test"
+                Builder.for "test"
+                    >> Scale.begin
                     >> Scale.toXYZ 5 6 7
-                    >> Scale.build
+                    >> Scale.end
             , getter = Property.getScaleStart
             , expectedFrom = { x = 2, y = 3, z = 4 }
             , expectedDefault = { x = 1, y = 1, z = 1 }
@@ -377,14 +387,16 @@ getStartValue =
         , getStartTests
             { label = "getSizeStart"
             , buildWithFrom =
-                Size.for "test"
+                Builder.for "test"
+                    >> Size.begin
                     >> Size.fromHW 50 100
                     >> Size.toHW 200 300
-                    >> Size.build
+                    >> Size.end
             , buildWithoutFrom =
-                Size.for "test"
+                Builder.for "test"
+                    >> Size.begin
                     >> Size.toHW 200 300
-                    >> Size.build
+                    >> Size.end
             , getter = Property.getSizeStart
             , expectedFrom = { width = 100, height = 50 }
             , expectedDefault = { width = 0, height = 0 }
@@ -392,14 +404,16 @@ getStartValue =
         , getStartTests
             { label = "getTranslateStart"
             , buildWithFrom =
-                Translate.for "test"
+                Builder.for "test"
+                    >> Translate.begin
                     >> Translate.fromXYZ 10 20 30
                     >> Translate.toXYZ 100 200 300
-                    >> Translate.build
+                    >> Translate.end
             , buildWithoutFrom =
-                Translate.for "test"
+                Builder.for "test"
+                    >> Translate.begin
                     >> Translate.toXYZ 100 200 300
-                    >> Translate.build
+                    >> Translate.end
             , getter = Property.getTranslateStart
             , expectedFrom = { x = 10, y = 20, z = 30 }
             , expectedDefault = { x = 0, y = 0, z = 0 }
@@ -440,63 +454,70 @@ getEndValue =
         [ getEndTests
             { label = "getBackgroundColorEnd"
             , build =
-                CustomColor.for "test" BackgroundColor
+                Builder.for "test"
+                    >> CustomColor.begin BackgroundColor
                     >> CustomColor.to Color.red
-                    >> CustomColor.build
+                    >> CustomColor.end
             , getter = \animGroup builder -> Property.getCustomColorPropertyEnd animGroup "background-color" builder
             , expectedEnd = Color.red
             }
         , getEndTests
             { label = "getFontColorEnd"
             , build =
-                CustomColor.for "test" TextColor
+                Builder.for "test"
+                    >> CustomColor.begin TextColor
                     >> CustomColor.to Color.red
-                    >> CustomColor.build
+                    >> CustomColor.end
             , getter = \animGroup builder -> Property.getCustomColorPropertyEnd animGroup "color" builder
             , expectedEnd = Color.red
             }
         , getEndTests
             { label = "getOpacityEnd"
             , build =
-                Opacity.for "test"
+                Builder.for "test"
+                    >> Opacity.begin
                     >> Opacity.to 0.5
-                    >> Opacity.build
+                    >> Opacity.end
             , getter = Property.getOpacityEnd
             , expectedEnd = 0.5
             }
         , getEndTests
             { label = "getRotateEnd"
             , build =
-                Rotate.for "test"
+                Builder.for "test"
+                    >> Rotate.begin
                     >> Rotate.toXYZ 100 200 300
-                    >> Rotate.build
+                    >> Rotate.end
             , getter = Property.getRotateEnd
             , expectedEnd = { x = 100, y = 200, z = 300 }
             }
         , getEndTests
             { label = "getScaleEnd"
             , build =
-                Scale.for "test"
+                Builder.for "test"
+                    >> Scale.begin
                     >> Scale.toXYZ 5 6 7
-                    >> Scale.build
+                    >> Scale.end
             , getter = Property.getScaleEnd
             , expectedEnd = { x = 5, y = 6, z = 7 }
             }
         , getEndTests
             { label = "getSizeEnd"
             , build =
-                Size.for "test"
+                Builder.for "test"
+                    >> Size.begin
                     >> Size.toHW 200 300
-                    >> Size.build
+                    >> Size.end
             , getter = Property.getSizeEnd
             , expectedEnd = { width = 300, height = 200 }
             }
         , getEndTests
             { label = "getTranslateEnd"
             , build =
-                Translate.for "test"
+                Builder.for "test"
+                    >> Translate.begin
                     >> Translate.toXYZ 100 200 300
-                    >> Translate.build
+                    >> Translate.end
             , getter = Property.getTranslateEnd
             , expectedEnd = { x = 100, y = 200, z = 300 }
             }
@@ -557,14 +578,16 @@ getRangeValue =
         [ getRangeTests
             { label = "getBackgroundColorRange"
             , buildWithFrom =
-                CustomColor.for "test" BackgroundColor
+                Builder.for "test"
+                    >> CustomColor.begin BackgroundColor
                     >> CustomColor.from (Color.rgba 100 200 50 1)
                     >> CustomColor.to (Color.rgba 255 0 0 1)
-                    >> CustomColor.build
+                    >> CustomColor.end
             , buildWithoutFrom =
-                CustomColor.for "test" BackgroundColor
+                Builder.for "test"
+                    >> CustomColor.begin BackgroundColor
                     >> CustomColor.to Color.red
-                    >> CustomColor.build
+                    >> CustomColor.end
             , getter = \animGroup builder -> Property.getCustomColorPropertyRange animGroup "background-color" builder
             , expectedStart = Color.rgba 100 200 50 1
             , expectedEndWithFrom = Color.rgba 255 0 0 1
@@ -574,14 +597,16 @@ getRangeValue =
         , getRangeTests
             { label = "getFontColorRange"
             , buildWithFrom =
-                CustomColor.for "test" TextColor
+                Builder.for "test"
+                    >> CustomColor.begin TextColor
                     >> CustomColor.from (Color.rgba 100 200 50 1)
                     >> CustomColor.to (Color.rgba 255 0 0 1)
-                    >> CustomColor.build
+                    >> CustomColor.end
             , buildWithoutFrom =
-                CustomColor.for "test" TextColor
+                Builder.for "test"
+                    >> CustomColor.begin TextColor
                     >> CustomColor.to Color.red
-                    >> CustomColor.build
+                    >> CustomColor.end
             , getter = \animGroup builder -> Property.getCustomColorPropertyRange animGroup "color" builder
             , expectedStart = Color.rgba 100 200 50 1
             , expectedEndWithFrom = Color.rgba 255 0 0 1
@@ -591,14 +616,16 @@ getRangeValue =
         , getRangeTests
             { label = "getOpacityRange"
             , buildWithFrom =
-                Opacity.for "test"
+                Builder.for "test"
+                    >> Opacity.begin
                     >> Opacity.from 0.5
                     >> Opacity.to 0
-                    >> Opacity.build
+                    >> Opacity.end
             , buildWithoutFrom =
-                Opacity.for "test"
+                Builder.for "test"
+                    >> Opacity.begin
                     >> Opacity.to 0
-                    >> Opacity.build
+                    >> Opacity.end
             , getter = Property.getOpacityRange
             , expectedStart = 0.5
             , expectedEndWithFrom = 0
@@ -608,14 +635,16 @@ getRangeValue =
         , getRangeTests
             { label = "getRotateRange"
             , buildWithFrom =
-                Rotate.for "test"
+                Builder.for "test"
+                    >> Rotate.begin
                     >> Rotate.fromXYZ 10 20 30
                     >> Rotate.toXYZ 100 200 300
-                    >> Rotate.build
+                    >> Rotate.end
             , buildWithoutFrom =
-                Rotate.for "test"
+                Builder.for "test"
+                    >> Rotate.begin
                     >> Rotate.toXYZ 100 200 300
-                    >> Rotate.build
+                    >> Rotate.end
             , getter = Property.getRotateRange
             , expectedStart = { x = 10, y = 20, z = 30 }
             , expectedEndWithFrom = { x = 100, y = 200, z = 300 }
@@ -625,14 +654,16 @@ getRangeValue =
         , getRangeTests
             { label = "getScaleRange"
             , buildWithFrom =
-                Scale.for "test"
+                Builder.for "test"
+                    >> Scale.begin
                     >> Scale.fromXYZ 2 3 4
                     >> Scale.toXYZ 5 6 7
-                    >> Scale.build
+                    >> Scale.end
             , buildWithoutFrom =
-                Scale.for "test"
+                Builder.for "test"
+                    >> Scale.begin
                     >> Scale.toXYZ 5 6 7
-                    >> Scale.build
+                    >> Scale.end
             , getter = Property.getScaleRange
             , expectedStart = { x = 2, y = 3, z = 4 }
             , expectedEndWithFrom = { x = 5, y = 6, z = 7 }
@@ -642,14 +673,16 @@ getRangeValue =
         , getRangeTests
             { label = "getSizeRange"
             , buildWithFrom =
-                Size.for "test"
+                Builder.for "test"
+                    >> Size.begin
                     >> Size.fromHW 50 100
                     >> Size.toHW 200 300
-                    >> Size.build
+                    >> Size.end
             , buildWithoutFrom =
-                Size.for "test"
+                Builder.for "test"
+                    >> Size.begin
                     >> Size.toHW 200 300
-                    >> Size.build
+                    >> Size.end
             , getter = Property.getSizeRange
             , expectedStart = { width = 100, height = 50 }
             , expectedEndWithFrom = { width = 300, height = 200 }
@@ -659,14 +692,16 @@ getRangeValue =
         , getRangeTests
             { label = "getTranslateRange"
             , buildWithFrom =
-                Translate.for "test"
+                Builder.for "test"
+                    >> Translate.begin
                     >> Translate.fromXYZ 10 20 30
                     >> Translate.toXYZ 100 200 300
-                    >> Translate.build
+                    >> Translate.end
             , buildWithoutFrom =
-                Translate.for "test"
+                Builder.for "test"
+                    >> Translate.begin
                     >> Translate.toXYZ 100 200 300
-                    >> Translate.build
+                    >> Translate.end
             , getter = Property.getTranslateRange
             , expectedStart = { x = 10, y = 20, z = 30 }
             , expectedEndWithFrom = { x = 100, y = 200, z = 300 }
@@ -732,144 +767,159 @@ translateClampTests =
         [ test "clampX clamps explicit toX above max" <|
             \_ ->
                 animBuilder
-                    |> (Translate.for "test"
+                    |> (Builder.for "test"
+                            >> Translate.begin
                             >> Translate.clampX 0 200
                             >> Translate.toX 500
-                            >> Translate.build
+                            >> Translate.end
                        )
                     |> endRecord
                     |> Expect.equal (Just { x = 200, y = 0, z = 0 })
         , test "clampX still clamps when declared after toX" <|
             \_ ->
                 animBuilder
-                    |> (Translate.for "test"
+                    |> (Builder.for "test"
+                            >> Translate.begin
                             >> Translate.toX 500
                             >> Translate.clampX 0 200
-                            >> Translate.build
+                            >> Translate.end
                        )
                     |> endRecord
                     |> Expect.equal (Just { x = 200, y = 0, z = 0 })
         , test "clampX clamps explicit fromX below min" <|
             \_ ->
                 animBuilder
-                    |> (Translate.for "test"
+                    |> (Builder.for "test"
+                            >> Translate.begin
                             >> Translate.clampX 0 200
                             >> Translate.fromX -100
                             >> Translate.toX 50
-                            >> Translate.build
+                            >> Translate.end
                        )
                     |> startRecord
                     |> Expect.equal (Just { x = 0, y = 0, z = 0 })
         , test "clampX clamps a byX overshoot to the max boundary" <|
             \_ ->
                 animBuilder
-                    |> (Translate.for "test"
+                    |> (Builder.for "test"
+                            >> Translate.begin
                             >> Translate.clampX 0 200
                             >> Translate.fromX 150
                             >> Translate.byX 100
-                            >> Translate.build
+                            >> Translate.end
                        )
                     |> endRecord
                     |> Expect.equal (Just { x = 200, y = 0, z = 0 })
         , test "clampY only clamps the Y axis" <|
             \_ ->
                 animBuilder
-                    |> (Translate.for "test"
+                    |> (Builder.for "test"
+                            >> Translate.begin
                             >> Translate.clampY 0 100
                             >> Translate.toXY 500 500
-                            >> Translate.build
+                            >> Translate.end
                        )
                     |> endRecord
                     |> Expect.equal (Just { x = 500, y = 100, z = 0 })
         , test "clampZ clamps the Z axis" <|
             \_ ->
                 animBuilder
-                    |> (Translate.for "test"
+                    |> (Builder.for "test"
+                            >> Translate.begin
                             >> Translate.clampZ -10 10
                             >> Translate.toZ 1000
-                            >> Translate.build
+                            >> Translate.end
                        )
                     |> endRecord
                     |> Expect.equal (Just { x = 0, y = 0, z = 10 })
         , test "clampX with reversed args (max < min) is normalized" <|
             \_ ->
                 animBuilder
-                    |> (Translate.for "test"
+                    |> (Builder.for "test"
+                            >> Translate.begin
                             >> Translate.clampX 200 0
                             >> Translate.toX 500
-                            >> Translate.build
+                            >> Translate.end
                        )
                     |> endRecord
                     |> Expect.equal (Just { x = 200, y = 0, z = 0 })
         , test "unclampX removes only the X axis clamp" <|
             \_ ->
                 animBuilder
-                    |> (Translate.for "test"
+                    |> (Builder.for "test"
+                            >> Translate.begin
                             >> Translate.clampX 0 200
                             >> Translate.clampY 0 100
                             >> Translate.unclampX
                             >> Translate.toXY 500 500
-                            >> Translate.build
+                            >> Translate.end
                        )
                     |> endRecord
                     |> Expect.equal (Just { x = 500, y = 100, z = 0 })
         , test "clamps are scoped to the active animGroup" <|
             \_ ->
                 animBuilder
-                    |> (Translate.for "ship"
+                    |> (Builder.for "ship"
+                            >> Translate.begin
                             >> Translate.clampX 0 200
                             >> Translate.toX 50
-                            >> Translate.build
+                            >> Translate.end
                        )
-                    |> (Translate.for "other"
+                    |> (Builder.for "other"
+                            >> Translate.begin
                             >> Translate.toX 500
-                            >> Translate.build
+                            >> Translate.end
                        )
                     |> endRecord
                     |> Expect.equal (Just { x = 500, y = 0, z = 0 })
         , test "no clamps means values pass through unchanged" <|
             \_ ->
                 animBuilder
-                    |> (Translate.for "test"
+                    |> (Builder.for "test"
+                            >> Translate.begin
                             >> Translate.toX 500
-                            >> Translate.build
+                            >> Translate.end
                        )
                     |> endRecord
                     |> Expect.equal (Just { x = 500, y = 0, z = 0 })
         , test "clamps persist across an animate batch (not cleared by clearAnimData)" <|
             \_ ->
                 animBuilder
-                    |> (Translate.for "test"
+                    |> (Builder.for "test"
+                            >> Translate.begin
                             >> Translate.clampX 0 200
                             >> Translate.toX 100
-                            >> Translate.build
+                            >> Translate.end
                        )
                     |> finishAnimateBatch
-                    |> (Translate.for "test"
+                    |> (Builder.for "test"
+                            >> Translate.begin
                             >> Translate.toX 500
-                            >> Translate.build
+                            >> Translate.end
                        )
                     |> endRecord
                     |> Expect.equal (Just { x = 200, y = 0, z = 0 })
         , test "out-of-range start snaps to boundary" <|
             \_ ->
                 animBuilder
-                    |> (Translate.for "test"
+                    |> (Builder.for "test"
+                            >> Translate.begin
                             >> Translate.clampX 0 200
                             >> Translate.fromX 500
                             >> Translate.toX 100
-                            >> Translate.build
+                            >> Translate.end
                        )
                     |> startRecord
                     |> Expect.equal (Just { x = 200, y = 0, z = 0 })
         , test "distance is recomputed from clamped values" <|
             \_ ->
                 animBuilder
-                    |> (Translate.for "test"
+                    |> (Builder.for "test"
+                            >> Translate.begin
                             >> Translate.clampX 0 200
                             >> Translate.fromX 0
                             >> Translate.toX 1000
-                            >> Translate.build
+                            >> Translate.end
                        )
                     |> firstTranslateConfig
                     |> Maybe.map (.distance >> round)
@@ -1008,112 +1058,112 @@ rotateClampTests =
         [ test "clampX clamps explicit toX above max" <|
             \_ ->
                 animBuilder
-                    |> (Rotate.for "test"
+                    |> (Builder.for "test" >> Rotate.begin
                             >> Rotate.clampX 0 90
                             >> Rotate.toX 360
-                            >> Rotate.build
+                            >> Rotate.end
                        )
                     |> endRecord
                     |> Expect.equal (Just { x = 90, y = 0, z = 0 })
         , test "clampX still clamps when declared after toX" <|
             \_ ->
                 animBuilder
-                    |> (Rotate.for "test"
+                    |> (Builder.for "test" >> Rotate.begin
                             >> Rotate.toX 360
                             >> Rotate.clampX 0 90
-                            >> Rotate.build
+                            >> Rotate.end
                        )
                     |> endRecord
                     |> Expect.equal (Just { x = 90, y = 0, z = 0 })
         , test "clampY only clamps the Y axis" <|
             \_ ->
                 animBuilder
-                    |> (Rotate.for "test"
+                    |> (Builder.for "test" >> Rotate.begin
                             >> Rotate.clampY 0 45
                             >> Rotate.toXY 360 360
-                            >> Rotate.build
+                            >> Rotate.end
                        )
                     |> endRecord
                     |> Expect.equal (Just { x = 360, y = 45, z = 0 })
         , test "clampZ clamps the Z axis" <|
             \_ ->
                 animBuilder
-                    |> (Rotate.for "test"
+                    |> (Builder.for "test" >> Rotate.begin
                             >> Rotate.clampZ -10 10
                             >> Rotate.toZ 1000
-                            >> Rotate.build
+                            >> Rotate.end
                        )
                     |> endRecord
                     |> Expect.equal (Just { x = 0, y = 0, z = 10 })
         , test "clampX with reversed args (max < min) is normalized" <|
             \_ ->
                 animBuilder
-                    |> (Rotate.for "test"
+                    |> (Builder.for "test" >> Rotate.begin
                             >> Rotate.clampX 90 0
                             >> Rotate.toX 360
-                            >> Rotate.build
+                            >> Rotate.end
                        )
                     |> endRecord
                     |> Expect.equal (Just { x = 90, y = 0, z = 0 })
         , test "unclampX removes only the X axis clamp" <|
             \_ ->
                 animBuilder
-                    |> (Rotate.for "test"
+                    |> (Builder.for "test" >> Rotate.begin
                             >> Rotate.clampX 0 90
                             >> Rotate.clampY 0 45
                             >> Rotate.unclampX
                             >> Rotate.toXY 360 360
-                            >> Rotate.build
+                            >> Rotate.end
                        )
                     |> endRecord
                     |> Expect.equal (Just { x = 360, y = 45, z = 0 })
         , test "clamps are scoped to the active animGroup" <|
             \_ ->
                 animBuilder
-                    |> (Rotate.for "ship"
+                    |> (Builder.for "ship" >> Rotate.begin
                             >> Rotate.clampX 0 90
                             >> Rotate.toX 50
-                            >> Rotate.build
+                            >> Rotate.end
                        )
-                    |> (Rotate.for "other"
+                    |> (Builder.for "other" >> Rotate.begin
                             >> Rotate.toX 360
-                            >> Rotate.build
+                            >> Rotate.end
                        )
                     |> endRecord
                     |> Expect.equal (Just { x = 360, y = 0, z = 0 })
         , test "clamps persist across an animate batch" <|
             \_ ->
                 animBuilder
-                    |> (Rotate.for "test"
+                    |> (Builder.for "test" >> Rotate.begin
                             >> Rotate.clampX 0 90
                             >> Rotate.toX 30
-                            >> Rotate.build
+                            >> Rotate.end
                        )
                     |> finishAnimateBatch
-                    |> (Rotate.for "test"
+                    |> (Builder.for "test" >> Rotate.begin
                             >> Rotate.toX 360
-                            >> Rotate.build
+                            >> Rotate.end
                        )
                     |> endRecord
                     |> Expect.equal (Just { x = 90, y = 0, z = 0 })
         , test "out-of-range start snaps to boundary" <|
             \_ ->
                 animBuilder
-                    |> (Rotate.for "test"
+                    |> (Builder.for "test" >> Rotate.begin
                             >> Rotate.clampX 0 90
                             >> Rotate.fromX -50
                             >> Rotate.toX 30
-                            >> Rotate.build
+                            >> Rotate.end
                        )
                     |> startRecord
                     |> Expect.equal (Just { x = 0, y = 0, z = 0 })
         , test "byXYZ adds the delta to the configured start rotation" <|
             \_ ->
                 animBuilder
-                    |> (Rotate.for "test"
+                    |> (Builder.for "test" >> Rotate.begin
                             >> Rotate.fromXYZ 10 20 30
                             >> Rotate.byXYZ 5 -5 15
-                            >> Rotate.build
+                            >> Rotate.end
                        )
                     |> endRecord
                     |> Expect.equal (Just { x = 15, y = 15, z = 45 })
@@ -1131,101 +1181,101 @@ scaleClampTests =
         [ test "clampX clamps explicit toX above max" <|
             \_ ->
                 animBuilder
-                    |> (Scale.for "test"
+                    |> (Builder.for "test" >> Scale.begin
                             >> Scale.clampX 0.5 2
                             >> Scale.toX 5
-                            >> Scale.build
+                            >> Scale.end
                        )
                     |> endRecord
                     |> Expect.equal (Just { x = 2, y = 1, z = 1 })
         , test "clampX still clamps when declared after toX" <|
             \_ ->
                 animBuilder
-                    |> (Scale.for "test"
+                    |> (Builder.for "test" >> Scale.begin
                             >> Scale.toX 5
                             >> Scale.clampX 0.5 2
-                            >> Scale.build
+                            >> Scale.end
                        )
                     |> endRecord
                     |> Expect.equal (Just { x = 2, y = 1, z = 1 })
         , test "clampY only clamps the Y axis" <|
             \_ ->
                 animBuilder
-                    |> (Scale.for "test"
+                    |> (Builder.for "test" >> Scale.begin
                             >> Scale.clampY 0.5 1.5
                             >> Scale.toXY 5 5
-                            >> Scale.build
+                            >> Scale.end
                        )
                     |> endRecord
                     |> Expect.equal (Just { x = 5, y = 1.5, z = 1 })
         , test "clampZ clamps the Z axis" <|
             \_ ->
                 animBuilder
-                    |> (Scale.for "test"
+                    |> (Builder.for "test" >> Scale.begin
                             >> Scale.clampZ 0.1 0.5
                             >> Scale.toZ 10
-                            >> Scale.build
+                            >> Scale.end
                        )
                     |> endRecord
                     |> Expect.equal (Just { x = 1, y = 1, z = 0.5 })
         , test "clampX with reversed args is normalized" <|
             \_ ->
                 animBuilder
-                    |> (Scale.for "test"
+                    |> (Builder.for "test" >> Scale.begin
                             >> Scale.clampX 2 0.5
                             >> Scale.toX 5
-                            >> Scale.build
+                            >> Scale.end
                        )
                     |> endRecord
                     |> Expect.equal (Just { x = 2, y = 1, z = 1 })
         , test "unclampX removes only the X axis clamp" <|
             \_ ->
                 animBuilder
-                    |> (Scale.for "test"
+                    |> (Builder.for "test" >> Scale.begin
                             >> Scale.clampX 0.5 2
                             >> Scale.clampY 0.5 1.5
                             >> Scale.unclampX
                             >> Scale.toXY 5 5
-                            >> Scale.build
+                            >> Scale.end
                        )
                     |> endRecord
                     |> Expect.equal (Just { x = 5, y = 1.5, z = 1 })
         , test "clamps are scoped to the active animGroup" <|
             \_ ->
                 animBuilder
-                    |> (Scale.for "a"
+                    |> (Builder.for "a" >> Scale.begin
                             >> Scale.clampX 0.5 2
                             >> Scale.toX 1.5
-                            >> Scale.build
+                            >> Scale.end
                        )
-                    |> (Scale.for "b"
+                    |> (Builder.for "b" >> Scale.begin
                             >> Scale.toX 5
-                            >> Scale.build
+                            >> Scale.end
                        )
                     |> endRecord
                     |> Expect.equal (Just { x = 5, y = 1, z = 1 })
         , test "clamps persist across animate batches" <|
             \_ ->
                 animBuilder
-                    |> (Scale.for "test"
+                    |> (Builder.for "test" >> Scale.begin
                             >> Scale.clampX 0.5 2
                             >> Scale.toX 1
-                            >> Scale.build
+                            >> Scale.end
                        )
                     |> finishAnimateBatch
-                    |> (Scale.for "test"
+                    |> (Builder.for "test" >> Scale.begin
                             >> Scale.toX 5
-                            >> Scale.build
+                            >> Scale.end
                        )
                     |> endRecord
                     |> Expect.equal (Just { x = 2, y = 1, z = 1 })
         , test "byXYZ adds the delta to the configured start scale" <|
             \_ ->
                 animBuilder
-                    |> (Scale.for "test"
+                    |> (Builder.for "test" >> Scale.begin
                             >> Scale.fromXYZ 1 2 3
                             >> Scale.byXYZ 0.25 -0.5 1
-                            >> Scale.build
+                            >> Scale.end
                        )
                     |> endRecord
                     |> Expect.equal (Just { x = 1.25, y = 1.5, z = 4 })
@@ -1243,77 +1293,77 @@ skewClampTests =
         [ test "clampX clamps explicit toX above max" <|
             \_ ->
                 animBuilder
-                    |> (Skew.for "test"
+                    |> (Builder.for "test" >> Skew.begin
                             >> Skew.clampX 0 30
                             >> Skew.toX 90
-                            >> Skew.build
+                            >> Skew.end
                        )
                     |> endTuple
                     |> Expect.equal (Just ( 30, 0 ))
         , test "clampX still clamps when declared after toX" <|
             \_ ->
                 animBuilder
-                    |> (Skew.for "test"
+                    |> (Builder.for "test" >> Skew.begin
                             >> Skew.toX 90
                             >> Skew.clampX 0 30
-                            >> Skew.build
+                            >> Skew.end
                        )
                     |> endTuple
                     |> Expect.equal (Just ( 30, 0 ))
         , test "clampY only clamps the Y axis" <|
             \_ ->
                 animBuilder
-                    |> (Skew.for "test"
+                    |> (Builder.for "test" >> Skew.begin
                             >> Skew.clampY 0 15
                             >> Skew.toXY 90 90
-                            >> Skew.build
+                            >> Skew.end
                        )
                     |> endTuple
                     |> Expect.equal (Just ( 90, 15 ))
         , test "unclampX removes only X axis clamp" <|
             \_ ->
                 animBuilder
-                    |> (Skew.for "test"
+                    |> (Builder.for "test" >> Skew.begin
                             >> Skew.clampX 0 30
                             >> Skew.clampY 0 15
                             >> Skew.unclampX
                             >> Skew.toXY 90 90
-                            >> Skew.build
+                            >> Skew.end
                        )
                     |> endTuple
                     |> Expect.equal (Just ( 90, 15 ))
         , test "clampX with reversed args is normalized" <|
             \_ ->
                 animBuilder
-                    |> (Skew.for "test"
+                    |> (Builder.for "test" >> Skew.begin
                             >> Skew.clampX 30 0
                             >> Skew.toX 90
-                            >> Skew.build
+                            >> Skew.end
                        )
                     |> endTuple
                     |> Expect.equal (Just ( 30, 0 ))
         , test "clamps persist across animate batches" <|
             \_ ->
                 animBuilder
-                    |> (Skew.for "test"
+                    |> (Builder.for "test" >> Skew.begin
                             >> Skew.clampX 0 30
                             >> Skew.toX 10
-                            >> Skew.build
+                            >> Skew.end
                        )
                     |> finishAnimateBatch
-                    |> (Skew.for "test"
+                    |> (Builder.for "test" >> Skew.begin
                             >> Skew.toX 90
-                            >> Skew.build
+                            >> Skew.end
                        )
                     |> endTuple
                     |> Expect.equal (Just ( 30, 0 ))
         , test "byXY adds the delta to the configured start skew" <|
             \_ ->
                 animBuilder
-                    |> (Skew.for "test"
+                    |> (Builder.for "test" >> Skew.begin
                             >> Skew.fromXY 10 20
                             >> Skew.byXY 5 -10
-                            >> Skew.build
+                            >> Skew.end
                        )
                     |> endTuple
                     |> Expect.equal (Just ( 15, 10 ))
@@ -1331,77 +1381,85 @@ sizeClampTests =
         [ test "clampWidth clamps explicit toW above max" <|
             \_ ->
                 animBuilder
-                    |> (Size.for "test"
+                    |> (Builder.for "test"
+                            >> Size.begin
                             >> Size.clampWidth 0 200
                             >> Size.toW 500
-                            >> Size.build
+                            >> Size.end
                        )
                     |> endRecord
                     |> Expect.equal (Just { width = 200, height = 0 })
         , test "clampWidth still clamps when declared after toW" <|
             \_ ->
                 animBuilder
-                    |> (Size.for "test"
+                    |> (Builder.for "test"
+                            >> Size.begin
                             >> Size.toW 500
                             >> Size.clampWidth 0 200
-                            >> Size.build
+                            >> Size.end
                        )
                     |> endRecord
                     |> Expect.equal (Just { width = 200, height = 0 })
         , test "clampHeight only clamps the height" <|
             \_ ->
                 animBuilder
-                    |> (Size.for "test"
+                    |> (Builder.for "test"
+                            >> Size.begin
                             >> Size.clampHeight 0 100
                             >> Size.toHW 500 500
-                            >> Size.build
+                            >> Size.end
                        )
                     |> endRecord
                     |> Expect.equal (Just { width = 500, height = 100 })
         , test "clampWidth with reversed args is normalized" <|
             \_ ->
                 animBuilder
-                    |> (Size.for "test"
+                    |> (Builder.for "test"
+                            >> Size.begin
                             >> Size.clampWidth 200 0
                             >> Size.toW 500
-                            >> Size.build
+                            >> Size.end
                        )
                     |> endRecord
                     |> Expect.equal (Just { width = 200, height = 0 })
         , test "byHW adds the delta to the configured start size" <|
             \_ ->
                 animBuilder
-                    |> (Size.for "test"
+                    |> (Builder.for "test"
+                            >> Size.begin
                             >> Size.fromHW 100 200
                             >> Size.byHW 10 20
-                            >> Size.build
+                            >> Size.end
                        )
                     |> endRecord
                     |> Expect.equal (Just { width = 220, height = 110 })
         , test "unclampWidth removes only width clamp" <|
             \_ ->
                 animBuilder
-                    |> (Size.for "test"
+                    |> (Builder.for "test"
+                            >> Size.begin
                             >> Size.clampWidth 0 200
                             >> Size.clampHeight 0 100
                             >> Size.unclampWidth
                             >> Size.toHW 500 500
-                            >> Size.build
+                            >> Size.end
                        )
                     |> endRecord
                     |> Expect.equal (Just { width = 500, height = 100 })
         , test "clamps persist across animate batches" <|
             \_ ->
                 animBuilder
-                    |> (Size.for "test"
+                    |> (Builder.for "test"
+                            >> Size.begin
                             >> Size.clampWidth 0 200
                             >> Size.toW 100
-                            >> Size.build
+                            >> Size.end
                        )
                     |> finishAnimateBatch
-                    |> (Size.for "test"
+                    |> (Builder.for "test"
+                            >> Size.begin
                             >> Size.toW 500
-                            >> Size.build
+                            >> Size.end
                        )
                     |> endRecord
                     |> Expect.equal (Just { width = 200, height = 0 })
@@ -1423,40 +1481,40 @@ perspectiveOriginClampTests =
         [ test "clampX clamps explicit toX above max" <|
             \_ ->
                 animBuilder
-                    |> (PerspectiveOrigin.for "test"
+                    |> (Builder.for "test" >> PerspectiveOrigin.begin
                             >> PerspectiveOrigin.clampX 0 100
                             >> PerspectiveOrigin.toX 500
-                            >> PerspectiveOrigin.build
+                            >> PerspectiveOrigin.end
                        )
                     |> endRecord
                     |> Expect.equal (Just { x = 100, y = 50 })
         , test "clampX still clamps when declared after toX" <|
             \_ ->
                 animBuilder
-                    |> (PerspectiveOrigin.for "test"
+                    |> (Builder.for "test" >> PerspectiveOrigin.begin
                             >> PerspectiveOrigin.toX 500
                             >> PerspectiveOrigin.clampX 0 100
-                            >> PerspectiveOrigin.build
+                            >> PerspectiveOrigin.end
                        )
                     |> endRecord
                     |> Expect.equal (Just { x = 100, y = 50 })
         , test "clampY only clamps Y axis" <|
             \_ ->
                 animBuilder
-                    |> (PerspectiveOrigin.for "test"
+                    |> (Builder.for "test" >> PerspectiveOrigin.begin
                             >> PerspectiveOrigin.clampY 0 60
                             >> PerspectiveOrigin.toXY 500 500
-                            >> PerspectiveOrigin.build
+                            >> PerspectiveOrigin.end
                        )
                     |> endRecord
                     |> Expect.equal (Just { x = 500, y = 60 })
         , test "by adds the delta to the configured start perspective origin" <|
             \_ ->
                 animBuilder
-                    |> (PerspectiveOrigin.for "test"
+                    |> (Builder.for "test" >> PerspectiveOrigin.begin
                             >> PerspectiveOrigin.fromXY 10 20
                             >> PerspectiveOrigin.by 5
-                            >> PerspectiveOrigin.build
+                            >> PerspectiveOrigin.end
                        )
                     |> endRecord
                     |> Expect.equal (Just { x = 15, y = 25 })
@@ -1465,32 +1523,32 @@ perspectiveOriginClampTests =
                 animBuilder
                     |> PerspectiveOrigin.initXY "test" 0 0
                     |> PerspectiveOrigin.cssUnit Unit.Px
-                    |> (PerspectiveOrigin.for "test"
+                    |> (Builder.for "test" >> PerspectiveOrigin.begin
                             >> PerspectiveOrigin.clampX 0 100
                             >> PerspectiveOrigin.toX 500
-                            >> PerspectiveOrigin.build
+                            >> PerspectiveOrigin.end
                        )
                     |> endUnit
                     |> Expect.equal (Just Unit.Px)
         , test "unclampX removes only X axis clamp" <|
             \_ ->
                 animBuilder
-                    |> (PerspectiveOrigin.for "test"
+                    |> (Builder.for "test" >> PerspectiveOrigin.begin
                             >> PerspectiveOrigin.clampX 0 100
                             >> PerspectiveOrigin.clampY 0 60
                             >> PerspectiveOrigin.unclampX
                             >> PerspectiveOrigin.toXY 500 500
-                            >> PerspectiveOrigin.build
+                            >> PerspectiveOrigin.end
                        )
                     |> endRecord
                     |> Expect.equal (Just { x = 500, y = 60 })
         , test "clampX with reversed args is normalized" <|
             \_ ->
                 animBuilder
-                    |> (PerspectiveOrigin.for "test"
+                    |> (Builder.for "test" >> PerspectiveOrigin.begin
                             >> PerspectiveOrigin.clampX 100 0
                             >> PerspectiveOrigin.toX 500
-                            >> PerspectiveOrigin.build
+                            >> PerspectiveOrigin.end
                        )
                     |> endRecord
                     |> Expect.equal (Just { x = 100, y = 50 })
@@ -1508,90 +1566,90 @@ opacityClampTests =
         [ test "clamp clamps explicit to above max" <|
             \_ ->
                 animBuilder
-                    |> (Opacity.for "test"
+                    |> (Builder.for "test" >> Opacity.begin
                             >> Opacity.clamp 0 0.5
                             >> Opacity.to 1
-                            >> Opacity.build
+                            >> Opacity.end
                        )
                     |> endValue
                     |> Expect.equal (Just 0.5)
         , test "clamp still clamps when declared after to" <|
             \_ ->
                 animBuilder
-                    |> (Opacity.for "test"
+                    |> (Builder.for "test" >> Opacity.begin
                             >> Opacity.to 1
                             >> Opacity.clamp 0 0.5
-                            >> Opacity.build
+                            >> Opacity.end
                        )
                     |> endValue
                     |> Expect.equal (Just 0.5)
         , test "clamp clamps below min" <|
             \_ ->
                 animBuilder
-                    |> (Opacity.for "test"
+                    |> (Builder.for "test" >> Opacity.begin
                             >> Opacity.clamp 0.2 1
                             >> Opacity.to 0
-                            >> Opacity.build
+                            >> Opacity.end
                        )
                     |> endValue
                     |> Expect.equal (Just 0.2)
         , test "clamp with reversed args is normalized" <|
             \_ ->
                 animBuilder
-                    |> (Opacity.for "test"
+                    |> (Builder.for "test" >> Opacity.begin
                             >> Opacity.clamp 0.5 0
                             >> Opacity.to 1
-                            >> Opacity.build
+                            >> Opacity.end
                        )
                     |> endValue
                     |> Expect.equal (Just 0.5)
         , test "by adds the delta to the configured start opacity" <|
             \_ ->
                 animBuilder
-                    |> (Opacity.for "test"
+                    |> (Builder.for "test" >> Opacity.begin
                             >> Opacity.from 0.25
                             >> Opacity.by 0.5
-                            >> Opacity.build
+                            >> Opacity.end
                        )
                     |> endValue
                     |> Expect.equal (Just 0.75)
         , test "unclamp removes the clamp" <|
             \_ ->
                 animBuilder
-                    |> (Opacity.for "test"
+                    |> (Builder.for "test" >> Opacity.begin
                             >> Opacity.clamp 0 0.5
                             >> Opacity.unclamp
                             >> Opacity.to 1
-                            >> Opacity.build
+                            >> Opacity.end
                        )
                     |> endValue
                     |> Expect.equal (Just 1)
         , test "clamps are scoped to the active animGroup" <|
             \_ ->
                 animBuilder
-                    |> (Opacity.for "a"
+                    |> (Builder.for "a" >> Opacity.begin
                             >> Opacity.clamp 0 0.5
                             >> Opacity.to 0.3
-                            >> Opacity.build
+                            >> Opacity.end
                        )
-                    |> (Opacity.for "b"
+                    |> (Builder.for "b" >> Opacity.begin
                             >> Opacity.to 1
-                            >> Opacity.build
+                            >> Opacity.end
                        )
                     |> endValue
                     |> Expect.equal (Just 1)
         , test "clamps persist across animate batches" <|
             \_ ->
                 animBuilder
-                    |> (Opacity.for "test"
+                    |> (Builder.for "test" >> Opacity.begin
                             >> Opacity.clamp 0 0.5
                             >> Opacity.to 0.3
-                            >> Opacity.build
+                            >> Opacity.end
                        )
                     |> finishAnimateBatch
-                    |> (Opacity.for "test"
+                    |> (Builder.for "test" >> Opacity.begin
                             >> Opacity.to 1
-                            >> Opacity.build
+                            >> Opacity.end
                        )
                     |> endValue
                     |> Expect.equal (Just 0.5)
@@ -1609,140 +1667,140 @@ customClampTests =
         [ test "clamp clamps explicit to above max" <|
             \_ ->
                 animBuilder
-                    |> (Custom.for "test" (Custom.Left Unit.Px)
+                    |> (Builder.for "test" >> Custom.begin (Custom.Left Unit.Px)
                             >> Custom.clamp 0 200
                             >> Custom.to 500
-                            >> Custom.build
+                            >> Custom.end
                        )
                     |> endValue "left"
                     |> Expect.equal (Just 200)
         , test "clamp still clamps when declared after to" <|
             \_ ->
                 animBuilder
-                    |> (Custom.for "test" (Custom.Left Unit.Px)
+                    |> (Builder.for "test" >> Custom.begin (Custom.Left Unit.Px)
                             >> Custom.to 500
                             >> Custom.clamp 0 200
-                            >> Custom.build
+                            >> Custom.end
                        )
                     |> endValue "left"
                     |> Expect.equal (Just 200)
         , test "clamp with reversed args is normalized" <|
             \_ ->
                 animBuilder
-                    |> (Custom.for "test" (Custom.Left Unit.Px)
+                    |> (Builder.for "test" >> Custom.begin (Custom.Left Unit.Px)
                             >> Custom.clamp 200 0
                             >> Custom.to 500
-                            >> Custom.build
+                            >> Custom.end
                        )
                     |> endValue "left"
                     |> Expect.equal (Just 200)
         , test "unclamp removes the clamp" <|
             \_ ->
                 animBuilder
-                    |> (Custom.for "test" (Custom.Left Unit.Px)
+                    |> (Builder.for "test" >> Custom.begin (Custom.Left Unit.Px)
                             >> Custom.clamp 0 200
                             >> Custom.unclamp
                             >> Custom.to 500
-                            >> Custom.build
+                            >> Custom.end
                        )
                     |> endValue "left"
                     |> Expect.equal (Just 500)
         , test "clamps are keyed by CSS property name" <|
             \_ ->
                 animBuilder
-                    |> (Custom.for "test" (Custom.Left Unit.Px)
+                    |> (Builder.for "test" >> Custom.begin (Custom.Left Unit.Px)
                             >> Custom.clamp 0 200
                             >> Custom.to 500
-                            >> Custom.build
+                            >> Custom.end
                        )
-                    |> (Custom.for "test" (Custom.Top Unit.Px)
+                    |> (Builder.for "test" >> Custom.begin (Custom.Top Unit.Px)
                             >> Custom.to 500
-                            >> Custom.build
+                            >> Custom.end
                        )
                     |> endValue "top"
                     |> Expect.equal (Just 500)
         , test "clamps are scoped to the active animGroup" <|
             \_ ->
                 animBuilder
-                    |> (Custom.for "a" (Custom.Left Unit.Px)
+                    |> (Builder.for "a" >> Custom.begin (Custom.Left Unit.Px)
                             >> Custom.clamp 0 200
                             >> Custom.to 50
-                            >> Custom.build
+                            >> Custom.end
                        )
-                    |> (Custom.for "b" (Custom.Left Unit.Px)
+                    |> (Builder.for "b" >> Custom.begin (Custom.Left Unit.Px)
                             >> Custom.to 500
-                            >> Custom.build
+                            >> Custom.end
                        )
                     |> endValue "left"
                     |> Expect.equal (Just 500)
         , test "clamps persist across animate batches" <|
             \_ ->
                 animBuilder
-                    |> (Custom.for "test" (Custom.Left Unit.Px)
+                    |> (Builder.for "test" >> Custom.begin (Custom.Left Unit.Px)
                             >> Custom.clamp 0 200
                             >> Custom.to 50
-                            >> Custom.build
+                            >> Custom.end
                        )
                     |> finishAnimateBatch
-                    |> (Custom.for "test" (Custom.Left Unit.Px)
+                    |> (Builder.for "test" >> Custom.begin (Custom.Left Unit.Px)
                             >> Custom.to 500
-                            >> Custom.build
+                            >> Custom.end
                        )
                     |> endValue "left"
                     |> Expect.equal (Just 200)
         , test "by adds the delta to the configured start value" <|
             \_ ->
                 animBuilder
-                    |> (Custom.for "test" (Custom.Left Unit.Px)
+                    |> (Builder.for "test" >> Custom.begin (Custom.Left Unit.Px)
                             >> Custom.from 100
                             >> Custom.by 25
-                            >> Custom.build
+                            >> Custom.end
                        )
                     |> endValue "left"
                     |> Expect.equal (Just 125)
         , test "by defaults the start to 0 when none is configured" <|
             \_ ->
                 animBuilder
-                    |> (Custom.for "test" (Custom.Left Unit.Px)
+                    |> (Builder.for "test" >> Custom.begin (Custom.Left Unit.Px)
                             >> Custom.by 30
-                            >> Custom.build
+                            >> Custom.end
                        )
                     |> endValue "left"
                     |> Expect.equal (Just 30)
         , test "by accumulates across animate batches via the carried start" <|
             \_ ->
                 animBuilder
-                    |> (Custom.for "test" (Custom.Left Unit.Px)
+                    |> (Builder.for "test" >> Custom.begin (Custom.Left Unit.Px)
                             >> Custom.from 0
                             >> Custom.by 10
-                            >> Custom.build
+                            >> Custom.end
                        )
                     |> finishAnimateBatch
-                    |> (Custom.for "test" (Custom.Left Unit.Px)
+                    |> (Builder.for "test" >> Custom.begin (Custom.Left Unit.Px)
                             >> Custom.by 10
-                            >> Custom.build
+                            >> Custom.end
                        )
                     |> endValue "left"
                     |> Expect.equal (Just 20)
         , test "clamp pins a by overshoot to the max boundary" <|
             \_ ->
                 animBuilder
-                    |> (Custom.for "test" (Custom.Left Unit.Px)
+                    |> (Builder.for "test" >> Custom.begin (Custom.Left Unit.Px)
                             >> Custom.from 100
                             >> Custom.clamp 0 120
                             >> Custom.by 50
-                            >> Custom.build
+                            >> Custom.end
                        )
                     |> endValue "left"
                     |> Expect.equal (Just 120)
         , test "clamp pins a negative by undershoot to the min boundary" <|
             \_ ->
                 animBuilder
-                    |> (Custom.for "test" (Custom.Left Unit.Px)
+                    |> (Builder.for "test" >> Custom.begin (Custom.Left Unit.Px)
                             >> Custom.from 10
                             >> Custom.clamp 0 100
                             >> Custom.by -50
-                            >> Custom.build
+                            >> Custom.end
                        )
                     |> endValue "left"
                     |> Expect.equal (Just 0)
@@ -1780,7 +1838,7 @@ animationHistoryLookupTests =
         , test "returns a single entry after one animation" <|
             \_ ->
                 animBuilder
-                    |> (Scale.for "cube" >> Scale.to 1 >> Scale.build)
+                    |> (Builder.for "cube" >> Scale.begin >> Scale.to 1 >> Scale.end)
                     |> processAndStore
                     |> Builder.getAnimationConfigs "cube"
                     |> List.length
@@ -1808,11 +1866,11 @@ animationHistoryLookupTests =
                                 )
                 in
                 animBuilder
-                    |> (Scale.for "cube" >> Scale.to 1 >> Scale.build)
+                    |> (Builder.for "cube" >> Scale.begin >> Scale.to 1 >> Scale.end)
                     |> processAndStore
                     |> Builder.mergeBaselines
                     |> Builder.clearAnimData
-                    |> (Rotate.for "cube" >> Rotate.toX 90 >> Rotate.build)
+                    |> (Builder.for "cube" >> Rotate.begin >> Rotate.toX 90 >> Rotate.end)
                     |> processAndStore
                     |> Builder.getAnimationConfigs "cube"
                     |> propertyTags
@@ -1820,11 +1878,11 @@ animationHistoryLookupTests =
         , test "preserves a Scale config in history after a Rotate-only animation runs (regression for Scale.bounds after non-scale animate)" <|
             \_ ->
                 animBuilder
-                    |> (Scale.for "cube" >> Scale.to 1 >> Scale.build)
+                    |> (Builder.for "cube" >> Scale.begin >> Scale.to 1 >> Scale.end)
                     |> processAndStore
                     |> Builder.mergeBaselines
                     |> Builder.clearAnimData
-                    |> (Rotate.for "cube" >> Rotate.toX 90 >> Rotate.build)
+                    |> (Builder.for "cube" >> Rotate.begin >> Rotate.toX 90 >> Rotate.end)
                     |> processAndStore
                     |> Builder.getAnimationConfigs "cube"
                     |> List.any
@@ -1848,7 +1906,7 @@ animationHistoryLookupTests =
                     |> processAndStore
                     |> Builder.mergeBaselines
                     |> Builder.clearAnimData
-                    |> (Rotate.for "box" >> Rotate.toX 90 >> Rotate.build)
+                    |> (Builder.for "box" >> Rotate.begin >> Rotate.toX 90 >> Rotate.end)
                     |> processAndStore
                     |> Builder.getAnimationConfigs "box"
                     |> List.any

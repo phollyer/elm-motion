@@ -186,118 +186,118 @@ suite =
             [ test "set records mode = Snap" <|
                 \_ ->
                     prepared
-                        |> (Opacity.for "el" >> Opacity.set 0 >> Opacity.build)
+                        |> (Builder.for "el" >> Opacity.begin >> Opacity.set 0 >> Opacity.end)
                         |> opacityMode
                         |> Expect.equal (Just Builder.Snap)
             , test "to records mode = Animate" <|
                 \_ ->
                     prepared
-                        |> (Opacity.for "el" >> Opacity.to 0 >> Opacity.build)
+                        |> (Builder.for "el" >> Opacity.begin >> Opacity.to 0 >> Opacity.end)
                         |> opacityMode
                         |> Expect.equal (Just Builder.Animate)
             , test "set after to upgrades mode to Snap" <|
                 \_ ->
                     prepared
-                        |> (Opacity.for "el"
+                        |> (Builder.for "el" >> Opacity.begin
                                 >> Opacity.to 0.5
                                 >> Opacity.set 0
-                                >> Opacity.build
+                                >> Opacity.end
                            )
                         |> opacityMode
                         |> Expect.equal (Just Builder.Snap)
             , test "to after set preserves mode = Snap" <|
                 \_ ->
                     prepared
-                        |> (Opacity.for "el"
+                        |> (Builder.for "el" >> Opacity.begin
                                 >> Opacity.set 0
                                 >> Opacity.to 0.5
-                                >> Opacity.build
+                                >> Opacity.end
                            )
                         |> opacityMode
                         |> Expect.equal (Just Builder.Snap)
             ]
         , snapAndAnimate "Translate"
             translateMode
-            (Translate.for "el" >> Translate.setXYZ 1 2 3 >> Translate.build)
-            (Translate.for "el" >> Translate.toXYZ 1 2 3 >> Translate.build)
+            (Builder.for "el" >> Translate.begin >> Translate.setXYZ 1 2 3 >> Translate.end)
+            (Builder.for "el" >> Translate.begin >> Translate.toXYZ 1 2 3 >> Translate.end)
         , describe "Translate axis variants"
             [ test "setX records Snap" <|
                 \_ ->
                     prepared
-                        |> (Translate.for "el" >> Translate.setX 10 >> Translate.build)
+                        |> (Builder.for "el" >> Translate.begin >> Translate.setX 10 >> Translate.end)
                         |> translateMode
                         |> Expect.equal (Just Builder.Snap)
             , test "setXY records Snap" <|
                 \_ ->
                     prepared
-                        |> (Translate.for "el" >> Translate.setXY 1 2 >> Translate.build)
+                        |> (Builder.for "el" >> Translate.begin >> Translate.setXY 1 2 >> Translate.end)
                         |> translateMode
                         |> Expect.equal (Just Builder.Snap)
             ]
         , snapAndAnimate "Rotate"
             rotateMode
-            (Rotate.for "el" >> Rotate.setXYZ 10 20 30 >> Rotate.build)
-            (Rotate.for "el" >> Rotate.toXYZ 10 20 30 >> Rotate.build)
+            (Builder.for "el" >> Rotate.begin >> Rotate.setXYZ 10 20 30 >> Rotate.end)
+            (Builder.for "el" >> Rotate.begin >> Rotate.toXYZ 10 20 30 >> Rotate.end)
         , describe "Rotate axis variants"
             [ test "set (uniform) records Snap" <|
                 \_ ->
                     prepared
-                        |> (Rotate.for "el" >> Rotate.set 45 >> Rotate.build)
+                        |> (Builder.for "el" >> Rotate.begin >> Rotate.set 45 >> Rotate.end)
                         |> rotateMode
                         |> Expect.equal (Just Builder.Snap)
             , test "setY records Snap" <|
                 \_ ->
                     prepared
-                        |> (Rotate.for "el" >> Rotate.setY 90 >> Rotate.build)
+                        |> (Builder.for "el" >> Rotate.begin >> Rotate.setY 90 >> Rotate.end)
                         |> rotateMode
                         |> Expect.equal (Just Builder.Snap)
             ]
         , snapAndAnimate "Scale"
             scaleMode
-            (Scale.for "el" >> Scale.setXYZ 1 2 3 >> Scale.build)
-            (Scale.for "el" >> Scale.toXYZ 1 2 3 >> Scale.build)
+            (Builder.for "el" >> Scale.begin >> Scale.setXYZ 1 2 3 >> Scale.end)
+            (Builder.for "el" >> Scale.begin >> Scale.toXYZ 1 2 3 >> Scale.end)
         , describe "Scale variants"
             [ test "set (uniform) records Snap" <|
                 \_ ->
                     prepared
-                        |> (Scale.for "el" >> Scale.set 2 >> Scale.build)
+                        |> (Builder.for "el" >> Scale.begin >> Scale.set 2 >> Scale.end)
                         |> scaleMode
                         |> Expect.equal (Just Builder.Snap)
             ]
         , snapAndAnimate "Skew"
             skewMode
-            (Skew.for "el" >> Skew.setXY 5 10 >> Skew.build)
-            (Skew.for "el" >> Skew.toXY 5 10 >> Skew.build)
+            (Builder.for "el" >> Skew.begin >> Skew.setXY 5 10 >> Skew.end)
+            (Builder.for "el" >> Skew.begin >> Skew.toXY 5 10 >> Skew.end)
         , snapAndAnimate "Size"
             sizeMode
-            (Size.for "el" >> Size.setHW 100 200 >> Size.build)
-            (Size.for "el" >> Size.toHW 100 200 >> Size.build)
+            (Builder.for "el" >> Size.begin >> Size.setHW 100 200 >> Size.end)
+            (Builder.for "el" >> Size.begin >> Size.toHW 100 200 >> Size.end)
         , describe "Size variants"
             [ test "set (uniform) records Snap" <|
                 \_ ->
                     prepared
-                        |> (Size.for "el" >> Size.set 100 >> Size.build)
+                        |> (Builder.for "el" >> Size.begin >> Size.set 100 >> Size.end)
                         |> sizeMode
                         |> Expect.equal (Just Builder.Snap)
             ]
         , snapAndAnimate "PerspectiveOrigin"
             perspectiveOriginMode
-            (PerspectiveOrigin.for "el" >> PerspectiveOrigin.setXY 10 20 >> PerspectiveOrigin.build)
-            (PerspectiveOrigin.for "el" >> PerspectiveOrigin.toXY 10 20 >> PerspectiveOrigin.build)
+            (Builder.for "el" >> PerspectiveOrigin.begin >> PerspectiveOrigin.setXY 10 20 >> PerspectiveOrigin.end)
+            (Builder.for "el" >> PerspectiveOrigin.begin >> PerspectiveOrigin.toXY 10 20 >> PerspectiveOrigin.end)
         , describe "PerspectiveOrigin variants"
             [ test "set (uniform) records Snap" <|
                 \_ ->
                     prepared
-                        |> (PerspectiveOrigin.for "el" >> PerspectiveOrigin.set 50 >> PerspectiveOrigin.build)
+                        |> (Builder.for "el" >> PerspectiveOrigin.begin >> PerspectiveOrigin.set 50 >> PerspectiveOrigin.end)
                         |> perspectiveOriginMode
                         |> Expect.equal (Just Builder.Snap)
             ]
         , snapAndAnimate "Custom"
             customMode
-            (Custom.for "el" (Custom.Margin Unit.Px) >> Custom.set 10 >> Custom.build)
-            (Custom.for "el" (Custom.Margin Unit.Px) >> Custom.to 10 >> Custom.build)
+            (Builder.for "el" >> Custom.begin (Custom.Margin Unit.Px) >> Custom.set 10 >> Custom.end)
+            (Builder.for "el" >> Custom.begin (Custom.Margin Unit.Px) >> Custom.to 10 >> Custom.end)
         , snapAndAnimate "CustomColor"
             customColorMode
-            (CustomColor.for "el" CustomColor.BackgroundColor >> CustomColor.set (Color.rgb 0 0 0) >> CustomColor.build)
-            (CustomColor.for "el" CustomColor.BackgroundColor >> CustomColor.to (Color.rgb 0 0 0) >> CustomColor.build)
+            (Builder.for "el" >> CustomColor.begin CustomColor.BackgroundColor >> CustomColor.set (Color.rgb 0 0 0) >> CustomColor.end)
+            (Builder.for "el" >> CustomColor.begin CustomColor.BackgroundColor >> CustomColor.to (Color.rgb 0 0 0) >> CustomColor.end)
         ]

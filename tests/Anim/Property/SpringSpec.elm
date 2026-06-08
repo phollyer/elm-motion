@@ -157,80 +157,80 @@ propagationTests =
         [ test "Translate.spring" <|
             \_ ->
                 initBuilder
-                    |> (Translate.for "el"
+                    |> (Builder.for "el" >> Translate.begin
                             >> Translate.toX 100
                             >> Translate.spring Spring.wobbly
-                            >> Translate.build
+                            >> Translate.end
                        )
                     |> collectSprings
                     |> Expect.equal [ Just Spring.wobbly ]
         , test "Scale.spring" <|
             \_ ->
                 initBuilder
-                    |> (Scale.for "el"
+                    |> (Builder.for "el" >> Scale.begin
                             >> Scale.to 2
                             >> Scale.spring Spring.gentle
-                            >> Scale.build
+                            >> Scale.end
                        )
                     |> collectSprings
                     |> Expect.equal [ Just Spring.gentle ]
         , test "Rotate.spring" <|
             \_ ->
                 initBuilder
-                    |> (Rotate.for "el"
+                    |> (Builder.for "el" >> Rotate.begin
                             >> Rotate.toZ 180
                             >> Rotate.spring Spring.stiff
-                            >> Rotate.build
+                            >> Rotate.end
                        )
                     |> collectSprings
                     |> Expect.equal [ Just Spring.stiff ]
         , test "Skew.spring" <|
             \_ ->
                 initBuilder
-                    |> (Skew.for "el"
+                    |> (Builder.for "el" >> Skew.begin
                             >> Skew.toXY 12 0
                             >> Skew.spring Spring.slow
-                            >> Skew.build
+                            >> Skew.end
                        )
                     |> collectSprings
                     |> Expect.equal [ Just Spring.slow ]
         , test "Size.spring" <|
             \_ ->
                 initBuilder
-                    |> (Size.for "el"
+                    |> (Builder.for "el" >> Size.begin
                             >> Size.toHW 200 100
                             >> Size.spring Spring.noWobble
-                            >> Size.build
+                            >> Size.end
                        )
                     |> collectSprings
                     |> Expect.equal [ Just Spring.noWobble ]
         , test "PerspectiveOrigin.spring" <|
             \_ ->
                 initBuilder
-                    |> (PerspectiveOrigin.for "el"
+                    |> (Builder.for "el" >> PerspectiveOrigin.begin
                             >> PerspectiveOrigin.to 200
                             >> PerspectiveOrigin.spring Spring.wobbly
-                            >> PerspectiveOrigin.build
+                            >> PerspectiveOrigin.end
                        )
                     |> collectSprings
                     |> Expect.equal [ Just Spring.wobbly ]
         , test "Custom.spring" <|
             \_ ->
                 initBuilder
-                    |> (Custom.for "el" (BorderRadius Px)
+                    |> (Builder.for "el" >> Custom.begin (BorderRadius Px)
                             >> Custom.to 16
                             >> Custom.spring Spring.gentle
-                            >> Custom.build
+                            >> Custom.end
                        )
                     |> collectSprings
                     |> Expect.equal [ Just Spring.gentle ]
         , test "CustomColor.spring" <|
             \_ ->
                 initBuilder
-                    |> (CustomColor.for "el" BackgroundColor
+                    |> (Builder.for "el" >> CustomColor.begin BackgroundColor
                             >> CustomColor.to (Color.rgb 255 0 0)
                             >> CustomColor.spring Spring.stiff
-                            >> CustomColor.build
+                            >> CustomColor.end
                        )
                     |> collectSprings
                     |> Expect.equal [ Just Spring.stiff ]
@@ -255,11 +255,11 @@ mutualExclusionTests =
         [ test "Translate.spring after Translate.easing wins" <|
             \_ ->
                 initBuilder
-                    |> (Translate.for "el"
+                    |> (Builder.for "el" >> Translate.begin
                             >> Translate.toX 100
                             >> Translate.easing EaseInOut
                             >> Translate.spring Spring.wobbly
-                            >> Translate.build
+                            >> Translate.end
                        )
                     |> collectSprings
                     |> Expect.equal [ Just Spring.wobbly ]
@@ -268,11 +268,11 @@ mutualExclusionTests =
                 let
                     builder =
                         initBuilder
-                            |> (Translate.for "el"
+                            |> (Builder.for "el" >> Translate.begin
                                     >> Translate.toX 100
                                     >> Translate.spring Spring.wobbly
                                     >> Translate.easing EaseInOut
-                                    >> Translate.build
+                                    >> Translate.end
                                )
                 in
                 ( collectSprings builder, collectEasings builder )
@@ -280,33 +280,33 @@ mutualExclusionTests =
         , test "PerspectiveOrigin.spring after PerspectiveOrigin.easing wins" <|
             \_ ->
                 initBuilder
-                    |> (PerspectiveOrigin.for "el"
+                    |> (Builder.for "el" >> PerspectiveOrigin.begin
                             >> PerspectiveOrigin.to 200
                             >> PerspectiveOrigin.easing EaseInOut
                             >> PerspectiveOrigin.spring Spring.wobbly
-                            >> PerspectiveOrigin.build
+                            >> PerspectiveOrigin.end
                        )
                     |> collectSprings
                     |> Expect.equal [ Just Spring.wobbly ]
         , test "Custom.spring after Custom.easing wins" <|
             \_ ->
                 initBuilder
-                    |> (Custom.for "el" (BorderRadius Px)
+                    |> (Builder.for "el" >> Custom.begin (BorderRadius Px)
                             >> Custom.to 16
                             >> Custom.easing EaseInOut
                             >> Custom.spring Spring.wobbly
-                            >> Custom.build
+                            >> Custom.end
                        )
                     |> collectSprings
                     |> Expect.equal [ Just Spring.wobbly ]
         , test "CustomColor.spring after CustomColor.easing wins" <|
             \_ ->
                 initBuilder
-                    |> (CustomColor.for "el" BackgroundColor
+                    |> (Builder.for "el" >> CustomColor.begin BackgroundColor
                             >> CustomColor.to (Color.rgb 255 0 0)
                             >> CustomColor.easing EaseInOut
                             >> CustomColor.spring Spring.wobbly
-                            >> CustomColor.build
+                            >> CustomColor.end
                        )
                     |> collectSprings
                     |> Expect.equal [ Just Spring.wobbly ]

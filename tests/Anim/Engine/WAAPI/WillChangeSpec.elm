@@ -26,7 +26,6 @@ import Anim.Property.Size as Size
 import Anim.Property.Skew as Skew
 import Anim.Property.Translate as Translate
 import Anim.Unit as Unit
-import Dict
 import Expect
 import Json.Decode as Decode
 import Json.Encode as Encode
@@ -146,7 +145,7 @@ encodeAnimate steps =
         processed =
             Builder.init [ steps ] |> Builder.process
     in
-    Encoder.encode AnimGroups.init Dict.empty processed
+    Encoder.encode AnimGroups.init processed
         |> Encode.encode 0
 
 

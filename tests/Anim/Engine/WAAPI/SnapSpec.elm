@@ -16,7 +16,6 @@ import Anim.Internal.Engine.Shared.AnimGroups as AnimGroups
 import Anim.Internal.Engine.WAAPI.Encoder as Encoder
 import Anim.Property.Opacity as Opacity
 import Anim.Property.Translate as Translate
-import Dict
 import Expect
 import Json.Decode as Decode
 import Json.Encode as Encode
@@ -35,7 +34,7 @@ suite =
                         >> Translate.end
                     ]
                     |> Builder.process
-                    |> Encoder.encodeSnap AnimGroups.init Dict.empty
+                    |> Encoder.encodeSnap AnimGroups.init
                     |> decodeType
                     |> Expect.equal (Just "snap")
         , test "encodeSnap includes the snapped property's end value" <|
@@ -47,7 +46,7 @@ suite =
                         >> Translate.end
                     ]
                     |> Builder.process
-                    |> Encoder.encodeSnap AnimGroups.init Dict.empty
+                    |> Encoder.encodeSnap AnimGroups.init
                     |> Encode.encode 0
                     |> String.contains "250"
                     |> Expect.equal True
@@ -60,7 +59,7 @@ suite =
                         >> Translate.end
                     ]
                     |> Builder.process
-                    |> Encoder.encode AnimGroups.init Dict.empty
+                    |> Encoder.encode AnimGroups.init
                     |> decodeElementPropertyTypes "cube"
                     |> Expect.equal []
         , test "encode includes Animate-mode property when mixed with Snap" <|
@@ -76,7 +75,7 @@ suite =
                         >> Translate.end
                     ]
                     |> Builder.process
-                    |> Encoder.encode AnimGroups.init Dict.empty
+                    |> Encoder.encode AnimGroups.init
                     |> decodeElementPropertyTypes "cube"
                     |> Expect.equal [ "opacity" ]
         , test "encodeSnap includes only Snap-mode property when mixed with Animate" <|
@@ -92,7 +91,7 @@ suite =
                         >> Translate.end
                     ]
                     |> Builder.process
-                    |> Encoder.encodeSnap AnimGroups.init Dict.empty
+                    |> Encoder.encodeSnap AnimGroups.init
                     |> decodeElementPropertyTypes "cube"
                     |> Expect.equal [ "translate" ]
         ]

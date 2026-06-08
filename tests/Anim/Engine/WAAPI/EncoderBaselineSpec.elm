@@ -20,7 +20,6 @@ import Anim.Internal.Engine.WAAPI.Encoder as Encoder
 import Anim.Internal.Property.Scale as Scale
 import Anim.Internal.Property.Translate as Translate
 import Anim.Property.Rotate as Rotate
-import Dict
 import Expect
 import Json.Decode as Decode
 import Json.Encode as Encode
@@ -46,7 +45,7 @@ suite =
                         Builder.init [ rotateBuilder ] |> Builder.process
 
                     json =
-                        Encoder.encode animGroups Dict.empty processed |> Encode.encode 0
+                        Encoder.encode animGroups processed |> Encode.encode 0
                 in
                 json
                     |> decodeBaselineTranslateZ "cube"
@@ -67,7 +66,7 @@ suite =
                         Builder.init [ rotateBuilder ] |> Builder.process
 
                     json =
-                        Encoder.encode animGroups Dict.empty processed |> Encode.encode 0
+                        Encoder.encode animGroups processed |> Encode.encode 0
                 in
                 json
                     |> decodeBaselineScaleX "cube"
@@ -84,7 +83,7 @@ suite =
                         Builder.init [ rotateBuilder ] |> Builder.process
 
                     json =
-                        Encoder.encode animGroups Dict.empty processed |> Encode.encode 0
+                        Encoder.encode animGroups processed |> Encode.encode 0
                 in
                 json
                     |> decodeHasBaseline "cube"
@@ -106,7 +105,7 @@ suite =
                         Builder.init [ rotateBuilder ] |> Builder.process
 
                     json =
-                        Encoder.encode animGroups Dict.empty processed |> Encode.encode 0
+                        Encoder.encode animGroups processed |> Encode.encode 0
                 in
                 ( decodeBaselineTranslateZ "cube" json
                 , decodeBaselineScaleX "cube" json

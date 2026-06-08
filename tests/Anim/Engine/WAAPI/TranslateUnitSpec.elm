@@ -15,7 +15,6 @@ import Anim.Internal.Engine.WAAPI.AnimGroup as AnimGroup
 import Anim.Internal.Engine.WAAPI.Encoder as Encoder
 import Anim.Property.Translate as Translate
 import Anim.Unit as Unit
-import Dict
 import Expect
 import Json.Decode as Decode
 import Json.Encode as Encode
@@ -77,7 +76,7 @@ unitTest description maybeUnit expected =
                     Builder.init [ initStep, translateBuilder ] |> Builder.process
 
                 json =
-                    Encoder.encode animGroups Dict.empty processed |> Encode.encode 0
+                    Encoder.encode animGroups processed |> Encode.encode 0
             in
             json
                 |> decodeTranslateUnit "ball"

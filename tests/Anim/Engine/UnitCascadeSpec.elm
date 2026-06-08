@@ -118,23 +118,26 @@ firstPerspectiveOriginLength builder =
 
 animateTranslate : Builder.AnimBuilder { eng | withTiming : () } -> Builder.AnimBuilder { eng | withTiming : () }
 animateTranslate =
-    Translate.for "box"
+    Builder.for "box"
+        >> Translate.begin
         >> Translate.toX 100
-        >> Translate.build
+        >> Translate.end
 
 
 animateSize : Builder.AnimBuilder { eng | withTiming : () } -> Builder.AnimBuilder { eng | withTiming : () }
 animateSize =
-    Size.for "box"
+    Builder.for "box"
+        >> Size.begin
         >> Size.toW 200
-        >> Size.build
+        >> Size.end
 
 
 animatePerspectiveOrigin : Builder.AnimBuilder { eng | withTiming : () } -> Builder.AnimBuilder { eng | withTiming : () }
 animatePerspectiveOrigin =
-    PerspectiveOrigin.for "scene"
+    Builder.for "scene"
+        >> PerspectiveOrigin.begin
         >> PerspectiveOrigin.toX 25
-        >> PerspectiveOrigin.build
+        >> PerspectiveOrigin.end
 
 
 

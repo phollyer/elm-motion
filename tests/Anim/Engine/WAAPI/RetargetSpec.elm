@@ -290,7 +290,6 @@ encoderPayload =
                         Encoder.encodeRetarget
                             (animGroupsFor "a")
                             Dict.empty
-                            Dict.empty
                             processed
                             |> Encode.encode 0
                 in
@@ -306,7 +305,6 @@ encoderPayload =
                     json =
                         Encoder.encodeRetarget
                             (animGroupsFor "a")
-                            Dict.empty
                             Dict.empty
                             processed
                             |> Encode.encode 0

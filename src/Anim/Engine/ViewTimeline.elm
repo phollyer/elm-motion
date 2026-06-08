@@ -283,7 +283,7 @@ overrides any global setting for that group.
 -}
 setUpdateThrottle : Int -> EngineBuilder -> EngineBuilder
 setUpdateThrottle =
-        Builder.setUpdateThrottle
+    Builder.setUpdateThrottle
 
 
 
