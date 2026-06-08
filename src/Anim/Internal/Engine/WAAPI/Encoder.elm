@@ -173,6 +173,8 @@ encodeAnimateLike typeTag animGroups touchedAxes processed =
                             (Just animTransformOrder)
                             (encodeTransformBaseline snapshot)
                             Nothing
+                            Nothing
+                            Nothing
                             config.frozenAxes
                             (touchedAxesForGroup animGroupName touchedAxes)
                             playback.iterations
@@ -247,6 +249,8 @@ encodeRestart iterationsConfig directionConfig animGroup configGroup =
                             (Just elemTransformOrder)
                             (encodeTransformBaseline snapshot)
                             Nothing
+                            Nothing
+                            Nothing
                             config.frozenAxes
                             Dict.empty
                             playback.iterations
@@ -283,6 +287,8 @@ encodeProcessedData data =
                         , encodeProcessedAnimGroupConfig
                             animGroupName
                             animGroupName
+                            Nothing
+                            Nothing
                             Nothing
                             Nothing
                             Nothing
@@ -444,6 +450,8 @@ encodeProcessedAnimGroupConfig :
     -> Maybe (AnimGroups PropertyState)
     -> Maybe (List TransformProperty)
     -> Maybe Encode.Value
+    -> Maybe String
+    -> Maybe String
     -> Maybe Bool
     -> Dict.Dict String (List String)
     -> Dict.Dict String (Set String)
@@ -451,7 +459,7 @@ encodeProcessedAnimGroupConfig :
     -> Builder.AnimationDirection
     -> List Builder.ProcessedPropertyConfig
     -> Encode.Value
-encodeProcessedAnimGroupConfig animGroupName targetId propertyState transformOrder_ transformBaseline emitProgress_ frozenAxes touchedAxes iterations_ direction_ propertyConfigs =
+encodeProcessedAnimGroupConfig animGroupName targetId propertyState transformOrder_ transformBaseline viewRangeStart viewRangeEnd emitProgress_ frozenAxes touchedAxes iterations_ direction_ propertyConfigs =
     let
         baseFields =
             [ ( "properties", Encode.list (encodeProcessedPropertyConfig propertyState frozenAxes touchedAxes) propertyConfigs )
@@ -471,6 +479,12 @@ encodeProcessedAnimGroupConfig animGroupName targetId propertyState transformOrd
                 |> Maybe.map (\baseline -> [ ( "transformBaseline", baseline ) ])
                 |> Maybe.withDefault []
 
+        viewRangeFields =
+            [ viewRangeStart |> Maybe.map (\range -> ( "rangeStart", Encode.string range ))
+            , viewRangeEnd |> Maybe.map (\range -> ( "rangeEnd", Encode.string range ))
+            ]
+                |> List.filterMap identity
+
         emitProgressField =
             emitProgress_
                 |> Maybe.map (\enabled -> [ ( "emitProgress", Encode.bool enabled ) ])
@@ -484,7 +498,7 @@ encodeProcessedAnimGroupConfig animGroupName targetId propertyState transformOrd
                 value ->
                     [ ( "willChange", Encode.string value ) ]
     in
-    Encode.object (baseFields ++ orderField ++ baselineField ++ emitProgressField ++ willChangeField)
+    Encode.object (baseFields ++ orderField ++ baselineField ++ viewRangeFields ++ emitProgressField ++ willChangeField)
 
 
 {-| Encode the Elm-side transform snapshot baseline (init values plus any
@@ -1066,6 +1080,8 @@ encodeScroll builder =
                             Nothing
                             config.transformOrder
                             Nothing
+                            config.viewRangeStart
+                            config.viewRangeEnd
                             (Just emitProgress)
                             config.frozenAxes
                             Dict.empty
@@ -1149,6 +1165,8 @@ encodeView builder =
                             Nothing
                             config.transformOrder
                             Nothing
+                            (Builder.getViewRangeStartFor animGroupName builder)
+                            (Builder.getViewRangeEndFor animGroupName builder)
                             (Just emitProgress)
                             config.frozenAxes
                             Dict.empty

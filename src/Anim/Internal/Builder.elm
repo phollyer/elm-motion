@@ -89,7 +89,9 @@ module Anim.Internal.Builder exposing
     , getTransformOrder
     , getTranslateInitCssUnitAxes
     , getViewRangeEnd
+    , getViewRangeEndFor
     , getViewRangeStart
+    , getViewRangeStartFor
     , init
     , initDefaults
     , initPlayback
@@ -344,6 +346,8 @@ type alias AnimGroupConfig =
     { properties : List PropertyConfig
     , playback : Maybe GroupPlaybackConfig
     , transformOrder : Maybe (List TransformProperty)
+    , viewRangeStart : Maybe String
+    , viewRangeEnd : Maybe String
     , emitProgress : Maybe Bool
     , frozenAxes : Maybe (Dict String (List String))
     }
@@ -353,6 +357,8 @@ type alias ProcessedAnimGroupConfig =
     { properties : List ProcessedPropertyConfig
     , playback : Maybe GroupPlaybackConfig
     , transformOrder : Maybe (List TransformProperty)
+    , viewRangeStart : Maybe String
+    , viewRangeEnd : Maybe String
     , emitProgress : Maybe Bool
     , frozenAxes : Dict String (List String)
     }
@@ -977,6 +983,8 @@ transformOrder order ((AnimBuilder data) as builder) =
                             { properties = []
                             , playback = Nothing
                             , transformOrder = normalizedOrder
+                            , viewRangeStart = Nothing
+                            , viewRangeEnd = Nothing
                             , emitProgress = Nothing
                             , frozenAxes = Nothing
                             }
@@ -1117,6 +1125,8 @@ iterations count (AnimBuilder data) =
                 { properties = []
                 , playback = Just { iterations = Just (Times count), animationDirection = Nothing }
                 , transformOrder = Nothing
+                , viewRangeStart = Nothing
+                , viewRangeEnd = Nothing
                 , emitProgress = Nothing
                 , frozenAxes = Nothing
                 }
@@ -1138,6 +1148,8 @@ loopForever (AnimBuilder data) =
                 { properties = []
                 , playback = Just { iterations = Just Infinite, animationDirection = Nothing }
                 , transformOrder = Nothing
+                , viewRangeStart = Nothing
+                , viewRangeEnd = Nothing
                 , emitProgress = Nothing
                 , frozenAxes = Nothing
                 }
@@ -1174,6 +1186,8 @@ alternate (AnimBuilder data) =
                 { properties = []
                 , playback = Just { iterations = Nothing, animationDirection = Just Alternate }
                 , transformOrder = Nothing
+                , viewRangeStart = Nothing
+                , viewRangeEnd = Nothing
                 , emitProgress = Nothing
                 , frozenAxes = Nothing
                 }
@@ -1333,6 +1347,8 @@ freezeAxes axes properties (AnimBuilder data) =
                 { properties = []
                 , playback = Nothing
                 , transformOrder = Nothing
+                , viewRangeStart = Nothing
+                , viewRangeEnd = Nothing
                 , emitProgress = Nothing
                 , frozenAxes = Just (applyFreezeAxesToDict baseFrozenAxes)
                 }
@@ -1376,6 +1392,8 @@ unfreezeAxes axes properties (AnimBuilder data) =
                 { properties = []
                 , playback = Nothing
                 , transformOrder = Nothing
+                , viewRangeStart = Nothing
+                , viewRangeEnd = Nothing
                 , emitProgress = Nothing
                 , frozenAxes = Just (applyUnfreezeAxesToDict baseFrozenAxes)
                 }
@@ -1505,6 +1523,8 @@ getCurrentAnimGroupConfig (AnimBuilder data) =
             { properties = []
             , playback = Nothing
             , transformOrder = data.defaults.globalTransformOrder
+            , viewRangeStart = data.scrollDriven.viewRangeStart
+            , viewRangeEnd = data.scrollDriven.viewRangeEnd
             , emitProgress = Nothing
             , frozenAxes = Just data.animation.frozenAxes
             }
@@ -1521,6 +1541,20 @@ getCurrentAnimGroupConfig (AnimBuilder data) =
 
                                     Nothing ->
                                         data.defaults.globalTransformOrder
+                            , viewRangeStart =
+                                case config.viewRangeStart of
+                                    Just groupRangeStart ->
+                                        Just groupRangeStart
+
+                                    Nothing ->
+                                        data.scrollDriven.viewRangeStart
+                            , viewRangeEnd =
+                                case config.viewRangeEnd of
+                                    Just groupRangeEnd ->
+                                        Just groupRangeEnd
+
+                                    Nothing ->
+                                        data.scrollDriven.viewRangeEnd
                             , frozenAxes =
                                 case config.frozenAxes of
                                     Just groupFrozenAxes ->
@@ -1534,6 +1568,8 @@ getCurrentAnimGroupConfig (AnimBuilder data) =
                     { properties = []
                     , playback = Nothing
                     , transformOrder = data.defaults.globalTransformOrder
+                    , viewRangeStart = data.scrollDriven.viewRangeStart
+                    , viewRangeEnd = data.scrollDriven.viewRangeEnd
                     , emitProgress = Nothing
                     , frozenAxes = Just data.animation.frozenAxes
                     }
@@ -1767,7 +1803,7 @@ pipeline — for example, after a resize that shifts the in-flight
 animation's end target. Subsequent builders look up the new end via
 `getBaseline` (so that `Translate.begin
 the resized X/Z values), and that lookup must reflect the post-resize
-target rather than the pre-resize one captured by the prior `animate`.
+target rather than the pre-resize one captured by the prior`animate\`.
 
 -}
 updateBaselines : String -> (PropertyBaselines -> PropertyBaselines) -> AnimBuilder eng -> AnimBuilder eng
@@ -2034,6 +2070,20 @@ updateCurrentConfig config (AnimBuilder data) =
                                         Nothing ->
                                             existing.playback
                                 , transformOrder = mergedOrder
+                                , viewRangeStart =
+                                    case config.viewRangeStart of
+                                        Just _ ->
+                                            config.viewRangeStart
+
+                                        Nothing ->
+                                            existing.viewRangeStart
+                                , viewRangeEnd =
+                                    case config.viewRangeEnd of
+                                        Just _ ->
+                                            config.viewRangeEnd
+
+                                        Nothing ->
+                                            existing.viewRangeEnd
                                 , emitProgress =
                                     case config.emitProgress of
                                         Just _ ->
@@ -2420,6 +2470,8 @@ process (AnimBuilder data) =
 
                         Nothing ->
                             data.defaults.globalTransformOrder
+                , viewRangeStart = group.viewRangeStart
+                , viewRangeEnd = group.viewRangeEnd
                 , emitProgress = group.emitProgress
                 , frozenAxes =
                     case group.frozenAxes of
@@ -2893,22 +2945,102 @@ transitionMode (AnimBuilder data) =
 -}
 setViewRangeStart : String -> AnimBuilder eng -> AnimBuilder eng
 setViewRangeStart range (AnimBuilder data) =
-    let
-        sd =
-            data.scrollDriven
-    in
-    AnimBuilder { data | scrollDriven = { sd | viewRangeStart = Just range } }
+    case data.animation.currentAnimGroup of
+        Nothing ->
+            let
+                sd =
+                    data.scrollDriven
+            in
+            AnimBuilder { data | scrollDriven = { sd | viewRangeStart = Just range } }
+
+        Just _ ->
+            updateCurrentConfig
+                { properties = []
+                , playback = Nothing
+                , transformOrder = Nothing
+                , viewRangeStart = Just range
+                , viewRangeEnd = Nothing
+                , emitProgress = Nothing
+                , frozenAxes = Nothing
+                }
+                (AnimBuilder data)
 
 
 {-| Set the ViewTimeline rangeEnd value without changing the phantom mode.
 -}
 setViewRangeEnd : String -> AnimBuilder eng -> AnimBuilder eng
 setViewRangeEnd range (AnimBuilder data) =
+    case data.animation.currentAnimGroup of
+        Nothing ->
+            let
+                sd =
+                    data.scrollDriven
+            in
+            AnimBuilder { data | scrollDriven = { sd | viewRangeEnd = Just range } }
+
+        Just _ ->
+            updateCurrentConfig
+                { properties = []
+                , playback = Nothing
+                , transformOrder = Nothing
+                , viewRangeStart = Nothing
+                , viewRangeEnd = Just range
+                , emitProgress = Nothing
+                , frozenAxes = Nothing
+                }
+                (AnimBuilder data)
+
+
+{-| Resolve the current group's effective `rangeStart`.
+-}
+getViewRangeStartFor : AnimGroupName -> AnimBuilder eng -> Maybe String
+getViewRangeStartFor animGroupName ((AnimBuilder data) as builder) =
     let
-        sd =
-            data.scrollDriven
+        fromHistory =
+            getCurrentAnimationConfig animGroupName builder
+                |> Maybe.andThen .viewRangeStart
+
+        fromCurrentConfig =
+            getAnimGroupConfig animGroupName builder
+                |> Maybe.andThen .viewRangeStart
     in
-    AnimBuilder { data | scrollDriven = { sd | viewRangeEnd = Just range } }
+    case fromHistory of
+        Just viewRangeStart ->
+            Just viewRangeStart
+
+        Nothing ->
+            case fromCurrentConfig of
+                Just viewRangeStart ->
+                    Just viewRangeStart
+
+                Nothing ->
+                    data.scrollDriven.viewRangeStart
+
+
+{-| Resolve the current group's effective `rangeEnd`.
+-}
+getViewRangeEndFor : AnimGroupName -> AnimBuilder eng -> Maybe String
+getViewRangeEndFor animGroupName ((AnimBuilder data) as builder) =
+    let
+        fromHistory =
+            getCurrentAnimationConfig animGroupName builder
+                |> Maybe.andThen .viewRangeEnd
+
+        fromCurrentConfig =
+            getAnimGroupConfig animGroupName builder
+                |> Maybe.andThen .viewRangeEnd
+    in
+    case fromHistory of
+        Just viewRangeEnd ->
+            Just viewRangeEnd
+
+        Nothing ->
+            case fromCurrentConfig of
+                Just viewRangeEnd ->
+                    Just viewRangeEnd
+
+                Nothing ->
+                    data.scrollDriven.viewRangeEnd
 
 
 {-| Get the scroll source element ID (for ScrollTimeline).
@@ -2988,6 +3120,8 @@ setScrollEmitProgress enabled (AnimBuilder data) =
                 { properties = []
                 , playback = Nothing
                 , transformOrder = Nothing
+                , viewRangeStart = Nothing
+                , viewRangeEnd = Nothing
                 , emitProgress = Just enabled
                 , frozenAxes = Nothing
                 }
@@ -3037,6 +3171,8 @@ setEmitProgress enabled (AnimBuilder data) =
                 { properties = []
                 , playback = Nothing
                 , transformOrder = Nothing
+                , viewRangeStart = Nothing
+                , viewRangeEnd = Nothing
                 , emitProgress = Just enabled
                 , frozenAxes = Nothing
                 }

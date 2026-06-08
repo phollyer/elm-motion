@@ -374,11 +374,14 @@ function buildSharedTimelineOptions(commandData) {
 
 /**
  * Build the rangeOptions object for a ViewTimeline from its config.
+ * Per-element overrides win over the timeline defaults.
  */
-function buildViewRangeOptions(timelineConfig) {
+function buildViewRangeOptions(timelineConfig, elementConfig) {
     const rangeOptions = {};
     if (timelineConfig.rangeStart) rangeOptions.rangeStart = timelineConfig.rangeStart;
     if (timelineConfig.rangeEnd) rangeOptions.rangeEnd = timelineConfig.rangeEnd;
+    if (elementConfig && elementConfig.rangeStart) rangeOptions.rangeStart = elementConfig.rangeStart;
+    if (elementConfig && elementConfig.rangeEnd) rangeOptions.rangeEnd = elementConfig.rangeEnd;
     return rangeOptions;
 }
 
@@ -504,7 +507,6 @@ export function processViewDrivenData(commandData) {
 
     const timelineConfig = commandData.timeline || {};
     const axis = timelineConfig.axis || 'block';
-    const rangeOptions = buildViewRangeOptions(timelineConfig);
     const { playbackOptions, discreteEntry, discreteExit, defaultEmitProgress } = buildSharedTimelineOptions(commandData);
 
     Object.entries(commandData.elements).forEach(function ([animGroup, elementConfig]) {
@@ -512,6 +514,7 @@ export function processViewDrivenData(commandData) {
             typeof elementConfig.emitProgress === 'boolean'
                 ? elementConfig.emitProgress
                 : defaultEmitProgress;
+        const rangeOptions = buildViewRangeOptions(timelineConfig, elementConfig);
         applyViewDrivenForEntry(animGroup, elementConfig, axis, rangeOptions, playbackOptions, discreteEntry, discreteExit, emitProgress);
     });
 }

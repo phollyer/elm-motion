@@ -85,6 +85,9 @@ and the
 
 # Range
 
+📖 See [Range](https://phollyer.github.io/elm-motion/animation/engines/view-timeline/#range)
+for details.
+
 @docs Unit, Range, rangeStart, rangeEnd
 
 
@@ -327,7 +330,7 @@ toAnimEvent internalEvent =
 
 {-| Subscribe to lifecycle events for this engine.
 
-Wire this up alongside your `motionMsg` port.
+This is only required if you want to receive events.
 
     subscriptions : Model -> Sub Msg
     subscriptions _ =
@@ -406,9 +409,6 @@ Each constructor takes a numeric value and a `Unit`:
 
     rangeEnd (Exit 100 Px) -- exit 100px
 
-See the [Range section](https://phollyer.github.io/elm-motion/animation/engines/view-timeline/#range)
-for details.
-
 -}
 type Range
     = Cover Float Unit
@@ -424,8 +424,16 @@ type Range
 
 Optional — defaults to `Cover 0 Perc` when not called.
 
+This is a precedence function, so it can act as a global default for the
+whole builder chain or be set after `for` to override the range for a
+specific group.
+
     -- Start animating as the element enters the viewport
     ViewTimeline.rangeStart (Entry 0 Perc)
+
+    -- Give one section its own range inside the same pipeline
+    ViewTimeline.for "section-a"
+        >> ViewTimeline.rangeStart (Entry 10 Perc)
 
     -- Start animating once the element is fully visible
     ViewTimeline.rangeStart (Entry 100 Perc)
@@ -440,8 +448,16 @@ rangeStart range =
 
 Optional — defaults to `Cover 100 Perc` when not called.
 
+This is a precedence function, so it can act as a global default for the
+whole builder chain or be set after `for` to override the range for a
+specific group.
+
     -- End animating as the element begins to leave the viewport
     ViewTimeline.rangeEnd (Exit 0 Perc)
+
+    -- Give one section its own range inside the same pipeline
+    ViewTimeline.for "section-a"
+        >> ViewTimeline.rangeEnd (Exit 60 Perc)
 
     -- End animating once the element has fully left the viewport
     ViewTimeline.rangeEnd (Exit 100 Perc)

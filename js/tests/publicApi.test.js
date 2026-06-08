@@ -653,6 +653,123 @@ describe('ElmMotion public API', () => {
         );
     });
 
+    it('merges per-element ViewTimeline ranges over the global timeline defaults', async () => {
+        const globalRangeStart = 'cover 10%';
+        const globalRangeEnd = 'exit 90%';
+        const overrideRangeStart = 'entry 0%';
+        const overrideRangeEnd = 'exit 50%';
+
+        const elements = new Map();
+        function registerElement(id) {
+            const animation = createFakeAnimation();
+            const element = {
+                id,
+                animate: vi.fn(() => animation)
+            };
+            elements.set(id, element);
+            return element;
+        }
+
+        const firstElement = registerElement('section-a');
+        const secondElement = registerElement('section-b');
+
+        global.CSS = { escape: (value) => value };
+        global.performance = { now: () => 100 };
+        global.requestAnimationFrame = vi.fn(() => 1);
+        global.cancelAnimationFrame = vi.fn();
+        global.document = {
+            documentElement: { id: 'document' },
+            head: { appendChild() { } },
+            createElement() {
+                return {
+                    setAttribute() { },
+                    addEventListener() { },
+                    onload: null,
+                    onerror: null
+                };
+            },
+            querySelector(selector) {
+                const targetMatch = selector.match(/^\[data-anim-target="(.+)"\]$/);
+                if (!targetMatch) return null;
+                return elements.get(targetMatch[1]) || null;
+            },
+            querySelectorAll(selector) {
+                const targetMatch = selector.match(/^\[data-anim-target="(.+)"\]$/);
+                if (!targetMatch) return [];
+                const element = elements.get(targetMatch[1]);
+                return element ? [element] : [];
+            },
+            getElementById(id) {
+                return elements.get(id) || null;
+            }
+        };
+        global.window = {
+            getComputedStyle() {
+                return {
+                    opacity: '0.4',
+                    width: '100px',
+                    height: '50px',
+                    getPropertyValue(prop) {
+                        if (prop === '--progress') return '12';
+                        if (prop === 'color') return 'rgb(255, 255, 255)';
+                        if (prop === 'background-color') return 'rgb(0, 0, 0)';
+                        return '';
+                    }
+                };
+            },
+            ViewTimeline: class ViewTimeline {
+                constructor(config) {
+                    this.config = config;
+                }
+            }
+        };
+        global.ViewTimeline = global.window.ViewTimeline;
+
+        const events = [];
+        const ports = createPorts((payload) => events.push(payload));
+        ElmMotion.init(ports.ports);
+
+        await ports.send({
+            type: 'viewDriven',
+            iterations: { type: 'times', count: 1 },
+            timeline: { axis: 'block', rangeStart: globalRangeStart, rangeEnd: globalRangeEnd },
+            elements: {
+                'section-a': {
+                    properties: [
+                        { type: 'opacity', startValue: 0, endValue: 1, duration: 300, easing: 'linear', version: 1 }
+                    ],
+                    rangeStart: overrideRangeStart,
+                    rangeEnd: overrideRangeEnd
+                },
+                'section-b': {
+                    properties: [
+                        { type: 'opacity', startValue: 0, endValue: 1, duration: 300, easing: 'linear', version: 1 }
+                    ]
+                }
+            }
+        });
+
+        expect(firstElement.animate).toHaveBeenCalledTimes(1);
+        expect(secondElement.animate).toHaveBeenCalledTimes(1);
+
+        const firstTiming = firstElement.animate.mock.calls[0][1];
+        const secondTiming = secondElement.animate.mock.calls[0][1];
+
+        expect(firstTiming).toEqual(
+            expect.objectContaining({
+                rangeStart: overrideRangeStart,
+                rangeEnd: overrideRangeEnd
+            })
+        );
+        expect(secondTiming).toEqual(
+            expect.objectContaining({
+                rangeStart: globalRangeStart,
+                rangeEnd: globalRangeEnd
+            })
+        );
+        expect(events).toEqual([]);
+    });
+
     it('handles stop, reset, and restart commands through the public API', async () => {
         const elements = new Map();
         const sourceMap = new Map();

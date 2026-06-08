@@ -339,7 +339,7 @@ toAnimEvent internalEvent =
 
 {-| Subscribe to lifecycle events for this engine.
 
-Wire this up alongside your `motionMsg` port.
+This is only required if you want to receive events.
 
     subscriptions : Model -> Sub Msg
     subscriptions _ =
