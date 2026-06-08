@@ -63,9 +63,6 @@ init =
 -- ANIMATION
 
 
-    
-
-
 animateDiagonal : SubEngine.EngineBuilder -> SubEngine.EngineBuilder
 animateDiagonal =
     Translate.for animGroup

@@ -62,7 +62,6 @@ init =
 
 -- ANIMATION
 
-    
 
 animateDiagonal : Transition.EngineBuilder -> Transition.EngineBuilder
 animateDiagonal =
@@ -70,7 +69,6 @@ animateDiagonal =
         >> Translate.toXY endXY endXY
         >> Translate.duration 5000
         >> Translate.easing Linear
-
         >> Translate.build
 
 
