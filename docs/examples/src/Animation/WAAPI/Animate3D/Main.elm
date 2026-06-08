@@ -429,7 +429,7 @@ moveBottomFaceIn toY =
 
 textMoveAmount : Float
 textMoveAmount =
-    4
+    14
 
 
 moveText : TextConfig -> Float -> Float -> WAAPI.EngineBuilder -> WAAPI.EngineBuilder

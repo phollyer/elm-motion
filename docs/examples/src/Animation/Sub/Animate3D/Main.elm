@@ -419,7 +419,7 @@ moveBottomFaceIn toY =
 
 textMoveAmount : Float
 textMoveAmount =
-    4
+    14
 
 
 moveText : TextConfig -> Float -> Float -> Sub.EngineBuilder -> Sub.EngineBuilder

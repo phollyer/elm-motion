@@ -374,7 +374,7 @@ moveFace config moveToBuilder =
 
 moveAmount : Float
 moveAmount =
-    50
+    30
 
 
 moveFrontFaceOut : Float -> Transition.EngineBuilder -> Transition.EngineBuilder
@@ -458,7 +458,7 @@ moveBottomFaceIn toY =
 
 textMoveAmount : Float
 textMoveAmount =
-    20
+    14
 
 
 moveText : TextConfig -> Float -> Float -> Transition.EngineBuilder -> Transition.EngineBuilder
