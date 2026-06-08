@@ -514,20 +514,21 @@ This is a precedence function, so it can operate as a global setting for all
 groups in the builder chain, or you can set it on a per-group basis which
 overrides any global setting for that group.
 
-    - Pass `0` (the default) to emit on every `requestAnimationFrame` tick,
-        matching the display refresh rate (60 Hz, 120 Hz, 144 Hz, …).
-    - Pass a positive number of milliseconds to cap the emission rate, e.g.
-        `16` for ~60 Hz, `33` for ~30 Hz.
+  - Pass `0` (the default) to emit on every `requestAnimationFrame` tick,
+    matching the display refresh rate (60 Hz, 120 Hz, 144 Hz, …).
+  - Pass a positive number of milliseconds to cap the emission rate, e.g.
+    `16` for ~60 Hz, `33` for ~30 Hz.
 
 **Note**: Higher throttle values reduce Elm-side mid-flight precision for
 queries and interruption bookkeeping.
 
-        WAAPI.setUpdateThrottle 33 -- global default
-                >> WAAPI.for "hero"
-                >> WAAPI.setUpdateThrottle 0 -- dense updates for interactions
-                >> WAAPI.for "background"
-                >> WAAPI.setUpdateThrottle 50 -- lower traffic for passive motion
-                >> ... -- other builders
+    WAAPI.setUpdateThrottle 33 -- global default
+            >> WAAPI.for "hero"
+            >> WAAPI.setUpdateThrottle 0 -- dense updates for interactions
+            >> ... -- other builders
+            >> WAAPI.for "background"
+            >> WAAPI.setUpdateThrottle 50 -- lower traffic for passive motion
+            >> ... -- other builders
 
 -}
 setUpdateThrottle : Int -> EngineBuilder -> EngineBuilder
