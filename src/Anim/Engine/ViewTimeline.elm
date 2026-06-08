@@ -430,13 +430,9 @@ specific group.
 
     -- Start animating as the element enters the viewport
     ViewTimeline.rangeStart (Entry 0 Perc)
-
-    -- Give one section its own range inside the same pipeline
-    ViewTimeline.for "section-a"
+        >> ViewTimeline.for "section-a"
+        -- Give one section its own range inside the same pipeline
         >> ViewTimeline.rangeStart (Entry 10 Perc)
-
-    -- Start animating once the element is fully visible
-    ViewTimeline.rangeStart (Entry 100 Perc)
 
 -}
 rangeStart : Range -> EngineBuilder -> EngineBuilder
@@ -454,13 +450,9 @@ specific group.
 
     -- End animating as the element begins to leave the viewport
     ViewTimeline.rangeEnd (Exit 0 Perc)
-
-    -- Give one section its own range inside the same pipeline
-    ViewTimeline.for "section-a"
+        >> ViewTimeline.for "section-a"
+        -- Give one section its own range inside the same pipeline
         >> ViewTimeline.rangeEnd (Exit 60 Perc)
-
-    -- End animating once the element has fully left the viewport
-    ViewTimeline.rangeEnd (Exit 100 Perc)
 
 -}
 rangeEnd : Range -> EngineBuilder -> EngineBuilder
