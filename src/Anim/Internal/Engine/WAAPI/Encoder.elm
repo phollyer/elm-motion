@@ -53,9 +53,9 @@ type alias AnimGroupName =
 -- ============================================================
 
 
-encode : AnimGroups AnimGroup -> Dict.Dict String (List String) -> Builder.ProcessedAnimationData -> Encode.Value
-encode animGroups frozenAxes processed =
-    encodeAnimateLike "animate" animGroups frozenAxes Dict.empty (filterGroupsByMode Builder.Animate processed)
+encode : AnimGroups AnimGroup -> Builder.ProcessedAnimationData -> Encode.Value
+encode animGroups processed =
+    encodeAnimateLike "animate" animGroups Dict.empty (filterGroupsByMode Builder.Animate processed)
 
 
 {-| Encode a snap-to-target retarget command. The JSON payload is the
@@ -77,7 +77,6 @@ behaviour for callers that retarget every axis at once).
 -}
 encodeRetarget :
     AnimGroups AnimGroup
-    -> Dict.Dict String (List String)
     -> Dict.Dict ( String, String ) (Set String)
     -> Builder.ProcessedAnimationData
     -> Encode.Value
@@ -93,9 +92,9 @@ by JS. Emitted in addition to (and separately from) the regular
 `animate` command, with the per-element property list pre-filtered to
 contain only `mode = Snap` properties.
 -}
-encodeSnap : AnimGroups AnimGroup -> Dict.Dict String (List String) -> Builder.ProcessedAnimationData -> Encode.Value
-encodeSnap animGroups frozenAxes processed =
-    encodeAnimateLike "snap" animGroups frozenAxes Dict.empty (filterGroupsByMode Builder.Snap processed)
+encodeSnap : AnimGroups AnimGroup -> Builder.ProcessedAnimationData -> Encode.Value
+encodeSnap animGroups processed =
+    encodeAnimateLike "snap" animGroups Dict.empty (filterGroupsByMode Builder.Snap processed)
 
 
 {-| Keep only properties whose `mode` matches `targetMode`, and drop
@@ -131,11 +130,10 @@ filterGroupsByMode targetMode processed =
 encodeAnimateLike :
     String
     -> AnimGroups AnimGroup
-    -> Dict.Dict String (List String)
     -> Dict.Dict ( String, String ) (Set String)
     -> Builder.ProcessedAnimationData
     -> Encode.Value
-encodeAnimateLike typeTag animGroups frozenAxes touchedAxes processed =
+encodeAnimateLike typeTag animGroups touchedAxes processed =
     let
         elementsWithVersions =
             processed.groups
@@ -175,7 +173,7 @@ encodeAnimateLike typeTag animGroups frozenAxes touchedAxes processed =
                             (Just animTransformOrder)
                             (encodeTransformBaseline snapshot)
                             Nothing
-                            frozenAxes
+                            config.frozenAxes
                             (touchedAxesForGroup animGroupName touchedAxes)
                             playback.iterations
                             playback.animationDirection
@@ -249,7 +247,7 @@ encodeRestart iterationsConfig directionConfig animGroup configGroup =
                             (Just elemTransformOrder)
                             (encodeTransformBaseline snapshot)
                             Nothing
-                            Dict.empty
+                            config.frozenAxes
                             Dict.empty
                             playback.iterations
                             playback.animationDirection
@@ -289,7 +287,7 @@ encodeProcessedData data =
                             Nothing
                             Nothing
                             Nothing
-                            Dict.empty
+                            config.frozenAxes
                             Dict.empty
                             playback.iterations
                             playback.animationDirection
@@ -1069,7 +1067,7 @@ encodeScroll builder =
                             config.transformOrder
                             Nothing
                             (Just emitProgress)
-                            Dict.empty
+                            config.frozenAxes
                             Dict.empty
                             playback.iterations
                             playback.animationDirection
@@ -1152,7 +1150,7 @@ encodeView builder =
                             config.transformOrder
                             Nothing
                             (Just emitProgress)
-                            Dict.empty
+                            config.frozenAxes
                             Dict.empty
                             playback.iterations
                             playback.animationDirection

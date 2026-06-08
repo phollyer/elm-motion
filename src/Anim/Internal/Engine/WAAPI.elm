@@ -229,9 +229,6 @@ animate (AnimState state animGroups) build =
         processed =
             Builder.process builder
 
-        frozenAxes =
-            Builder.getAllFrozenAxes builder
-
         generateAnimGroup : AnimGroupName -> Builder.ProcessedAnimGroupConfig -> AnimGroup
         generateAnimGroup animGroupName config =
             let
@@ -290,9 +287,9 @@ animate (AnimState state animGroups) build =
 
         animateCmd =
             Cmd.batch
-                [ state.commandPort (encode processedAnimGroups frozenAxes processed)
+                [ state.commandPort (encode processedAnimGroups processed)
                 , if hasSnap then
-                    state.commandPort (encodeSnap processedAnimGroups frozenAxes processed)
+                    state.commandPort (encodeSnap processedAnimGroups processed)
 
                   else
                     Cmd.none
@@ -334,9 +331,6 @@ retarget (AnimState state animGroups) build =
 
         processed =
             Builder.process builder
-
-        frozenAxes =
-            Builder.getAllFrozenAxes builder
 
         touchedAxes =
             Builder.getAllTouchedAxes builder
@@ -707,7 +701,7 @@ retarget (AnimState state animGroups) build =
 
         retargetCmd =
             state.commandPort <|
-                encodeRetarget nextAnimGroups frozenAxes touchedAxes processed
+                encodeRetarget nextAnimGroups touchedAxes processed
     in
     ( nextState, retargetCmd )
 

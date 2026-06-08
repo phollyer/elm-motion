@@ -52,6 +52,7 @@ module Anim.Internal.Builder exposing
     , for
     , freezeAxes
     , getAllFrozenAxes
+    , getAllFrozenAxesFor
     , getAllTouchedAxes
     , getAnimGroupConfig
     , getAnimGroups
@@ -344,6 +345,7 @@ type alias AnimGroupConfig =
     , playback : Maybe GroupPlaybackConfig
     , transformOrder : Maybe (List TransformProperty)
     , emitProgress : Maybe Bool
+    , frozenAxes : Maybe (Dict String (List String))
     }
 
 
@@ -352,6 +354,7 @@ type alias ProcessedAnimGroupConfig =
     , playback : Maybe GroupPlaybackConfig
     , transformOrder : Maybe (List TransformProperty)
     , emitProgress : Maybe Bool
+    , frozenAxes : Dict String (List String)
     }
 
 
@@ -971,7 +974,12 @@ transformOrder order ((AnimBuilder data) as builder) =
                             { existing | transformOrder = normalizedOrder }
 
                         Nothing ->
-                            { properties = [], playback = Nothing, transformOrder = normalizedOrder, emitProgress = Nothing }
+                            { properties = []
+                            , playback = Nothing
+                            , transformOrder = normalizedOrder
+                            , emitProgress = Nothing
+                            , frozenAxes = Nothing
+                            }
             in
             builder
                 |> updateCurrentConfig nextConfig
@@ -1110,6 +1118,7 @@ iterations count (AnimBuilder data) =
                 , playback = Just { iterations = Just (Times count), animationDirection = Nothing }
                 , transformOrder = Nothing
                 , emitProgress = Nothing
+                , frozenAxes = Nothing
                 }
                 (AnimBuilder data)
 
@@ -1130,6 +1139,7 @@ loopForever (AnimBuilder data) =
                 , playback = Just { iterations = Just Infinite, animationDirection = Nothing }
                 , transformOrder = Nothing
                 , emitProgress = Nothing
+                , frozenAxes = Nothing
                 }
                 (AnimBuilder data)
 
@@ -1165,6 +1175,7 @@ alternate (AnimBuilder data) =
                 , playback = Just { iterations = Nothing, animationDirection = Just Alternate }
                 , transformOrder = Nothing
                 , emitProgress = Nothing
+                , frozenAxes = Nothing
                 }
                 (AnimBuilder data)
 
@@ -1289,9 +1300,10 @@ freezeAxes axes properties (AnimBuilder data) =
         anim =
             data.animation
 
-        newFrozenAxes =
+        applyFreezeAxesToDict : Dict String (List String) -> Dict String (List String)
+        applyFreezeAxesToDict dict =
             List.foldl
-                (\propName dict ->
+                (\propName acc ->
                     Dict.update propName
                         (\maybeAxes ->
                             case maybeAxes of
@@ -1301,12 +1313,30 @@ freezeAxes axes properties (AnimBuilder data) =
                                 Nothing ->
                                     Just axes
                         )
-                        dict
+                        acc
                 )
-                anim.frozenAxes
+                dict
                 propNames
     in
-    AnimBuilder { data | animation = { anim | frozenAxes = newFrozenAxes } }
+    case anim.currentAnimGroup of
+        Nothing ->
+            AnimBuilder { data | animation = { anim | frozenAxes = applyFreezeAxesToDict anim.frozenAxes } }
+
+        Just animGroupName ->
+            let
+                baseFrozenAxes =
+                    AnimGroups.get animGroupName anim.animGroups
+                        |> Maybe.andThen .frozenAxes
+                        |> Maybe.withDefault anim.frozenAxes
+            in
+            updateCurrentConfig
+                { properties = []
+                , playback = Nothing
+                , transformOrder = Nothing
+                , emitProgress = Nothing
+                , frozenAxes = Just (applyFreezeAxesToDict baseFrozenAxes)
+                }
+                (AnimBuilder data)
 
 
 unfreezeAxes : List String -> List FreezeProperty -> AnimBuilder eng -> AnimBuilder eng
@@ -1318,26 +1348,60 @@ unfreezeAxes axes properties (AnimBuilder data) =
         anim =
             data.animation
 
-        newFrozenAxes =
+        applyUnfreezeAxesToDict : Dict String (List String) -> Dict String (List String)
+        applyUnfreezeAxesToDict dict =
             List.foldl
-                (\propName dict ->
+                (\propName acc ->
                     Dict.update propName
                         (Maybe.map <|
                             List.filter (\a -> not (List.member a axes))
                         )
-                        dict
+                        acc
                 )
-                anim.frozenAxes
+                dict
                 propNames
     in
-    AnimBuilder { data | animation = { anim | frozenAxes = newFrozenAxes } }
+    case anim.currentAnimGroup of
+        Nothing ->
+            AnimBuilder { data | animation = { anim | frozenAxes = applyUnfreezeAxesToDict anim.frozenAxes } }
+
+        Just animGroupName ->
+            let
+                baseFrozenAxes =
+                    AnimGroups.get animGroupName anim.animGroups
+                        |> Maybe.andThen .frozenAxes
+                        |> Maybe.withDefault anim.frozenAxes
+            in
+            updateCurrentConfig
+                { properties = []
+                , playback = Nothing
+                , transformOrder = Nothing
+                , emitProgress = Nothing
+                , frozenAxes = Just (applyUnfreezeAxesToDict baseFrozenAxes)
+                }
+                (AnimBuilder data)
 
 
 {-| Get the list of frozen axes for a property. Returns [] if none are frozen.
 -}
 getFrozenAxes : String -> AnimBuilder eng -> List String
 getFrozenAxes propName (AnimBuilder data) =
-    Dict.get propName data.animation.frozenAxes |> Maybe.withDefault []
+    case data.animation.currentAnimGroup of
+        Nothing ->
+            Dict.get propName data.animation.frozenAxes |> Maybe.withDefault []
+
+        Just animGroupName ->
+            let
+                fromGroup =
+                    AnimGroups.get animGroupName data.animation.animGroups
+                        |> Maybe.andThen .frozenAxes
+                        |> Maybe.andThen (Dict.get propName)
+
+                fromGlobal =
+                    Dict.get propName data.animation.frozenAxes
+                        |> Maybe.withDefault []
+            in
+            Maybe.withDefault fromGlobal fromGroup
 
 
 {-| Get the full frozen-axes dictionary keyed by property name. Used by
@@ -1348,6 +1412,13 @@ values to avoid snap-back from stale Elm snapshots).
 getAllFrozenAxes : AnimBuilder eng -> Dict String (List String)
 getAllFrozenAxes (AnimBuilder data) =
     data.animation.frozenAxes
+
+
+getAllFrozenAxesFor : AnimGroupName -> AnimBuilder eng -> Dict String (List String)
+getAllFrozenAxesFor animGroupName (AnimBuilder data) =
+    AnimGroups.get animGroupName data.animation.animGroups
+        |> Maybe.andThen .frozenAxes
+        |> Maybe.withDefault data.animation.frozenAxes
 
 
 {-| Mark axes of a property as having been explicitly set by the user's
@@ -1431,7 +1502,12 @@ getCurrentAnimGroupConfig : AnimBuilder eng -> AnimGroupConfig
 getCurrentAnimGroupConfig (AnimBuilder data) =
     case data.animation.currentAnimGroup of
         Nothing ->
-            { properties = [], playback = Nothing, transformOrder = data.defaults.globalTransformOrder, emitProgress = Nothing }
+            { properties = []
+            , playback = Nothing
+            , transformOrder = data.defaults.globalTransformOrder
+            , emitProgress = Nothing
+            , frozenAxes = Just data.animation.frozenAxes
+            }
 
         Just animGroupName ->
             AnimGroups.get animGroupName data.animation.animGroups
@@ -1445,9 +1521,22 @@ getCurrentAnimGroupConfig (AnimBuilder data) =
 
                                     Nothing ->
                                         data.defaults.globalTransformOrder
+                            , frozenAxes =
+                                case config.frozenAxes of
+                                    Just groupFrozenAxes ->
+                                        Just groupFrozenAxes
+
+                                    Nothing ->
+                                        Just data.animation.frozenAxes
                         }
                     )
-                |> Maybe.withDefault { properties = [], playback = Nothing, transformOrder = data.defaults.globalTransformOrder, emitProgress = Nothing }
+                |> Maybe.withDefault
+                    { properties = []
+                    , playback = Nothing
+                    , transformOrder = data.defaults.globalTransformOrder
+                    , emitProgress = Nothing
+                    , frozenAxes = Just data.animation.frozenAxes
+                    }
 
 
 getAnimGroupConfig : AnimGroupName -> AnimBuilder eng -> Maybe AnimGroupConfig
@@ -1952,6 +2041,13 @@ updateCurrentConfig config (AnimBuilder data) =
 
                                         Nothing ->
                                             existing.emitProgress
+                                , frozenAxes =
+                                    case config.frozenAxes of
+                                        Just _ ->
+                                            config.frozenAxes
+
+                                        Nothing ->
+                                            existing.frozenAxes
                             }
 
                         Nothing ->
@@ -2325,6 +2421,13 @@ process (AnimBuilder data) =
                         Nothing ->
                             data.defaults.globalTransformOrder
                 , emitProgress = group.emitProgress
+                , frozenAxes =
+                    case group.frozenAxes of
+                        Just axes ->
+                            axes
+
+                        Nothing ->
+                            data.animation.frozenAxes
                 }
             )
             data.animation.animGroups
@@ -2886,6 +2989,7 @@ setScrollEmitProgress enabled (AnimBuilder data) =
                 , playback = Nothing
                 , transformOrder = Nothing
                 , emitProgress = Just enabled
+                , frozenAxes = Nothing
                 }
                 (AnimBuilder data)
 
@@ -2934,5 +3038,6 @@ setEmitProgress enabled (AnimBuilder data) =
                 , playback = Nothing
                 , transformOrder = Nothing
                 , emitProgress = Just enabled
+                , frozenAxes = Nothing
                 }
                 (AnimBuilder data)
