@@ -362,9 +362,6 @@ horizontal =
 
 {-| Set how many times an animation should repeat.
 
-Use a finite value here. Scroll timelines map progress through a finite
-range, so this controls how many passes are distributed across that range.
-
 Applies to the currently selected animation group in the builder chain.
 
     notificationAttentionLoop : ScrollTimeline.EngineBuilder -> ScrollTimeline.EngineBuilder
@@ -536,33 +533,6 @@ cssUnitHeight =
 
 
 -- ============================================================
--- TRANSFORM ORDER
--- ============================================================
-
-
-{-| Override the order in which transform functions are applied.
-
-By default, transforms are applied in the order: translate → rotate → skew → scale.
-Use this when you need a different order for specific visual effects.
-
-    import Anim.Extra.TransformOrder exposing (TransformProperty(..))
-
-    ScrollTimeline.animate motionCmd (Container "scroller") <|
-        ScrollTimeline.transformOrder [ Scale, Rotate, Translate ]
-            >> ScrollTimeline.for "box"
-            >> Translate.begin
-            >> Translate.fromXY 0 0
-            >> Translate.toXY 100 0
-            >> Translate.end
-
--}
-transformOrder : List TransformProperty -> EngineBuilder -> EngineBuilder
-transformOrder =
-    Internal.transformOrder
-
-
-
--- ============================================================
 -- DISCRETE PROPERTIES
 -- ============================================================
 
@@ -587,25 +557,54 @@ discreteEntry =
     Internal.discreteEntry
 
 
-{-| Flip a discrete CSS property when the animation completes.
+{-| Add a discrete CSS property for exit animations.
 
-  - `from` — the value to hold during the animation
+Exit animations need to hold their initial state
+until the very end of the animation, at which point they flip to the final state.
+Therefore you need to set both entry and exit values for the property.
 
-  - `to` — the value to apply when the animation finishes
+Use when an element is disappearing (e.g., going from
+`display: block` to `display: none`):
 
     ScrollTimeline.animate motionCmd (Container "scroller") <|
-    ScrollTimeline.discreteExit "display" "block" "none"
-
-    > > ScrollTimeline.for "box"
-    > > Opacity.begin
-    > > Opacity.from 1
-    > > Opacity.to 0
-    > > Opacity.end
+        ScrollTimeline.discreteExit "display" "block" "none"
+            >> ScrollTimeline.for "box"
+            >> Opacity.begin
+            >> Opacity.from 1
+            >> Opacity.to 0
+            >> Opacity.end
 
 -}
 discreteExit : String -> String -> String -> EngineBuilder -> EngineBuilder
 discreteExit =
     Internal.discreteExit
+
+
+
+-- ============================================================
+-- TRANSFORM ORDER
+-- ============================================================
+
+
+{-| Override the order in which transform functions are applied.
+
+By default, transforms are applied in the order: translate → rotate → skew → scale.
+Use this when you need a different order for specific visual effects.
+
+    import Anim.Extra.TransformOrder exposing (TransformProperty(..))
+
+    ScrollTimeline.animate motionCmd (Container "scroller") <|
+        ScrollTimeline.transformOrder [ Scale, Rotate, Translate ]
+            >> ScrollTimeline.for "box"
+            >> Translate.begin
+            >> Translate.fromXY 0 0
+            >> Translate.toXY 100 0
+            >> Translate.end
+
+-}
+transformOrder : List TransformProperty -> EngineBuilder -> EngineBuilder
+transformOrder =
+    Internal.transformOrder
 
 
 

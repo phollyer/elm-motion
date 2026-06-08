@@ -282,7 +282,6 @@ Full documentation at **[phollyer.github.io/elm-motion](https://phollyer.github.
 ## 📋 Roadmap — in no particular order or timeframe
 
 - CSS Transitions - potentially bake complex easings, and maybe springs, into the css `linear` easing function
-- Full WAAPI coverage
 - FLIP Engine
 - Canvas Engine
 - WebGL Engine
