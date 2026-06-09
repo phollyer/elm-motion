@@ -1,6 +1,9 @@
 module Anim.Internal.Builder.Skew exposing
     ( SkewBuilder
     , build
+    , byX
+    , byXY
+    , byY
     , clampX
     , clampY
     , delay
@@ -10,9 +13,6 @@ module Anim.Internal.Builder.Skew exposing
     , fromX
     , fromXY
     , fromY
-    , byXY
-    , byX
-    , byY
     , setX
     , setXY
     , setY

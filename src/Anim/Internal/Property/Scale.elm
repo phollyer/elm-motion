@@ -60,23 +60,23 @@ toCssString : Scale -> String
 toCssString (Scale { x, y, z }) =
     let
         parts =
-            [ if x /= 1.0 then
-                Just ("scaleX(" ++ String.fromFloat x ++ ")")
+            List.filterMap identity
+                [ if x /= 1.0 then
+                    Just ("scaleX(" ++ String.fromFloat x ++ ")")
 
-              else
-                Nothing
-            , if y /= 1.0 then
-                Just ("scaleY(" ++ String.fromFloat y ++ ")")
+                  else
+                    Nothing
+                , if y /= 1.0 then
+                    Just ("scaleY(" ++ String.fromFloat y ++ ")")
 
-              else
-                Nothing
-            , if z /= 1.0 then
-                Just ("scaleZ(" ++ String.fromFloat z ++ ")")
+                  else
+                    Nothing
+                , if z /= 1.0 then
+                    Just ("scaleZ(" ++ String.fromFloat z ++ ")")
 
-              else
-                Nothing
-            ]
-                |> List.filterMap identity
+                  else
+                    Nothing
+                ]
     in
     case parts of
         [] ->

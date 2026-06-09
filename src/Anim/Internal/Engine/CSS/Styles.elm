@@ -164,9 +164,8 @@ toAttrs animGroupName (Styles dict) =
             Html.Attributes.attribute "data-anim-group-name" animGroupName
     in
     dataAttr
-        :: (Dict.toList dict
-                |> List.map
-                    (\( key, value ) ->
-                        Html.Attributes.style key value
-                    )
-           )
+        :: List.map
+            (\( key, value ) ->
+                Html.Attributes.style key value
+            )
+            (Dict.toList dict)

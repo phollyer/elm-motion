@@ -78,18 +78,18 @@ toCssString : Skew -> String
 toCssString (Skew values) =
     let
         parts =
-            [ if values.x /= 0 then
-                Just ("skewX(" ++ String.fromFloat values.x ++ "deg)")
+            List.filterMap identity
+                [ if values.x /= 0 then
+                    Just ("skewX(" ++ String.fromFloat values.x ++ "deg)")
 
-              else
-                Nothing
-            , if values.y /= 0 then
-                Just ("skewY(" ++ String.fromFloat values.y ++ "deg)")
+                  else
+                    Nothing
+                , if values.y /= 0 then
+                    Just ("skewY(" ++ String.fromFloat values.y ++ "deg)")
 
-              else
-                Nothing
-            ]
-                |> List.filterMap identity
+                  else
+                    Nothing
+                ]
     in
     case parts of
         [] ->

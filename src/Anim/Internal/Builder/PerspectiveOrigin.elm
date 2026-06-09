@@ -2,6 +2,10 @@ module Anim.Internal.Builder.PerspectiveOrigin exposing
     ( PerspectiveOriginBuilder
     , bounds
     , build
+    , by
+    , byX
+    , byXY
+    , byY
     , clampX
     , clampY
     , delay
@@ -12,10 +16,6 @@ module Anim.Internal.Builder.PerspectiveOrigin exposing
     , fromX
     , fromXY
     , fromY
-    , by
-    , byX
-    , byXY
-    , byY
     , set
     , setX
     , setXY

@@ -59,23 +59,23 @@ toCssString : Rotate -> String
 toCssString (Rotate angles) =
     let
         parts =
-            [ if angles.x /= 0 then
-                Just ("rotateX(" ++ String.fromFloat angles.x ++ "deg)")
+            List.filterMap identity
+                [ if angles.x /= 0 then
+                    Just ("rotateX(" ++ String.fromFloat angles.x ++ "deg)")
 
-              else
-                Nothing
-            , if angles.y /= 0 then
-                Just ("rotateY(" ++ String.fromFloat angles.y ++ "deg)")
+                  else
+                    Nothing
+                , if angles.y /= 0 then
+                    Just ("rotateY(" ++ String.fromFloat angles.y ++ "deg)")
 
-              else
-                Nothing
-            , if angles.z /= 0 then
-                Just ("rotateZ(" ++ String.fromFloat angles.z ++ "deg)")
+                  else
+                    Nothing
+                , if angles.z /= 0 then
+                    Just ("rotateZ(" ++ String.fromFloat angles.z ++ "deg)")
 
-              else
-                Nothing
-            ]
-                |> List.filterMap identity
+                  else
+                    Nothing
+                ]
     in
     if List.isEmpty parts then
         "rotateZ(0deg)"

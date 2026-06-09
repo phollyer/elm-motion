@@ -1,6 +1,13 @@
 module Anim.Internal.Builder.Rotate exposing
     ( RotateBuilder
     , build
+    , byX
+    , byXY
+    , byXYZ
+    , byXZ
+    , byY
+    , byYZ
+    , byZ
     , clampX
     , clampY
     , clampZ
@@ -16,13 +23,6 @@ module Anim.Internal.Builder.Rotate exposing
     , fromY
     , fromYZ
     , fromZ
-    , byXYZ
-    , byXY
-    , byXZ
-    , byX
-    , byYZ
-    , byY
-    , byZ
     , set
     , setX
     , setXY

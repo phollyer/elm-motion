@@ -103,6 +103,7 @@ type Builder
         }
 
 
+
 -- ============================================================
 -- BUILD
 -- ============================================================
@@ -227,6 +228,7 @@ speed speedPxPerSec (Builder config) =
     Builder { config | timing = Just (Speed speedPxPerSec) }
 
 
+
 -- ============================================================
 -- EASING
 -- ============================================================
@@ -235,6 +237,7 @@ speed speedPxPerSec (Builder config) =
 easing : Easing -> Builder -> Builder
 easing easingFn (Builder config) =
     Builder { config | easing = Just easingFn }
+
 
 
 -- ============================================================
@@ -394,6 +397,7 @@ byY dy (Builder config) =
         }
 
 
+
 -- ============================================================
 -- OFFSETS
 -- ============================================================
@@ -447,6 +451,7 @@ withOffsetY offsetY (Builder config) =
         }
 
 
+
 -- ============================================================
 -- AXIS SELECTION
 -- ============================================================
@@ -488,6 +493,7 @@ onYAxis (Builder config) =
         }
 
 
+
 -- ============================================================
 -- QUERY
 -- ============================================================
@@ -500,7 +506,7 @@ getScrollTargets (ScrollBuilder data) =
 
 getTimeSpecWithDefault : ScrollBuilder -> TimeSpec
 getTimeSpecWithDefault (ScrollBuilder data) =
-    data.timing |> Maybe.withDefault (Duration 0)
+    Maybe.withDefault (Duration 0) data.timing
 
 
 getEasing : ScrollBuilder -> Maybe Easing
@@ -510,7 +516,7 @@ getEasing (ScrollBuilder data) =
 
 getEasingWithDefault : ScrollBuilder -> Easing
 getEasingWithDefault (ScrollBuilder data) =
-    data.easing |> Maybe.withDefault QuintOut
+    Maybe.withDefault QuintOut data.easing
 
 
 getDelay : ScrollBuilder -> Maybe Int
@@ -525,4 +531,3 @@ getDelay (ScrollBuilder data) =
 getDelayWithDefault : ScrollBuilder -> Int
 getDelayWithDefault (ScrollBuilder data) =
     data.delay
-

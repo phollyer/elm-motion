@@ -785,8 +785,6 @@ applyTranslateResize animGroupName previousBounds bounds (AnimState state animGr
                     updatedAnimGroups
 
 
-{-| Resize the in-memory translate animation to match new bounds.
--}
 resizeTranslate : InternalUnit.ResolvedCssUnitAxes -> AxisBounds -> AxisBounds -> Bool -> Bool -> PropertyAnimation Translate -> PropertyAnimation Translate
 resizeTranslate units previousBounds bounds isLooping isPaused cfg =
     let
@@ -869,9 +867,6 @@ applyAxisLegForUnit unit maybePrevBounds maybeNewBounds startV endV =
         { start = startV, end = endV }
 
 
-{-| Rescale an in-flight `PropertyAnimation` so that the elapsed
-fraction of the new leg matches the elapsed fraction of the old leg.
--}
 preserveProgress :
     { cfg : PropertyAnimation a
     , newStart : a
@@ -908,8 +903,6 @@ preserveProgress { cfg, newStart, newEnd, oldDistance, newLegDistance } =
     }
 
 
-{-| Dispatch a translate-position snap to the group's translate animation, if it has one.
--}
 applyScaleResize : AnimGroupName -> AxisBounds -> AxisBounds -> AnimState -> AnimState
 applyScaleResize animGroupName previousBounds bounds (AnimState state animGroups) =
     if ResizeBuilder.isEmpty bounds then
@@ -961,8 +954,6 @@ applyScaleResize animGroupName previousBounds bounds (AnimState state animGroups
                     updatedAnimGroups
 
 
-{-| Resize the in-memory scale animation to match new bounds.
--}
 resizeScale : AxisBounds -> AxisBounds -> Bool -> Bool -> PropertyAnimation Scale -> PropertyAnimation Scale
 resizeScale previousBounds bounds isLooping isPaused cfg =
     let
@@ -1019,8 +1010,6 @@ resizeScale previousBounds bounds isLooping isPaused cfg =
             }
 
 
-{-| Dispatch a perspective-origin position snap to the group's perspective-origin animation, if it has one.
--}
 applyPerspectiveOriginResize : AnimGroupName -> AxisBounds -> AxisBounds -> AnimState -> AnimState
 applyPerspectiveOriginResize animGroupName previousBounds bounds (AnimState state animGroups) =
     if ResizeBuilder.isEmpty bounds then
@@ -1125,8 +1114,6 @@ resizePerspectiveOrigin units previousBounds bounds isLooping isPaused cfg =
             }
 
 
-{-| Dispatch a size remap to the group's size animation, if it has one.
--}
 applySizeResize : AnimGroupName -> AxisBounds -> AxisBounds -> AnimState -> AnimState
 applySizeResize animGroupName previousBounds bounds (AnimState state animGroups) =
     if ResizeBuilder.isEmpty bounds then
@@ -1178,9 +1165,6 @@ applySizeResize animGroupName previousBounds bounds (AnimState state animGroups)
                     updatedAnimGroups
 
 
-{-| Resize the in-memory size animation to match new bounds. Width is
-mapped to the X axis of the bounds record, height to the Y axis.
--}
 resizeSize : InternalUnit.ResolvedCssUnitAxes -> AxisBounds -> AxisBounds -> Bool -> Bool -> PropertyAnimation Size -> PropertyAnimation Size
 resizeSize units previousBounds bounds isLooping isPaused cfg =
     let

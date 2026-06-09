@@ -411,13 +411,6 @@ attributes animGroupName ((AnimState _ data) as animState) =
                                 [ Html.Attributes.style "will-change" value ]
             in
             if AnimGroup.usesDiscrete animGroup then
-                -- Selector-driven mode: all animated styles live in the
-                -- stylesheet rule emitted by `startingStyleNode`, scoped
-                -- by `[data-anim-group-name="X"][data-anim-state="sN"]`.
-                -- The element only needs the data attributes (so the
-                -- selector matches change on each animate, triggering
-                -- `@starting-style` for entry transitions) plus the
-                -- in-flight `will-change` hint.
                 Html.Attributes.attribute "data-anim-group-name" animGroupName
                     :: Html.Attributes.attribute "data-anim-state" (stateAttrValue animGroup)
                     :: willChangeAttrs
@@ -476,20 +469,6 @@ startingStyleNodeFor animGroupName animState =
             Html.text ""
 
 
-{-| For a discrete-mode group, render the full per-animate stylesheet:
-
-  - A destination rule scoped by `[data-anim-group-name][data-anim-state]`
-    containing all the styles that drive the transition (including
-    `transition`, `transition-behavior`, the animated property values,
-    and the resolved entry / exit destinations).
-  - An `@starting-style` block scoped by the same selector when this
-    animate freshly set `discreteEntry` (i.e. it's an entry transition).
-
-For non-discrete groups this returns `Nothing` - their styles continue
-to flow through the inline `style` attribute via `attributes`, the same
-as before.
-
--}
 generateGroupCss : AnimGroupName -> AnimState -> Maybe String
 generateGroupCss animGroupName (AnimState _ animGroups) =
     AnimGroups.get animGroupName animGroups

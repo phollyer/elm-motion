@@ -123,8 +123,8 @@ baselineTransformParts maybeTargetValues processedProps =
                 baseline isTranslate
                     (PropertyBaselines.getTranslate targets)
                     (Translate.toCssString
-                        (PropertyBaselines.getTranslateUnits targets
-                            |> Maybe.withDefault { x = InternalUnit.default, y = InternalUnit.default, z = InternalUnit.default }
+                        (Maybe.withDefault { x = InternalUnit.default, y = InternalUnit.default, z = InternalUnit.default } <|
+                            PropertyBaselines.getTranslateUnits targets
                         )
                     )
             , rotate = baseline isRotate (PropertyBaselines.getRotate targets) Rotate.toCssString

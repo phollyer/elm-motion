@@ -2,6 +2,9 @@ module Anim.Internal.Builder.Size exposing
     ( SizeBuilder
     , bounds
     , build
+    , byH
+    , byHW
+    , byW
     , clampHeight
     , clampWidth
     , delay
@@ -12,9 +15,6 @@ module Anim.Internal.Builder.Size exposing
     , fromH
     , fromHW
     , fromW
-    , byHW
-    , byH
-    , byW
     , set
     , setH
     , setHW
@@ -188,7 +188,6 @@ fromH h (SizeBuilder config builder) =
     fromHW h w (SizeBuilder config builder)
 
 
-
 byHW : Float -> Float -> SizeBuilder eng -> SizeBuilder eng
 byHW deltaH deltaW (SizeBuilder config builder) =
     let
@@ -211,6 +210,7 @@ byH deltaH =
 byW : Float -> SizeBuilder eng -> SizeBuilder eng
 byW deltaW =
     byHW 0 deltaW
+
 
 fromW : Float -> SizeBuilder eng -> SizeBuilder eng
 fromW w (SizeBuilder config builder) =

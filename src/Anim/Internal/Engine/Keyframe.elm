@@ -316,11 +316,6 @@ update animMsg animState =
             )
 
         GotCancelled animGroupName { currentTargetId, targetId } ->
-            -- Browsers fire `animationcancel` whenever a CSS animation is
-            -- interrupted, including when our own `stop` / `retarget` /
-            -- `reset` set the group to a non-Running PlayState. We only
-            -- surface `Cancelled` for genuine external interruption — i.e.
-            -- the group was still Running when the DOM event arrived.
             if isGroupRunning animGroupName animState then
                 ( CSS.handleEvent AnimGroup.setPlayState (CSS.AnimationCancelled animGroupName) animState
                 , Just (Cancelled currentTargetId targetId animGroupName)

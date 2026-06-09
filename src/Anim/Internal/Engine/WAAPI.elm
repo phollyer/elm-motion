@@ -302,24 +302,6 @@ setSnapshot anims =
     AnimGroups.map (\_ anim -> { propertySnapshot = AnimGroup.getPropertySnapshot anim }) anims
 
 
-{-| Snap the named anim groups to the targets described by `build`, with no
-animation.
-
-For every property mentioned in `build`, the engine cancels any in-flight
-WAAPI animation on that property, writes the target value as inline style
-on the element, and marks the property `Complete`. Builder timing fields
-(`duration`, `delay`, `easing`, `spring`) are accepted but ignored —
-there is no animation to apply them to.
-
-Frozen axes are preserved: only unfrozen axes are snapped. Untouched
-properties on the same anim group continue running.
-
-Use `retarget` to instantly reposition an element — e.g. after a layout
-change, a teleport, or to seed a new starting position before a follow-up
-`animate` call. For a smooth redirect from the current position toward a
-new target, use [animate](#animate) with a factored builder instead.
-
--}
 retarget : AnimState msg -> (EngineBuilder -> EngineBuilder) -> ( AnimState msg, Cmd msg )
 retarget (AnimState state animGroups) build =
     let
@@ -352,27 +334,6 @@ retarget (AnimState state animGroups) build =
                 (AnimGroups.get animGroupName animGroups)
                 config.properties
 
-        -- Mark every property on the freshly generated (touched) group as
-        -- Complete and advance its snapshot to the target value: the snap
-        -- puts the property at its target with no animation pending. The
-        -- JS side cancels in-flight WAAPI handles silently — no Cancelled
-        -- AnimEvent is emitted for the retarget.
-        --
-        -- For per-axis-aware properties (translate), axes not mentioned in
-        -- the retarget build keep the previously-running animation's end
-        -- value rather than collapsing to the live mid-flight position.
-        -- We patch both:
-        --
-        --   1. The new translate `PropertyState.config` so every
-        --      `propertyUpdate` event from JS interpolates with
-        --      `start.untouched = end.untouched = previousEnd.untouched`
-        --      and snapshot.translate.untouched stays at previousEnd.
-        --   2. The initial snapshot so the value is correct before the
-        --      first `propertyUpdate` arrives.
-        --
-        -- That matches the JS continuation animation's final keyframe so
-        -- the inline style Elm renders after `finish` agrees with the
-        -- value WAAPI's `commitStyles` left on the element.
         snapPropertyStates : AnimGroupName -> Maybe AnimGroup -> AnimGroup -> AnimGroup
         snapPropertyStates groupName maybeExisting freshAnimGroup =
             let
@@ -669,10 +630,6 @@ retarget (AnimState state animGroups) build =
                     AnimGroups.insert animGroupName snapped acc
 
                 Just existing ->
-                    -- `addPropertyStates` unions snapped's states over
-                    -- existing's, biasing toward snapped on key collision.
-                    -- Untouched properties on `existing` carry over with
-                    -- their current Running/Paused/Complete status.
                     AnimGroups.insert animGroupName
                         (AnimGroup.addPropertyStates snapped existing)
                         acc
@@ -898,8 +855,6 @@ updateAnimGroup animUpdate animGroup =
             )
 
 
-{-| Decoder for AnimEvent from lifecycle events.
--}
 animEventDecoder : Decode.Decoder AnimEvent
 animEventDecoder =
     Decode.map3 statusToAnimEvent
@@ -908,8 +863,6 @@ animEventDecoder =
         (Decode.at [ "payload", "progress" ] Decode.float)
 
 
-{-| Map a decoded status string to the appropriate AnimEvent constructor.
--}
 statusToAnimEvent : String -> String -> Float -> AnimEvent
 statusToAnimEvent animGroupName status progress =
     case status of
@@ -1129,11 +1082,6 @@ applyTranslateResize animGroupName previousBounds bounds ((AnimState state animG
                             )
                             animGroups
 
-                    -- Sync the stored baseline to the resized end. `Builder.getBaseline`
-                    -- feeds `Translate.begin` so the next `animate` reads the post-resize
-                    -- target — otherwise `toY h` / `toX w` would inherit the pre-resize
-                    -- coordinate for the axis it doesn't explicitly set and animate the
-                    -- box off-screen.
                     updatedBuilder =
                         state.builder
                             |> Builder.updateBaselines animGroupName
@@ -1186,20 +1134,13 @@ computeResizePayload animGroupName previousBounds bounds (AnimState state animGr
                                     resolvedBaseline /= Nothing
 
                                 baseline =
-                                    resolvedBaseline
-                                        |> Maybe.withDefault
-                                            -- No animation config registered for this group's
-                                            -- translate (init-only property). Synthesize a
-                                            -- degenerate baseline from the current snapshot so
-                                            -- `applyAxis` can clamp the value into the new bounds
-                                            -- via its `oldRange == 0` branch. The snapshot update
-                                            -- in `applyTranslateResize` causes `WAAPI.attributes`
-                                            -- to re-render the new transform inline.
-                                            { start = Translate.toRecord currentTranslate
-                                            , end = Translate.toRecord currentTranslate
-                                            , durationMs = 0
-                                            , proportion = AnimGroup.emptyProportion
-                                            }
+                                    Maybe.withDefault
+                                        { start = Translate.toRecord currentTranslate
+                                        , end = Translate.toRecord currentTranslate
+                                        , durationMs = 0
+                                        , proportion = AnimGroup.emptyProportion
+                                        }
+                                        resolvedBaseline
                             in
                             let
                                 oldStart =
@@ -1226,11 +1167,6 @@ computeResizePayload animGroupName previousBounds bounds (AnimState state animGr
                                 newEnd =
                                     { x = rx.end, y = ry.end, z = rz.end }
 
-                                -- Forward-axis proportion (0..1) derived from the frozen
-                                -- per-iteration progress + direction. Stable across
-                                -- resize round-trips because it bypasses the
-                                -- `(oldCurrent - oldMin) / oldRange` recomputation that
-                                -- drifted on repeated orientation switches (Bug 4).
                                 direction =
                                     AnimGroup.getAnimationDirection animGroup
 
@@ -1308,17 +1244,6 @@ computeResizePayload animGroupName previousBounds bounds (AnimState state animGr
             )
 
 
-{-| Rescale the leg duration so the box keeps the same speed (px/ms) when
-the bounding range changes. Returns the original duration when either the
-old or new leg distance is zero (no motion to scale against).
-
-The JS side uses this duration as input to `effect.updateTiming`, then
-preserves the animation's fractional `currentTime` so the visual progress
-within the current iteration stays put across the resize. WAAPI itself
-preserves `currentIteration` and the alternating-leg phase, so no
-forward/reverse-leg math is needed here.
-
--}
 scaleDurationForResize :
     { oldStart : Translate.Translate
     , oldEnd : Translate.Translate
@@ -1378,22 +1303,6 @@ perspectiveOriginRecordsNearlyEqual a b =
         && floatNearlyEqual a.y b.y
 
 
-{-| Compute the WAAPI `currentTime` (in ms) to seek to after a resize.
-
-Unified across looping and non-looping animations: the seek is always
-`(currentIteration + progress) * newDur`. Because [`applyAxis`](Anim-Internal-Resize-Builder#applyAxis)
-returns canonical leg geometry (`legStart -> legEnd`) regardless of
-animation kind, and [`scaleDurationForResize`](#scaleDurationForResize)
-preserves px/ms by scaling `newDur` against the full-leg distance, this
-formula lands the dot at exactly `easing(progress)` of the new leg -
-the same proportional visual position it occupied before the resize.
-
-Drag-resize (many resizes in quick succession) and orientation flip
-(one resize) drive identical math: each tick recomputes `newDur` against
-the _cached_ resize baseline (the previous tick's `(start, end)`), so
-successive ticks self-stabilize.
-
--}
 currentTimeForResize :
     { durationMs : Float
     , currentIteration : Int
@@ -1406,21 +1315,6 @@ currentTimeForResize cfg =
             * cfg.durationMs
 
 
-{-| Derive forward-axis position-as-proportion (0 = at `b.min`, 1 = at
-`b.max`) from the animation's frozen per-iteration `progress`, its
-`direction`, the current iteration index and the per-axis leg endpoints.
-
-This is the single source of truth for "where on the leg is the box" so
-resize round-trips stay exact: each Proportional resize computes the new
-absolute position as `b.min + p * (b.max - b.min)` without ever feeding
-the previous resize's `current` value back through a floating-point
-subtraction & division (which is what compounded into visible drift on
-repeated orientation switches - see Responsive Bug 4).
-
-Returns `Nothing` for an axis with no motion (`startV == endV`) so the
-caller can fall back to the existing degenerate-leg handling.
-
--}
 proportionFromProgress :
     Builder.AnimationDirection
     -> Int
@@ -1456,11 +1350,6 @@ proportionFromProgress direction iter progress startV endV =
                 1 - progress
 
 
-{-| Apply a forward-axis proportion to a set of new bounds, yielding the
-absolute position. Falls back to `fallbackCurrent` when no proportion is
-available for the axis or when the new bounds aren't defined for that
-axis (Clamp-only on that side, degenerate leg, etc.).
--}
 applyProportionToBounds : Maybe Float -> Maybe ResizeBuilder.Bounds -> Float -> Float
 applyProportionToBounds maybeP maybeBounds fallbackCurrent =
     case ( maybeP, maybeBounds ) of
@@ -1471,13 +1360,6 @@ applyProportionToBounds maybeP maybeBounds fallbackCurrent =
             fallbackCurrent
 
 
-{-| Resolve the resize baseline for a group's translate. Prefers the
-last-applied resize state (cached on the AnimGroup) so successive resizes
-see the _current_ effective bounds & duration rather than the original
-`animate()` configuration. Falls back to the builder config for the very
-first resize on a freshly-animated group, since `animate` resets the
-cached state on the new AnimGroup.
--}
 resolveResizeBaseline :
     AnimGroupName
     -> AnimGroup
@@ -1530,14 +1412,6 @@ findCurrentTranslate animGroupName builder =
         |> List.head
 
 
-{-| Filter out "degenerate" resize baselines — ones whose `durationMs <= 0`
-indicate no real animation timeline (e.g. a synthesized cached state for
-an init-only `Scale.init` / `Translate.init` value). These are kept on
-the AnimGroup so `applyAxis` can still clamp into new bounds, but they
-must not signal `hasAnimationBaseline = True` to JS, which would trigger
-a `currentTime` seek on the shared merged-transform animation and reset
-co-running animations (e.g. a spinning Rotate) to the start.
--}
 rejectDegenerateBaseline : ResizeAxisState -> Maybe ResizeAxisState
 rejectDegenerateBaseline baseline =
     if baseline.durationMs <= 0 then
@@ -1547,11 +1421,6 @@ rejectDegenerateBaseline baseline =
         Just baseline
 
 
-{-| Dispatch a property name to its `rebaseXConfig` function for the
-animate-restart flow. Returns `Nothing` for properties that have no
-runtime resize-aware state to rebase against. To make a new property
-resize-aware, add a `rebaseXConfig` for it and an arm here.
--}
 rebaseFor :
     String
     ->
@@ -1578,11 +1447,6 @@ rebaseFor propName =
             Nothing
 
 
-{-| Replace a translate config's `start`/`end`/`duration` with the
-post-resize values cached on the group. Called by the animate flow's
-`restart` so a Restart triggered after a resize re-animates within the
-current bounds rather than the original (pre-resize) ones.
--}
 rebaseTranslateConfig :
     ResizeAxisState
     -> Builder.ProcessedPropertyConfig
@@ -1627,9 +1491,6 @@ applyScaleResize animGroupName previousBounds bounds ((AnimState state animGroup
                             )
                             animGroups
 
-                    -- Sync the stored baseline to the resized end so the next builder
-                    -- inherits the post-resize scale target. See the matching comment
-                    -- in `applyTranslateResize` for the full rationale.
                     updatedBuilder =
                         state.builder
                             |> Builder.updateBaselines animGroupName
@@ -1682,20 +1543,13 @@ computeScaleResizePayload animGroupName previousBounds bounds (AnimState state a
                                     resolvedBaseline /= Nothing
 
                                 baseline =
-                                    resolvedBaseline
-                                        |> Maybe.withDefault
-                                            -- No animation config registered for this group's
-                                            -- scale (init-only property). Synthesize a degenerate
-                                            -- baseline from the current snapshot so `applyAxis`
-                                            -- can clamp the value into the new bounds via its
-                                            -- `oldRange == 0` branch. The snapshot update in
-                                            -- `applyScaleResize` causes `WAAPI.attributes` to
-                                            -- re-render the new transform inline.
-                                            { start = Scale.toRecord currentScale
-                                            , end = Scale.toRecord currentScale
-                                            , durationMs = 0
-                                            , proportion = AnimGroup.emptyProportion
-                                            }
+                                    Maybe.withDefault
+                                        { start = Scale.toRecord currentScale
+                                        , end = Scale.toRecord currentScale
+                                        , durationMs = 0
+                                        , proportion = AnimGroup.emptyProportion
+                                        }
+                                        resolvedBaseline
                             in
                             let
                                 oldStart =
@@ -1722,8 +1576,6 @@ computeScaleResizePayload animGroupName previousBounds bounds (AnimState state a
                                 newEnd =
                                     { x = rx.end, y = ry.end, z = rz.end }
 
-                                -- Mirror translate: forward-axis proportion from frozen progress
-                                -- + direction, so scale resize round-trips are exact (Bug 4).
                                 direction =
                                     AnimGroup.getAnimationDirection animGroup
 
@@ -1801,8 +1653,6 @@ computeScaleResizePayload animGroupName previousBounds bounds (AnimState state a
             )
 
 
-{-| Scale's mirror of [`scaleDurationForResize`](#scaleDurationForResize).
--}
 scaleScaleDurationForResize :
     { oldStart : Scale.Scale
     , oldEnd : Scale.Scale
@@ -1878,8 +1728,6 @@ findCurrentScale animGroupName builder =
         |> List.head
 
 
-{-| Scale's mirror of [`rebaseTranslateConfig`](#rebaseTranslateConfig).
--}
 rebaseScaleConfig :
     ResizeAxisState
     -> Builder.ProcessedPropertyConfig
@@ -1975,26 +1823,21 @@ computePerspectiveOriginResizePayload animGroupName previousBounds bounds (AnimS
                                     resolvedBaseline /= Nothing
 
                                 baseline =
-                                    resolvedBaseline
-                                        |> Maybe.withDefault
-                                            -- No animation config registered for this group's
-                                            -- perspective origin (init-only property). Synthesize
-                                            -- a degenerate baseline from the current snapshot so
-                                            -- `applyAxis` can still clamp the value into the new
-                                            -- bounds via its `oldRange == 0` branch.
-                                            (let
-                                                cur =
-                                                    PerspectiveOrigin.toRecord currentPerspectiveOrigin
+                                    Maybe.withDefault
+                                        (let
+                                            cur =
+                                                PerspectiveOrigin.toRecord currentPerspectiveOrigin
 
-                                                cur3d =
-                                                    { x = cur.x, y = cur.y, z = 0 }
-                                             in
-                                             { start = cur3d
-                                             , end = cur3d
-                                             , durationMs = 0
-                                             , proportion = AnimGroup.emptyProportion
-                                             }
-                                            )
+                                            cur3d =
+                                                { x = cur.x, y = cur.y, z = 0 }
+                                         in
+                                         { start = cur3d
+                                         , end = cur3d
+                                         , durationMs = 0
+                                         , proportion = AnimGroup.emptyProportion
+                                         }
+                                        )
+                                        resolvedBaseline
 
                                 oldStart =
                                     { x = baseline.start.x, y = baseline.start.y }
@@ -2038,11 +1881,6 @@ computePerspectiveOriginResizePayload animGroupName previousBounds bounds (AnimS
                                     }
 
                                 unit =
-                                    -- Use the unit stored on the snapshot
-                                    -- by `Generator.propertyBounds` when
-                                    -- the animation was created, so a
-                                    -- resize emits matching `px`/`%`/etc.
-                                    -- suffixes on the keyframes JS rebuilds.
                                     PropertyBaselines.getPerspectiveOriginUnits snapshot
                                         |> Maybe.map .x
                                         |> Maybe.withDefault InternalUnit.default
@@ -2113,11 +1951,6 @@ computePerspectiveOriginResizePayload animGroupName previousBounds bounds (AnimS
             )
 
 
-{-| Like [`resolveScaleResizeBaseline`](#resolveScaleResizeBaseline) for
-perspective origin. Prefers the AnimGroup's cached `currentPerspectiveOriginState`
-so resize-rebased bounds persist across multiple resizes; otherwise
-synthesizes a baseline from the most recent `animate` config.
--}
 resolvePerspectiveOriginResizeBaseline :
     AnimGroupName
     -> AnimGroup
@@ -2148,8 +1981,6 @@ resolvePerspectiveOriginResizeBaseline animGroupName animGroup builder =
                 |> Maybe.andThen rejectDegenerateBaseline
 
 
-{-| Perspective origin's mirror of [`rebaseTranslateConfig`](#rebaseTranslateConfig).
--}
 rebasePerspectiveOriginConfig :
     ResizeAxisState
     -> Builder.ProcessedPropertyConfig
@@ -2552,13 +2383,6 @@ attributes animGroupName (AnimState state data) =
                 propertyStates =
                     AnimGroup.getPropertyStates animGroup
 
-                -- A property key is "JS-owned" once it has an entry in
-                -- `propertyStates`. `Generator.init` only writes to the
-                -- snapshot, leaving `propertyStates` empty for that key, so
-                -- `init`-only properties remain Elm-owned. `WAAPI.animate`
-                -- adds an entry, flipping ownership to JS for the lifetime
-                -- of the group (JS `commitAnimatedStyles` keeps the visual
-                -- after the animation finishes).
                 isElmOwned propType =
                     not (AnimGroups.member propType propertyStates)
 
@@ -2618,24 +2442,6 @@ attributes animGroupName (AnimState state data) =
                         |> List.filter (\( name, _ ) -> isElmOwned ("customColor:" ++ name))
                         |> List.map (\( name, color ) -> Html.Attributes.style name (Color.toCssString color))
 
-                -- The CSS `transform` slot is monolithic: only one inline
-                -- value can exist. We always emit it from the snapshot,
-                -- which tracks the latest value for every sub-property
-                -- (init values, the pre-animation start value merged in
-                -- by `Generator.generateAnimation`, and per-frame
-                -- `propertyUpdate` values from JS while WAAPI runs).
-                --
-                -- Emitting unconditionally closes the one-frame gap that
-                -- existed when ownership of any sub-property flipped to
-                -- JS: previously Elm dropped the `transform` attribute on
-                -- that render, the browser could paint the element with
-                -- no transform (collapsed to identity) before the JS
-                -- bridge synchronously rewrote the inline style. The
-                -- running CSS animation effect supersedes inline values
-                -- during playback, and `commitAnimatedStyles` writes the
-                -- final WAAPI value back to inline before `cancel()`,
-                -- so re-emitting from the snapshot never produces a
-                -- visible snap.
                 transformStyles =
                     buildTransformStyles
                         (AnimGroup.getTransformOrder animGroup)
@@ -2886,10 +2692,6 @@ resetSingleKey animGroupName (AnimState state animGroups) =
                 propertyConfigs =
                     List.map (\p -> ( Generator.propertyTypeString p, p )) properties
 
-                -- Rewind the stored builder baselines to the original
-                -- animate's `end` values so the next `animate`'s
-                -- synthesised `.start` no longer reflects any subsequent
-                -- retarget's transient end.
                 rewoundBuilder =
                     Builder.setBaselinesFromProcessedEnds
                         animGroupName
@@ -2929,10 +2731,6 @@ resetSingleKey animGroupName (AnimState state animGroups) =
 
                 Just animGroup ->
                     let
-                        -- Bump versions so any in-flight `propertyUpdate` from
-                        -- the now-cancelled animation is rejected as stale.
-                        -- Config is refreshed only to satisfy `bumpPropertyVersions`;
-                        -- no animation will be run against it after a reset.
                         resetAnimGroup =
                             animGroup
                                 |> AnimGroup.bumpPropertyVersions propertyConfigs
@@ -3005,16 +2803,6 @@ restartSingleKey resolvedKey (AnimState state animGroups) =
                 Just animGroup ->
                     -- Update existing entry, incrementing versions for restarted properties
                     let
-                        -- A previous resize may have shifted resize-aware
-                        -- property bounds since the original `animate` call.
-                        -- The cached state per property is the resize-aware
-                        -- truth (computed via `Resize.applyAxis` and stored
-                        -- on the group); use it to override the stale
-                        -- `start`/`end`/`duration` baked into `processedData`,
-                        -- otherwise Restart re-animates to the original
-                        -- (pre-resize) target. Dispatch by property name —
-                        -- adding a new resize-aware property only requires
-                        -- extending `rebaseFor` below.
                         rebasedProcessedData =
                             AnimGroup.foldResizeStates
                                 (\propName cached acc ->
@@ -3243,17 +3031,14 @@ getPropertyCurrent animGroupName cssName (AnimState _ animGroups) =
     getSnapshotProperty (PropertyBaselines.getCustomProperty cssName) animGroupName animGroups
 
 
-{-| Pull a property value out of a group's current snapshot, if the group
-exists and the snapshot has a value for the requested property.
--}
 getSnapshotProperty :
     (PropertyBaselines.PropertyBaselines -> Maybe a)
     -> AnimGroupName
     -> AnimGroups.AnimGroups AnimGroup.AnimGroup
     -> Maybe a
-getSnapshotProperty getter animGroupName animGroups =
-    AnimGroups.get animGroupName animGroups
-        |> Maybe.andThen (AnimGroup.getPropertySnapshot >> getter)
+getSnapshotProperty getter animGroupName =
+    AnimGroups.get animGroupName
+        >> Maybe.andThen (AnimGroup.getPropertySnapshot >> getter)
 
 
 getPropertyRange : AnimGroupName -> String -> AnimState msg -> Maybe { start : Maybe Float, end : Float }
@@ -3383,13 +3168,6 @@ getScaleRange animGroupName state =
             (getBuilder >> Property.getScaleRange animGroupName) state
 
 
-{-| Look up the live post-resize scale state for a group, if any.
-
-Scale is one of the properties whose runtime state can diverge from the
-builder snapshot (via [`onResize`](#onResize) or a mid-animation policy swap),
-so its getters consult the runtime first and fall back to the builder.
-
--}
 getRuntimeScale : AnimGroupName -> AnimState msg -> Maybe AnimGroup.ResizeAxisState
 getRuntimeScale animGroupName (AnimState _ animGroups) =
     AnimGroups.get animGroupName animGroups
@@ -3552,13 +3330,6 @@ getTranslateRange animGroupName state =
             (getBuilder >> Property.getTranslateRange animGroupName) state
 
 
-{-| Look up the live post-resize translate state for a group, if any.
-
-Translate is one of the properties whose runtime state can diverge from the
-builder snapshot (via [`onResize`](#onResize) or a mid-animation policy swap),
-so its getters consult the runtime first and fall back to the builder.
-
--}
 getRuntimeTranslate : AnimGroupName -> AnimState msg -> Maybe AnimGroup.ResizeAxisState
 getRuntimeTranslate animGroupName (AnimState _ animGroups) =
     AnimGroups.get animGroupName animGroups

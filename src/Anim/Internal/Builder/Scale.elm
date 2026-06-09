@@ -2,6 +2,13 @@ module Anim.Internal.Builder.Scale exposing
     ( ScaleBuilder
     , bounds
     , build
+    , byX
+    , byXY
+    , byXYZ
+    , byXZ
+    , byY
+    , byYZ
+    , byZ
     , clampX
     , clampY
     , clampZ
@@ -16,13 +23,6 @@ module Anim.Internal.Builder.Scale exposing
     , fromY
     , fromYZ
     , fromZ
-    , byXYZ
-    , byXY
-    , byXZ
-    , byX
-    , byYZ
-    , byY
-    , byZ
     , set
     , setX
     , setXY

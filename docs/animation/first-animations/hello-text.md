@@ -61,8 +61,6 @@ Fades in text when the page loads. The obligatory "Hello" example.
 
 ??? example "Breaking It Down"
 
-    There are four simple steps for this animation, and an optional fifth `update` step for the Sub Engine.
-
     ### 1. Build
 
     Animations are defined as functions that transform an `AnimBuilder eng`:

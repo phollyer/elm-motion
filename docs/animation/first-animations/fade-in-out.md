@@ -62,10 +62,6 @@ Fade an element in and out with buttons.
 
 ??? example "Breaking It Down"
 
-    ### Breaking It Down
-
-    There are four simple steps for this animation, and an optional fifth `update` step for the Sub Engine.
-
     #### 1. Build
 
     Animations are defined as functions that transform an `AnimBuilder eng`:

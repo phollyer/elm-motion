@@ -59,37 +59,49 @@ Then use with any engine.
     === "Transition"
 
         ```elm
-        Transition.animate model.animState fadeIn
+        Transition.animate model.animState <|
+            Transition.for "entranceAnim"
+                >> fadeIn
         ```
 
     === "Keyframe"
 
         ```elm
-        Keyframe.animate model.animState fadeIn
+        Keyframe.animate model.animState <|
+            Keyframe.for "entranceanim"
+                >> fadeIn
         ```
 
     === "Sub"
 
         ```elm
-        Sub.animate model.animState fadeIn
+        Sub.animate model.animState <|
+            Sub.for "entranceAnim"
+                >> fadeIn
         ```
 
     === "WAAPI"
 
         ```elm
-        WAAPI.animate model.animState fadeIn
+        WAAPI.animate model.animState <|
+            WAAPI.for "entranceAnim" 
+                >> fadeIn
         ```
 
     === "ScrollTimeline"
 
         ```elm
-        ScrollTimeline.animate motionCmd Document fadeIn
+        ScrollTimeline.animate motionCmd Document <|
+            ScrollTimeline.for "entranceAnim"
+                >> fadeIn
         ```
 
     === "ViewTimeline"
 
         ```elm
-        ViewTimeline.animate motionCmd fadeIn
+        ViewTimeline.animate motionCmd <|
+            ViewTimeline.for "entranceAnim"
+                >> fadeIn
         ```
 
 Elm Motion abstracts away the differences in each approach so you can focus on your task at hand rather than a new API - the same animation configurations work with every Engine.
