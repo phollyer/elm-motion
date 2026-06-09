@@ -122,13 +122,13 @@ import Scroll.Internal.ScrollBuilder as Internal exposing (ScrollBuilder)
 -- ============================================================
 
 
-{-| The builder type for configuring scrolls.
+{-| The same builder type used by the Scroll Engines.
 -}
 type alias ScrollBuilder =
     Internal.ScrollBuilder
 
 
-{-| Builder type during scroll configuration.
+{-| Builder type for configuring individual scroll animations.
 -}
 type alias Builder =
     Internal.Builder

@@ -42,7 +42,11 @@ init =
             Keyframe.init
                 [ Opacity.init groupName 0 ]
     in
-    ( { animState = Keyframe.animate animState fadeIn }
+    ( { animState =
+            Keyframe.animate animState <|
+                Keyframe.for groupName
+                    >> fadeIn
+      }
     , Cmd.none
     )
 
@@ -62,8 +66,7 @@ groupName =
 
 fadeIn : Keyframe.EngineBuilder -> Keyframe.EngineBuilder
 fadeIn =
-    Keyframe.for groupName
-        >> Opacity.begin
+    Opacity.begin
         >> Opacity.to 1
         >> Opacity.duration 5000
         >> Opacity.end

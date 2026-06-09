@@ -61,7 +61,9 @@ init =
                 [ Opacity.init groupName 0 ]
 
         ( newAnimState, cmd ) =
-            WAAPI.animate animState fadeIn
+            WAAPI.animate animState <|
+                WAAPI.for groupName
+                    >> fadeIn
     in
     ( { animState = newAnimState }
     , cmd
@@ -83,8 +85,7 @@ groupName =
 
 fadeIn : WAAPI.EngineBuilder -> WAAPI.EngineBuilder
 fadeIn =
-    WAAPI.for groupName
-        >> Opacity.begin
+    Opacity.begin
         >> Opacity.to 1
         >> Opacity.duration 5000
         >> Opacity.end

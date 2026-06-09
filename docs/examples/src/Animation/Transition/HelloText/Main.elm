@@ -62,8 +62,7 @@ groupName =
 
 fadeIn : Transition.EngineBuilder -> Transition.EngineBuilder
 fadeIn =
-    Transition.for groupName
-        >> Opacity.begin
+    Opacity.begin
         >> Opacity.to 1
         >> Opacity.duration 5000
         >> Opacity.end
@@ -83,7 +82,12 @@ update msg model =
     case msg of
         ---8<-- [start:trigger]
         TriggerAnimation ->
-            ( { model | animState = Transition.animate model.animState fadeIn }
+            ( { model
+                | animState =
+                    Transition.animate model.animState <|
+                        Transition.for groupName
+                            >> fadeIn
+              }
             , Cmd.none
             )
 

@@ -6,7 +6,8 @@ module Scroll.Engine.Task exposing
     , easing
     )
 
-{-| Use scroll animations as Tasks when you want results or error handling.
+{-| Scroll animations as Tasks for when you want results, typed error handling or composition
+with other Tasks.
 
 📖 See
 [Scroll Task Engine Documentation](https://phollyer.github.io/elm-motion/engines/scroll/task/)

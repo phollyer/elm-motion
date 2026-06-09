@@ -42,7 +42,11 @@ init =
             Sub.init
                 [ Opacity.init groupName 0 ]
     in
-    ( { animState = Sub.animate animState fadeIn }
+    ( { animState =
+            Sub.animate animState <|
+                Sub.for groupName
+                    >> fadeIn
+      }
     , Cmd.none
     )
 
@@ -62,8 +66,7 @@ groupName =
 
 fadeIn : Sub.EngineBuilder -> Sub.EngineBuilder
 fadeIn =
-    Sub.for groupName
-        >> Opacity.begin
+    Opacity.begin
         >> Opacity.to 1
         >> Opacity.duration 5000
         >> Opacity.end
