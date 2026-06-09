@@ -844,14 +844,29 @@ updateAnimGroup animUpdate animGroup =
 
                     else
                         propAnim
+
+        currentStates =
+            AnimGroup.getPropertyStates animGroup
+
+        matchingProgress =
+            Dict.filter
+                (\propType _ ->
+                    case ( AnimGroups.get propType animUpdate.propertyVersions, AnimGroups.get propType currentStates ) of
+                        ( Just incomingVersion, Just currentState ) ->
+                            incomingVersion == currentState.version
+
+                        _ ->
+                            False
+                )
+                animUpdate.propertyProgress
     in
     animGroup
         |> AnimGroup.setProgress animUpdate.progress
-        |> AnimGroup.setPropertyStates (AnimGroups.map updateStatus (AnimGroup.getPropertyStates animGroup))
+        |> AnimGroup.setPropertyStates (AnimGroups.map updateStatus currentStates)
         |> AnimGroup.setSnapshot
             (animGroup
                 |> AnimGroup.getPropertySnapshot
-                |> ProgressApply.applyPropertyProgress animUpdate.propertyProgress (AnimGroup.getPropertyStates animGroup)
+                |> ProgressApply.applyPropertyProgress matchingProgress currentStates
             )
 
 

@@ -6,6 +6,7 @@ import Anim.Internal.Engine.Sub.AnimGroup as SubAnimGroup
 import Anim.Internal.Engine.Sub.Animation as SubAnimation
 import Anim.Internal.Engine.Sub.Animations as SubAnimations
 import Anim.Internal.Engine.Sub.Generator as SubGenerator
+import Anim.Internal.Property.Opacity as Opacity
 import Anim.Internal.Property.Translate as Translate
 import Anim.Internal.Unit as InternalUnit
 import Dict
@@ -40,6 +41,7 @@ suite =
         [ initTests
         , generateAnimationTests
         , snapModeTests
+        , interruptDurationScalingTests
         ]
 
 
@@ -156,4 +158,55 @@ snapModeTests =
                     |> SubAnimations.list
                     |> List.all (SubAnimation.foldTiming .isComplete >> not)
                     |> Expect.equal True
+        ]
+
+
+interruptDurationScalingTests : Test
+interruptDurationScalingTests =
+    describe "interrupt duration scaling"
+        [ test "opacity interruption preserves previous velocity by scaling duration" <|
+            \_ ->
+                let
+                    existingOpacity =
+                        SubAnimation.Opacity
+                            { start = Opacity.fromFloat 0
+                            , end = Opacity.fromFloat 1
+                            , easingFunction = identity
+                            , delayMs = 0
+                            , isComplete = False
+                            , totalDurationMs = 200
+                            , elapsedMs = 100
+                            }
+
+                    existingGroup =
+                        SubAnimGroup.init
+                            |> SubAnimGroup.setAnimations (SubAnimations.fromList [ ( "opacity", existingOpacity ) ])
+
+                    incomingOpacity =
+                        Builder.OpacityConfig
+                            { start = Just (Opacity.fromFloat 0.5)
+                            , end = Opacity.fromFloat 0
+                            , distance = 0.5
+                            , timing = Just (Duration 200)
+                            , easing = Nothing
+                            , spring = Nothing
+                            , delay = Nothing
+                            , cssUnit = InternalUnit.emptyCssUnitAxes
+                            , mode = Builder.Animate
+                            }
+
+                    processedIncomingOpacity =
+                        Builder.processProperties Builder.initDefaults "test" [ incomingOpacity ]
+                in
+                SubGenerator.generateAnimation Builder.Once Builder.Normal Nothing Dict.empty Dict.empty (Just existingGroup) processedIncomingOpacity
+                    |> SubAnimGroup.getAnimations
+                    |> SubAnimations.get "opacity"
+                    |> (\maybeAnim ->
+                            case maybeAnim of
+                                Just (SubAnimation.Opacity anim) ->
+                                    Expect.equal 100 anim.totalDurationMs
+
+                                _ ->
+                                    Expect.fail "expected opacity animation"
+                       )
         ]

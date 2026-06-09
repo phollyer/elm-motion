@@ -313,6 +313,31 @@ function patchTransformStartsFromAnimation(existingTransform, mergedTransformPro
     });
 }
 
+function scaleOpacityInterruptDuration(existingEntry, resolvedNonTransform, fallbackDuration) {
+    const previous = existingEntry?.resolvedNonTransform;
+    const previousAnimation = existingEntry?.animation;
+    const previousTiming = previousAnimation?.effect?.getTiming?.() || {};
+    const previousDuration = Number(previousTiming.duration);
+
+    if (!previous || !Number.isFinite(previousDuration) || previousDuration <= 0) {
+        return fallbackDuration;
+    }
+
+    const previousDistance = Math.abs(Number(previous.endValue) - Number(previous.startValue));
+    const nextDistance = Math.abs(Number(resolvedNonTransform.endValue) - Number(resolvedNonTransform.startValue));
+
+    if (!Number.isFinite(previousDistance) || previousDistance <= 0 || !Number.isFinite(nextDistance)) {
+        return fallbackDuration;
+    }
+
+    return Math.max(0, nextDistance * (previousDuration / previousDistance));
+}
+
+function isActiveOpacityInterrupt(existingEntry) {
+    const playState = existingEntry?.animation?.playState;
+    return playState === 'running' || playState === 'paused' || playState === 'pending';
+}
+
 function buildRetainedTransformProperty(oldProp, currentTransform, elapsedMs) {
     const keys = TRANSFORM_STATE_KEYS[oldProp.type];
     const originalDuration = oldProp.duration || 0;
@@ -646,12 +671,28 @@ export function processElementAnimation(animGroup, elementConfig, globalOptions 
                 : property.type;
         const newVersion = property.version || 1;
 
-        if (elementAnims.has(propType)) {
-            elementAnims.get(propType).animation.cancel();
+        const existingEntry =
+            elementAnims.has(propType)
+                ? elementAnims.get(propType)
+                : null;
+
+        const shouldAdjustOpacityInterrupt =
+            propType === 'opacity' && existingEntry && isActiveOpacityInterrupt(existingEntry);
+
+        if (existingEntry) {
+            existingEntry.animation.cancel();
         }
 
         const resolvedNonTransform = resolveNonTransformValues(animGroup, element, property);
-        const animation = createPropertyAnimation(element, resolvedNonTransform, property, globalOptions);
+        const propertyForAnimation =
+            shouldAdjustOpacityInterrupt
+                ? {
+                    ...property,
+                    duration: scaleOpacityInterruptDuration(existingEntry, resolvedNonTransform, property.duration)
+                }
+                : property;
+
+        const animation = createPropertyAnimation(element, resolvedNonTransform, propertyForAnimation, globalOptions);
 
         if (animation) {
             const entry = {

@@ -380,7 +380,7 @@ describe('processAnimationData (WAAPI engine)', () => {
             elements: {
                 [animGroup]: {
                     properties: [
-                        { type: 'opacity', startValue: 1, endValue: 0, duration: 200, easing: 'linear', version: 2 }
+                        { type: 'opacity', startValue: 0.5, endValue: 0, duration: 200, easing: 'linear', version: 2 }
                     ]
                 }
             }
@@ -388,6 +388,38 @@ describe('processAnimationData (WAAPI engine)', () => {
 
         expect(firstAnim.cancelCalls).toBe(1);
         expect(element.animate).toHaveBeenCalledTimes(2);
+    });
+
+    it('scales non-transform opacity duration on mid-flight interruption', () => {
+        const animGroup = 'box-opacity-interrupt-scale';
+        const firstAnim = createFakeAnimation({ duration: 200, progress: 0.5 });
+        firstAnim.playState = 'running';
+        const secondAnim = createFakeAnimation({ duration: 200 });
+        const element = makeElement({ animGroup, animations: [firstAnim, secondAnim] });
+        installDom({ element, targetId: animGroup });
+
+        processAnimationData({
+            elements: {
+                [animGroup]: {
+                    properties: [
+                        { type: 'opacity', startValue: 0, endValue: 1, duration: 200, easing: 'linear', version: 1 }
+                    ]
+                }
+            }
+        });
+
+        processAnimationData({
+            elements: {
+                [animGroup]: {
+                    properties: [
+                        { type: 'opacity', startValue: 0.5, endValue: 0, duration: 200, easing: 'linear', version: 2 }
+                    ]
+                }
+            }
+        });
+
+        const secondCallOptions = element.animate.mock.calls[1][1];
+        expect(secondCallOptions.duration).toBeCloseTo(100, 1);
     });
 
     it('stores transformOrder for the element when provided', () => {

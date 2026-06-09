@@ -87,14 +87,18 @@ update msg model =
     case msg of
         ---8<-- [start:trigger]
         TriggerFadeIn ->
-            ( { model | animState = Transition.animate model.animState fadeIn }
-            , Cmd.none
-            )
+            let
+                nextState =
+                    Transition.animate model.animState fadeIn
+            in
+            ( { model | animState = nextState }, Cmd.none )
 
         TriggerFadeOut ->
-            ( { model | animState = Transition.animate model.animState fadeOut }
-            , Cmd.none
-            )
+            let
+                nextState =
+                    Transition.animate model.animState fadeOut
+            in
+            ( { model | animState = nextState }, Cmd.none )
 
 
 
