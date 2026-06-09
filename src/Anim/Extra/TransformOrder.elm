@@ -11,8 +11,7 @@ For example, if you rotate an element and then translate it, you will get a diff
 than if you translate it first and then rotate it.
 
 All Engines use the same default transform order, which is: `translate`, then `rotate`, then `skew`, then `scale`.
-This should suffice for general use, so ordinarily, you don't need to change it, but you can customize
-the transform order if needed using the `transformOrder` function from each engine.
+Use the `transformOrder` function from each engine to change the order.
 
 The only Engine that does not support customizing the transform order is the Transition Engine, which
 was a design trade-off. See the

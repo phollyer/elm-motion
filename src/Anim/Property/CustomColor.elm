@@ -38,6 +38,8 @@ When no start value is configured, the default will be used.
 
 ## Start Value
 
+When not set, the default will be used.
+
 📖 See [Start Values](https://phollyer.github.io/elm-motion/animation/properties/overview/#start-values)
 for details.
 
@@ -190,9 +192,7 @@ init animGroupName cssProperty value animBuilder =
 -- ============================================================
 
 
-{-| Turn the `AnimBuilder` into a custom color property animation `Builder`.
-
-The first argument is the animation group name, the second is the CSS property.
+{-| Begin the animation configuration by turning an `AnimBuilder` into a custom property animation `Builder`.
 
     myAnimation : AnimBuilder eng -> AnimBuilder eng
     myAnimation =

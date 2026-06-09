@@ -5,7 +5,7 @@ module Scroll.Engine.Cmd exposing
     , easing
     )
 
-{-| Use a simple fire-and-forget scroll command.
+{-| A simple fire-and-forget scroll command.
 
 Choose this engine when you just want to trigger a scroll and move on.
 

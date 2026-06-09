@@ -608,7 +608,7 @@ viewAnimationArea model =
         , View3D.perspectiveOrigin View3D.Center
 
         --
-        -- Harmless hack for Chrome on macOS GPU compositing issues with 3D transforms.
+        -- Hack for Chrome on macOS GPU compositing issues with 3D transforms.
         -- Setting opacity: 0.99 forces a new compositing layer, which prevents
         -- the colored rectangle artifacts that can appear during complex 3D animations.
         -- It's not perfect, some flickering can still occur.

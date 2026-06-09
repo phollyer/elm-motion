@@ -12,7 +12,7 @@ module Scroll.Engine.Sub exposing
     , getPosition, getPositionX, getPositionY
     )
 
-{-| Use a stateful scroll engine when you need progress, control, or scroll events.
+{-| A stateful scroll engine for when you need progress, control, or scroll events.
 
 📖 See
 [Scroll Sub Engine Documentation](https://phollyer.github.io/elm-motion/engines/scroll/sub/)

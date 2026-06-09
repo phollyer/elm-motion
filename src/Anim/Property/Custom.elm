@@ -16,6 +16,10 @@ module Anim.Property.Custom exposing
 {-| Animate any numeric CSS property not covered by the first-class
 property modules (Translate, Rotate, Scale etc.).
 
+**Default**: 0
+
+When no start value is configured, the default will be used.
+
 
 # Types
 
@@ -36,6 +40,8 @@ property modules (Translate, Rotate, Scale etc.).
 
 
 ## Start Value
+
+When not set, the default will be used.
 
 📖 See [Start Values](https://phollyer.github.io/elm-motion/animation/properties/overview/#start-values)
 for details.
@@ -166,17 +172,17 @@ type alias Builder eng =
     import Anim.Unit exposing (Unit(..))
 
 
-    Property.for "labelAnim" (Property.LineHeight Em)
+    Property.begin (Property.LineHeight Em)
         >> Property.to 1.4 -- Animate to "1.4em"
-        >> Property.build
+        >> Property.end
 
-    Property.for "labelAnim" (Property.LineHeight Unitless)
+    Property.begin (Property.LineHeight Unitless)
         >> Property.to 1.4 -- Animate to "1.4" - 1.4x the element's font-size
-        >> Property.build
+        >> Property.end
 
-    Property.for "boxAnim" (Property.Custom "property-name" "unit")
+    Property.begin (Property.Custom "property-name" "unit")
         >> Property.to 32 -- Animate to "32unit"
-        >> Property.build
+        >> Property.end
 
 -}
 type Property
@@ -449,17 +455,15 @@ toCssArgs cssProperty =
 -- ============================================================
 
 
-{-| Turn the `AnimBuilder` into a custom property animation `Builder`.
-
-The first argument is the animation group name, the second is the CSS property.
+{-| Begin the animation configuration by turning an `AnimBuilder` into a custom property animation `Builder`.
 
     import Anim.Unit exposing (Unit(..))
 
     myAnimation : AnimBuilder eng -> AnimBuilder eng
     myAnimation =
-        Property.for "box" (BorderRadius Px)
+        Property.begin (Property.BorderRadius Px)
             >> Property.to 16
-            >> Property.build
+            >> Property.end
 
 -}
 begin : Property -> AnimBuilder eng -> Builder eng
@@ -522,9 +526,9 @@ to =
 
     myAnimation : AnimBuilder eng -> AnimBuilder eng
     myAnimation =
-        Property.for "box" (Property.BorderRadius Px)
+        Property.begin (Property.BorderRadius Px)
             >> Property.by 4
-            >> Property.build
+            >> Property.end
 
 -}
 by : Float -> Builder { eng | withLiveDelta : () } -> Builder { eng | withLiveDelta : () }

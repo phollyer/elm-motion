@@ -251,7 +251,7 @@ transformStyle ts =
 -- ============================================================
 
 
-{-| Harmless hack for Chrome GPU compositing issues on macOS.
+{-| Hack for Chrome GPU compositing issues on macOS.
 
 Some complex 3D animations may cause rendering artifacts in Chrome on macOS
 (colored rectangles appearing over the page). Apply this attribute to the
