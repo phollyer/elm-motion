@@ -83,7 +83,7 @@ groupName =
     "helloText"
 
 
-fadeIn : WAAPI.EngineBuilder -> WAAPI.EngineBuilder
+fadeIn : AnimBuilder { eng | withTiming : () } -> AnimBuilder { eng | withTiming : () }
 fadeIn =
     Opacity.begin
         >> Opacity.to 1

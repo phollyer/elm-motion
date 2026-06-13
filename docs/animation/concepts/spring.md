@@ -65,15 +65,14 @@ The bottom row builds a `Spring.custom` from the three inputs. Edit any of `stif
     A spring's duration depends on its physics and the distance it has to travel — short hops settle quickly, long ones take longer, all using the same configuration. Easings always take their configured duration, regardless of distance. Reach for a spring when distance is dynamic or unknown.
 
 !!! note "Engines that support springs"
-    All six animation engines accept springs:
-    [Transition](../engines/transition.md),
+
     [Keyframe](../engines/keyframes.md),
     [Sub](../engines/sub.md),
     [WAAPI](../engines/waapi.md),
     [Scroll Timeline](../engines/scroll-timeline.md),
     [View Timeline](../engines/view-timeline.md).
 
-    The CSS-based engines (Transition, Keyframe) and the JS-backed engines (WAAPI, Scroll Timeline, View Timeline) pre-bake the spring into densely-spaced samples. Sub renders the analytic solution every frame.
+    The Keyframe engine and the JS-backed engines (WAAPI, Scroll Timeline, View Timeline) pre-bake the spring into densely-spaced samples. Sub renders the analytic solution every frame.
 
 !!! warning "Springs and `duration` / `speed`"
     Setting a spring overrides any easing already on the builder, and the spring's settle time is what determines how long the motion lasts. `duration` and `speed` only apply to easing-based motion.
@@ -84,19 +83,6 @@ A spring can be set at either level, with the same precedence rules as easing:
 
 - **Engine-level** (`Engine.spring`) — default for every property in the builder.
 - **Property-level** (`Property.spring`) — overrides the engine default for that property only.
-
-??? example "View Source Code"
-
-    ```elm
-    import Motion.Spring as Spring
-
-    bouncyReveal : AnimBuilder eng -> AnimBuilder eng
-    bouncyReveal =
-        Translate.begin
-            >> Translate.toX 0
-            >> Translate.spring Spring.wobbly
-            >> Translate.end
-    ```
 
 ## Next Steps
 

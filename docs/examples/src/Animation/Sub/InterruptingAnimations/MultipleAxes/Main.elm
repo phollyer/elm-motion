@@ -131,8 +131,7 @@ moveBoxY y =
 
 moveBox : (Translate.Builder ForSub -> Translate.Builder ForSub) -> Sub.EngineBuilder -> Sub.EngineBuilder
 moveBox moveFunc =
-    Sub.for animGroupName
-        >> Translate.begin
+    Translate.begin
         >> moveFunc
         >> Translate.speed targetSpeed
         >> Translate.easing QuintOut
@@ -168,7 +167,8 @@ update msg model =
             ( { model
                 | animState =
                     Sub.animate model.animState <|
-                        moveBoxX (targetX XLeft)
+                        Sub.for animGroupName
+                            >> moveBoxX (targetX XLeft)
               }
             , Cmd.none
             )
@@ -177,7 +177,8 @@ update msg model =
             ( { model
                 | animState =
                     Sub.animate model.animState <|
-                        moveBoxX (targetX XRight)
+                        Sub.for animGroupName
+                            >> moveBoxX (targetX XRight)
               }
             , Cmd.none
             )
@@ -186,7 +187,8 @@ update msg model =
             ( { model
                 | animState =
                     Sub.animate model.animState <|
-                        moveBoxY (targetY YTop)
+                        Sub.for animGroupName
+                            >> moveBoxY (targetY YTop)
               }
             , Cmd.none
             )
@@ -195,7 +197,8 @@ update msg model =
             ( { model
                 | animState =
                     Sub.animate model.animState <|
-                        moveBoxY (targetY YBottom)
+                        Sub.for animGroupName
+                            >> moveBoxY (targetY YBottom)
               }
             , Cmd.none
             )

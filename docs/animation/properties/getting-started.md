@@ -36,10 +36,11 @@ These properties trigger browser repaints and/or reflows. Use them when needed, 
     import Anim.Property.Custom as CustomProperty exposing (Property(..))
     import Anim.Property.CustomColor as CustomColor exposing (ColorProperty(..))
     import Anim.Extra.Color as Color
+    import Anim.Unit exposing (Unit(..))
 
     borderRadiusAnimation : AnimBuilder eng -> AnimBuilder eng
     borderRadiusAnimation =
-        CustomProperty.begin (BorderRadius "px")
+        CustomProperty.begin (BorderRadius Px)
             >> CustomProperty.to 24
             >> CustomProperty.end
 

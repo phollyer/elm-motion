@@ -66,12 +66,6 @@ The `animate` function is what does all the heavy lifting. It processes your ani
 
         ViewTimeline uses JavaScript ports, and no `AnimState`, so `animate` simply returns a `cmd` that sends the animation data to JS.
 
-
-Some engines also expose `retarget` for immediate re-anchoring after layout changes.
-
-📖 See [Responsive Animations](../concepts/responsive-animations.md#path-3-layout-re-anchoring) for when to use it.
-
-
 ## When to Trigger
 
 ### In Response to Events

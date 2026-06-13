@@ -45,7 +45,9 @@ main =
 
 
 type alias Model =
-    { animState : WAAPI.AnimState Msg }
+    { animState : WAAPI.AnimState Msg
+    , animatedBoxes : List Permutation
+    }
 
 
 init : ( Model, Cmd Msg )
@@ -59,6 +61,7 @@ init =
                         ]
                     )
                     allPermutations
+      , animatedBoxes = []
       }
     , Cmd.none
     )
@@ -214,7 +217,8 @@ reset =
 
 engineDefaults : Permutation -> WAAPI.EngineBuilder -> WAAPI.EngineBuilder
 engineDefaults perm =
-    WAAPI.transformOrder (permutationOrder perm)
+    WAAPI.for (permutationKey perm)
+        >> WAAPI.transformOrder (permutationOrder perm)
         >> WAAPI.duration 2000
         >> WAAPI.easing EaseInOut
         >> WAAPI.cssUnitX Cqw
@@ -250,10 +254,17 @@ update msg model =
                 ( newAnimState, animCmd ) =
                     WAAPI.animate model.animState <|
                         engineDefaults perm
-                            >> WAAPI.for (permutationKey perm)
                             >> moveOut
             in
-            ( { model | animState = newAnimState }
+            ( { model
+                | animState = newAnimState
+                , animatedBoxes =
+                    if List.member perm model.animatedBoxes then
+                        model.animatedBoxes
+
+                    else
+                        perm :: model.animatedBoxes
+              }
             , animCmd
             )
 
@@ -262,10 +273,13 @@ update msg model =
                 ( newAnimState, animCmd ) =
                     WAAPI.animate model.animState <|
                         engineDefaults perm
-                            >> WAAPI.for (permutationKey perm)
                             >> reset
             in
-            ( { model | animState = newAnimState }
+            ( { model
+                | animState = newAnimState
+                , animatedBoxes =
+                    List.filter ((/=) perm) model.animatedBoxes
+              }
             , animCmd
             )
 
@@ -276,14 +290,13 @@ update msg model =
                         List.foldl
                             (\perm acc ->
                                 engineDefaults perm
-                                    >> WAAPI.for (permutationKey perm)
                                     >> moveOut
                                     >> acc
                             )
                             identity
                             allPermutations
             in
-            ( { model | animState = finalState }
+            ( { model | animState = finalState, animatedBoxes = allPermutations }
             , cmd
             )
 
@@ -294,14 +307,13 @@ update msg model =
                         List.foldl
                             (\perm acc ->
                                 engineDefaults perm
-                                    >> WAAPI.for (permutationKey perm)
                                     >> reset
                                     >> acc
                             )
                             identity
-                            allPermutations
+                            model.animatedBoxes
             in
-            ( { model | animState = finalState }
+            ( { model | animState = finalState, animatedBoxes = [] }
             , cmd
             )
 

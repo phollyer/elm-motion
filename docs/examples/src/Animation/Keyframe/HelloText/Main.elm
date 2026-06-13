@@ -64,7 +64,7 @@ groupName =
     "helloText"
 
 
-fadeIn : Keyframe.EngineBuilder -> Keyframe.EngineBuilder
+fadeIn : AnimBuilder { eng | withTiming : () } -> AnimBuilder { eng | withTiming : () }
 fadeIn =
     Opacity.begin
         >> Opacity.to 1

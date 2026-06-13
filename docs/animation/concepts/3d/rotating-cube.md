@@ -10,10 +10,6 @@ Rotating cube with expanding sides.
 
 ??? example "View Examples"
 
-    === "Transition"
-
-        <iframe src="../../../../examples/src/Animation/Transition/Animate3D/index.html" class="example-iframe square" loading="lazy"></iframe>
-
     === "Keyframe"
 
         <iframe src="../../../../examples/src/Animation/Keyframe/Animate3D/index.html" class="example-iframe square" loading="lazy"></iframe>
@@ -30,12 +26,6 @@ Rotating cube with expanding sides.
 
 --8<-- [start:code]
 ??? example "View Source Code"
-
-    === "Transition"
-
-        ```elm
-        --8<-- "docs/examples/src/Animation/Transition/Animate3D/Main.elm"
-        ```
 
     === "Keyframe"
 
@@ -67,12 +57,6 @@ Rotating cube with expanding sides.
 
     ??? example "View Source Code"
 
-        === "Transition"
-
-            ```elm
-            --8<-- "docs/examples/src/Animation/Transition/Animate3D/Main.elm:animationFunctions"
-            ```
-
         === "Keyframe"
 
             ```elm
@@ -96,12 +80,6 @@ Rotating cube with expanding sides.
     A simple state machine selects which animation to run based on the current `State`.
 
     ??? example "View Source Code"
-
-        === "Transition"
-
-            ```elm
-            --8<-- "docs/examples/src/Animation/Transition/Animate3D/Main.elm:selectAnimation"
-            ```
 
         === "Keyframe"
 
@@ -127,13 +105,7 @@ Rotating cube with expanding sides.
     We use the `init*` functions to initialize the starting positions for the cube and the sides.
     This builds the cube - with these settings used in the view on first render.
 
-    ??? example "View Source Code"
-
-        === "Transition"
-
-            ```elm
-            --8<-- "docs/examples/src/Animation/Transition/Animate3D/Main.elm:initializeAndTrigger"
-            ```
+    ??? example "View Source Code"``
 
         === "Keyframe"
 
@@ -161,12 +133,6 @@ Rotating cube with expanding sides.
 
     ??? example "View Source Code"
 
-        === "Transition"
-
-            ```elm
-            --8<-- "docs/examples/src/Animation/Transition/Animate3D/Main.elm:render"
-            ```
-
         === "Keyframe"
 
             ```elm
@@ -193,12 +159,6 @@ Rotating cube with expanding sides.
     We listen for the `Keyframe.Ended` event and filter by animation group name to only respond to the relevant animation's completion.
 
     ??? example "View Source Code"
-
-        === "Transition"
-
-            ```elm
-            --8<-- "docs/examples/src/Animation/Transition/Animate3D/Main.elm:handleAnimationEvents"
-            ```
 
         === "Keyframe"
 

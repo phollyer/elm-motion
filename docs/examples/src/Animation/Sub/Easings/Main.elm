@@ -56,10 +56,9 @@ init =
 -- ANIMATION
 
 
-animateTo : Float -> Easing -> Sub.EngineBuilder -> Sub.EngineBuilder
+animateTo : Float -> Easing -> AnimBuilder { eng | withTiming : () } -> AnimBuilder { eng | withTiming : () }
 animateTo x easing =
-    Sub.for animGroup
-        >> Translate.begin
+    Translate.begin
         >> Translate.toX x
         >> Translate.speed 350
         >> Translate.easing easing
@@ -97,7 +96,10 @@ update msg model =
                         420
             in
             ( { model
-                | animState = Sub.animate model.animState (animateTo target easing)
+                | animState =
+                    Sub.animate model.animState <|
+                        Sub.for animGroup
+                            >> animateTo target easing
                 , easing = easing
                 , atEnd = not model.atEnd
               }
@@ -121,8 +123,8 @@ subscriptions model =
 curves : List ( Easing, String )
 curves =
     [ ( Linear, "Linear" )
-    , ( CubicOut, "CubicOut" )
-    , ( CubicInOut, "CubicInOut" )
+    , ( QuadOut, "QuadOut" )
+    , ( ExpoOut, "ExpoOut" )
     , ( ElasticOut, "ElasticOut" )
     , ( BounceOut, "BounceOut" )
     , ( BackInOut, "BackInOut" )

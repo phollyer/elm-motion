@@ -1,6 +1,6 @@
 module Animation.Transition.BorderColor.Main exposing (main)
 
-import Anim.Builder exposing (AnimBuilder, ForTransition)
+import Anim.Builder exposing (AnimBuilder)
 import Anim.Engine.Transition as Transition
 import Anim.Extra.Color as Color
 import Anim.Property.CustomColor as CustomColor
@@ -56,25 +56,23 @@ animGroup =
     "borderAnim"
 
 
-standardTiming : CustomColor.Builder ForTransition -> CustomColor.Builder ForTransition
+standardTiming : CustomColor.Builder { prop | withTiming : () } -> CustomColor.Builder { prop | withTiming : () }
 standardTiming =
     CustomColor.duration 800
         >> CustomColor.easing CubicInOut
 
 
-toRed : Transition.EngineBuilder -> Transition.EngineBuilder
+toRed : AnimBuilder { eng | withTiming : () } -> AnimBuilder { eng | withTiming : () }
 toRed =
-    Transition.for animGroup
-        >> CustomColor.begin CustomColor.BorderColor
+    CustomColor.begin CustomColor.BorderColor
         >> CustomColor.to (Color.rgb 239 68 68)
         >> standardTiming
         >> CustomColor.end
 
 
-toBlue : Transition.EngineBuilder -> Transition.EngineBuilder
+toBlue : AnimBuilder { eng | withTiming : () } -> AnimBuilder { eng | withTiming : () }
 toBlue =
-    Transition.for animGroup
-        >> CustomColor.begin CustomColor.BorderColor
+    CustomColor.begin CustomColor.BorderColor
         >> CustomColor.to (Color.rgb 59 130 246)
         >> standardTiming
         >> CustomColor.end
@@ -94,12 +92,22 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         TriggerRed ->
-            ( { model | animState = Transition.animate model.animState toRed }
+            ( { model
+                | animState =
+                    Transition.animate model.animState <|
+                        Transition.for animGroup
+                            >> toRed
+              }
             , Cmd.none
             )
 
         TriggerBlue ->
-            ( { model | animState = Transition.animate model.animState toBlue }
+            ( { model
+                | animState =
+                    Transition.animate model.animState <|
+                        Transition.for animGroup
+                            >> toBlue
+              }
             , Cmd.none
             )
 

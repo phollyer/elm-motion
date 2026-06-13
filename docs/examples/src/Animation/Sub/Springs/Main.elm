@@ -62,10 +62,9 @@ init =
 -- ANIMATION
 
 
-animateTo : Float -> Spring -> Sub.EngineBuilder -> Sub.EngineBuilder
+animateTo : Float -> Spring -> AnimBuilder { eng | withTiming : (), withSpring : () } -> AnimBuilder { eng | withTiming : (), withSpring : () }
 animateTo x spring =
-    Sub.for animGroup
-        >> Translate.begin
+    Translate.begin
         >> Translate.toX x
         >> Translate.spring spring
         >> Translate.end
@@ -106,7 +105,10 @@ update msg model =
                         420
             in
             ( { model
-                | animState = Sub.animate model.animState (animateTo target spring)
+                | animState =
+                    Sub.animate model.animState <|
+                        Sub.for animGroup
+                            >> animateTo target spring
                 , selected = label
                 , atEnd = not model.atEnd
               }
@@ -139,7 +141,10 @@ update msg model =
                         420
             in
             ( { model
-                | animState = Sub.animate model.animState (animateTo target spring)
+                | animState =
+                    Sub.animate model.animState <|
+                        Sub.for animGroup
+                            >> animateTo target spring
                 , selected = "custom"
                 , atEnd = not model.atEnd
                 , stiffness = String.fromFloat stiffness

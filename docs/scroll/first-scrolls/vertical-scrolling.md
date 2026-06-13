@@ -48,9 +48,9 @@ The classic "jump to a section" scroll. A vertical container with three named se
 
     Every scroll example follows the same workflow. The number of steps you actually wire up depends on the engine:
 
-    - **Cmd** - the minimal flow: Build, Render, Trigger.
-    - **Task** - adds Initialize (to hold the result) and React (to handle `Ok` / `Err`).
-    - **Sub** - adds Initialize (to hold `ScrollState`), Subscribe (for frame updates), and React (to update from events).
+    - **Cmd** - the minimal flow: Build and Trigger.
+    - **Task** - Build, Trigger and optionally React (to handle `Ok` / `Err`).
+    - **Sub** - Build, Trigger, Initialize (to hold `ScrollState`), Subscribe (for frame updates), and optionally React (to update from events).
 
     Below, each step is shown side by side per engine. Notice how only the wiring changes - the builder definition is identical across all three.
 
@@ -82,15 +82,9 @@ The classic "jump to a section" scroll. A vertical container with three named se
 
     ### 2. Initialize
 
-    Task and Sub keep scroll-related state in the model so the UI can react to completion, errors, or progress:
+    Only the Sub engine keeps state in the model:
 
     ??? example "View Source Code"
-
-        === "Task"
-
-            ```elm
-            --8<-- "docs/examples/src/Scroll/Task/FirstScroll/Main.elm:model"
-            ```
 
         === "Sub"
 
@@ -98,43 +92,19 @@ The classic "jump to a section" scroll. A vertical container with three named se
             --8<-- "docs/examples/src/Scroll/Sub/FirstScroll/Main.elm:model"
             ```
 
-    ### 3. Render
+    ### 3. Subscribe
 
-    Render a scrollable container and give it a stable `id` so the builder can target it:
+    Only the Sub engine needs subscriptions:
 
     ??? example "View Source Code"
-
-        === "Cmd"
-
-            ```elm
-            --8<-- "docs/examples/src/Scroll/Cmd/FirstScroll/Main.elm:container"
-            ```
-
-        === "Task"
-
-            ```elm
-            --8<-- "docs/examples/src/Scroll/Task/FirstScroll/Main.elm:render"
-            ```
 
         === "Sub"
 
             ```elm
-            --8<-- "docs/examples/src/Scroll/Sub/FirstScroll/Main.elm:render"
+            --8<-- "docs/examples/src/Scroll/Sub/FirstScroll/Main.elm:subscriptions"
             ```
 
-        The target elements inside the container also need their own `id`s so `toElement` can find them.
-
-    ### 4. Subscribe
-
-    Only the Sub engine needs subscriptions so it can receive animation frame updates while a scroll is running:
-
-    ??? example "View Source Code"
-
-        ```elm
-        --8<-- "docs/examples/src/Scroll/Sub/FirstScroll/Main.elm:subscriptions"
-        ```
-
-    ### 5. Trigger
+    ### 4. Trigger
 
     Each engine starts the same scroll definition a little differently:
 
@@ -158,7 +128,7 @@ The classic "jump to a section" scroll. A vertical container with three named se
             --8<-- "docs/examples/src/Scroll/Sub/FirstScroll/Main.elm:trigger"
             ```
 
-    ### 6. React
+    ### 5. React
 
     Task returns a `Result`, while Sub returns frame-by-frame events that keep the model in sync:
 

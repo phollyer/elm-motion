@@ -5,8 +5,8 @@ import Html exposing (Html, button, div, text)
 import Html.Attributes exposing (class, id, style)
 import Html.Events exposing (onClick)
 import Motion.Easing as Easing exposing (Easing(..))
-import Scroll.Builder as ScrollTo
-import Scroll.Engine.Cmd as Scroll exposing (ScrollBuilder)
+import Scroll.Builder as Scroll
+import Scroll.Engine.Cmd as Cmd exposing (ScrollBuilder)
 
 
 
@@ -51,7 +51,10 @@ update msg model =
     case msg of
         ---8<-- [start:trigger]
         NavigateTo regionId ->
-            ( { model | status = Scrolling }, Scroll.scroll ScrollComplete <| scrollToRegion regionId )
+            ( { model | status = Scrolling }
+            , Cmd.scroll ScrollComplete <|
+                scrollToRegion regionId
+            )
 
         ---8<-- [end:trigger]
         ScrollComplete ->
@@ -64,12 +67,12 @@ update msg model =
 
 scrollToRegion : String -> ScrollBuilder -> ScrollBuilder
 scrollToRegion regionId =
-    ScrollTo.forContainer "spreadsheet"
-        >> ScrollTo.toElement regionId
-        >> ScrollTo.withOffsetXY 48 32
-        >> ScrollTo.speed 400
-        >> ScrollTo.easing EaseInOut
-        >> ScrollTo.build
+    Scroll.forContainer "spreadsheet"
+        >> Scroll.toElement regionId
+        >> Scroll.withOffsetXY 48 32
+        >> Scroll.speed 400
+        >> Scroll.easing EaseInOut
+        >> Scroll.build
 
 
 

@@ -148,14 +148,6 @@ insertAnimGroup animGroupsConfig animGroupName newAnimGroup acc =
             AnimGroups.insert animGroupName styles acc
 
 
-{-| Re-anchor an animation to a new target by snapping to the new end values.
-
-Uses the dedicated `CSS.retarget` pipeline so the retarget's end value
-does not pollute the stored baseline (which would otherwise become the
-synthesised `start` for the next `animate` or the snap target for the
-next `reset`).
-
--}
 retarget : AnimState -> (EngineBuilder -> EngineBuilder) -> AnimState
 retarget ((AnimState origState _) as animState) build =
     let

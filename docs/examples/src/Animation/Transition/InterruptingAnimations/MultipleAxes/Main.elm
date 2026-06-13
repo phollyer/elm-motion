@@ -131,8 +131,7 @@ moveBoxY y =
 
 moveBox : (Translate.Builder ForTransition -> Translate.Builder ForTransition) -> Transition.EngineBuilder -> Transition.EngineBuilder
 moveBox moveFunc =
-    Transition.for animGroupName
-        >> Translate.begin
+    Translate.begin
         >> moveFunc
         >> Translate.speed 25
         >> Translate.easing QuintOut
@@ -167,7 +166,8 @@ update msg model =
             ( { model
                 | animState =
                     Transition.animate model.animState <|
-                        moveBoxX (targetX XLeft)
+                        Transition.for animGroupName
+                            >> moveBoxX (targetX XLeft)
               }
             , Cmd.none
             )
@@ -176,7 +176,8 @@ update msg model =
             ( { model
                 | animState =
                     Transition.animate model.animState <|
-                        moveBoxX (targetX XRight)
+                        Transition.for animGroupName
+                            >> moveBoxX (targetX XRight)
               }
             , Cmd.none
             )
@@ -185,7 +186,8 @@ update msg model =
             ( { model
                 | animState =
                     Transition.animate model.animState <|
-                        moveBoxY (targetY YTop)
+                        Transition.for animGroupName
+                            >> moveBoxY (targetY YTop)
               }
             , Cmd.none
             )
@@ -194,7 +196,8 @@ update msg model =
             ( { model
                 | animState =
                     Transition.animate model.animState <|
-                        moveBoxY (targetY YBottom)
+                        Transition.for animGroupName
+                            >> moveBoxY (targetY YBottom)
               }
             , Cmd.none
             )

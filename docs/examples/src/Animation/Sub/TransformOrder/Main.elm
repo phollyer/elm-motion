@@ -34,7 +34,9 @@ main =
 
 
 type alias Model =
-    { animState : Sub.AnimState }
+    { animState : Sub.AnimState
+    , animatedBoxes : List Permutation
+    }
 
 
 init : ( Model, Cmd Msg )
@@ -48,6 +50,7 @@ init =
                         ]
                     )
                     allPermutations
+      , animatedBoxes = []
       }
     , Cmd.none
     )
@@ -203,7 +206,8 @@ reset =
 
 engineDefaults : Permutation -> Sub.EngineBuilder -> Sub.EngineBuilder
 engineDefaults perm =
-    Sub.transformOrder (permutationOrder perm)
+    Sub.for (permutationKey perm)
+        >> Sub.transformOrder (permutationOrder perm)
         >> Sub.duration 2000
         >> Sub.easing EaseInOut
         >> Sub.cssUnitX Cqw
@@ -239,8 +243,13 @@ update msg model =
                 | animState =
                     Sub.animate model.animState <|
                         engineDefaults perm
-                            >> Sub.for (permutationKey perm)
                             >> moveOut
+                , animatedBoxes =
+                    if List.member perm model.animatedBoxes then
+                        model.animatedBoxes
+
+                    else
+                        perm :: model.animatedBoxes
               }
             , Cmd.none
             )
@@ -250,8 +259,9 @@ update msg model =
                 | animState =
                     Sub.animate model.animState <|
                         engineDefaults perm
-                            >> Sub.for (permutationKey perm)
                             >> reset
+                , animatedBoxes =
+                    List.filter ((/=) perm) model.animatedBoxes
               }
             , Cmd.none
             )
@@ -263,12 +273,12 @@ update msg model =
                         List.foldl
                             (\perm acc ->
                                 engineDefaults perm
-                                    >> Sub.for (permutationKey perm)
                                     >> moveOut
                                     >> acc
                             )
                             identity
                             allPermutations
+                , animatedBoxes = allPermutations
               }
             , Cmd.none
             )
@@ -280,12 +290,12 @@ update msg model =
                         List.foldl
                             (\perm acc ->
                                 engineDefaults perm
-                                    >> Sub.for (permutationKey perm)
                                     >> reset
                                     >> acc
                             )
                             identity
-                            allPermutations
+                            model.animatedBoxes
+                , animatedBoxes = []
               }
             , Cmd.none
             )

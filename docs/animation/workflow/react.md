@@ -7,6 +7,8 @@ After [triggering](trigger.md) an animation, you'll often want to react to its l
 Each engine communicates with your app via a `Msg` - DOM events, subscription ticks,
 or port messages depending on the engine.
 
+All engines return a `Maybe AnimEvent` with the exception of the Sub engine which returns a `List AnimEvent`.
+
 ??? example "View Source Code"
 
     === "Transition"
@@ -21,26 +23,24 @@ or port messages depending on the engine.
             case msg of
                 GotAnimMsg animMsg ->
                     let
-                        ( animState, animEvent ) =
+                        ( animState, maybeAnimEvent ) =
                             Transition.update animMsg model.animState
                     in
-                    (reactToAnimEvent animEvent { model | animState = animState }
+                    (reactToAnimEvent maybeAnimEvent { model | animState = animState }
                     , Cmd.none
                     )
 
                 ...
 
-        reactToAnimEvent : AnimEvent -> Model -> Model
-        reactToAnimEvent animEvent model =
-            case animEvent of 
-                Ended _ _ "introAnim" ->
+        reactToAnimEvent : Maybe AnimEvent -> Model -> Model
+        reactToAnimEvent maybeAnimEvent model =
+            case maybeAnimEvent of 
+                Just (Ended _ _ "introAnim") ->
                     { model | animState = Transition.animate model.animState nextAnimation }
 
                 _ ->
                     model
         ```
-
-        Returns a single `animEvent` from `update`.
 
     === "Keyframe"
 
@@ -54,26 +54,24 @@ or port messages depending on the engine.
             case msg of
                 GotAnimMsg animMsg ->
                     let
-                        ( animState, animEvent ) =
+                        ( animState, maybeAnimEvent ) =
                             Keyframe.update animMsg model.animState
                     in
-                    (reactToAnimEvent animEvent { model | animState = animState }
+                    (reactToAnimEvent maybeAnimEvent { model | animState = animState }
                     , Cmd.none
                     )
 
                 ...
 
-        reactToAnimEvent : AnimEvent -> Model -> Model
-        reactToAnimEvent animEvent model =
-            case animEvent of 
-                Ended _ _ "introAnim" ->
+        reactToAnimEvent : Maybe AnimEvent -> Model -> Model
+        reactToAnimEvent maybeAnimEvent model =
+            case maybeAnimEvent of 
+                Just (Ended _ _ "introAnim") ->
                     { model | animState = Keyframe.animate model.animState nextAnimation }
 
                 _ ->
                     model
         ```
-
-        Returns a single `animEvent` from `update`.
 
     === "Sub"
 
@@ -106,12 +104,9 @@ or port messages depending on the engine.
                     model
         ```
         
-        Returns a list of `animEvent`s from `update`.
-        
         Sub drives all animations from a single `onAnimationFrameDelta` subscription, 
         so multiple animations can advance and complete within the same frame.
-        `Sub.update` therefore returns a `List` of events rather than a single one, 
-        which you fold over to handle each in turn.
+        `Sub.update` therefore returns a `List` of events which you fold over to handle each in turn.
 
     === "WAAPI"
 
@@ -149,8 +144,6 @@ or port messages depending on the engine.
 
         ```
 
-        Returns a single `Maybe` event from `update`.
-
         This Engine shares the same incoming and outgoing ports as the  ScrollTimeline and ViewTimeline Engines, therefore, `Nothing` represents a message from the JS companion that is not for this Engine.
 
     === "ScrollTimeline"
@@ -184,10 +177,6 @@ or port messages depending on the engine.
 
         ```
 
-        Returns a single `Maybe` event from `update`. No `AnimState` is needed - scroll-driven
-        animations run automatically as the user scrolls, so the engine does not hold
-        any playback state.
-
         This Engine shares the same incoming and outgoing ports as the  WAAPI and ViewTimeline Engines, therefore, `Nothing` represents a message from the JS companion that is not for this Engine.
 
     === "ViewTimeline"
@@ -220,10 +209,6 @@ or port messages depending on the engine.
                 ...
 
         ```
-
-        Returns a single `Maybe` event from `update`. No `AnimState` is needed - view-driven
-        animations run automatically as the element enters and leaves the viewport,
-        so the engine does not hold any playback state.
 
         This Engine shares the same incoming and outgoing ports as the  WAAPI and ScrollTimeline Engines, therefore, `Nothing` represents a message from the JS companion that is not for this Engine.
 
@@ -390,7 +375,7 @@ Fired when an animation is interrupted by something outside the engine's control
 
 - The element is removed from the DOM mid-animation
 - A conflicting CSS rule or external animation displaces the running one
-- The browser invalidates the animation (e.g. tab discard, external `animation-*` style change)
+- The browser invalidates the animation
 
 
 For **ScrollTimeline** and **ViewTimeline**, `Cancelled` also carries the progress value (0.0–1.0) at the time of cancellation.

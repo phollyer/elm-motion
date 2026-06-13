@@ -121,60 +121,54 @@ unhoverEasing =
 ---8<-- [start:build]
 
 
-scaleUp : WAAPI.EngineBuilder -> WAAPI.EngineBuilder
+scaleUp : AnimBuilder { eng | withTiming : () } -> AnimBuilder { eng | withTiming : () }
 scaleUp =
-    WAAPI.for scaleButton
-        >> Scale.begin
+    Scale.begin
         >> Scale.to 1.1
         >> Scale.duration hoverDuration
         >> Scale.easing hoverEasing
         >> Scale.end
 
 
-scaleDown : WAAPI.EngineBuilder -> WAAPI.EngineBuilder
+scaleDown : AnimBuilder { eng | withTiming : () } -> AnimBuilder { eng | withTiming : () }
 scaleDown =
-    WAAPI.for scaleButton
-        >> Scale.begin
+    Scale.begin
         >> Scale.to 1
         >> Scale.duration hoverDuration
         >> Scale.easing unhoverEasing
         >> Scale.end
 
 
-growSize : WAAPI.EngineBuilder -> WAAPI.EngineBuilder
+growSize : AnimBuilder { eng | withTiming : () } -> AnimBuilder { eng | withTiming : () }
 growSize =
-    WAAPI.for sizeButton
-        >> Size.begin
+    Size.begin
         >> Size.toHW hoverHeight hoverWidth
         >> Size.duration hoverDuration
         >> Size.easing hoverEasing
         >> Size.end
 
 
-shrinkSize : WAAPI.EngineBuilder -> WAAPI.EngineBuilder
+shrinkSize : AnimBuilder { eng | withTiming : () } -> AnimBuilder { eng | withTiming : () }
 shrinkSize =
-    WAAPI.for sizeButton
-        >> Size.begin
+    Size.begin
         >> Size.toHW baseHeight baseWidth
         >> Size.duration hoverDuration
         >> Size.easing unhoverEasing
         >> Size.end
 
 
-liftUp : WAAPI.EngineBuilder -> WAAPI.EngineBuilder
+liftUp : AnimBuilder { eng | withTiming : () } -> AnimBuilder { eng | withTiming : () }
 liftUp =
-    WAAPI.for zButton
-        >> Translate.begin
+    Translate.begin
         >> Translate.toZ 60
         >> Translate.duration hoverDuration
         >> Translate.easing hoverEasing
         >> Translate.end
 
 
-setDown : WAAPI.EngineBuilder -> WAAPI.EngineBuilder
+setDown : AnimBuilder { eng | withTiming : () } -> AnimBuilder { eng | withTiming : () }
 setDown =
-    WAAPI.for zButton
-        >> Translate.begin
+    Translate.begin
         >> Translate.toZ 0
         >> Translate.duration hoverDuration
         >> Translate.easing unhoverEasing
@@ -219,42 +213,54 @@ update msg model =
         ScaleHover ->
             let
                 ( animState, cmd ) =
-                    WAAPI.animate model.animState scaleUp
+                    WAAPI.animate model.animState <|
+                        WAAPI.for scaleButton
+                            >> scaleUp
             in
             ( { model | animState = animState }, cmd )
 
         ScaleUnhover ->
             let
                 ( animState, cmd ) =
-                    WAAPI.animate model.animState scaleDown
+                    WAAPI.animate model.animState <|
+                        WAAPI.for scaleButton
+                            >> scaleDown
             in
             ( { model | animState = animState }, cmd )
 
         SizeHover ->
             let
                 ( animState, cmd ) =
-                    WAAPI.animate model.animState growSize
+                    WAAPI.animate model.animState <|
+                        WAAPI.for sizeButton
+                            >> growSize
             in
             ( { model | animState = animState }, cmd )
 
         SizeUnhover ->
             let
                 ( animState, cmd ) =
-                    WAAPI.animate model.animState shrinkSize
+                    WAAPI.animate model.animState <|
+                        WAAPI.for sizeButton
+                            >> shrinkSize
             in
             ( { model | animState = animState }, cmd )
 
         ZHover ->
             let
                 ( animState, cmd ) =
-                    WAAPI.animate model.animState liftUp
+                    WAAPI.animate model.animState <|
+                        WAAPI.for zButton
+                            >> liftUp
             in
             ( { model | animState = animState }, cmd )
 
         ZUnhover ->
             let
                 ( animState, cmd ) =
-                    WAAPI.animate model.animState setDown
+                    WAAPI.animate model.animState <|
+                        WAAPI.for zButton
+                            >> setDown
             in
             ( { model | animState = animState }, cmd )
 

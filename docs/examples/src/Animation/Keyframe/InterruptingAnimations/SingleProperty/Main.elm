@@ -18,7 +18,7 @@ import Motion.Easing as Easing exposing (Easing(..))
 main : Program () Model Msg
 main =
     Browser.element
-        { init = always init
+        { init = \_ -> init
         , update = update
         , view = view
         , subscriptions = always Sub.none
@@ -97,8 +97,7 @@ toColor4 =
 
 colorBox : (CustomColor.Builder ForKeyframe -> CustomColor.Builder ForKeyframe) -> (Keyframe.EngineBuilder -> Keyframe.EngineBuilder)
 colorBox moveFunc =
-    Keyframe.for animGroupName
-        >> CustomColor.begin CustomColor.BackgroundColor
+    CustomColor.begin CustomColor.BackgroundColor
         >> moveFunc
         >> CustomColor.duration 3000
         >> CustomColor.easing Linear
@@ -130,22 +129,42 @@ update msg model =
             )
 
         Color1 ->
-            ( { model | animState = Keyframe.animate model.animState toColor1 }
+            ( { model
+                | animState =
+                    Keyframe.animate model.animState <|
+                        Keyframe.for animGroupName
+                            >> toColor1
+              }
             , Cmd.none
             )
 
         Color2 ->
-            ( { model | animState = Keyframe.animate model.animState toColor2 }
+            ( { model
+                | animState =
+                    Keyframe.animate model.animState <|
+                        Keyframe.for animGroupName
+                            >> toColor2
+              }
             , Cmd.none
             )
 
         Color3 ->
-            ( { model | animState = Keyframe.animate model.animState toColor3 }
+            ( { model
+                | animState =
+                    Keyframe.animate model.animState <|
+                        Keyframe.for animGroupName
+                            >> toColor3
+              }
             , Cmd.none
             )
 
         Color4 ->
-            ( { model | animState = Keyframe.animate model.animState toColor4 }
+            ( { model
+                | animState =
+                    Keyframe.animate model.animState <|
+                        Keyframe.for animGroupName
+                            >> toColor4
+              }
             , Cmd.none
             )
 

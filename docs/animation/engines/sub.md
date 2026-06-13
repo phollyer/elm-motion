@@ -36,10 +36,8 @@ Here's a general workflow to get up an running quickly.
 
     fadeIn : Sub.AnimBuilder eng -> Sub.AnimBuilder eng
     fadeIn =
-        Sub.for "card"
-            >> Opacity.begin
+        Opacity.begin
             >> Opacity.to 1
-            >> Opacity.duration 350
             >> Opacity.end
     ```
 
@@ -82,7 +80,11 @@ Call `animate` to apply the animation config to the current `AnimState`.
 
     ```elm
     TriggerFadeIn ->
-        ( { model | animState = Sub.animate model.animState fadeIn }
+        ( { model | animState = 
+            Sub.animate model.animState <|
+                Sub.for "card"
+                    >> fadeIn
+          }
         , Cmd.none
         )
     ```
@@ -157,7 +159,11 @@ Call `animate` to apply an animation to the current `AnimState`.
 
     ```elm
     TriggerDrop ->
-        ( { model | animState = Sub.animate model.animState dropBall }
+        ( { model | animState = 
+            Sub.animate model.animState <|
+                Sub.for "card"
+                    >> dropBall
+          }
         , Cmd.none
         )
     ```
@@ -313,7 +319,7 @@ Set the default `duration`, `speed`, and `delay`. Inherited by every property th
 
 ### Easing
 
-Sub animations use the full Easing library with exact mathematical curves — including bounce and elastic.
+Sub animations evaluate the easing curve using the [elm-community/easing-functions](https://package.elm-lang.org/packages/elm-community/easing-functions/latest/) library on each frame — no pre-sampled approximations.
 
 Set the default easing for all properties that don't override it:
 
@@ -585,8 +591,20 @@ Choose Sub when you want maximum Elm-side control with per-frame updates and cur
 
 | Function | Type | Description |
 | -------- | ---- | ----------- |
-| `freeze` | `AnimGroupName -> List FreezeProperty -> AnimState -> AnimState` | Freeze the specified axes |
-| `unfreeze` | `AnimGroupName -> List FreezeProperty -> AnimState -> AnimState` | Unfreeze the specified axes |
+| `freezeX` | `AnimGroupName -> List FreezeProperty -> AnimState -> AnimState` | Freeze the X axis |
+| `freezeY` | `AnimGroupName -> List FreezeProperty -> AnimState -> AnimState` | Freeze the Y axis |
+| `freezeZ` | `AnimGroupName -> List FreezeProperty -> AnimState -> AnimState` | Freeze the Z axis |
+| `freezeXY` | `AnimGroupName -> List FreezeProperty -> AnimState -> AnimState` | Freeze the X and Y axes |
+| `freezeXZ` | `AnimGroupName -> List FreezeProperty -> AnimState -> AnimState` | Freeze the X and Z axes |
+| `freezeYZ` | `AnimGroupName -> List FreezeProperty -> AnimState -> AnimState` | Freeze the Y and Z axes |
+| `freezeXYZ` | `AnimGroupName -> List FreezeProperty -> AnimState -> AnimState` | Freeze all axes |
+| `unfreezeX` | `AnimGroupName -> List FreezeProperty -> AnimState -> AnimState` | Unfreeze the X axis |
+| `unfreezeY` | `AnimGroupName -> List FreezeProperty -> AnimState -> AnimState` | Unfreeze the Y axis |
+| `unfreezeZ` | `AnimGroupName -> List FreezeProperty -> AnimState -> AnimState` | Unfreeze the Z axis |
+| `unfreezeXY` | `AnimGroupName -> List FreezeProperty -> AnimState -> AnimState` | Unfreeze the X and Y axes |
+| `unfreezeXZ` | `AnimGroupName -> List FreezeProperty -> AnimState -> AnimState` | Unfreeze the X and Z axes |
+| `unfreezeYZ` | `AnimGroupName -> List FreezeProperty -> AnimState -> AnimState` | Unfreeze the Y and Z axes |
+| `unfreezeXYZ` | `AnimGroupName -> List FreezeProperty -> AnimState -> AnimState` | Unfreeze all axes |
 
 ### State Queries
 
@@ -637,9 +655,3 @@ For complete API details, see the [Anim.Engine.Sub](https://package.elm-lang.org
 The WAAPI Engine provides all of the features of the Transition, Keyframe, and Sub engines combined, with native browser control.
 
 [WAAPI Engine →](waapi.md){ .md-button .md-button--primary }
-
-Or explore the fire-and-forget timeline engines:
-
-[Scroll Timeline Engine →](scroll-timeline.md){ .md-button .md-button--primary }
-Or
-[View Timeline Engine →](view-timeline.md){ .md-button .md-button--primary }

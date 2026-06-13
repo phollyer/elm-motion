@@ -4,41 +4,25 @@ This page mainly covers the shared patterns that are used by each Property. For 
 
 ## Builder Pattern
 
-Every property uses the same pattern: target an animation group, set values, configure timing, and finish the property builder.
+Every property uses the same pattern: start the builder, set values, configure timing, and finish the property builder.
 
 ??? example "View Source Code"
 
     ```elm
-    animationFunction : AnimBuilder eng -> AnimBuilder eng
-    animationFunction =
-        Engine.for animGroup                -- Animation group name (required)
-            >> Property.begin
-            >> Property.from startValue     -- Optional starting value
-            >> Property.to endValue         -- Property specific alternatives to `to` are available
-            >> Property.delay 100           -- ms
-            >> Property.duration 500        -- ms, or `Property.speed 50` (units per second)
-            >> Property.easing BounceOut    -- or `Property.spring wobbly`
-            >> Property.end                 -- Finalize (required)
+    Property.begin                      -- Start the builder (required)
+        >> Property.from startValue     -- Optional starting value
+        >> Property.to endValue         -- Property specific alternatives to `to` are available
+        >> Property.delay 100           -- ms
+        >> Property.duration 500        -- ms, or `Property.speed 50` (units per second)
+        >> Property.easing BounceOut    -- or `Property.spring wobbly`
+        >> Property.end                 -- Finalize (required)
     ```
 
 📖 See [The Builder Pattern](../workflow/build.md#the-builder-pattern) for more information.
 
-## Animation Groups
+## Begin
 
-These are important. An animation group is a group of properties that animate on an element together.
-
-Properties are added to an animation group by providing the group name as a string when starting an animation pipeline. This is done with the `for` function:
-
-??? example "View Source Code"
-
-    ```elm
-    myAnimation : AnimBuilder eng -> AnimBuilder eng
-    myAnimation =
-        Translate.begin
-            >> ... -- Continue configuring the animation
-    ```
-
-📖 See [Animation Group Names](../workflow/build.md#animation-group-names) for more information.
+All property builders start with the `begin` function. This converts an `AnimBuilder` into a property specific builder, ensuring you don't mix property functions in the same builder chain.
 
 ## Start Values
 
@@ -52,6 +36,8 @@ All properties have either an `init` function, or a variety of `init*` functions
     Transition.init [ Opacity.init "animGroup" 0 ]
 
     Keyframe.init [ Size.initHW "animGroup" 80 100 ]
+
+    Sub.init [ Skew.initX "animGroup" 10 ]
 
     WAAPI.init [ Translate.initXYZ "animGroup" 50 100 75 ]
     ```
@@ -76,7 +62,7 @@ If in doubt, start without; only add when needed.
 All animations need an end value.
 
 All properties have either a `to` function, or a variety of `to*` functions that are property specific, or both.
-`Translate` also has `by*` in order to translate by a delta value rather
+`Translate` also has `by*` in order to translate by a delta value.
 
 ??? example "View Source Code"
 
@@ -132,13 +118,17 @@ All properties have a `spring` function which takes a `Spring`. This will overri
     ```elm
     import Motion.Spring as Spring
 
-    bouncyReveal : AnimBuilder eng -> AnimBuilder eng
+    bouncyReveal : AnimBuilder { eng | withSpring : () } -> AnimBuilder { eng | withSpring : () }
     bouncyReveal =
         Translate.begin
             >> Translate.toX 0
             >> Translate.spring Spring.wobbly
             >> ... -- Continue configuring the animation
+
     ```
+    **Note**: Springs are not supported by all Engines, the Transition engine doesn't, so `spring` is a capablility restricted function denoted by `withSpring`. 
+
+    📖 See [Engine Capabilities](../concepts/engine-capabilities.md) for more info.
 
 📖 See [Spring](../concepts/spring.md) for the full preset list and tuning guidance.
 
@@ -151,13 +141,16 @@ All properties have a `delay` function which takes an `Int` representing millise
 ??? example "View Source Code"
 
     ```elm
-    fadeInAfterDelay : AnimBuilder eng -> AnimBuilder eng
+    fadeInAfterDelay : AnimBuilder { eng | withTiming : () } -> AnimBuilder { eng | withTiming : () }
     fadeInAfterDelay =
         Opacity.begin
             >> Opacity.to 1
             >> Opacity.delay 300
             >> ... -- Continue configuring the animation
     ```
+    **Note**: Delay is part of the `withTiming` capabilities and is not supported by all Engines, the Timeline engines don't, they are driven by scroll position not time, so timing capabilities don't make sense for these engines.
+
+    📖 See [Engine Capabilities](../concepts/engine-capabilities.md) for more info.
 
 !!! tip "Staggering animations"
     Use different delays on properties within the same group to stagger their start times, creating a sequenced feel without needing separate animations.
@@ -172,13 +165,16 @@ All properties have a `duration` function which takes an `Int` representing mill
 ??? example "View Source Code"
 
     ```elm
-    slideIn : AnimBuilder eng -> AnimBuilder eng
+    slideIn : AnimBuilder { eng | withTiming : () } -> AnimBuilder { eng | withTiming : () }
     slideIn =
         Translate.begin
             >> Translate.toX 0
             >> Translate.duration 500
             >> ... -- Continue configuring the animation
     ```
+    **Note**: Duration is part of the `withTiming` capabilities and is not supported by all Engines, the Timeline engines don't, they are driven by scroll position not time, so timing capabilities don't make sense for these engines.
+
+    📖 See [Engine Capabilities](../concepts/engine-capabilities.md) for more info.
 
 📖 See [Duration vs Speed](../concepts/timing.md#duration-vs-speed) for more information.
 
@@ -192,37 +188,40 @@ All properties have a `speed` function which takes a `Float`. The unit depends o
 ??? example "View Source Code"
 
     ```elm
-    moveToTarget : Float -> AnimBuilder eng -> AnimBuilder eng
+    moveToTarget : Float -> AnimBuilder { eng | withTiming : () } -> AnimBuilder { eng | withTiming : () }
     moveToTarget targetX =
         Translate.begin
             >> Translate.toX targetX
             >> Translate.speed 500
             >> ... -- Continue configuring the animation
     ```
+    **Note**: Speed is part of the `withTiming` capabilities and is not supported by all Engines, the Timeline engines don't, they are driven by scroll position not time, so timing capabilities don't make sense for these engines.
+
+    📖 See [Engine Capabilities](../concepts/engine-capabilities.md) for more info.
 
 !!! tip "When to use `speed` over `duration`"
     `speed` is ideal when the distance varies at runtime — for example, drag-and-drop targets or scrolling to dynamic positions. It gives a consistent feel regardless of how far the element needs to travel.
 
 📖 See [Duration vs Speed](../concepts/timing.md#duration-vs-speed) for more information.
 
-## Build
+## End
 
-`build` completes the pattern and returns an `AnimBuilder`, allowing you to build another animation or pass the builder to an engine for triggering.
+`end` completes the pattern and returns an `AnimBuilder`, allowing you to build another animation or pass the builder to an engine for triggering.
 
 ??? example "View Source Code"
 
     ```elm
     myAnimation : AnimBuilder eng -> AnimBuilder eng
     myAnimation =
-        Translate.begin
+        Translate.begin                   -- Transforms `AnimBuilder eng` into a `Translate.Builder eng`
             >> Translate.toX 100
             >> Translate.end              -- Returns AnimBuilder eng
-            >> Opacity.begin
+            >> Opacity.begin              -- Transforms `AnimBuilder eng` into an `Opacity.builder eng` 
             >> Opacity.to 1
             >> Opacity.end                -- Returns AnimBuilder eng
-            >> Translate.begin
-            >> Translate.toY 200
-            >> Translate.end              -- Returns AnimBuilder eng
+            >> Rotate.begin               -- Transforms `AnimBuilder eng` into a `Rotate.builder eng` 
+            >> Rotate.toY 90
+            >> Rotate.end                 -- Returns AnimBuilder eng
     ```
 
 📖 See [The Builder Pattern](../workflow/build.md#the-builder-pattern) for more information.

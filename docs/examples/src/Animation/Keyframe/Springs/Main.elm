@@ -62,10 +62,9 @@ init =
 -- ANIMATION
 
 
-animateTo : Float -> Spring -> Keyframe.EngineBuilder -> Keyframe.EngineBuilder
+animateTo : Float -> Spring -> AnimBuilder { eng | withTiming : (), withSpring : () } -> AnimBuilder { eng | withTiming : (), withSpring : () }
 animateTo x spring =
-    Keyframe.for animGroup
-        >> Translate.begin
+    Translate.begin
         >> Translate.toX x
         >> Translate.spring spring
         >> Translate.end
@@ -96,7 +95,10 @@ update msg model =
                         420
             in
             ( { model
-                | animState = Keyframe.animate model.animState (animateTo target spring)
+                | animState =
+                    Keyframe.animate model.animState <|
+                        Keyframe.for animGroup
+                            >> animateTo target spring
                 , selected = label
                 , atEnd = not model.atEnd
               }
@@ -129,7 +131,10 @@ update msg model =
                         420
             in
             ( { model
-                | animState = Keyframe.animate model.animState (animateTo target spring)
+                | animState =
+                    Keyframe.animate model.animState <|
+                        Keyframe.for animGroup
+                            >> animateTo target spring
                 , selected = "custom"
                 , atEnd = not model.atEnd
                 , stiffness = String.fromFloat stiffness

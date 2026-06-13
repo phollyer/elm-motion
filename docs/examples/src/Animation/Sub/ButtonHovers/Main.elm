@@ -111,60 +111,54 @@ unhoverEasing =
 ---8<-- [start:build]
 
 
-scaleUp : Sub.EngineBuilder -> Sub.EngineBuilder
+scaleUp : AnimBuilder { eng | withTiming : () } -> AnimBuilder { eng | withTiming : () }
 scaleUp =
-    Sub.for scaleButton
-        >> Scale.begin
+    Scale.begin
         >> Scale.to 1.1
         >> Scale.duration hoverDuration
         >> Scale.easing hoverEasing
         >> Scale.end
 
 
-scaleDown : Sub.EngineBuilder -> Sub.EngineBuilder
+scaleDown : AnimBuilder { eng | withTiming : () } -> AnimBuilder { eng | withTiming : () }
 scaleDown =
-    Sub.for scaleButton
-        >> Scale.begin
+    Scale.begin
         >> Scale.to 1
         >> Scale.duration hoverDuration
         >> Scale.easing unhoverEasing
         >> Scale.end
 
 
-growSize : Sub.EngineBuilder -> Sub.EngineBuilder
+growSize : AnimBuilder { eng | withTiming : () } -> AnimBuilder { eng | withTiming : () }
 growSize =
-    Sub.for sizeButton
-        >> Size.begin
+    Size.begin
         >> Size.toHW hoverHeight hoverWidth
         >> Size.duration hoverDuration
         >> Size.easing hoverEasing
         >> Size.end
 
 
-shrinkSize : Sub.EngineBuilder -> Sub.EngineBuilder
+shrinkSize : AnimBuilder { eng | withTiming : () } -> AnimBuilder { eng | withTiming : () }
 shrinkSize =
-    Sub.for sizeButton
-        >> Size.begin
+    Size.begin
         >> Size.toHW baseHeight baseWidth
         >> Size.duration hoverDuration
         >> Size.easing unhoverEasing
         >> Size.end
 
 
-liftUp : Sub.EngineBuilder -> Sub.EngineBuilder
+liftUp : AnimBuilder { eng | withTiming : () } -> AnimBuilder { eng | withTiming : () }
 liftUp =
-    Sub.for zButton
-        >> Translate.begin
+    Translate.begin
         >> Translate.toZ 60
         >> Translate.duration hoverDuration
         >> Translate.easing hoverEasing
         >> Translate.end
 
 
-setDown : Sub.EngineBuilder -> Sub.EngineBuilder
+setDown : AnimBuilder { eng | withTiming : () } -> AnimBuilder { eng | withTiming : () }
 setDown =
-    Sub.for zButton
-        >> Translate.begin
+    Translate.begin
         >> Translate.toZ 0
         >> Translate.duration hoverDuration
         >> Translate.easing unhoverEasing
@@ -207,32 +201,62 @@ update msg model =
         ---8<-- [end:update]
         ---8<-- [start:trigger]
         ScaleHover ->
-            ( { model | animState = Sub.animate model.animState scaleUp }
+            ( { model
+                | animState =
+                    Sub.animate model.animState <|
+                        Sub.for scaleButton
+                            >> scaleUp
+              }
             , Cmd.none
             )
 
         ScaleUnhover ->
-            ( { model | animState = Sub.animate model.animState scaleDown }
+            ( { model
+                | animState =
+                    Sub.animate model.animState <|
+                        Sub.for scaleButton
+                            >> scaleDown
+              }
             , Cmd.none
             )
 
         SizeHover ->
-            ( { model | animState = Sub.animate model.animState growSize }
+            ( { model
+                | animState =
+                    Sub.animate model.animState <|
+                        Sub.for sizeButton
+                            >> growSize
+              }
             , Cmd.none
             )
 
         SizeUnhover ->
-            ( { model | animState = Sub.animate model.animState shrinkSize }
+            ( { model
+                | animState =
+                    Sub.animate model.animState <|
+                        Sub.for sizeButton
+                            >> shrinkSize
+              }
             , Cmd.none
             )
 
         ZHover ->
-            ( { model | animState = Sub.animate model.animState liftUp }
+            ( { model
+                | animState =
+                    Sub.animate model.animState <|
+                        Sub.for zButton
+                            >> liftUp
+              }
             , Cmd.none
             )
 
         ZUnhover ->
-            ( { model | animState = Sub.animate model.animState setDown }
+            ( { model
+                | animState =
+                    Sub.animate model.animState <|
+                        Sub.for zButton
+                            >> setDown
+              }
             , Cmd.none
             )
 

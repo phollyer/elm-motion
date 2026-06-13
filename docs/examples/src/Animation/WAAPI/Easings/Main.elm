@@ -67,10 +67,9 @@ init =
 -- ANIMATION
 
 
-animateTo : Float -> Easing -> WAAPI.EngineBuilder -> WAAPI.EngineBuilder
+animateTo : Float -> Easing -> AnimBuilder { eng | withTiming : () } -> AnimBuilder { eng | withTiming : () }
 animateTo x easing =
-    WAAPI.for animGroup
-        >> Translate.begin
+    Translate.begin
         >> Translate.toX x
         >> Translate.speed 350
         >> Translate.easing easing
@@ -108,7 +107,9 @@ update msg model =
                         420
 
                 ( newAnimState, cmd ) =
-                    WAAPI.animate model.animState (animateTo target easing)
+                    WAAPI.animate model.animState <|
+                        WAAPI.for animGroup
+                            >> animateTo target easing
             in
             ( { model
                 | animState = newAnimState
@@ -135,8 +136,8 @@ subscriptions model =
 curves : List ( Easing, String )
 curves =
     [ ( Linear, "Linear" )
-    , ( CubicOut, "CubicOut" )
-    , ( CubicInOut, "CubicInOut" )
+    , ( QuadOut, "QuadOut" )
+    , ( ExpoOut, "ExpoOut" )
     , ( ElasticOut, "ElasticOut" )
     , ( BounceOut, "BounceOut" )
     , ( BackInOut, "BackInOut" )

@@ -5,8 +5,8 @@ import Html exposing (Html, button, div, p, text)
 import Html.Attributes exposing (class, id, style)
 import Html.Events exposing (onClick)
 import Motion.Easing as Easing exposing (Easing(..))
-import Scroll.Builder as ScrollTo
-import Scroll.Engine.Sub as Scroll exposing (ScrollBuilder)
+import Scroll.Builder as Scroll
+import Scroll.Engine.Sub as Sub exposing (ScrollBuilder)
 
 
 
@@ -16,7 +16,7 @@ import Scroll.Engine.Sub as Scroll exposing (ScrollBuilder)
 main : Program () Model Msg
 main =
     Browser.element
-        { init = \_ -> ( init, Cmd.none )
+        { init = \_ -> init
         , view = view
         , update = update
         , subscriptions = subscriptions
@@ -27,6 +27,12 @@ main =
 -- MODEL
 
 
+type alias Model =
+    { scrollState : Sub.ScrollState
+    , status : ScrollStatus
+    }
+
+
 type ScrollStatus
     = Idle
     | Scrolling
@@ -34,17 +40,13 @@ type ScrollStatus
     | Arrived
 
 
-type alias Model =
-    { scrollState : Scroll.ScrollState
-    , status : ScrollStatus
-    }
-
-
-init : Model
+init : ( Model, Cmd Msg )
 init =
-    { scrollState = Scroll.init
-    , status = Idle
-    }
+    ( { scrollState = Sub.init
+      , status = Idle
+      }
+    , Cmd.none
+    )
 
 
 
@@ -53,7 +55,7 @@ init =
 
 type Msg
     = ScrollTo String
-    | GotScrollMsg Scroll.ScrollMsg
+    | GotScrollMsg Sub.ScrollMsg
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -65,7 +67,7 @@ update msg model =
                     model.status == Scrolling
 
                 ( newScrollState, scrollCmd ) =
-                    Scroll.scroll GotScrollMsg model.scrollState <|
+                    Sub.scroll GotScrollMsg model.scrollState <|
                         scrollToElement targetId
             in
             ( { model
@@ -83,7 +85,7 @@ update msg model =
         GotScrollMsg scrollMsg ->
             let
                 ( newScrollState, events, scrollCmd ) =
-                    Scroll.update GotScrollMsg scrollMsg model.scrollState
+                    Sub.update GotScrollMsg scrollMsg model.scrollState
             in
             ( { model
                 | scrollState = newScrollState
@@ -93,13 +95,13 @@ update msg model =
             )
 
 
-applyEvent : Scroll.ScrollEvent -> ScrollStatus -> ScrollStatus
+applyEvent : Sub.ScrollEvent -> ScrollStatus -> ScrollStatus
 applyEvent event status =
     case event of
-        Scroll.Ended _ ->
+        Sub.Ended _ ->
             Arrived
 
-        Scroll.Started _ ->
+        Sub.Started _ ->
             if status == Interrupted then
                 Interrupted
 
@@ -112,11 +114,11 @@ applyEvent event status =
 
 scrollToElement : String -> ScrollBuilder -> ScrollBuilder
 scrollToElement targetId =
-    ScrollTo.forContainer "scroll-container"
-        >> ScrollTo.toElement targetId
-        >> ScrollTo.speed 120
-        >> ScrollTo.easing Linear
-        >> ScrollTo.build
+    Scroll.forContainer "scroll-container"
+        >> Scroll.toElement targetId
+        >> Scroll.speed 120
+        >> Scroll.easing Linear
+        >> Scroll.build
 
 
 
@@ -125,7 +127,7 @@ scrollToElement targetId =
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
-    Scroll.subscriptions GotScrollMsg model.scrollState
+    Sub.subscriptions GotScrollMsg model.scrollState
 
 
 

@@ -5,8 +5,8 @@ import Html exposing (Html, button, div, p, text)
 import Html.Attributes exposing (class, id, style)
 import Html.Events exposing (onClick)
 import Motion.Easing as Easing exposing (Easing(..))
-import Scroll.Builder as ScrollTo
-import Scroll.Engine.Task as Scroll exposing (ScrollBuilder)
+import Scroll.Builder as Scroll
+import Scroll.Engine.Task as Task exposing (ScrollBuilder)
 import Task
 
 
@@ -17,7 +17,7 @@ import Task
 main : Program () Model Msg
 main =
     Browser.element
-        { init = \_ -> ( { activeScrolls = 0 }, Cmd.none )
+        { init = \_ -> init
         , view = view
         , update = update
         , subscriptions = always Sub.none
@@ -32,13 +32,20 @@ type alias Model =
     { activeScrolls : Int }
 
 
+init : ( Model, Cmd Msg )
+init =
+    ( { activeScrolls = 0 }
+    , Cmd.none
+    )
+
+
 
 -- UPDATE
 
 
 type Msg
     = ScrollTo String
-    | ScrollResult (Result Scroll.ScrollError (List Scroll.ScrollOk))
+    | ScrollResult (Result Task.ScrollError (List Task.ScrollOk))
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -47,7 +54,7 @@ update msg model =
         ScrollTo targetId ->
             ( { model | activeScrolls = model.activeScrolls + 1 }
             , Task.attempt ScrollResult <|
-                Scroll.scroll <|
+                Task.scroll <|
                     scrollToElement targetId
             )
 
@@ -59,11 +66,11 @@ update msg model =
 
 scrollToElement : String -> ScrollBuilder -> ScrollBuilder
 scrollToElement targetId =
-    ScrollTo.forContainer "scroll-container"
-        >> ScrollTo.toElement targetId
-        >> ScrollTo.speed 120
-        >> ScrollTo.easing Linear
-        >> ScrollTo.build
+    Scroll.forContainer "scroll-container"
+        >> Scroll.toElement targetId
+        >> Scroll.speed 120
+        >> Scroll.easing Linear
+        >> Scroll.build
 
 
 

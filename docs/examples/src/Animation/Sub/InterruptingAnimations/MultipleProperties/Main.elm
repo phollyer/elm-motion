@@ -119,20 +119,18 @@ color4 =
 -- ANIMATIONS
 
 
-moveBoxX : Float -> Sub.EngineBuilder -> Sub.EngineBuilder
+moveBoxX : Float -> AnimBuilder { eng | withTiming : () } -> AnimBuilder { eng | withTiming : () }
 moveBoxX x =
-    Sub.for animGroupName
-        >> Translate.begin
+    Translate.begin
         >> Translate.toX x
         >> Translate.speed 25
         >> Translate.easing BounceOut
         >> Translate.end
 
 
-changeColor : Color -> Sub.EngineBuilder -> Sub.EngineBuilder
+changeColor : Color -> AnimBuilder { eng | withTiming : () } -> AnimBuilder { eng | withTiming : () }
 changeColor color =
-    Sub.for animGroupName
-        >> CustomColor.begin CustomColor.BackgroundColor
+    CustomColor.begin CustomColor.BackgroundColor
         >> CustomColor.to color
         >> CustomColor.duration 3000
         >> CustomColor.easing Linear
@@ -166,7 +164,8 @@ update msg model =
             ( { model
                 | animState =
                     Sub.animate model.animState <|
-                        moveBoxX (targetX XLeft)
+                        Sub.for animGroupName
+                            >> moveBoxX (targetX XLeft)
               }
             , Cmd.none
             )
@@ -175,7 +174,8 @@ update msg model =
             ( { model
                 | animState =
                     Sub.animate model.animState <|
-                        moveBoxX (targetX XRight)
+                        Sub.for animGroupName
+                            >> moveBoxX (targetX XRight)
               }
             , Cmd.none
             )
@@ -184,7 +184,8 @@ update msg model =
             ( { model
                 | animState =
                     Sub.animate model.animState <|
-                        changeColor color
+                        Sub.for animGroupName
+                            >> changeColor color
               }
             , Cmd.none
             )

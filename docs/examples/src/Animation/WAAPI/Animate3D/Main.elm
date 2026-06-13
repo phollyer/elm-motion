@@ -68,7 +68,7 @@ init =
 
                 -- Position each face in 3D space along the axis it faces.
                 -- Face offsets use `Cqmin` so the cube scales proportionally
-                -- with the stage's smaller dimension on resize.
+                -- with the stage's new dimensions on resize.
                 -- Front/Back faces move on Z (forward/backward)
                 -- Left/Right faces move on X (sideways)
                 -- Top/Bottom faces move on Y (up/down)
@@ -180,7 +180,7 @@ frontFace =
         { id = "front-face-text"
         , groupName = "frontFaceTextAnim"
         , label = "FRONT"
-        , color = "rgb(0,0 ,0   )"
+        , color = "rgb(0,0,0)"
         }
     }
 
@@ -196,7 +196,7 @@ backFace =
         { id = "back-face-text"
         , groupName = "backFaceTextAnim"
         , label = "BACK"
-        , color = "rgb(0,0 ,0   )"
+        , color = "rgb(0,0,0)"
         }
     }
 
@@ -212,7 +212,7 @@ rightFace =
         { id = "right-face-text"
         , groupName = "rightFaceTextAnim"
         , label = "RIGHT"
-        , color = "rgb(0,0 ,0   )"
+        , color = "rgb(0,0,0)"
         }
     }
 
@@ -228,7 +228,7 @@ leftFace =
         { id = "left-face-text"
         , groupName = "leftFaceTextAnim"
         , label = "LEFT"
-        , color = "rgb(0,0 ,0   )"
+        , color = "rgb(0,0,0)"
         }
     }
 
@@ -244,7 +244,7 @@ topFace =
         { id = "top-face-text"
         , groupName = "topFaceTextAnim"
         , label = "TOP"
-        , color = "rgb(0,0 ,0   )"
+        , color = "rgb(0,0,0)"
         }
     }
 
@@ -260,7 +260,7 @@ bottomFace =
         { id = "bottom-face-text"
         , groupName = "bottomFaceTextAnim"
         , label = "BOTTOM"
-        , color = "rgb(0,0 ,0   )"
+        , color = "rgb(0,0,0)"
         }
     }
 
@@ -441,7 +441,6 @@ moveText config toZ toRotate =
         >> Translate.begin
         >> Translate.toZ toZ
         >> Translate.end
-        >> WAAPI.for config.groupName
         >> Rotate.begin
         >> Rotate.toZ toRotate
         >> Rotate.end

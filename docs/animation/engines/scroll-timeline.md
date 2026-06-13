@@ -28,8 +28,7 @@ Here's a general workflow to get up an running quickly.
 
     scrollAnimation : ScrollTimeline.AnimBuilder eng -> ScrollTimeline.AnimBuilder eng
     scrollAnimation =
-        ScrollTimeline.for "progress"
-            >> Opacity.begin
+        Opacity.begin
             >> Opacity.from 0
             >> Opacity.to 1
             >> Opacity.end
@@ -65,7 +64,9 @@ Call `animate` to send a fire-and-forget scroll-driven animation command.
 
     startScrollAnimation : Cmd Msg
     startScrollAnimation =
-        ScrollTimeline.animate motionCmd ScrollTimeline.Document scrollAnimation
+        ScrollTimeline.animate motionCmd ScrollTimeline.Document <|
+            ScrollTimeline.for "progress"
+                >> scrollAnimation
     ```
 
 ### 4. Optional React
@@ -85,11 +86,6 @@ Subscribe only when you need lifecycle events in Elm. See [Subscriptions](#subsc
         = GotScrollMsg ScrollTimeline.AnimMsg
 
 
-    subscriptions : Model -> Sub Msg
-    subscriptions _ =
-        ScrollTimeline.subscriptions GotScrollMsg motionMsg
-
-
     update : Msg -> Model -> ( Model, Cmd Msg )
     update msg model =
         case msg of
@@ -100,6 +96,11 @@ Subscribe only when you need lifecycle events in Elm. See [Subscriptions](#subsc
 
                     _ ->
                         ( model, Cmd.none )
+
+
+    subscriptions : Model -> Sub Msg
+    subscriptions _ =
+        ScrollTimeline.subscriptions GotScrollMsg motionMsg
     ```
 
 ---

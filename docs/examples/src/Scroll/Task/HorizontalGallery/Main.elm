@@ -5,8 +5,8 @@ import Html exposing (Html, button, div, text)
 import Html.Attributes exposing (class, id, style)
 import Html.Events exposing (onClick)
 import Motion.Easing as Easing exposing (Easing(..))
-import Scroll.Builder as ScrollTo
-import Scroll.Engine.Task as Scroll exposing (ScrollBuilder)
+import Scroll.Builder as Scroll
+import Scroll.Engine.Task as Task exposing (ScrollBuilder)
 import Task
 
 
@@ -17,7 +17,7 @@ import Task
 main : Program () Model Msg
 main =
     Browser.element
-        { init = \_ -> ( { status = Idle }, Cmd.none )
+        { init = \_ -> init
         , view = view
         , update = update
         , subscriptions = always Sub.none
@@ -29,6 +29,10 @@ main =
 ---8<-- [start:model]
 
 
+type alias Model =
+    { status : ScrollStatus }
+
+
 type ScrollStatus
     = Idle
     | Scrolling
@@ -36,8 +40,11 @@ type ScrollStatus
     | Failed String
 
 
-type alias Model =
-    { status : ScrollStatus }
+init : ( Model, Cmd Msg )
+init =
+    ( { status = Idle }
+    , Cmd.none
+    )
 
 
 
@@ -47,7 +54,7 @@ type alias Model =
 
 type Msg
     = ScrollTo String
-    | ScrollResult (Result Scroll.ScrollError (List Scroll.ScrollOk))
+    | ScrollResult (Result Task.ScrollError (List Task.ScrollOk))
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -57,7 +64,7 @@ update msg model =
         ScrollTo cardId ->
             ( { model | status = Scrolling }
             , Task.attempt ScrollResult <|
-                Scroll.scroll <|
+                Task.scroll <|
                     scrollToCard cardId
             )
 
@@ -66,14 +73,14 @@ update msg model =
         ScrollResult (Ok _) ->
             ( { model | status = Arrived }, Cmd.none )
 
-        ScrollResult (Err (Scroll.ScrollError err)) ->
+        ScrollResult (Err (Task.ScrollError err)) ->
             let
                 containerLabel =
                     case err.container of
-                        Scroll.Document ->
+                        Task.Document ->
                             "document"
 
-                        Scroll.Container id ->
+                        Task.Container id ->
                             id
             in
             ( { model | status = Failed ("Could not scroll: " ++ containerLabel) }, Cmd.none )
@@ -86,12 +93,12 @@ update msg model =
 
 scrollToCard : String -> ScrollBuilder -> ScrollBuilder
 scrollToCard cardId =
-    ScrollTo.forContainer "gallery"
-        >> ScrollTo.toElement cardId
-        >> ScrollTo.onXAxis
-        >> ScrollTo.speed 500
-        >> ScrollTo.easing EaseInOut
-        >> ScrollTo.build
+    Scroll.forContainer "gallery"
+        >> Scroll.toElement cardId
+        >> Scroll.onXAxis
+        >> Scroll.speed 500
+        >> Scroll.easing EaseInOut
+        >> Scroll.build
 
 
 

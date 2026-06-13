@@ -55,20 +55,18 @@ animGroup =
     "borderAnim"
 
 
-toRed : Keyframe.EngineBuilder -> Keyframe.EngineBuilder
+toRed : AnimBuilder { eng | withTiming : () } -> AnimBuilder { eng | withTiming : () }
 toRed =
-    Keyframe.for animGroup
-        >> CustomColor.begin CustomColor.BorderColor
+    CustomColor.begin CustomColor.BorderColor
         >> CustomColor.to (Color.rgb 239 68 68)
         >> CustomColor.duration 800
         >> CustomColor.easing CubicInOut
         >> CustomColor.end
 
 
-toBlue : Keyframe.EngineBuilder -> Keyframe.EngineBuilder
+toBlue : AnimBuilder { eng | withTiming : () } -> AnimBuilder { eng | withTiming : () }
 toBlue =
-    Keyframe.for animGroup
-        >> CustomColor.begin CustomColor.BorderColor
+    CustomColor.begin CustomColor.BorderColor
         >> CustomColor.to (Color.rgb 59 130 246)
         >> CustomColor.duration 800
         >> CustomColor.easing CubicInOut
@@ -88,12 +86,22 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         TriggerRed ->
-            ( { model | animState = Keyframe.animate model.animState toRed }
+            ( { model
+                | animState =
+                    Keyframe.animate model.animState <|
+                        Keyframe.for animGroup
+                            >> toRed
+              }
             , Cmd.none
             )
 
         TriggerBlue ->
-            ( { model | animState = Keyframe.animate model.animState toBlue }
+            ( { model
+                | animState =
+                    Keyframe.animate model.animState <|
+                        Keyframe.for animGroup
+                            >> toBlue
+              }
             , Cmd.none
             )
 

@@ -137,20 +137,18 @@ color4 =
 -- ANIMATIONS
 
 
-moveBoxX : Float -> WAAPI.EngineBuilder -> WAAPI.EngineBuilder
+moveBoxX : Float -> AnimBuilder { eng | withTiming : () } -> AnimBuilder { eng | withTiming : () }
 moveBoxX x =
-    WAAPI.for animGroupName
-        >> Translate.begin
+    Translate.begin
         >> Translate.toX x
         >> Translate.speed 25
         >> Translate.easing BounceOut
         >> Translate.end
 
 
-changeColor : Color -> WAAPI.EngineBuilder -> WAAPI.EngineBuilder
+changeColor : Color -> AnimBuilder { eng | withTiming : () } -> AnimBuilder { eng | withTiming : () }
 changeColor color =
-    WAAPI.for animGroupName
-        >> CustomColor.begin CustomColor.BackgroundColor
+    CustomColor.begin CustomColor.BackgroundColor
         >> CustomColor.to color
         >> CustomColor.duration 3000
         >> CustomColor.easing Linear
@@ -184,7 +182,8 @@ update msg model =
             let
                 ( newAnimState, cmd ) =
                     WAAPI.animate model.animState <|
-                        moveBoxX (targetX XLeft)
+                        WAAPI.for animGroupName
+                            >> moveBoxX (targetX XLeft)
             in
             ( { model | animState = newAnimState }, cmd )
 
@@ -192,7 +191,8 @@ update msg model =
             let
                 ( newAnimState, cmd ) =
                     WAAPI.animate model.animState <|
-                        moveBoxX (targetX XRight)
+                        WAAPI.for animGroupName
+                            >> moveBoxX (targetX XRight)
             in
             ( { model | animState = newAnimState }, cmd )
 
@@ -200,7 +200,8 @@ update msg model =
             let
                 ( newAnimState, cmd ) =
                     WAAPI.animate model.animState <|
-                        changeColor color
+                        WAAPI.for animGroupName
+                            >> changeColor color
             in
             ( { model | animState = newAnimState }, cmd )
 

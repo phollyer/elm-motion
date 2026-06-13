@@ -5,8 +5,8 @@ import Html exposing (Html, button, div, text)
 import Html.Attributes exposing (class, id, style)
 import Html.Events exposing (onClick)
 import Motion.Easing as Easing exposing (Easing(..))
-import Scroll.Builder as ScrollTo
-import Scroll.Engine.Sub as Scroll exposing (ScrollBuilder)
+import Scroll.Builder as Scroll
+import Scroll.Engine.Sub as Sub exposing (ScrollBuilder)
 
 
 
@@ -16,7 +16,7 @@ import Scroll.Engine.Sub as Scroll exposing (ScrollBuilder)
 main : Program () Model Msg
 main =
     Browser.element
-        { init = \_ -> ( init, Cmd.none )
+        { init = \_ -> init
         , view = view
         , update = update
         , subscriptions = subscriptions
@@ -28,23 +28,25 @@ main =
 ---8<-- [start:model]
 
 
+type alias Model =
+    { scrollState : Sub.ScrollState
+    , status : ScrollStatus
+    }
+
+
 type ScrollStatus
     = Idle
     | Scrolling Float Float
     | Arrived
 
 
-type alias Model =
-    { scrollState : Scroll.ScrollState
-    , status : ScrollStatus
-    }
-
-
-init : Model
+init : ( Model, Cmd Msg )
 init =
-    { scrollState = Scroll.init
-    , status = Idle
-    }
+    ( { scrollState = Sub.init
+      , status = Idle
+      }
+    , Cmd.none
+    )
 
 
 
@@ -54,7 +56,7 @@ init =
 
 type Msg
     = ScrollTo String
-    | GotScrollMsg Scroll.ScrollMsg
+    | GotScrollMsg Sub.ScrollMsg
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -64,7 +66,7 @@ update msg model =
         ScrollTo cardId ->
             let
                 ( newScrollState, scrollCmd ) =
-                    Scroll.scroll GotScrollMsg model.scrollState <|
+                    Sub.scroll GotScrollMsg model.scrollState <|
                         scrollToCard cardId
             in
             ( { model | scrollState = newScrollState }, scrollCmd )
@@ -74,7 +76,7 @@ update msg model =
         GotScrollMsg scrollMsg ->
             let
                 ( newScrollState, events, scrollCmd ) =
-                    Scroll.update GotScrollMsg scrollMsg model.scrollState
+                    Sub.update GotScrollMsg scrollMsg model.scrollState
             in
             ( { model
                 | scrollState = newScrollState
@@ -88,13 +90,13 @@ update msg model =
 ---8<-- [end:updateScroll]
 
 
-applyEvent : Scroll.ScrollEvent -> ScrollStatus -> ScrollStatus
+applyEvent : Sub.ScrollEvent -> ScrollStatus -> ScrollStatus
 applyEvent event _ =
     case event of
-        Scroll.Progress _ pos progress ->
+        Sub.Progress _ pos progress ->
             Scrolling pos.x progress
 
-        Scroll.Ended _ ->
+        Sub.Ended _ ->
             Arrived
 
         _ ->
@@ -107,12 +109,12 @@ applyEvent event _ =
 
 scrollToCard : String -> ScrollBuilder -> ScrollBuilder
 scrollToCard cardId =
-    ScrollTo.forContainer "gallery"
-        >> ScrollTo.toElement cardId
-        >> ScrollTo.onXAxis
-        >> ScrollTo.speed 500
-        >> ScrollTo.easing EaseInOut
-        >> ScrollTo.build
+    Scroll.forContainer "gallery"
+        >> Scroll.toElement cardId
+        >> Scroll.onXAxis
+        >> Scroll.speed 500
+        >> Scroll.easing EaseInOut
+        >> Scroll.build
 
 
 
@@ -123,7 +125,7 @@ scrollToCard cardId =
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
-    Scroll.subscriptions GotScrollMsg model.scrollState
+    Sub.subscriptions GotScrollMsg model.scrollState
 
 
 

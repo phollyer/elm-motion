@@ -121,8 +121,7 @@ moveBoxY y =
 
 moveBox : (Translate.Builder ForKeyframe -> Translate.Builder ForKeyframe) -> Keyframe.EngineBuilder -> Keyframe.EngineBuilder
 moveBox moveFunc =
-    Keyframe.for animGroupName
-        >> Translate.begin
+    Translate.begin
         >> moveFunc
         >> Translate.speed 25
         >> Translate.easing QuintOut
@@ -157,7 +156,8 @@ update msg model =
             ( { model
                 | animState =
                     Keyframe.animate model.animState <|
-                        moveBoxX (targetX XLeft)
+                        Keyframe.for animGroupName
+                            >> moveBoxX (targetX XLeft)
               }
             , Cmd.none
             )
@@ -166,7 +166,8 @@ update msg model =
             ( { model
                 | animState =
                     Keyframe.animate model.animState <|
-                        moveBoxX (targetX XRight)
+                        Keyframe.for animGroupName
+                            >> moveBoxX (targetX XRight)
               }
             , Cmd.none
             )
@@ -175,7 +176,8 @@ update msg model =
             ( { model
                 | animState =
                     Keyframe.animate model.animState <|
-                        moveBoxY (targetY YTop)
+                        Keyframe.for animGroupName
+                            >> moveBoxY (targetY YTop)
               }
             , Cmd.none
             )
@@ -184,7 +186,8 @@ update msg model =
             ( { model
                 | animState =
                     Keyframe.animate model.animState <|
-                        moveBoxY (targetY YBottom)
+                        Keyframe.for animGroupName
+                            >> moveBoxY (targetY YBottom)
               }
             , Cmd.none
             )

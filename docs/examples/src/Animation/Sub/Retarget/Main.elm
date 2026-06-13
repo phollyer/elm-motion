@@ -63,20 +63,18 @@ init =
 -- ANIMATION
 
 
-animateDiagonal : Sub.EngineBuilder -> Sub.EngineBuilder
+animateDiagonal : AnimBuilder { eng | withTiming : () } -> AnimBuilder { eng | withTiming : () }
 animateDiagonal =
-    Sub.for animGroup
-        >> Translate.begin
+    Translate.begin
         >> Translate.toXY endXY endXY
         >> Translate.duration 5000
         >> Translate.easing Linear
         >> Translate.end
 
 
-retargetYToTop : Sub.EngineBuilder -> Sub.EngineBuilder
+retargetYToTop : AnimBuilder { eng | withTiming : () } -> AnimBuilder { eng | withTiming : () }
 retargetYToTop =
-    Sub.for animGroup
-        >> Translate.begin
+    Translate.begin
         >> Translate.toY 0
         >> Translate.end
 
@@ -105,12 +103,22 @@ update msg model =
             )
 
         Animate ->
-            ( { model | animState = Sub.animate model.animState animateDiagonal }
+            ( { model
+                | animState =
+                    Sub.animate model.animState <|
+                        Sub.for animGroup
+                            >> animateDiagonal
+              }
             , Cmd.none
             )
 
         RetargetY ->
-            ( { model | animState = Sub.retarget model.animState retargetYToTop }
+            ( { model
+                | animState =
+                    Sub.retarget model.animState <|
+                        Sub.for animGroup
+                            >> retargetYToTop
+              }
             , Cmd.none
             )
 

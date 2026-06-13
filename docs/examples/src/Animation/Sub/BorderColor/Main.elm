@@ -1,6 +1,6 @@
 module Animation.Sub.BorderColor.Main exposing (main)
 
-import Anim.Builder exposing (AnimBuilder, ForSub)
+import Anim.Builder exposing (AnimBuilder)
 import Anim.Engine.Sub as Sub
 import Anim.Extra.Color as Color
 import Anim.Property.CustomColor as CustomColor
@@ -55,25 +55,23 @@ animGroup =
     "borderAnim"
 
 
-standardTiming : CustomColor.Builder ForSub -> CustomColor.Builder ForSub
+standardTiming : CustomColor.Builder { prop | withTiming : () } -> CustomColor.Builder { prop | withTiming : () }
 standardTiming =
     CustomColor.duration 800
         >> CustomColor.easing CubicInOut
 
 
-toRed : Sub.EngineBuilder -> Sub.EngineBuilder
+toRed : AnimBuilder { eng | withTiming : () } -> AnimBuilder { eng | withTiming : () }
 toRed =
-    Sub.for animGroup
-        >> CustomColor.begin CustomColor.BorderColor
+    CustomColor.begin CustomColor.BorderColor
         >> CustomColor.to (Color.rgb 239 68 68)
         >> standardTiming
         >> CustomColor.end
 
 
-toBlue : Sub.EngineBuilder -> Sub.EngineBuilder
+toBlue : AnimBuilder { eng | withTiming : () } -> AnimBuilder { eng | withTiming : () }
 toBlue =
-    Sub.for animGroup
-        >> CustomColor.begin CustomColor.BorderColor
+    CustomColor.begin CustomColor.BorderColor
         >> CustomColor.to (Color.rgb 59 130 246)
         >> standardTiming
         >> CustomColor.end
@@ -102,12 +100,22 @@ update msg model =
             )
 
         TriggerRed ->
-            ( { model | animState = Sub.animate model.animState toRed }
+            ( { model
+                | animState =
+                    Sub.animate model.animState <|
+                        Sub.for animGroup
+                            >> toRed
+              }
             , Cmd.none
             )
 
         TriggerBlue ->
-            ( { model | animState = Sub.animate model.animState toBlue }
+            ( { model
+                | animState =
+                    Sub.animate model.animState <|
+                        Sub.for animGroup
+                            >> toBlue
+              }
             , Cmd.none
             )
 

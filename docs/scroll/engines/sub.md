@@ -267,7 +267,7 @@ You can have several scrolls running at once inside a single `ScrollState` - for
 
 ### Mid-Flight Redirection
 
-This is the headline feature. Trigger `Sub.scroll` for the same container while a scroll is in flight, and the engine replaces it - smoothly carrying on from the current position to the new target instead of fighting with the old animation.
+Trigger `Sub.scroll` for the same container while a scroll is in flight, and the engine replaces it - smoothly carrying on from the current position to the new target instead of fighting with the old animation.
 
 📖 See [Interrupting Scrolls](../concepts/interrupting-scrolls.md) for a live side-by-side demonstration of all three engines.
 
@@ -360,6 +360,9 @@ For everything else, [Cmd](cmd.md) or [Task](task.md) are simpler.
 | `getPosition` | `Container -> ScrollState -> Maybe { x : Float, y : Float }` | Current position |
 | `getPositionX` | `Container -> ScrollState -> Maybe Float` | Current X |
 | `getPositionY` | `Container -> ScrollState -> Maybe Float` | Current Y |
+
+**Note**: The family of `getPosition*` functions return values stored in the engine. If the user manually scrolls after-the-fact, these functions will not return the current scroll position.
+
 
 For complete API details, see the [Scroll.Engine.Sub](https://package.elm-lang.org/packages/phollyer/elm-motion/latest/Scroll-Engine-Sub) documentation.
 

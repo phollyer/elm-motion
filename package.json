@@ -24,7 +24,7 @@
     "test:js": "vitest run",
     "test:js:coverage": "vitest run --coverage",
     "prepublishOnly": "npm test && npm run check-types",
-    "publish:dist": "npm test && npm run check-types && npm run build && npm publish dist/",
+    "publish:dist": "npm test && npm run check-types && npm run build && npm publish --access public dist/",
     "postinstall": "elm-tooling install"
   },
   "keywords": [
@@ -39,11 +39,14 @@
   "license": "BSD-3-Clause",
   "repository": {
     "type": "git",
-    "url": "https://github.com/phollyer/elm-motion.git"
+    "url": "git+https://github.com/phollyer/elm-motion.git"
   },
   "homepage": "https://github.com/phollyer/elm-motion#readme",
   "bugs": {
     "url": "https://github.com/phollyer/elm-motion/issues"
+  },
+  "publishConfig": {
+    "access": "public"
   },
   "devDependencies": {
     "@rollup/plugin-node-resolve": "^16.0.1",

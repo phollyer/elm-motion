@@ -63,20 +63,18 @@ endXY =
 -- ANIMATION
 
 
-animateDiagonal : Keyframe.EngineBuilder -> Keyframe.EngineBuilder
+animateDiagonal : AnimBuilder { eng | withTiming : () } -> AnimBuilder { eng | withTiming : () }
 animateDiagonal =
-    Keyframe.for animGroup
-        >> Translate.begin
+    Translate.begin
         >> Translate.toXY endXY endXY
         >> Translate.duration 5000
         >> Translate.easing Linear
         >> Translate.end
 
 
-retargetYToTop : Keyframe.EngineBuilder -> Keyframe.EngineBuilder
+retargetYToTop : AnimBuilder { eng | withTiming : () } -> AnimBuilder { eng | withTiming : () }
 retargetYToTop =
-    Keyframe.for animGroup
-        >> Translate.begin
+    Translate.begin
         >> Translate.toY 0
         >> Translate.end
 
@@ -95,12 +93,22 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         Animate ->
-            ( { model | animState = Keyframe.animate model.animState animateDiagonal }
+            ( { model
+                | animState =
+                    Keyframe.animate model.animState <|
+                        Keyframe.for animGroup
+                            >> animateDiagonal
+              }
             , Cmd.none
             )
 
         RetargetY ->
-            ( { model | animState = Keyframe.retarget model.animState retargetYToTop }
+            ( { model
+                | animState =
+                    Keyframe.retarget model.animState <|
+                        Keyframe.for animGroup
+                            >> retargetYToTop
+              }
             , Cmd.none
             )
 

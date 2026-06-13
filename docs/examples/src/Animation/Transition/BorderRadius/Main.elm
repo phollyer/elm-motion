@@ -1,6 +1,6 @@
 module Animation.Transition.BorderRadius.Main exposing (main)
 
-import Anim.Builder exposing (AnimBuilder, ForTransition)
+import Anim.Builder exposing (AnimBuilder)
 import Anim.Engine.Transition as Transition
 import Anim.Property.Custom as Property
 import Anim.Unit exposing (Unit(..))
@@ -53,13 +53,13 @@ animGroup =
     "radiusAnim"
 
 
-standardTiming : Property.Builder ForTransition -> Property.Builder ForTransition
+standardTiming : Property.Builder { prop | withTiming : () } -> Property.Builder { prop | withTiming : () }
 standardTiming =
     Property.duration 800
         >> Property.easing CubicInOut
 
 
-roundCorners : Transition.EngineBuilder -> Transition.EngineBuilder
+roundCorners : AnimBuilder { eng | withTiming : () } -> AnimBuilder { eng | withTiming : () }
 roundCorners =
     Property.begin (Property.BorderRadius Px)
         >> Property.to 48
@@ -67,7 +67,7 @@ roundCorners =
         >> Property.end
 
 
-squareCorners : Transition.EngineBuilder -> Transition.EngineBuilder
+squareCorners : AnimBuilder { eng | withTiming : () } -> AnimBuilder { eng | withTiming : () }
 squareCorners =
     Property.begin (Property.BorderRadius Px)
         >> Property.to 0

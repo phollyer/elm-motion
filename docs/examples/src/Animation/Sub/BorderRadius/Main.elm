@@ -1,6 +1,6 @@
 module Animation.Sub.BorderRadius.Main exposing (main)
 
-import Anim.Builder exposing (AnimBuilder, ForSub)
+import Anim.Builder exposing (AnimBuilder)
 import Anim.Engine.Sub as Sub
 import Anim.Property.Custom as Property
 import Anim.Unit exposing (Unit(..))
@@ -52,13 +52,13 @@ animGroup =
     "radiusAnim"
 
 
-standardTiming : Property.Builder ForSub -> Property.Builder ForSub
+standardTiming : Property.Builder { prop | withTiming : () } -> Property.Builder { prop | withTiming : () }
 standardTiming =
     Property.duration 800
         >> Property.easing CubicInOut
 
 
-roundCorners : Sub.EngineBuilder -> Sub.EngineBuilder
+roundCorners : AnimBuilder { eng | withTiming : () } -> AnimBuilder { eng | withTiming : () }
 roundCorners =
     Property.begin (Property.BorderRadius Px)
         >> Property.to 48
@@ -66,7 +66,7 @@ roundCorners =
         >> Property.end
 
 
-squareCorners : Sub.EngineBuilder -> Sub.EngineBuilder
+squareCorners : AnimBuilder { eng | withTiming : () } -> AnimBuilder { eng | withTiming : () }
 squareCorners =
     Property.begin (Property.BorderRadius Px)
         >> Property.to 0

@@ -60,7 +60,7 @@ groupName =
     "helloText"
 
 
-fadeIn : Transition.EngineBuilder -> Transition.EngineBuilder
+fadeIn : AnimBuilder { eng | withTiming : () } -> AnimBuilder { eng | withTiming : () }
 fadeIn =
     Opacity.begin
         >> Opacity.to 1

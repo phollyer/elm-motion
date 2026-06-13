@@ -125,7 +125,7 @@ type ErrorSource =
     | 'scrollDriven'
     | 'viewDriven'
     | 'polyfill'
-    | string;        // future-proof; treat unknown values as opaque
+    | string;        // future-proof; treat unknown values as unrecognized labels and use a fallback handler
 ```
 
 The `code` field is the most useful for routing — it is a stable string you can switch on without parsing the human-readable `error.message`.
@@ -157,7 +157,7 @@ The current set of error codes emitted by the JavaScript companion:
 | `THROTTLE_INVALID` | warning | `setPropertyUpdateThrottle` | `ElmMotion.setPropertyUpdateThrottle()` was called with a value that was not a non-negative finite number; the previous throttle setting is left unchanged |
 
 !!! tip "Stable additions"
-    New codes may be added in future releases. Treat unknown codes as opaque — switch on the codes you care about and let the rest fall through to a generic handler.
+    New codes may be added in future releases. Handle only the codes you explicitly recognize, and route all others to a generic fallback.
 
 ## Patterns
 

@@ -73,10 +73,9 @@ init =
 -- ANIMATION
 
 
-animateTo : Float -> Spring -> WAAPI.EngineBuilder -> WAAPI.EngineBuilder
+animateTo : Float -> Spring -> AnimBuilder { eng | withTiming : (), withSpring : () } -> AnimBuilder { eng | withTiming : (), withSpring : () }
 animateTo x spring =
-    WAAPI.for animGroup
-        >> Translate.begin
+    Translate.begin
         >> Translate.toX x
         >> Translate.spring spring
         >> Translate.end
@@ -117,7 +116,9 @@ update msg model =
                         420
 
                 ( newAnimState, cmd ) =
-                    WAAPI.animate model.animState (animateTo target spring)
+                    WAAPI.animate model.animState <|
+                        WAAPI.for animGroup
+                            >> animateTo target spring
             in
             ( { model
                 | animState = newAnimState
@@ -153,7 +154,9 @@ update msg model =
                         420
 
                 ( newAnimState, cmd ) =
-                    WAAPI.animate model.animState (animateTo target spring)
+                    WAAPI.animate model.animState <|
+                        WAAPI.for animGroup
+                            >> animateTo target spring
             in
             ( { model
                 | animState = newAnimState

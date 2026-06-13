@@ -19,6 +19,18 @@ animBuilder =
     Builder.init []
 
 
+groupName : String
+groupName =
+    "group"
+
+
+groupPlayback : Builder.AnimBuilder eng -> Maybe { iterations : Maybe Builder.Iterations, animationDirection : Maybe Builder.AnimationDirection }
+groupPlayback builder =
+    builder
+        |> Builder.getAnimGroupConfig groupName
+        |> Maybe.andThen .playback
+
+
 suite : Test
 suite =
     describe "Builder.alternate"
@@ -62,4 +74,30 @@ suite =
                     |> Builder.iterations 7
                     |> Builder.getIterations
                     |> Expect.equal (Builder.Times 7)
+        , test "preserves loopForever when alternate is called after for (group context)" <|
+            \_ ->
+                animBuilder
+                    |> Builder.for groupName
+                    |> Builder.loopForever
+                    |> Builder.alternate
+                    |> groupPlayback
+                    |> Expect.equal
+                        (Just
+                            { iterations = Just Builder.Infinite
+                            , animationDirection = Just Builder.Alternate
+                            }
+                        )
+        , test "preserves loopForever when alternate is called before for (group context)" <|
+            \_ ->
+                animBuilder
+                    |> Builder.for groupName
+                    |> Builder.alternate
+                    |> Builder.loopForever
+                    |> groupPlayback
+                    |> Expect.equal
+                        (Just
+                            { iterations = Just Builder.Infinite
+                            , animationDirection = Just Builder.Alternate
+                            }
+                        )
         ]

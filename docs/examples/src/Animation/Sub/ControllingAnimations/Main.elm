@@ -66,10 +66,9 @@ init =
 -- ANIMATION
 
 
-dropBall : Sub.EngineBuilder -> Sub.EngineBuilder
+dropBall : AnimBuilder { eng | withTiming : () } -> AnimBuilder { eng | withTiming : () }
 dropBall =
-    Sub.for animGroup
-        >> Translate.begin
+    Translate.begin
         >> Translate.fromY 0
         >> Translate.toY (100 - ballSize)
         >> Translate.speed 75
@@ -106,7 +105,9 @@ update msg model =
         Animate ->
             ( { model
                 | animState =
-                    Sub.animate model.animState dropBall
+                    Sub.animate model.animState <|
+                        Sub.for animGroup
+                            >> dropBall
               }
             , Cmd.none
             )

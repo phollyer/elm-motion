@@ -8,7 +8,6 @@ Three engines, one shared [builder](../builder.md). You describe the scroll once
 | [`Scroll.Task`](task.md) | Fire-and-forget with a typed `Result`. Composable with other `Task`s. |
 | [`Scroll.Sub`](sub.md) | State-tracked. Pause, resume, stop, query position, react to live progress, redirect mid-flight. |
 
-Cmd and Task share most of their API and trade-offs, so they live on one page. Sub is the full-featured engine and gets its own.
 
 ## Decision Guide
 

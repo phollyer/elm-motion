@@ -9,15 +9,6 @@ The Keyframe, Sub, and WAAPI engines expose a `transformOrder` function which ta
 
 Use these to change the transform order that is applied to your animations.
 
-## Scope
-
-`transformOrder` has dual scope:
-
-- Call it after selecting a group with `for` to set that group's transform order.
-- Call it before selecting a group to set the global default used by groups that do not set their own order.
-
-Group-level order takes precedence over the global default.
-
 ## Default Order
 
 Elm Motion uses **Translate → Rotate → Skew → Scale** as the default order when no order is specified with the `transformOrder` function.

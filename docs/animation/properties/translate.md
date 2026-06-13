@@ -17,7 +17,6 @@ Move elements in 2D or 3D space by animating their position.
     slideRight =
         Translate.begin
             >> Translate.toX 100
-            >> Translate.duration 500
             >> Translate.end
     ```
 
@@ -55,45 +54,45 @@ See the [Properties Overview](overview.md) page for the shared usage patterns.
 
 | Function | Signature | Description |
 | -------- | --------- | ----------- |
-| `fromXYZ` | `Float -> Float -> Float -> Builder -> Builder` | Starting X, Y, and Z positions |
-| `fromXY` | `Float -> Float -> Builder -> Builder` | Starting X and Y positions |
-| `fromXZ` | `Float -> Float -> Builder -> Builder` | Starting X and Z positions |
-| `fromX` | `Float -> Builder -> Builder` | Starting X position (pixels) |
-| `fromYZ` | `Float -> Float -> Builder -> Builder` | Starting Y and Z positions |
-| `fromY` | `Float -> Builder -> Builder` | Starting Y position (pixels) |
-| `fromZ` | `Float -> Builder -> Builder` | Starting Z position (pixels) |
+| `fromXYZ` | `Float -> Float -> Float -> Builder eng -> Builder eng` | Starting X, Y, and Z positions |
+| `fromXY` | `Float -> Float -> Builder eng -> Builder eng` | Starting X and Y positions |
+| `fromXZ` | `Float -> Float -> Builder eng -> Builder eng` | Starting X and Z positions |
+| `fromX` | `Float -> Builder eng -> Builder eng` | Starting X position (pixels) |
+| `fromYZ` | `Float -> Float -> Builder eng -> Builder eng` | Starting Y and Z positions |
+| `fromY` | `Float -> Builder eng -> Builder eng` | Starting Y position (pixels) |
+| `fromZ` | `Float -> Builder eng -> Builder eng` | Starting Z position (pixels) |
 
 ### End Value (Absolute)
 
 | Function | Signature | Description |
 | -------- | --------- | ----------- |
-| `toXYZ` | `Float -> Float -> Float -> Builder -> Builder` | Ending X, Y, and Z positions |
-| `toXY` | `Float -> Float -> Builder -> Builder` | Ending X and Y positions |
-| `toXZ` | `Float -> Float -> Builder -> Builder` | Ending X and Z positions |
-| `toX` | `Float -> Builder -> Builder` | Ending X position (pixels) |
-| `toYZ` | `Float -> Float -> Builder -> Builder` | Ending Y and Z positions |
-| `toY` | `Float -> Builder -> Builder` | Ending Y position (pixels) |
-| `toZ` | `Float -> Builder -> Builder` | Ending Z position (pixels) |
+| `toXYZ` | `Float -> Float -> Float -> Builder eng -> Builder eng` | Ending X, Y, and Z positions |
+| `toXY` | `Float -> Float -> Builder eng -> Builder eng` | Ending X and Y positions |
+| `toXZ` | `Float -> Float -> Builder eng -> Builder eng` | Ending X and Z positions |
+| `toX` | `Float -> Builder eng -> Builder eng` | Ending X position (pixels) |
+| `toYZ` | `Float -> Float -> Builder eng -> Builder eng` | Ending Y and Z positions |
+| `toY` | `Float -> Builder eng -> Builder eng` | Ending Y position (pixels) |
+| `toZ` | `Float -> Builder eng -> Builder eng` | Ending Z position (pixels) |
 
 ### End Value (Relative)
 
 | Function | Signature | Description |
 | -------- | --------- | ----------- |
-| `byXYZ` | `Float -> Float -> Float -> Builder -> Builder` | Move by X, Y, and Z amounts |
-| `byXY` | `Float -> Float -> Builder -> Builder` | Move by X and Y amounts |
-| `byXZ` | `Float -> Float -> Builder -> Builder` | Move by X and Z amounts |
-| `byX` | `Float -> Builder -> Builder` | Move by X amount |
-| `byYZ` | `Float -> Float -> Builder -> Builder` | Move by Y and Z amounts |
-| `byY` | `Float -> Builder -> Builder` | Move by Y amount |
-| `byZ` | `Float -> Builder -> Builder` | Move by Z amount |
+| `byXYZ` | `Float -> Float -> Float -> Builder eng -> Builder eng` | Move by X, Y, and Z amounts |
+| `byXY` | `Float -> Float -> Builder eng -> Builder eng` | Move by X and Y amounts |
+| `byXZ` | `Float -> Float -> Builder eng -> Builder eng` | Move by X and Z amounts |
+| `byX` | `Float -> Builder eng -> Builder eng` | Move by X amount |
+| `byYZ` | `Float -> Float -> Builder eng -> Builder eng` | Move by Y and Z amounts |
+| `byY` | `Float -> Builder eng -> Builder eng` | Move by Y amount |
+| `byZ` | `Float -> Builder eng -> Builder eng` | Move by Z amount |
 
 ### Timing
 
 | Function | Signature | Description |
 | -------- | --------- | ----------- |
-| `delay` | `Int -> Builder -> Builder` | The delay in ms before the animation starts |
-| `duration` | `Int -> Builder -> Builder` | The duration in ms that the animation lasts for |
-| `speed` | `Float -> Builder -> Builder` | Pixels per second |
+| `delay` | `Int -> Builder { eng | withTiming : () } -> Builder { eng | withTiming : () }` | The delay in ms before the animation starts |
+| `duration` | `Int -> Builder { eng | withTiming : () } -> Builder { eng | withTiming : () }` | The duration in ms that the animation lasts for |
+| `speed` | `Float -> Builder { eng | withTiming : () } -> Builder { eng | withTiming : () }` | Pixels per second |
 
 ### Easing
 
@@ -105,7 +104,7 @@ See the [Properties Overview](overview.md) page for the shared usage patterns.
 
 | Function | Signature | Description |
 | -------- | --------- | ----------- |
-| `spring` | `Spring -> Builder -> Builder` | Use spring physics instead of easing |
+| `spring` | `Spring -> Builder { eng | withSpring : () } -> Builder { eng | withSpring : () }` | Use spring physics instead of easing |
 
 ## Next Steps
 

@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 // worker directly — the coalescing wrapper is exercised separately
 // in `resizeCoalescing.test.js`.
 import { _resizeTransformAnimationImmediate as resizeTransformAnimation } from '../src/animations.js';
+import { onError, _resetSubscribers } from '../src/errors.js';
 import {
     activeAnimations,
     animationGroups,
@@ -63,11 +64,13 @@ beforeEach(clearGlobalState);
 afterEach(() => {
     cleanupDom();
     clearGlobalState();
+    _resetSubscribers();
 });
 
 describe('resizeTransformAnimation', () => {
     it('is a no-op when no transform animation is in flight', () => {
-        installDom({ element: makeElement('box', vi.fn()), targetId: 'box' });
+        const animateMock = vi.fn();
+        installDom({ element: makeElement('box', animateMock), targetId: 'box' });
         // No entry in activeAnimations → silent no-op, no throw.
         expect(() => resizeTransformAnimation({
             elementId: 'box',
@@ -75,6 +78,9 @@ describe('resizeTransformAnimation', () => {
             endX: 400, endY: 0, endZ: 0,
             duration: 1000
         })).not.toThrow();
+
+        expect(animateMock).not.toHaveBeenCalled();
+        expect(activeAnimations.has('box')).toBe(false);
     });
 
     it('cancels the old animation and recreates it with new keyframes/timing already set', () => {
@@ -210,13 +216,22 @@ describe('resizeTransformAnimation', () => {
 
     it('reports COMMAND_INVALID when elementId/animGroup is missing', () => {
         installDom({ element: makeElement('box', vi.fn()), targetId: 'box' });
-        // No throw, but should log via reportError. Verifying the no-throw
-        // contract is enough; reportError swallows in test env.
+        const errorSpy = vi.fn();
+        const off = onError(errorSpy);
+
         expect(() => resizeTransformAnimation({
             startX: 0, startY: 0, startZ: 0,
             endX: 0, endY: 0, endZ: 0,
             duration: 0
         })).not.toThrow();
+
+        expect(errorSpy).toHaveBeenCalledTimes(1);
+        expect(errorSpy.mock.calls[0][1]).toMatchObject({
+            source: 'animation',
+            severity: 'warning',
+            code: 'COMMAND_INVALID'
+        });
+        off();
     });
 
     it('applies an Elm-supplied currentTimeMs verbatim', () => {

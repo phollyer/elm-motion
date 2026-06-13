@@ -68,10 +68,9 @@ ballSizeCqh =
 -- ANIMATION
 
 
-dropBall : Transition.EngineBuilder -> Transition.EngineBuilder
+dropBall : AnimBuilder { eng | withTiming : () } -> AnimBuilder { eng | withTiming : () }
 dropBall =
-    Transition.for animGroup
-        >> Translate.begin
+    Translate.begin
         >> Translate.fromY 0
         >> Translate.toY (100 - ballSize)
         >> Translate.speed 75
@@ -95,7 +94,9 @@ update msg model =
         Animate ->
             ( { model
                 | animState =
-                    Transition.animate model.animState dropBall
+                    Transition.animate model.animState <|
+                        Transition.for animGroup
+                            >> dropBall
               }
             , Cmd.none
             )

@@ -36,10 +36,8 @@ Here's a general workflow to get up an running quickly.
 
     fadeIn : String -> WAAPI.AnimBuilder eng -> WAAPI.AnimBuilder eng
     fadeIn animGroup =
-        WAAPI.for animGroup
-            >> Opacity.begin
+        Opacity.begin
             >> Opacity.to 1
-            >> Opacity.duration 300
             >> Opacity.end
     ```
 
@@ -100,7 +98,9 @@ Call `animate` to start a state-tracked animation.
     TriggerFadeIn ->
         let
             ( animState, cmd ) =
-                WAAPI.animate model.animState fadeIn
+                WAAPI.animate model.animState <|
+                    WAAPI.for animGroup
+                        >> fadeIn
         in
         ( { model | animState = animState }, cmd )
     ```
@@ -116,12 +116,6 @@ Subscribe to events, then process messages with `update`.
         = TriggerFadeIn
         | GotAnimMsg WAAPI.AnimMsg
 
-
-    subscriptions : Model -> Sub Msg
-    subscriptions model =
-        WAAPI.subscriptions GotAnimMsg model.animState
-
-
     update : Msg -> Model -> ( Model, Cmd Msg )
     update msg model =
         case msg of
@@ -134,6 +128,10 @@ Subscribe to events, then process messages with `update`.
 
             _ ->
                 ( model, Cmd.none )
+
+    subscriptions : Model -> Sub Msg
+    subscriptions model =
+        WAAPI.subscriptions GotAnimMsg model.animState
     ```
 
 ---

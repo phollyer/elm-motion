@@ -24,8 +24,8 @@ Animate any color CSS property.
 
     borderColorAnimation : AnimBuilder eng -> AnimBuilder eng
     borderColorAnimation =
-        CustomColor.begin CustomColor.BorderColor            >> CustomColor.to (Color.rgb 255 0 0)
-            >> CustomColor.duration 500
+        CustomColor.begin CustomColor.BorderColor            
+            >> CustomColor.to (Color.rgb 255 0 0)
             >> CustomColor.end
     ```
 
@@ -58,33 +58,33 @@ See the [Properties Overview](overview.md) page for the shared usage patterns.
 
 | Function | Signature | Description |
 | -------- | --------- | ----------- |
-| `from` | `Color -> Builder -> Builder` | Starting color |
+| `from` | `Color -> Builder eng -> Builder eng` | Starting color |
 
 ### End Value
 
 | Function | Signature | Description |
 | -------- | --------- | ----------- |
-| `to` | `Color -> Builder -> Builder` | Ending color |
+| `to` | `Color -> Builder eng -> Builder eng` | Ending color |
 
 ### Timing
 
 | Function | Signature | Description |
 | -------- | --------- | ----------- |
-| `delay` | `Int -> Builder -> Builder` | The delay in ms before the animation starts |
-| `duration` | `Int -> Builder -> Builder` | The duration in ms that the animation lasts for |
-| `speed` | `Float -> Builder -> Builder` | The rate of change per second |
+| `delay` | `Int -> Builder { eng | withTiming : () } -> Builder { eng | withTiming : () }` | The delay in ms before the animation starts |
+| `duration` | `Int -> Builder { eng | withTiming : () } -> Builder { eng | withTiming : () }` | The duration in ms that the animation lasts for |
+| `speed` | `Float -> Builder { eng | withTiming : () } -> Builder { eng | withTiming : () }` | The rate of change per second |
 
 ### Easing
 
 | Function | Signature | Description |
 | -------- | --------- | ----------- |
-| `easing` | `Easing -> Builder -> Builder` | Add natural motion |
+| `easing` | `Easing -> Builder eng -> Builder eng` | Add natural motion |
 
 ### Spring
 
 | Function | Signature | Description |
 | -------- | --------- | ----------- |
-| `spring` | `Spring -> Builder -> Builder` | Use spring physics instead of easing |
+| `spring` | `Spring -> Builder { eng | withSpring : () } -> Builder { eng | withSpring : () }` | Use spring physics instead of easing |
 
 
 ## Next Steps

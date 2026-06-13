@@ -56,10 +56,9 @@ init =
 -- ANIMATION
 
 
-animateTo : Float -> Easing -> Keyframe.EngineBuilder -> Keyframe.EngineBuilder
+animateTo : Float -> Easing -> AnimBuilder { eng | withTiming : () } -> AnimBuilder { eng | withTiming : () }
 animateTo x easing =
-    Keyframe.for animGroup
-        >> Translate.begin
+    Translate.begin
         >> Translate.toX x
         >> Translate.speed 350
         >> Translate.easing easing
@@ -87,7 +86,10 @@ update msg model =
                         420
             in
             ( { model
-                | animState = Keyframe.animate model.animState (animateTo target easing)
+                | animState =
+                    Keyframe.animate model.animState <|
+                        Keyframe.for animGroup
+                            >> animateTo target easing
                 , easing = easing
                 , atEnd = not model.atEnd
               }
@@ -102,8 +104,8 @@ update msg model =
 curves : List ( Easing, String )
 curves =
     [ ( Linear, "Linear" )
-    , ( CubicOut, "CubicOut" )
-    , ( CubicInOut, "CubicInOut" )
+    , ( QuadOut, "QuadOut" )
+    , ( ExpoOut, "ExpoOut" )
     , ( ElasticOut, "ElasticOut" )
     , ( BounceOut, "BounceOut" )
     , ( BackInOut, "BackInOut" )

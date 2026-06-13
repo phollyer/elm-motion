@@ -31,6 +31,9 @@ const distPkg = {
     version: pkg.version,
     description: pkg.description,
     type: pkg.type,
+    publishConfig: {
+        access: 'public'
+    },
     main: 'elm-motion.js',
     module: 'elm-motion.mjs',
     types: 'elm-motion.d.ts',

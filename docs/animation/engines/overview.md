@@ -44,7 +44,7 @@ For implementation details, each engine page includes the complete usage flow fo
 | Pause | | ✓ | ✓ | ✓ | | |
 | Resume | | ✓ | ✓ | ✓ | | |
 | **Events** |
-| Run | ✓ | | | | | |
+| Run | ✓ | ✓ | | | | |
 | Started | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | Ended | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | Cancelled | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
@@ -52,7 +52,7 @@ For implementation details, each engine page includes the complete usage flow fo
 | Paused | | ✓ | ✓ | ✓ | | |
 | Resumed | | ✓ | ✓ | ✓ | | |
 | Iteration | | ✓ | ✓ | ✓ | ✓ | ✓ |
-| Progress | | | ✓ | ✓ | | |
+| Progress | | | ✓ | ✓ | ✓ | ✓ |
 | **Mid-Flight Access** |
 | Query current values | | | ✓ | ✓ | | |
 | Dynamic redirects | ✓ | | ✓ | ✓ | | |

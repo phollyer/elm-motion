@@ -64,20 +64,18 @@ animGroup =
     "fadeAnim"
 
 
-fadeIn : WAAPI.EngineBuilder -> WAAPI.EngineBuilder
+fadeIn : AnimBuilder { eng | withTiming : () } -> AnimBuilder { eng | withTiming : () }
 fadeIn =
-    WAAPI.for animGroup
-        >> Opacity.begin
+    Opacity.begin
         >> Opacity.to 1
         >> Opacity.duration 800
         >> Opacity.easing QuartIn
         >> Opacity.end
 
 
-fadeOut : WAAPI.EngineBuilder -> WAAPI.EngineBuilder
+fadeOut : AnimBuilder { eng | withTiming : () } -> AnimBuilder { eng | withTiming : () }
 fadeOut =
-    WAAPI.for animGroup
-        >> Opacity.begin
+    Opacity.begin
         >> Opacity.to 0
         >> Opacity.duration 800
         >> Opacity.easing CubicIn
@@ -101,7 +99,8 @@ update msg model =
             let
                 ( newAnimState, cmd ) =
                     WAAPI.animate model.animState <|
-                        WAAPI.discreteEntry "display" "flex"
+                        WAAPI.for animGroup
+                            >> WAAPI.discreteEntry "display" "flex"
                             >> fadeIn
             in
             ( { model
@@ -114,7 +113,8 @@ update msg model =
             let
                 ( newAnimState, cmd ) =
                     WAAPI.animate model.animState <|
-                        WAAPI.discreteExit "display" "flex" "none"
+                        WAAPI.for animGroup
+                            >> WAAPI.discreteExit "display" "flex" "none"
                             >> fadeOut
             in
             ( { model

@@ -17,7 +17,6 @@ Scale elements uniformly or independently on each axis.
     grow =
         Scale.begin
             >> Scale.to 1.5
-            >> Scale.duration 300
             >> Scale.end
     ```
 
@@ -25,7 +24,9 @@ See the [Properties Overview](overview.md) page for the shared usage patterns.
 
 ## API
 
-### Types
+ eng
+
+### Types eng
 
 | Type | Description |
 | -------- | ----------- |
@@ -56,47 +57,47 @@ See the [Properties Overview](overview.md) page for the shared usage patterns.
 
 | Function | Signature | Description |
 | -------- | --------- | ----------- |
-| `from` | `Float -> Builder -> Builder` | Starting scale (uniform, 1.0 = 100%) |
-| `fromXYZ` | `Float -> Float -> Float -> Builder -> Builder` | Starting X, Y, and Z scales |
-| `fromXY` | `Float -> Float -> Builder -> Builder` | Starting X and Y scales |
-| `fromXZ` | `Float -> Float -> Builder -> Builder` | Starting X and Z scales |
-| `fromX` | `Float -> Builder -> Builder` | Starting X-axis scale |
-| `fromYZ` | `Float -> Float -> Builder -> Builder` | Starting Y and Z scales |
-| `fromY` | `Float -> Builder -> Builder` | Starting Y-axis scale |
-| `fromZ` | `Float -> Builder -> Builder` | Starting Z-axis scale |
+| `from` | `Float -> Builder eng -> Builder eng` | Starting scale (uniform, 1.0 = 100%) |
+| `fromXYZ` | `Float -> Float -> Float -> Builder eng -> Builder eng` | Starting X, Y, and Z scales |
+| `fromXY` | `Float -> Float -> Builder eng -> Builder eng` | Starting X and Y scales |
+| `fromXZ` | `Float -> Float -> Builder eng -> Builder eng` | Starting X and Z scales |
+| `fromX` | `Float -> Builder eng -> Builder eng` | Starting X-axis scale |
+| `fromYZ` | `Float -> Float -> Builder eng -> Builder eng` | Starting Y and Z scales |
+| `fromY` | `Float -> Builder eng -> Builder eng` | Starting Y-axis scale |
+| `fromZ` | `Float -> Builder eng -> Builder eng` | Starting Z-axis scale |
 
 ### End Value (Absolute)
 
 | Function | Signature | Description |
 | -------- | --------- | ----------- |
-| `to` | `Float -> Builder -> Builder` | Ending scale (uniform, 1.0 = 100%) |
-| `toXYZ` | `Float -> Float -> Float -> Builder -> Builder` | Ending X, Y, and Z scales |
-| `toXY` | `Float -> Float -> Builder -> Builder` | Ending X and Y scales |
-| `toXZ` | `Float -> Float -> Builder -> Builder` | Ending X and Z scales |
-| `toX` | `Float -> Builder -> Builder` | Ending X-axis scale |
-| `toYZ` | `Float -> Float -> Builder -> Builder` | Ending Y and Z scales |
-| `toY` | `Float -> Builder -> Builder` | Ending Y-axis scale |
-| `toZ` | `Float -> Builder -> Builder` | Ending Z-axis scale |
+| `to` | `Float -> Builder eng -> Builder eng` | Ending scale (uniform, 1.0 = 100%) |
+| `toXYZ` | `Float -> Float -> Float -> Builder eng -> Builder eng` | Ending X, Y, and Z scales |
+| `toXY` | `Float -> Float -> Builder eng -> Builder eng` | Ending X and Y scales |
+| `toXZ` | `Float -> Float -> Builder eng -> Builder eng` | Ending X and Z scales |
+| `toX` | `Float -> Builder eng -> Builder eng` | Ending X-axis scale |
+| `toYZ` | `Float -> Float -> Builder eng -> Builder eng` | Ending Y and Z scales |
+| `toY` | `Float -> Builder eng -> Builder eng` | Ending Y-axis scale |
+| `toZ` | `Float -> Builder eng -> Builder eng` | Ending Z-axis scale |
 
 ### End Value (Relative)
 
 | Function | Signature | Description |
 | -------- | --------- | ----------- |
-| `byXYZ` | `Float -> Float -> Float -> Builder -> Builder` | Scale by X, Y, and Z amounts |
-| `byXY` | `Float -> Float -> Builder -> Builder` | Scale by X and Y amounts |
-| `byXZ` | `Float -> Float -> Builder -> Builder` | Scale by X and Z amounts |
-| `byX` | `Float -> Builder -> Builder` | Scale by X amount |
-| `byYZ` | `Float -> Float -> Builder -> Builder` | Scale by Y and Z amounts |
-| `byY` | `Float -> Builder -> Builder` | Scale by Y amount |
-| `byZ` | `Float -> Builder -> Builder` | Scale by Z amount |
+| `byXYZ` | `Float -> Float -> Float -> Builder eng -> Builder eng` | Scale by X, Y, and Z amounts |
+| `byXY` | `Float -> Float -> Builder eng -> Builder eng` | Scale by X and Y amounts |
+| `byXZ` | `Float -> Float -> Builder eng -> Builder eng` | Scale by X and Z amounts |
+| `byX` | `Float -> Builder eng -> Builder eng` | Scale by X amount |
+| `byYZ` | `Float -> Float -> Builder eng -> Builder eng` | Scale by Y and Z amounts |
+| `byY` | `Float -> Builder eng -> Builder eng` | Scale by Y amount |
+| `byZ` | `Float -> Builder eng -> Builder eng` | Scale by Z amount |
 
 ### Timing
 
 | Function | Signature | Description |
 | -------- | --------- | ----------- |
-| `delay` | `Int -> Builder -> Builder` | The delay in ms before the animation starts |
-| `duration` | `Int -> Builder -> Builder` | The duration in ms that the animation lasts for |
-| `speed` | `Float -> Builder -> Builder` | Scale units per second |
+| `delay` | `Int -> Builder { eng | withTiming : () } -> Builder { eng | withTiming : () }` | The delay in ms before the animation starts |
+| `duration` | `Int -> Builder { eng | withTiming : () } -> Builder { eng | withTiming : () }` | The duration in ms that the animation lasts for |
+| `speed` | `Float -> Builder { eng | withTiming : () } -> Builder { eng | withTiming : () }` | Scale units per second |
 
 ### Easing
 
@@ -108,14 +109,11 @@ See the [Properties Overview](overview.md) page for the shared usage patterns.
 
 | Function | Signature | Description |
 | -------- | --------- | ----------- |
-| `spring` | `Spring -> Builder -> Builder` | Use spring physics instead of easing |
+| `spring` | `Spring -> Builder { eng | withSpring : () } -> Builder { eng | withSpring : () }` | Use spring physics instead of easing |
 
 ## Next Steps
 
-The Translate property.
+The Skew property.
 
-[Translate →](translate.md){ .md-button .md-button--primary }
+[Skew →](skew.md){ .md-button .md-button--primary }
 
-Non-GPU Accelerated Properties.
-
-[Non-GPU →](non-gpu.md){ .md-button .md-button--primary }

@@ -5,8 +5,8 @@ import Html exposing (Html, button, div, text)
 import Html.Attributes exposing (class, id, style)
 import Html.Events exposing (onClick)
 import Motion.Easing as Easing exposing (Easing(..))
-import Scroll.Builder as ScrollTo
-import Scroll.Engine.Sub as Scroll exposing (ScrollBuilder)
+import Scroll.Builder as Scroll
+import Scroll.Engine.Sub as Sub exposing (ScrollBuilder)
 
 
 
@@ -29,7 +29,7 @@ main =
 
 
 type alias Model =
-    { scrollState : Scroll.ScrollState
+    { scrollState : Sub.ScrollState
     , status : ScrollStatus
     }
 
@@ -38,13 +38,13 @@ type ScrollStatus
     = Idle
     | Scrolling
     | Progress { x : Float, y : Float } Float
-    | Completed Scroll.Container
+    | Completed Sub.Container
     | Failed String
 
 
 init : ( Model, Cmd Msg )
 init =
-    ( { scrollState = Scroll.init
+    ( { scrollState = Sub.init
       , status = Idle
       }
     , Cmd.none
@@ -58,7 +58,7 @@ init =
 
 type Msg
     = ScrollTo String
-    | GotScrollMsg Scroll.ScrollMsg
+    | GotScrollMsg Sub.ScrollMsg
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -68,7 +68,7 @@ update msg model =
         ScrollTo targetId ->
             let
                 ( newScrollState, scrollCmd ) =
-                    Scroll.scroll GotScrollMsg model.scrollState <|
+                    Sub.scroll GotScrollMsg model.scrollState <|
                         scrollToElement targetId
             in
             ( { model | scrollState = newScrollState }, scrollCmd )
@@ -78,35 +78,34 @@ update msg model =
         GotScrollMsg scrollMsg ->
             let
                 ( newScrollState, events, scrollCmd ) =
-                    Scroll.update GotScrollMsg scrollMsg model.scrollState
-
-                updatedModel =
-                    handleEvents { model | scrollState = newScrollState } events
+                    Sub.update GotScrollMsg scrollMsg model.scrollState
             in
-            ( updatedModel, scrollCmd )
+            ( handleEvents { model | scrollState = newScrollState } events
+            , scrollCmd
+            )
 
 
 
 ---8<-- [end:updateScroll]
 
 
-handleEvents : Model -> List Scroll.ScrollEvent -> Model
+handleEvents : Model -> List Sub.ScrollEvent -> Model
 handleEvents =
     List.foldl handleEvent
 
 
-handleEvent : Scroll.ScrollEvent -> Model -> Model
+handleEvent : Sub.ScrollEvent -> Model -> Model
 handleEvent event model =
     { model
         | status =
             case event of
-                Scroll.Started _ ->
+                Sub.Started _ ->
                     Scrolling
 
-                Scroll.Ended container ->
+                Sub.Ended container ->
                     Completed container
 
-                Scroll.Progress _ xy progress ->
+                Sub.Progress _ xy progress ->
                     Progress xy progress
 
                 _ ->
@@ -120,11 +119,11 @@ handleEvent event model =
 
 scrollToElement : String -> ScrollBuilder -> ScrollBuilder
 scrollToElement targetId =
-    ScrollTo.forContainer "scroll-container"
-        >> ScrollTo.toElement targetId
-        >> ScrollTo.speed 250
-        >> ScrollTo.easing BounceOut
-        >> ScrollTo.build
+    Scroll.forContainer "scroll-container"
+        >> Scroll.toElement targetId
+        >> Scroll.speed 250
+        >> Scroll.easing BounceOut
+        >> Scroll.build
 
 
 
@@ -135,7 +134,7 @@ scrollToElement targetId =
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
-    Scroll.subscriptions GotScrollMsg model.scrollState
+    Sub.subscriptions GotScrollMsg model.scrollState
 
 
 
@@ -201,13 +200,13 @@ statusBar status =
         [ text message ]
 
 
-containerLabel : Scroll.Container -> String
+containerLabel : Sub.Container -> String
 containerLabel container =
     case container of
-        Scroll.Document ->
+        Sub.Document ->
             "document"
 
-        Scroll.Container containerId ->
+        Sub.Container containerId ->
             containerId
 
 

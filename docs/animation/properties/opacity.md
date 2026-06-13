@@ -17,7 +17,6 @@ Fade elements in and out by animating their opacity value.
     fadeIn =
         Opacity.begin
             >> Opacity.to 1
-            >> Opacity.duration 500
             >> Opacity.end
     ```
 
@@ -42,41 +41,41 @@ See the [Properties Overview](overview.md) page for the shared usage patterns.
 
 | Function | Signature | Description |
 | -------- | --------- | ----------- |
-| `for` | `AnimGroupName -> AnimBuilder eng -> Builder eng` | Start building |
-| `build` | `Builder eng -> AnimBuilder eng` | Finish building |
+| `begin` | `AnimBuilder eng -> Builder eng` | Start building |
+| `end` | `Builder eng -> AnimBuilder eng` | Finish building |
 
 ### Start Value
 
 | Function | Signature | Description |
 | -------- | --------- | ----------- |
-| `from` | `Float -> Builder -> Builder` | Start value (0.0 to 1.0) |
+| `from` | `Float -> Builder eng -> Builder eng` | Start value (0.0 to 1.0) |
 
 ### End Value
 
 | Function | Signature | Description |
 | -------- | --------- | ----------- |
-| `to` | `Float -> Builder -> Builder` | Absolute End value (0.0 to 1.0) |
-| `by` | `Float -> Builder -> Builder` | Relative End value |
+| `to` | `Float -> Builder eng -> Builder eng` | Absolute End value (0.0 to 1.0) |
+| `by` | `Float -> Builder eng -> Builder eng` | Relative End value |
 
 ### Timing
 
 | Function | Signature | Description |
 | -------- | --------- | ----------- |
-| `delay` | `Int -> Builder -> Builder` | The delay in ms before the animation starts |
-| `duration` | `Int -> Builder -> Builder` | The duration in ms that the animation lasts for |
-| `speed` | `Float -> Builder -> Builder` | The rate of change per second - 0 -> 1 = 1 sec |
+| `delay` | `Int -> Builder { eng | withTiming : () } -> Builder { eng | withTiming : () }` | The delay in ms before the animation starts |
+| `duration` | `Int -> Builder { eng | withTiming : () } -> Builder { eng | withTiming : () }` | The duration in ms that the animation lasts for |
+| `speed` | `Float -> Builder { eng | withTiming : () } -> Builder { eng | withTiming : () }` | The rate of change per second - 0 -> 1 = 1 sec |
 
 ### Easing
 
 | Function | Signature | Description |
 | -------- | --------- | ----------- |
-| `easing` | `Easing -> Builder -> Builder` | Add natural motion |
+| `easing` | `Easing -> Builder eng -> Builder eng` | Add natural motion |
 
 ### Spring
 
 | Function | Signature | Description |
 | -------- | --------- | ----------- |
-| `spring` | `Spring -> Builder -> Builder` | Use spring physics instead of easing |
+| `spring` | `Spring -> Builder { eng | withSpring } -> Builder { eng | withSpring }` | Use spring physics instead of easing |
 
 
 ## Next Steps

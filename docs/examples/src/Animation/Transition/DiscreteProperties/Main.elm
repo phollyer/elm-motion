@@ -52,20 +52,18 @@ animGroup =
     "fadeAnim"
 
 
-fadeIn : Transition.EngineBuilder -> Transition.EngineBuilder
+fadeIn : AnimBuilder { eng | withTiming : () } -> AnimBuilder { eng | withTiming : () }
 fadeIn =
-    Transition.for animGroup
-        >> Opacity.begin
+    Opacity.begin
         >> Opacity.to 1
         >> Opacity.duration 800
         >> Opacity.easing QuartIn
         >> Opacity.end
 
 
-fadeOut : Transition.EngineBuilder -> Transition.EngineBuilder
+fadeOut : AnimBuilder { eng | withTiming : () } -> AnimBuilder { eng | withTiming : () }
 fadeOut =
-    Transition.for animGroup
-        >> Opacity.begin
+    Opacity.begin
         >> Opacity.to 0
         >> Opacity.duration 800
         >> Opacity.easing CubicIn
@@ -89,7 +87,8 @@ update msg model =
             ( { model
                 | animState =
                     Transition.animate model.animState <|
-                        Transition.discreteEntry "display" "flex"
+                        Transition.for animGroup
+                            >> Transition.discreteEntry "display" "flex"
                             >> fadeIn
               }
             , Cmd.none
@@ -99,7 +98,8 @@ update msg model =
             ( { model
                 | animState =
                     Transition.animate model.animState <|
-                        Transition.discreteExit "display" "flex" "none"
+                        Transition.for animGroup
+                            >> Transition.discreteExit "display" "flex" "none"
                             >> fadeOut
               }
             , Cmd.none

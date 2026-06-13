@@ -5,8 +5,8 @@ import Html exposing (Html, button, div, text)
 import Html.Attributes exposing (class, id, style)
 import Html.Events exposing (onClick)
 import Motion.Easing as Easing exposing (Easing(..))
-import Scroll.Builder as ScrollTo
-import Scroll.Engine.Cmd as Scroll exposing (ScrollBuilder)
+import Scroll.Builder as Scroll
+import Scroll.Engine.Cmd as Cmd exposing (ScrollBuilder)
 
 
 
@@ -57,7 +57,8 @@ update msg model =
         ---8<-- [start:trigger]
         ScrollTo targetId ->
             ( { model | status = Scrolling }
-            , Scroll.scroll ScrollComplete <| scrollToElement targetId
+            , Cmd.scroll ScrollComplete <|
+                scrollToElement targetId
             )
 
         ---8<-- [end:trigger]
@@ -71,11 +72,11 @@ update msg model =
 
 scrollToElement : String -> ScrollBuilder -> ScrollBuilder
 scrollToElement targetId =
-    ScrollTo.forContainer "scroll-container"
-        >> ScrollTo.toElement targetId
-        >> ScrollTo.speed 250
-        >> ScrollTo.easing BounceOut
-        >> ScrollTo.build
+    Scroll.forContainer "scroll-container"
+        >> Scroll.toElement targetId
+        >> Scroll.speed 250
+        >> Scroll.easing BounceOut
+        >> Scroll.build
 
 
 

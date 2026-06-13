@@ -53,20 +53,18 @@ animGroup =
     "fadeAnim"
 
 
-fadeIn : Sub.EngineBuilder -> Sub.EngineBuilder
+fadeIn : AnimBuilder { eng | withTiming : () } -> AnimBuilder { eng | withTiming : () }
 fadeIn =
-    Sub.for animGroup
-        >> Opacity.begin
+    Opacity.begin
         >> Opacity.to 1
         >> Opacity.duration 800
         >> Opacity.easing QuartIn
         >> Opacity.end
 
 
-fadeOut : Sub.EngineBuilder -> Sub.EngineBuilder
+fadeOut : AnimBuilder { eng | withTiming : () } -> AnimBuilder { eng | withTiming : () }
 fadeOut =
-    Sub.for animGroup
-        >> Opacity.begin
+    Opacity.begin
         >> Opacity.to 0
         >> Opacity.duration 800
         >> Opacity.easing CubicIn
@@ -90,7 +88,8 @@ update msg model =
             ( { model
                 | animState =
                     Sub.animate model.animState <|
-                        Sub.discreteEntry "display" "flex"
+                        Sub.for animGroup
+                            >> Sub.discreteEntry "display" "flex"
                             >> fadeIn
               }
             , Cmd.none
@@ -100,7 +99,8 @@ update msg model =
             ( { model
                 | animState =
                     Sub.animate model.animState <|
-                        Sub.discreteExit "display" "flex" "none"
+                        Sub.for animGroup
+                            >> Sub.discreteExit "display" "flex" "none"
                             >> fadeOut
               }
             , Cmd.none

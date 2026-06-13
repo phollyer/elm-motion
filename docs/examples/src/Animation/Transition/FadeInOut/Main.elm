@@ -53,21 +53,20 @@ animGroup =
     "fadeAnim"
 
 
-fadeTo : Float -> Transition.EngineBuilder -> Transition.EngineBuilder
+fadeTo : Float -> AnimBuilder { eng | withTiming : () } -> AnimBuilder { eng | withTiming : () }
 fadeTo to =
-    Transition.for animGroup
-        >> Opacity.begin
+    Opacity.begin
         >> Opacity.to to
         >> Opacity.duration 2500
         >> Opacity.end
 
 
-fadeIn : Transition.EngineBuilder -> Transition.EngineBuilder
+fadeIn : AnimBuilder { eng | withTiming : () } -> AnimBuilder { eng | withTiming : () }
 fadeIn =
     fadeTo 1
 
 
-fadeOut : Transition.EngineBuilder -> Transition.EngineBuilder
+fadeOut : AnimBuilder { eng | withTiming : () } -> AnimBuilder { eng | withTiming : () }
 fadeOut =
     fadeTo 0
 
@@ -87,18 +86,24 @@ update msg model =
     case msg of
         ---8<-- [start:trigger]
         TriggerFadeIn ->
-            let
-                nextState =
-                    Transition.animate model.animState fadeIn
-            in
-            ( { model | animState = nextState }, Cmd.none )
+            ( { model
+                | animState =
+                    Transition.animate model.animState <|
+                        Transition.for animGroup
+                            >> fadeIn
+              }
+            , Cmd.none
+            )
 
         TriggerFadeOut ->
-            let
-                nextState =
-                    Transition.animate model.animState fadeOut
-            in
-            ( { model | animState = nextState }, Cmd.none )
+            ( { model
+                | animState =
+                    Transition.animate model.animState <|
+                        Transition.for animGroup
+                            >> fadeOut
+              }
+            , Cmd.none
+            )
 
 
 

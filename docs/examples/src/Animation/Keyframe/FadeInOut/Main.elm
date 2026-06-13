@@ -53,21 +53,20 @@ animGroup =
     "fadeAnim"
 
 
-fadeTo : Float -> Keyframe.EngineBuilder -> Keyframe.EngineBuilder
+fadeTo : Float -> AnimBuilder { eng | withTiming : () } -> AnimBuilder { eng | withTiming : () }
 fadeTo to =
-    Keyframe.for animGroup
-        >> Opacity.begin
+    Opacity.begin
         >> Opacity.to to
         >> Opacity.duration 2500
         >> Opacity.end
 
 
-fadeIn : Keyframe.EngineBuilder -> Keyframe.EngineBuilder
+fadeIn : AnimBuilder { eng | withTiming : () } -> AnimBuilder { eng | withTiming : () }
 fadeIn =
     fadeTo 1
 
 
-fadeOut : Keyframe.EngineBuilder -> Keyframe.EngineBuilder
+fadeOut : AnimBuilder { eng | withTiming : () } -> AnimBuilder { eng | withTiming : () }
 fadeOut =
     fadeTo 0
 
@@ -87,12 +86,22 @@ update msg model =
     case msg of
         ---8<-- [start:trigger]
         TriggerFadeIn ->
-            ( { model | animState = Keyframe.animate model.animState fadeIn }
+            ( { model
+                | animState =
+                    Keyframe.animate model.animState <|
+                        Keyframe.for animGroup
+                            >> fadeIn
+              }
             , Cmd.none
             )
 
         TriggerFadeOut ->
-            ( { model | animState = Keyframe.animate model.animState fadeOut }
+            ( { model
+                | animState =
+                    Keyframe.animate model.animState <|
+                        Keyframe.for animGroup
+                            >> fadeOut
+              }
             , Cmd.none
             )
 
@@ -106,8 +115,7 @@ view : Model -> Html Msg
 view model =
     div
         [ class "example-stage" ]
-        [ Keyframe.styleNode model.animState
-        , div [ class "example-controls" ]
+        [ div [ class "example-controls" ]
             [ button
                 [ onClick TriggerFadeIn
                 , class "ui-action-button primary"
@@ -121,6 +129,7 @@ view model =
             ]
 
         ---8<-- [start:render]
+        , Keyframe.styleNode model.animState
         , div
             (Keyframe.attributes animGroup model.animState
                 ++ [ style "background-color" "red"

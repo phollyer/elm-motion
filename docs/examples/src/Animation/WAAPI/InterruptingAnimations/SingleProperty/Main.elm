@@ -29,7 +29,7 @@ port motionMsg : (Encode.Value -> msg) -> Sub msg
 main : Program () Model Msg
 main =
     Browser.element
-        { init = always init
+        { init = \_ -> init
         , update = update
         , view = view
         , subscriptions = subscriptions
@@ -108,8 +108,7 @@ toColor4 =
 
 colorBox : (CustomColor.Builder ForWAAPI -> CustomColor.Builder ForWAAPI) -> WAAPI.EngineBuilder -> WAAPI.EngineBuilder
 colorBox moveFunc =
-    WAAPI.for animGroupName
-        >> CustomColor.begin CustomColor.BackgroundColor
+    CustomColor.begin CustomColor.BackgroundColor
         >> moveFunc
         >> CustomColor.duration 3000
         >> CustomColor.easing Linear
@@ -143,7 +142,9 @@ update msg model =
         Color1 ->
             let
                 ( newAnimState, cmd ) =
-                    WAAPI.animate model.animState toColor1
+                    WAAPI.animate model.animState <|
+                        WAAPI.for animGroupName
+                            >> toColor1
             in
             ( { model | animState = newAnimState }
             , cmd
@@ -152,7 +153,9 @@ update msg model =
         Color2 ->
             let
                 ( newAnimState, cmd ) =
-                    WAAPI.animate model.animState toColor2
+                    WAAPI.animate model.animState <|
+                        WAAPI.for animGroupName
+                            >> toColor2
             in
             ( { model | animState = newAnimState }
             , cmd
@@ -161,7 +164,9 @@ update msg model =
         Color3 ->
             let
                 ( newAnimState, cmd ) =
-                    WAAPI.animate model.animState toColor3
+                    WAAPI.animate model.animState <|
+                        WAAPI.for animGroupName
+                            >> toColor3
             in
             ( { model | animState = newAnimState }
             , cmd
@@ -170,7 +175,9 @@ update msg model =
         Color4 ->
             let
                 ( newAnimState, cmd ) =
-                    WAAPI.animate model.animState toColor4
+                    WAAPI.animate model.animState <|
+                        WAAPI.for animGroupName
+                            >> toColor4
             in
             ( { model | animState = newAnimState }
             , cmd

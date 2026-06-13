@@ -48,7 +48,6 @@ Define your animations once.
         Opacity.begin
             >> Opacity.from 0
             >> Opacity.to 1
-            >> Opacity.duration 300
             >> Opacity.end
     ```
 

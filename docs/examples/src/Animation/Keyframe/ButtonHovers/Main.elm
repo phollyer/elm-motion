@@ -110,60 +110,54 @@ unhoverEasing =
 ---8<-- [start:build]
 
 
-scaleUp : Keyframe.EngineBuilder -> Keyframe.EngineBuilder
+scaleUp : AnimBuilder { eng | withTiming : () } -> AnimBuilder { eng | withTiming : () }
 scaleUp =
-    Keyframe.for scaleButton
-        >> Scale.begin
+    Scale.begin
         >> Scale.to 1.1
         >> Scale.duration hoverDuration
         >> Scale.easing hoverEasing
         >> Scale.end
 
 
-scaleDown : Keyframe.EngineBuilder -> Keyframe.EngineBuilder
+scaleDown : AnimBuilder { eng | withTiming : () } -> AnimBuilder { eng | withTiming : () }
 scaleDown =
-    Keyframe.for scaleButton
-        >> Scale.begin
+    Scale.begin
         >> Scale.to 1
         >> Scale.duration hoverDuration
         >> Scale.easing unhoverEasing
         >> Scale.end
 
 
-growSize : Keyframe.EngineBuilder -> Keyframe.EngineBuilder
+growSize : AnimBuilder { eng | withTiming : () } -> AnimBuilder { eng | withTiming : () }
 growSize =
-    Keyframe.for sizeButton
-        >> Size.begin
+    Size.begin
         >> Size.toHW hoverHeight hoverWidth
         >> Size.duration hoverDuration
         >> Size.easing hoverEasing
         >> Size.end
 
 
-shrinkSize : Keyframe.EngineBuilder -> Keyframe.EngineBuilder
+shrinkSize : AnimBuilder { eng | withTiming : () } -> AnimBuilder { eng | withTiming : () }
 shrinkSize =
-    Keyframe.for sizeButton
-        >> Size.begin
+    Size.begin
         >> Size.toHW baseHeight baseWidth
         >> Size.duration hoverDuration
         >> Size.easing unhoverEasing
         >> Size.end
 
 
-liftUp : Keyframe.EngineBuilder -> Keyframe.EngineBuilder
+liftUp : AnimBuilder { eng | withTiming : () } -> AnimBuilder { eng | withTiming : () }
 liftUp =
-    Keyframe.for zButton
-        >> Translate.begin
+    Translate.begin
         >> Translate.toZ 60
         >> Translate.duration hoverDuration
         >> Translate.easing hoverEasing
         >> Translate.end
 
 
-setDown : Keyframe.EngineBuilder -> Keyframe.EngineBuilder
+setDown : AnimBuilder { eng | withTiming : () } -> AnimBuilder { eng | withTiming : () }
 setDown =
-    Keyframe.for zButton
-        >> Translate.begin
+    Translate.begin
         >> Translate.toZ 0
         >> Translate.duration hoverDuration
         >> Translate.easing unhoverEasing
@@ -189,32 +183,62 @@ update msg model =
     case msg of
         ---8<-- [start:trigger]
         ScaleHover ->
-            ( { model | animState = Keyframe.animate model.animState scaleUp }
+            ( { model
+                | animState =
+                    Keyframe.animate model.animState <|
+                        Keyframe.for scaleButton
+                            >> scaleUp
+              }
             , Cmd.none
             )
 
         ScaleUnhover ->
-            ( { model | animState = Keyframe.animate model.animState scaleDown }
+            ( { model
+                | animState =
+                    Keyframe.animate model.animState <|
+                        Keyframe.for scaleButton
+                            >> scaleDown
+              }
             , Cmd.none
             )
 
         SizeHover ->
-            ( { model | animState = Keyframe.animate model.animState growSize }
+            ( { model
+                | animState =
+                    Keyframe.animate model.animState <|
+                        Keyframe.for sizeButton
+                            >> growSize
+              }
             , Cmd.none
             )
 
         SizeUnhover ->
-            ( { model | animState = Keyframe.animate model.animState shrinkSize }
+            ( { model
+                | animState =
+                    Keyframe.animate model.animState <|
+                        Keyframe.for sizeButton
+                            >> shrinkSize
+              }
             , Cmd.none
             )
 
         ZHover ->
-            ( { model | animState = Keyframe.animate model.animState liftUp }
+            ( { model
+                | animState =
+                    Keyframe.animate model.animState <|
+                        Keyframe.for zButton
+                            >> liftUp
+              }
             , Cmd.none
             )
 
         ZUnhover ->
-            ( { model | animState = Keyframe.animate model.animState setDown }
+            ( { model
+                | animState =
+                    Keyframe.animate model.animState <|
+                        Keyframe.for zButton
+                            >> setDown
+              }
             , Cmd.none
             )
 

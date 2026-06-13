@@ -47,9 +47,6 @@ Each capability is declared by one or more functions in the API. If your builder
 | `withTransformOrder` | `transformOrder`             | Keyframe, Sub, WAAPI, ScrollTimeline, ViewTimeline |
 | `withProgressEvents` | progress event subscriptions | Sub, WAAPI, ScrollTimeline, ViewTimeline           |
 
-The capability field names (`withTiming`, `withSpring`, ...) are what the compiler reports when there's a mismatch - you don't write them, you just read them in the error.
-
-
 ## Locking to a Single Engine
 
 If you ever wish to enforce the use of a particular Engine, maybe if using a different Engine would be considered a bug, then you can use each Engine's own `EngineBuilder`.

@@ -2,6 +2,7 @@ module Animation.Keyframe.ControllingAnimations.Main exposing (main)
 
 import Anim.Builder exposing (AnimBuilder)
 import Anim.Engine.Keyframe as Keyframe
+import Anim.Property.Opacity as Opacity
 import Anim.Property.Translate as Translate
 import Anim.Unit exposing (Unit(..))
 import Browser
@@ -64,15 +65,22 @@ ballSizeCqh =
     String.fromFloat ballSize ++ "cqh"
 
 
-dropBall : Keyframe.EngineBuilder -> Keyframe.EngineBuilder
+dropBall : AnimBuilder { eng | withTiming : () } -> AnimBuilder { eng | withTiming : () }
 dropBall =
-    Keyframe.for animGroup
-        >> Translate.begin
+    Translate.begin
         >> Translate.fromY 0
         >> Translate.toY (100 - ballSize)
         >> Translate.speed 75
         >> Translate.easing BounceOut
         >> Translate.end
+
+
+fadeIn : AnimBuilder eng -> AnimBuilder eng
+fadeIn =
+    Opacity.begin
+        >> Opacity.from 0
+        >> Opacity.to 1
+        >> Opacity.end
 
 
 
@@ -95,7 +103,9 @@ update msg model =
         Animate ->
             ( { model
                 | animState =
-                    Keyframe.animate model.animState dropBall
+                    Keyframe.animate model.animState <|
+                        Keyframe.for animGroup
+                            >> dropBall
               }
             , Cmd.none
             )

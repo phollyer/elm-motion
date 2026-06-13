@@ -1,6 +1,6 @@
 port module Animation.WAAPI.BorderRadius.Main exposing (main)
 
-import Anim.Builder exposing (AnimBuilder, ForWAAPI)
+import Anim.Builder exposing (AnimBuilder)
 import Anim.Engine.WAAPI as WAAPI
 import Anim.Property.Custom as Property
 import Anim.Unit exposing (Unit(..))
@@ -63,13 +63,13 @@ animGroup =
     "radiusAnim"
 
 
-standardTiming : Property.Builder ForWAAPI -> Property.Builder ForWAAPI
+standardTiming : Property.Builder { prop | withTiming : () } -> Property.Builder { prop | withTiming : () }
 standardTiming =
     Property.duration 800
         >> Property.easing CubicInOut
 
 
-roundCorners : WAAPI.EngineBuilder -> WAAPI.EngineBuilder
+roundCorners : AnimBuilder { eng | withTiming : () } -> AnimBuilder { eng | withTiming : () }
 roundCorners =
     Property.begin (Property.BorderRadius Px)
         >> Property.to 48
@@ -77,7 +77,7 @@ roundCorners =
         >> Property.end
 
 
-squareCorners : WAAPI.EngineBuilder -> WAAPI.EngineBuilder
+squareCorners : AnimBuilder { eng | withTiming : () } -> AnimBuilder { eng | withTiming : () }
 squareCorners =
     Property.begin (Property.BorderRadius Px)
         >> Property.to 0

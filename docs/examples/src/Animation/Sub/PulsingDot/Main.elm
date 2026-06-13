@@ -46,7 +46,11 @@ init =
                 , Opacity.init groupName 1
                 ]
     in
-    ( { animState = Sub.animate animState pulse }
+    ( { animState =
+            Sub.animate animState <|
+                Sub.for groupName
+                    >> pulse
+      }
     , Cmd.none
     )
 
@@ -70,11 +74,9 @@ pulse =
         >> Sub.alternate
         >> Sub.duration 1000
         >> Sub.easing EaseInOut
-        >> Sub.for groupName
         >> Scale.begin
         >> Scale.to 0.4
         >> Scale.end
-        >> Sub.for groupName
         >> Opacity.begin
         >> Opacity.to 0.3
         >> Opacity.end

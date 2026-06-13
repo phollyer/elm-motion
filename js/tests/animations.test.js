@@ -3,6 +3,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { processAnimationData, processElementAnimation, retargetAnimation } from '../src/animations.js';
 import { activeAnimations, animationGroups, elementTransformOrders, lastKnownTransforms, appliedWillChange, cleanupAnimGroup } from '../src/state.js';
+import { onError, _resetSubscribers } from '../src/errors.js';
 import { createFakeAnimation, installDom, cleanupDom } from './_publicApiHelpers.js';
 
 function makeElement({ animGroup, animations = [createFakeAnimation()], order = null }) {
@@ -32,21 +33,38 @@ beforeEach(clearGlobalState);
 afterEach(() => {
     cleanupDom();
     clearGlobalState();
+    _resetSubscribers();
 });
 
 describe('processAnimationData (WAAPI engine)', () => {
     it('reports COMMAND_INVALID when animationData is missing or has no elements', () => {
         installDom({ element: makeElement({ animGroup: 'x' }), targetId: 'x' });
         const errorSpy = vi.fn();
-        global.window.addEventListener = (_, handler) => { errorSpy.handler = handler; };
+        const off = onError(errorSpy);
 
         // Both branches: null and missing elements
         expect(() => processAnimationData(null)).not.toThrow();
         expect(() => processAnimationData({})).not.toThrow();
+
+        expect(errorSpy).toHaveBeenCalledTimes(2);
+        expect(errorSpy.mock.calls[0][1]).toMatchObject({
+            source: 'animation',
+            severity: 'warning',
+            code: 'COMMAND_INVALID'
+        });
+        expect(errorSpy.mock.calls[1][1]).toMatchObject({
+            source: 'animation',
+            severity: 'warning',
+            code: 'COMMAND_INVALID'
+        });
+        off();
     });
 
     it('reports TARGET_NOT_FOUND when no element matches the animGroup', () => {
         installDom({ element: null, targetId: 'absent' });
+        const errorSpy = vi.fn();
+        const off = onError(errorSpy);
+
         // querySelector returns null for any other selector → triggers reportError
         expect(() => processAnimationData({
             elements: {
@@ -57,6 +75,14 @@ describe('processAnimationData (WAAPI engine)', () => {
                 }
             }
         })).not.toThrow();
+
+        expect(errorSpy).toHaveBeenCalledTimes(1);
+        expect(errorSpy.mock.calls[0][1]).toMatchObject({
+            source: 'animation',
+            severity: 'warning',
+            code: 'TARGET_NOT_FOUND'
+        });
+        off();
     });
 
     it('animates a single transform property (translate)', () => {
@@ -79,6 +105,10 @@ describe('processAnimationData (WAAPI engine)', () => {
         });
 
         expect(element.animate).toHaveBeenCalledTimes(1);
+        const [keyframes, options] = element.animate.mock.calls[0];
+        expect(keyframes[0].transform).toContain('translate3d(0px, 0px, 0px)');
+        expect(keyframes[keyframes.length - 1].transform).toContain('translate3d(100px, 50px, 0px)');
+        expect(options.duration).toBe(300);
         const elementAnims = activeAnimations.get(animGroup);
         expect(elementAnims.has('transform')).toBe(true);
     });
@@ -513,6 +543,9 @@ describe('processElementAnimation', () => {
                 ]
             })
         ).not.toThrow();
+
+        expect(activeAnimations.has('never-found')).toBe(false);
+        expect(animationGroups.has('never-found')).toBe(false);
     });
 
     it('carries a still-running non-transform animation forward when a transform-only call comes in, so its finish does not prematurely wipe activeAnimations', () => {
@@ -717,7 +750,56 @@ describe('processElementAnimation transformBaseline seeding', () => {
             }
         })).not.toThrow();
 
+        expect(element.animate).toHaveBeenCalledTimes(1);
+        const elementAnims = activeAnimations.get(animGroup);
+        expect(elementAnims.has('opacity')).toBe(true);
         expect(lastKnownTransforms.has(animGroup)).toBe(false);
+    });
+
+    it('preserves rotate end state across cleanup for next phase (360 -> 0)', () => {
+        const animGroup = 'cube-cycle-rotate';
+        const firstAnim = createFakeAnimation({ duration: 8000 });
+        const secondAnim = createFakeAnimation({ duration: 8000 });
+        const element = makeElement({ animGroup, animations: [firstAnim, secondAnim] });
+        installDom({ element, targetId: animGroup });
+
+        processAnimationData({
+            elements: {
+                [animGroup]: {
+                    transformBaseline: {
+                        translate: { x: 0, y: 0, z: 200 }
+                    },
+                    properties: [{
+                        type: 'rotate',
+                        endX: 360, endY: 360, endZ: 360,
+                        duration: 8000, easing: 'linear', version: 1
+                    }]
+                }
+            }
+        });
+
+        firstAnim.finish();
+
+        processAnimationData({
+            elements: {
+                [animGroup]: {
+                    transformBaseline: {
+                        translate: { x: 0, y: 0, z: 200 }
+                    },
+                    properties: [{
+                        type: 'rotate',
+                        endX: 0, endY: 0, endZ: 0,
+                        duration: 8000, easing: 'linear', version: 2
+                    }]
+                }
+            }
+        });
+
+        expect(element.animate).toHaveBeenCalledTimes(2);
+        const secondKeyframes = element.animate.mock.calls[1][0];
+
+        expect(secondKeyframes[0].transform).toContain('rotateZ(360deg)');
+        expect(secondKeyframes[secondKeyframes.length - 1].transform).toContain('rotateZ(0deg)');
     });
 });
 

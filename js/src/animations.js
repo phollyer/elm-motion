@@ -437,7 +437,10 @@ function buildDefaultResolvedTransform(currentTransform) {
 function assignResolvedTransformProperty(target, property, currentTransform, axes) {
     axes.forEach(({ suffix, startKey, endKey, currentKey, useDefault }) => {
         const defaultValue = useDefault ? property[`default${suffix}`] : undefined;
-        target[startKey] = property[`start${suffix}`] ?? defaultValue ?? currentTransform[currentKey];
+        // Start values must anchor to the current live/cached transform state
+        // when not explicitly provided, so sequential phases (e.g. 360 -> 0)
+        // animate from the prior phase end instead of snapping to defaults.
+        target[startKey] = property[`start${suffix}`] ?? currentTransform[currentKey] ?? defaultValue;
         target[endKey] = property[`end${suffix}`] ?? currentTransform[currentKey];
     });
     target.easing = property.easing;

@@ -1,6 +1,6 @@
 port module Animation.WAAPI.BorderColor.Main exposing (main)
 
-import Anim.Builder exposing (AnimBuilder, ForWAAPI)
+import Anim.Builder exposing (AnimBuilder)
 import Anim.Engine.WAAPI as WAAPI
 import Anim.Extra.Color as Color
 import Anim.Property.CustomColor as CustomColor
@@ -66,25 +66,23 @@ animGroup =
     "borderAnim"
 
 
-standardTiming : CustomColor.Builder ForWAAPI -> CustomColor.Builder ForWAAPI
+standardTiming : CustomColor.Builder { prop | withTiming : () } -> CustomColor.Builder { prop | withTiming : () }
 standardTiming =
     CustomColor.duration 800
         >> CustomColor.easing CubicInOut
 
 
-toRed : WAAPI.EngineBuilder -> WAAPI.EngineBuilder
+toRed : AnimBuilder { eng | withTiming : () } -> AnimBuilder { eng | withTiming : () }
 toRed =
-    WAAPI.for animGroup
-        >> CustomColor.begin CustomColor.BorderColor
+    CustomColor.begin CustomColor.BorderColor
         >> CustomColor.to (Color.rgb 239 68 68)
         >> standardTiming
         >> CustomColor.end
 
 
-toBlue : WAAPI.EngineBuilder -> WAAPI.EngineBuilder
+toBlue : AnimBuilder { eng | withTiming : () } -> AnimBuilder { eng | withTiming : () }
 toBlue =
-    WAAPI.for animGroup
-        >> CustomColor.begin CustomColor.BorderColor
+    CustomColor.begin CustomColor.BorderColor
         >> CustomColor.to (Color.rgb 59 130 246)
         >> standardTiming
         >> CustomColor.end
@@ -115,7 +113,9 @@ update msg model =
         TriggerRed ->
             let
                 ( newAnimState, cmd ) =
-                    WAAPI.animate model.animState toRed
+                    WAAPI.animate model.animState <|
+                        WAAPI.for animGroup
+                            >> toRed
             in
             ( { model | animState = newAnimState }
             , cmd
@@ -124,7 +124,9 @@ update msg model =
         TriggerBlue ->
             let
                 ( newAnimState, cmd ) =
-                    WAAPI.animate model.animState toBlue
+                    WAAPI.animate model.animState <|
+                        WAAPI.for animGroup
+                            >> toBlue
             in
             ( { model | animState = newAnimState }
             , cmd

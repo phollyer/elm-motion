@@ -64,7 +64,7 @@ animGroup =
     "fadeAnim"
 
 
-fadeTo : Float -> WAAPI.EngineBuilder -> WAAPI.EngineBuilder
+fadeTo : Float -> AnimBuilder { eng | withTiming : () } -> AnimBuilder { eng | withTiming : () }
 fadeTo to =
     Opacity.begin
         >> Opacity.to to
@@ -72,12 +72,12 @@ fadeTo to =
         >> Opacity.end
 
 
-fadeIn : WAAPI.EngineBuilder -> WAAPI.EngineBuilder
+fadeIn : AnimBuilder { eng | withTiming : () } -> AnimBuilder { eng | withTiming : () }
 fadeIn =
     fadeTo 1
 
 
-fadeOut : WAAPI.EngineBuilder -> WAAPI.EngineBuilder
+fadeOut : AnimBuilder { eng | withTiming : () } -> AnimBuilder { eng | withTiming : () }
 fadeOut =
     fadeTo 0
 
@@ -123,7 +123,9 @@ update msg model =
         TriggerFadeOut ->
             let
                 ( newAnimState, cmd ) =
-                    WAAPI.animate model.animState fadeOut
+                    WAAPI.animate model.animState <|
+                        WAAPI.for animGroup
+                            >> fadeOut
             in
             ( { model | animState = newAnimState }, cmd )
 

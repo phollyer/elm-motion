@@ -97,14 +97,24 @@ export function commitAnimatedStyles(element, animation) {
 
 function buildPropertyVersions(animGroup, propertyType, version) {
     const propertyVersions = {};
+
+    const assignVersion = (propType, ver) => {
+        propertyVersions[propType] = ver;
+        if (propType === 'transform') {
+            TRANSFORM_SUB_PROPS.forEach(subProp => {
+                propertyVersions[subProp] = ver;
+            });
+        }
+    };
+
     const elementAnims = activeAnimations.get(animGroup);
     if (elementAnims) {
         elementAnims.forEach((animData, propType) => {
-            propertyVersions[propType] = animData.version;
+            assignVersion(propType, animData.version);
         });
     }
     if (propertyType && version != null) {
-        propertyVersions[propertyType] = version;
+        assignVersion(propertyType, version);
     }
     return propertyVersions;
 }

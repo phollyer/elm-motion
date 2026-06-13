@@ -15,7 +15,7 @@ afterEach(() => {
 });
 
 describe('cleanupAnimGroup', () => {
-    it('drops per-group entries from every Map except lastKnownPerspectiveOrigins', () => {
+    it('drops per-group runtime entries but preserves transform/perspective caches', () => {
         const group = 'grp';
         activeAnimations.set(group, new Map());
         animationGroups.set(group, {});
@@ -28,9 +28,13 @@ describe('cleanupAnimGroup', () => {
 
         expect(activeAnimations.has(group)).toBe(false);
         expect(animationGroups.has(group)).toBe(false);
-        expect(lastKnownTransforms.has(group)).toBe(false);
+        expect(lastKnownTransforms.has(group)).toBe(true);
         expect(scrollDrivenIterationCounts.has(group)).toBe(false);
         expect(elementTransformOrders.has(group)).toBe(false);
+
+        // lastKnownTransforms must persist so sequential animations in the
+        // same group can continue from the prior end state (e.g. 360deg -> 0deg).
+        expect(lastKnownTransforms.get(group)).toEqual({});
 
         // lastKnownPerspectiveOrigins must persist so a subsequent
         // animation in the same group keeps the user's chosen unit.

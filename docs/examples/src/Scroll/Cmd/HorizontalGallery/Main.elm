@@ -5,8 +5,8 @@ import Html exposing (Html, button, div, text)
 import Html.Attributes exposing (class, id, style)
 import Html.Events exposing (onClick)
 import Motion.Easing as Easing exposing (Easing(..))
-import Scroll.Builder as ScrollTo
-import Scroll.Engine.Cmd as Scroll exposing (ScrollBuilder)
+import Scroll.Builder as Scroll
+import Scroll.Engine.Cmd as Cmd exposing (ScrollBuilder)
 
 
 
@@ -45,7 +45,10 @@ update msg model =
     case msg of
         ---8<-- [start:trigger]
         ScrollTo cardId ->
-            ( model, Scroll.scroll ScrollComplete <| scrollToCard cardId )
+            ( model
+            , Cmd.scroll ScrollComplete <|
+                scrollToCard cardId
+            )
 
         ---8<-- [end:trigger]
         ScrollComplete ->
@@ -58,12 +61,12 @@ update msg model =
 
 scrollToCard : String -> ScrollBuilder -> ScrollBuilder
 scrollToCard cardId =
-    ScrollTo.forContainer "gallery"
-        >> ScrollTo.toElement cardId
-        >> ScrollTo.onXAxis
-        >> ScrollTo.speed 500
-        >> ScrollTo.easing EaseInOut
-        >> ScrollTo.build
+    Scroll.forContainer "gallery"
+        >> Scroll.toElement cardId
+        >> Scroll.onXAxis
+        >> Scroll.speed 500
+        >> Scroll.easing EaseInOut
+        >> Scroll.build
 
 
 

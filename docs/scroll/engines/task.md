@@ -70,7 +70,7 @@ If you don't need any of those, [`Cmd`](cmd.md) is simpler. If you need pause / 
 
 `ScrollOk` is a type alias for `{ container : Container, targetElementId : Maybe String }`.
 
-It is returned for every scroll that completed successfully,  and tells you which container finished and - if you targeted a specific element - which one.
+It is returned for every scroll that completed successfully,  and tells you which container finished and, if you targeted a specific element, which one.
 
 | Field | Type | Description |
 | ----- | ---- | ----------- |
@@ -125,6 +125,9 @@ If you'd rather get a result for **every** target - failures included - use `Tas
 ??? example "View Source Code"
 
     ```elm
+    import Scroll.Task as Task
+    import Task
+
     type Msg
         = ScrollAttempts (List (Result ScrollError ScrollOk))
 
@@ -133,7 +136,7 @@ If you'd rather get a result for **every** target - failures included - use `Tas
         ( model
         , scrollSequence
             |> Task.scrollEach
-            |> TaskCore.perform ScrollAttempts
+            |> Task.perform ScrollAttempts
         )
     ```
 
@@ -141,15 +144,18 @@ If you'd rather get a result for **every** target - failures included - use `Tas
 
 ## Task Composition
 
-Because `Task.scroll` is a regular `Task`, you can compose it with anything else that returns a `Task`. Classic example - fetch data, then scroll to wherever the response points:
+Because `Task.scroll` is a regular `Task`, you can compose it with anything else that returns a `Task`. Example - fetch data, then scroll to wherever the response points:
 
 ??? example "View Source Code"
 
     ```elm
+    import Scroll.Task as Task
+    import Task
+
     fetchArticle "article-123"
-        |> TaskCore.andThen
+        |> Task.andThen
             (Task.scroll << scrollToSection << .anchorId)
-        |> TaskCore.attempt GotResult
+        |> Task.attempt GotResult
     ```
 
 ## Caveats

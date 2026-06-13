@@ -17,7 +17,6 @@ Rotate elements around the X, Y, and Z axes.
     spin =
         Rotate.begin
             >> Rotate.toZ 360
-            >> Rotate.duration 1000
             >> Rotate.end
     ```
 
@@ -48,52 +47,52 @@ See the [Properties Overview](overview.md) page for the shared usage patterns.
 
 | Function | Signature | Description |
 | -------- | --------- | ----------- |
-| `for` | `AnimGroupName -> AnimBuilder eng -> Builder eng` | Start building |
-| `build` | `Builder eng -> AnimBuilder eng` | Finish building |
+| `begin` | `AnimGroupName -> AnimBuilder eng -> Builder eng` | Start building |
+| `end` | `Builder eng -> AnimBuilder eng` | Finish building |
 
 ### Start Value
 
 | Function | Signature | Description |
 | -------- | --------- | ----------- |
-| `fromXYZ` | `Float -> Float -> Float -> Builder -> Builder` | Starting X, Y, and Z rotations (degrees) |
-| `fromXY` | `Float -> Float -> Builder -> Builder` | Starting X and Y rotations (degrees) |
-| `fromXZ` | `Float -> Float -> Builder -> Builder` | Starting X and Z rotations (degrees) |
-| `fromX` | `Float -> Builder -> Builder` | Starting X-axis rotation (degrees) |
-| `fromYZ` | `Float -> Float -> Builder -> Builder` | Starting Y and Z rotations (degrees) |
-| `fromY` | `Float -> Builder -> Builder` | Starting Y-axis rotation (degrees) |
-| `fromZ` | `Float -> Builder -> Builder` | Starting Z-axis rotation (degrees) |
+| `fromXYZ` | `Float -> Float -> Float -> Builder eng -> Builder eng` | Starting X, Y, and Z rotations (degrees) |
+| `fromXY` | `Float -> Float -> Builder eng -> Builder eng` | Starting X and Y rotations (degrees) |
+| `fromXZ` | `Float -> Float -> Builder eng -> Builder eng` | Starting X and Z rotations (degrees) |
+| `fromX` | `Float -> Builder eng -> Builder eng` | Starting X-axis rotation (degrees) |
+| `fromYZ` | `Float -> Float -> Builder eng -> Builder eng` | Starting Y and Z rotations (degrees) |
+| `fromY` | `Float -> Builder eng -> Builder eng` | Starting Y-axis rotation (degrees) |
+| `fromZ` | `Float -> Builder eng -> Builder eng` | Starting Z-axis rotation (degrees) |
 
 ### End Value (Absolute)
 
 | Function | Signature | Description |
 | -------- | --------- | ----------- |
-| `toXYZ` | `Float -> Float -> Float -> Builder -> Builder` | Ending X, Y, and Z rotations (degrees) |
-| `toXY` | `Float -> Float -> Builder -> Builder` | Ending X and Y rotations (degrees) |
-| `toXZ` | `Float -> Float -> Builder -> Builder` | Ending X and Z rotations (degrees) |
-| `toX` | `Float -> Builder -> Builder` | Ending X-axis rotation (degrees) |
-| `toYZ` | `Float -> Float -> Builder -> Builder` | Ending Y and Z rotations (degrees) |
-| `toY` | `Float -> Builder -> Builder` | Ending Y-axis rotation (degrees) |
-| `toZ` | `Float -> Builder -> Builder` | Ending Z-axis rotation (degrees) |
+| `toXYZ` | `Float -> Float -> Float -> Builder eng -> Builder eng` | Ending X, Y, and Z rotations (degrees) |
+| `toXY` | `Float -> Float -> Builder eng -> Builder eng` | Ending X and Y rotations (degrees) |
+| `toXZ` | `Float -> Float -> Builder eng -> Builder eng` | Ending X and Z rotations (degrees) |
+| `toX` | `Float -> Builder eng -> Builder eng` | Ending X-axis rotation (degrees) |
+| `toYZ` | `Float -> Float -> Builder eng -> Builder eng` | Ending Y and Z rotations (degrees) |
+| `toY` | `Float -> Builder eng -> Builder eng` | Ending Y-axis rotation (degrees) |
+| `toZ` | `Float -> Builder eng -> Builder eng` | Ending Z-axis rotation (degrees) |
 
 ### End Value (Relative)
 
 | Function | Signature | Description |
 | -------- | --------- | ----------- |
-| `byXYZ` | `Float -> Float -> Float -> Builder -> Builder` | Rotate by X, Y, and Z amounts (degrees) |
-| `byXY` | `Float -> Float -> Builder -> Builder` | Rotate by X and Y amounts (degrees) |
-| `byXZ` | `Float -> Float -> Builder -> Builder` | Rotate by X and Z amounts (degrees) |
-| `byX` | `Float -> Builder -> Builder` | Rotate by X amount (degrees) |
-| `byYZ` | `Float -> Float -> Builder -> Builder` | Rotate by Y and Z amounts (degrees) |
-| `byY` | `Float -> Builder -> Builder` | Rotate by Y amount (degrees) |
-| `byZ` | `Float -> Builder -> Builder` | Rotate by Z amount (degrees) |
+| `byXYZ` | `Float -> Float -> Float -> Builder eng -> Builder eng` | Rotate by X, Y, and Z amounts (degrees) |
+| `byXY` | `Float -> Float -> Builder eng -> Builder eng` | Rotate by X and Y amounts (degrees) |
+| `byXZ` | `Float -> Float -> Builder eng -> Builder eng` | Rotate by X and Z amounts (degrees) |
+| `byX` | `Float -> Builder eng -> Builder eng` | Rotate by X amount (degrees) |
+| `byYZ` | `Float -> Float -> Builder eng -> Builder eng` | Rotate by Y and Z amounts (degrees) |
+| `byY` | `Float -> Builder eng -> Builder eng` | Rotate by Y amount (degrees) |
+| `byZ` | `Float -> Builder eng -> Builder eng` | Rotate by Z amount (degrees) |
 
 ### Timing
 
 | Function | Signature | Description |
 | -------- | --------- | ----------- |
-| `delay` | `Int -> Builder -> Builder` | The delay in ms before the animation starts |
-| `duration` | `Int -> Builder -> Builder` | The duration in ms that the animation lasts for |
-| `speed` | `Float -> Builder -> Builder` | Degrees per second |
+| `delay` | `Int -> Builder { eng | withTiming : () } -> Builder { eng | withTiming : () }` | The delay in ms before the animation starts |
+| `duration` | `Int -> Builder { eng | withTiming : () } -> Builder { eng | withTiming : () }` | The duration in ms that the animation lasts for |
+| `speed` | `Float -> Builder { eng | withTiming : () } -> Builder { eng | withTiming : () }` | Degrees per second |
 
 ### Easing
 
@@ -105,7 +104,7 @@ See the [Properties Overview](overview.md) page for the shared usage patterns.
 
 | Function | Signature | Description |
 | -------- | --------- | ----------- |
-| `spring` | `Spring -> Builder -> Builder` | Use spring physics instead of easing |
+| `spring` | `Spring -> Builder { eng | withSpring : () } -> Builder { eng | withSpring : () }` | Use spring physics instead of easing |
 
 ## Next Steps
 

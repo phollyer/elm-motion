@@ -17,7 +17,6 @@ Skew elements along the X and Y axes.
     tilt =
         Skew.begin
             >> Skew.toXY 12 0
-            >> Skew.duration 400
             >> Skew.end
     ```
 
@@ -51,33 +50,33 @@ See the [Properties Overview](overview.md) page for the shared usage patterns.
 
 | Function | Signature | Description |
 | -------- | --------- | ----------- |
-| `fromXY` | `Float -> Float -> Builder -> Builder` | Starting X and Y skew (degrees) |
-| `fromX` | `Float -> Builder -> Builder` | Starting X skew (degrees) |
-| `fromY` | `Float -> Builder -> Builder` | Starting Y skew (degrees) |
+| `fromXY` | `Float -> Float -> Builder eng -> Builder eng` | Starting X and Y skew (degrees) |
+| `fromX` | `Float -> Builder eng -> Builder eng` | Starting X skew (degrees) |
+| `fromY` | `Float -> Builder eng -> Builder eng` | Starting Y skew (degrees) |
 
 ### End Value (Absolute)
 
 | Function | Signature | Description |
 | -------- | --------- | ----------- |
-| `toXY` | `Float -> Float -> Builder -> Builder` | Ending X and Y skew (degrees) |
-| `toX` | `Float -> Builder -> Builder` | Ending X skew (degrees) |
-| `toY` | `Float -> Builder -> Builder` | Ending Y skew (degrees) |
+| `toXY` | `Float -> Float -> Builder eng -> Builder eng` | Ending X and Y skew (degrees) |
+| `toX` | `Float -> Builder eng -> Builder eng` | Ending X skew (degrees) |
+| `toY` | `Float -> Builder eng -> Builder eng` | Ending Y skew (degrees) |
 
 ### End Value (Relative)
 
 | Function | Signature | Description |
 | -------- | --------- | ----------- |
-| `byXY` | `Float -> Float -> Builder -> Builder` | Skew by X and Y amounts (degrees) |
-| `byX` | `Float -> Builder -> Builder` | Skew by X amount (degrees) |
-| `byY` | `Float -> Builder -> Builder` | Skew by Y amount (degrees) |
+| `byXY` | `Float -> Float -> Builder eng -> Builder eng` | Skew by X and Y amounts (degrees) |
+| `byX` | `Float -> Builder eng -> Builder eng` | Skew by X amount (degrees) |
+| `byY` | `Float -> Builder eng -> Builder eng` | Skew by Y amount (degrees) |
 
 ### Timing
 
 | Function | Signature | Description |
 | -------- | --------- | ----------- |
-| `delay` | `Int -> Builder -> Builder` | Delay in ms before animation starts |
-| `duration` | `Int -> Builder -> Builder` | Duration in ms |
-| `speed` | `Float -> Builder -> Builder` | Degrees per second |
+| `delay` | `Int -> Builder { eng | withTiming : () } -> Builder { eng | withTiming : () }` | Delay in ms before animation starts |
+| `duration` | `Int -> Builder { eng | withTiming : () } -> Builder { eng | withTiming : () }` | Duration in ms |
+| `speed` | `Float -> Builder { eng | withTiming : () } -> Builder { eng | withTiming : () }` | Degrees per second |
 
 ### Easing
 
@@ -89,10 +88,10 @@ See the [Properties Overview](overview.md) page for the shared usage patterns.
 
 | Function | Signature | Description |
 | -------- | --------- | ----------- |
-| `spring` | `Spring -> Builder -> Builder` | Use spring physics instead of easing |
+| `spring` | `Spring -> Builder { eng | withSpring : () } -> Builder { eng | withSpring : () }` | Use spring physics instead of easing |
 
 ## Next Steps
 
-The Scale property.
+The Translate property.
 
-[Scale →](scale.md){ .md-button .md-button--primary }
+[Translate →](translate.md){ .md-button .md-button--primary }

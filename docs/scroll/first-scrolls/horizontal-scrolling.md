@@ -74,15 +74,9 @@ A horizontally-scrolling image gallery. The buttons jump between named cards, an
 
     ### 2. Initialize
 
-    Task and Sub keep enough model state to drive the status bar:
+    Only the Sub engine keeps state in the model:
 
     ??? example "View Source Code"
-
-        === "Task"
-
-            ```elm
-            --8<-- "docs/examples/src/Scroll/Task/HorizontalGallery/Main.elm:model"
-            ```
 
         === "Sub"
 
@@ -90,33 +84,9 @@ A horizontally-scrolling image gallery. The buttons jump between named cards, an
             --8<-- "docs/examples/src/Scroll/Sub/HorizontalGallery/Main.elm:model"
             ```
 
-    ### 3. Render
+    ### 3. Subscribe
 
-    The gallery container uses horizontal overflow and fixed-width cards so there is something to scroll across:
-
-    ??? example "View Source Code"
-
-        === "Cmd"
-
-            ```elm
-            --8<-- "docs/examples/src/Scroll/Cmd/HorizontalGallery/Main.elm:render"
-            ```
-
-        === "Task"
-
-            ```elm
-            --8<-- "docs/examples/src/Scroll/Task/HorizontalGallery/Main.elm:render"
-            ```
-
-        === "Sub"
-
-            ```elm
-            --8<-- "docs/examples/src/Scroll/Sub/HorizontalGallery/Main.elm:render"
-            ```
-
-    ### 4. Subscribe
-
-    Only the Sub engine needs subscriptions to receive animation frame updates:
+    Only the Sub engine needs subscriptions:
 
     ??? example "View Source Code"
 
@@ -124,9 +94,9 @@ A horizontally-scrolling image gallery. The buttons jump between named cards, an
         --8<-- "docs/examples/src/Scroll/Sub/HorizontalGallery/Main.elm:subscriptions"
         ```
 
-    ### 5. Trigger
+    ### 4. Trigger
 
-    The navigation buttons all trigger the same builder function:
+    Each engine starts the same scroll definition a little differently:
 
     ??? example "View Source Code"
 
@@ -148,7 +118,7 @@ A horizontally-scrolling image gallery. The buttons jump between named cards, an
             --8<-- "docs/examples/src/Scroll/Sub/HorizontalGallery/Main.elm:trigger"
             ```
 
-    ### 6. React
+    ### 5. React
 
     Task reports success or failure when the scroll finishes, while Sub keeps the status bar updated with live X position and progress:
 

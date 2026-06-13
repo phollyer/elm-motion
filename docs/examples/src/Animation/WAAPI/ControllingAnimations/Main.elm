@@ -82,10 +82,9 @@ ballSizeCqh =
     String.fromFloat ballSize ++ "cqh"
 
 
-dropBall : WAAPI.EngineBuilder -> WAAPI.EngineBuilder
+dropBall : AnimBuilder { eng | withTiming : () } -> AnimBuilder { eng | withTiming : () }
 dropBall =
-    WAAPI.for animGroup
-        >> Translate.begin
+    Translate.begin
         >> Translate.fromY 0
         >> Translate.toY (100 - ballSize)
         >> Translate.speed 75
@@ -122,7 +121,9 @@ update msg model =
         Animate ->
             let
                 ( newAnimState, animCmd ) =
-                    WAAPI.animate model.animState dropBall
+                    WAAPI.animate model.animState <|
+                        WAAPI.for animGroup
+                            >> dropBall
             in
             ( { model | animState = newAnimState }
             , animCmd

@@ -46,7 +46,11 @@ init =
                 , Opacity.init groupName 1
                 ]
     in
-    ( { animState = Keyframe.animate animState pulse }
+    ( { animState =
+            Keyframe.animate animState <|
+                Keyframe.for groupName
+                    >> pulse
+      }
     , Cmd.none
     )
 
@@ -70,11 +74,9 @@ pulse =
         >> Keyframe.alternate
         >> Keyframe.duration 1000
         >> Keyframe.easing EaseInOut
-        >> Keyframe.for groupName
         >> Scale.begin
         >> Scale.to 0.4
         >> Scale.end
-        >> Keyframe.for groupName
         >> Opacity.begin
         >> Opacity.to 0.3
         >> Opacity.end

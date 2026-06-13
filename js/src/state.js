@@ -45,10 +45,13 @@ export const appliedWillChange = new Map();
 export const portsRef = { ports: null };
 
 /**
- * Drop every per-`animGroup` entry from every Map. Called when an animation
- * group's lifecycle ends (completed / cancelled / stopped / reset / replaced
- * by direct property update). Without this, the per-group caches grow
- * without bound for the lifetime of the page.
+ * Drop per-`animGroup` runtime entries when an animation lifecycle ends.
+ *
+ * `lastKnownTransforms` is intentionally NOT cleared here. WAAPI/cached
+ * transform continuity depends on preserving the previous end state across
+ * sequential animations in the same group (e.g. rotate 360 -> rotate 0).
+ * If this cache is cleared on every completion, equivalent-angle endpoints
+ * collapse to identity and the next animation can become a no-op.
  *
  * `lastKnownPerspectiveOrigins` is intentionally NOT cleared here. CSS
  * `getComputedStyle(...).perspectiveOrigin` always reports pixels, so once
@@ -71,7 +74,6 @@ export function cleanupAnimGroup(animGroup) {
     appliedWillChange.delete(animGroup);
     activeAnimations.delete(animGroup);
     animationGroups.delete(animGroup);
-    lastKnownTransforms.delete(animGroup);
     scrollDrivenIterationCounts.delete(animGroup);
     elementTransformOrders.delete(animGroup);
 }

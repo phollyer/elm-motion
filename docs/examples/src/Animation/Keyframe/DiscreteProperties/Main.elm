@@ -53,10 +53,9 @@ animGroup =
     "fadeAnim"
 
 
-fadeIn : Keyframe.EngineBuilder -> Keyframe.EngineBuilder
+fadeIn : AnimBuilder { eng | withTiming : () } -> AnimBuilder { eng | withTiming : () }
 fadeIn =
-    Keyframe.for animGroup
-        >> Opacity.begin
+    Opacity.begin
         >> Opacity.from 0
         >> Opacity.to 1
         >> Opacity.duration 800
@@ -64,10 +63,9 @@ fadeIn =
         >> Opacity.end
 
 
-fadeOut : Keyframe.EngineBuilder -> Keyframe.EngineBuilder
+fadeOut : AnimBuilder { eng | withTiming : () } -> AnimBuilder { eng | withTiming : () }
 fadeOut =
-    Keyframe.for animGroup
-        >> Opacity.begin
+    Opacity.begin
         >> Opacity.from 1
         >> Opacity.to 0
         >> Opacity.duration 800
@@ -92,7 +90,8 @@ update msg model =
             ( { model
                 | animState =
                     Keyframe.animate model.animState <|
-                        Keyframe.discreteEntry "display" "flex"
+                        Keyframe.for animGroup
+                            >> Keyframe.discreteEntry "display" "flex"
                             >> fadeIn
               }
             , Cmd.none
@@ -102,7 +101,8 @@ update msg model =
             ( { model
                 | animState =
                     Keyframe.animate model.animState <|
-                        Keyframe.discreteExit "display" "flex" "none"
+                        Keyframe.for animGroup
+                            >> Keyframe.discreteExit "display" "flex" "none"
                             >> fadeOut
               }
             , Cmd.none

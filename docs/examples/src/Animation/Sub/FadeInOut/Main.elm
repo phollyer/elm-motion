@@ -53,22 +53,20 @@ animGroup =
     "fadeAnim"
 
 
-fadeTo : Float -> Sub.EngineBuilder -> Sub.EngineBuilder
+fadeTo : Float -> AnimBuilder { eng | withTiming : () } -> AnimBuilder { eng | withTiming : () }
 fadeTo to =
-    Sub.withProgressEvents True
-        >> Sub.for animGroup
-        >> Opacity.begin
+    Opacity.begin
         >> Opacity.to to
         >> Opacity.duration 2500
         >> Opacity.end
 
 
-fadeIn : Sub.EngineBuilder -> Sub.EngineBuilder
+fadeIn : AnimBuilder { eng | withTiming : () } -> AnimBuilder { eng | withTiming : () }
 fadeIn =
     fadeTo 1
 
 
-fadeOut : Sub.EngineBuilder -> Sub.EngineBuilder
+fadeOut : AnimBuilder { eng | withTiming : () } -> AnimBuilder { eng | withTiming : () }
 fadeOut =
     fadeTo 0
 
@@ -103,18 +101,24 @@ update msg model =
         ---8<-- [end:update]
         ---8<-- [start:trigger]
         TriggerFadeIn ->
-            let
-                nextState =
-                    Sub.animate model.animState fadeIn
-            in
-            ( { model | animState = nextState }, Cmd.none )
+            ( { model
+                | animState =
+                    Sub.animate model.animState <|
+                        Sub.for animGroup
+                            >> fadeIn
+              }
+            , Cmd.none
+            )
 
         TriggerFadeOut ->
-            let
-                nextState =
-                    Sub.animate model.animState fadeOut
-            in
-            ( { model | animState = nextState }, Cmd.none )
+            ( { model
+                | animState =
+                    Sub.animate model.animState <|
+                        Sub.for animGroup
+                            >> fadeOut
+              }
+            , Cmd.none
+            )
 
 
 

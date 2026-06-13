@@ -36,10 +36,8 @@ Here's a general workflow to get up an running quickly.
 
     fadeIn : Transition.AnimBuilder eng -> Transition.AnimBuilder eng
     fadeIn =
-        Transition.for "card"
-            >> Opacity.begin
+        Opacity.begin
             >> Opacity.to 1
-            >> Opacity.duration 300
             >> Opacity.end
     ```
 
@@ -86,7 +84,10 @@ Call `animate` to apply the animation config to the current `AnimState`.
 
     ```elm
     TriggerFadeIn ->
-        ( { model | animState = Transition.animate model.animState fadeIn }
+        ( { model | animState = 
+            Transition.animate model.animState <|
+                Transition.for "card" >> fadeIn 
+          }
         , Cmd.none
         )
     ```
@@ -108,19 +109,19 @@ Use `update` for incoming Transition events.
         case msg of
             GotAnimMsg animMsg ->
                 let
-                    ( animState, event ) =
+                    ( animState, maybeEvent ) =
                         Transition.update animMsg model.animState
                 in
-                handleAnimEvent event { model | animState = animState }
+                handleAnimEvent maybeEvent { model | animState = animState }
 
             _ ->
                 (model, Cmd.none)
 
 
-    handleAnimEvent : Transition.AnimEvent -> Model -> ( Model, Cmd Msg )
-    handleAnimEvent event model =
-        case event of
-            Transition.Ended _ _ "card" ->
+    handleAnimEvent : Maybe Transition.AnimEvent -> Model -> ( Model, Cmd Msg )
+    handleAnimEvent maybeEvent model =
+        case maybeEvent of
+            Just (Transition.Ended _ _ "card") ->
                 ( model, Cmd.none )
 
             _ ->
@@ -186,22 +187,22 @@ If a transition must run immediately on page load, defer triggering to the next 
 
 ### Update
 
-Use `update` to process incoming transition messages. It returns the updated `AnimState` and the corresponding `AnimEvent`.
+Use `update` to process incoming transition messages. It returns the updated `AnimState` and a `Maybe AnimEvent`.
 
 ??? example "View Source Code"
 
     ```elm
     GotAnimMsg animMsg ->
         let
-            ( animState, event ) =
+            ( animState, maybeEvent ) =
                 Transition.update animMsg model.animState
         in
-        handleAnimEvent event { model | animState = animState }
+        handleAnimEvent maybeEvent { model | animState = animState }
     ```
 
 ### Events
 
-`update` returns a single `AnimEvent` per call. Each event carries three values:
+`update` returns a single `Maybe AnimEvent` per call. Each event carries three values:
 
 - the `id` (if one exists) of the element that fired the event (`CurrentTargetId`),
 - the `id` (if one exists) of the element that owns the listener (`TargetId`), and,
@@ -212,10 +213,10 @@ In most cases only the group name is needed. `CurrentTargetId` and `TargetId` ma
 ??? example "View Source Code"
 
     ```elm
-    handleAnimEvent : Transition.AnimEvent -> Model -> ( Model, Cmd Msg )
-    handleAnimEvent event model =
-        case event of
-            Transition.Ended _ _ "card" ->
+    handleAnimEvent : Maybe Transition.AnimEvent -> Model -> ( Model, Cmd Msg )
+    handleAnimEvent maybeEvent model =
+        case maybeEvent of
+            Just (Transition.Ended _ _ "card") ->
                 ( model, Cmd.none )
 
             _ ->
@@ -346,15 +347,13 @@ For entry animations, include `startingStyleNode` in your view. This generates `
     ```elm
     fadeIn : AnimBuilder eng -> AnimBuilder eng
     fadeIn =
-        Transition.for "box"
-            >> Opacity.begin
+        Opacity.begin
             >> Opacity.to 1
             >> Opacity.end
 
     fadeOut : AnimBuilder eng -> AnimBuilder eng
     fadeOut =
-        Transition.for "box"
-            >> Opacity.begin
+        Opacity.begin
             >> Opacity.to 0
             >> Opacity.end
 
@@ -362,16 +361,20 @@ For entry animations, include `startingStyleNode` in your view. This generates `
     update msg model =
         case msg of
             FadeBoxIn ->
-                ({ model | animState = Transition.animate model.animState <|
-                        Transition.discreteEntry "display" "block"
+                ({ model | animState = 
+                    Transition.animate model.animState <|
+                        Transition.for "box"
+                            >> Transition.discreteEntry "display" "block"
                             >> fadeIn                    
                 }
                 , Cmd.none
                 )
 
             FadeBoxOut ->
-                ({ model | animState = Transition.animate model.animState <|
-                        Transition.discreteEntry "display" "block" "none"
+                ({ model | animState = 
+                    Transition.animate model.animState <|
+                        Transition.for "box"
+                            >> Transition.discreteExit "display" "block" "none"
                             >> fadeOut                    
                 }
                 , Cmd.none
@@ -474,7 +477,7 @@ Choose Transition when you want minimal setup and smooth A→B animations.
 
 | Function | Type | Description |
 | -------- | ---- | ----------- |
-| `update` | `AnimMsg -> AnimState -> (AnimState, AnimEvent)` | Process transition messages |
+| `update` | `AnimMsg -> AnimState -> (AnimState, Maybe AnimEvent)` | Process transition messages |
 
 ### View
 

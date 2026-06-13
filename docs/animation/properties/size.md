@@ -20,7 +20,6 @@ Animate the width and height of elements.
     expandBox =
         Size.begin
             >> Size.toHW 150 200
-            >> Size.duration 300
             >> Size.end
     ```
 
@@ -55,45 +54,45 @@ See the [Properties Overview](overview.md) page for the shared usage patterns.
 
 | Function | Signature | Description |
 | -------- | --------- | ----------- |
-| `fromHW` | `Float -> Float -> Builder -> Builder` | Starting height and width |
-| `fromH` | `Float -> Builder -> Builder` | Starting height (pixels) |
-| `fromW` | `Float -> Builder -> Builder` | Starting width (pixels) |
+| `fromHW` | `Float -> Float -> Builder eng -> Builder eng` | Starting height and width |
+| `fromH` | `Float -> Builder eng -> Builder eng` | Starting height (pixels) |
+| `fromW` | `Float -> Builder eng -> Builder eng` | Starting width (pixels) |
 
 ### End Value (Absolute)
 
 | Function | Signature | Description |
 | -------- | --------- | ----------- |
-| `toHW` | `Float -> Float -> Builder -> Builder` | Ending height and width |
-| `toH` | `Float -> Builder -> Builder` | Ending height (pixels) |
-| `toW` | `Float -> Builder -> Builder` | Ending width (pixels) |
+| `toHW` | `Float -> Float -> Builder eng -> Builder eng` | Ending height and width |
+| `toH` | `Float -> Builder eng -> Builder eng` | Ending height (pixels) |
+| `toW` | `Float -> Builder eng -> Builder eng` | Ending width (pixels) |
 
 ### End Value (Relative)
 
 | Function | Signature | Description |
 | -------- | --------- | ----------- |
-| `byHW` | `Float -> Float -> Builder -> Builder` | Resize by height and width amounts |
-| `byH` | `Float -> Builder -> Builder` | Resize by height amount (pixels) |
-| `byW` | `Float -> Builder -> Builder` | Resize by width amount (pixels) |
+| `byHW` | `Float -> Float -> Builder eng -> Builder eng` | Resize by height and width amounts |
+| `byH` | `Float -> Builder eng -> Builder eng` | Resize by height amount (pixels) |
+| `byW` | `Float -> Builder eng -> Builder eng` | Resize by width amount (pixels) |
 
 ### Timing
 
 | Function | Signature | Description |
 | -------- | --------- | ----------- |
-| `delay` | `Int -> Builder -> Builder` | The delay in ms before the animation starts |
-| `duration` | `Int -> Builder -> Builder` | The duration in ms that the animation lasts for |
-| `speed` | `Float -> Builder -> Builder` | Pixels per second |
+| `delay` | `Int -> Builder { eng | withTiming : () } -> Builder { eng | withTiming : () }` | The delay in ms before the animation starts |
+| `duration` | `Int -> Builder { eng | withTiming : () } -> Builder { eng | withTiming : () }` | The duration in ms that the animation lasts for |
+| `speed` | `Float -> Builder { eng | withTiming : () } -> Builder { eng | withTiming : () }` | Pixels per second |
 
 ### Easing
 
 | Function | Signature | Description |
 | -------- | --------- | ----------- |
-| `easing` | `Easing -> Builder -> Builder` | Add natural motion |
+| `easing` | `Easing -> Builder eng -> Builder eng` | Add natural motion |
 
 ### Spring
 
 | Function | Signature | Description |
 | -------- | --------- | ----------- |
-| `spring` | `Spring -> Builder -> Builder` | Use spring physics instead of easing |
+| `spring` | `Spring -> Builder { eng | withSpring : () } -> Builder { eng | withSpring : () }` | Use spring physics instead of easing |
 
 ## Next Steps
 

@@ -254,9 +254,7 @@ type alias ForView =
 {-| Engine capability tag for a `Sub.onResize` builder callback. Same
 shape as [`ForSub`](#ForSub) plus `withBounds`, which unlocks the
 resize-only [`bounds`](Anim-Property-Translate#bounds) /
-[`position`](Anim-Property-Translate#position) functions. Inside a
-regular `Sub.animate` callback (which receives a `ForSub` builder), the
-absence of `withBounds` makes those calls a type error.
+[`position`](Anim-Property-Translate#position) functions.
 -}
 type alias ForResizeSub =
     { forSub : ()
@@ -275,9 +273,7 @@ type alias ForResizeSub =
 {-| Engine capability tag for a `WAAPI.onResize` builder callback. Same
 shape as [`ForWAAPI`](#ForWAAPI) plus `withBounds`, which unlocks the
 resize-only [`bounds`](Anim-Property-Translate#bounds) /
-[`position`](Anim-Property-Translate#position) functions. Inside a
-regular `WAAPI.animate` callback (which receives a `ForWAAPI` builder),
-the absence of `withBounds` makes those calls a type error.
+[`position`](Anim-Property-Translate#position) functions.
 -}
 type alias ForResizeWAAPI =
     { forWAAPI : ()
@@ -415,12 +411,6 @@ type alias AnimationConfig targetProperty =
   - `RemapToBounds` — resize-only directive: proportionally remap the
     current animation onto the supplied bounds (preserving in-flight
     progress) and pin its endpoints to the new range.
-
-Engines outside `onResize` (i.e. the `animate` path of every engine)
-ignore `RemapToBounds`. The `withBounds` phantom on engine tags makes
-that the compiler's job, but the partition helpers also defensively
-filter, so a stray Bounds entry in a regular `animate` builder is a
-no-op rather than a crash.
 
 -}
 type AnimationMode
@@ -2205,11 +2195,29 @@ updateCurrentConfig config (AnimBuilder data) =
                             { existing
                                 | properties = filteredExisting ++ config.properties
                                 , playback =
-                                    case config.playback of
-                                        Just _ ->
-                                            config.playback
+                                    case ( existing.playback, config.playback ) of
+                                        ( Just existingPlayback, Just incomingPlayback ) ->
+                                            Just
+                                                { iterations =
+                                                    case incomingPlayback.iterations of
+                                                        Just _ ->
+                                                            incomingPlayback.iterations
 
-                                        Nothing ->
+                                                        Nothing ->
+                                                            existingPlayback.iterations
+                                                , animationDirection =
+                                                    case incomingPlayback.animationDirection of
+                                                        Just _ ->
+                                                            incomingPlayback.animationDirection
+
+                                                        Nothing ->
+                                                            existingPlayback.animationDirection
+                                                }
+
+                                        ( Nothing, Just incomingPlayback ) ->
+                                            Just incomingPlayback
+
+                                        ( _, Nothing ) ->
                                             existing.playback
                                 , transformOrder = mergedOrder
                                 , viewRangeStart =

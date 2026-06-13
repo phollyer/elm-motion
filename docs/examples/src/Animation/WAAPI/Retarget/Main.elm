@@ -74,20 +74,18 @@ init =
 -- ANIMATION
 
 
-animateDiagonal : WAAPI.EngineBuilder -> WAAPI.EngineBuilder
+animateDiagonal : AnimBuilder { eng | withTiming : () } -> AnimBuilder { eng | withTiming : () }
 animateDiagonal =
-    WAAPI.for animGroup
-        >> Translate.begin
+    Translate.begin
         >> Translate.toXY endXY endXY
         >> Translate.duration 5000
         >> Translate.easing Linear
         >> Translate.end
 
 
-retargetYToTop : WAAPI.EngineBuilder -> WAAPI.EngineBuilder
+retargetYToTop : AnimBuilder { eng | withTiming : () } -> AnimBuilder { eng | withTiming : () }
 retargetYToTop =
-    WAAPI.for animGroup
-        >> Translate.begin
+    Translate.begin
         >> Translate.toY 0
         >> Translate.end
 
@@ -118,7 +116,9 @@ update msg model =
         Animate ->
             let
                 ( newAnimState, animCmd ) =
-                    WAAPI.animate model.animState animateDiagonal
+                    WAAPI.animate model.animState <|
+                        WAAPI.for animGroup
+                            >> animateDiagonal
             in
             ( { model | animState = newAnimState }
             , animCmd
@@ -127,7 +127,9 @@ update msg model =
         RetargetY ->
             let
                 ( newAnimState, animCmd ) =
-                    WAAPI.retarget model.animState retargetYToTop
+                    WAAPI.retarget model.animState <|
+                        WAAPI.for animGroup
+                            >> retargetYToTop
             in
             ( { model | animState = newAnimState }
             , animCmd

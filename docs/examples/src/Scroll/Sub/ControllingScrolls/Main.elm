@@ -5,8 +5,8 @@ import Html exposing (Html, button, div, h1, p, text)
 import Html.Attributes exposing (class, id, style)
 import Html.Events exposing (onClick)
 import Motion.Easing as Easing exposing (Easing(..))
-import Scroll.Builder as ScrollTo
-import Scroll.Engine.Sub as Scroll
+import Scroll.Builder as Scroll
+import Scroll.Engine.Sub as Sub exposing (ScrollBuilder)
 
 
 
@@ -16,7 +16,7 @@ import Scroll.Engine.Sub as Scroll
 main : Program () Model Msg
 main =
     Browser.element
-        { init = always init
+        { init = \_ -> init
         , view = view
         , update = update
         , subscriptions = subscriptions
@@ -28,7 +28,7 @@ main =
 
 
 type alias Model =
-    { scrollState : Scroll.ScrollState }
+    { scrollState : Sub.ScrollState }
 
 
 
@@ -37,7 +37,7 @@ type alias Model =
 
 init : ( Model, Cmd Msg )
 init =
-    ( { scrollState = Scroll.init }
+    ( { scrollState = Sub.init }
     , Cmd.none
     )
 
@@ -53,7 +53,7 @@ type Msg
     | Resume
     | Reset
     | Restart
-    | GotScrollMsg Scroll.ScrollMsg
+    | GotScrollMsg Sub.ScrollMsg
     | NoOp
 
 
@@ -66,7 +66,7 @@ update msg model =
         GotScrollMsg scrollMsg ->
             let
                 ( newScrollState, _, scrollCmd ) =
-                    Scroll.update GotScrollMsg scrollMsg model.scrollState
+                    Sub.update GotScrollMsg scrollMsg model.scrollState
             in
             ( { model | scrollState = newScrollState }
             , scrollCmd
@@ -75,7 +75,7 @@ update msg model =
         ScrollAnimate ->
             let
                 ( newScrollState, scrollCmd ) =
-                    Scroll.scroll GotScrollMsg model.scrollState scrollAnimation
+                    Sub.scroll GotScrollMsg model.scrollState scrollAnimation
             in
             ( { model | scrollState = newScrollState }
             , scrollCmd
@@ -85,7 +85,7 @@ update msg model =
         Stop ->
             let
                 ( newScrollState, scrollCmd ) =
-                    Scroll.stop scrollContainer GotScrollMsg model.scrollState
+                    Sub.stop scrollContainer GotScrollMsg model.scrollState
             in
             ( { model | scrollState = newScrollState }
             , scrollCmd
@@ -94,14 +94,14 @@ update msg model =
         ---8<-- [end:stop]
         ---8<-- [start:pause]
         Pause ->
-            ( { model | scrollState = Scroll.pause scrollContainer model.scrollState }
+            ( { model | scrollState = Sub.pause scrollContainer model.scrollState }
             , Cmd.none
             )
 
         ---8<-- [end:pause]
         ---8<-- [start:resume]
         Resume ->
-            ( { model | scrollState = Scroll.resume scrollContainer model.scrollState }
+            ( { model | scrollState = Sub.resume scrollContainer model.scrollState }
             , Cmd.none
             )
 
@@ -110,7 +110,7 @@ update msg model =
         Reset ->
             let
                 ( newScrollState, scrollCmd ) =
-                    Scroll.reset scrollContainer GotScrollMsg model.scrollState
+                    Sub.reset scrollContainer GotScrollMsg model.scrollState
             in
             ( { model | scrollState = newScrollState }
             , scrollCmd
@@ -121,7 +121,7 @@ update msg model =
         Restart ->
             let
                 ( newScrollState, scrollCmd ) =
-                    Scroll.restart scrollContainer GotScrollMsg model.scrollState
+                    Sub.restart scrollContainer GotScrollMsg model.scrollState
             in
             ( { model | scrollState = newScrollState }
             , scrollCmd
@@ -138,9 +138,9 @@ containerId =
     "scroll-container"
 
 
-scrollContainer : Scroll.Container
+scrollContainer : Sub.Container
 scrollContainer =
-    Scroll.Container containerId
+    Sub.Container containerId
 
 
 targetId : String
@@ -148,13 +148,13 @@ targetId =
     "scroll-target"
 
 
-scrollAnimation : Scroll.ScrollBuilder -> Scroll.ScrollBuilder
+scrollAnimation : ScrollBuilder -> ScrollBuilder
 scrollAnimation =
-    ScrollTo.forContainer containerId
-        >> ScrollTo.toElement targetId
-        >> ScrollTo.speed 200
-        >> ScrollTo.easing BounceOut
-        >> ScrollTo.build
+    Scroll.forContainer containerId
+        >> Scroll.toElement targetId
+        >> Scroll.speed 200
+        >> Scroll.easing BounceOut
+        >> Scroll.build
 
 
 
@@ -163,7 +163,7 @@ scrollAnimation =
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
-    Scroll.subscriptions GotScrollMsg model.scrollState
+    Sub.subscriptions GotScrollMsg model.scrollState
 
 
 

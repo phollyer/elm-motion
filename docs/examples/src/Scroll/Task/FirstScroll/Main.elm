@@ -5,8 +5,8 @@ import Html exposing (Html, button, div, text)
 import Html.Attributes exposing (class, id, style)
 import Html.Events exposing (onClick)
 import Motion.Easing as Easing exposing (Easing(..))
-import Scroll.Builder as ScrollTo
-import Scroll.Engine.Task as Scroll exposing (ScrollBuilder)
+import Scroll.Builder as Scroll
+import Scroll.Engine.Task as Task exposing (ScrollBuilder)
 import Task
 
 
@@ -52,7 +52,7 @@ init =
 
 type Msg
     = ScrollTo String
-    | ScrollResult (Result Scroll.ScrollError (List Scroll.ScrollOk))
+    | ScrollResult (Result Task.ScrollError (List Task.ScrollOk))
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -62,7 +62,7 @@ update msg model =
         ScrollTo targetId ->
             ( { model | status = Scrolling }
             , Task.attempt ScrollResult <|
-                Scroll.scroll <|
+                Task.scroll <|
                     scrollToElement targetId
             )
 
@@ -71,14 +71,14 @@ update msg model =
         ScrollResult (Ok _) ->
             ( { model | status = Arrived }, Cmd.none )
 
-        ScrollResult (Err (Scroll.ScrollError err)) ->
+        ScrollResult (Err (Task.ScrollError err)) ->
             let
                 containerLabel =
                     case err.container of
-                        Scroll.Document ->
+                        Task.Document ->
                             "document"
 
-                        Scroll.Container id ->
+                        Task.Container id ->
                             id
             in
             ( { model | status = Failed ("Scroll failed for container: " ++ containerLabel) }
@@ -93,11 +93,11 @@ update msg model =
 
 scrollToElement : String -> ScrollBuilder -> ScrollBuilder
 scrollToElement targetId =
-    ScrollTo.forContainer "scroll-container"
-        >> ScrollTo.toElement targetId
-        >> ScrollTo.speed 250
-        >> ScrollTo.easing BounceOut
-        >> ScrollTo.build
+    Scroll.forContainer "scroll-container"
+        >> Scroll.toElement targetId
+        >> Scroll.speed 250
+        >> Scroll.easing BounceOut
+        >> Scroll.build
 
 
 

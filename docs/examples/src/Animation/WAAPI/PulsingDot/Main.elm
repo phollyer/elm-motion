@@ -63,7 +63,9 @@ init =
                 ]
 
         ( newAnimState, cmd ) =
-            WAAPI.animate animState pulse
+            WAAPI.animate animState <|
+                WAAPI.for groupName
+                    >> pulse
     in
     ( { animState = newAnimState }
     , cmd
@@ -89,11 +91,9 @@ pulse =
         >> WAAPI.alternate
         >> WAAPI.duration 1000
         >> WAAPI.easing EaseInOut
-        >> WAAPI.for groupName
         >> Scale.begin
         >> Scale.to 0.4
         >> Scale.end
-        >> WAAPI.for groupName
         >> Opacity.begin
         >> Opacity.to 0.3
         >> Opacity.end

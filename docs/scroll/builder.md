@@ -58,8 +58,6 @@ Scrolls a specific element identified by its `id`. Use this for sidebars, panels
             >> Scroll.build
     ```
 
-The element with `id="results-panel"` must actually be scrollable in CSS (`overflow: auto` / `overflow: scroll`).
-
 ---
 
 ## 2. Pick a Target
