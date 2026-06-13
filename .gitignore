@@ -5,9 +5,6 @@ example/index.html
 docs.json
 documentation.json
 
-#Ignore vscode AI rules
-.github/instructions/codacy.instructions.md
-
 # Ignore NPM Modules
 node_modules
 npm-debug.log
