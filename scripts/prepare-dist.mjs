@@ -34,14 +34,13 @@ const distPkg = {
     publishConfig: {
         access: 'public'
     },
-    main: 'elm-motion.js',
+    main: 'elm-motion.mjs',
     module: 'elm-motion.mjs',
     types: 'elm-motion.d.ts',
     exports: {
         '.': {
             types: './elm-motion.d.ts',
-            import: './elm-motion.mjs',
-            require: './elm-motion.js'
+            import: './elm-motion.mjs'
         }
     },
     keywords: pkg.keywords,

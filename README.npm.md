@@ -2,6 +2,8 @@
 
 JavaScript companion for the [`phollyer/elm-motion`](https://package.elm-lang.org/packages/phollyer/elm-motion/latest/) Elm package. Provides Web Animations API integration via Elm ports, enabling hardware-accelerated animations and scroll-driven animations (ScrollTimeline, ViewTimeline) from Elm.
 
+This package is ESM-only. Use `import` from an ESM-aware bundler or runtime.
+
 ## Installation
 
 ```bash
@@ -22,12 +24,6 @@ elm install phollyer/elm-motion
 
 ```javascript
 import ElmMotion from '@phollyer/elm-motion'
-```
-
-#### CommonJS
-
-```javascript
-const ElmMotion = require('@phollyer/elm-motion')
 ```
 
 #### Script tag (CDN)

@@ -1,17 +1,16 @@
 {
   "name": "@phollyer/elm-motion",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "JavaScript companion for the phollyer/elm-motion Elm package - Web Animations API integration via Elm ports",
   "type": "module",
   "private": true,
-  "main": "dist/elm-motion.js",
+  "main": "dist/elm-motion.mjs",
   "module": "dist/elm-motion.mjs",
   "types": "dist/elm-motion.d.ts",
   "exports": {
     ".": {
       "types": "./dist/elm-motion.d.ts",
-      "import": "./dist/elm-motion.mjs",
-      "require": "./dist/elm-motion.js"
+      "import": "./dist/elm-motion.mjs"
     }
   },
   "scripts": {
