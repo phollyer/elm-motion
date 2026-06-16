@@ -10,7 +10,7 @@
  * Rollup output (elm-motion.js, elm-motion.mjs) and sync-types.mjs output
  * (elm-motion.d.ts) already live in dist/.
  *
- * Publish with:  npm publish dist/
+ * Publish with:  npm run publish:dist
  */
 
 import { copyFile, readFile, writeFile, mkdir } from 'node:fs/promises';
@@ -31,6 +31,9 @@ const distPkg = {
     version: pkg.version,
     description: pkg.description,
     type: pkg.type,
+    scripts: {
+        prepublishOnly: "node -e \"if (process.env.ELM_MOTION_APPROVED_PUBLISH !== '1') { console.error('Use npm run publish:dist from the repository root. Direct npm publish dist/ is blocked.'); process.exit(1); }\""
+    },
     publishConfig: {
         access: 'public'
     },

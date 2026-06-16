@@ -23,7 +23,7 @@
     "test:js": "vitest run",
     "test:js:coverage": "vitest run --coverage",
     "prepublishOnly": "npm test && npm run check-types",
-    "publish:dist": "npm test && npm run check-types && npm run build && npm publish --access public dist/",
+    "publish:dist": "npm test && npm run check-types && npm run build && ELM_MOTION_APPROVED_PUBLISH=1 npm publish --access public dist/",
     "postinstall": "elm-tooling install"
   },
   "keywords": [
