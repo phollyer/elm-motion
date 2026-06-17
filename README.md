@@ -7,7 +7,7 @@ A comprehensive Elm package for smooth, high-performance DOM animations and scro
 - **6 Animation Engines** — Transition, Keyframe, Sub, WAAPI, ScrollTimeline, ViewTimeline
 - **3 Scroll Engines** — Cmd, Task, Sub
 - **Three timelines, one API** — drive animations by time, scroll progress or viewport position
-- **Engine-scoped control** — Sub and WAAPI support query/divert/pause/resume/restart/stop; Transition supports stop/reset; timeline engines are fire-and-forget
+- **Mid-flight control** — query, divert, pause, resume, restart and stop animations and scrolls in motion
 - **Hardware-accelerated** — GPU transforms with full 3D support
 - **Type Safe** — only the capabilities an engine actually supports compile against it
 
