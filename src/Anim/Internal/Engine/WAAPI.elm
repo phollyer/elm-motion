@@ -992,7 +992,8 @@ subscriptions toMsg (AnimState state _) =
 -- ============================================================
 
 
-{-| Adjust the in-flight properties of every anim group referenced by the\\nresize builder to new bounding ranges.\\n
+{-| Adjust the in-flight properties of every anim group referenced
+by the resize builder to new bounding ranges.
 -}
 onResize : AnimState msg -> (AnimBuilder Builder.ForResizeWAAPI -> AnimBuilder Builder.ForResizeWAAPI) -> ( AnimState msg, Cmd msg )
 onResize (AnimState state animGroups) buildResize =
@@ -1036,7 +1037,7 @@ applyBoundsEntry animGroupName ( prop, ranges ) ( (AnimState state _) as st, acc
 
         prev =
             Dict.get cacheKey state.lastResize
-                |> Maybe.withDefault emptyBounds
+                |> Maybe.withDefault { x = Nothing, y = Nothing, z = Nothing }
 
         ( nextState, cmd ) =
             case propKey of
@@ -1064,11 +1065,6 @@ applyBoundsEntry animGroupName ( prop, ranges ) ( (AnimState state _) as st, acc
                 nextGroups
     in
     ( cachedState, cmd :: accCmds )
-
-
-emptyBounds : Builder.AxisBounds
-emptyBounds =
-    { x = Nothing, y = Nothing, z = Nothing }
 
 
 applyTranslateResize : AnimGroupName -> Builder.AxisBounds -> Builder.AxisBounds -> AnimState msg -> ( AnimState msg, Cmd msg )
@@ -1462,10 +1458,7 @@ rebaseFor propName =
             Nothing
 
 
-rebaseTranslateConfig :
-    ResizeAxisState
-    -> Builder.ProcessedPropertyConfig
-    -> Builder.ProcessedPropertyConfig
+rebaseTranslateConfig : ResizeAxisState -> Builder.ProcessedPropertyConfig -> Builder.ProcessedPropertyConfig
 rebaseTranslateConfig cached config =
     case config of
         Builder.ProcessedTranslateConfig cfg ->
@@ -2610,6 +2603,17 @@ easing =
 
 
 -- ============================================================
+-- SPRING
+-- ============================================================
+
+
+spring : Spring -> Builder.AnimBuilder { eng | withSpring : () } -> Builder.AnimBuilder { eng | withSpring : () }
+spring =
+    Builder.spring
+
+
+
+-- ============================================================
 -- UNIT
 -- ============================================================
 
@@ -2632,17 +2636,6 @@ cssUnitY =
 cssUnitZ : Unit -> Builder.AnimBuilder eng -> Builder.AnimBuilder eng
 cssUnitZ =
     Builder.cssUnitZ
-
-
-
--- ============================================================
--- SPRING
--- ============================================================
-
-
-spring : Spring -> Builder.AnimBuilder { eng | withSpring : () } -> Builder.AnimBuilder { eng | withSpring : () }
-spring =
-    Builder.spring
 
 
 
@@ -2945,13 +2938,7 @@ freezeScale =
 
 freezeSkew : FreezeProperty
 freezeSkew =
-    Builder.FreexeSkew
-
-
-
--- ============================================================
--- FREEZE
--- ============================================================
+    Builder.FreezeSkew
 
 
 freezeAxes : List String -> List FreezeProperty -> EngineBuilder -> EngineBuilder
@@ -3015,20 +3002,14 @@ isRunning animGroupName (AnimState _ data) =
 
 
 
--- ============================================================
--- PROPERTY QUERIES
--- ============================================================
+-- ============================
+-- CUSTOM PROPERTY
+-- ============================
 
 
 getBuilder : AnimState msg -> EngineBuilder
 getBuilder (AnimState state _) =
     state.builder
-
-
-
--- ============================
--- CUSTOM PROPERTY
--- ============================
 
 
 getPropertyStart : AnimGroupName -> String -> AnimState msg -> Maybe Float

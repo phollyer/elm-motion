@@ -19,8 +19,20 @@ import Anim.Internal.Property.Shared.Axis3 as Axis
 import Shared.TimeSpec as TimeSpec exposing (TimeSpec)
 
 
+
+-- ============================================================
+-- TYPES
+-- ============================================================
+
+
 type Rotate
     = Rotate { x : Float, y : Float, z : Float }
+
+
+
+-- ============================================================
+-- BUILD
+-- ============================================================
 
 
 default : Rotate
@@ -28,21 +40,21 @@ default =
     Rotate { x = 0, y = 0, z = 0 }
 
 
+
+-- ============================================================
+-- TRANSFORM
+-- ============================================================
+
+
 support : Axis.Axis3Support Rotate
 support =
-    { zero = default
+    { default = default
     , fromRecord = Rotate
     , toRecord = \(Rotate angles) -> angles
     , add = \(Rotate a) (Rotate b) -> Rotate { x = a.x + b.x, y = a.y + b.y, z = a.z + b.z }
     , subtract = \(Rotate a) (Rotate b) -> Rotate { x = a.x - b.x, y = a.y - b.y, z = a.z - b.z }
     , scale = \factor (Rotate angles) -> Rotate { x = angles.x * factor, y = angles.y * factor, z = angles.z * factor }
     }
-
-
-
--- ============================================================
--- TRANSFORM
--- ============================================================
 
 
 fromRecord : { x : Float, y : Float, z : Float } -> Rotate

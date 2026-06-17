@@ -19,17 +19,28 @@ import Dict exposing (Dict)
 -- ============================================================
 
 
-type alias PropertyName =
-    String
-
-
 type Animations
     = Animations (Dict PropertyName Animation)
 
 
+type alias PropertyName =
+    String
+
+
 
 -- ============================================================
--- OPERATIONS
+-- BUILD
+-- ============================================================
+
+
+add : Animations -> Animations -> Animations
+add (Animations additional) (Animations existing) =
+    Animations (Dict.union existing additional)
+
+
+
+-- ============================================================
+-- INITIALIZE
 -- ============================================================
 
 
@@ -38,9 +49,26 @@ init =
     Animations Dict.empty
 
 
-add : Animations -> Animations -> Animations
-add (Animations additional) (Animations existing) =
-    Animations (Dict.union existing additional)
+
+-- ============================================================
+-- QUERY
+-- ============================================================
+
+
+get : PropertyName -> Animations -> Maybe Animation
+get key (Animations dict) =
+    Dict.get key dict
+
+
+list : Animations -> List Animation
+list (Animations dict) =
+    Dict.values dict
+
+
+
+-- ============================================================
+-- TRANSFORM
+-- ============================================================
 
 
 foldl : (PropertyName -> Animation -> v -> v) -> v -> Animations -> v
@@ -53,16 +81,6 @@ fromList =
     Dict.fromList >> Animations
 
 
-get : PropertyName -> Animations -> Maybe Animation
-get key (Animations dict) =
-    Dict.get key dict
-
-
 map : (PropertyName -> Animation -> Animation) -> Animations -> Animations
 map f (Animations dict) =
     Animations (Dict.map f dict)
-
-
-list : Animations -> List Animation
-list (Animations dict) =
-    Dict.values dict

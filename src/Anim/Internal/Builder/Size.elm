@@ -54,6 +54,12 @@ type alias SizeConfig =
     Builder.AnimationConfig Size
 
 
+
+-- ============================================================
+-- BUILD
+-- ============================================================
+
+
 default : Float
 default =
     0.0
@@ -63,12 +69,6 @@ defaultConfig : SizeConfig
 defaultConfig =
     PropertyBuilder.defaultConfig <|
         Size.fromTuple ( default, default )
-
-
-
--- ============================================================
--- BUILD
--- ============================================================
 
 
 for : String -> AnimBuilder eng -> SizeBuilder eng
@@ -188,30 +188,6 @@ fromH h (SizeBuilder config builder) =
     fromHW h w (SizeBuilder config builder)
 
 
-byHW : Float -> Float -> SizeBuilder eng -> SizeBuilder eng
-byHW deltaH deltaW (SizeBuilder config builder) =
-    let
-        startH =
-            PropertyBuilder.getFloat Size.getH default config.start
-
-        startW =
-            PropertyBuilder.getFloat Size.getW default config.start
-    in
-    SizeBuilder config builder
-        |> fromHW startH startW
-        |> toHW (startH + deltaH) (startW + deltaW)
-
-
-byH : Float -> SizeBuilder eng -> SizeBuilder eng
-byH deltaH =
-    byHW deltaH 0
-
-
-byW : Float -> SizeBuilder eng -> SizeBuilder eng
-byW deltaW =
-    byHW 0 deltaW
-
-
 fromW : Float -> SizeBuilder eng -> SizeBuilder eng
 fromW w (SizeBuilder config builder) =
     let
@@ -267,10 +243,6 @@ toW w (SizeBuilder config builder) =
         (markAxes [ "width" ] builder)
 
 
-
--- Private helpers shared by TO setters.
-
-
 setEnd : Size -> SizeConfig -> SizeConfig
 setEnd newEnd config =
     PropertyBuilder.setEnd Size.default Size.distance newEnd config
@@ -279,6 +251,36 @@ setEnd newEnd config =
 markAxes : List String -> AnimBuilder eng -> AnimBuilder eng
 markAxes axes builder =
     Builder.markAxes "size" axes builder
+
+
+
+-- ============================================================
+-- BY
+-- ============================================================
+
+
+byHW : Float -> Float -> SizeBuilder eng -> SizeBuilder eng
+byHW deltaH deltaW (SizeBuilder config builder) =
+    let
+        startH =
+            PropertyBuilder.getFloat Size.getH default config.start
+
+        startW =
+            PropertyBuilder.getFloat Size.getW default config.start
+    in
+    SizeBuilder config builder
+        |> fromHW startH startW
+        |> toHW (startH + deltaH) (startW + deltaW)
+
+
+byH : Float -> SizeBuilder eng -> SizeBuilder eng
+byH deltaH =
+    byHW deltaH 0
+
+
+byW : Float -> SizeBuilder eng -> SizeBuilder eng
+byW deltaW =
+    byHW 0 deltaW
 
 
 
@@ -357,14 +359,10 @@ spring s (SizeBuilder config builder) =
 
 
 -- ============================================================
--- BOUNDS (resize)
+-- BOUNDS
 -- ============================================================
 
 
-{-| Mark this size config as a `RemapToBounds` resize directive for
-the current animation group. See `Anim.Internal.Builder.Translate.bounds`
-for the design.
--}
 bounds : Builder.AxisBounds -> SizeBuilder { eng | withBounds : () } -> SizeBuilder { eng | withBounds : () }
 bounds ranges (SizeBuilder config builder) =
     SizeBuilder { config | mode = Builder.RemapToBounds ranges } builder
@@ -372,7 +370,7 @@ bounds ranges (SizeBuilder config builder) =
 
 
 -- ============================================================
--- BOUNDS
+-- CLAMPS
 -- ============================================================
 
 

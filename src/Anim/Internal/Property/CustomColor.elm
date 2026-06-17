@@ -7,7 +7,6 @@ module Anim.Internal.Property.CustomColor exposing
     , for
     , from
     , set
-    , snap
     , speed
     , spring
     , to
@@ -32,15 +31,15 @@ type Builder eng
     = Builder String (Builder.AnimationConfig Color) (AnimBuilder eng)
 
 
-defaultColor : Color
-defaultColor =
-    Color.fromRGBA { r = 255, g = 255, b = 255, a = 0 }
-
-
 
 -- ============================================================
 -- BUILD
 -- ============================================================
+
+
+defaultColor : Color
+defaultColor =
+    Color.fromRGBA { r = 255, g = 255, b = 255, a = 0 }
 
 
 for : String -> String -> AnimBuilder eng -> Builder eng
@@ -184,16 +183,28 @@ duration dur (Builder cssName config builder) =
     Builder cssName (PropertyBuilder.duration dur config) builder
 
 
+delay : Int -> Builder { eng | withTiming : () } -> Builder { eng | withTiming : () }
+delay dly (Builder cssName config builder) =
+    Builder cssName (PropertyBuilder.delay dly config) builder
+
+
+
+-- ============================================================
+-- EASING
+-- ============================================================
+
+
 easing : Easing -> Builder eng -> Builder eng
 easing ease (Builder cssName config builder) =
     Builder cssName (PropertyBuilder.easing ease config) builder
 
 
+
+-- ============================================================
+-- SPRING
+-- ============================================================
+
+
 spring : Spring -> Builder { eng | withSpring : () } -> Builder { eng | withSpring : () }
 spring s (Builder cssName config builder) =
     Builder cssName (PropertyBuilder.spring s config) builder
-
-
-delay : Int -> Builder { eng | withTiming : () } -> Builder { eng | withTiming : () }
-delay dly (Builder cssName config builder) =
-    Builder cssName (PropertyBuilder.delay dly config) builder

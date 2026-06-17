@@ -3,6 +3,10 @@ module Scroll.Internal.Shared.Container exposing
     , toContainer
     )
 
+-- ============================================================
+-- TYPES
+-- ============================================================
+
 
 type Container
     = Document
@@ -11,6 +15,12 @@ type Container
 
 type alias ElementId =
     String
+
+
+
+-- ============================================================
+-- BUILD
+-- ============================================================
 
 
 toContainer : String -> Container

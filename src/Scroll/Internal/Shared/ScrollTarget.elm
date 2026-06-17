@@ -30,15 +30,13 @@ positions, elements, or coordinates within containers.
 
 -}
 
-
-type ScrollTarget
-    = ScrollTarget ScrollTargetData
-
-
-
 -- ============================================================
 -- TYPES
 -- ============================================================
+
+
+type ScrollTarget
+    = ScrollTarget ScrollTargetData
 
 
 type alias ScrollTargetData =

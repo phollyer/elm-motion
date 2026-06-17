@@ -30,30 +30,55 @@ type Scale
     = Scale { x : Float, y : Float, z : Float }
 
 
+
+-- ============================================================
+-- BUILD
+-- ============================================================
+
+
 default : Scale
 default =
     Scale { x = 1.0, y = 1.0, z = 1.0 }
+
+
+
+-- ============================================================
+-- QUERY
+-- ============================================================
+
+
+getY : Scale -> Float
+getY (Scale { y }) =
+    y
+
+
+getX : Scale -> Float
+getX (Scale { x }) =
+    x
+
+
+getZ : Scale -> Float
+getZ (Scale { z }) =
+    z
+
+
+
+-- ============================================================
+-- TRANSFORM
+-- ============================================================
 
 
 {-| Support interface for generic 3D coordinate operations
 -}
 support : Axis.Axis3Support Scale
 support =
-    { zero = default -- For Scale, "zero" is actually (1,1,1)
+    { default = default
     , fromRecord = Scale
     , toRecord = \(Scale coords) -> coords
-
-    -- Scale uses additive operations: 1.0 + 0.2 = 1.2 (120% scale)
     , add = \(Scale a) (Scale b) -> Scale { x = a.x + b.x, y = a.y + b.y, z = a.z + b.z }
     , subtract = \(Scale a) (Scale b) -> Scale { x = a.x - b.x, y = a.y - b.y, z = a.z - b.z }
     , scale = \factor (Scale coords) -> Scale { x = coords.x * factor, y = coords.y * factor, z = coords.z * factor }
     }
-
-
-
--- ============================================================
--- CONVERSIONS
--- ============================================================
 
 
 toCssString : Scale -> String
@@ -101,12 +126,6 @@ toCssPropertyValue (Scale { x, y, z }) =
         String.fromFloat x ++ " " ++ String.fromFloat y
 
 
-
--- ============================================================
--- CONSTRUCTORS
--- ============================================================
-
-
 toTriple : Scale -> ( Float, Float, Float )
 toTriple =
     Axis.toTriple support
@@ -127,19 +146,20 @@ fromRecord =
     Axis.fromRecord support
 
 
-getY : Scale -> Float
-getY (Scale { y }) =
-    y
+
+-- ============================================================
+-- TIMING
+-- ============================================================
 
 
-getX : Scale -> Float
-getX (Scale { x }) =
-    x
+speed : Float -> Float -> TimeSpec -> Float
+speed =
+    TimeSpec.speed
 
 
-getZ : Scale -> Float
-getZ (Scale { z }) =
-    z
+duration : Float -> TimeSpec -> Float
+duration =
+    TimeSpec.duration
 
 
 
@@ -156,13 +176,3 @@ interpolate =
 distance : Scale -> Scale -> Float
 distance =
     Axis.distance support
-
-
-speed : Float -> Float -> TimeSpec -> Float
-speed =
-    TimeSpec.speed
-
-
-duration : Float -> TimeSpec -> Float
-duration =
-    TimeSpec.duration

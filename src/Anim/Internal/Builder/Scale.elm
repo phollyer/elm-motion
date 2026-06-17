@@ -70,6 +70,12 @@ type alias ScaleConfig =
     Builder.AnimationConfig Scale
 
 
+
+-- ============================================================
+-- BUILD
+-- ============================================================
+
+
 default : Float
 default =
     1.0
@@ -78,12 +84,6 @@ default =
 defaultConfig : ScaleConfig
 defaultConfig =
     PropertyBuilder.defaultConfig Scale.default
-
-
-
--- ============================================================
--- BUILD
--- ============================================================
 
 
 for : String -> AnimBuilder eng -> ScaleBuilder eng
@@ -253,53 +253,6 @@ fromZ scaleZ (ScaleBuilder config builder) =
         ScaleBuilder config builder
 
 
-byXYZ : Float -> Float -> Float -> ScaleBuilder eng -> ScaleBuilder eng
-byXYZ deltaX deltaY deltaZ (ScaleBuilder config builder) =
-    let
-        startX =
-            PropertyBuilder.getFloat Scale.getX default config.start
-
-        startY =
-            PropertyBuilder.getFloat Scale.getY default config.start
-
-        startZ =
-            PropertyBuilder.getFloat Scale.getZ default config.start
-    in
-    ScaleBuilder config builder
-        |> fromXYZ startX startY startZ
-        |> toXYZ (startX + deltaX) (startY + deltaY) (startZ + deltaZ)
-
-
-byXY : Float -> Float -> ScaleBuilder eng -> ScaleBuilder eng
-byXY deltaX deltaY =
-    byXYZ deltaX deltaY 0
-
-
-byXZ : Float -> Float -> ScaleBuilder eng -> ScaleBuilder eng
-byXZ deltaX deltaZ =
-    byXYZ deltaX 0 deltaZ
-
-
-byX : Float -> ScaleBuilder eng -> ScaleBuilder eng
-byX deltaX =
-    byXYZ deltaX 0 0
-
-
-byYZ : Float -> Float -> ScaleBuilder eng -> ScaleBuilder eng
-byYZ deltaY deltaZ =
-    byXYZ 0 deltaY deltaZ
-
-
-byY : Float -> ScaleBuilder eng -> ScaleBuilder eng
-byY deltaY =
-    byXYZ 0 deltaY 0
-
-
-byZ : Float -> ScaleBuilder eng -> ScaleBuilder eng
-byZ deltaZ =
-    byXYZ 0 0 deltaZ
-
-
 
 -- ============================================================
 -- TO
@@ -411,10 +364,6 @@ toZ z (ScaleBuilder config builder) =
         (markAxes [ "z" ] builder)
 
 
-
--- Private helpers shared by TO setters.
-
-
 setEnd : Scale -> ScaleConfig -> ScaleConfig
 setEnd newEnd config =
     PropertyBuilder.setEnd Scale.default Scale.distance newEnd config
@@ -423,6 +372,59 @@ setEnd newEnd config =
 markAxes : List String -> AnimBuilder eng -> AnimBuilder eng
 markAxes axes builder =
     Builder.markAxes "scale" axes builder
+
+
+
+-- ============================================================
+-- BY
+-- ============================================================
+
+
+byXYZ : Float -> Float -> Float -> ScaleBuilder eng -> ScaleBuilder eng
+byXYZ deltaX deltaY deltaZ (ScaleBuilder config builder) =
+    let
+        startX =
+            PropertyBuilder.getFloat Scale.getX default config.start
+
+        startY =
+            PropertyBuilder.getFloat Scale.getY default config.start
+
+        startZ =
+            PropertyBuilder.getFloat Scale.getZ default config.start
+    in
+    ScaleBuilder config builder
+        |> fromXYZ startX startY startZ
+        |> toXYZ (startX + deltaX) (startY + deltaY) (startZ + deltaZ)
+
+
+byXY : Float -> Float -> ScaleBuilder eng -> ScaleBuilder eng
+byXY deltaX deltaY =
+    byXYZ deltaX deltaY 0
+
+
+byXZ : Float -> Float -> ScaleBuilder eng -> ScaleBuilder eng
+byXZ deltaX deltaZ =
+    byXYZ deltaX 0 deltaZ
+
+
+byX : Float -> ScaleBuilder eng -> ScaleBuilder eng
+byX deltaX =
+    byXYZ deltaX 0 0
+
+
+byYZ : Float -> Float -> ScaleBuilder eng -> ScaleBuilder eng
+byYZ deltaY deltaZ =
+    byXYZ 0 deltaY deltaZ
+
+
+byY : Float -> ScaleBuilder eng -> ScaleBuilder eng
+byY deltaY =
+    byXYZ 0 deltaY 0
+
+
+byZ : Float -> ScaleBuilder eng -> ScaleBuilder eng
+byZ deltaZ =
+    byXYZ 0 0 deltaZ
 
 
 
@@ -478,21 +480,6 @@ setZ z =
 
 
 -- ============================================================
--- BOUNDS (resize)
--- ============================================================
-
-
-{-| Mark this scale config as a `RemapToBounds` resize directive for
-the current animation group. See `Anim.Internal.Builder.Translate.bounds`
-for the design.
--}
-bounds : Builder.AxisBounds -> ScaleBuilder { eng | withBounds : () } -> ScaleBuilder { eng | withBounds : () }
-bounds ranges (ScaleBuilder config builder) =
-    ScaleBuilder { config | mode = Builder.RemapToBounds ranges } builder
-
-
-
--- ============================================================
 -- TIMING
 -- ============================================================
 
@@ -537,6 +524,17 @@ spring s (ScaleBuilder config builder) =
 
 -- ============================================================
 -- BOUNDS
+-- ============================================================
+
+
+bounds : Builder.AxisBounds -> ScaleBuilder { eng | withBounds : () } -> ScaleBuilder { eng | withBounds : () }
+bounds ranges (ScaleBuilder config builder) =
+    ScaleBuilder { config | mode = Builder.RemapToBounds ranges } builder
+
+
+
+-- ============================================================
+-- CLAMPS
 -- ============================================================
 
 

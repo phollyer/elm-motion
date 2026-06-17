@@ -1,20 +1,14 @@
 module Anim.Internal.Resize.Builder exposing
-    ( Bounds, AxisBounds, AxisResult
-    , isEmpty, applyAxis
+    ( AxisBounds
+    , AxisResult
+    , Bounds
+    , applyAxis
+    , isEmpty
     )
 
-{-| Math + types used by the engine resize pipeline.
-
-This module no longer carries an accumulator: bounds directives are now
-expressed through the regular `AnimBuilder` pipeline (a `RemapToBounds`
-[`AnimationMode`](Anim-Internal-Builder#AnimationMode) attached to
-specific property entries) and extracted by
-[`partitionForResize`](Anim-Internal-Builder#partitionForResize). What
-remains here is the per-axis math (`applyAxis`) and the shared
-[`AxisBounds`](#AxisBounds) / [`Bounds`](#Bounds) record shapes used
-throughout the engine internals.
-
--}
+-- ============================================================
+-- TYPES
+-- ============================================================
 
 
 type alias Bounds =
@@ -35,11 +29,23 @@ type alias AxisResult =
     }
 
 
+
+-- ============================================================
+-- QUERY
+-- ============================================================
+
+
 {-| A resize directive with no populated axes is treated as a no-op by engines.
 -}
 isEmpty : AxisBounds -> Bool
 isEmpty bounds_ =
     bounds_.x == Nothing && bounds_.y == Nothing && bounds_.z == Nothing
+
+
+
+-- ============================================================
+-- BUILD
+-- ============================================================
 
 
 {-| Compute new per-axis start / end / current under proportional resize.

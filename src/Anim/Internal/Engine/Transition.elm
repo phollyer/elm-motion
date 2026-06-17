@@ -25,7 +25,7 @@ import Anim.Internal.Engine.CSS.Styles as Styles exposing (Styles)
 import Anim.Internal.Engine.Shared.AnimGroups as AnimGroups exposing (AnimGroups)
 import Anim.Internal.Engine.Shared.PlayState as PlayState
 import Anim.Internal.Engine.Transition.AnimGroup as AnimGroup exposing (AnimGroup)
-import Anim.Internal.Engine.Transition.Generator as Generator exposing (AnimGroupName)
+import Anim.Internal.Engine.Transition.Generator as Generator
 import Anim.Internal.Engine.Transition.Styles as TransitionStyles
 import Anim.Internal.Extra.Color as Color exposing (Color(..))
 import Anim.Internal.Property.Opacity as Opacity

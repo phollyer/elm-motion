@@ -31,25 +31,20 @@ type Translate
     = Translate { x : Float, y : Float, z : Float }
 
 
+
+-- ============================================================
+-- BUILD
+-- ============================================================
+
+
 default : Translate
 default =
     Translate { x = 0, y = 0, z = 0 }
 
 
-support : Axis.Axis3Support Translate
-support =
-    { zero = default
-    , fromRecord = Translate
-    , toRecord = \(Translate coords) -> coords
-    , add = \(Translate a) (Translate b) -> Translate { x = a.x + b.x, y = a.y + b.y, z = a.z + b.z }
-    , subtract = \(Translate a) (Translate b) -> Translate { x = a.x - b.x, y = a.y - b.y, z = a.z - b.z }
-    , scale = \factor (Translate coords) -> Translate { x = coords.x * factor, y = coords.y * factor, z = coords.z * factor }
-    }
-
-
 
 -- ============================================================
--- CONSTRUCTORS
+-- QUERY
 -- ============================================================
 
 
@@ -68,6 +63,33 @@ getZ (Translate coords) =
     coords.z
 
 
+
+-- ============================================================
+-- TRANSFORM
+-- ============================================================
+
+
+support : Axis.Axis3Support Translate
+support =
+    { default = default
+    , fromRecord = Translate
+    , toRecord = \(Translate coords) -> coords
+    , add = \(Translate a) (Translate b) -> Translate { x = a.x + b.x, y = a.y + b.y, z = a.z + b.z }
+    , subtract = \(Translate a) (Translate b) -> Translate { x = a.x - b.x, y = a.y - b.y, z = a.z - b.z }
+    , scale = \factor (Translate coords) -> Translate { x = coords.x * factor, y = coords.y * factor, z = coords.z * factor }
+    }
+
+
+fromRecord : { x : Float, y : Float, z : Float } -> Translate
+fromRecord =
+    Axis.fromRecord support
+
+
+toRecord : Translate -> { x : Float, y : Float, z : Float }
+toRecord =
+    Axis.toRecord support
+
+
 fromTriple : ( Float, Float, Float ) -> Translate
 fromTriple =
     Axis.fromTriple support
@@ -76,12 +98,6 @@ fromTriple =
 toTriple : Translate -> ( Float, Float, Float )
 toTriple =
     Axis.toTriple support
-
-
-
--- ============================================================
--- CONVERSIONS
--- ============================================================
 
 
 toCssString : InternalUnit.ResolvedCssUnitAxes -> Translate -> String
@@ -112,6 +128,22 @@ toCssPropertyValue axes (Translate coords) =
 
 
 -- ============================================================
+-- TIMING
+-- ============================================================
+
+
+speed : Float -> Float -> TimeSpec -> Float
+speed =
+    TimeSpec.speed
+
+
+duration : Float -> TimeSpec -> Float
+duration =
+    TimeSpec.duration
+
+
+
+-- ============================================================
 -- MATH
 -- ============================================================
 
@@ -124,23 +156,3 @@ distance =
 interpolate : Float -> Translate -> Translate -> Translate
 interpolate =
     Axis.interpolate support
-
-
-fromRecord : { x : Float, y : Float, z : Float } -> Translate
-fromRecord =
-    Axis.fromRecord support
-
-
-toRecord : Translate -> { x : Float, y : Float, z : Float }
-toRecord =
-    Axis.toRecord support
-
-
-speed : Float -> Float -> TimeSpec -> Float
-speed =
-    TimeSpec.speed
-
-
-duration : Float -> TimeSpec -> Float
-duration =
-    TimeSpec.duration

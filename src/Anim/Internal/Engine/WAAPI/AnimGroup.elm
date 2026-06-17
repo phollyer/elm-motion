@@ -53,12 +53,12 @@ import Dict exposing (Dict)
 type AnimGroup
     = AnimGroup
         { propertySnapshot : PropertyBaselines
-        , propertyStates : AnimGroups PropertyState -- Tracks version and status per property type ("position", "opacity", etc.)
-        , transformOrder : List TransformProperty -- Order to apply transforms (default: Translate → Rotate → Scale)
-        , progress : Float -- Current animation progress (0.0 to 1.0)
+        , propertyStates : AnimGroups PropertyState
+        , transformOrder : List TransformProperty
+        , progress : Float
         , iterations : Builder.Iterations
-        , currentIteration : Int -- Latest iteration index reported by WAAPI (0 = first leg)
-        , resizeStates : Dict String ResizeAxisState -- Latest resize-updated leg state per property name ("translate", "scale", "perspectiveOrigin", ...). A missing key means no resize has fired yet for that property on this group.
+        , currentIteration : Int
+        , resizeStates : Dict String ResizeAxisState
         , animationDirection : Builder.AnimationDirection
         , discreteEntry : Dict String Builder.DiscreteEntryProperty
         , discreteExit : Dict String Builder.DiscreteExitProperty
@@ -76,12 +76,6 @@ type alias Vec3 =
     { x : Float, y : Float, z : Float }
 
 
-{-| Per-axis forward-axis proportion snapshot (0 = at `b.min`, 1 = at
-`b.max`, regardless of animation direction). `Nothing` on an axis means
-no snapshot exists yet — the resize handler falls back to the legacy
-absolute-pixel `(oldCurrent - oldMin) / oldRange` derivation for that
-axis.
--}
 type alias AxisProportion =
     { x : Maybe Float, y : Maybe Float, z : Maybe Float }
 
@@ -141,98 +135,48 @@ init =
 
 
 -- ============================================================
--- QUERY
--- ============================================================
-
-
-isRunning : AnimGroup -> Bool
-isRunning =
-    getPropertyStates
-        >> AnimGroups.groups
-        >> List.any (\prop -> prop.status == Running)
-
-
-isComplete : AnimGroup -> Bool
-isComplete =
-    getPropertyStates
-        >> AnimGroups.groups
-        >> List.all (\prop -> prop.status == Complete)
-
-
-isPaused : AnimGroup -> Bool
-isPaused =
-    getPropertyStates
-        >> AnimGroups.groups
-        >> List.any (\prop -> prop.status == Paused)
-
-
-getAnimationDirection : AnimGroup -> Builder.AnimationDirection
-getAnimationDirection (AnimGroup group) =
-    group.animationDirection
-
-
-getCurrentIteration : AnimGroup -> Int
-getCurrentIteration (AnimGroup group) =
-    group.currentIteration
-
-
-{-| Look up the cached resize-aware leg state for a given property name
-("translate", "scale", "perspectiveOrigin", ...). Returns `Nothing`
-when no resize has fired yet for that property on this group.
--}
-getResizeState : String -> AnimGroup -> Maybe ResizeAxisState
-getResizeState propName (AnimGroup group) =
-    Dict.get propName group.resizeStates
-
-
-getDiscreteEntry : AnimGroup -> Dict String Builder.DiscreteEntryProperty
-getDiscreteEntry (AnimGroup group) =
-    group.discreteEntry
-
-
-getDiscreteExit : AnimGroup -> Dict String Builder.DiscreteExitProperty
-getDiscreteExit (AnimGroup group) =
-    group.discreteExit
-
-
-getIterations : AnimGroup -> Builder.Iterations
-getIterations (AnimGroup group) =
-    group.iterations
-
-
-getProgress : AnimGroup -> Float
-getProgress (AnimGroup group) =
-    group.progress
-
-
-getPropertySnapshot : AnimGroup -> PropertyBaselines
-getPropertySnapshot (AnimGroup group) =
-    group.propertySnapshot
-
-
-getPropertyStates : AnimGroup -> AnimGroups PropertyState
-getPropertyStates (AnimGroup group) =
-    group.propertyStates
-
-
-getTransformOrder : AnimGroup -> List TransformProperty
-getTransformOrder (AnimGroup group) =
-    group.transformOrder
-
-
-{-| Fold over every cached resize-aware leg state on this group. Used by
-the animate-restart flow to dispatch a per-property rebase function (one
-per property name) against the most recent post-resize bounds.
--}
-foldResizeStates : (String -> ResizeAxisState -> b -> b) -> b -> AnimGroup -> b
-foldResizeStates f acc (AnimGroup group) =
-    Dict.foldl f acc group.resizeStates
-
-
-
--- ============================================================
 -- BUILD
 -- ============================================================
+
+
+addPropertyStates : AnimGroup -> AnimGroup -> AnimGroup
+addPropertyStates (AnimGroup newGroup) (AnimGroup existingGroup) =
+    AnimGroup
+        { newGroup
+            | propertyStates = AnimGroups.union newGroup.propertyStates existingGroup.propertyStates
+        }
+
+
+{-| Bump version and reset status for each property whose name appears in
+`updates`, also refreshing its stored `config` (so a restart or reset
+with different easing/duration takes effect). Properties not listed in
+`updates` are left untouched.
+-}
+bumpPropertyVersions : List ( String, Builder.ProcessedPropertyConfig ) -> AnimGroup -> AnimGroup
+bumpPropertyVersions updates (AnimGroup group) =
+    let
+        updateLookup : Dict String Builder.ProcessedPropertyConfig
+        updateLookup =
+            Dict.fromList updates
+    in
+    AnimGroup
+        { group
+            | propertyStates =
+                AnimGroups.map
+                    (\propType propAnim ->
+                        case Dict.get propType updateLookup of
+                            Just newConfig ->
+                                { propAnim
+                                    | version = propAnim.version + 1
+                                    , status = NotStarted
+                                    , config = newConfig
+                                }
+
+                            Nothing ->
+                                propAnim
+                    )
+                    group.propertyStates
+        }
 
 
 setAnimationDirection : Builder.AnimationDirection -> AnimGroup -> AnimGroup
@@ -318,45 +262,95 @@ setTransformOrder order (AnimGroup group) =
 
 
 -- ============================================================
--- HELPERS
+-- QUERY
 -- ============================================================
 
 
-addPropertyStates : AnimGroup -> AnimGroup -> AnimGroup
-addPropertyStates (AnimGroup newGroup) (AnimGroup existingGroup) =
-    AnimGroup
-        { newGroup
-            | propertyStates = AnimGroups.union newGroup.propertyStates existingGroup.propertyStates
-        }
+isRunning : AnimGroup -> Bool
+isRunning =
+    getPropertyStates
+        >> AnimGroups.groups
+        >> List.any (\prop -> prop.status == Running)
 
 
-{-| Bump version and reset status for each property whose name appears in
-`updates`, also refreshing its stored `config` (so a restart or reset
-with different easing/duration takes effect). Properties not listed in
-`updates` are left untouched.
+isComplete : AnimGroup -> Bool
+isComplete =
+    getPropertyStates
+        >> AnimGroups.groups
+        >> List.all (\prop -> prop.status == Complete)
+
+
+isPaused : AnimGroup -> Bool
+isPaused =
+    getPropertyStates
+        >> AnimGroups.groups
+        >> List.any (\prop -> prop.status == Paused)
+
+
+getAnimationDirection : AnimGroup -> Builder.AnimationDirection
+getAnimationDirection (AnimGroup group) =
+    group.animationDirection
+
+
+getCurrentIteration : AnimGroup -> Int
+getCurrentIteration (AnimGroup group) =
+    group.currentIteration
+
+
+{-| Look up the cached resize-aware leg state for a given property name
+("translate", "scale", "perspectiveOrigin", ...). Returns `Nothing`
+when no resize has fired yet for that property on this group.
 -}
-bumpPropertyVersions : List ( String, Builder.ProcessedPropertyConfig ) -> AnimGroup -> AnimGroup
-bumpPropertyVersions updates (AnimGroup group) =
-    let
-        updateLookup : Dict String Builder.ProcessedPropertyConfig
-        updateLookup =
-            Dict.fromList updates
-    in
-    AnimGroup
-        { group
-            | propertyStates =
-                AnimGroups.map
-                    (\propType propAnim ->
-                        case Dict.get propType updateLookup of
-                            Just newConfig ->
-                                { propAnim
-                                    | version = propAnim.version + 1
-                                    , status = NotStarted
-                                    , config = newConfig
-                                }
+getResizeState : String -> AnimGroup -> Maybe ResizeAxisState
+getResizeState propName (AnimGroup group) =
+    Dict.get propName group.resizeStates
 
-                            Nothing ->
-                                propAnim
-                    )
-                    group.propertyStates
-        }
+
+getDiscreteEntry : AnimGroup -> Dict String Builder.DiscreteEntryProperty
+getDiscreteEntry (AnimGroup group) =
+    group.discreteEntry
+
+
+getDiscreteExit : AnimGroup -> Dict String Builder.DiscreteExitProperty
+getDiscreteExit (AnimGroup group) =
+    group.discreteExit
+
+
+getIterations : AnimGroup -> Builder.Iterations
+getIterations (AnimGroup group) =
+    group.iterations
+
+
+getProgress : AnimGroup -> Float
+getProgress (AnimGroup group) =
+    group.progress
+
+
+getPropertySnapshot : AnimGroup -> PropertyBaselines
+getPropertySnapshot (AnimGroup group) =
+    group.propertySnapshot
+
+
+getPropertyStates : AnimGroup -> AnimGroups PropertyState
+getPropertyStates (AnimGroup group) =
+    group.propertyStates
+
+
+getTransformOrder : AnimGroup -> List TransformProperty
+getTransformOrder (AnimGroup group) =
+    group.transformOrder
+
+
+
+-- ============================================================
+-- Transform
+-- ============================================================
+
+
+{-| Fold over every cached resize-aware leg state on this group. Used by
+the animate-restart flow to dispatch a per-property rebase function (one
+per property name) against the most recent post-resize bounds.
+-}
+foldResizeStates : (String -> ResizeAxisState -> b -> b) -> b -> AnimGroup -> b
+foldResizeStates f acc (AnimGroup group) =
+    Dict.foldl f acc group.resizeStates

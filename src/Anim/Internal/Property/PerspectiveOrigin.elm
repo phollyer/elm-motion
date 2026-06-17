@@ -27,6 +27,12 @@ type PerspectiveOrigin
     = PerspectiveOrigin { x : Float, y : Float }
 
 
+
+-- ============================================================
+-- BUILD
+-- ============================================================
+
+
 default : PerspectiveOrigin
 default =
     PerspectiveOrigin { x = 50, y = 50 }
@@ -34,7 +40,23 @@ default =
 
 
 -- ============================================================
--- CONSTRUCTORS
+-- QUERY
+-- ============================================================
+
+
+getX : PerspectiveOrigin -> Float
+getX (PerspectiveOrigin { x }) =
+    x
+
+
+getY : PerspectiveOrigin -> Float
+getY (PerspectiveOrigin { y }) =
+    y
+
+
+
+-- ============================================================
+-- TRANSFORM
 -- ============================================================
 
 
@@ -53,22 +75,6 @@ toTuple (PerspectiveOrigin { x, y }) =
     ( x, y )
 
 
-getX : PerspectiveOrigin -> Float
-getX (PerspectiveOrigin { x }) =
-    x
-
-
-getY : PerspectiveOrigin -> Float
-getY (PerspectiveOrigin { y }) =
-    y
-
-
-
--- ============================================================
--- CONVERSIONS
--- ============================================================
-
-
 toCssString : InternalUnit.ResolvedCssUnitAxes -> PerspectiveOrigin -> String
 toCssString axes (PerspectiveOrigin { x, y }) =
     String.fromFloat x
@@ -76,6 +82,22 @@ toCssString axes (PerspectiveOrigin { x, y }) =
         ++ " "
         ++ String.fromFloat y
         ++ InternalUnit.toCssSuffix axes.y
+
+
+
+-- ============================================================
+-- TIMING
+-- ============================================================
+
+
+speed : Float -> Float -> TimeSpec -> Float
+speed =
+    TimeSpec.speed
+
+
+duration : Float -> TimeSpec -> Float
+duration =
+    TimeSpec.duration
 
 
 
@@ -100,16 +122,6 @@ distance start end =
             ey - sy
     in
     sqrt (dx * dx + dy * dy)
-
-
-speed : Float -> Float -> TimeSpec -> Float
-speed =
-    TimeSpec.speed
-
-
-duration : Float -> TimeSpec -> Float
-duration =
-    TimeSpec.duration
 
 
 interpolate : Float -> PerspectiveOrigin -> PerspectiveOrigin -> PerspectiveOrigin

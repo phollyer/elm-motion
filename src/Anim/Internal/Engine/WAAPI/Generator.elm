@@ -1,4 +1,10 @@
-module Anim.Internal.Engine.WAAPI.Generator exposing (..)
+module Anim.Internal.Engine.WAAPI.Generator exposing
+    ( generateAnimation
+    , init
+    , propertyBounds
+    , propertyTypeString
+    , resolveStartFromSnapshot
+    )
 
 import Anim.Extra.TransformOrder as TransformProperty exposing (TransformProperty)
 import Anim.Internal.Builder as Builder
@@ -126,12 +132,6 @@ generateAnimation iterations animationDirection globalTransformOrder discreteEnt
         |> AnimGroup.setAnimationDirection animationDirection
         |> AnimGroup.setDiscreteEntry discreteEntryProps
         |> AnimGroup.setDiscreteExit discreteExitProps
-
-
-
--- ============================================================
--- HELPERS
--- ============================================================
 
 
 propertyTypeString : Builder.ProcessedPropertyConfig -> String

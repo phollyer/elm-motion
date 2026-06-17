@@ -54,6 +54,12 @@ type alias PerspectiveOriginConfig =
     Builder.AnimationConfig PerspectiveOrigin
 
 
+
+-- ============================================================
+-- BUILD
+-- ============================================================
+
+
 default : Float
 default =
     0.5
@@ -62,12 +68,6 @@ default =
 defaultConfig : PerspectiveOriginConfig
 defaultConfig =
     PropertyBuilder.defaultConfig PerspectiveOrigin.default
-
-
-
--- ============================================================
--- BUILD
--- ============================================================
 
 
 for : String -> AnimBuilder eng -> PerspectiveOriginBuilder eng
@@ -193,35 +193,6 @@ fromY y (PerspectiveOriginBuilder config builder) =
         PerspectiveOriginBuilder config builder
 
 
-by : Float -> PerspectiveOriginBuilder eng -> PerspectiveOriginBuilder eng
-by delta =
-    byXY delta delta
-
-
-byXY : Float -> Float -> PerspectiveOriginBuilder eng -> PerspectiveOriginBuilder eng
-byXY deltaX deltaY (PerspectiveOriginBuilder config builder) =
-    let
-        startX =
-            PropertyBuilder.getFloat PerspectiveOrigin.getX default config.start
-
-        startY =
-            PropertyBuilder.getFloat PerspectiveOrigin.getY default config.start
-    in
-    PerspectiveOriginBuilder config builder
-        |> fromXY startX startY
-        |> toXY (startX + deltaX) (startY + deltaY)
-
-
-byX : Float -> PerspectiveOriginBuilder eng -> PerspectiveOriginBuilder eng
-byX deltaX =
-    byXY deltaX 0
-
-
-byY : Float -> PerspectiveOriginBuilder eng -> PerspectiveOriginBuilder eng
-byY deltaY =
-    byXY 0 deltaY
-
-
 
 -- ============================================================
 -- TO
@@ -274,10 +245,6 @@ toY y (PerspectiveOriginBuilder config builder) =
         (markAxes [ "y" ] builder)
 
 
-
--- Private helpers shared by TO setters.
-
-
 setEnd : PerspectiveOrigin -> PerspectiveOriginConfig -> PerspectiveOriginConfig
 setEnd newEnd config =
     PropertyBuilder.setEnd PerspectiveOrigin.default PerspectiveOrigin.distance newEnd config
@@ -286,6 +253,41 @@ setEnd newEnd config =
 markAxes : List String -> AnimBuilder eng -> AnimBuilder eng
 markAxes axes builder =
     Builder.markAxes "perspectiveOrigin" axes builder
+
+
+
+-- ============================================================
+-- BY
+-- ============================================================
+
+
+by : Float -> PerspectiveOriginBuilder eng -> PerspectiveOriginBuilder eng
+by delta =
+    byXY delta delta
+
+
+byXY : Float -> Float -> PerspectiveOriginBuilder eng -> PerspectiveOriginBuilder eng
+byXY deltaX deltaY (PerspectiveOriginBuilder config builder) =
+    let
+        startX =
+            PropertyBuilder.getFloat PerspectiveOrigin.getX default config.start
+
+        startY =
+            PropertyBuilder.getFloat PerspectiveOrigin.getY default config.start
+    in
+    PerspectiveOriginBuilder config builder
+        |> fromXY startX startY
+        |> toXY (startX + deltaX) (startY + deltaY)
+
+
+byX : Float -> PerspectiveOriginBuilder eng -> PerspectiveOriginBuilder eng
+byX deltaX =
+    byXY deltaX 0
+
+
+byY : Float -> PerspectiveOriginBuilder eng -> PerspectiveOriginBuilder eng
+byY deltaY =
+    byXY 0 deltaY
 
 
 
@@ -317,21 +319,6 @@ setX x =
 setY : Float -> PerspectiveOriginBuilder eng -> PerspectiveOriginBuilder eng
 setY y =
     toY y >> snap
-
-
-
--- ============================================================
--- BOUNDS (resize)
--- ============================================================
-
-
-{-| Mark this perspective-origin config as a `RemapToBounds` resize
-directive for the current animation group. See
-`Anim.Internal.Builder.Translate.bounds` for the design.
--}
-bounds : Builder.AxisBounds -> PerspectiveOriginBuilder { eng | withBounds : () } -> PerspectiveOriginBuilder { eng | withBounds : () }
-bounds ranges (PerspectiveOriginBuilder config builder) =
-    PerspectiveOriginBuilder { config | mode = Builder.RemapToBounds ranges } builder
 
 
 
@@ -380,6 +367,17 @@ spring s (PerspectiveOriginBuilder config builder) =
 
 -- ============================================================
 -- BOUNDS
+-- ============================================================
+
+
+bounds : Builder.AxisBounds -> PerspectiveOriginBuilder { eng | withBounds : () } -> PerspectiveOriginBuilder { eng | withBounds : () }
+bounds ranges (PerspectiveOriginBuilder config builder) =
+    PerspectiveOriginBuilder { config | mode = Builder.RemapToBounds ranges } builder
+
+
+
+-- ============================================================
+-- CLAMPS
 -- ============================================================
 
 

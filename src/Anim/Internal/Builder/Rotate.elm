@@ -70,6 +70,12 @@ type alias RotateConfig =
     Builder.AnimationConfig Rotate
 
 
+
+-- ============================================================
+-- BUILD
+-- ============================================================
+
+
 default : Float
 default =
     0.0
@@ -78,12 +84,6 @@ default =
 defaultConfig : RotateConfig
 defaultConfig =
     PropertyBuilder.defaultConfig Rotate.default
-
-
-
--- ============================================================
--- BUILD
--- ============================================================
 
 
 for : String -> AnimBuilder eng -> RotateBuilder eng
@@ -253,53 +253,6 @@ fromZ z (RotateBuilder config builder) =
         RotateBuilder config builder
 
 
-byXYZ : Float -> Float -> Float -> RotateBuilder eng -> RotateBuilder eng
-byXYZ deltaX deltaY deltaZ (RotateBuilder config builder) =
-    let
-        startX =
-            PropertyBuilder.getFloat Rotate.getX default config.start
-
-        startY =
-            PropertyBuilder.getFloat Rotate.getY default config.start
-
-        startZ =
-            PropertyBuilder.getFloat Rotate.getZ default config.start
-    in
-    RotateBuilder config builder
-        |> fromXYZ startX startY startZ
-        |> toXYZ (startX + deltaX) (startY + deltaY) (startZ + deltaZ)
-
-
-byXY : Float -> Float -> RotateBuilder eng -> RotateBuilder eng
-byXY deltaX deltaY =
-    byXYZ deltaX deltaY 0
-
-
-byXZ : Float -> Float -> RotateBuilder eng -> RotateBuilder eng
-byXZ deltaX deltaZ =
-    byXYZ deltaX 0 deltaZ
-
-
-byX : Float -> RotateBuilder eng -> RotateBuilder eng
-byX deltaX =
-    byXYZ deltaX 0 0
-
-
-byYZ : Float -> Float -> RotateBuilder eng -> RotateBuilder eng
-byYZ deltaY deltaZ =
-    byXYZ 0 deltaY deltaZ
-
-
-byY : Float -> RotateBuilder eng -> RotateBuilder eng
-byY deltaY =
-    byXYZ 0 deltaY 0
-
-
-byZ : Float -> RotateBuilder eng -> RotateBuilder eng
-byZ deltaZ =
-    byXYZ 0 0 deltaZ
-
-
 
 -- ============================================================
 -- TO
@@ -411,10 +364,6 @@ toZ z (RotateBuilder config builder) =
         (markAxes [ "z" ] builder)
 
 
-
--- Private helpers shared by TO setters.
-
-
 setEnd : Rotate -> RotateConfig -> RotateConfig
 setEnd newEnd config =
     PropertyBuilder.setEnd Rotate.default Rotate.distance newEnd config
@@ -423,6 +372,59 @@ setEnd newEnd config =
 markAxes : List String -> AnimBuilder eng -> AnimBuilder eng
 markAxes axes builder =
     Builder.markAxes "rotate" axes builder
+
+
+
+-- ============================================================
+-- BY
+-- ============================================================
+
+
+byXYZ : Float -> Float -> Float -> RotateBuilder eng -> RotateBuilder eng
+byXYZ deltaX deltaY deltaZ (RotateBuilder config builder) =
+    let
+        startX =
+            PropertyBuilder.getFloat Rotate.getX default config.start
+
+        startY =
+            PropertyBuilder.getFloat Rotate.getY default config.start
+
+        startZ =
+            PropertyBuilder.getFloat Rotate.getZ default config.start
+    in
+    RotateBuilder config builder
+        |> fromXYZ startX startY startZ
+        |> toXYZ (startX + deltaX) (startY + deltaY) (startZ + deltaZ)
+
+
+byXY : Float -> Float -> RotateBuilder eng -> RotateBuilder eng
+byXY deltaX deltaY =
+    byXYZ deltaX deltaY 0
+
+
+byXZ : Float -> Float -> RotateBuilder eng -> RotateBuilder eng
+byXZ deltaX deltaZ =
+    byXYZ deltaX 0 deltaZ
+
+
+byX : Float -> RotateBuilder eng -> RotateBuilder eng
+byX deltaX =
+    byXYZ deltaX 0 0
+
+
+byYZ : Float -> Float -> RotateBuilder eng -> RotateBuilder eng
+byYZ deltaY deltaZ =
+    byXYZ 0 deltaY deltaZ
+
+
+byY : Float -> RotateBuilder eng -> RotateBuilder eng
+byY deltaY =
+    byXYZ 0 deltaY 0
+
+
+byZ : Float -> RotateBuilder eng -> RotateBuilder eng
+byZ deltaZ =
+    byXYZ 0 0 deltaZ
 
 
 
@@ -521,7 +523,7 @@ spring s (RotateBuilder config builder) =
 
 
 -- ============================================================
--- BOUNDS
+-- CLAMPS
 -- ============================================================
 
 

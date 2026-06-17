@@ -170,8 +170,6 @@ setPerspectiveOriginConfiguredUnits axes (PropertyBaselines dict) =
 -- ============================================================
 
 
-{-| Merge two PropertyBaselines. The second argument takes precedence.
--}
 merge : PropertyBaselines -> PropertyBaselines -> PropertyBaselines
 merge (PropertyBaselines base) (PropertyBaselines override) =
     PropertyBaselines (Dict.union override base)
@@ -191,11 +189,6 @@ updateCustomProperties customProperties baselines =
     Dict.foldl updateCustomProperty baselines customProperties
 
 
-{-| Update a custom property from a float value.
-
-Ignores properties with no existing unit.
-
--}
 updateCustomProperty : String -> Float -> PropertyBaselines -> PropertyBaselines
 updateCustomProperty cssPropertyName value baselines =
     case getUnit cssPropertyName baselines of
@@ -211,11 +204,6 @@ updateCustomColorProperties customColorProperties baselines =
     Dict.foldl updateCustomColorProperty baselines customColorProperties
 
 
-{-| Update a single custom color property from a color string.
-
-Ignores invalid color strings.
-
--}
 updateCustomColorProperty : String -> String -> PropertyBaselines -> PropertyBaselines
 updateCustomColorProperty cssPropertyName colorString baselines =
     case Color.fromString colorString of
@@ -482,7 +470,3 @@ getUnit cssPropertyName (PropertyBaselines dict) =
                     _ ->
                         Nothing
             )
-
-
-
--- ============================================================

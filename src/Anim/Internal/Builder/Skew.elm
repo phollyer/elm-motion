@@ -48,6 +48,12 @@ type alias SkewConfig =
     Builder.AnimationConfig Skew
 
 
+
+-- ============================================================
+-- BUILD
+-- ============================================================
+
+
 default : Float
 default =
     0.0
@@ -57,12 +63,6 @@ defaultConfig : SkewConfig
 defaultConfig =
     PropertyBuilder.defaultConfig <|
         Skew.fromTuple ( default, default )
-
-
-
--- ============================================================
--- BUILD
--- ============================================================
 
 
 for : String -> AnimBuilder eng -> SkewBuilder eng
@@ -166,30 +166,6 @@ fromY y (SkewBuilder config builder) =
         SkewBuilder config builder
 
 
-byXY : Float -> Float -> SkewBuilder eng -> SkewBuilder eng
-byXY deltaX deltaY (SkewBuilder config builder) =
-    let
-        startX =
-            PropertyBuilder.getFloat Skew.getX default config.start
-
-        startY =
-            PropertyBuilder.getFloat Skew.getY default config.start
-    in
-    SkewBuilder config builder
-        |> fromXY startX startY
-        |> toXY (startX + deltaX) (startY + deltaY)
-
-
-byX : Float -> SkewBuilder eng -> SkewBuilder eng
-byX deltaX =
-    byXY deltaX 0
-
-
-byY : Float -> SkewBuilder eng -> SkewBuilder eng
-byY deltaY =
-    byXY 0 deltaY
-
-
 
 -- ============================================================
 -- TO
@@ -236,10 +212,6 @@ toY y (SkewBuilder config builder) =
         (markAxes [ "y" ] builder)
 
 
-
--- Private helpers shared by TO setters.
-
-
 setEnd : Skew -> SkewConfig -> SkewConfig
 setEnd newEnd config =
     PropertyBuilder.setEnd Skew.default Skew.distance newEnd config
@@ -248,6 +220,36 @@ setEnd newEnd config =
 markAxes : List String -> AnimBuilder eng -> AnimBuilder eng
 markAxes axes builder =
     Builder.markAxes "skew" axes builder
+
+
+
+-- ============================================================
+-- BY
+-- ============================================================
+
+
+byXY : Float -> Float -> SkewBuilder eng -> SkewBuilder eng
+byXY deltaX deltaY (SkewBuilder config builder) =
+    let
+        startX =
+            PropertyBuilder.getFloat Skew.getX default config.start
+
+        startY =
+            PropertyBuilder.getFloat Skew.getY default config.start
+    in
+    SkewBuilder config builder
+        |> fromXY startX startY
+        |> toXY (startX + deltaX) (startY + deltaY)
+
+
+byX : Float -> SkewBuilder eng -> SkewBuilder eng
+byX deltaX =
+    byXY deltaX 0
+
+
+byY : Float -> SkewBuilder eng -> SkewBuilder eng
+byY deltaY =
+    byXY 0 deltaY
 
 
 
@@ -321,7 +323,7 @@ spring s (SkewBuilder config builder) =
 
 
 -- ============================================================
--- BOUNDS
+-- CLAMPS
 -- ============================================================
 
 

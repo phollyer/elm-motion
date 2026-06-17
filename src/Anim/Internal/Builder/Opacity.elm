@@ -39,15 +39,15 @@ type alias OpacityConfig =
     Builder.AnimationConfig Opacity
 
 
-defaultConfig : OpacityConfig
-defaultConfig =
-    PropertyBuilder.defaultConfig Opacity.default
-
-
 
 -- ============================================================
 -- BUILD
 -- ============================================================
+
+
+defaultConfig : OpacityConfig
+defaultConfig =
+    PropertyBuilder.defaultConfig Opacity.default
 
 
 for : String -> AnimBuilder eng -> OpacityBuilder eng
@@ -116,24 +116,6 @@ from opacity (OpacityBuilder config builder) =
     OpacityBuilder { config | start = Just opacity } builder
 
 
-by : Float -> OpacityBuilder eng -> OpacityBuilder eng
-by delta (OpacityBuilder config builder) =
-    let
-        startPos =
-            Maybe.withDefault Opacity.default config.start
-
-        endPos =
-            Opacity.fromFloat (Opacity.toFloat startPos + delta)
-    in
-    OpacityBuilder
-        { config
-            | start = Just startPos
-            , end = endPos
-            , distance = Opacity.distance startPos endPos
-        }
-        builder
-
-
 
 -- ============================================================
 -- TO
@@ -148,9 +130,33 @@ to endPos (OpacityBuilder config builder) =
     in
     OpacityBuilder
         { config
-            | end = endPos
+            | start = Just startPos
+            , end = endPos
             , distance = Opacity.distance startPos endPos
-            , start = Just startPos
+        }
+        builder
+
+
+
+-- ============================================================
+-- BY
+-- ============================================================
+
+
+by : Float -> OpacityBuilder eng -> OpacityBuilder eng
+by delta (OpacityBuilder config builder) =
+    let
+        startPos =
+            Maybe.withDefault Opacity.default config.start
+
+        endPos =
+            Opacity.fromFloat (Opacity.toFloat startPos + delta)
+    in
+    OpacityBuilder
+        { config
+            | start = Just startPos
+            , end = endPos
+            , distance = Opacity.distance startPos endPos
         }
         builder
 
@@ -216,7 +222,7 @@ spring s (OpacityBuilder config builder) =
 
 
 -- ============================================================
--- BOUNDS
+-- CLAMPS
 -- ============================================================
 
 

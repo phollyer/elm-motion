@@ -30,6 +30,12 @@ type Size
     = Size { w : Float, h : Float }
 
 
+
+-- ============================================================
+-- BUILD
+-- ============================================================
+
+
 default : Size
 default =
     Size { w = 0, h = 0 }
@@ -37,7 +43,7 @@ default =
 
 
 -- ============================================================
--- CONSTRUCTORS
+-- QUERY
 -- ============================================================
 
 
@@ -49,6 +55,12 @@ getH (Size dimensions) =
 getW : Size -> Float
 getW (Size dimensions) =
     dimensions.w
+
+
+
+-- ============================================================
+-- TRANSFORM
+-- ============================================================
 
 
 fromRecord : { width : Float, height : Float } -> Size
@@ -69,12 +81,6 @@ toTuple (Size dimensions) =
 toRecord : Size -> { width : Float, height : Float }
 toRecord (Size dimensions) =
     { width = dimensions.w, height = dimensions.h }
-
-
-
--- ============================================================
--- CONVERSIONS
--- ============================================================
 
 
 toCssString : InternalUnit.ResolvedCssUnitAxes -> Size -> String
@@ -103,6 +109,22 @@ heightToCssString axes (Size dimensions) =
 
 
 -- ============================================================
+-- TIMING
+-- ============================================================
+
+
+speed : Float -> Float -> TimeSpec -> Float
+speed =
+    TimeSpec.speed
+
+
+duration : Float -> TimeSpec -> Float
+duration =
+    TimeSpec.duration
+
+
+
+-- ============================================================
 -- MATH
 -- ============================================================
 
@@ -117,16 +139,6 @@ distance (Size start) (Size end) =
             end.h - start.h
     in
     sqrt (dw * dw + dh * dh)
-
-
-speed : Float -> Float -> TimeSpec -> Float
-speed =
-    TimeSpec.speed
-
-
-duration : Float -> TimeSpec -> Float
-duration =
-    TimeSpec.duration
 
 
 interpolate : Float -> Size -> Size -> Size

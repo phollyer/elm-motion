@@ -1,4 +1,8 @@
-module Anim.Internal.Engine.Transition.Generator exposing (..)
+module Anim.Internal.Engine.Transition.Generator exposing
+    ( generate
+    , generateAnimation
+    , init
+    )
 
 import Anim.Internal.Builder as Builder
 import Anim.Internal.Engine.Transition.AnimGroup as AnimGroup exposing (AnimGroup)
@@ -43,31 +47,6 @@ init defaults animGroupName discreteTransitions discreteEntry discreteExit prope
             )
 
 
-
--- ============================================================
--- GENERATORS
--- ============================================================
-
-
-generateAnimation : Bool -> Dict String String -> Dict String Builder.DiscreteExitProperty -> List Builder.ProcessedPropertyConfig -> AnimGroup
-generateAnimation discreteTransitions discreteEntry discreteExit processedProps =
-    AnimGroup.init
-        |> AnimGroup.setDiscreteEntry discreteEntry
-        |> AnimGroup.setDiscreteExit discreteExit
-        |> AnimGroup.setPropertyKeys (propertyKeysOf processedProps)
-        |> AnimGroup.setWillChange (Builder.willChangeIndividual processedProps)
-        |> AnimGroup.setStyles
-            (TransitionStyles.fromProcessedProperties
-                (baseStyles discreteTransitions discreteEntry discreteExit processedProps)
-                processedProps
-            )
-
-
-propertyKeysOf : List Builder.ProcessedPropertyConfig -> Set.Set String
-propertyKeysOf =
-    List.foldl (Builder.processedPropertyType >> Set.insert) Set.empty
-
-
 baseStyles : Bool -> Dict String String -> Dict String Builder.DiscreteExitProperty -> List Builder.ProcessedPropertyConfig -> List ( String, String )
 baseStyles discreteTransitions discreteEntry discreteExit processedProps =
     let
@@ -81,19 +60,20 @@ baseStyles discreteTransitions discreteEntry discreteExit processedProps =
     ( "transition", generate discreteTransitions discreteEntry discreteExit processedProps ) :: transitionBehavior
 
 
+propertyKeysOf : List Builder.ProcessedPropertyConfig -> Set.Set String
+propertyKeysOf =
+    List.foldl (Builder.processedPropertyType >> Set.insert) Set.empty
+
+
 
 -- ============================================================
--- CSS TRANSITION STRING
+-- GENERATORS
 -- ============================================================
 
 
 generate : Bool -> Dict String String -> Dict String Builder.DiscreteExitProperty -> List Builder.ProcessedPropertyConfig -> String
 generate discreteTransitions discreteEntry discreteExit properties =
     let
-        -- Snap properties get no transition rule - the style change happens
-        -- instantly because the browser only interpolates properties listed
-        -- in `transition`. End-value styles are still emitted via
-        -- TransitionStyles.fromProcessedProperties regardless of mode.
         animated =
             (Builder.partitionByMode properties).animate
 
@@ -178,8 +158,7 @@ generate discreteTransitions discreteEntry discreteExit properties =
 {-| Collect the distinct CSS property names that appear in `discreteEntry`
 or `discreteExit`. These need to be added to `transition-property` so the
 browser will respect `transition-behavior: allow-discrete` when flipping
-them (otherwise the discrete change happens immediately and cancels any
-co-animating opacity / transform on exit).
+them.
 -}
 discretePropertyNames : Dict String String -> Dict String Builder.DiscreteExitProperty -> List String
 discretePropertyNames discreteEntry discreteExit =
@@ -191,6 +170,99 @@ discretePropertyNames discreteEntry discreteExit =
             Dict.keys discreteExit
     in
     entryKeys ++ List.filter (\k -> not (List.member k entryKeys)) exitKeys
+
+
+{-| Emits a single `transform` transition rule. When both rotate and skew are
+present, rotate's settings take priority. If only skew is present, skew's
+settings are used.
+-}
+transformTransitionFromProcessed : List Builder.ProcessedPropertyConfig -> Maybe String
+transformTransitionFromProcessed properties =
+    let
+        rotateConfig =
+            properties
+                |> List.filterMap
+                    (\p ->
+                        case p of
+                            Builder.ProcessedRotateConfig config ->
+                                Just config
+
+                            _ ->
+                                Nothing
+                    )
+                |> List.head
+
+        skewConfig =
+            properties
+                |> List.filterMap
+                    (\p ->
+                        case p of
+                            Builder.ProcessedSkewConfig config ->
+                                Just config
+
+                            _ ->
+                                Nothing
+                    )
+                |> List.head
+    in
+    case rotateConfig of
+        Just config ->
+            Just (transitionRule "transform" config)
+
+        Nothing ->
+            Maybe.map (transitionRule "transform") skewConfig
+
+
+{-| Build a single CSS `transition` rule for a given property name.
+-}
+transitionRule : String -> Builder.ProcessedAnimationConfig a -> String
+transitionRule cssName cfg =
+    cssName
+        ++ " "
+        ++ String.fromInt cfg.duration
+        ++ "ms "
+        ++ timingFunction cfg.easing
+        ++ " "
+        ++ String.fromInt cfg.delay
+        ++ "ms"
+
+
+{-| Resolve the CSS `transition-timing-function` for a property.
+-}
+timingFunction : Easing -> String
+timingFunction easing =
+    InternalEasing.toCSS (Just easing)
+
+
+nonTransformTransitionFromProcessed : Builder.ProcessedPropertyConfig -> Maybe String
+nonTransformTransitionFromProcessed property =
+    case property of
+        Builder.ProcessedCustomPropertyConfig cssName _ config ->
+            Just (transitionRule cssName config)
+
+        Builder.ProcessedCustomColorPropertyConfig cssName config ->
+            Just (transitionRule cssName config)
+
+        Builder.ProcessedOpacityConfig config ->
+            Just (transitionRule "opacity" config)
+
+        Builder.ProcessedPerspectiveOriginConfig config ->
+            Just (transitionRule "perspective-origin" config)
+
+        Builder.ProcessedRotateConfig _ ->
+            Nothing
+
+        Builder.ProcessedScaleConfig config ->
+            Just (transitionRule "scale" config)
+
+        Builder.ProcessedSizeConfig config ->
+            Just (transitionRule "width" config ++ ", " ++ transitionRule "height" config)
+
+        Builder.ProcessedSkewConfig _ ->
+            Nothing
+
+        Builder.ProcessedTranslateConfig config ->
+            Just (transitionRule "translate" config)
 
 
 {-| The longest animation duration across the processed properties, used
@@ -237,100 +309,15 @@ maxAnimationDuration =
         0
 
 
-
--- ============================================================
--- HELPERS
--- ============================================================
-
-
-{-| Emits a single `transform` transition rule. When both rotate and skew are
-present, rotate's settings take priority. If only skew is present, skew's
-settings are used.
--}
-transformTransitionFromProcessed : List Builder.ProcessedPropertyConfig -> Maybe String
-transformTransitionFromProcessed properties =
-    let
-        rotateConfig =
-            properties
-                |> List.filterMap
-                    (\p ->
-                        case p of
-                            Builder.ProcessedRotateConfig config ->
-                                Just config
-
-                            _ ->
-                                Nothing
-                    )
-                |> List.head
-
-        skewConfig =
-            properties
-                |> List.filterMap
-                    (\p ->
-                        case p of
-                            Builder.ProcessedSkewConfig config ->
-                                Just config
-
-                            _ ->
-                                Nothing
-                    )
-                |> List.head
-    in
-    case rotateConfig of
-        Just config ->
-            Just (transitionRule "transform" config)
-
-        Nothing ->
-            Maybe.map (transitionRule "transform") skewConfig
-
-
-nonTransformTransitionFromProcessed : Builder.ProcessedPropertyConfig -> Maybe String
-nonTransformTransitionFromProcessed property =
-    case property of
-        Builder.ProcessedCustomPropertyConfig cssName _ config ->
-            Just (transitionRule cssName config)
-
-        Builder.ProcessedCustomColorPropertyConfig cssName config ->
-            Just (transitionRule cssName config)
-
-        Builder.ProcessedOpacityConfig config ->
-            Just (transitionRule "opacity" config)
-
-        Builder.ProcessedPerspectiveOriginConfig config ->
-            Just (transitionRule "perspective-origin" config)
-
-        Builder.ProcessedRotateConfig _ ->
-            Nothing
-
-        Builder.ProcessedScaleConfig config ->
-            Just (transitionRule "scale" config)
-
-        Builder.ProcessedSizeConfig config ->
-            Just (transitionRule "width" config ++ ", " ++ transitionRule "height" config)
-
-        Builder.ProcessedSkewConfig _ ->
-            Nothing
-
-        Builder.ProcessedTranslateConfig config ->
-            Just (transitionRule "translate" config)
-
-
-{-| Build a single CSS `transition` rule for a given property name.
--}
-transitionRule : String -> Builder.ProcessedAnimationConfig a -> String
-transitionRule cssName cfg =
-    cssName
-        ++ " "
-        ++ String.fromInt cfg.duration
-        ++ "ms "
-        ++ timingFunction cfg.easing
-        ++ " "
-        ++ String.fromInt cfg.delay
-        ++ "ms"
-
-
-{-| Resolve the CSS `transition-timing-function` for a property.
--}
-timingFunction : Easing -> String
-timingFunction easing =
-    InternalEasing.toCSS (Just easing)
+generateAnimation : Bool -> Dict String String -> Dict String Builder.DiscreteExitProperty -> List Builder.ProcessedPropertyConfig -> AnimGroup
+generateAnimation discreteTransitions discreteEntry discreteExit processedProps =
+    AnimGroup.init
+        |> AnimGroup.setDiscreteEntry discreteEntry
+        |> AnimGroup.setDiscreteExit discreteExit
+        |> AnimGroup.setPropertyKeys (propertyKeysOf processedProps)
+        |> AnimGroup.setWillChange (Builder.willChangeIndividual processedProps)
+        |> AnimGroup.setStyles
+            (TransitionStyles.fromProcessedProperties
+                (baseStyles discreteTransitions discreteEntry discreteExit processedProps)
+                processedProps
+            )

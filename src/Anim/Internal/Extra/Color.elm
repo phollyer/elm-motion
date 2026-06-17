@@ -284,6 +284,91 @@ hexByteAt start default hex_ =
         |> Maybe.withDefault default
 
 
+hexToInt : String -> Maybe Int
+hexToInt str =
+    let
+        hexCharToInt char =
+            case char of
+                '0' ->
+                    Just 0
+
+                '1' ->
+                    Just 1
+
+                '2' ->
+                    Just 2
+
+                '3' ->
+                    Just 3
+
+                '4' ->
+                    Just 4
+
+                '5' ->
+                    Just 5
+
+                '6' ->
+                    Just 6
+
+                '7' ->
+                    Just 7
+
+                '8' ->
+                    Just 8
+
+                '9' ->
+                    Just 9
+
+                'A' ->
+                    Just 10
+
+                'a' ->
+                    Just 10
+
+                'B' ->
+                    Just 11
+
+                'b' ->
+                    Just 11
+
+                'C' ->
+                    Just 12
+
+                'c' ->
+                    Just 12
+
+                'D' ->
+                    Just 13
+
+                'd' ->
+                    Just 13
+
+                'E' ->
+                    Just 14
+
+                'e' ->
+                    Just 14
+
+                'F' ->
+                    Just 15
+
+                'f' ->
+                    Just 15
+
+                _ ->
+                    Nothing
+
+        chars =
+            String.toList str
+    in
+    case chars of
+        [ c1, c2 ] ->
+            Maybe.map2 (\v1 v2 -> v1 * 16 + v2) (hexCharToInt c1) (hexCharToInt c2)
+
+        _ ->
+            Nothing
+
+
 
 -- ============================================================
 -- HSL CONVERSIONS
@@ -364,6 +449,11 @@ hslToRgb hslValue =
             round ((b1 + m) * 255)
     in
     { r = r, g = g, b = b }
+
+
+floatMod : Float -> Float -> Float
+floatMod a b =
+    a - (toFloat (floor (a / b)) * b)
 
 
 
@@ -919,9 +1009,9 @@ toHexComponent value =
                         "F"
 
                     _ ->
+                        -- fallback, should never happen
                         "F"
 
-        -- fallback, should never happen
         high =
             clampedValue // 16
 
@@ -1292,99 +1382,3 @@ green =
 blue : Color
 blue =
     Rgb { r = 0, g = 0, b = 255 }
-
-
-
--- ============================================================
--- HELPERS
--- ============================================================
-
-
-hexToInt : String -> Maybe Int
-hexToInt str =
-    let
-        hexCharToInt char =
-            case char of
-                '0' ->
-                    Just 0
-
-                '1' ->
-                    Just 1
-
-                '2' ->
-                    Just 2
-
-                '3' ->
-                    Just 3
-
-                '4' ->
-                    Just 4
-
-                '5' ->
-                    Just 5
-
-                '6' ->
-                    Just 6
-
-                '7' ->
-                    Just 7
-
-                '8' ->
-                    Just 8
-
-                '9' ->
-                    Just 9
-
-                'A' ->
-                    Just 10
-
-                'a' ->
-                    Just 10
-
-                'B' ->
-                    Just 11
-
-                'b' ->
-                    Just 11
-
-                'C' ->
-                    Just 12
-
-                'c' ->
-                    Just 12
-
-                'D' ->
-                    Just 13
-
-                'd' ->
-                    Just 13
-
-                'E' ->
-                    Just 14
-
-                'e' ->
-                    Just 14
-
-                'F' ->
-                    Just 15
-
-                'f' ->
-                    Just 15
-
-                _ ->
-                    Nothing
-
-        chars =
-            String.toList str
-    in
-    case chars of
-        [ c1, c2 ] ->
-            Maybe.map2 (\v1 v2 -> v1 * 16 + v2) (hexCharToInt c1) (hexCharToInt c2)
-
-        _ ->
-            Nothing
-
-
-floatMod : Float -> Float -> Float
-floatMod a b =
-    a - (toFloat (floor (a / b)) * b)

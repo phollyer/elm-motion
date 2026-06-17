@@ -73,6 +73,12 @@ type alias TranslateConfig =
     Builder.AnimationConfig Translate
 
 
+
+-- ============================================================
+-- BUILD
+-- ============================================================
+
+
 default : Float
 default =
     0.0
@@ -81,12 +87,6 @@ default =
 defaultConfig : TranslateConfig
 defaultConfig =
     PropertyBuilder.defaultConfig Translate.default
-
-
-
--- ============================================================
--- BUILD
--- ============================================================
 
 
 for : String -> AnimBuilder eng -> TranslateBuilder eng
@@ -383,6 +383,16 @@ toZ z (TranslateBuilder config builder) =
         (markAxes [ "z" ] builder)
 
 
+setEnd : Translate -> TranslateConfig -> TranslateConfig
+setEnd newEnd config =
+    PropertyBuilder.setEnd Translate.default Translate.distance newEnd config
+
+
+markAxes : List String -> AnimBuilder eng -> AnimBuilder eng
+markAxes axes builder =
+    Builder.markAxes "translate" axes builder
+
+
 
 -- ============================================================
 -- BY
@@ -549,20 +559,6 @@ byZ dz (TranslateBuilder config builder) =
 
 
 
--- Private helpers shared by TO setters.
-
-
-setEnd : Translate -> TranslateConfig -> TranslateConfig
-setEnd newEnd config =
-    PropertyBuilder.setEnd Translate.default Translate.distance newEnd config
-
-
-markAxes : List String -> AnimBuilder eng -> AnimBuilder eng
-markAxes axes builder =
-    Builder.markAxes "translate" axes builder
-
-
-
 -- ============================================================
 -- SET (snap)
 -- ============================================================
@@ -615,23 +611,6 @@ setZ z =
 
 
 -- ============================================================
--- BOUNDS (resize)
--- ============================================================
-
-
-{-| Mark this translate config as a `RemapToBounds` resize directive
-for the current animation group. Engines outside `onResize` ignore
-these entries (see `Builder.partitionForResize`); the `withBounds`
-phantom on the engine tag makes that a compile-time guarantee for the
-public API.
--}
-bounds : Builder.AxisBounds -> TranslateBuilder { eng | withBounds : () } -> TranslateBuilder { eng | withBounds : () }
-bounds ranges (TranslateBuilder config builder) =
-    TranslateBuilder { config | mode = Builder.RemapToBounds ranges } builder
-
-
-
--- ============================================================
 -- TIMING
 -- ============================================================
 
@@ -676,6 +655,17 @@ spring s (TranslateBuilder config builder) =
 
 -- ============================================================
 -- BOUNDS
+-- ============================================================
+
+
+bounds : Builder.AxisBounds -> TranslateBuilder { eng | withBounds : () } -> TranslateBuilder { eng | withBounds : () }
+bounds ranges (TranslateBuilder config builder) =
+    TranslateBuilder { config | mode = Builder.RemapToBounds ranges } builder
+
+
+
+-- ============================================================
+-- CLAMPS
 -- ============================================================
 
 

@@ -8,7 +8,7 @@ module Anim.Internal.Property.Shared.Axis3 exposing
     , toTriple
     )
 
-{-| Generic 3 - axis builder patterns for use across Position, Rotate, and Scale modules.
+{-| Generic 3-axis builder patterns for use across Position, Rotate, and Scale modules.
 -}
 
 -- ============================================================
@@ -17,8 +17,7 @@ module Anim.Internal.Property.Shared.Axis3 exposing
 
 
 type alias Axis3Support a =
-    { -- Constructors
-      zero : a
+    { default : a
     , fromRecord : { x : Float, y : Float, z : Float } -> a
     , toRecord : a -> { x : Float, y : Float, z : Float }
     , add : a -> a -> a

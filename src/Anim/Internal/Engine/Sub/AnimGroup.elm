@@ -54,6 +54,65 @@ type AnimGroup
 
 
 -- ============================================================
+-- BUILD
+-- ============================================================
+
+
+addAnimation : Animations -> AnimGroup -> AnimGroup
+addAnimation additional (AnimGroup group) =
+    AnimGroup { group | animations = Animations.add additional group.animations }
+
+
+setAnimationDirection : AnimationDirection -> AnimGroup -> AnimGroup
+setAnimationDirection direction (AnimGroup group) =
+    AnimGroup { group | animationDirection = direction }
+
+
+setCurrentIteration : Int -> AnimGroup -> AnimGroup
+setCurrentIteration currentIteration (AnimGroup group) =
+    AnimGroup { group | currentIteration = currentIteration }
+
+
+setPlayState : PlayState -> AnimGroup -> AnimGroup
+setPlayState state (AnimGroup group) =
+    AnimGroup { group | playState = state }
+
+
+setIterationCount : Iterations -> AnimGroup -> AnimGroup
+setIterationCount iterationCount (AnimGroup group) =
+    AnimGroup { group | iterations = iterationCount }
+
+
+setAnimations : Animations -> AnimGroup -> AnimGroup
+setAnimations animations (AnimGroup group) =
+    AnimGroup { group | animations = animations }
+
+
+setTransformOrder : List TransformProperty -> AnimGroup -> AnimGroup
+setTransformOrder transformOrder (AnimGroup group) =
+    AnimGroup { group | transformOrder = transformOrder }
+
+
+{-| Set the precomputed `will-change` value for this group. See
+[`getWillChange`](#getWillChange).
+-}
+setWillChange : String -> AnimGroup -> AnimGroup
+setWillChange value (AnimGroup group) =
+    AnimGroup { group | willChange = value }
+
+
+setDiscreteEntry : Dict String String -> AnimGroup -> AnimGroup
+setDiscreteEntry entry (AnimGroup group) =
+    AnimGroup { group | discreteEntry = entry }
+
+
+setDiscreteExit : Dict String DiscreteExitProperty -> AnimGroup -> AnimGroup
+setDiscreteExit exit (AnimGroup group) =
+    AnimGroup { group | discreteExit = exit }
+
+
+
+-- ============================================================
 -- INITIALIZE
 -- ============================================================
 
@@ -143,62 +202,3 @@ isPaused (AnimGroup group) =
 isRunning : AnimGroup -> Bool
 isRunning (AnimGroup group) =
     PlayState.isRunning group.playState
-
-
-
--- ============================================================
--- BUILD
--- ============================================================
-
-
-addAnimation : Animations -> AnimGroup -> AnimGroup
-addAnimation additional (AnimGroup group) =
-    AnimGroup { group | animations = Animations.add additional group.animations }
-
-
-setAnimationDirection : AnimationDirection -> AnimGroup -> AnimGroup
-setAnimationDirection direction (AnimGroup group) =
-    AnimGroup { group | animationDirection = direction }
-
-
-setCurrentIteration : Int -> AnimGroup -> AnimGroup
-setCurrentIteration currentIteration (AnimGroup group) =
-    AnimGroup { group | currentIteration = currentIteration }
-
-
-setPlayState : PlayState -> AnimGroup -> AnimGroup
-setPlayState state (AnimGroup group) =
-    AnimGroup { group | playState = state }
-
-
-setIterationCount : Iterations -> AnimGroup -> AnimGroup
-setIterationCount iterationCount (AnimGroup group) =
-    AnimGroup { group | iterations = iterationCount }
-
-
-setAnimations : Animations -> AnimGroup -> AnimGroup
-setAnimations animations (AnimGroup group) =
-    AnimGroup { group | animations = animations }
-
-
-setTransformOrder : List TransformProperty -> AnimGroup -> AnimGroup
-setTransformOrder transformOrder (AnimGroup group) =
-    AnimGroup { group | transformOrder = transformOrder }
-
-
-{-| Set the precomputed `will-change` value for this group. See
-[`getWillChange`](#getWillChange).
--}
-setWillChange : String -> AnimGroup -> AnimGroup
-setWillChange value (AnimGroup group) =
-    AnimGroup { group | willChange = value }
-
-
-setDiscreteEntry : Dict String String -> AnimGroup -> AnimGroup
-setDiscreteEntry entry (AnimGroup group) =
-    AnimGroup { group | discreteEntry = entry }
-
-
-setDiscreteExit : Dict String DiscreteExitProperty -> AnimGroup -> AnimGroup
-setDiscreteExit exit (AnimGroup group) =
-    AnimGroup { group | discreteExit = exit }

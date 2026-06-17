@@ -21,6 +21,40 @@ import Anim.Internal.Unit as InternalUnit
 -- ============================================================
 
 
+generateTransformComponents : Maybe (List TransformProperty) -> Builder.TransformParts -> List String
+generateTransformComponents maybeOrder transformParts =
+    List.filter (String.isEmpty >> not) <|
+        case maybeOrder of
+            Nothing ->
+                [ transformParts.translate, transformParts.rotate, transformParts.skew, transformParts.scale ]
+
+            Just order ->
+                List.filterMap
+                    (\o ->
+                        let
+                            part =
+                                case o of
+                                    Translate ->
+                                        transformParts.translate
+
+                                    Rotate ->
+                                        transformParts.rotate
+
+                                    Skew ->
+                                        transformParts.skew
+
+                                    Scale ->
+                                        transformParts.scale
+                        in
+                        if part /= "" then
+                            Just part
+
+                        else
+                            Nothing
+                    )
+                    order
+
+
 fromProcessedProperties : Maybe (List TransformProperty) -> Maybe PropertyBaselines -> List ( String, String ) -> List Builder.ProcessedPropertyConfig -> Styles
 fromProcessedProperties maybeOrder maybeTargetValues baseStyles =
     Styles.fromProcessedProperties baseStyles <|
@@ -131,43 +165,3 @@ baselineTransformParts maybeTargetValues processedProps =
             , skew = baseline isSkew (PropertyBaselines.getSkew targets) Skew.toCssString
             , scale = baseline isScale (PropertyBaselines.getScale targets) Scale.toCssString
             }
-
-
-
--- ============================================================
--- HELPERS
--- ============================================================
-
-
-generateTransformComponents : Maybe (List TransformProperty) -> Builder.TransformParts -> List String
-generateTransformComponents maybeOrder transformParts =
-    List.filter (String.isEmpty >> not) <|
-        case maybeOrder of
-            Nothing ->
-                [ transformParts.translate, transformParts.rotate, transformParts.skew, transformParts.scale ]
-
-            Just order ->
-                List.filterMap
-                    (\o ->
-                        let
-                            part =
-                                case o of
-                                    Translate ->
-                                        transformParts.translate
-
-                                    Rotate ->
-                                        transformParts.rotate
-
-                                    Skew ->
-                                        transformParts.skew
-
-                                    Scale ->
-                                        transformParts.scale
-                        in
-                        if part /= "" then
-                            Just part
-
-                        else
-                            Nothing
-                    )
-                    order

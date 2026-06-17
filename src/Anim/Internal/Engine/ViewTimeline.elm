@@ -228,6 +228,17 @@ easing =
 
 
 -- ============================================================
+-- SPRING
+-- ============================================================
+
+
+spring : Spring -> EngineBuilder -> EngineBuilder
+spring =
+    Builder.spring
+
+
+
+-- ============================================================
 -- UNIT
 -- ============================================================
 
@@ -250,17 +261,6 @@ cssUnitY =
 cssUnitZ : Unit -> EngineBuilder -> EngineBuilder
 cssUnitZ =
     Builder.cssUnitZ
-
-
-
--- ============================================================
--- SPRING
--- ============================================================
-
-
-spring : Spring -> EngineBuilder -> EngineBuilder
-spring =
-    Builder.spring
 
 
 

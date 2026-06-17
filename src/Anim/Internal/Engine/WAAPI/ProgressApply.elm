@@ -8,8 +8,6 @@ This is the Elm side of the per-property progress wire format: JS sends
 `{ propType -> rawProgress }` and Elm interpolates locally rather than
 trusting JS-computed absolute values.
 
-@docs applyPropertyProgress
-
 -}
 
 import Anim.Internal.Builder as Builder
@@ -164,12 +162,6 @@ applyConfigProgress config rawProgress baselines =
             PropertyBaselines.setCustomColorProperty cssName (Color.interpolate t start cfg.end) baselines
 
 
-
--- ============================================================
--- HELPERS
--- ============================================================
-
-
 {-| Resolve the animation's start value with a three-tier fallback:
 the explicit config start, the current baseline (snapshotted when the
 animation began on the first invocation), or the type's default.
@@ -190,7 +182,7 @@ trajectory at `progress * duration` so the Elm-side baseline matches the
 spring-driven WAAPI keyframes (including overshoot). Otherwise apply the
 stored easing curve. Keeping these in sync is what lets a spring-driven
 WAAPI animation be interrupted cleanly: the next animation reads a baseline
-that reflects the box's actual on-screen position rather than a linear
+that reflects the actual on-screen position rather than a linear
 projection of the old motion.
 -}
 progressToT : { a | easing : Easing, spring : Maybe Spring, duration : Int } -> Float -> Float

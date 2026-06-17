@@ -39,6 +39,11 @@ type Builder eng
 -- ============================================================
 
 
+defaultConfig : Builder.AnimationConfig Float
+defaultConfig =
+    PropertyBuilder.defaultConfig 0
+
+
 for : String -> String -> String -> AnimBuilder eng -> Builder eng
 for animGroupName cssPropertyName unit builder =
     let
@@ -108,11 +113,6 @@ applyClamps cssName builder config =
 -- ============================================================
 -- FROM
 -- ============================================================
-
-
-defaultConfig : Builder.AnimationConfig Float
-defaultConfig =
-    PropertyBuilder.defaultConfig 0
 
 
 from : Float -> Builder eng -> Builder eng
@@ -216,7 +216,7 @@ spring s (Builder cssName unit config builder) =
 
 
 -- ============================================================
--- BOUNDS
+-- CLAMPS
 -- ============================================================
 
 

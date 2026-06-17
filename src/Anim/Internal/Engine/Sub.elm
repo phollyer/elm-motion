@@ -271,7 +271,7 @@ animate (AnimState state animGroups) build =
 
 setSnapshot : AnimGroups AnimGroup -> AnimGroups { propertySnapshot : PropertyBaselines }
 setSnapshot anims =
-    AnimGroups.map (\_ anim -> { propertySnapshot = extractElementCurrentStates anim }) anims
+    AnimGroups.map (\_ anim -> { propertySnapshot = extractAnimGroupCurrentStates anim }) anims
 
 
 retarget : AnimState -> (EngineBuilder -> EngineBuilder) -> AnimState
@@ -685,14 +685,14 @@ onResize (AnimState state animGroups) buildResize =
 
 
 applyGroupResize : AnimGroupName -> Builder.ProcessedAnimGroupConfig -> AnimState -> AnimState
-applyGroupResize animGroupName cfg st =
+applyGroupResize animGroupName cfg state =
     List.foldl (applyBoundsEntry animGroupName)
-        st
+        state
         (Builder.partitionForResize cfg.properties).bounds
 
 
 applyBoundsEntry : AnimGroupName -> ( Builder.ProcessedPropertyConfig, Builder.AxisBounds ) -> AnimState -> AnimState
-applyBoundsEntry animGroupName ( prop, ranges ) ((AnimState state _) as st) =
+applyBoundsEntry animGroupName ( prop, ranges ) ((AnimState state _) as animState) =
     let
         propKey =
             Builder.processedPropertyType prop
@@ -702,24 +702,24 @@ applyBoundsEntry animGroupName ( prop, ranges ) ((AnimState state _) as st) =
 
         prev =
             Dict.get cacheKey state.lastResize
-                |> Maybe.withDefault emptyBounds
+                |> Maybe.withDefault { x = Nothing, y = Nothing, z = Nothing }
 
         next =
             case propKey of
                 "translate" ->
-                    applyTranslateResize animGroupName prev ranges st
+                    applyTranslateResize animGroupName prev ranges animState
 
                 "scale" ->
-                    applyScaleResize animGroupName prev ranges st
+                    applyScaleResize animGroupName prev ranges animState
 
                 "perspectiveOrigin" ->
-                    applyPerspectiveOriginResize animGroupName prev ranges st
+                    applyPerspectiveOriginResize animGroupName prev ranges animState
 
                 "size" ->
-                    applySizeResize animGroupName prev ranges st
+                    applySizeResize animGroupName prev ranges animState
 
                 _ ->
-                    st
+                    animState
 
         (AnimState nextState nextGroups) =
             next
@@ -727,11 +727,6 @@ applyBoundsEntry animGroupName ( prop, ranges ) ((AnimState state _) as st) =
     AnimState
         { nextState | lastResize = Dict.insert cacheKey ranges nextState.lastResize }
         nextGroups
-
-
-emptyBounds : AxisBounds
-emptyBounds =
-    { x = Nothing, y = Nothing, z = Nothing }
 
 
 applyTranslateResize : AnimGroupName -> AxisBounds -> AxisBounds -> AnimState -> AnimState
@@ -826,7 +821,7 @@ resizeTranslate units previousBounds bounds isLooping isPaused cfg =
 
     else if newLegDistance == 0 && not (isPaused && not isLooping) then
         -- Resize collapsed the leg to zero length. Auto-complete - except
-        -- when the user has paused a one-shot, where we keep the pause intact.
+        -- when the user has paused we keep the pause intact.
         { cfg
             | start = newStart
             , end = newEnd
@@ -1218,8 +1213,8 @@ resizeSize units previousBounds bounds isLooping isPaused cfg =
             }
 
 
-extractElementCurrentStates : AnimGroup -> PropertyBaselines
-extractElementCurrentStates =
+extractAnimGroupCurrentStates : AnimGroup -> PropertyBaselines
+extractAnimGroupCurrentStates =
     AnimGroup.getAnimations
         >> Animations.foldl (\_ -> extractPropertyCurrentState)
             PropertyBaselines.empty
@@ -1499,6 +1494,17 @@ easing =
 
 
 -- ============================================================
+-- SPRING
+-- ============================================================
+
+
+spring : Spring -> Builder.AnimBuilder { eng | withSpring : () } -> Builder.AnimBuilder { eng | withSpring : () }
+spring =
+    Builder.spring
+
+
+
+-- ============================================================
 -- UNIT
 -- ============================================================
 
@@ -1521,17 +1527,6 @@ cssUnitY =
 cssUnitZ : Unit -> Builder.AnimBuilder eng -> Builder.AnimBuilder eng
 cssUnitZ =
     Builder.cssUnitZ
-
-
-
--- ============================================================
--- SPRING
--- ============================================================
-
-
-spring : Spring -> Builder.AnimBuilder { eng | withSpring : () } -> Builder.AnimBuilder { eng | withSpring : () }
-spring =
-    Builder.spring
 
 
 
@@ -1746,7 +1741,7 @@ freezeScale =
 
 freezeSkew : FreezeProperty
 freezeSkew =
-    Builder.FreexeSkew
+    Builder.FreezeSkew
 
 
 freezeAxes : List String -> List FreezeProperty -> EngineBuilder -> EngineBuilder
@@ -1821,9 +1816,9 @@ overallProgress =
 
 
 
--- ============================================================
--- PROPERTY QUERIES
--- ============================================================
+-- ============================
+-- CUSTOM PROPERTY
+-- ============================
 
 
 getBuilder : AnimState -> EngineBuilder
@@ -1836,12 +1831,6 @@ getPropertyValue propertyKey valueExtractor animGroupName (AnimState _ animGroup
     AnimGroups.get animGroupName animGroups
         |> Maybe.andThen (Animations.get propertyKey << AnimGroup.getAnimations)
         |> Maybe.andThen valueExtractor
-
-
-
--- ============================
--- CUSTOM PROPERTY
--- ============================
 
 
 getPropertyRange : AnimGroupName -> String -> AnimState -> Maybe { start : Maybe Float, end : Float }
@@ -2367,7 +2356,7 @@ interpolateTranslate =
 
 
 -- ============================================================
--- INTERPOLATION (delegated to Sub.Interpolation)
+-- INTERPOLATION
 -- ============================================================
 
 

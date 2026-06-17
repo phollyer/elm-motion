@@ -356,11 +356,6 @@ attributes animGroupName ((AnimState _ animGroups) as animState) =
                             "none"
 
                 willChangePairs =
-                    -- `will-change` promotes the animated properties to
-                    -- their own compositor layer ahead of the keyframes
-                    -- starting. We clear it once the animation finishes
-                    -- (infinite loops never reach this branch) so the
-                    -- element doesn't keep paying the layer cost forever.
                     if AnimGroup.isComplete animGroup then
                         []
 
@@ -472,6 +467,11 @@ eventsStopPropagation toMsg =
 -- ============================================================
 
 
+setStyles : Styles -> AnimGroup
+setStyles styles =
+    AnimGroup.setStyles styles AnimGroup.init
+
+
 stop : AnimGroupName -> AnimState -> AnimState
 stop =
     CSS.stop
@@ -487,11 +487,6 @@ reset =
         AnimGroup.setPlayState
         (KeyframeStyles.fromProcessedProperties Nothing Nothing)
         setStyles
-
-
-setStyles : Styles -> AnimGroup
-setStyles styles =
-    AnimGroup.setStyles styles AnimGroup.init
 
 
 restart : AnimGroupName -> (AnimMsg -> msg) -> AnimState -> ( AnimState, Cmd msg )

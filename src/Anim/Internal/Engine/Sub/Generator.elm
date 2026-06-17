@@ -92,18 +92,57 @@ generateAnimation iterationCount directionConfig maybeOrder discreteEntryProps d
         |> AnimGroup.setWillChange (Builder.willChangeComposite adjustedProperties)
 
 
+scaleInterruptDuration : Maybe AnimGroup -> Builder.ProcessedPropertyConfig -> Builder.ProcessedPropertyConfig
+scaleInterruptDuration maybeExisting propertyConfig =
+    case ( maybeExisting, propertyConfig ) of
+        ( Just existing, Builder.ProcessedOpacityConfig cfg ) ->
+            case Animations.get "opacity" (AnimGroup.getAnimations existing) of
+                Just (Opacity prev) ->
+                    if prev.isComplete then
+                        propertyConfig
+
+                    else
+                        let
+                            prevDistance =
+                                Opacity.distance prev.start prev.end
+
+                            prevDurationMs =
+                                prev.totalDurationMs
+
+                            nextStart =
+                                Maybe.withDefault Opacity.default cfg.start
+
+                            nextDistance =
+                                Opacity.distance nextStart cfg.end
+
+                            scaledDurationMs =
+                                if prevDistance <= 0 || prevDurationMs <= 0 then
+                                    toFloat cfg.duration
+
+                                else
+                                    nextDistance * (prevDurationMs / prevDistance)
+
+                            scaledDurationInt =
+                                max 0 (round scaledDurationMs)
+                        in
+                        Builder.ProcessedOpacityConfig { cfg | duration = scaledDurationInt }
+
+                _ ->
+                    propertyConfig
+
+        _ ->
+            propertyConfig
+
+
 
 -- ============================================================
--- HELPERS
+-- TRANSFORM
 -- ============================================================
 
 
 toAnimation : Bool -> Builder.ProcessedPropertyConfig -> Maybe ( String, Animation )
 toAnimation isComplete propertyConfig =
     let
-        -- Snap mode bypasses the frame-loop entirely: the PropertyAnimation
-        -- is born already complete at its end value, so the renderer reads
-        -- `end` on every query and no progress events ever fire.
         snapped =
             Builder.processedPropertyMode propertyConfig == Builder.Snap
 
@@ -204,48 +243,6 @@ toAnimation isComplete propertyConfig =
                 , Translate config.cssUnit <|
                     build Translate.default config
                 )
-
-
-scaleInterruptDuration : Maybe AnimGroup -> Builder.ProcessedPropertyConfig -> Builder.ProcessedPropertyConfig
-scaleInterruptDuration maybeExisting propertyConfig =
-    case ( maybeExisting, propertyConfig ) of
-        ( Just existing, Builder.ProcessedOpacityConfig cfg ) ->
-            case Animations.get "opacity" (AnimGroup.getAnimations existing) of
-                Just (Opacity prev) ->
-                    if prev.isComplete then
-                        propertyConfig
-
-                    else
-                        let
-                            prevDistance =
-                                Opacity.distance prev.start prev.end
-
-                            prevDurationMs =
-                                prev.totalDurationMs
-
-                            nextStart =
-                                Maybe.withDefault Opacity.default cfg.start
-
-                            nextDistance =
-                                Opacity.distance nextStart cfg.end
-
-                            scaledDurationMs =
-                                if prevDistance <= 0 || prevDurationMs <= 0 then
-                                    toFloat cfg.duration
-
-                                else
-                                    nextDistance * (prevDurationMs / prevDistance)
-
-                            scaledDurationInt =
-                                max 0 (round scaledDurationMs)
-                        in
-                        Builder.ProcessedOpacityConfig { cfg | duration = scaledDurationInt }
-
-                _ ->
-                    propertyConfig
-
-        _ ->
-            propertyConfig
 
 
 

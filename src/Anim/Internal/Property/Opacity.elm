@@ -14,8 +14,20 @@ module Anim.Internal.Property.Opacity exposing
 import Shared.TimeSpec as TimeSpec exposing (TimeSpec)
 
 
+
+-- ============================================================
+-- TYPES
+-- ============================================================
+
+
 type Opacity
     = Opacity Float
+
+
+
+-- ============================================================
+-- BUILD
+-- ============================================================
 
 
 default : Opacity

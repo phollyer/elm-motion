@@ -12,12 +12,24 @@ module.
 import Shared.Spring
 
 
+
+-- ============================================================
+-- TYPES
+-- ============================================================
+
+
 {-| Opaque wrapper around the solver's `SpringConfig`. The constructor
 is intentionally inaccessible from `Motion.Spring`'s public surface so
 all `Spring` values come from the validated presets or `custom`.
 -}
 type Spring
     = Spring Shared.Spring.SpringConfig
+
+
+
+-- ============================================================
+-- QUERY
+-- ============================================================
 
 
 {-| Extract the underlying `SpringConfig` for use by the solver and

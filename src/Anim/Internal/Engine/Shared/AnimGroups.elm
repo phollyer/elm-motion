@@ -50,7 +50,62 @@ init =
 
 
 -- ============================================================
--- OPERATIONS
+-- BUILD
+-- ============================================================
+
+
+singleton : AnimGroupName -> a -> AnimGroups a
+singleton name value =
+    AnimGroups <|
+        Dict.singleton name value
+
+
+insert : AnimGroupName -> a -> AnimGroups a -> AnimGroups a
+insert name value (AnimGroups dict) =
+    AnimGroups <|
+        Dict.insert name value dict
+
+
+remove : AnimGroupName -> AnimGroups a -> AnimGroups a
+remove name (AnimGroups dict) =
+    AnimGroups <|
+        Dict.remove name dict
+
+
+
+-- ============================================================
+-- QUERY
+-- ============================================================
+
+
+get : AnimGroupName -> AnimGroups a -> Maybe a
+get name (AnimGroups dict) =
+    Dict.get name dict
+
+
+groups : AnimGroups a -> List a
+groups (AnimGroups dict) =
+    Dict.values dict
+
+
+isEmpty : AnimGroups a -> Bool
+isEmpty (AnimGroups dict) =
+    Dict.isEmpty dict
+
+
+member : AnimGroupName -> AnimGroups a -> Bool
+member name (AnimGroups dict) =
+    Dict.member name dict
+
+
+names : AnimGroups a -> List AnimGroupName
+names (AnimGroups dict) =
+    Dict.keys dict
+
+
+
+-- ============================================================
+-- TRANSFORM
 -- ============================================================
 
 
@@ -69,36 +124,10 @@ fromList =
     AnimGroups << Dict.fromList
 
 
-get : AnimGroupName -> AnimGroups a -> Maybe a
-get name (AnimGroups dict) =
-    Dict.get name dict
-
-
-groups : AnimGroups a -> List a
-groups (AnimGroups dict) =
-    Dict.values dict
-
-
-insert : AnimGroupName -> a -> AnimGroups a -> AnimGroups a
-insert name value (AnimGroups dict) =
-    AnimGroups <|
-        Dict.insert name value dict
-
-
-isEmpty : AnimGroups a -> Bool
-isEmpty (AnimGroups dict) =
-    Dict.isEmpty dict
-
-
 map : (AnimGroupName -> a -> v) -> AnimGroups a -> AnimGroups v
 map f (AnimGroups dict) =
     AnimGroups <|
         Dict.map f dict
-
-
-member : AnimGroupName -> AnimGroups a -> Bool
-member name (AnimGroups dict) =
-    Dict.member name dict
 
 
 merge :
@@ -118,23 +147,6 @@ merge leftStep bothStep rightStep dictB dictC (AnimGroups dictA) =
             dictB
             dictC
             dictA
-
-
-names : AnimGroups a -> List AnimGroupName
-names (AnimGroups dict) =
-    Dict.keys dict
-
-
-remove : AnimGroupName -> AnimGroups a -> AnimGroups a
-remove name (AnimGroups dict) =
-    AnimGroups <|
-        Dict.remove name dict
-
-
-singleton : AnimGroupName -> a -> AnimGroups a
-singleton name value =
-    AnimGroups <|
-        Dict.singleton name value
 
 
 toDict : AnimGroups a -> Dict AnimGroupName a

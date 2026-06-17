@@ -72,8 +72,57 @@ init =
 
 
 -- ============================================================
+-- BUILD
+-- ============================================================
+
+
+setDiscreteEntry : Dict String String -> AnimGroup -> AnimGroup
+setDiscreteEntry entry (AnimGroup animGroup) =
+    AnimGroup { animGroup | discreteEntry = entry }
+
+
+setDiscreteExit : Dict String Builder.DiscreteExitProperty -> AnimGroup -> AnimGroup
+setDiscreteExit exit (AnimGroup animGroup) =
+    AnimGroup { animGroup | discreteExit = exit }
+
+
+setPlayState : PlayState -> AnimGroup -> AnimGroup
+setPlayState state (AnimGroup animGroup) =
+    AnimGroup { animGroup | playState = state }
+
+
+setPropertyKeys : Set String -> AnimGroup -> AnimGroup
+setPropertyKeys keys (AnimGroup animGroup) =
+    AnimGroup { animGroup | propertyKeys = keys }
+
+
+setStartingStyles : List String -> AnimGroup -> AnimGroup
+setStartingStyles styles (AnimGroup animGroup) =
+    AnimGroup { animGroup | startingStyles = styles }
+
+
+setStyles : Styles -> AnimGroup -> AnimGroup
+setStyles styles (AnimGroup animGroup) =
+    AnimGroup { animGroup | styles = styles }
+
+
+{-| Set the precomputed `will-change` value for this group. See
+[`getWillChange`](#getWillChange).
+-}
+setWillChange : String -> AnimGroup -> AnimGroup
+setWillChange value (AnimGroup animGroup) =
+    AnimGroup { animGroup | willChange = value }
+
+
+
+-- ============================================================
 -- QUERY
 -- ============================================================
+
+
+getStartingStyles : AnimGroup -> List String
+getStartingStyles (AnimGroup animGroup) =
+    animGroup.startingStyles
 
 
 getStyles : AnimGroup -> Styles
@@ -100,11 +149,6 @@ getStylesheetRule (AnimGroup animGroup) =
            )
 
 
-{-| True when this group uses the discrete-transition pattern
-(`discreteEntry` or `discreteExit` has ever been set). The Transition
-engine uses this to switch to selector-driven styling (data attribute +
-stylesheet rule) so `@starting-style` triggers correctly on entry.
--}
 usesDiscrete : AnimGroup -> Bool
 usesDiscrete (AnimGroup animGroup) =
     not (Dict.isEmpty animGroup.discreteEntry)
@@ -152,53 +196,29 @@ getStateId (AnimGroup animGroup) =
     animGroup.stateId
 
 
-
--- ============================================================
--- BUILD
--- ============================================================
-
-
-setDiscreteEntry : Dict String String -> AnimGroup -> AnimGroup
-setDiscreteEntry entry (AnimGroup animGroup) =
-    AnimGroup { animGroup | discreteEntry = entry }
+isActive : AnimGroup -> Bool
+isActive (AnimGroup animGroup) =
+    PlayState.isActive animGroup.playState
 
 
-setDiscreteExit : Dict String Builder.DiscreteExitProperty -> AnimGroup -> AnimGroup
-setDiscreteExit exit (AnimGroup animGroup) =
-    AnimGroup { animGroup | discreteExit = exit }
+isCancelled : AnimGroup -> Bool
+isCancelled (AnimGroup animGroup) =
+    PlayState.isCancelled animGroup.playState
 
 
-getStartingStyles : AnimGroup -> List String
-getStartingStyles (AnimGroup animGroup) =
-    animGroup.startingStyles
+isComplete : AnimGroup -> Bool
+isComplete (AnimGroup animGroup) =
+    PlayState.isComplete animGroup.playState
 
 
-setStartingStyles : List String -> AnimGroup -> AnimGroup
-setStartingStyles styles (AnimGroup animGroup) =
-    AnimGroup { animGroup | startingStyles = styles }
-
-
-setStyles : Styles -> AnimGroup -> AnimGroup
-setStyles styles (AnimGroup animGroup) =
-    AnimGroup { animGroup | styles = styles }
-
-
-setPropertyKeys : Set String -> AnimGroup -> AnimGroup
-setPropertyKeys keys (AnimGroup animGroup) =
-    AnimGroup { animGroup | propertyKeys = keys }
-
-
-{-| Set the precomputed `will-change` value for this group. See
-[`getWillChange`](#getWillChange).
--}
-setWillChange : String -> AnimGroup -> AnimGroup
-setWillChange value (AnimGroup animGroup) =
-    AnimGroup { animGroup | willChange = value }
+isRunning : AnimGroup -> Bool
+isRunning (AnimGroup animGroup) =
+    PlayState.isRunning animGroup.playState
 
 
 
 -- ============================================================
--- MERGE
+-- TRANSFORM
 -- ============================================================
 
 
@@ -291,10 +311,36 @@ mergeStyles (AnimGroup newGroup) (AnimGroup existingGroup) newCssProps =
         }
 
 
+{-| Merge two comma-joined `will-change` values, preserving the order of
+the existing entries and appending any new entries that aren't already
+listed. Empty inputs are skipped so a fresh group merging into one with
+no will-change works in either direction.
+-}
+mergeWillChange : String -> String -> String
+mergeWillChange existing new =
+    case ( existing, new ) of
+        ( "", _ ) ->
+            new
 
--- ============================================================
--- HELPERS
--- ============================================================
+        ( _, "" ) ->
+            existing
+
+        _ ->
+            let
+                split value =
+                    value
+                        |> String.split ","
+                        |> List.map String.trim
+                        |> List.filter (not << String.isEmpty)
+
+                existingParts =
+                    split existing
+
+                newOnlyParts =
+                    split new
+                        |> List.filter (\p -> not (List.member p existingParts))
+            in
+            String.join ", " (existingParts ++ newOnlyParts)
 
 
 {-| Split a CSS transition value string by commas, but only at the top level
@@ -348,66 +394,3 @@ splitRespectingParens value =
                     helper rest depth (c :: current) acc
     in
     helper chars 0 [] []
-
-
-{-| Merge two comma-joined `will-change` values, preserving the order of
-the existing entries and appending any new entries that aren't already
-listed. Empty inputs are skipped so a fresh group merging into one with
-no will-change works in either direction.
--}
-mergeWillChange : String -> String -> String
-mergeWillChange existing new =
-    case ( existing, new ) of
-        ( "", _ ) ->
-            new
-
-        ( _, "" ) ->
-            existing
-
-        _ ->
-            let
-                split value =
-                    value
-                        |> String.split ","
-                        |> List.map String.trim
-                        |> List.filter (not << String.isEmpty)
-
-                existingParts =
-                    split existing
-
-                newOnlyParts =
-                    split new
-                        |> List.filter (\p -> not (List.member p existingParts))
-            in
-            String.join ", " (existingParts ++ newOnlyParts)
-
-
-
--- ============================================================
--- PLAY STATE
--- ============================================================
-
-
-setPlayState : PlayState -> AnimGroup -> AnimGroup
-setPlayState state (AnimGroup animGroup) =
-    AnimGroup { animGroup | playState = state }
-
-
-isActive : AnimGroup -> Bool
-isActive (AnimGroup animGroup) =
-    PlayState.isActive animGroup.playState
-
-
-isCancelled : AnimGroup -> Bool
-isCancelled (AnimGroup animGroup) =
-    PlayState.isCancelled animGroup.playState
-
-
-isComplete : AnimGroup -> Bool
-isComplete (AnimGroup animGroup) =
-    PlayState.isComplete animGroup.playState
-
-
-isRunning : AnimGroup -> Bool
-isRunning (AnimGroup animGroup) =
-    PlayState.isRunning animGroup.playState

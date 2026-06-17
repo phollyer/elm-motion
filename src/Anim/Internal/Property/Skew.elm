@@ -27,6 +27,12 @@ type Skew
     = Skew { x : Float, y : Float }
 
 
+
+-- ============================================================
+-- BUILD
+-- ============================================================
+
+
 default : Skew
 default =
     Skew { x = 0, y = 0 }
@@ -34,7 +40,7 @@ default =
 
 
 -- ============================================================
--- CONSTRUCTORS
+-- QUERY
 -- ============================================================
 
 
@@ -46,6 +52,12 @@ getX (Skew values) =
 getY : Skew -> Float
 getY (Skew values) =
     values.y
+
+
+
+-- ============================================================
+-- TRANSFORM
+-- ============================================================
 
 
 fromRecord : { x : Float, y : Float } -> Skew
@@ -66,12 +78,6 @@ toTuple (Skew values) =
 toRecord : Skew -> { x : Float, y : Float }
 toRecord (Skew values) =
     { x = values.x, y = values.y }
-
-
-
--- ============================================================
--- CONVERSIONS
--- ============================================================
 
 
 toCssString : Skew -> String
@@ -104,6 +110,22 @@ toCssString (Skew values) =
 
 
 -- ============================================================
+-- TIMING
+-- ============================================================
+
+
+speed : Float -> Float -> TimeSpec -> Float
+speed =
+    TimeSpec.speed
+
+
+duration : Float -> TimeSpec -> Float
+duration =
+    TimeSpec.duration
+
+
+
+-- ============================================================
 -- MATH
 -- ============================================================
 
@@ -124,16 +146,6 @@ distance start end =
             endY - startY
     in
     sqrt (dx * dx + dy * dy)
-
-
-speed : Float -> Float -> TimeSpec -> Float
-speed =
-    TimeSpec.speed
-
-
-duration : Float -> TimeSpec -> Float
-duration =
-    TimeSpec.duration
 
 
 interpolate : Float -> Skew -> Skew -> Skew

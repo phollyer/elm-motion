@@ -1,7 +1,6 @@
 module Anim.Internal.Engine.Sub.Animation exposing
     ( Animation(..)
     , PropertyAnimation
-    , Timing
     , foldTiming
     , mapTiming
     , replaceAxes
@@ -92,21 +91,7 @@ toPropertyKey prop =
 
 
 -- ============================================================
--- TIMING
--- ============================================================
-
-
-type alias Timing =
-    { elapsedMs : Float
-    , isComplete : Bool
-    , totalDurationMs : Float
-    , delayMs : Float
-    }
-
-
-
--- ============================================================
--- MODIFY
+-- CONTROLS
 -- ============================================================
 
 
@@ -172,8 +157,16 @@ stop =
 
 
 -- ============================================================
--- HELPERS
+-- TIMING
 -- ============================================================
+
+
+type alias Timing =
+    { elapsedMs : Float
+    , isComplete : Bool
+    , totalDurationMs : Float
+    , delayMs : Float
+    }
 
 
 toTiming : PropertyAnimation a -> Timing

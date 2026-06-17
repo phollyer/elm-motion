@@ -185,22 +185,6 @@ animate setPlayState generateData insertData (AnimState state animGroups) transf
 -- ============================================================
 
 
-{-| Dedicated retarget pipeline. Re-uses the animate code path to compute
-fresh group styles, but:
-
-  - Tags the new history entry `RetargetKind` so `reset` walks past it
-    to find the original animate's rest position.
-  - **Skips `mergeBaselines`**, so the retarget's end value does not
-    become the start anchor for the next `animate` or `reset`. Without
-    this skip, a subsequent `animate` would jump to the retarget's end
-    before animating, and a subsequent `reset` would snap to the
-    retarget's synthesised mid-flight start.
-
-The engine-specific snap (e.g. `transition: none` for the Transition
-engine, `stop` for the Keyframe engine) is applied by the caller via the
-`postProcess` function once the new groups are in place.
-
--}
 retarget :
     (PlayState -> a -> a)
     -> (Maybe (List TransformProperty) -> TimelineBuilder engine -> AnimGroupName -> Builder.ProcessedAnimGroupConfig -> a)
@@ -315,6 +299,12 @@ attributes attrs getStyles animGroupName (AnimState _ animGroups) =
 -- ============================================================
 
 
+type alias SourceEventData =
+    { targetId : Maybe String
+    , currentTargetId : Maybe String
+    }
+
+
 onEvent : String -> (a -> msg) -> (AnimGroupName -> SourceEventData -> a) -> Html.Attribute msg
 onEvent eventName toMsg msg =
     Html.Events.on eventName <|
@@ -339,12 +329,6 @@ sourceEventDecoder toMsg =
         (Json.Decode.at [ "target", "dataset", "animGroupName" ] Json.Decode.string)
         (elementIdDecoder [ "target", "id" ])
         (elementIdDecoder [ "currentTarget", "id" ])
-
-
-type alias SourceEventData =
-    { targetId : Maybe String
-    , currentTargetId : Maybe String
-    }
 
 
 eventDataToMsg : (animMsg -> msg) -> (AnimGroupName -> SourceEventData -> animMsg) -> AnimGroupName -> SourceEventData -> msg
@@ -422,6 +406,17 @@ easing =
 
 
 -- ============================================================
+-- SPRING
+-- ============================================================
+
+
+spring : Spring -> Builder.AnimBuilder { eng | withSpring : () } -> Builder.AnimBuilder { eng | withSpring : () }
+spring =
+    Builder.spring
+
+
+
+-- ============================================================
 -- UNIT
 -- ============================================================
 
@@ -444,17 +439,6 @@ cssUnitY =
 cssUnitZ : Unit -> Builder.AnimBuilder eng -> Builder.AnimBuilder eng
 cssUnitZ =
     Builder.cssUnitZ
-
-
-
--- ============================================================
--- SPRING
--- ============================================================
-
-
-spring : Spring -> Builder.AnimBuilder { eng | withSpring : () } -> Builder.AnimBuilder { eng | withSpring : () }
-spring =
-    Builder.spring
 
 
 
@@ -693,20 +677,14 @@ isCancelled getIsCancelled animGroupName (AnimState _ animGroups) =
 
 
 
--- ============================================================
--- PROPERTY QUERIES
--- ============================================================
+-- ============================
+-- CUSTOM PROPERTY
+-- ============================
 
 
 getBuilder : AnimState engine a -> TimelineBuilder engine
 getBuilder (AnimState state _) =
     state.builder
-
-
-
--- ============================
--- CUSTOM PROPERTY
--- ============================
 
 
 getPropertyStart : AnimGroupName -> String -> AnimState engine a -> Maybe Float

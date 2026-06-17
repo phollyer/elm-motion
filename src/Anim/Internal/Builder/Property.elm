@@ -75,6 +75,16 @@ type alias Config a =
     }
 
 
+type alias AnimGroupName =
+    String
+
+
+
+-- ============================================================
+-- BUILD
+-- ============================================================
+
+
 defaultConfig : a -> Config a
 defaultConfig defaultEnd =
     { start = Nothing
@@ -87,12 +97,6 @@ defaultConfig defaultEnd =
     , spring = Nothing
     , mode = Builder.Animate
     }
-
-
-
--- ============================================================
--- BUILD
--- ============================================================
 
 
 for :
@@ -424,14 +428,8 @@ spring spring_ config =
 
 
 -- ============================================================
--- QUERY
+-- CLAMPS
 -- ============================================================
-
-
-getFloat : (t -> Float) -> Float -> Maybe t -> Float
-getFloat getAxis default =
-    Maybe.map getAxis
-        >> Maybe.withDefault default
 
 
 {-| Clamp a float to the supplied `(min, max)` range when one is
@@ -448,8 +446,16 @@ clampAxis range v =
             v
 
 
-type alias AnimGroupName =
-    String
+
+-- ============================================================
+-- QUERY
+-- ============================================================
+
+
+getFloat : (t -> Float) -> Float -> Maybe t -> Float
+getFloat getAxis default =
+    Maybe.map getAxis
+        >> Maybe.withDefault default
 
 
 getRange :

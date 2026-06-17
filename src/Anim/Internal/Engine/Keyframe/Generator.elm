@@ -41,15 +41,21 @@ type alias DiscreteConfig =
     }
 
 
+type alias AnimGroupName =
+    String
+
+
+
+-- ============================================================
+-- BUILD
+-- ============================================================
+
+
 emptyDiscreteConfig : DiscreteConfig
 emptyDiscreteConfig =
     { entry = Dict.empty
     , exit = Dict.empty
     }
-
-
-type alias AnimGroupName =
-    String
 
 
 
@@ -536,7 +542,7 @@ generateName maybeSuffix maybeOrder discrete animGroupName properties =
 
 
 -- ============================================================
--- HELPERS
+-- MAX TIMINGS
 -- ============================================================
 
 

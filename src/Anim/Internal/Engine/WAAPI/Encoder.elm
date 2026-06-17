@@ -1010,7 +1010,6 @@ springKeyframes s durationMs =
 
 
 {-| Check if an easing type requires keyframe pre-computation for accuracy.
-Bounce and Elastic easings cannot be represented accurately with a single cubic-bezier curve.
 -}
 isComplexEasing : Easing -> Bool
 isComplexEasing easing_ =

@@ -64,11 +64,6 @@ long-running motions — notably low-stiffness or high-mass springs whose
 settle time can run into tens of seconds — with samples spaced far
 enough apart that the linear segments become visible.
 
-The heuristic is ~60 samples per second of motion (floor of 60, cap of
-
-1.  which keeps sub-second motions on their existing budget while
-    giving long springs the resolution they need to remain smooth.
-
 -}
 sampleCountForDuration : Float -> Int
 sampleCountForDuration durationMs =
