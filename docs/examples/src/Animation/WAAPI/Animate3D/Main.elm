@@ -648,12 +648,8 @@ viewAnimationArea model =
 
 viewCube : Model -> Html Msg
 viewCube model =
-    let
-        cubeAttrs =
-            WAAPI.attributes cubeGroupName model.animState
-    in
     div
-        (cubeAttrs
+        (WAAPI.attributes cubeGroupName model.animState
             ++ [ View3D.transformStyle View3D.Preserve3D
                , id "cube"
                , style "width" cubeSizeCss
@@ -672,15 +668,8 @@ viewCube model =
 
 viewFace : WAAPI.AnimState Msg -> FaceConfig -> Html Msg
 viewFace animState config =
-    let
-        faceAnimAttributes =
-            WAAPI.attributes config.groupName animState
-
-        textAnimAttributes =
-            WAAPI.attributes config.text.groupName animState
-    in
     div
-        (faceAnimAttributes
+        (WAAPI.attributes config.groupName animState
             ++ [ View3D.transformStyle View3D.Preserve3D
                , id config.id
                , style "position" "absolute"
@@ -702,7 +691,7 @@ viewFace animState config =
             ]
             [ text config.label ]
         , div
-            (textAnimAttributes
+            (WAAPI.attributes config.text.groupName animState
                 ++ [ id config.text.id
                    , style "color" config.text.color
                    , style "position" "absolute"

@@ -633,16 +633,9 @@ cubeSizeCss =
 
 viewCube : Model -> Html Msg
 viewCube model =
-    let
-        cubeAttrs =
-            Keyframe.attributes cubeGroupName model.animState
-
-        cubeEvents =
-            Keyframe.events GotKeyframeMsg
-    in
     div
-        (cubeAttrs
-            ++ cubeEvents
+        (Keyframe.attributes cubeGroupName model.animState
+            ++ Keyframe.events GotKeyframeMsg
             ++ [ View3D.transformStyle View3D.Preserve3D
                , id "cube"
                , style "width" cubeSizeCss
@@ -661,15 +654,8 @@ viewCube model =
 
 viewFace : Keyframe.AnimState -> FaceConfig -> Html Msg
 viewFace animState config =
-    let
-        faceAnimAttributes =
-            Keyframe.attributes config.groupName animState
-
-        textAnimAttributes =
-            Keyframe.attributes config.text.groupName animState
-    in
     div
-        (faceAnimAttributes
+        (Keyframe.attributes config.groupName animState
             ++ [ View3D.transformStyle View3D.Preserve3D
                , id config.id
                , style "position" "absolute"
@@ -691,7 +677,7 @@ viewFace animState config =
             ]
             [ text config.label ]
         , div
-            (textAnimAttributes
+            (Keyframe.attributes config.text.groupName animState
                 ++ [ id config.text.id
                    , style "color" config.text.color
                    , style "position" "absolute"
