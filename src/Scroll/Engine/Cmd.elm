@@ -10,9 +10,9 @@ module Scroll.Engine.Cmd exposing
 Choose this engine when you just want to trigger a scroll and move on.
 
 📖 See
-[Scroll Cmd Engine Documentation](https://phollyer.github.io/elm-motion/engines/scroll/cmd/)
+[Scroll Cmd Engine Documentation](https://phollyer.github.io/elm-motion/scroll/engines/cmd/)
 and
-[Scroll Overview](https://phollyer.github.io/elm-motion/engines/scroll/overview/)
+[Scroll Overview](https://phollyer.github.io/elm-motion/scroll/engines/overview/)
 for details.
 
 Use the [Builder](Scroll-Builder) module to configure scroll targets.

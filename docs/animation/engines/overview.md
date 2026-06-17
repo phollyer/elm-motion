@@ -55,12 +55,14 @@ For implementation details, each engine page includes the complete usage flow fo
 | Progress | | | ✓ | ✓ | ✓ | ✓ |
 | **Mid-Flight Access** |
 | Query current values | | | ✓ | ✓ | | |
-| Dynamic redirects | ✓ | | ✓ | ✓ | | |
+| Smooth dynamic redirects | ✓ | | ✓ | ✓ | | |
 | **Properties** |
 | Custom transform order | | ✓ | ✓ | ✓ | ✓ | ✓ |
 | Discrete properties | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 
 All engines work with responsive layouts; see [Responsive Animations](../concepts/responsive-animations.md) for the techniques available and which engines support measured-pixel updates.
+
+"Smooth dynamic redirects" means retargeting from the current in-flight value without snapping. Keyframe still supports `retarget` for re-anchoring after layout truth changes, but it does not provide smooth in-flight redirects.
 
 ## Engine Families
 

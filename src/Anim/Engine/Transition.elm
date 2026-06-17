@@ -541,7 +541,7 @@ eventsStopPropagation =
 
 {-| Set the default length unit for all length-bearing properties.
 
-    responsivePanelMotion : AnimBuilder eng -> AnimBuilder eng
+    responsivePanelMotion : AnimBuilder { eng | withCssUnit : () } -> AnimBuilder { eng | withCssUnit : () }
     responsivePanelMotion =
         cssUnit Unit.Vw
             >> slidePanelIn
@@ -555,7 +555,7 @@ cssUnit =
 
 {-| Set the default length unit for the X axis.
 
-    responsiveDrawerMotion : AnimBuilder eng -> AnimBuilder eng
+    responsiveDrawerMotion : AnimBuilder { eng | withCssUnit : () } -> AnimBuilder { eng | withCssUnit : () }
     responsiveDrawerMotion =
         cssUnitX Unit.Vw
             >> slidePanelIn
@@ -569,7 +569,7 @@ cssUnitX =
 
 {-| Set the default length unit for the Y axis.
 
-    responsiveSheetMotion : AnimBuilder eng -> AnimBuilder eng
+    responsiveSheetMotion : AnimBuilder { eng | withCssUnit : () } -> AnimBuilder { eng | withCssUnit : () }
     responsiveSheetMotion =
         cssUnitY Unit.Vh
             >> slidePanelIn
@@ -583,7 +583,7 @@ cssUnitY =
 
 {-| Set the default length unit for the Z axis.
 
-    layeredSceneMotion : AnimBuilder eng -> AnimBuilder eng
+    layeredSceneMotion : AnimBuilder { eng | withCssUnit : () } -> AnimBuilder { eng | withCssUnit : () }
     layeredSceneMotion =
         cssUnitZ Unit.Px
             >> slidePanelIn
@@ -597,7 +597,7 @@ cssUnitZ =
 
 {-| Set the default length unit used for width values in Transition animations.
 
-    responsiveCardWidth : AnimBuilder eng -> AnimBuilder eng
+    responsiveCardWidth : AnimBuilder { eng | withCssUnit : () } -> AnimBuilder { eng | withCssUnit : () }
     responsiveCardWidth =
         cssUnitWidth Unit.Vw
             >> slidePanelIn
@@ -611,7 +611,7 @@ cssUnitWidth =
 
 {-| Set the default length unit used for height values in Transition animations.
 
-    responsivePanelHeight : AnimBuilder eng -> AnimBuilder eng
+    responsivePanelHeight : AnimBuilder { eng | withCssUnit : () } -> AnimBuilder { eng | withCssUnit : () }
     responsivePanelHeight =
         cssUnitHeight Unit.Vh
             >> slidePanelIn
@@ -631,7 +631,7 @@ cssUnitHeight =
 
 {-| Set the global delay for all animations in this builder.
 
-    introAnim : AnimBuilder eng -> AnimBuilder eng
+    introAnim : AnimBuilder { eng | withTiming : () } -> AnimBuilder { eng | withTiming : () }
     introAnim =
         delay 500
             >> fadeInHeader
@@ -646,7 +646,7 @@ delay =
 
 {-| Set the global duration for all animations in this builder.
 
-    introAnim : AnimBuilder eng -> AnimBuilder eng
+    introAnim : AnimBuilder { eng | withTiming : () } -> AnimBuilder { eng | withTiming : () }
     introAnim =
         duration 500
             >> fadeInHeader
@@ -661,7 +661,7 @@ duration =
 
 {-| Set the global speed for all animations in this builder.
 
-    introAnim : AnimBuilder eng -> AnimBuilder eng
+    introAnim : AnimBuilder { eng | withTiming : () } -> AnimBuilder { eng | withTiming : () }
     introAnim =
         speed 300
             >> slideDownHeader
@@ -682,7 +682,7 @@ speed =
 
 {-| Set the global easing function.
 
-    heroEntrance : AnimBuilder eng -> AnimBuilder eng
+    heroEntrance : AnimBuilder { eng | withEasing : () } -> AnimBuilder { eng | withEasing : () }
     heroEntrance =
         easing EaseInOut
             >> fadeInHeroTitle

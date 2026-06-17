@@ -6,8 +6,8 @@ This is everything `Scroll.Task` offers:
 | -------- | ---- |
 | `scroll` | `(ScrollBuilder -> ScrollBuilder) -> Task ScrollError (List ScrollOk)` |
 | `scrollEach` | `(ScrollBuilder -> ScrollBuilder) -> Task Never (List (Result ScrollError ScrollOk))` |
-| `delay` | `Float -> ScrollBuilder -> ScrollBuilder` |
-| `duration` | `Float -> ScrollBuilder -> ScrollBuilder` |
+| `delay` | `Int -> ScrollBuilder -> ScrollBuilder` |
+| `duration` | `Int -> ScrollBuilder -> ScrollBuilder` |
 | `speed` | `Float -> ScrollBuilder -> ScrollBuilder` |
 | `easing` | `Easing -> ScrollBuilder -> ScrollBuilder` |
 

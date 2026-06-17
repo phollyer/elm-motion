@@ -15,9 +15,9 @@ module Scroll.Engine.Sub exposing
 {-| A stateful scroll engine for when you need progress, control, or scroll events.
 
 📖 See
-[Scroll Sub Engine Documentation](https://phollyer.github.io/elm-motion/engines/scroll/sub/)
+[Scroll Sub Engine Documentation](https://phollyer.github.io/elm-motion/scroll/engines/sub/)
 and
-[Scroll Overview](https://phollyer.github.io/elm-motion/engines/scroll/overview/)
+[Scroll Overview](https://phollyer.github.io/elm-motion/scroll/engines/overview/)
 for details.
 
 Use the [Builder](Scroll-Builder) module to configure scroll targets.

@@ -371,7 +371,7 @@ speed =
 
 {-| Set the easing function.
 
-    import Easing exposing (Easing(..))
+    import Motion.Easing exposing (Easing(..))
 
     CustomColor.easing EaseInOut
 

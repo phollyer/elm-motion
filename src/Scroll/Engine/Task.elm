@@ -10,9 +10,9 @@ module Scroll.Engine.Task exposing
 with other Tasks.
 
 📖 See
-[Scroll Task Engine Documentation](https://phollyer.github.io/elm-motion/engines/scroll/task/)
+[Scroll Task Engine Documentation](https://phollyer.github.io/elm-motion/scroll/engines/task/)
 and
-[Scroll Overview](https://phollyer.github.io/elm-motion/engines/scroll/overview/)
+[Scroll Overview](https://phollyer.github.io/elm-motion/scroll/engines/overview/)
 for details.
 
 Use the [Builder](Scroll-Builder) module to configure scroll targets.

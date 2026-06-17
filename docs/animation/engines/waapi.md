@@ -34,8 +34,8 @@ Here's a general workflow to get up an running quickly.
     import Anim.Property.Opacity as Opacity
 
 
-    fadeIn : String -> WAAPI.AnimBuilder eng -> WAAPI.AnimBuilder eng
-    fadeIn animGroup =
+    fadeIn : WAAPI.AnimBuilder eng -> WAAPI.AnimBuilder eng
+    fadeIn =
         Opacity.begin
             >> Opacity.to 1
             >> Opacity.end
@@ -99,7 +99,7 @@ Call `animate` to start a state-tracked animation.
         let
             ( animState, cmd ) =
                 WAAPI.animate model.animState <|
-                    WAAPI.for animGroup
+                    WAAPI.for "card"
                         >> fadeIn
         in
         ( { model | animState = animState }, cmd )

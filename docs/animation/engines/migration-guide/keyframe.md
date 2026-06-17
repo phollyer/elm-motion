@@ -3,8 +3,8 @@
 --8<-- [start:code]
 
 ```elm
-import Anim.Engine.CSS.Keyframe as Keyframe
-import Anim.Opacity as Opacity
+import Anim.Engine.Keyframe as Keyframe
+import Anim.Property.Opacity as Opacity
 
 type alias Model =
     { animState : Keyframe.AnimState }

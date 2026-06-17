@@ -7,7 +7,7 @@ A comprehensive Elm package for smooth, high-performance DOM animations and scro
 - **6 Animation Engines** — Transition, Keyframe, Sub, WAAPI, ScrollTimeline, ViewTimeline
 - **3 Scroll Engines** — Cmd, Task, Sub
 - **Three timelines, one API** — drive animations by time, scroll progress or viewport position
-- **Mid-flight control** — query, divert, pause, resume, restart and stop animations and scrolls in motion
+- **Engine-scoped control** — Sub and WAAPI support query/divert/pause/resume/restart/stop; Transition supports stop/reset; timeline engines are fire-and-forget
 - **Hardware-accelerated** — GPU transforms with full 3D support
 - **Type Safe** — only the capabilities an engine actually supports compile against it
 
@@ -48,7 +48,6 @@ fadeIn =
     Opacity.begin
         >> Opacity.from 0
         >> Opacity.to 1
-        >> Opacity.duration 300
         >> Opacity.end
 
 -- Use with any Engine
@@ -181,7 +180,6 @@ fadeInHeader : AnimBuilder eng -> AnimBuilder eng
 fadeInHeader =
     Opacity.begin
         >> Opacity.to 1
-        >> Opacity.duration 400
         >> Opacity.build
 
 
@@ -197,6 +195,7 @@ update msg model =
             ( { model | animState = 
                 Transition.animate model.animState <|
                     Transition.for "headerAnim"
+                        >> Transition.duration 400
                         >> fadeInHeader
               }
             , Cmd.none
@@ -286,6 +285,7 @@ Full documentation at **[phollyer.github.io/elm-motion](https://phollyer.github.
 - Canvas Engine
 - WebGL Engine
 - Any other user suggested features
+- Dedicated website similar to motion.dev for React
 
 ---
 

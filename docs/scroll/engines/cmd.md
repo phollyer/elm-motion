@@ -5,8 +5,8 @@ This is everything `Scroll.Cmd` offers:
 | Function | Type |
 | -------- | ---- |
 | `scroll` | `msg -> (ScrollBuilder -> ScrollBuilder) -> Cmd msg` |
-| `delay` | `Float -> ScrollBuilder -> ScrollBuilder` |
-| `duration` | `Float -> ScrollBuilder -> ScrollBuilder` |
+| `delay` | `Int -> ScrollBuilder -> ScrollBuilder` |
+| `duration` | `Int -> ScrollBuilder -> ScrollBuilder` |
 | `speed` | `Float -> ScrollBuilder -> ScrollBuilder` |
 | `easing` | `Easing -> ScrollBuilder -> ScrollBuilder` |
 

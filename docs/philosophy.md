@@ -67,7 +67,7 @@ Then use with any engine.
 
         ```elm
         Keyframe.animate model.animState <|
-            Keyframe.for "entranceanim"
+            Keyframe.for "entranceAnim"
                 >> fadeIn
         ```
 

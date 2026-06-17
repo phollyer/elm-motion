@@ -3,8 +3,8 @@
 --8<-- [start:code]
 
 ```elm
-import Anim.Engine.CSS.Transition as Transition
-import Anim.Opacity as Opacity
+import Anim.Engine.Transition as Transition
+import Anim.Property.Opacity as Opacity
 
 type alias Model =
     { animState : Transition.AnimState }

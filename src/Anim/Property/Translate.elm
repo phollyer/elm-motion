@@ -613,7 +613,7 @@ speed =
 
 {-| Set the easing function for the animation.
 
-    import Easing exposing (Easing(..))
+    import Motion.Easing exposing (Easing(..))
 
     Translate.easing EaseInOut
 

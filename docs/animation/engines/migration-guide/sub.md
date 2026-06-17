@@ -4,7 +4,7 @@
 
 ```elm
 import Anim.Engine.Sub as Sub
-import Anim.Opacity as Opacity
+import Anim.Property.Opacity as Opacity
 
 type alias Model =
     { animState : Sub.AnimState }

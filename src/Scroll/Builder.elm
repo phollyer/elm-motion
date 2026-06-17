@@ -19,7 +19,7 @@ Use this module to define where and how each scroll animation should behave.
 The Scroll engine modules ([Cmd](Scroll-Engine-Cmd), [Task](Scroll-Engine-Task),
 [Sub](Scroll-Engine-Sub)) handle execution, while this module handles per-scroll configuration.
 
-    import Easing exposing (Easing(..))
+    import Motion.Easing exposing (Easing(..))
     import Scroll.Builder as Scroll exposing (ScrollBuilder)
 
     scrollToElement : String -> ScrollBuilder -> ScrollBuilder
@@ -30,7 +30,7 @@ The Scroll engine modules ([Cmd](Scroll-Engine-Cmd), [Task](Scroll-Engine-Task),
             >> Scroll.easing EaseInOut
             >> Scroll.build
 
-📖 See [Scroll Overview](https://phollyer.github.io/elm-motion/engines/scroll/overview/) for details.
+📖 See [Scroll Overview](https://phollyer.github.io/elm-motion/scroll/engines/overview/) for details.
 
 
 # Build
@@ -50,7 +50,7 @@ The Scroll engine modules ([Cmd](Scroll-Engine-Cmd), [Task](Scroll-Engine-Task),
 
 # Element Targeting
 
-📖 See [Scroll to Element](https://phollyer.github.io/elm-motion/engines/scroll/overview/#scroll-to-element)
+📖 See [Scroll to Element](https://phollyer.github.io/elm-motion/scroll/engines/overview/#scroll-to-element)
 for details.
 
 @docs toElement
@@ -58,7 +58,7 @@ for details.
 
 # Position Targeting
 
-📖 See [Scroll to Position](https://phollyer.github.io/elm-motion/engines/scroll/overview/#scroll-to-position)
+📖 See [Scroll to Position](https://phollyer.github.io/elm-motion/scroll/engines/overview/#scroll-to-position)
 for details.
 
 @docs toCenter
@@ -93,7 +93,7 @@ for details.
 
 # Offsets
 
-📖 See [Offset](https://phollyer.github.io/elm-motion/engines/scroll/overview/#offset)
+📖 See [Offset](https://phollyer.github.io/elm-motion/scroll/engines/overview/#offset)
 for details.
 
 @docs withOffsetXY, withOffsetX, withOffsetY
@@ -105,7 +105,7 @@ Use axis selection when you want to lock one direction and scroll
 in the other. Primarily for scrolling containers whose overflow is
 scrollable in both directions but you only want to scroll in one direction.
 
-📖 See [Axis](https://phollyer.github.io/elm-motion/engines/scroll/overview/#axis)
+📖 See [Axis](https://phollyer.github.io/elm-motion/scroll/engines/overview/#axis)
 for details.
 
 @docs onBothAxes, onXAxis, onYAxis
@@ -264,7 +264,7 @@ speed =
 
 Overrides the global default easing set on a Scroll Engine.
 
-    import Easing exposing (Easing(..))
+    import Motion.Easing exposing (Easing(..))
     import Scroll.Builder as Scroll
 
     scrollWithEasing : ScrollBuilder -> ScrollBuilder

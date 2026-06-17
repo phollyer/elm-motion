@@ -50,9 +50,9 @@ The complete API documentation is available on the official Elm package reposito
 
 ## Common Patterns
 
-### Animation Function Signature
+### Animation Builder Signature
 
-All animation functions follow this pattern:
+Reusable animation builders follow this pattern:
 
 ```elm
 myAnimation : AnimBuilder eng -> AnimBuilder eng
@@ -60,15 +60,26 @@ myAnimation : AnimBuilder eng -> AnimBuilder eng
 
 This makes them composable with `>>` and reusable across engines.
 
-### Engine Pipeline
+### Engine Trigger Pipelines
 
-State-tracked animation engines (`Transition`, `Keyframe`, `Sub`, `WAAPI`) follow this pipeline:
+State-tracked engines with pure Elm state updates (`Transition`, `Keyframe`, `Sub`) use this shape:
 
 ```elm
 Engine.animate animState <|
-    \ builder ->
-        builder
-            |> ... -- Build animation
+    Engine.for "anim-group"
+        >> myAnimation
+```
+
+`WAAPI` is state-tracked but returns both updated state and a `Cmd msg`:
+
+```elm
+let
+    ( newAnimState, animCmd ) =
+        WAAPI.animate model.animState <|
+            WAAPI.for "anim-group"
+                >> myAnimation
+in
+( { model | animState = newAnimState }, animCmd )
 ```
 
 Timeline engines (`ScrollTimeline`, `ViewTimeline`) are fire-and-forget and return a `Cmd msg` directly:
