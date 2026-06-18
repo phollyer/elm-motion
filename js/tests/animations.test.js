@@ -113,6 +113,86 @@ describe('processAnimationData (WAAPI engine)', () => {
         expect(elementAnims.has('transform')).toBe(true);
     });
 
+    it('anchors a fresh transform start to the cached resting place, not the stale command start', () => {
+        // Regression: after a previous animation settles, `cleanupAnimGroup`
+        // removes the live entry so the next command takes the fresh path and
+        // its start comes from Elm's `runtimeBaseline`. That baseline can
+        // diverge from where the element actually rests (most visibly after a
+        // frozen-axis animation), producing a first-frame snap. The JS-owned
+        // `lastKnownTransforms` is the authoritative rest and must win.
+        const animGroup = 'box-resettle';
+        const animation = createFakeAnimation({ duration: 300 });
+        const element = makeElement({ animGroup, animations: [animation] });
+        installDom({ element, targetId: animGroup });
+
+        // Authoritative resting place committed by the prior (settled) anim.
+        lastKnownTransforms.set(animGroup, {
+            x: 67, y: 0, z: 0,
+            scaleX: 1, scaleY: 1, scaleZ: 1,
+            rotateX: 0, rotateY: 0, rotateZ: 0,
+            skewX: 0, skewY: 0,
+            translateUnitX: 'cqw', translateUnitY: 'cqh', translateUnitZ: 'px'
+        });
+
+        processAnimationData({
+            elements: {
+                [animGroup]: {
+                    properties: [{
+                        type: 'translate',
+                        // Stale baseline from Elm: X start trails the rest by
+                        // 2cqw and a frozen Y carries a stale 1cqh target.
+                        startX: 65, startY: 1, startZ: 0,
+                        endX: 0, endY: 1, endZ: 0,
+                        unitX: 'cqw', unitY: 'cqh', unitZ: 'px',
+                        frozenAxes: ['y'],
+                        duration: 300, easing: 'linear', version: 1
+                    }]
+                }
+            }
+        });
+
+        const [keyframes] = element.animate.mock.calls[0];
+        // X starts from the cached rest (67cqw), not the stale 65cqw.
+        expect(keyframes[0].transform).toContain('translate3d(67cqw, 0cqh, 0px)');
+        // Frozen Y is pinned to the rest (0cqh) at both ends, not Elm's 1cqh.
+        expect(keyframes[keyframes.length - 1].transform).toContain('translate3d(0cqw, 0cqh, 0px)');
+    });
+
+    it('leaves the command start intact when units differ from the cached rest', () => {
+        // Unit-safety guard: re-anchoring a px-authored animation to a cqw
+        // cached value would reinterpret the number under the wrong unit.
+        const animGroup = 'box-unit-mismatch';
+        const animation = createFakeAnimation({ duration: 300 });
+        const element = makeElement({ animGroup, animations: [animation] });
+        installDom({ element, targetId: animGroup });
+
+        lastKnownTransforms.set(animGroup, {
+            x: 67, y: 0, z: 0,
+            scaleX: 1, scaleY: 1, scaleZ: 1,
+            rotateX: 0, rotateY: 0, rotateZ: 0,
+            skewX: 0, skewY: 0,
+            translateUnitX: 'cqw', translateUnitY: 'cqh', translateUnitZ: 'px'
+        });
+
+        processAnimationData({
+            elements: {
+                [animGroup]: {
+                    properties: [{
+                        type: 'translate',
+                        startX: 120, startY: 0, startZ: 0,
+                        endX: 0, endY: 0, endZ: 0,
+                        unitX: 'px', unitY: 'px', unitZ: 'px',
+                        duration: 300, easing: 'linear', version: 1
+                    }]
+                }
+            }
+        });
+
+        const [keyframes] = element.animate.mock.calls[0];
+        // px start is preserved because the cached rest is in cqw.
+        expect(keyframes[0].transform).toContain('translate3d(120px, 0px, 0px)');
+    });
+
     it('animates mixed transform and non-transform properties in one command', () => {
         const animGroup = 'box-mixed';
         const transformAnim = createFakeAnimation({ duration: 300 });

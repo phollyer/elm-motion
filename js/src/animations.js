@@ -441,6 +441,56 @@ function patchTransformStartsFromAnimation(element, existingTransform, mergedTra
     });
 }
 
+// Re-anchor a fresh transform animation's start values to JS's authoritative
+// resting place after a previous animation has settled.
+//
+// When an animation completes, `cleanupAnimGroup` removes the live WAAPI
+// entry, so the next command takes the no-existing-entry path and its start
+// values come straight from Elm's `runtimeBaseline`. That baseline can
+// diverge from where the element is actually rendered - most visibly after a
+// frozen-axis animation, where JS froze an axis to the live compositor value
+// while Elm kept its own (stale) snapshot. Starting from the stale baseline
+// then produces a visible snap on the first frame.
+//
+// `lastKnownTransforms` is intentionally retained across `cleanupAnimGroup`
+// and holds the exact authored values JS last committed to the DOM, so it is
+// the single source of truth for the resting place. Pin every axis start to
+// it, and pin the end of any frozen axis too (a frozen axis must not move, so
+// its end has to match the rest rather than Elm's stale target).
+function anchorFreshStartsToCachedRest(animGroup, mergedTransformProperties) {
+    const cached = lastKnownTransforms.get(animGroup);
+    if (!cached) {
+        return;
+    }
+    mergedTransformProperties.forEach(property => {
+        const axes = RESOLVED_TRANSFORM_AXES[property.type];
+        if (!axes) {
+            return;
+        }
+        const frozen = Array.isArray(property.frozenAxes) ? property.frozenAxes : [];
+        axes.forEach(({ suffix, startKey, endKey, currentKey }) => {
+            const restValue = cached[currentKey];
+            if (!Number.isFinite(restValue)) {
+                return;
+            }
+            // The cached rest stores translate values in their own unit; only
+            // re-anchor when the new animation shares that unit, otherwise the
+            // numeric value would be reinterpreted under the wrong unit.
+            if (property.type === 'translate') {
+                const propUnit = property[`unit${suffix}`] || 'px';
+                const cachedUnit = cached[`translateUnit${suffix}`] || 'px';
+                if (propUnit !== cachedUnit) {
+                    return;
+                }
+            }
+            property[startKey] = restValue;
+            if (frozen.includes(suffix.toLowerCase())) {
+                property[endKey] = restValue;
+            }
+        });
+    });
+}
+
 function scaleOpacityInterruptDuration(existingEntry, resolvedNonTransform, fallbackDuration) {
     const previous = existingEntry?.resolvedNonTransform;
     const previousAnimation = existingEntry?.animation;
@@ -761,6 +811,8 @@ export function processElementAnimation(animGroup, elementConfig, globalOptions 
             patchTransformStartsFromAnimation(element, existingTransform, mergedTransformProperties);
             carryForwardMissingTransformProperties(animGroup, element, existingTransform, mergedTransformProperties);
             existingTransform.animation.cancel();
+        } else {
+            anchorFreshStartsToCachedRest(animGroup, mergedTransformProperties);
         }
 
         cancelLegacyTransformAnimations(elementAnims);
