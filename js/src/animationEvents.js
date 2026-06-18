@@ -5,7 +5,6 @@ import { activeAnimations, animationGroups, lastKnownTransforms, cleanupAnimGrou
 import {
     getDefaultTransformState,
     computeTransformFromResolved,
-    getCurrentTransform,
     getElementOrder,
     buildTransformString
 } from './transform.js';
@@ -147,11 +146,11 @@ function removeTrackedAnimationVersion(animGroup, propertyType, version) {
  * cache to compute proportional rescaling; without it the post-animation
  * resize falls back to a DOM read of the inline style.
  */
-function cacheFinalTransformState(animGroup, resolvedTransformValues) {
+function buildAuthoredFinalState(resolvedTransformValues) {
     if (!resolvedTransformValues) {
-        return;
+        return null;
     }
-    const finalState = {
+    return {
         x: resolvedTransformValues.translate.endX,
         y: resolvedTransformValues.translate.endY,
         z: resolvedTransformValues.translate.endZ,
@@ -167,6 +166,13 @@ function cacheFinalTransformState(animGroup, resolvedTransformValues) {
         translateUnitY: (typeof resolvedTransformValues.translate.unitY === 'string') ? resolvedTransformValues.translate.unitY : 'px',
         translateUnitZ: (typeof resolvedTransformValues.translate.unitZ === 'string') ? resolvedTransformValues.translate.unitZ : 'px'
     };
+}
+
+function cacheFinalTransformState(animGroup, resolvedTransformValues) {
+    const finalState = buildAuthoredFinalState(resolvedTransformValues);
+    if (!finalState) {
+        return;
+    }
     lastKnownTransforms.set(animGroup, finalState);
 }
 
@@ -461,7 +467,7 @@ export function setupAnimationEvents(animGroup, propertyType, element, animation
     animation.addEventListener('finish', () => {
         finishHandled = true;
 
-        let finalTransformStateFromDom = null;
+        let authoredFinalState = null;
 
         if (rafId !== null) {
             cancelAnimationFrame(rafId);
@@ -469,40 +475,30 @@ export function setupAnimationEvents(animGroup, propertyType, element, animation
         }
         try {
             if (propertyType === 'transform') {
-                // iOS Safari can occasionally commit the last keyframe tail at a
-                // slightly stale transform when an interrupted animation
-                // finishes. Snapshot the compositor's live transform first,
-                // then persist it as canonical transform functions (not a
-                // raw matrix string) so subsequent reads preserve per-axis
-                // values and units.
-                const computedTransform = window.getComputedStyle(element).transform;
-                const hasUsableComputedTransform =
-                    typeof computedTransform === 'string'
-                    && computedTransform.length > 0
-                    && computedTransform !== 'none';
+                // We authored every keyframe, so the resting place is the
+                // resolved end values - exact numbers in the user's own
+                // units. Commit those authored values directly instead of
+                // reading the compositor's matrix back and decomposing it
+                // (matrix decomposition is lossy/ambiguous for combined
+                // transforms and is what produced interrupt snaps). Writing
+                // the authored end also pins iOS Safari past any stale
+                // last-keyframe tail commit.
+                authoredFinalState = buildAuthoredFinalState(resolvedTransformValues);
 
-                const liveState = hasUsableComputedTransform
-                    ? getCurrentTransform(element)
-                    : null;
-                const hasFiniteLiveState = Number.isFinite(liveState?.x) && Number.isFinite(liveState?.y);
-
-                if (hasFiniteLiveState) {
-                    finalTransformStateFromDom = liveState;
+                if (authoredFinalState) {
                     animation.cancel();
 
                     const order = getElementOrder(element);
-                    const tUx = liveState.translateUnitX || 'px';
-                    const tUy = liveState.translateUnitY || 'px';
-                    const tUz = liveState.translateUnitZ || 'px';
-
                     element.style.transform = buildTransformString(
-                        liveState.x, liveState.y, liveState.z,
-                        liveState.scaleX, liveState.scaleY, liveState.scaleZ,
-                        liveState.rotateX, liveState.rotateY, liveState.rotateZ,
-                        liveState.skewX, liveState.skewY,
+                        authoredFinalState.x, authoredFinalState.y, authoredFinalState.z,
+                        authoredFinalState.scaleX, authoredFinalState.scaleY, authoredFinalState.scaleZ,
+                        authoredFinalState.rotateX, authoredFinalState.rotateY, authoredFinalState.rotateZ,
+                        authoredFinalState.skewX, authoredFinalState.skewY,
                         order,
                         null,
-                        tUx, tUy, tUz
+                        authoredFinalState.translateUnitX,
+                        authoredFinalState.translateUnitY,
+                        authoredFinalState.translateUnitZ
                     );
                 } else {
                     commitAnimatedStyles(element, animation);
@@ -537,32 +533,34 @@ export function setupAnimationEvents(animGroup, propertyType, element, animation
 
         if (wasActive && entryGeneration != null && animationGroups.get(animGroup)?.generation === entryGeneration) {
             const allComplete = finalizeAnimationTracking(animGroup, entryGeneration, 'completed');
-            // Cache end-of-animation transform state for the next resize.
-            if (propertyType === 'transform' && finalTransformStateFromDom) {
-                lastKnownTransforms.set(animGroup, finalTransformStateFromDom);
+            // Cache end-of-animation transform state for the next resize and
+            // the next animation's start. Authored resolved-end values are
+            // the single source of truth - never a decomposed DOM matrix.
+            if (propertyType === 'transform' && authoredFinalState) {
+                lastKnownTransforms.set(animGroup, authoredFinalState);
                 // Emit settled transform values so Elm baseline matches JS committed state
                 sendSettledTransformValues(animGroup, {
                     translate: {
-                        x: finalTransformStateFromDom.x,
-                        y: finalTransformStateFromDom.y,
-                        z: finalTransformStateFromDom.z,
-                        unitX: finalTransformStateFromDom.translateUnitX,
-                        unitY: finalTransformStateFromDom.translateUnitY,
-                        unitZ: finalTransformStateFromDom.translateUnitZ
+                        x: authoredFinalState.x,
+                        y: authoredFinalState.y,
+                        z: authoredFinalState.z,
+                        unitX: authoredFinalState.translateUnitX,
+                        unitY: authoredFinalState.translateUnitY,
+                        unitZ: authoredFinalState.translateUnitZ
                     },
                     scale: {
-                        x: finalTransformStateFromDom.scaleX,
-                        y: finalTransformStateFromDom.scaleY,
-                        z: finalTransformStateFromDom.scaleZ
+                        x: authoredFinalState.scaleX,
+                        y: authoredFinalState.scaleY,
+                        z: authoredFinalState.scaleZ
                     },
                     rotate: {
-                        x: finalTransformStateFromDom.rotateX,
-                        y: finalTransformStateFromDom.rotateY,
-                        z: finalTransformStateFromDom.rotateZ
+                        x: authoredFinalState.rotateX,
+                        y: authoredFinalState.rotateY,
+                        z: authoredFinalState.rotateZ
                     },
                     skew: {
-                        x: finalTransformStateFromDom.skewX,
-                        y: finalTransformStateFromDom.skewY
+                        x: authoredFinalState.skewX,
+                        y: authoredFinalState.skewY
                     }
                 });
             } else {
