@@ -1,7 +1,7 @@
 /* eslint-env browser */
 import { isTransformProperty, easingFunctions, parseIterations } from './utils.js';
 import { activeAnimations, animationGroups, elementTransformOrders, cleanupAnimGroup, lastKnownTransforms, lastKnownPerspectiveOrigins, appliedWillChange } from './state.js';
-import { getTransformState, getElementOrder, interpolateSubProperty, computeTransformFromResolved, buildTransformString, getDefaultTransformState } from './transform.js';
+import { getTransformState, getCurrentTransform, getElementOrder, interpolateSubProperty, computeTransformFromResolved, buildTransformString, getDefaultTransformState } from './transform.js';
 import { resolveNonTransformValues, createPropertyAnimation, extractPropertyConfig, buildPropertyKeyframes } from './properties.js';
 import { sendLifecycleEvent } from './ports.js';
 import { findAnimTarget, findAllAnimTargets } from './targets.js';
@@ -273,7 +273,7 @@ const FROZEN_AXIS_LIVE_FIELDS = {
     skew: { x: 'skewX', y: 'skewY' }
 };
 
-function applyFrozenAxesFromLive(property, currentState) {
+function applyFrozenAxesFromLive(property, currentState, domLiveState, element) {
     const axes = property.frozenAxes;
     if (!Array.isArray(axes) || axes.length === 0) {
         return;
@@ -282,18 +282,129 @@ function applyFrozenAxesFromLive(property, currentState) {
     if (!fieldMap) {
         return;
     }
+
+    function findContainerForQueryUnits(element) {
+        if (!element) {
+            return null;
+        }
+
+        let cursor = element.parentElement;
+        while (cursor) {
+            const cs = window.getComputedStyle(cursor);
+            const containerType = cs.containerType || '';
+            if (containerType !== 'normal') {
+                return cursor;
+            }
+            cursor = cursor.parentElement;
+        }
+
+        return element.parentElement;
+    }
+
+    function pxToTranslateUnit(pxValue, unit, axis, element) {
+        if (!Number.isFinite(pxValue)) {
+            return null;
+        }
+
+        if (!unit || unit === 'px') {
+            return pxValue;
+        }
+
+        const viewportW = window.innerWidth || 0;
+        const viewportH = window.innerHeight || 0;
+        const container = findContainerForQueryUnits(element);
+        const containerRect = container ? container.getBoundingClientRect() : null;
+        const containerW = containerRect ? containerRect.width : 0;
+        const containerH = containerRect ? containerRect.height : 0;
+
+        switch (unit) {
+            case 'cqw':
+            case 'cqi':
+                return containerW > 0 ? (pxValue * 100) / containerW : null;
+
+            case 'cqh':
+            case 'cqb':
+                return containerH > 0 ? (pxValue * 100) / containerH : null;
+
+            case 'cqmin': {
+                const basis = Math.min(containerW, containerH);
+                return basis > 0 ? (pxValue * 100) / basis : null;
+            }
+
+            case 'cqmax': {
+                const basis = Math.max(containerW, containerH);
+                return basis > 0 ? (pxValue * 100) / basis : null;
+            }
+
+            case 'vw':
+            case 'dvw':
+            case 'svw':
+            case 'lvw':
+                return viewportW > 0 ? (pxValue * 100) / viewportW : null;
+
+            case 'vh':
+            case 'dvh':
+            case 'svh':
+            case 'lvh':
+                return viewportH > 0 ? (pxValue * 100) / viewportH : null;
+
+            default:
+                if (axis === 'x') {
+                    const basis = containerW || viewportW;
+                    return basis > 0 ? (pxValue * 100) / basis : null;
+                }
+
+                if (axis === 'y') {
+                    const basis = containerH || viewportH;
+                    return basis > 0 ? (pxValue * 100) / basis : null;
+                }
+
+                return null;
+        }
+    }
+
     for (const axis of axes) {
         const stateKey = fieldMap[axis];
         if (!stateKey) continue;
-        const liveValue = currentState[stateKey];
-        if (!Number.isFinite(liveValue)) continue;
         const suffix = axis.toUpperCase();
-        property[`start${suffix}`] = liveValue;
-        property[`end${suffix}`] = liveValue;
+        const startKey = `start${suffix}`;
+        const endKey = `end${suffix}`;
+
+        // Keep command-provided starts as a last resort only. During
+        // interruptions, Elm's runtime snapshot can trail the compositor on
+        // iOS by a few frames; freezing to that stale value causes visible
+        // snaps when the animation finishes.
+        const commandStartValue = Number.isFinite(property[startKey]) ? property[startKey] : null;
+
+        // Use the true compositor value from computed style when available.
+        // iOS WebKit can report a slightly different in-flight value than our
+        // resolved-time interpolation during interruptions.
+        const domLivePx = Number.isFinite(domLiveState?.[stateKey])
+            ? domLiveState[stateKey]
+            : null;
+
+        let liveValue = currentState[stateKey];
+        if (domLivePx != null) {
+            if (property.type === 'translate') {
+                const unitKey = axis === 'x' ? 'unitX' : axis === 'y' ? 'unitY' : 'unitZ';
+                const converted = pxToTranslateUnit(domLivePx, property[unitKey] || 'px', axis, element);
+                if (Number.isFinite(converted)) {
+                    liveValue = converted;
+                }
+            } else {
+                liveValue = domLivePx;
+            }
+        }
+        if (!Number.isFinite(liveValue)) {
+            liveValue = commandStartValue;
+        }
+        if (!Number.isFinite(liveValue)) continue;
+        property[startKey] = liveValue;
+        property[endKey] = liveValue;
     }
 }
 
-function patchTransformStartsFromAnimation(existingTransform, mergedTransformProperties) {
+function patchTransformStartsFromAnimation(element, existingTransform, mergedTransformProperties) {
     if (!existingTransform.resolvedValues || !existingTransform.animation) {
         return;
     }
@@ -307,9 +418,10 @@ function patchTransformStartsFromAnimation(existingTransform, mergedTransformPro
 
     const progress = Math.min(1.0, Math.max(0.0, currentTime / duration));
     const currentState = computeTransformFromResolved(existingTransform.resolvedValues, progress, duration);
+    const domLiveState = getCurrentTransform(element);
     mergedTransformProperties.forEach(property => {
         fillMissingTransformStarts(property, currentState);
-        applyFrozenAxesFromLive(property, currentState);
+        applyFrozenAxesFromLive(property, currentState, domLiveState, element);
     });
 }
 
@@ -630,7 +742,7 @@ export function processElementAnimation(animGroup, elementConfig, globalOptions 
 
         if (elementAnims.has('transform')) {
             const existingTransform = elementAnims.get('transform');
-            patchTransformStartsFromAnimation(existingTransform, mergedTransformProperties);
+            patchTransformStartsFromAnimation(element, existingTransform, mergedTransformProperties);
             carryForwardMissingTransformProperties(animGroup, element, existingTransform, mergedTransformProperties);
             existingTransform.animation.cancel();
         }

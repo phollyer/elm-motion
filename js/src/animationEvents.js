@@ -2,7 +2,13 @@
 /* global requestAnimationFrame, cancelAnimationFrame, performance */
 import { updateGroupIteration } from './utils.js';
 import { activeAnimations, animationGroups, lastKnownTransforms, cleanupAnimGroup } from './state.js';
-import { getDefaultTransformState, computeTransformFromResolved } from './transform.js';
+import {
+    getDefaultTransformState,
+    computeTransformFromResolved,
+    getCurrentTransform,
+    getElementOrder,
+    buildTransformString
+} from './transform.js';
 import { sendLifecycleEvent, sendIterationEvent, sendPropertyUpdate, buildAnimatedPropertyData } from './ports.js';
 import { reportError } from './errors.js';
 
@@ -455,13 +461,57 @@ export function setupAnimationEvents(animGroup, propertyType, element, animation
     animation.addEventListener('finish', () => {
         finishHandled = true;
 
+        let finalTransformStateFromDom = null;
+
         if (rafId !== null) {
             cancelAnimationFrame(rafId);
             rafId = null;
         }
         try {
-            commitAnimatedStyles(element, animation);
-            animation.cancel();
+            if (propertyType === 'transform') {
+                // iOS Safari can occasionally commit the last keyframe tail at a
+                // slightly stale transform when an interrupted animation
+                // finishes. Snapshot the compositor's live transform first,
+                // then persist it as canonical transform functions (not a
+                // raw matrix string) so subsequent reads preserve per-axis
+                // values and units.
+                const computedTransform = window.getComputedStyle(element).transform;
+                const hasUsableComputedTransform =
+                    typeof computedTransform === 'string'
+                    && computedTransform.length > 0
+                    && computedTransform !== 'none';
+
+                const liveState = hasUsableComputedTransform
+                    ? getCurrentTransform(element)
+                    : null;
+                const hasFiniteLiveState = Number.isFinite(liveState?.x) && Number.isFinite(liveState?.y);
+
+                if (hasFiniteLiveState) {
+                    finalTransformStateFromDom = liveState;
+                    animation.cancel();
+
+                    const order = getElementOrder(element);
+                    const tUx = liveState.translateUnitX || 'px';
+                    const tUy = liveState.translateUnitY || 'px';
+                    const tUz = liveState.translateUnitZ || 'px';
+
+                    element.style.transform = buildTransformString(
+                        liveState.x, liveState.y, liveState.z,
+                        liveState.scaleX, liveState.scaleY, liveState.scaleZ,
+                        liveState.rotateX, liveState.rotateY, liveState.rotateZ,
+                        liveState.skewX, liveState.skewY,
+                        order,
+                        null,
+                        tUx, tUy, tUz
+                    );
+                } else {
+                    commitAnimatedStyles(element, animation);
+                    animation.cancel();
+                }
+            } else {
+                commitAnimatedStyles(element, animation);
+                animation.cancel();
+            }
         } catch (commitError) {
             reportError(commitError, {
                 source: 'animationEvents',
@@ -488,7 +538,11 @@ export function setupAnimationEvents(animGroup, propertyType, element, animation
         if (wasActive && entryGeneration != null && animationGroups.get(animGroup)?.generation === entryGeneration) {
             const allComplete = finalizeAnimationTracking(animGroup, entryGeneration, 'completed');
             // Cache end-of-animation transform state for the next resize.
-            cacheFinalTransformState(animGroup, resolvedTransformValues);
+            if (propertyType === 'transform' && finalTransformStateFromDom) {
+                lastKnownTransforms.set(animGroup, finalTransformStateFromDom);
+            } else {
+                cacheFinalTransformState(animGroup, resolvedTransformValues);
+            }
             const finalProgress = resolvedTransformValues
                 ? Object.fromEntries(TRANSFORM_SUB_PROPS.map(k => [k, 1]))
                 : { [propertyType]: 1 };

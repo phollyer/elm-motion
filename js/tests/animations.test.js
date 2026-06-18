@@ -389,6 +389,55 @@ describe('processAnimationData (WAAPI engine)', () => {
         expect(endRotateZ).toBeCloseTo(90, 1);
     });
 
+    it('anchors frozen translate axes to live DOM transform over stale command starts', () => {
+        const animGroup = 'box-frozen-live-anchor';
+        const firstAnim = createFakeAnimation({ duration: 300 });
+        firstAnim.currentTime = 120;
+        firstAnim.playState = 'running';
+        const secondAnim = createFakeAnimation({ duration: 300 });
+
+        const element = makeElement({ animGroup, animations: [firstAnim, secondAnim] });
+        element.style.transform = 'translate3d(45px, 0px, 0px)';
+        installDom({ element, targetId: animGroup });
+
+        processAnimationData({
+            elements: {
+                [animGroup]: {
+                    properties: [
+                        {
+                            type: 'translate',
+                            startX: 0, startY: 0, startZ: 0,
+                            endX: 100, endY: 0, endZ: 0,
+                            duration: 300, easing: 'linear', version: 1
+                        }
+                    ]
+                }
+            }
+        });
+
+        processAnimationData({
+            elements: {
+                [animGroup]: {
+                    properties: [
+                        {
+                            type: 'translate',
+                            // Deliberately stale value; frozen X must come from live DOM transform.
+                            startX: 10, startY: 0, startZ: 0,
+                            endX: 200, endY: 80, endZ: 0,
+                            unitX: 'px', unitY: 'px', unitZ: 'px',
+                            frozenAxes: ['x'],
+                            duration: 300, easing: 'linear', version: 2
+                        }
+                    ]
+                }
+            }
+        });
+
+        const keyframes = element.animate.mock.calls[1][0];
+        expect(keyframes[0].transform).toContain('translate3d(45px, 0px, 0px)');
+        expect(keyframes[keyframes.length - 1].transform).toContain('translate3d(45px, 80px, 0px)');
+    });
+
     it('cancels a non-transform animation when restarted with a new version', () => {
         const animGroup = 'box-opacity-restart';
         const firstAnim = createFakeAnimation({ duration: 200 });

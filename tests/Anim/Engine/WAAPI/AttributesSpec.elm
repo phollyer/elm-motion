@@ -13,15 +13,12 @@ styles to emit:
   - Independent slots (`opacity`, `perspective-origin`, `width`/`height`,
     custom, custom-color) are emitted only when the corresponding
     property has no entry in `propertyStates`.
-  - The CSS `transform` slot is always rendered from the snapshot when
-    the snapshot has any transform values. The snapshot tracks the
-    latest value for every sub-property (init values, the start value
-    merged in by `Generator.generateAnimation`, and per-frame
-    `propertyUpdate` values from JS). Emitting unconditionally closes
-    the one-frame gap that previously existed when ownership of any
-    sub-property flipped to JS - the running CSS animation effect
-    supersedes inline values during playback, and `commitAnimatedStyles`
-    writes the final WAAPI value back to inline before `cancel()`.
+      - The CSS `transform` slot is emitted only when all transform
+        sub-properties are Elm-owned (no active JS ownership for
+        `translate`/`rotate`/`skew`/`scale`). Once WAAPI has taken ownership
+        of any transform sub-property, inline transform writes are deferred to
+        the JS runtime so Elm does not overwrite committed WAAPI values with
+        stale snapshot data after completion.
   - The `data-anim-target` attribute is always emitted.
 
 -}
@@ -142,10 +139,6 @@ animatedTests =
                     |> Query.hasNot [ Selector.style "opacity" "0.5" ]
         , test "animate Translate → transform inline rendered from snapshot start value" <|
             \_ ->
-                -- The snapshot is seeded with the animation's start value
-                -- (`Generator.generateAnimation` merges `animationBounds.start`
-                -- into the snapshot). Elm renders that value so the inline
-                -- `transform` is never empty when the bridge takes over.
                 initWith []
                     |> animate
                         (WAAPI.for "el"
@@ -154,7 +147,7 @@ animatedTests =
                             >> Translate.end
                         )
                     |> query
-                    |> Query.has [ Selector.style "transform" "translate3d(0px, 0px, 0px)" ]
+                    |> Query.hasNot [ Selector.style "transform" "translate3d(0px, 0px, 0px)" ]
         , test "animate Rotate → transform inline rendered from snapshot start value" <|
             \_ ->
                 initWith []
@@ -165,7 +158,7 @@ animatedTests =
                             >> Rotate.end
                         )
                     |> query
-                    |> Query.has [ Selector.style "transform" "rotateZ(0deg)" ]
+                    |> Query.hasNot [ Selector.style "transform" "rotateZ(0deg)" ]
         , test "data-anim-target is still emitted for animated groups" <|
             \_ ->
                 initWith []
@@ -215,7 +208,7 @@ mixedKindTests =
                     |> query
                     |> Expect.all
                         [ Query.has [ Selector.style "opacity" "0.5" ]
-                        , Query.has [ Selector.style "transform" "translate3d(0px, 0px, 0px)" ]
+                        , Query.hasNot [ Selector.style "transform" "translate3d(0px, 0px, 0px)" ]
                         ]
         ]
 
@@ -228,14 +221,9 @@ mixedKindTests =
 
 transformSlotTests : Test
 transformSlotTests =
-    describe "transform slot is rendered from the snapshot regardless of ownership"
-        [ test "init-only Translate + animated Rotate → combined transform inline (translate from init, rotate from animation start)" <|
+    describe "transform slot is rendered only when fully Elm-owned"
+        [ test "init-only Translate + animated Rotate → transform inline suppressed while JS owns a transform sub-property" <|
             \_ ->
-                -- The snapshot retains the init translate (x=100) and is
-                -- merged with the rotate animation's start value (0deg).
-                -- Emitting the combined transform closes the one-frame gap
-                -- that previously caused the element to collapse to identity
-                -- between Elm's render and the JS bridge's inline write.
                 initWith [ Translate.initX "el" 100 ]
                     |> animate
                         (WAAPI.for "el"
@@ -244,7 +232,7 @@ transformSlotTests =
                             >> Rotate.end
                         )
                     |> query
-                    |> Query.has
+                    |> Query.hasNot
                         [ Selector.style "transform"
                             "translate3d(100px, 0px, 0px) rotateZ(0deg)"
                         ]
@@ -261,15 +249,7 @@ transformSlotTests =
                 initWith [ Opacity.init "el" 0.5 ]
                     |> query
                     |> Query.hasNot [ Selector.style "transform" "" ]
-        , test "regression: animating Rotate after Translate.initZ keeps z translate in inline transform (no flicker)" <|
-            -- Regression for the Animate3D flicker bug. Previously, when an
-            -- animation gave JS ownership of any transform sub-property (here,
-            -- rotate), Elm dropped the entire `transform` attribute on that
-            -- render and the browser could paint the element with no transform
-            -- (collapsing perspective-translated elements to identity / z=0)
-            -- before the JS bridge wrote inline styles back. Re-emitting from
-            -- the snapshot must preserve the init translate values so the
-            -- element never visually snaps.
+        , test "animating Rotate after Translate.initZ suppresses inline transform while JS owns transform" <|
             \_ ->
                 initWith [ Translate.initZ "el" 200 ]
                     |> animate
@@ -279,7 +259,7 @@ transformSlotTests =
                             >> Rotate.end
                         )
                     |> query
-                    |> Query.has
+                    |> Query.hasNot
                         [ Selector.style "transform"
                             "translate3d(0px, 0px, 200px) rotateZ(0deg)"
                         ]

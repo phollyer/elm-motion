@@ -2450,17 +2450,24 @@ attributes animGroupName (AnimState state data) =
                         |> List.filter (\( name, _ ) -> isElmOwned ("customColor:" ++ name))
                         |> List.map (\( name, color ) -> Html.Attributes.style name (Color.toCssString color))
 
+                transformIsElmOwned =
+                    List.all isElmOwned [ "translate", "rotate", "skew", "scale" ]
+
                 transformStyles =
-                    buildTransformStyles
-                        (AnimGroup.getTransformOrder animGroup)
-                        snapshot
-                        (PropertyBaselines.getTranslateUnits snapshot
-                            |> Maybe.withDefault
-                                (findCurrentTranslate animGroupName state.builder
-                                    |> Maybe.map .cssUnit
-                                    |> Maybe.withDefault { x = InternalUnit.default, y = InternalUnit.default, z = InternalUnit.default }
-                                )
-                        )
+                    if transformIsElmOwned then
+                        buildTransformStyles
+                            (AnimGroup.getTransformOrder animGroup)
+                            snapshot
+                            (PropertyBaselines.getTranslateUnits snapshot
+                                |> Maybe.withDefault
+                                    (findCurrentTranslate animGroupName state.builder
+                                        |> Maybe.map .cssUnit
+                                        |> Maybe.withDefault { x = InternalUnit.default, y = InternalUnit.default, z = InternalUnit.default }
+                                    )
+                            )
+
+                    else
+                        []
             in
             dataAttr
                 :: transformStyles
