@@ -9,7 +9,7 @@ import {
     getElementOrder,
     buildTransformString
 } from './transform.js';
-import { sendLifecycleEvent, sendIterationEvent, sendPropertyUpdate, buildAnimatedPropertyData } from './ports.js';
+import { sendLifecycleEvent, sendIterationEvent, sendPropertyUpdate, buildAnimatedPropertyData, sendSettledTransformValues, sendFrozenAxesAcknowledgment } from './ports.js';
 import { reportError } from './errors.js';
 
 // Sub-property keys covered by the merged transform animation. When the
@@ -540,6 +540,31 @@ export function setupAnimationEvents(animGroup, propertyType, element, animation
             // Cache end-of-animation transform state for the next resize.
             if (propertyType === 'transform' && finalTransformStateFromDom) {
                 lastKnownTransforms.set(animGroup, finalTransformStateFromDom);
+                // Emit settled transform values so Elm baseline matches JS committed state
+                sendSettledTransformValues(animGroup, {
+                    translate: {
+                        x: finalTransformStateFromDom.x,
+                        y: finalTransformStateFromDom.y,
+                        z: finalTransformStateFromDom.z,
+                        unitX: finalTransformStateFromDom.translateUnitX,
+                        unitY: finalTransformStateFromDom.translateUnitY,
+                        unitZ: finalTransformStateFromDom.translateUnitZ
+                    },
+                    scale: {
+                        x: finalTransformStateFromDom.scaleX,
+                        y: finalTransformStateFromDom.scaleY,
+                        z: finalTransformStateFromDom.scaleZ
+                    },
+                    rotate: {
+                        x: finalTransformStateFromDom.rotateX,
+                        y: finalTransformStateFromDom.rotateY,
+                        z: finalTransformStateFromDom.rotateZ
+                    },
+                    skew: {
+                        x: finalTransformStateFromDom.skewX,
+                        y: finalTransformStateFromDom.skewY
+                    }
+                });
             } else {
                 cacheFinalTransformState(animGroup, resolvedTransformValues);
             }

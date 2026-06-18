@@ -761,6 +761,26 @@ update msg ((AnimState state animGroups) as animState) =
                             , Just (AnimError ("Failed to decode animation update: " ++ Decode.errorToString error))
                             )
 
+                Ok "settledValues" ->
+                    case Decode.decodeValue settledValuesDecoder jsonValue of
+                        Ok settledValues ->
+                            ( handleSettledValues settledValues animState, Nothing )
+
+                        Err error ->
+                            ( animState
+                            , Just (AnimError ("Failed to decode settled values: " ++ Decode.errorToString error))
+                            )
+
+                Ok "frozenAxesApplied" ->
+                    case Decode.decodeValue frozenAxesDecoder jsonValue of
+                        Ok frozenAxes ->
+                            ( handleFrozenAxesAcknowledgment frozenAxes animState, Nothing )
+
+                        Err error ->
+                            ( animState
+                            , Just (AnimError ("Failed to decode frozen axes: " ++ Decode.errorToString error))
+                            )
+
                 Ok unknown ->
                     ( animState
                     , Just (AnimError ("Unknown message type: " ++ unknown))
@@ -868,6 +888,192 @@ updateAnimGroup animUpdate animGroup =
                 |> AnimGroup.getPropertySnapshot
                 |> ProgressApply.applyPropertyProgress matchingProgress currentStates
             )
+
+
+handleSettledValues : SettledValuesPayload -> AnimState msg -> AnimState msg
+handleSettledValues settled (AnimState state animGroups) =
+    let
+        updateBaseline : PropertyBaselines -> PropertyBaselines
+        updateBaseline baseline =
+            baseline
+                |> (case settled.translate of
+                        Just t ->
+                            PropertyBaselines.setTranslate (Translate.fromRecord { x = t.x, y = t.y, z = t.z })
+
+                        Nothing ->
+                            identity
+                   )
+                |> (case settled.scale of
+                        Just s ->
+                            PropertyBaselines.setScale (Scale.fromRecord { x = s.x, y = s.y, z = s.z })
+
+                        Nothing ->
+                            identity
+                   )
+                |> (case settled.rotate of
+                        Just r ->
+                            PropertyBaselines.setRotate (Rotate.fromRecord { x = r.x, y = r.y, z = r.z })
+
+                        Nothing ->
+                            identity
+                   )
+                |> (case settled.skew of
+                        Just s ->
+                            PropertyBaselines.setSkew (Skew.fromRecord { x = s.x, y = s.y })
+
+                        Nothing ->
+                            identity
+                   )
+
+        updatedAnimGroups =
+            AnimGroups.update settled.animGroup
+                (Maybe.map (AnimGroup.updateRuntimeBaseline updateBaseline))
+                animGroups
+    in
+    AnimState state updatedAnimGroups
+
+
+handleFrozenAxesAcknowledgment : FrozenAxesPayload -> AnimState msg -> AnimState msg
+handleFrozenAxesAcknowledgment frozen (AnimState state animGroups) =
+    let
+        updateBaseline : PropertyBaselines -> PropertyBaselines
+        updateBaseline baseline =
+            baseline
+                |> (case frozen.translate of
+                        Just t ->
+                            PropertyBaselines.setTranslate (Translate.fromRecord { x = t.x, y = t.y, z = t.z })
+
+                        Nothing ->
+                            identity
+                   )
+                |> (case frozen.scale of
+                        Just s ->
+                            PropertyBaselines.setScale (Scale.fromRecord { x = s.x, y = s.y, z = s.z })
+
+                        Nothing ->
+                            identity
+                   )
+                |> (case frozen.rotate of
+                        Just r ->
+                            PropertyBaselines.setRotate (Rotate.fromRecord { x = r.x, y = r.y, z = r.z })
+
+                        Nothing ->
+                            identity
+                   )
+                |> (case frozen.skew of
+                        Just s ->
+                            PropertyBaselines.setSkew (Skew.fromRecord { x = s.x, y = s.y })
+
+                        Nothing ->
+                            identity
+                   )
+
+        updatedAnimGroups =
+            AnimGroups.update frozen.animGroup
+                (Maybe.map (AnimGroup.updateRuntimeBaseline updateBaseline))
+                animGroups
+    in
+    AnimState state updatedAnimGroups
+
+
+type alias SettledValuesPayload =
+    { animGroup : String
+    , translate : Maybe { x : Float, y : Float, z : Float }
+    , scale : Maybe { x : Float, y : Float, z : Float }
+    , rotate : Maybe { x : Float, y : Float, z : Float }
+    , skew : Maybe { x : Float, y : Float }
+    }
+
+
+type alias FrozenAxesPayload =
+    { animGroup : String
+    , translate : Maybe { x : Float, y : Float, z : Float }
+    , scale : Maybe { x : Float, y : Float, z : Float }
+    , rotate : Maybe { x : Float, y : Float, z : Float }
+    , skew : Maybe { x : Float, y : Float }
+    , commandVersion : Maybe Int
+    }
+
+
+settledValuesDecoder : Decode.Decoder SettledValuesPayload
+settledValuesDecoder =
+    let
+        vectorDecoder =
+            Decode.map3 (\x y z -> { x = x, y = y, z = z })
+                (Decode.field "x" Decode.float)
+                (Decode.field "y" Decode.float)
+                (Decode.field "z" Decode.float)
+
+        skewVectorDecoder =
+            Decode.map2 (\x y -> { x = x, y = y })
+                (Decode.field "x" Decode.float)
+                (Decode.field "y" Decode.float)
+    in
+    Decode.map5 SettledValuesPayload
+        (Decode.field "animGroup" Decode.string)
+        (Decode.oneOf
+            [ Decode.at [ "payload", "translate" ] (Decode.map Just vectorDecoder)
+            , Decode.succeed Nothing
+            ]
+        )
+        (Decode.oneOf
+            [ Decode.at [ "payload", "scale" ] (Decode.map Just vectorDecoder)
+            , Decode.succeed Nothing
+            ]
+        )
+        (Decode.oneOf
+            [ Decode.at [ "payload", "rotate" ] (Decode.map Just vectorDecoder)
+            , Decode.succeed Nothing
+            ]
+        )
+        (Decode.oneOf
+            [ Decode.at [ "payload", "skew" ] (Decode.map Just skewVectorDecoder)
+            , Decode.succeed Nothing
+            ]
+        )
+
+
+frozenAxesDecoder : Decode.Decoder FrozenAxesPayload
+frozenAxesDecoder =
+    let
+        vectorDecoder =
+            Decode.map3 (\x y z -> { x = x, y = y, z = z })
+                (Decode.field "x" Decode.float)
+                (Decode.field "y" Decode.float)
+                (Decode.field "z" Decode.float)
+
+        skewVectorDecoder =
+            Decode.map2 (\x y -> { x = x, y = y })
+                (Decode.field "x" Decode.float)
+                (Decode.field "y" Decode.float)
+    in
+    Decode.map6 FrozenAxesPayload
+        (Decode.field "animGroup" Decode.string)
+        (Decode.oneOf
+            [ Decode.at [ "frozenStates", "translate" ] (Decode.map Just vectorDecoder)
+            , Decode.succeed Nothing
+            ]
+        )
+        (Decode.oneOf
+            [ Decode.at [ "frozenStates", "scale" ] (Decode.map Just vectorDecoder)
+            , Decode.succeed Nothing
+            ]
+        )
+        (Decode.oneOf
+            [ Decode.at [ "frozenStates", "rotate" ] (Decode.map Just vectorDecoder)
+            , Decode.succeed Nothing
+            ]
+        )
+        (Decode.oneOf
+            [ Decode.at [ "frozenStates", "skew" ] (Decode.map Just skewVectorDecoder)
+            , Decode.succeed Nothing
+            ]
+        )
+        (Decode.oneOf
+            [ Decode.field "commandVersion" (Decode.map Just Decode.int)
+            , Decode.succeed Nothing
+            ]
+        )
 
 
 animEventDecoder : Decode.Decoder AnimEvent

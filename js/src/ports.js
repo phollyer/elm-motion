@@ -149,3 +149,43 @@ export function buildAnimatedPropertyData(propertyProgress) {
     return { propertyProgress };
 }
 
+/**
+ * Send settled (committed) transform values to Elm after animation completes.
+ * This establishes the runtime baseline for the next animation on the same group,
+ * ensuring Elm and JS use the same committed start values for frozen-axis anchoring.
+ *
+ * Payload includes per-axis values and units so Elm can reconstruct the exact
+ * transform state that was committed to the DOM, preventing Elm baseline drift.
+ */
+export function sendSettledTransformValues(animGroup, settledTransform) {
+    if (!settledTransform || typeof settledTransform !== 'object') {
+        return;
+    }
+    sendToElm({
+        type: 'settledValues',
+        animGroup: animGroup,
+        payload: {
+            translate: settledTransform.translate || null,
+            scale: settledTransform.scale || null,
+            rotate: settledTransform.rotate || null,
+            skew: settledTransform.skew || null,
+            committedAt: performance.now()
+        }
+    });
+}
+
+/**
+ * Send frozen-axes acknowledgment to Elm after a retarget with frozen axes.
+ * This tells Elm the exact values that JS used for each frozen axis,
+ * preventing Elm from recomputing different start values on the next animate.
+ */
+export function sendFrozenAxesAcknowledgment(animGroup, frozenAxesApplied, commandVersion) {
+    sendToElm({
+        type: 'frozenAxesApplied',
+        animGroup: animGroup,
+        frozenStates: frozenAxesApplied,
+        commandVersion: commandVersion,
+        appliedAt: performance.now()
+    });
+}
+

@@ -258,14 +258,23 @@ function fillMissingTransformStarts(property, currentState) {
     });
 }
 
-// For each axis Elm has declared frozen on this property, override both
-// the start and end values with the live mid-flight transform reading
-// from the running WAAPI animation. Elm's `runtimeBaseline` is updated
-// asynchronously via the `motionMsg` port and is therefore one or more
-// frames behind the actual rendered position; using its (stale) snapshot
-// as both endpoints of a "frozen" axis produces a visible backward jump
-// when the user retargets a sibling axis mid-flight. The live transform
-// computed from the in-flight animation is the only source of truth.
+// For each axis Elm has declared frozen on this property, anchor both the
+// start and end values to where that axis currently rests.
+//
+// MID-FLIGHT: Elm's `runtimeBaseline` is updated asynchronously via the
+// `motionMsg` port and is therefore one or more frames behind the actual
+// rendered position; using its (stale) snapshot as both endpoints of a
+// "frozen" axis produces a visible backward jump when the user retargets a
+// sibling axis mid-flight. The live transform read from the in-flight
+// animation is the only source of truth in that case.
+//
+// SETTLED: once the prior animation has finished there is no race - the
+// axis is holding at the exact value Elm last commanded. The resolved end
+// value (`currentState`, sampled at progress 1.0) is that exact ledger
+// value, already expressed in the user's own unit. A live DOM read here
+// would round-trip through matrix decomposition and px-to-unit conversion,
+// both lossy, producing the few-pixel snap. So for settled axes we trust
+// the ledger and skip the DOM read entirely.
 const FROZEN_AXIS_LIVE_FIELDS = {
     translate: { x: 'x', y: 'y', z: 'z' },
     scale: { x: 'scaleX', y: 'scaleY', z: 'scaleZ' },
@@ -273,7 +282,7 @@ const FROZEN_AXIS_LIVE_FIELDS = {
     skew: { x: 'skewX', y: 'skewY' }
 };
 
-function applyFrozenAxesFromLive(property, currentState, domLiveState, element) {
+function applyFrozenAxesFromLive(property, currentState, domLiveState, element, isSettled) {
     const axes = property.frozenAxes;
     if (!Array.isArray(axes) || axes.length === 0) {
         return;
@@ -383,8 +392,11 @@ function applyFrozenAxesFromLive(property, currentState, domLiveState, element) 
             ? domLiveState[stateKey]
             : null;
 
+        // `currentState[stateKey]` is the exact resolved value (the ledger).
+        // When settled this is Elm's last-commanded target in the user's own
+        // unit, so we keep it and skip the lossy DOM override below.
         let liveValue = currentState[stateKey];
-        if (domLivePx != null) {
+        if (!isSettled && domLivePx != null) {
             if (property.type === 'translate') {
                 const unitKey = axis === 'x' ? 'unitX' : axis === 'y' ? 'unitY' : 'unitZ';
                 const converted = pxToTranslateUnit(domLivePx, property[unitKey] || 'px', axis, element);
@@ -419,9 +431,13 @@ function patchTransformStartsFromAnimation(element, existingTransform, mergedTra
     const progress = Math.min(1.0, Math.max(0.0, currentTime / duration));
     const currentState = computeTransformFromResolved(existingTransform.resolvedValues, progress, duration);
     const domLiveState = getCurrentTransform(element);
+    // A finished animation holds at its exact commanded end (the ledger);
+    // trust that value for frozen axes instead of a lossy live DOM read.
+    const isSettled = existingTransform.animation.playState === 'finished'
+        || currentTime >= duration;
     mergedTransformProperties.forEach(property => {
         fillMissingTransformStarts(property, currentState);
-        applyFrozenAxesFromLive(property, currentState, domLiveState, element);
+        applyFrozenAxesFromLive(property, currentState, domLiveState, element, isSettled);
     });
 }
 
@@ -2089,6 +2105,30 @@ function retargetTransformWithContinuation(animGroup, element, transformProperti
                 if (!Number.isFinite(newEnd)) return;
                 target[`start${suffix}`] = newEnd;
                 target[`end${suffix}`] = newEnd;
+
+                // CRITICAL: For frozen (untouched) axes, anchor their start/end to the
+                // CURRENT LIVE position. Without this, frozen axes use stale in-flight
+                // start values, causing snaps when the next animate runs. E.g., if X moved
+                // 0→100 and settled at 100, a frozen-X retarget must have startX = 100
+                // (live), not 0 (old in-flight value).
+                const domLiveState = getCurrentTransform(element);
+                transformProperties.forEach(property => {
+                    const target = resolved[property.type];
+                    const axes = RESOLVED_TRANSFORM_AXES[property.type];
+                    if (!target || !axes) return;
+
+                    axes.forEach(({ suffix, currentKey }) => {
+                        const touchedFlag = property[`touched${suffix}`];
+                        // If touched !== true (either false or undefined), this axis is frozen
+                        if (touchedFlag !== true) {
+                            const liveValue = domLiveState[currentKey];
+                            if (Number.isFinite(liveValue)) {
+                                target[`start${suffix}`] = liveValue;
+                                target[`end${suffix}`] = liveValue;
+                            }
+                        }
+                    });
+                });
             });
         } else {
             // Per-axis flags present: only touched axes snap; untouched

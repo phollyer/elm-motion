@@ -35,6 +35,7 @@ module Anim.Internal.Engine.WAAPI.AnimGroup exposing
     , setSnapshot
     , setStatus
     , setTransformOrder
+    , updateRuntimeBaseline
     )
 
 import Anim.Extra.TransformOrder as TransformProperty exposing (TransformProperty(..))
@@ -242,6 +243,11 @@ setPropertyStates propertyStates (AnimGroup group) =
 setSnapshot : PropertyBaselines -> AnimGroup -> AnimGroup
 setSnapshot snapshot (AnimGroup group) =
     AnimGroup { group | propertySnapshot = snapshot }
+
+
+updateRuntimeBaseline : (PropertyBaselines -> PropertyBaselines) -> AnimGroup -> AnimGroup
+updateRuntimeBaseline updater (AnimGroup group) =
+    AnimGroup { group | propertySnapshot = updater group.propertySnapshot }
 
 
 setStatus : AnimationStatus -> AnimGroup -> AnimGroup
