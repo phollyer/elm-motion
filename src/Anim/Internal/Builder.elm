@@ -2892,12 +2892,9 @@ processStandardAnimation { config, globalData, globalCssUnit, defaultStart, defa
             durationFn distance_ resolvedTiming
 
         resolvedSpring =
-            case config.spring of
-                Just s ->
-                    Just s
-
-                Nothing ->
-                    globalData.globalSpring
+            -- Spring must be snapshotted at property build time so later `spring`
+            -- calls in the same pipeline do not retroactively affect earlier groups.
+            config.spring
 
         duration_ =
             case resolvedSpring of
@@ -2921,7 +2918,10 @@ processStandardAnimation { config, globalData, globalCssUnit, defaultStart, defa
         , speed = speed_
         , distance = distance_
         , timing = resolvedTiming
-        , easing = resolveEasingWithDefault config.easing globalData.globalEasing EaseInOut
+
+        -- Easing must be snapshotted at property build time so later `easing`
+        -- calls in the same pipeline do not retroactively affect earlier groups.
+        , easing = resolveEasingWithDefault config.easing Nothing EaseInOut
         , spring = resolvedSpring
         , cssUnit = InternalUnit.resolveCssUnitAxes config.cssUnit globalCssUnit defaultCssUnit
 
