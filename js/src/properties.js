@@ -386,10 +386,12 @@ export function createPropertyAnimation(element, resolved, property, globalOptio
     if (!resolved) return null;
     const { keyframes, animationEasing } = buildPropertyKeyframes(resolved, property.easingKeyframes, property.easing);
     if (!keyframes) return null;
+    const delayMs = property.delay || 0;
     return element.animate(keyframes, {
         duration: property.duration,
+        delay: delayMs,
         easing: animationEasing,
-        fill: 'forwards',
+        fill: delayMs > 0 ? 'both' : 'forwards',
         iterations: globalOptions.iterations,
         direction: globalOptions.direction
     });

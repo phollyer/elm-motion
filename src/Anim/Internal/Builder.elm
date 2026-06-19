@@ -2924,7 +2924,10 @@ processStandardAnimation { config, globalData, globalCssUnit, defaultStart, defa
         , easing = resolveEasingWithDefault config.easing globalData.globalEasing EaseInOut
         , spring = resolvedSpring
         , cssUnit = InternalUnit.resolveCssUnitAxes config.cssUnit globalCssUnit defaultCssUnit
-        , delay = resolveDelayWithDefault config.delay globalData.globalDelay 0
+
+        -- Delay must be snapshotted at property build time so later `delay`
+        -- calls in the same pipeline do not retroactively affect earlier groups.
+        , delay = resolveDelayWithDefault config.delay Nothing 0
         , mode = config.mode
         }
 

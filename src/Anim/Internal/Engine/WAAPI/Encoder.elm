@@ -739,6 +739,7 @@ encodeProcessedPropertyConfig maybeVersions frozenAxes touchedAxes property =
                     :: versionFields
                     ++ [ ( "endValue", Encode.float config.end )
                        , ( "duration", Encode.int config.duration )
+                       , ( "delay", Encode.int config.delay )
                        ]
                     ++ startValue
                     ++ encodeEasingWithKeyframes config.duration config.easing config.spring
@@ -757,6 +758,7 @@ encodeProcessedPropertyConfig maybeVersions frozenAxes touchedAxes property =
                     :: versionFields
                     ++ [ ( "endColor", Encode.string (Color.toCssString config.end) )
                        , ( "duration", Encode.int config.duration )
+                       , ( "delay", Encode.int config.delay )
                        ]
                     ++ startColorField
                     ++ encodeEasingWithKeyframes config.duration config.easing config.spring
@@ -775,6 +777,7 @@ encodeProcessedPropertyConfig maybeVersions frozenAxes touchedAxes property =
                     ++ [ ( "startValue", Encode.float startValue )
                        , ( "endValue", Encode.float (Opacity.toFloat config.end) )
                        , ( "duration", Encode.int config.duration )
+                       , ( "delay", Encode.int config.delay )
                        ]
                     ++ encodeEasingWithKeyframes config.duration config.easing config.spring
                 )
@@ -799,6 +802,7 @@ encodeProcessedPropertyConfig maybeVersions frozenAxes touchedAxes property =
                        , ( "unitX", Encode.string (InternalUnit.toCssSuffix config.cssUnit.x) )
                        , ( "unitY", Encode.string (InternalUnit.toCssSuffix config.cssUnit.y) )
                        , ( "duration", Encode.int config.duration )
+                       , ( "delay", Encode.int config.delay )
                        ]
                     ++ touchedAxesFields "perspectiveOrigin" [ ( "x", "touchedX" ), ( "y", "touchedY" ) ]
                     ++ encodeEasingWithKeyframes config.duration config.easing config.spring
@@ -817,6 +821,7 @@ encodeProcessedPropertyConfig maybeVersions frozenAxes touchedAxes property =
                        , ( "endY", Encode.float endY )
                        , ( "endZ", Encode.float endZ )
                        , ( "duration", Encode.int config.duration )
+                       , ( "delay", Encode.int config.delay )
                        ]
                     ++ frozenAxesField "scale"
                     ++ touchedAxesFields "scale" [ ( "x", "touchedX" ), ( "y", "touchedY" ), ( "z", "touchedZ" ) ]
@@ -836,6 +841,7 @@ encodeProcessedPropertyConfig maybeVersions frozenAxes touchedAxes property =
                        , ( "endY", Encode.float endY )
                        , ( "endZ", Encode.float endZ )
                        , ( "duration", Encode.int config.duration )
+                       , ( "delay", Encode.int config.delay )
                        ]
                     ++ frozenAxesField "rotate"
                     ++ touchedAxesFields "rotate" [ ( "x", "touchedX" ), ( "y", "touchedY" ), ( "z", "touchedZ" ) ]
@@ -883,6 +889,7 @@ encodeProcessedPropertyConfig maybeVersions frozenAxes touchedAxes property =
                     ++ [ ( "endX", Encode.float endX )
                        , ( "endY", Encode.float endY )
                        , ( "duration", Encode.int config.duration )
+                       , ( "delay", Encode.int config.delay )
                        ]
                     ++ frozenAxesField "skew"
                     ++ touchedAxesFields "skew" [ ( "x", "touchedX" ), ( "y", "touchedY" ) ]
@@ -909,6 +916,7 @@ encodeProcessedPropertyConfig maybeVersions frozenAxes touchedAxes property =
                        , ( "unitWidth", Encode.string (InternalUnit.toCssSuffix config.cssUnit.x) )
                        , ( "unitHeight", Encode.string (InternalUnit.toCssSuffix config.cssUnit.y) )
                        , ( "duration", Encode.int config.duration )
+                       , ( "delay", Encode.int config.delay )
                        ]
                     ++ touchedAxesFields "size" [ ( "width", "touchedWidth" ), ( "height", "touchedHeight" ) ]
                     ++ encodeEasingWithKeyframes config.duration config.easing config.spring
@@ -930,6 +938,7 @@ encodeProcessedPropertyConfig maybeVersions frozenAxes touchedAxes property =
                        , ( "unitY", Encode.string (InternalUnit.toCssSuffix config.cssUnit.y) )
                        , ( "unitZ", Encode.string (InternalUnit.toCssSuffix config.cssUnit.z) )
                        , ( "duration", Encode.int config.duration )
+                       , ( "delay", Encode.int config.delay )
                        ]
                     ++ frozenAxesField "translate"
                     ++ touchedAxesFields "translate" [ ( "x", "touchedX" ), ( "y", "touchedY" ), ( "z", "touchedZ" ) ]

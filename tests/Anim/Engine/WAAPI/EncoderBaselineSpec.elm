@@ -19,6 +19,7 @@ import Anim.Internal.Engine.WAAPI.AnimGroup as AnimGroup
 import Anim.Internal.Engine.WAAPI.Encoder as Encoder
 import Anim.Internal.Property.Scale as Scale
 import Anim.Internal.Property.Translate as Translate
+import Anim.Property.Opacity as Opacity
 import Anim.Property.Rotate as Rotate
 import Expect
 import Json.Decode as Decode
@@ -111,6 +112,23 @@ suite =
                 , decodeBaselineScaleX "cube" json
                 )
                     |> Expect.equal ( Just 200, Just 2 )
+        , test "encodes per-group delay values from a single pipeline" <|
+            \_ ->
+                let
+                    processed =
+                        Builder.init [ staggeredOpacityBuilder ] |> Builder.process
+
+                    json =
+                        Encoder.encode AnimGroups.init processed |> Encode.encode 0
+                in
+                Expect.all
+                    [ \_ -> decodeFirstPropertyDelay "textLineOne" json |> Expect.equal (Just 0)
+                    , \_ -> decodeFirstPropertyDelay "dotOne" json |> Expect.equal (Just 500)
+                    , \_ -> decodeFirstPropertyDelay "dotTwo" json |> Expect.equal (Just 1000)
+                    , \_ -> decodeFirstPropertyDelay "dotThree" json |> Expect.equal (Just 1500)
+                    , \_ -> decodeFirstPropertyDelay "textLineTwo" json |> Expect.equal (Just 2000)
+                    ]
+                    ()
         ]
 
 
@@ -125,6 +143,39 @@ rotateBuilder =
         >> Rotate.toZ 90
         >> Rotate.duration 200
         >> Rotate.end
+
+
+staggeredOpacityBuilder : Builder.AnimBuilder { eng | withTiming : () } -> Builder.AnimBuilder { eng | withTiming : () }
+staggeredOpacityBuilder =
+    Builder.for "textLineOne"
+        >> Opacity.begin
+        >> Opacity.to 1
+        >> Opacity.duration 500
+        >> Opacity.end
+        >> Builder.for "dotOne"
+        >> Builder.delay 500
+        >> Opacity.begin
+        >> Opacity.to 1
+        >> Opacity.duration 500
+        >> Opacity.end
+        >> Builder.for "dotTwo"
+        >> Builder.delay 1000
+        >> Opacity.begin
+        >> Opacity.to 1
+        >> Opacity.duration 500
+        >> Opacity.end
+        >> Builder.for "dotThree"
+        >> Builder.delay 1500
+        >> Opacity.begin
+        >> Opacity.to 1
+        >> Opacity.duration 500
+        >> Opacity.end
+        >> Builder.for "textLineTwo"
+        >> Builder.delay 2000
+        >> Opacity.begin
+        >> Opacity.to 1
+        >> Opacity.duration 500
+        >> Opacity.end
 
 
 elementsField : String -> Decode.Decoder a -> Decode.Decoder a
@@ -169,3 +220,16 @@ decodeHasBaseline animGroupName json =
                     Nothing ->
                         False
            )
+
+
+decodeFirstPropertyDelay : String -> String -> Maybe Int
+decodeFirstPropertyDelay animGroupName json =
+    Decode.decodeString
+        (elementsField animGroupName
+            (Decode.at [ "properties" ] (Decode.list (Decode.field "delay" Decode.int))
+                |> Decode.map List.head
+            )
+        )
+        json
+        |> Result.toMaybe
+        |> Maybe.andThen identity

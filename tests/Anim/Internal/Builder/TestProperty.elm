@@ -3,6 +3,7 @@ module Anim.Internal.Builder.TestProperty exposing (suite)
 import Anim.Extra.Color as Color
 import Anim.Internal.Builder as Builder
 import Anim.Internal.Builder.Property as Property
+import Anim.Internal.Engine.Shared.AnimGroups as AnimGroups
 import Anim.Internal.Property.Opacity as InternalOpacity
 import Anim.Internal.Property.PerspectiveOrigin as InternalPerspectiveOrigin
 import Anim.Internal.Property.Rotate as InternalRotate
@@ -65,6 +66,7 @@ suite =
         , opacityClampTests
         , customClampTests
         , animationHistoryLookupTests
+        , globalDelayCarryoverTests
         ]
 
 
@@ -142,6 +144,66 @@ withTests =
                     |> Property.duration 300
                     |> .timing
                     |> Expect.equal (Just (Duration 300))
+        ]
+
+
+
+-- ============================================================
+-- global delay carryover
+-- ============================================================
+
+
+globalDelayCarryoverTests : Test
+globalDelayCarryoverTests =
+    let
+        fadeIn =
+            Opacity.begin
+                >> Opacity.to 1
+                >> Opacity.duration 500
+                >> Opacity.end
+
+        sequencedBuilder =
+            animBuilder
+                |> Builder.for "textLineOne"
+                |> fadeIn
+                |> Builder.for "dotOne"
+                |> Builder.delay 500
+                |> fadeIn
+                |> Builder.for "dotTwo"
+                |> Builder.delay 1000
+                |> fadeIn
+                |> Builder.for "dotThree"
+                |> Builder.delay 1500
+                |> fadeIn
+                |> Builder.for "textLineTwo"
+                |> Builder.delay 2000
+                |> fadeIn
+
+        processed =
+            Builder.process sequencedBuilder
+
+        opacityDelayFor groupName =
+            processed.groups
+                |> AnimGroups.get groupName
+                |> Maybe.andThen
+                    (\group ->
+                        group.properties
+                            |> List.filter (\prop -> Builder.processedPropertyType prop == "opacity")
+                            |> List.head
+                            |> Maybe.map (Builder.processedTimings >> .delay)
+                    )
+    in
+    describe "delay snapshotting in single pipeline"
+        [ test "early groups keep their own delay instead of inheriting the final global delay" <|
+            \_ ->
+                Expect.all
+                    [ \_ -> opacityDelayFor "textLineOne" |> Expect.equal (Just 0)
+                    , \_ -> opacityDelayFor "dotOne" |> Expect.equal (Just 500)
+                    , \_ -> opacityDelayFor "dotTwo" |> Expect.equal (Just 1000)
+                    , \_ -> opacityDelayFor "dotThree" |> Expect.equal (Just 1500)
+                    , \_ -> opacityDelayFor "textLineTwo" |> Expect.equal (Just 2000)
+                    ]
+                    ()
         ]
 
 
@@ -1058,7 +1120,8 @@ rotateClampTests =
         [ test "clampX clamps explicit toX above max" <|
             \_ ->
                 animBuilder
-                    |> (Builder.for "test" >> Rotate.begin
+                    |> (Builder.for "test"
+                            >> Rotate.begin
                             >> Rotate.clampX 0 90
                             >> Rotate.toX 360
                             >> Rotate.end
@@ -1068,7 +1131,8 @@ rotateClampTests =
         , test "clampX still clamps when declared after toX" <|
             \_ ->
                 animBuilder
-                    |> (Builder.for "test" >> Rotate.begin
+                    |> (Builder.for "test"
+                            >> Rotate.begin
                             >> Rotate.toX 360
                             >> Rotate.clampX 0 90
                             >> Rotate.end
@@ -1078,7 +1142,8 @@ rotateClampTests =
         , test "clampY only clamps the Y axis" <|
             \_ ->
                 animBuilder
-                    |> (Builder.for "test" >> Rotate.begin
+                    |> (Builder.for "test"
+                            >> Rotate.begin
                             >> Rotate.clampY 0 45
                             >> Rotate.toXY 360 360
                             >> Rotate.end
@@ -1088,7 +1153,8 @@ rotateClampTests =
         , test "clampZ clamps the Z axis" <|
             \_ ->
                 animBuilder
-                    |> (Builder.for "test" >> Rotate.begin
+                    |> (Builder.for "test"
+                            >> Rotate.begin
                             >> Rotate.clampZ -10 10
                             >> Rotate.toZ 1000
                             >> Rotate.end
@@ -1098,7 +1164,8 @@ rotateClampTests =
         , test "clampX with reversed args (max < min) is normalized" <|
             \_ ->
                 animBuilder
-                    |> (Builder.for "test" >> Rotate.begin
+                    |> (Builder.for "test"
+                            >> Rotate.begin
                             >> Rotate.clampX 90 0
                             >> Rotate.toX 360
                             >> Rotate.end
@@ -1108,7 +1175,8 @@ rotateClampTests =
         , test "unclampX removes only the X axis clamp" <|
             \_ ->
                 animBuilder
-                    |> (Builder.for "test" >> Rotate.begin
+                    |> (Builder.for "test"
+                            >> Rotate.begin
                             >> Rotate.clampX 0 90
                             >> Rotate.clampY 0 45
                             >> Rotate.unclampX
@@ -1120,12 +1188,14 @@ rotateClampTests =
         , test "clamps are scoped to the active animGroup" <|
             \_ ->
                 animBuilder
-                    |> (Builder.for "ship" >> Rotate.begin
+                    |> (Builder.for "ship"
+                            >> Rotate.begin
                             >> Rotate.clampX 0 90
                             >> Rotate.toX 50
                             >> Rotate.end
                        )
-                    |> (Builder.for "other" >> Rotate.begin
+                    |> (Builder.for "other"
+                            >> Rotate.begin
                             >> Rotate.toX 360
                             >> Rotate.end
                        )
@@ -1134,13 +1204,15 @@ rotateClampTests =
         , test "clamps persist across an animate batch" <|
             \_ ->
                 animBuilder
-                    |> (Builder.for "test" >> Rotate.begin
+                    |> (Builder.for "test"
+                            >> Rotate.begin
                             >> Rotate.clampX 0 90
                             >> Rotate.toX 30
                             >> Rotate.end
                        )
                     |> finishAnimateBatch
-                    |> (Builder.for "test" >> Rotate.begin
+                    |> (Builder.for "test"
+                            >> Rotate.begin
                             >> Rotate.toX 360
                             >> Rotate.end
                        )
@@ -1149,7 +1221,8 @@ rotateClampTests =
         , test "out-of-range start snaps to boundary" <|
             \_ ->
                 animBuilder
-                    |> (Builder.for "test" >> Rotate.begin
+                    |> (Builder.for "test"
+                            >> Rotate.begin
                             >> Rotate.clampX 0 90
                             >> Rotate.fromX -50
                             >> Rotate.toX 30
@@ -1160,7 +1233,8 @@ rotateClampTests =
         , test "byXYZ adds the delta to the configured start rotation" <|
             \_ ->
                 animBuilder
-                    |> (Builder.for "test" >> Rotate.begin
+                    |> (Builder.for "test"
+                            >> Rotate.begin
                             >> Rotate.fromXYZ 10 20 30
                             >> Rotate.byXYZ 5 -5 15
                             >> Rotate.end
@@ -1181,7 +1255,8 @@ scaleClampTests =
         [ test "clampX clamps explicit toX above max" <|
             \_ ->
                 animBuilder
-                    |> (Builder.for "test" >> Scale.begin
+                    |> (Builder.for "test"
+                            >> Scale.begin
                             >> Scale.clampX 0.5 2
                             >> Scale.toX 5
                             >> Scale.end
@@ -1191,7 +1266,8 @@ scaleClampTests =
         , test "clampX still clamps when declared after toX" <|
             \_ ->
                 animBuilder
-                    |> (Builder.for "test" >> Scale.begin
+                    |> (Builder.for "test"
+                            >> Scale.begin
                             >> Scale.toX 5
                             >> Scale.clampX 0.5 2
                             >> Scale.end
@@ -1201,7 +1277,8 @@ scaleClampTests =
         , test "clampY only clamps the Y axis" <|
             \_ ->
                 animBuilder
-                    |> (Builder.for "test" >> Scale.begin
+                    |> (Builder.for "test"
+                            >> Scale.begin
                             >> Scale.clampY 0.5 1.5
                             >> Scale.toXY 5 5
                             >> Scale.end
@@ -1211,7 +1288,8 @@ scaleClampTests =
         , test "clampZ clamps the Z axis" <|
             \_ ->
                 animBuilder
-                    |> (Builder.for "test" >> Scale.begin
+                    |> (Builder.for "test"
+                            >> Scale.begin
                             >> Scale.clampZ 0.1 0.5
                             >> Scale.toZ 10
                             >> Scale.end
@@ -1221,7 +1299,8 @@ scaleClampTests =
         , test "clampX with reversed args is normalized" <|
             \_ ->
                 animBuilder
-                    |> (Builder.for "test" >> Scale.begin
+                    |> (Builder.for "test"
+                            >> Scale.begin
                             >> Scale.clampX 2 0.5
                             >> Scale.toX 5
                             >> Scale.end
@@ -1231,7 +1310,8 @@ scaleClampTests =
         , test "unclampX removes only the X axis clamp" <|
             \_ ->
                 animBuilder
-                    |> (Builder.for "test" >> Scale.begin
+                    |> (Builder.for "test"
+                            >> Scale.begin
                             >> Scale.clampX 0.5 2
                             >> Scale.clampY 0.5 1.5
                             >> Scale.unclampX
@@ -1243,12 +1323,14 @@ scaleClampTests =
         , test "clamps are scoped to the active animGroup" <|
             \_ ->
                 animBuilder
-                    |> (Builder.for "a" >> Scale.begin
+                    |> (Builder.for "a"
+                            >> Scale.begin
                             >> Scale.clampX 0.5 2
                             >> Scale.toX 1.5
                             >> Scale.end
                        )
-                    |> (Builder.for "b" >> Scale.begin
+                    |> (Builder.for "b"
+                            >> Scale.begin
                             >> Scale.toX 5
                             >> Scale.end
                        )
@@ -1257,13 +1339,15 @@ scaleClampTests =
         , test "clamps persist across animate batches" <|
             \_ ->
                 animBuilder
-                    |> (Builder.for "test" >> Scale.begin
+                    |> (Builder.for "test"
+                            >> Scale.begin
                             >> Scale.clampX 0.5 2
                             >> Scale.toX 1
                             >> Scale.end
                        )
                     |> finishAnimateBatch
-                    |> (Builder.for "test" >> Scale.begin
+                    |> (Builder.for "test"
+                            >> Scale.begin
                             >> Scale.toX 5
                             >> Scale.end
                        )
@@ -1272,7 +1356,8 @@ scaleClampTests =
         , test "byXYZ adds the delta to the configured start scale" <|
             \_ ->
                 animBuilder
-                    |> (Builder.for "test" >> Scale.begin
+                    |> (Builder.for "test"
+                            >> Scale.begin
                             >> Scale.fromXYZ 1 2 3
                             >> Scale.byXYZ 0.25 -0.5 1
                             >> Scale.end
@@ -1293,7 +1378,8 @@ skewClampTests =
         [ test "clampX clamps explicit toX above max" <|
             \_ ->
                 animBuilder
-                    |> (Builder.for "test" >> Skew.begin
+                    |> (Builder.for "test"
+                            >> Skew.begin
                             >> Skew.clampX 0 30
                             >> Skew.toX 90
                             >> Skew.end
@@ -1303,7 +1389,8 @@ skewClampTests =
         , test "clampX still clamps when declared after toX" <|
             \_ ->
                 animBuilder
-                    |> (Builder.for "test" >> Skew.begin
+                    |> (Builder.for "test"
+                            >> Skew.begin
                             >> Skew.toX 90
                             >> Skew.clampX 0 30
                             >> Skew.end
@@ -1313,7 +1400,8 @@ skewClampTests =
         , test "clampY only clamps the Y axis" <|
             \_ ->
                 animBuilder
-                    |> (Builder.for "test" >> Skew.begin
+                    |> (Builder.for "test"
+                            >> Skew.begin
                             >> Skew.clampY 0 15
                             >> Skew.toXY 90 90
                             >> Skew.end
@@ -1323,7 +1411,8 @@ skewClampTests =
         , test "unclampX removes only X axis clamp" <|
             \_ ->
                 animBuilder
-                    |> (Builder.for "test" >> Skew.begin
+                    |> (Builder.for "test"
+                            >> Skew.begin
                             >> Skew.clampX 0 30
                             >> Skew.clampY 0 15
                             >> Skew.unclampX
@@ -1335,7 +1424,8 @@ skewClampTests =
         , test "clampX with reversed args is normalized" <|
             \_ ->
                 animBuilder
-                    |> (Builder.for "test" >> Skew.begin
+                    |> (Builder.for "test"
+                            >> Skew.begin
                             >> Skew.clampX 30 0
                             >> Skew.toX 90
                             >> Skew.end
@@ -1345,13 +1435,15 @@ skewClampTests =
         , test "clamps persist across animate batches" <|
             \_ ->
                 animBuilder
-                    |> (Builder.for "test" >> Skew.begin
+                    |> (Builder.for "test"
+                            >> Skew.begin
                             >> Skew.clampX 0 30
                             >> Skew.toX 10
                             >> Skew.end
                        )
                     |> finishAnimateBatch
-                    |> (Builder.for "test" >> Skew.begin
+                    |> (Builder.for "test"
+                            >> Skew.begin
                             >> Skew.toX 90
                             >> Skew.end
                        )
@@ -1360,7 +1452,8 @@ skewClampTests =
         , test "byXY adds the delta to the configured start skew" <|
             \_ ->
                 animBuilder
-                    |> (Builder.for "test" >> Skew.begin
+                    |> (Builder.for "test"
+                            >> Skew.begin
                             >> Skew.fromXY 10 20
                             >> Skew.byXY 5 -10
                             >> Skew.end
@@ -1481,7 +1574,8 @@ perspectiveOriginClampTests =
         [ test "clampX clamps explicit toX above max" <|
             \_ ->
                 animBuilder
-                    |> (Builder.for "test" >> PerspectiveOrigin.begin
+                    |> (Builder.for "test"
+                            >> PerspectiveOrigin.begin
                             >> PerspectiveOrigin.clampX 0 100
                             >> PerspectiveOrigin.toX 500
                             >> PerspectiveOrigin.end
@@ -1491,7 +1585,8 @@ perspectiveOriginClampTests =
         , test "clampX still clamps when declared after toX" <|
             \_ ->
                 animBuilder
-                    |> (Builder.for "test" >> PerspectiveOrigin.begin
+                    |> (Builder.for "test"
+                            >> PerspectiveOrigin.begin
                             >> PerspectiveOrigin.toX 500
                             >> PerspectiveOrigin.clampX 0 100
                             >> PerspectiveOrigin.end
@@ -1501,7 +1596,8 @@ perspectiveOriginClampTests =
         , test "clampY only clamps Y axis" <|
             \_ ->
                 animBuilder
-                    |> (Builder.for "test" >> PerspectiveOrigin.begin
+                    |> (Builder.for "test"
+                            >> PerspectiveOrigin.begin
                             >> PerspectiveOrigin.clampY 0 60
                             >> PerspectiveOrigin.toXY 500 500
                             >> PerspectiveOrigin.end
@@ -1511,7 +1607,8 @@ perspectiveOriginClampTests =
         , test "by adds the delta to the configured start perspective origin" <|
             \_ ->
                 animBuilder
-                    |> (Builder.for "test" >> PerspectiveOrigin.begin
+                    |> (Builder.for "test"
+                            >> PerspectiveOrigin.begin
                             >> PerspectiveOrigin.fromXY 10 20
                             >> PerspectiveOrigin.by 5
                             >> PerspectiveOrigin.end
@@ -1523,7 +1620,8 @@ perspectiveOriginClampTests =
                 animBuilder
                     |> PerspectiveOrigin.initXY "test" 0 0
                     |> PerspectiveOrigin.cssUnit Unit.Px
-                    |> (Builder.for "test" >> PerspectiveOrigin.begin
+                    |> (Builder.for "test"
+                            >> PerspectiveOrigin.begin
                             >> PerspectiveOrigin.clampX 0 100
                             >> PerspectiveOrigin.toX 500
                             >> PerspectiveOrigin.end
@@ -1533,7 +1631,8 @@ perspectiveOriginClampTests =
         , test "unclampX removes only X axis clamp" <|
             \_ ->
                 animBuilder
-                    |> (Builder.for "test" >> PerspectiveOrigin.begin
+                    |> (Builder.for "test"
+                            >> PerspectiveOrigin.begin
                             >> PerspectiveOrigin.clampX 0 100
                             >> PerspectiveOrigin.clampY 0 60
                             >> PerspectiveOrigin.unclampX
@@ -1545,7 +1644,8 @@ perspectiveOriginClampTests =
         , test "clampX with reversed args is normalized" <|
             \_ ->
                 animBuilder
-                    |> (Builder.for "test" >> PerspectiveOrigin.begin
+                    |> (Builder.for "test"
+                            >> PerspectiveOrigin.begin
                             >> PerspectiveOrigin.clampX 100 0
                             >> PerspectiveOrigin.toX 500
                             >> PerspectiveOrigin.end
@@ -1566,7 +1666,8 @@ opacityClampTests =
         [ test "clamp clamps explicit to above max" <|
             \_ ->
                 animBuilder
-                    |> (Builder.for "test" >> Opacity.begin
+                    |> (Builder.for "test"
+                            >> Opacity.begin
                             >> Opacity.clamp 0 0.5
                             >> Opacity.to 1
                             >> Opacity.end
@@ -1576,7 +1677,8 @@ opacityClampTests =
         , test "clamp still clamps when declared after to" <|
             \_ ->
                 animBuilder
-                    |> (Builder.for "test" >> Opacity.begin
+                    |> (Builder.for "test"
+                            >> Opacity.begin
                             >> Opacity.to 1
                             >> Opacity.clamp 0 0.5
                             >> Opacity.end
@@ -1586,7 +1688,8 @@ opacityClampTests =
         , test "clamp clamps below min" <|
             \_ ->
                 animBuilder
-                    |> (Builder.for "test" >> Opacity.begin
+                    |> (Builder.for "test"
+                            >> Opacity.begin
                             >> Opacity.clamp 0.2 1
                             >> Opacity.to 0
                             >> Opacity.end
@@ -1596,7 +1699,8 @@ opacityClampTests =
         , test "clamp with reversed args is normalized" <|
             \_ ->
                 animBuilder
-                    |> (Builder.for "test" >> Opacity.begin
+                    |> (Builder.for "test"
+                            >> Opacity.begin
                             >> Opacity.clamp 0.5 0
                             >> Opacity.to 1
                             >> Opacity.end
@@ -1606,7 +1710,8 @@ opacityClampTests =
         , test "by adds the delta to the configured start opacity" <|
             \_ ->
                 animBuilder
-                    |> (Builder.for "test" >> Opacity.begin
+                    |> (Builder.for "test"
+                            >> Opacity.begin
                             >> Opacity.from 0.25
                             >> Opacity.by 0.5
                             >> Opacity.end
@@ -1616,7 +1721,8 @@ opacityClampTests =
         , test "unclamp removes the clamp" <|
             \_ ->
                 animBuilder
-                    |> (Builder.for "test" >> Opacity.begin
+                    |> (Builder.for "test"
+                            >> Opacity.begin
                             >> Opacity.clamp 0 0.5
                             >> Opacity.unclamp
                             >> Opacity.to 1
@@ -1627,12 +1733,14 @@ opacityClampTests =
         , test "clamps are scoped to the active animGroup" <|
             \_ ->
                 animBuilder
-                    |> (Builder.for "a" >> Opacity.begin
+                    |> (Builder.for "a"
+                            >> Opacity.begin
                             >> Opacity.clamp 0 0.5
                             >> Opacity.to 0.3
                             >> Opacity.end
                        )
-                    |> (Builder.for "b" >> Opacity.begin
+                    |> (Builder.for "b"
+                            >> Opacity.begin
                             >> Opacity.to 1
                             >> Opacity.end
                        )
@@ -1641,13 +1749,15 @@ opacityClampTests =
         , test "clamps persist across animate batches" <|
             \_ ->
                 animBuilder
-                    |> (Builder.for "test" >> Opacity.begin
+                    |> (Builder.for "test"
+                            >> Opacity.begin
                             >> Opacity.clamp 0 0.5
                             >> Opacity.to 0.3
                             >> Opacity.end
                        )
                     |> finishAnimateBatch
-                    |> (Builder.for "test" >> Opacity.begin
+                    |> (Builder.for "test"
+                            >> Opacity.begin
                             >> Opacity.to 1
                             >> Opacity.end
                        )
@@ -1667,7 +1777,8 @@ customClampTests =
         [ test "clamp clamps explicit to above max" <|
             \_ ->
                 animBuilder
-                    |> (Builder.for "test" >> Custom.begin (Custom.Left Unit.Px)
+                    |> (Builder.for "test"
+                            >> Custom.begin (Custom.Left Unit.Px)
                             >> Custom.clamp 0 200
                             >> Custom.to 500
                             >> Custom.end
@@ -1677,7 +1788,8 @@ customClampTests =
         , test "clamp still clamps when declared after to" <|
             \_ ->
                 animBuilder
-                    |> (Builder.for "test" >> Custom.begin (Custom.Left Unit.Px)
+                    |> (Builder.for "test"
+                            >> Custom.begin (Custom.Left Unit.Px)
                             >> Custom.to 500
                             >> Custom.clamp 0 200
                             >> Custom.end
@@ -1687,7 +1799,8 @@ customClampTests =
         , test "clamp with reversed args is normalized" <|
             \_ ->
                 animBuilder
-                    |> (Builder.for "test" >> Custom.begin (Custom.Left Unit.Px)
+                    |> (Builder.for "test"
+                            >> Custom.begin (Custom.Left Unit.Px)
                             >> Custom.clamp 200 0
                             >> Custom.to 500
                             >> Custom.end
@@ -1697,7 +1810,8 @@ customClampTests =
         , test "unclamp removes the clamp" <|
             \_ ->
                 animBuilder
-                    |> (Builder.for "test" >> Custom.begin (Custom.Left Unit.Px)
+                    |> (Builder.for "test"
+                            >> Custom.begin (Custom.Left Unit.Px)
                             >> Custom.clamp 0 200
                             >> Custom.unclamp
                             >> Custom.to 500
@@ -1708,12 +1822,14 @@ customClampTests =
         , test "clamps are keyed by CSS property name" <|
             \_ ->
                 animBuilder
-                    |> (Builder.for "test" >> Custom.begin (Custom.Left Unit.Px)
+                    |> (Builder.for "test"
+                            >> Custom.begin (Custom.Left Unit.Px)
                             >> Custom.clamp 0 200
                             >> Custom.to 500
                             >> Custom.end
                        )
-                    |> (Builder.for "test" >> Custom.begin (Custom.Top Unit.Px)
+                    |> (Builder.for "test"
+                            >> Custom.begin (Custom.Top Unit.Px)
                             >> Custom.to 500
                             >> Custom.end
                        )
@@ -1722,12 +1838,14 @@ customClampTests =
         , test "clamps are scoped to the active animGroup" <|
             \_ ->
                 animBuilder
-                    |> (Builder.for "a" >> Custom.begin (Custom.Left Unit.Px)
+                    |> (Builder.for "a"
+                            >> Custom.begin (Custom.Left Unit.Px)
                             >> Custom.clamp 0 200
                             >> Custom.to 50
                             >> Custom.end
                        )
-                    |> (Builder.for "b" >> Custom.begin (Custom.Left Unit.Px)
+                    |> (Builder.for "b"
+                            >> Custom.begin (Custom.Left Unit.Px)
                             >> Custom.to 500
                             >> Custom.end
                        )
@@ -1736,13 +1854,15 @@ customClampTests =
         , test "clamps persist across animate batches" <|
             \_ ->
                 animBuilder
-                    |> (Builder.for "test" >> Custom.begin (Custom.Left Unit.Px)
+                    |> (Builder.for "test"
+                            >> Custom.begin (Custom.Left Unit.Px)
                             >> Custom.clamp 0 200
                             >> Custom.to 50
                             >> Custom.end
                        )
                     |> finishAnimateBatch
-                    |> (Builder.for "test" >> Custom.begin (Custom.Left Unit.Px)
+                    |> (Builder.for "test"
+                            >> Custom.begin (Custom.Left Unit.Px)
                             >> Custom.to 500
                             >> Custom.end
                        )
@@ -1751,7 +1871,8 @@ customClampTests =
         , test "by adds the delta to the configured start value" <|
             \_ ->
                 animBuilder
-                    |> (Builder.for "test" >> Custom.begin (Custom.Left Unit.Px)
+                    |> (Builder.for "test"
+                            >> Custom.begin (Custom.Left Unit.Px)
                             >> Custom.from 100
                             >> Custom.by 25
                             >> Custom.end
@@ -1761,7 +1882,8 @@ customClampTests =
         , test "by defaults the start to 0 when none is configured" <|
             \_ ->
                 animBuilder
-                    |> (Builder.for "test" >> Custom.begin (Custom.Left Unit.Px)
+                    |> (Builder.for "test"
+                            >> Custom.begin (Custom.Left Unit.Px)
                             >> Custom.by 30
                             >> Custom.end
                        )
@@ -1770,13 +1892,15 @@ customClampTests =
         , test "by accumulates across animate batches via the carried start" <|
             \_ ->
                 animBuilder
-                    |> (Builder.for "test" >> Custom.begin (Custom.Left Unit.Px)
+                    |> (Builder.for "test"
+                            >> Custom.begin (Custom.Left Unit.Px)
                             >> Custom.from 0
                             >> Custom.by 10
                             >> Custom.end
                        )
                     |> finishAnimateBatch
-                    |> (Builder.for "test" >> Custom.begin (Custom.Left Unit.Px)
+                    |> (Builder.for "test"
+                            >> Custom.begin (Custom.Left Unit.Px)
                             >> Custom.by 10
                             >> Custom.end
                        )
@@ -1785,7 +1909,8 @@ customClampTests =
         , test "clamp pins a by overshoot to the max boundary" <|
             \_ ->
                 animBuilder
-                    |> (Builder.for "test" >> Custom.begin (Custom.Left Unit.Px)
+                    |> (Builder.for "test"
+                            >> Custom.begin (Custom.Left Unit.Px)
                             >> Custom.from 100
                             >> Custom.clamp 0 120
                             >> Custom.by 50
@@ -1796,7 +1921,8 @@ customClampTests =
         , test "clamp pins a negative by undershoot to the min boundary" <|
             \_ ->
                 animBuilder
-                    |> (Builder.for "test" >> Custom.begin (Custom.Left Unit.Px)
+                    |> (Builder.for "test"
+                            >> Custom.begin (Custom.Left Unit.Px)
                             >> Custom.from 10
                             >> Custom.clamp 0 100
                             >> Custom.by -50

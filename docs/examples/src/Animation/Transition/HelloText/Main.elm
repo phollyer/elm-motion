@@ -40,7 +40,12 @@ init : ( Model, Cmd Msg )
 init =
     ( { animState =
             Transition.init
-                [ Opacity.init groupName 0 ]
+                [ Opacity.init textLineOne 0
+                , Opacity.init dotOne 0
+                , Opacity.init dotTwo 0
+                , Opacity.init dotThree 0
+                , Opacity.init textLineTwo 0
+                ]
       }
     , Process.sleep 0
         |> Task.perform (always TriggerAnimation)
@@ -55,16 +60,41 @@ init =
 -- Avoid typos from hardcoding strings in multiple places
 
 
-groupName : String
-groupName =
-    "helloText"
+duration : Int
+duration =
+    500
+
+
+textLineOne : String
+textLineOne =
+    "textLineOne"
+
+
+dotOne : String
+dotOne =
+    "dotOne"
+
+
+dotTwo : String
+dotTwo =
+    "dotTwo"
+
+
+dotThree : String
+dotThree =
+    "dotThree"
+
+
+textLineTwo : String
+textLineTwo =
+    "textLineTwo"
 
 
 fadeIn : AnimBuilder { eng | withTiming : () } -> AnimBuilder { eng | withTiming : () }
 fadeIn =
     Opacity.begin
         >> Opacity.to 1
-        >> Opacity.duration 5000
+        >> Opacity.duration duration
         >> Opacity.end
 
 
@@ -85,7 +115,19 @@ update msg model =
             ( { model
                 | animState =
                     Transition.animate model.animState <|
-                        Transition.for groupName
+                        Transition.for textLineOne
+                            >> fadeIn
+                            >> Transition.for dotOne
+                            >> Transition.delay duration
+                            >> fadeIn
+                            >> Transition.for dotTwo
+                            >> Transition.delay (duration * 2)
+                            >> fadeIn
+                            >> Transition.for dotThree
+                            >> Transition.delay (duration * 3)
+                            >> fadeIn
+                            >> Transition.for textLineTwo
+                            >> Transition.delay (duration * 4)
                             >> fadeIn
               }
             , Cmd.none
@@ -107,7 +149,32 @@ view model =
         ]
         ---8<-- [start:render]
         [ div
-            (Transition.attributes groupName model.animState
+            [ style "display" "flex"
+            , style "justify-content" "center"
+            , style "align-items" "center"
+            , style "gap" "0.25em"
+            ]
+            [ div
+                (Transition.attributes textLineOne model.animState ++ [])
+                [ text "Elm Motion says" ]
+            , div
+                (Transition.attributes dotOne model.animState
+                    ++ []
+                )
+                [ text "." ]
+            , div
+                (Transition.attributes dotTwo model.animState
+                    ++ []
+                )
+                [ text "." ]
+            , div
+                (Transition.attributes dotThree model.animState
+                    ++ []
+                )
+                [ text "." ]
+            ]
+        , div
+            (Transition.attributes textLineTwo model.animState
                 ++ [ style "width" "100%" ]
             )
             [ text "Hello World!" ]

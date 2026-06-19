@@ -40,11 +40,28 @@ init =
     let
         animState =
             Sub.init
-                [ Opacity.init groupName 0 ]
+                [ Opacity.init textLineOne 0
+                , Opacity.init dotOne 0
+                , Opacity.init dotTwo 0
+                , Opacity.init dotThree 0
+                , Opacity.init textLineTwo 0
+                ]
     in
     ( { animState =
             Sub.animate animState <|
-                Sub.for groupName
+                Sub.for textLineOne
+                    >> fadeIn
+                    >> Sub.for dotOne
+                    >> Sub.delay duration
+                    >> fadeIn
+                    >> Sub.for dotTwo
+                    >> Sub.delay (duration * 2)
+                    >> fadeIn
+                    >> Sub.for dotThree
+                    >> Sub.delay (duration * 3)
+                    >> fadeIn
+                    >> Sub.for textLineTwo
+                    >> Sub.delay (duration * 4)
                     >> fadeIn
       }
     , Cmd.none
@@ -59,16 +76,41 @@ init =
 -- Avoid typos from hardcoding strings in multiple places
 
 
-groupName : String
-groupName =
-    "helloText"
+duration : Int
+duration =
+    500
+
+
+textLineOne : String
+textLineOne =
+    "textLineOne"
+
+
+dotOne : String
+dotOne =
+    "dotOne"
+
+
+dotTwo : String
+dotTwo =
+    "dotTwo"
+
+
+dotThree : String
+dotThree =
+    "dotThree"
+
+
+textLineTwo : String
+textLineTwo =
+    "textLineTwo"
 
 
 fadeIn : AnimBuilder { eng | withTiming : () } -> AnimBuilder { eng | withTiming : () }
 fadeIn =
     Opacity.begin
         >> Opacity.to 1
-        >> Opacity.duration 5000
+        >> Opacity.duration duration
         >> Opacity.end
 
 
@@ -119,7 +161,32 @@ view model =
         ]
         ---8<-- [start:render]
         [ div
-            (Sub.attributes groupName model.animState
+            [ style "display" "flex"
+            , style "justify-content" "center"
+            , style "align-items" "center"
+            , style "gap" "0.25em"
+            ]
+            [ div
+                (Sub.attributes textLineOne model.animState ++ [])
+                [ text "Elm Motion says" ]
+            , div
+                (Sub.attributes dotOne model.animState
+                    ++ []
+                )
+                [ text "." ]
+            , div
+                (Sub.attributes dotTwo model.animState
+                    ++ []
+                )
+                [ text "." ]
+            , div
+                (Sub.attributes dotThree model.animState
+                    ++ []
+                )
+                [ text "." ]
+            ]
+        , div
+            (Sub.attributes textLineTwo model.animState
                 ++ [ style "width" "100%" ]
             )
             [ text "Hello World!" ]

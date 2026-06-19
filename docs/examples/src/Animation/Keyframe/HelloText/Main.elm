@@ -40,11 +40,28 @@ init =
     let
         animState =
             Keyframe.init
-                [ Opacity.init groupName 0 ]
+                [ Opacity.init textLineOne 0
+                , Opacity.init dotOne 0
+                , Opacity.init dotTwo 0
+                , Opacity.init dotThree 0
+                , Opacity.init textLineTwo 0
+                ]
     in
     ( { animState =
             Keyframe.animate animState <|
-                Keyframe.for groupName
+                Keyframe.for textLineOne
+                    >> fadeIn
+                    >> Keyframe.for dotOne
+                    >> Keyframe.delay duration
+                    >> fadeIn
+                    >> Keyframe.for dotTwo
+                    >> Keyframe.delay (duration * 2)
+                    >> fadeIn
+                    >> Keyframe.for dotThree
+                    >> Keyframe.delay (duration * 3)
+                    >> fadeIn
+                    >> Keyframe.for textLineTwo
+                    >> Keyframe.delay (duration * 4)
                     >> fadeIn
       }
     , Cmd.none
@@ -59,16 +76,41 @@ init =
 -- Avoid typos from hardcoding strings in multiple places
 
 
-groupName : String
-groupName =
-    "helloText"
+duration : Int
+duration =
+    500
+
+
+textLineOne : String
+textLineOne =
+    "textLineOne"
+
+
+dotOne : String
+dotOne =
+    "dotOne"
+
+
+dotTwo : String
+dotTwo =
+    "dotTwo"
+
+
+dotThree : String
+dotThree =
+    "dotThree"
+
+
+textLineTwo : String
+textLineTwo =
+    "textLineTwo"
 
 
 fadeIn : AnimBuilder { eng | withTiming : () } -> AnimBuilder { eng | withTiming : () }
 fadeIn =
     Opacity.begin
         >> Opacity.to 1
-        >> Opacity.duration 5000
+        >> Opacity.duration duration
         >> Opacity.end
 
 
@@ -88,7 +130,32 @@ view model =
         ---8<-- [start:render]
         [ Keyframe.styleNode model.animState
         , div
-            (Keyframe.attributes groupName model.animState
+            [ style "display" "flex"
+            , style "justify-content" "center"
+            , style "align-items" "center"
+            , style "gap" "0.25em"
+            ]
+            [ div
+                (Keyframe.attributes textLineOne model.animState ++ [])
+                [ text "Elm Motion says" ]
+            , div
+                (Keyframe.attributes dotOne model.animState
+                    ++ []
+                )
+                [ text "." ]
+            , div
+                (Keyframe.attributes dotTwo model.animState
+                    ++ []
+                )
+                [ text "." ]
+            , div
+                (Keyframe.attributes dotThree model.animState
+                    ++ []
+                )
+                [ text "." ]
+            ]
+        , div
+            (Keyframe.attributes textLineTwo model.animState
                 ++ [ style "width" "100%" ]
             )
             [ text "Hello World!" ]

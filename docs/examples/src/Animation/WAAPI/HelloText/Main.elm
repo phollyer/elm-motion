@@ -58,11 +58,28 @@ init =
     let
         animState =
             WAAPI.init motionCmd motionMsg <|
-                [ Opacity.init groupName 0 ]
+                [ Opacity.init textLineOne 0
+                , Opacity.init dotOne 0
+                , Opacity.init dotTwo 0
+                , Opacity.init dotThree 0
+                , Opacity.init textLineTwo 0
+                ]
 
         ( newAnimState, cmd ) =
             WAAPI.animate animState <|
-                WAAPI.for groupName
+                WAAPI.for textLineOne
+                    >> fadeIn
+                    >> WAAPI.for dotOne
+                    >> WAAPI.delay duration
+                    >> fadeIn
+                    >> WAAPI.for dotTwo
+                    >> WAAPI.delay (duration * 2)
+                    >> fadeIn
+                    >> WAAPI.for dotThree
+                    >> WAAPI.delay (duration * 3)
+                    >> fadeIn
+                    >> WAAPI.for textLineTwo
+                    >> WAAPI.delay (duration * 4)
                     >> fadeIn
     in
     ( { animState = newAnimState }
@@ -78,16 +95,41 @@ init =
 -- Avoid typos from hardcoding strings in multiple places
 
 
-groupName : String
-groupName =
-    "helloText"
+duration : Int
+duration =
+    500
+
+
+textLineOne : String
+textLineOne =
+    "textLineOne"
+
+
+dotOne : String
+dotOne =
+    "dotOne"
+
+
+dotTwo : String
+dotTwo =
+    "dotTwo"
+
+
+dotThree : String
+dotThree =
+    "dotThree"
+
+
+textLineTwo : String
+textLineTwo =
+    "textLineTwo"
 
 
 fadeIn : AnimBuilder { eng | withTiming : () } -> AnimBuilder { eng | withTiming : () }
 fadeIn =
     Opacity.begin
         >> Opacity.to 1
-        >> Opacity.duration 5000
+        >> Opacity.duration duration
         >> Opacity.end
 
 
@@ -106,7 +148,32 @@ view model =
         ]
         ---8<-- [start:render]
         [ div
-            (WAAPI.attributes groupName model.animState
+            [ style "display" "flex"
+            , style "justify-content" "center"
+            , style "align-items" "center"
+            , style "gap" "0.25em"
+            ]
+            [ div
+                (WAAPI.attributes textLineOne model.animState ++ [])
+                [ text "Elm Motion says" ]
+            , div
+                (WAAPI.attributes dotOne model.animState
+                    ++ []
+                )
+                [ text "." ]
+            , div
+                (WAAPI.attributes dotTwo model.animState
+                    ++ []
+                )
+                [ text "." ]
+            , div
+                (WAAPI.attributes dotThree model.animState
+                    ++ []
+                )
+                [ text "." ]
+            ]
+        , div
+            (WAAPI.attributes textLineTwo model.animState
                 ++ [ style "width" "100%" ]
             )
             [ text "Hello World!" ]
