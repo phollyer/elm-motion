@@ -1,11 +1,7 @@
 module Anim.Engine.Keyframe.RunEventSpec exposing (suite)
 
-{-| Verifies that the Keyframe engine exposes the `animationrun` lifecycle
-event in addition to `animationstart`, mirroring the browser's CSS animation
-event sequence. `animationrun` fires immediately when the animation is
-applied (before any configured delay), so callers can react before the
-visual movement begins. `animationstart` continues to fire after the delay,
-matching the native spec.
+{-| Verifies that the Keyframe engine surfaces `Run` from the native
+`animationstart` lifecycle event.
 -}
 
 import Anim.Engine.Keyframe as Keyframe
@@ -66,12 +62,8 @@ simulate eventName =
 suite : Test
 suite =
     describe "Keyframe Run event"
-        [ test "animationrun decodes into the Run AnimEvent" <|
-            \_ ->
-                simulate "animationrun"
-                    |> Expect.equal (Ok (Just (Keyframe.Run (Just "box") (Just "box") "box")))
-        , test "animationstart still produces Started" <|
+        [ test "animationstart decodes into the Run AnimEvent" <|
             \_ ->
                 simulate "animationstart"
-                    |> Expect.equal (Ok (Just (Keyframe.Started (Just "box") (Just "box") "box")))
+                    |> Expect.equal (Ok (Just (Keyframe.Run (Just "box") (Just "box") "box")))
         ]

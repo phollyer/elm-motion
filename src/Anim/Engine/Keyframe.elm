@@ -467,9 +467,6 @@ update msg =
 toAnimEvent : Internal.AnimEvent -> Maybe AnimEvent
 toAnimEvent event =
     case event of
-        Internal.Started currentTargetId targetId animGroup ->
-            Nothing
-
         Internal.Ended currentTargetId targetId animGroup ->
             Just (Ended currentTargetId targetId animGroup)
 
