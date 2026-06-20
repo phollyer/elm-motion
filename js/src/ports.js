@@ -55,8 +55,10 @@ function getRunningAnimationProgress(animGroup, maxDuration) {
         return 0;
     }
 
-    const currentTime = firstAnim.animation.currentTime || 0;
-    return Math.min(1.0, Math.max(0.0, currentTime / maxDuration));
+    const currentTime = Number(firstAnim.animation.currentTime) || 0;
+    const delay = Number(firstAnim.animation.effect?.getTiming?.()?.delay) || 0;
+    const activeTime = Math.max(0, currentTime - delay);
+    return Math.min(1.0, Math.max(0.0, activeTime / maxDuration));
 }
 
 function getLifecycleProgress(status, animGroup) {

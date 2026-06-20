@@ -518,6 +518,53 @@ describe('processAnimationData (WAAPI engine)', () => {
         expect(keyframes[keyframes.length - 1].transform).toContain('translate3d(45px, 80px, 0px)');
     });
 
+    it('re-anchors delayed interrupted translate starts to active in-flight position', () => {
+        const animGroup = 'box-delayed-interrupt-anchor';
+        const firstAnim = createFakeAnimation({ duration: 1000 });
+        firstAnim.playState = 'running';
+        // WAAPI currentTime includes delay; active progress should be (650-500)/1000 = 0.15.
+        firstAnim.currentTime = 650;
+        firstAnim.effect.getTiming = () => ({ duration: 1000, delay: 500 });
+        const secondAnim = createFakeAnimation({ duration: 1000 });
+
+        const element = makeElement({ animGroup, animations: [firstAnim, secondAnim] });
+        installDom({ element, targetId: animGroup });
+
+        processAnimationData({
+            elements: {
+                [animGroup]: {
+                    properties: [
+                        {
+                            type: 'translate',
+                            startX: 0, startY: 0, startZ: 0,
+                            endX: 100, endY: 0, endZ: 0,
+                            duration: 1000, delay: 500, easing: 'linear', version: 1
+                        }
+                    ]
+                }
+            }
+        });
+
+        processAnimationData({
+            elements: {
+                [animGroup]: {
+                    properties: [
+                        {
+                            type: 'translate',
+                            // Stale command start should be ignored in favor of live in-flight state.
+                            startX: 60, startY: 0, startZ: 0,
+                            endX: 0, endY: 0, endZ: 0,
+                            duration: 1000, delay: 500, easing: 'linear', version: 2
+                        }
+                    ]
+                }
+            }
+        });
+
+        const keyframes = element.animate.mock.calls[1][0];
+        expect(keyframes[0].transform).toContain('translate3d(15px, 0px, 0px)');
+    });
+
     it('cancels a non-transform animation when restarted with a new version', () => {
         const animGroup = 'box-opacity-restart';
         const firstAnim = createFakeAnimation({ duration: 200 });

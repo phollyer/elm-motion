@@ -267,7 +267,9 @@ export function getAnimationProgress(animGroup, animation) {
         ? Math.max(...groupInfo.propertyConfigs.map(property => property.duration))
         : 0;
     const maxDuration = liveDuration > 0 ? liveDuration : fallbackDuration;
-    const currentTime = animation.currentTime || 0;
+    const currentTime = Number(animation.currentTime) || 0;
+    const delay = Number(animation.effect?.getTiming?.()?.delay) || 0;
+    const activeTime = Math.max(0, currentTime - delay);
     if (maxDuration <= 0) {
         return 0;
     }
@@ -280,7 +282,7 @@ export function getAnimationProgress(animGroup, animation) {
     // which computes `(oldIter + progress) * newDuration` — with a stale
     // `progress=1` it lands the new `currentTime` exactly on the next
     // iteration boundary, snapping the box to the start of the next leg.
-    return (currentTime % maxDuration) / maxDuration;
+    return (activeTime % maxDuration) / maxDuration;
 }
 
 export function getLiveTransformState(animGroup, animation, resolvedTransformValues, transformAnimDuration) {
@@ -307,7 +309,9 @@ export function getLiveTransformState(animGroup, animation, resolvedTransformVal
     // the wrong position for the rest of the resized animation.
     const timing = animation.effect?.getTiming?.() || {};
     const liveDuration = Number(timing.duration) || transformAnimDuration || 0;
-    const currentTime = animation.currentTime || 0;
+    const currentTime = Number(animation.currentTime) || 0;
+    const delay = Number(timing.delay) || 0;
+    const activeTime = Math.max(0, currentTime - delay);
     // Per-iteration progress: WAAPI's `currentTime` is the animation's total
     // elapsed time across all iterations, not the progress within the current
     // iteration. Without the modulo, multi-iteration animations (looping or
@@ -316,7 +320,7 @@ export function getLiveTransformState(animGroup, animation, resolvedTransformVal
     // (especially after `flip` for alternate's reverse leg, where it would
     // collapse to 0).
     const rawProgress = liveDuration > 0
-        ? ((currentTime % liveDuration) / liveDuration)
+        ? ((activeTime % liveDuration) / liveDuration)
         : 0;
 
     // Flip progress on the reverse half of an `alternate`/`alternate-reverse`

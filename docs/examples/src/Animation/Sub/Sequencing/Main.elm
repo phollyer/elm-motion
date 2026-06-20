@@ -70,7 +70,7 @@ type alias MotionConfig =
 globalConfig : MotionConfig
 globalConfig =
     { delay = 1000
-    , speed = 100
+    , speed = 50
     , easing = Linear
     }
 
@@ -83,8 +83,8 @@ rowOne =
 rowOneConfig : MotionConfig
 rowOneConfig =
     { delay = 0
-    , speed = 400
-    , easing = BounceOut
+    , speed = 50
+    , easing = Linear
     }
 
 
@@ -96,8 +96,8 @@ rowTwo =
 rowTwoConfig : MotionConfig
 rowTwoConfig =
     { delay = 250
-    , speed = 300
-    , easing = BackOut
+    , speed = 50
+    , easing = Linear
     }
 
 
@@ -109,8 +109,8 @@ rowThree =
 rowThreeConfig : MotionConfig
 rowThreeConfig =
     { delay = 500
-    , speed = 200
-    , easing = ExpoOut
+    , speed = 50
+    , easing = Linear
     }
 
 

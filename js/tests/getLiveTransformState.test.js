@@ -39,6 +39,17 @@ function makeAnimation({ currentTime, duration, direction = 'normal', currentIte
     };
 }
 
+function makeAnimationWithDelay({ currentTime, duration, delay, direction = 'normal', currentIteration = 0, playState = 'running' }) {
+    return {
+        currentTime,
+        playState,
+        effect: {
+            getTiming() { return { duration, delay, direction }; },
+            getComputedTiming() { return { currentIteration, duration, delay, direction }; }
+        }
+    };
+}
+
 beforeEach(() => lastKnownTransforms.clear());
 afterEach(() => lastKnownTransforms.clear());
 
@@ -110,6 +121,19 @@ describe('getLiveTransformState', () => {
         const pending = makeAnimation({ currentTime: 0, duration: 1000, direction: 'normal', currentIteration: 0, playState: 'pending' });
         const state = getLiveTransformState('box', pending, makeResolvedX(0, 200, 1000), 1000);
         expect(state.x).toBeCloseTo(80, 5);
+    });
+
+    it('treats delay as pre-roll and keeps progress at 0 before active phase', () => {
+        const delayed = makeAnimationWithDelay({ currentTime: 400, duration: 1000, delay: 500 });
+        const state = getLiveTransformState('box', delayed, makeResolvedX(0, 200, 1000), 1000);
+        expect(state.x).toBeCloseTo(0, 5);
+    });
+
+    it('subtracts delay when sampling in-flight transform position', () => {
+        // currentTime=650, delay=500 -> activeTime=150 -> progress=0.15
+        const delayed = makeAnimationWithDelay({ currentTime: 650, duration: 1000, delay: 500 });
+        const state = getLiveTransformState('box', delayed, makeResolvedX(0, 200, 1000), 1000);
+        expect(state.x).toBeCloseTo(30, 5);
     });
 });
 
@@ -184,5 +208,16 @@ describe('getAnimationProgress', () => {
         });
         const animation = makeAnimation({ currentTime: 1630.587, duration: 2895 });
         expect(getAnimationProgress('box', animation)).toBeCloseTo(0.5632, 4);
+    });
+
+    it('does not advance progress while the animation is still in delay', () => {
+        const animation = makeAnimationWithDelay({ currentTime: 300, duration: 1000, delay: 500 });
+        expect(getAnimationProgress('box', animation)).toBe(0);
+    });
+
+    it('subtracts delay before applying modulo for looping progress', () => {
+        // activeTime = 2350 - 500 = 1850 -> 1850 % 1000 = 850 -> 0.85
+        const animation = makeAnimationWithDelay({ currentTime: 2350, duration: 1000, delay: 500, currentIteration: 1 });
+        expect(getAnimationProgress('box', animation)).toBeCloseTo(0.85, 5);
     });
 });

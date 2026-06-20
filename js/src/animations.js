@@ -114,6 +114,27 @@ function deriveTransformKeyframeCount(resolved) {
     return Math.max(...lengths);
 }
 
+function getAnimationActiveTiming(animation) {
+    const duration = Number(animation?.effect?.getTiming?.()?.duration) || 0;
+    if (duration <= 0) {
+        return null;
+    }
+
+    const currentTime = Number(animation?.currentTime);
+    if (!Number.isFinite(currentTime)) {
+        return null;
+    }
+
+    const delay = Number(animation?.effect?.getTiming?.()?.delay) || 0;
+    const activeElapsed = Math.min(duration, Math.max(0, currentTime - delay));
+
+    return {
+        duration,
+        activeElapsed,
+        progress: activeElapsed / duration
+    };
+}
+
 /**
  * Detect a resize cmd whose geometry exactly matches what the WAAPI
  * animation is already running. Used to short-circuit the cancel+recreate
@@ -421,21 +442,31 @@ function patchTransformStartsFromAnimation(element, existingTransform, mergedTra
         return;
     }
 
-    const timing = existingTransform.animation.effect?.getTiming();
-    const currentTime = existingTransform.animation.currentTime || 0;
-    const duration = timing?.duration || 0;
-    if (duration <= 0) {
+    const activeTiming = getAnimationActiveTiming(existingTransform.animation);
+    if (!activeTiming) {
         return;
     }
 
-    const progress = Math.min(1.0, Math.max(0.0, currentTime / duration));
-    const currentState = computeTransformFromResolved(existingTransform.resolvedValues, progress, duration);
+    const currentState = computeTransformFromResolved(existingTransform.resolvedValues, activeTiming.progress, activeTiming.duration);
     const domLiveState = getCurrentTransform(element);
     // A finished animation holds at its exact commanded end (the ledger);
     // trust that value for frozen axes instead of a lossy live DOM read.
     const isSettled = existingTransform.animation.playState === 'finished'
-        || currentTime >= duration;
+        || activeTiming.activeElapsed >= activeTiming.duration;
     mergedTransformProperties.forEach(property => {
+        // On interruption, always re-anchor starts to the live in-flight state.
+        // Command-provided starts can be stale (e.g. delayed groups), which
+        // otherwise produces visible snaps before the next delay window.
+        const axes = RESOLVED_TRANSFORM_AXES[property.type];
+        if (axes) {
+            axes.forEach(({ startKey, currentKey }) => {
+                const currentValue = currentState[currentKey];
+                if (Number.isFinite(currentValue)) {
+                    property[startKey] = currentValue;
+                }
+            });
+        }
+
         fillMissingTransformStarts(property, currentState);
         applyFrozenAxesFromLive(property, currentState, domLiveState, element, isSettled);
     });
@@ -649,18 +680,15 @@ function carryForwardMissingTransformProperties(animGroup, element, existingTran
     // this exact moment. Falls back to the cached transform state if the
     // running animation has no resolved values yet.
     let liveTransform = null;
-    const timing = existingTransform.animation?.effect?.getTiming();
-    const animationDuration = timing?.duration || 0;
-    const currentTime = existingTransform.animation?.currentTime || 0;
-    if (existingTransform.resolvedValues && animationDuration > 0) {
-        const progress = Math.min(1.0, Math.max(0.0, currentTime / animationDuration));
-        liveTransform = computeTransformFromResolved(existingTransform.resolvedValues, progress, animationDuration);
+    const activeTiming = getAnimationActiveTiming(existingTransform.animation);
+    if (existingTransform.resolvedValues && activeTiming) {
+        liveTransform = computeTransformFromResolved(existingTransform.resolvedValues, activeTiming.progress, activeTiming.duration);
     }
     const currentTransform = liveTransform || getTransformState(animGroup, element);
 
     existingTransform.transformProperties.forEach(oldProp => {
         if (!newPropTypes.has(oldProp.type)) {
-            mergedTransformProperties.push(buildRetainedTransformProperty(oldProp, currentTransform, currentTime));
+            mergedTransformProperties.push(buildRetainedTransformProperty(oldProp, currentTransform, activeTiming?.activeElapsed || 0));
         }
     });
 }
@@ -2087,12 +2115,9 @@ function cancelSilently(elementAnims, propType) {
  */
 function readLiveTransform(animGroup, element, existing) {
     if (existing && existing.resolvedValues) {
-        const timing = existing.animation?.effect?.getTiming();
-        const duration = timing?.duration || 0;
-        const currentTime = existing.animation?.currentTime || 0;
-        if (duration > 0) {
-            const progress = Math.min(1.0, Math.max(0.0, currentTime / duration));
-            return computeTransformFromResolved(existing.resolvedValues, progress, duration);
+        const activeTiming = getAnimationActiveTiming(existing.animation);
+        if (activeTiming) {
+            return computeTransformFromResolved(existing.resolvedValues, activeTiming.progress, activeTiming.duration);
         }
     }
     return getTransformState(animGroup, element);
