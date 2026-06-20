@@ -303,6 +303,86 @@ const FROZEN_AXIS_LIVE_FIELDS = {
     skew: { x: 'skewX', y: 'skewY' }
 };
 
+function findContainerForQueryUnits(element) {
+    if (!element) {
+        return null;
+    }
+
+    let cursor = element.parentElement;
+    while (cursor) {
+        const cs = window.getComputedStyle(cursor);
+        const containerType = cs.containerType || '';
+        if (containerType !== 'normal') {
+            return cursor;
+        }
+        cursor = cursor.parentElement;
+    }
+
+    return element.parentElement;
+}
+
+function pxToTranslateUnit(pxValue, unit, axis, element) {
+    if (!Number.isFinite(pxValue)) {
+        return null;
+    }
+
+    if (!unit || unit === 'px') {
+        return pxValue;
+    }
+
+    const viewportW = window.innerWidth || 0;
+    const viewportH = window.innerHeight || 0;
+    const container = findContainerForQueryUnits(element);
+    const containerRect = container ? container.getBoundingClientRect() : null;
+    const containerW = containerRect ? containerRect.width : 0;
+    const containerH = containerRect ? containerRect.height : 0;
+
+    switch (unit) {
+        case 'cqw':
+        case 'cqi':
+            return containerW > 0 ? (pxValue * 100) / containerW : null;
+
+        case 'cqh':
+        case 'cqb':
+            return containerH > 0 ? (pxValue * 100) / containerH : null;
+
+        case 'cqmin': {
+            const basis = Math.min(containerW, containerH);
+            return basis > 0 ? (pxValue * 100) / basis : null;
+        }
+
+        case 'cqmax': {
+            const basis = Math.max(containerW, containerH);
+            return basis > 0 ? (pxValue * 100) / basis : null;
+        }
+
+        case 'vw':
+        case 'dvw':
+        case 'svw':
+        case 'lvw':
+            return viewportW > 0 ? (pxValue * 100) / viewportW : null;
+
+        case 'vh':
+        case 'dvh':
+        case 'svh':
+        case 'lvh':
+            return viewportH > 0 ? (pxValue * 100) / viewportH : null;
+
+        default:
+            if (axis === 'x') {
+                const basis = containerW || viewportW;
+                return basis > 0 ? (pxValue * 100) / basis : null;
+            }
+
+            if (axis === 'y') {
+                const basis = containerH || viewportH;
+                return basis > 0 ? (pxValue * 100) / basis : null;
+            }
+
+            return null;
+    }
+}
+
 function applyFrozenAxesFromLive(property, currentState, domLiveState, element, isSettled) {
     const axes = property.frozenAxes;
     if (!Array.isArray(axes) || axes.length === 0) {
@@ -311,86 +391,6 @@ function applyFrozenAxesFromLive(property, currentState, domLiveState, element, 
     const fieldMap = FROZEN_AXIS_LIVE_FIELDS[property.type];
     if (!fieldMap) {
         return;
-    }
-
-    function findContainerForQueryUnits(element) {
-        if (!element) {
-            return null;
-        }
-
-        let cursor = element.parentElement;
-        while (cursor) {
-            const cs = window.getComputedStyle(cursor);
-            const containerType = cs.containerType || '';
-            if (containerType !== 'normal') {
-                return cursor;
-            }
-            cursor = cursor.parentElement;
-        }
-
-        return element.parentElement;
-    }
-
-    function pxToTranslateUnit(pxValue, unit, axis, element) {
-        if (!Number.isFinite(pxValue)) {
-            return null;
-        }
-
-        if (!unit || unit === 'px') {
-            return pxValue;
-        }
-
-        const viewportW = window.innerWidth || 0;
-        const viewportH = window.innerHeight || 0;
-        const container = findContainerForQueryUnits(element);
-        const containerRect = container ? container.getBoundingClientRect() : null;
-        const containerW = containerRect ? containerRect.width : 0;
-        const containerH = containerRect ? containerRect.height : 0;
-
-        switch (unit) {
-            case 'cqw':
-            case 'cqi':
-                return containerW > 0 ? (pxValue * 100) / containerW : null;
-
-            case 'cqh':
-            case 'cqb':
-                return containerH > 0 ? (pxValue * 100) / containerH : null;
-
-            case 'cqmin': {
-                const basis = Math.min(containerW, containerH);
-                return basis > 0 ? (pxValue * 100) / basis : null;
-            }
-
-            case 'cqmax': {
-                const basis = Math.max(containerW, containerH);
-                return basis > 0 ? (pxValue * 100) / basis : null;
-            }
-
-            case 'vw':
-            case 'dvw':
-            case 'svw':
-            case 'lvw':
-                return viewportW > 0 ? (pxValue * 100) / viewportW : null;
-
-            case 'vh':
-            case 'dvh':
-            case 'svh':
-            case 'lvh':
-                return viewportH > 0 ? (pxValue * 100) / viewportH : null;
-
-            default:
-                if (axis === 'x') {
-                    const basis = containerW || viewportW;
-                    return basis > 0 ? (pxValue * 100) / basis : null;
-                }
-
-                if (axis === 'y') {
-                    const basis = containerH || viewportH;
-                    return basis > 0 ? (pxValue * 100) / basis : null;
-                }
-
-                return null;
-        }
     }
 
     for (const axis of axes) {
@@ -449,6 +449,7 @@ function patchTransformStartsFromAnimation(element, existingTransform, mergedTra
 
     const currentState = computeTransformFromResolved(existingTransform.resolvedValues, activeTiming.progress, activeTiming.duration);
     const domLiveState = getCurrentTransform(element);
+    const hasActiveCompositorAnimation = !!(element.getAnimations && element.getAnimations().length > 0);
     // A finished animation holds at its exact commanded end (the ledger);
     // trust that value for frozen axes instead of a lossy live DOM read.
     const isSettled = existingTransform.animation.playState === 'finished'
@@ -463,6 +464,24 @@ function patchTransformStartsFromAnimation(element, existingTransform, mergedTra
                 const currentValue = currentState[currentKey];
                 if (Number.isFinite(currentValue)) {
                     property[startKey] = currentValue;
+                }
+            });
+        }
+
+        // For mid-flight interrupts, timeline-derived progress can lag the
+        // compositor by a frame on some browsers. Prefer the live rendered
+        // translate position when available so retarget starts exactly where
+        // the element currently is on screen.
+        if (!isSettled && hasActiveCompositorAnimation && property.type === 'translate') {
+            [
+                { axis: 'x', startKey: 'startX', unitKey: 'unitX' },
+                { axis: 'y', startKey: 'startY', unitKey: 'unitY' },
+                { axis: 'z', startKey: 'startZ', unitKey: 'unitZ' }
+            ].forEach(({ axis, startKey, unitKey }) => {
+                const domPx = domLiveState?.[axis];
+                const converted = pxToTranslateUnit(domPx, property[unitKey] || 'px', axis, element);
+                if (Number.isFinite(converted)) {
+                    property[startKey] = converted;
                 }
             });
         }

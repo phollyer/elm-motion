@@ -193,6 +193,62 @@ describe('processAnimationData (WAAPI engine)', () => {
         expect(keyframes[0].transform).toContain('translate3d(120px, 0px, 0px)');
     });
 
+    it('anchors mid-flight retarget starts to live translate position', () => {
+        // Regression: when retargeting during an active animation, timeline-
+        // derived progress can be slightly behind the compositor. Starting the
+        // next animation from that stale value causes a visible snap backward.
+        const animGroup = 'box-midflight-live';
+        const firstAnimation = createFakeAnimation({ duration: 1000 });
+        const secondAnimation = createFakeAnimation({ duration: 1000 });
+        firstAnimation.currentTime = 500;
+        firstAnimation.playState = 'running';
+
+        const element = makeElement({ animGroup, animations: [firstAnimation, secondAnimation] });
+        element.getAnimations = () => [firstAnimation];
+        installDom({ element, targetId: animGroup });
+
+        // Report a live compositor position ahead of timeline interpolation.
+        global.window.getComputedStyle = vi.fn(() => ({
+            transform: 'matrix(1, 0, 0, 1, 60, 0)',
+            containerType: 'normal',
+            getPropertyValue() {
+                return '';
+            }
+        }));
+
+        processAnimationData({
+            elements: {
+                [animGroup]: {
+                    properties: [{
+                        type: 'translate',
+                        startX: 0, startY: 0, startZ: 0,
+                        endX: 100, endY: 0, endZ: 0,
+                        unitX: 'px', unitY: 'px', unitZ: 'px',
+                        duration: 1000, easing: 'linear', version: 1
+                    }]
+                }
+            }
+        });
+
+        processAnimationData({
+            elements: {
+                [animGroup]: {
+                    properties: [{
+                        type: 'translate',
+                        // Elm-side baseline trails the actual live value.
+                        startX: 48, startY: 0, startZ: 0,
+                        endX: 0, endY: 0, endZ: 0,
+                        unitX: 'px', unitY: 'px', unitZ: 'px',
+                        duration: 1000, easing: 'linear', version: 2
+                    }]
+                }
+            }
+        });
+
+        const [retargetedKeyframes] = element.animate.mock.calls[1];
+        expect(retargetedKeyframes[0].transform).toContain('translate3d(60px, 0px, 0px)');
+    });
+
     it('animates mixed transform and non-transform properties in one command', () => {
         const animGroup = 'box-mixed';
         const transformAnim = createFakeAnimation({ duration: 300 });
