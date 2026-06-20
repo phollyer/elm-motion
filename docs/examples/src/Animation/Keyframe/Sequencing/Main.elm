@@ -71,7 +71,7 @@ globalConfig : MotionConfig
 globalConfig =
     { delay = 1000
     , speed = 50
-    , easing = Linear
+    , easing = BounceOut
     }
 
 
@@ -83,8 +83,8 @@ rowOne =
 rowOneConfig : MotionConfig
 rowOneConfig =
     { delay = 0
-    , speed = 50
-    , easing = Linear
+    , speed = 85
+    , easing = EaseInOut
     }
 
 
@@ -96,8 +96,8 @@ rowTwo =
 rowTwoConfig : MotionConfig
 rowTwoConfig =
     { delay = 250
-    , speed = 50
-    , easing = Linear
+    , speed = 75
+    , easing = SineInOut
     }
 
 
@@ -109,8 +109,8 @@ rowThree =
 rowThreeConfig : MotionConfig
 rowThreeConfig =
     { delay = 500
-    , speed = 50
-    , easing = Linear
+    , speed = 60
+    , easing = QuadInOut
     }
 
 
@@ -196,12 +196,12 @@ update msg model =
 -- VIEW
 
 
-rows : List ( String, String, String )
+rows : List String
 rows =
-    [ ( rowOne, "Row 1", "delay " ++ String.fromInt rowOneConfig.delay ++ " | speed " ++ String.fromFloat rowOneConfig.speed ++ " | " ++ Easing.toString rowOneConfig.easing )
-    , ( rowTwo, "Row 2", "delay " ++ String.fromInt rowTwoConfig.delay ++ " | speed " ++ String.fromFloat rowTwoConfig.speed ++ " | " ++ Easing.toString rowTwoConfig.easing )
-    , ( rowThree, "Row 3", "delay " ++ String.fromInt rowThreeConfig.delay ++ " | speed " ++ String.fromFloat rowThreeConfig.speed ++ " | " ++ Easing.toString rowThreeConfig.easing )
-    , ( rowFour, "Row 4", "delay " ++ String.fromInt globalConfig.delay ++ " | speed " ++ String.fromFloat globalConfig.speed ++ " | " ++ Easing.toString globalConfig.easing )
+    [ rowOne
+    , rowTwo
+    , rowThree
+    , rowFour
     ]
 
 
@@ -230,8 +230,8 @@ view model =
         ]
 
 
-rowView : Model -> ( String, String, String ) -> Html Msg
-rowView model ( groupName, title, meta ) =
+rowView : Model -> String -> Html Msg
+rowView model groupName =
     div
         [ style "display" "flex"
         , style "flex-wrap" "wrap"
@@ -239,23 +239,13 @@ rowView model ( groupName, title, meta ) =
         , style "gap" "8px"
         ]
         [ div
-            [ style "width" "220px"
-            , style "font-size" "13px"
-            , style "line-height" "1.2"
-            ]
-            [ div [ style "font-weight" "700" ] [ text title ]
-            , div [ style "opacity" "0.75" ] [ text meta ]
-            ]
-        , div
             [ style "position" "relative"
             , style "container-type" "size"
             , style "flex" "1"
-            , style "min-width" "0"
             , style "height" "42px"
             , style "border" "1px solid #d4d4d8"
             , style "border-radius" "10px"
             , style "background" "#f8fafc"
-            , style "overflow" "hidden"
             ]
             [ div
                 (Keyframe.attributes groupName model.animState
