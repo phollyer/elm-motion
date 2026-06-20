@@ -44,8 +44,8 @@ For implementation details, each engine page includes the complete usage flow fo
 | Pause | | ✓ | ✓ | ✓ | | |
 | Resume | | ✓ | ✓ | ✓ | | |
 | **Events** |
-| Run | ✓ | ✓ | | | | |
-| Started | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Run | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Started | ✓ | | ✓ | ✓ | ✓ | ✓ |
 | Ended | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | Cancelled | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | Restarted | | ✓ | ✓ | ✓ | | |

@@ -298,8 +298,8 @@ Wire up subscriptions:
 
 | Event | Transition | Keyframe | Sub | WAAPI | ScrollTimeline | ViewTimeline |
 | ----- | :---------: | :-------: | :-: | :---: | :------------: | :----------: |
-| Run | ✓ | ✓ | | | | |
-| Started | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Run | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Started | ✓ | | ✓ | ✓ | ✓ | ✓ |
 | Ended | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | Cancelled | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | Iteration | | ✓ | ✓ | ✓ | ✓ | ✓ |
@@ -320,7 +320,7 @@ These events come directly from the underlying technology - CSS DOM events or We
     | Event | Transition | Keyframe | WAAPI | ScrollTimeline | ViewTimeline |
     | ----- | :--------: | :------: | :---: | :------------: | :----------: |
     | Run | ✓ | ✓ | | | |
-    | Started | ✓ | ✓ | | | |
+    | Started | ✓ | | | | |
     | Ended | ✓ | ✓ | ✓ | ✓ | ✓ |
     | Cancelled | ✓ | ✓ | ✓ | ✓ | ✓ |
     | Iteration | | ✓ | | | |
@@ -332,16 +332,17 @@ These events are generated internally by the engine:
 
 ??? example "View Engine Generated Events"
 
-    | Event | Keyframe | Sub | WAAPI | ScrollTimeline | ViewTimeline |
-    | ----- | :------: | :-: | :---: | :------------: | :----------: | 
-    | Started | | ✓ | ✓ | ✓ | ✓ |
-    | Ended | | ✓ | | | |
-    | Cancelled | | ✓ | | | |
-    | Paused | ✓ | ✓ | ✓ | | |
-    | Resumed | ✓ | ✓ | ✓ | | |
-    | Restarted | ✓ | ✓ | ✓ | | |
-    | Iteration | | | ✓ | ✓ | ✓ |
-    | Progress | | ✓ | ✓ | ✓ | ✓ |
+    | Event | Sub | WAAPI | ScrollTimeline | ViewTimeline |
+    | ----- | :-: | :---: | :------------: | :----------: |
+    | Run | ✓ | ✓ | ✓ | ✓ |
+    | Started | ✓ | ✓ | ✓ | ✓ |
+    | Ended | ✓ | | | |
+    | Cancelled | ✓ | | | |
+    | Paused | ✓ | ✓ | | |
+    | Resumed | ✓ | ✓ | | |
+    | Restarted | ✓ | ✓ | | |
+    | Iteration | ✓ | ✓ | ✓ | ✓ |
+    | Progress | ✓ | ✓ | ✓ | ✓ |
 
 
 
@@ -351,13 +352,15 @@ These events are generated internally by the engine:
 
 Fired the moment an animation is applied, before any configured delay. Use this if you need to react before the visual movement begins - `Started` fires only after the delay has elapsed.
 
-Supported by **Transition** (native `transitionrun`) and **Keyframe** (native `animationrun`).
+Supported by all engines. For **Transition** and **Keyframe**, this comes from native DOM events (`transitionrun` and `animationrun`). For **Sub**, **WAAPI**, **ScrollTimeline**, and **ViewTimeline**, this is emitted by engine/runtime bookkeeping when a group is first registered.
 
 ### Started
 
 Fired when an animation begins playing.
 
-For **Transition** and **Keyframe**, this fires after any configured delay has elapsed. Use `Run` to react before the delay.
+For **Transition**, this fires after any configured delay has elapsed. Use `Run` to react before the delay.
+
+**Keyframe** does not surface a public `Started` event - use `Run` for start-of-lifecycle handling.
 
 For **ScrollTimeline** and **ViewTimeline**, `Started` fires each time the timeline enters its active range. Scrolling out of range and back in produces another `Started`.
 

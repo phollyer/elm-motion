@@ -164,7 +164,9 @@ The library has you covered here though, all incoming messages are gated by each
 
 Every event carries the animation group name. Some events carry an additional value:
 
+- `Cancelled` includes the progress at the moment of cancellation (`Float`, 0.0-1.0)
 - `Iteration` includes the iteration count (`Int`)
+- `Progress` fires every frame with the current progress (`Float`, 0.0-1.0)
 - `AnimError` carries an error string from the JavaScript layer
 
 ??? example "View Source Code"
@@ -188,10 +190,12 @@ Every event carries the animation group name. Some events carry an additional va
 
 | Event | Fires when... |
 | ----- | ------------- |
+| `Run` | Animation is registered to run (before any delay) |
 | `Started` | Animation begins playing |
 | `Ended` | Animation completes |
 | `Cancelled` | Animation is cancelled before completing |
 | `Iteration` | Each iteration completes (looping or alternating) |
+| `Progress` | Every frame while the animation is running |
 | `AnimError` | The JavaScript layer reports an error |
 
 ### Subscriptions
@@ -366,9 +370,12 @@ Choose ViewTimeline when playback should follow how an element moves through the
 
 | Event | Description |
 | ----- | ----------- |
+| `Run AnimGroupName` | Animation is registered to run |
+| `Started AnimGroupName` | Animation begins playing |
 | `Ended AnimGroupName` | Animation completes |
 | `Cancelled AnimGroupName Float` | Animation cancelled; `Float` is progress at cancellation |
 | `Iteration AnimGroupName Int` | Loop iteration completes; `Int` is iteration count |
+| `Progress AnimGroupName Float` | Each frame; `Float` is current progress (0.0-1.0) |
 | `AnimError String` | JavaScript-layer error |
 
 ### Update

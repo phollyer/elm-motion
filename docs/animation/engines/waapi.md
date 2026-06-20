@@ -251,7 +251,7 @@ Every event carries the animation group name. Some events carry an additional va
     handleEvent : Maybe AnimEvent -> Model -> ( Model, Cmd Msg )
     handleEvent maybeEvent model =
         case maybeEvent of
-            Just (Started "box") ->
+            Just (Run "box") ->
                 ( model, Cmd.none )
 
             Just (Ended "box") ->
@@ -266,6 +266,7 @@ Every event carries the animation group name. Some events carry an additional va
 
 | Event | Fires when... |
 | ----- | ------------- |
+| `Run` | Animation is registered to run (before any delay) |
 | `Started` | Animation begins playing |
 | `Ended` | Animation completes |
 | `Cancelled` | Animation is interrupted by something outside the engine's control. |
@@ -530,6 +531,7 @@ Choose WAAPI when you want browser-native playback with the broadest state-track
 
 | Event | Description |
 | ----- | ----------- |
+| `Run AnimGroupName` | Animation is registered to run |
 | `Started AnimGroupName` | Animation begins playing |
 | `Ended AnimGroupName` | Animation completes |
 | `Cancelled AnimGroupName Float` | Animation cancelled; `Float` is progress at cancellation |

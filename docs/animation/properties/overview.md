@@ -156,7 +156,6 @@ All properties have a `delay` function which takes an `Int` representing millise
     Use different delays on properties within the same group to stagger their start times, creating a sequenced feel without needing separate animations.
 
 
-
 ## Duration
 
 Set a fixed time for the animation to complete.

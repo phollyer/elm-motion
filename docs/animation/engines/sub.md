@@ -229,6 +229,7 @@ Every event carries the animation group name. Some events carry an additional va
 
 | Event | Fires when... |
 | ----- | ------------- |
+| `Run` | Animation is registered to run (before any delay) |
 | `Started` | Animation begins playing |
 | `Ended` | Animation completes |
 | `Cancelled` | Animation is interrupted by something outside the engine's control. |
@@ -509,6 +510,7 @@ Choose Sub when you want maximum Elm-side control with per-frame updates and cur
 
 | Event | Description |
 | ----- | ----------- |
+| `Run AnimGroupName` | Animation is registered to run |
 | `Started AnimGroupName` | Animation begins playing |
 | `Ended AnimGroupName` | Animation completes |
 | `Cancelled AnimGroupName Float` | Animation cancelled; `Float` is progress at cancellation |
