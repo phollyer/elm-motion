@@ -399,8 +399,7 @@ type alias TargetId =
 {-| CSS keyframe animation lifecycle events.
 -}
 type AnimEvent
-    = Started CurrentTargetId TargetId AnimGroupName
-    | Ended CurrentTargetId TargetId AnimGroupName
+    = Ended CurrentTargetId TargetId AnimGroupName
     | Cancelled CurrentTargetId TargetId AnimGroupName
     | Iteration CurrentTargetId TargetId AnimGroupName Int
     | Paused AnimGroupName
@@ -462,35 +461,35 @@ be surfaced.
 update : AnimMsg -> AnimState -> ( AnimState, Maybe AnimEvent )
 update msg =
     Internal.update msg
-        >> Tuple.mapSecond (Maybe.map toAnimEvent)
+        >> Tuple.mapSecond (Maybe.andThen toAnimEvent)
 
 
-toAnimEvent : Internal.AnimEvent -> AnimEvent
+toAnimEvent : Internal.AnimEvent -> Maybe AnimEvent
 toAnimEvent event =
     case event of
         Internal.Started currentTargetId targetId animGroup ->
-            Started currentTargetId targetId animGroup
+            Nothing
 
         Internal.Ended currentTargetId targetId animGroup ->
-            Ended currentTargetId targetId animGroup
+            Just (Ended currentTargetId targetId animGroup)
 
         Internal.Cancelled currentTargetId targetId animGroup ->
-            Cancelled currentTargetId targetId animGroup
+            Just (Cancelled currentTargetId targetId animGroup)
 
         Internal.Iteration currentTargetId targetId animGroup iteration ->
-            Iteration currentTargetId targetId animGroup iteration
+            Just (Iteration currentTargetId targetId animGroup iteration)
 
         Internal.Paused animGroup ->
-            Paused animGroup
+            Just (Paused animGroup)
 
         Internal.Resumed animGroup ->
-            Resumed animGroup
+            Just (Resumed animGroup)
 
         Internal.Restarted animGroup ->
-            Restarted animGroup
+            Just (Restarted animGroup)
 
         Internal.Run currentTargetId targetId animGroup ->
-            Run currentTargetId targetId animGroup
+            Just (Run currentTargetId targetId animGroup)
 
 
 

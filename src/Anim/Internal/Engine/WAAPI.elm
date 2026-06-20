@@ -669,7 +669,8 @@ retarget (AnimState state animGroups) build =
 
 
 type AnimEvent
-    = Started AnimGroupName
+    = Run AnimGroupName
+    | Started AnimGroupName
     | Ended AnimGroupName
     | Cancelled AnimGroupName Float
     | Restarted AnimGroupName
@@ -1087,6 +1088,9 @@ animEventDecoder =
 statusToAnimEvent : String -> String -> Float -> AnimEvent
 statusToAnimEvent animGroupName status progress =
     case status of
+        "run" ->
+            Run animGroupName
+
         "started" ->
             Started animGroupName
 
@@ -1121,6 +1125,9 @@ statusToAnimEvent animGroupName status progress =
 animEventGroupName : AnimEvent -> String
 animEventGroupName animEvent =
     case animEvent of
+        Run name ->
+            name
+
         Started name ->
             name
 
@@ -1152,6 +1159,9 @@ animEventGroupName animEvent =
 animEventToStatus : AnimEvent -> AnimationStatus
 animEventToStatus animEvent =
     case animEvent of
+        Run _ ->
+            AnimGroup.Running
+
         Started _ ->
             AnimGroup.Running
 

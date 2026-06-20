@@ -192,6 +192,37 @@ globalDelayCarryoverTests =
                             |> List.head
                             |> Maybe.map (Builder.processedTimings >> .delay)
                     )
+
+        fallbackBuilder =
+            animBuilder
+                |> Builder.delay 1000
+                |> Builder.for "textLineOne"
+                |> fadeIn
+                |> Builder.for "dotOne"
+                |> Builder.delay 500
+                |> fadeIn
+                |> Builder.for "dotTwo"
+                |> Builder.delay 1000
+                |> fadeIn
+                |> Builder.for "dotThree"
+                |> Builder.delay 1500
+                |> fadeIn
+                |> Builder.for "textLineTwo"
+                |> fadeIn
+
+        fallbackProcessed =
+            Builder.process fallbackBuilder
+
+        fallbackDelayFor groupName =
+            fallbackProcessed.groups
+                |> AnimGroups.get groupName
+                |> Maybe.andThen
+                    (\group ->
+                        group.properties
+                            |> List.filter (\prop -> Builder.processedPropertyType prop == "opacity")
+                            |> List.head
+                            |> Maybe.map (Builder.processedTimings >> .delay)
+                    )
     in
     describe "delay snapshotting in single pipeline"
         [ test "early groups keep their own delay instead of inheriting the final global delay" <|
@@ -202,6 +233,16 @@ globalDelayCarryoverTests =
                     , \_ -> opacityDelayFor "dotTwo" |> Expect.equal (Just 1000)
                     , \_ -> opacityDelayFor "dotThree" |> Expect.equal (Just 1500)
                     , \_ -> opacityDelayFor "textLineTwo" |> Expect.equal (Just 2000)
+                    ]
+                    ()
+        , test "later groups inherit the global delay when they do not override it" <|
+            \_ ->
+                Expect.all
+                    [ \_ -> fallbackDelayFor "textLineOne" |> Expect.equal (Just 1000)
+                    , \_ -> fallbackDelayFor "dotOne" |> Expect.equal (Just 500)
+                    , \_ -> fallbackDelayFor "dotTwo" |> Expect.equal (Just 1000)
+                    , \_ -> fallbackDelayFor "dotThree" |> Expect.equal (Just 1500)
+                    , \_ -> fallbackDelayFor "textLineTwo" |> Expect.equal (Just 1000)
                     ]
                     ()
         ]

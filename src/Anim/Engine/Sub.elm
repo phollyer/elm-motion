@@ -458,7 +458,8 @@ onResize =
 {-| Subscription animation lifecycle events.
 -}
 type AnimEvent
-    = Started AnimGroupName
+    = Run AnimGroupName
+    | Started AnimGroupName
     | Ended AnimGroupName
     | Cancelled AnimGroupName Float
     | Restarted AnimGroupName
@@ -573,6 +574,9 @@ toTickAnimEvent event =
 toControlAnimEvent : Internal.ControlEvent -> Maybe AnimEvent
 toControlAnimEvent event =
     case event of
+        Internal.Run key ->
+            Just (Run key)
+
         Internal.Started key ->
             Just (Started key)
 

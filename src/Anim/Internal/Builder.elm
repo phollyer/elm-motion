@@ -303,6 +303,7 @@ type alias BuilderData =
 type alias AnimGroupData =
     { currentAnimGroup : Maybe AnimGroupName
     , animGroups : AnimGroups AnimGroupConfig
+    , groupDefaults : AnimGroups DefaultsConfig
     , frozenAxes : Dict String (List String)
     , touchedAxes : Dict ( AnimGroupName, String ) (Set String)
     }
@@ -595,6 +596,7 @@ initAnimation : AnimGroupData
 initAnimation =
     { currentAnimGroup = Nothing
     , animGroups = AnimGroups.init
+    , groupDefaults = AnimGroups.init
     , frozenAxes = Dict.empty
     , touchedAxes = Dict.empty
     }
@@ -658,9 +660,21 @@ for elementId (AnimBuilder data) =
     let
         anim =
             data.animation
+
+        groupDefaults =
+            AnimGroups.update
+                elementId
+                (\maybeDefaults -> Just (Maybe.withDefault data.defaults maybeDefaults))
+                anim.groupDefaults
     in
     AnimBuilder
-        { data | animation = { anim | currentAnimGroup = Just elementId } }
+        { data
+            | animation =
+                { anim
+                    | currentAnimGroup = Just elementId
+                    , groupDefaults = groupDefaults
+                }
+        }
 
 
 {-| Inject current animated states as baselines for the next animation.
@@ -679,6 +693,31 @@ withCurrentAnimGroup f builder =
 
         Nothing ->
             builder
+
+
+updateScopedDefaults : (DefaultsConfig -> DefaultsConfig) -> AnimBuilder eng -> AnimBuilder eng
+updateScopedDefaults updateDefaults (AnimBuilder data) =
+    case data.animation.currentAnimGroup of
+        Nothing ->
+            let
+                defs =
+                    data.defaults
+            in
+            AnimBuilder { data | defaults = updateDefaults defs }
+
+        Just animGroupName ->
+            let
+                anim =
+                    data.animation
+
+                currentDefaults =
+                    AnimGroups.get animGroupName anim.groupDefaults
+                        |> Maybe.withDefault data.defaults
+
+                updatedGroupDefaults =
+                    AnimGroups.insert animGroupName (updateDefaults currentDefaults) anim.groupDefaults
+            in
+            AnimBuilder { data | animation = { anim | groupDefaults = updatedGroupDefaults } }
 
 
 
@@ -725,9 +764,13 @@ injectCurrentStates animGroups (AnimBuilder data) =
 mergeBaselines : AnimBuilder eng -> AnimBuilder eng
 mergeBaselines (AnimBuilder ({ state, animation, defaults } as data)) =
     let
+        getDefaultsForGroup groupName =
+            AnimGroups.get groupName animation.groupDefaults
+                |> Maybe.withDefault defaults
+
         newBaselines =
             animation.animGroups
-                |> AnimGroups.map (\groupName config -> extractBaselinesFromConfig defaults groupName config)
+                |> AnimGroups.map (\groupName config -> extractBaselinesFromConfig (getDefaultsForGroup groupName) groupName config)
 
         mergeBoth key new old =
             AnimGroups.insert key (PropertyBaselines.merge old new)
@@ -1155,7 +1198,17 @@ updateCurrentConfig config (AnimBuilder data) =
                             config
             in
             AnimBuilder
-                { data | animation = { anim | animGroups = AnimGroups.insert animKey mergedConfig anim.animGroups } }
+                { data
+                    | animation =
+                        { anim
+                            | animGroups = AnimGroups.insert animKey mergedConfig anim.animGroups
+                            , groupDefaults =
+                                AnimGroups.update
+                                    animKey
+                                    (\maybeDefaults -> Just (Maybe.withDefault data.defaults maybeDefaults))
+                                    anim.groupDefaults
+                        }
+                }
 
 
 {-| Get the type tag of a PropertyConfig for comparison.
@@ -1501,39 +1554,50 @@ orElse fallback primary =
             fallback
 
 
+getScopedDefaults : AnimBuilder eng -> DefaultsConfig
+getScopedDefaults (AnimBuilder data) =
+    case data.animation.currentAnimGroup of
+        Nothing ->
+            data.defaults
+
+        Just animGroupName ->
+            AnimGroups.get animGroupName data.animation.groupDefaults
+                |> Maybe.withDefault data.defaults
+
+
 getTimeSpec : AnimBuilder eng -> Maybe TimeSpec
 getTimeSpec (AnimBuilder data) =
-    data.defaults.globalTiming
+    (getScopedDefaults (AnimBuilder data)).globalTiming
 
 
 getTimeSpecWithDefault : AnimBuilder eng -> TimeSpec
 getTimeSpecWithDefault (AnimBuilder data) =
-    data.defaults.globalTiming |> Maybe.withDefault (Duration 0)
+    (getScopedDefaults (AnimBuilder data)).globalTiming |> Maybe.withDefault (Duration 0)
 
 
 getEasing : AnimBuilder eng -> Maybe Easing
 getEasing (AnimBuilder data) =
-    data.defaults.globalEasing
+    (getScopedDefaults (AnimBuilder data)).globalEasing
 
 
 getSpring : AnimBuilder eng -> Maybe Spring
 getSpring (AnimBuilder data) =
-    data.defaults.globalSpring
+    (getScopedDefaults (AnimBuilder data)).globalSpring
 
 
 getEasingWithDefault : AnimBuilder eng -> Easing
 getEasingWithDefault (AnimBuilder data) =
-    data.defaults.globalEasing |> Maybe.withDefault QuintOut
+    (getScopedDefaults (AnimBuilder data)).globalEasing |> Maybe.withDefault QuintOut
 
 
 getDelay : AnimBuilder eng -> Maybe Int
 getDelay (AnimBuilder data) =
-    data.defaults.globalDelay
+    (getScopedDefaults (AnimBuilder data)).globalDelay
 
 
 getDelayWithDefault : AnimBuilder eng -> Int
 getDelayWithDefault (AnimBuilder data) =
-    data.defaults.globalDelay |> Maybe.withDefault 0
+    (getScopedDefaults (AnimBuilder data)).globalDelay |> Maybe.withDefault 0
 
 
 perspectiveOriginStoreAxes : DefaultsConfig -> AnimGroupName -> InternalUnit.CssUnitAxes
@@ -1565,38 +1629,23 @@ sizeStoreAxes defaults animGroupName =
 
 delay : Int -> AnimBuilder { eng | withTiming : () } -> AnimBuilder { eng | withTiming : () }
 delay ms (AnimBuilder data) =
-    let
-        defs =
-            data.defaults
-    in
-    AnimBuilder
-        { data
-            | defaults = { defs | globalDelay = Just ms }
-        }
+    updateScopedDefaults
+        (\defs -> { defs | globalDelay = Just ms })
+        (AnimBuilder data)
 
 
 duration : Int -> AnimBuilder { eng | withTiming : () } -> AnimBuilder { eng | withTiming : () }
 duration ms (AnimBuilder data) =
-    let
-        defs =
-            data.defaults
-    in
-    AnimBuilder
-        { data
-            | defaults = { defs | globalTiming = Just (Duration ms) }
-        }
+    updateScopedDefaults
+        (\defs -> { defs | globalTiming = Just (Duration ms) })
+        (AnimBuilder data)
 
 
 speed : Float -> AnimBuilder { eng | withTiming : () } -> AnimBuilder { eng | withTiming : () }
 speed value (AnimBuilder data) =
-    let
-        defs =
-            data.defaults
-    in
-    AnimBuilder
-        { data
-            | defaults = { defs | globalTiming = Just (Speed value) }
-        }
+    updateScopedDefaults
+        (\defs -> { defs | globalTiming = Just (Speed value) })
+        (AnimBuilder data)
 
 
 
@@ -1607,18 +1656,14 @@ speed value (AnimBuilder data) =
 
 easing : Easing -> AnimBuilder eng -> AnimBuilder eng
 easing easingValue (AnimBuilder data) =
-    let
-        defs =
-            data.defaults
-    in
-    AnimBuilder
-        { data
-            | defaults =
-                { defs
-                    | globalEasing = Just easingValue
-                    , globalSpring = Nothing
-                }
-        }
+    updateScopedDefaults
+        (\defs ->
+            { defs
+                | globalEasing = Just easingValue
+                , globalSpring = Nothing
+            }
+        )
+        (AnimBuilder data)
 
 
 
@@ -1629,18 +1674,14 @@ easing easingValue (AnimBuilder data) =
 
 spring : Spring -> AnimBuilder { eng | withSpring : () } -> AnimBuilder { eng | withSpring : () }
 spring springValue (AnimBuilder data) =
-    let
-        defs =
-            data.defaults
-    in
-    AnimBuilder
-        { data
-            | defaults =
-                { defs
-                    | globalSpring = Just springValue
-                    , globalEasing = Nothing
-                }
-        }
+    updateScopedDefaults
+        (\defs ->
+            { defs
+                | globalSpring = Just springValue
+                , globalEasing = Nothing
+            }
+        )
+        (AnimBuilder data)
 
 
 
@@ -1651,18 +1692,14 @@ spring springValue (AnimBuilder data) =
 
 cssUnit : Unit -> AnimBuilder eng -> AnimBuilder eng
 cssUnit unit (AnimBuilder data) =
-    let
-        defs =
-            data.defaults
-    in
-    AnimBuilder
-        { data
-            | defaults =
-                { defs
-                    | globalCssUnit = InternalUnit.setAllCssUnitAxes unit defs.globalCssUnit
-                    , globalSizeCssUnit = InternalUnit.setAllCssUnitAxes unit defs.globalSizeCssUnit
-                }
-        }
+    updateScopedDefaults
+        (\defs ->
+            { defs
+                | globalCssUnit = InternalUnit.setAllCssUnitAxes unit defs.globalCssUnit
+                , globalSizeCssUnit = InternalUnit.setAllCssUnitAxes unit defs.globalSizeCssUnit
+            }
+        )
+        (AnimBuilder data)
 
 
 cssUnitX : Unit -> AnimBuilder eng -> AnimBuilder eng
@@ -2655,6 +2692,11 @@ dedupePreservingOrder =
 
 process : AnimBuilder eng -> ProcessedAnimationData
 process (AnimBuilder data) =
+    let
+        getDefaultsForGroup groupName =
+            AnimGroups.get groupName data.animation.groupDefaults
+                |> Maybe.withDefault data.defaults
+    in
     { globalTiming = data.defaults.globalTiming
     , globalEasing = data.defaults.globalEasing
     , globalSpring = data.defaults.globalSpring
@@ -2665,7 +2707,11 @@ process (AnimBuilder data) =
     , groups =
         AnimGroups.map
             (\groupName group ->
-                { properties = processProperties data.defaults groupName group.properties
+                let
+                    groupDefaults =
+                        getDefaultsForGroup groupName
+                in
+                { properties = processProperties groupDefaults groupName group.properties
                 , playback = group.playback
                 , transformOrder =
                     case group.transformOrder of
@@ -2673,7 +2719,7 @@ process (AnimBuilder data) =
                             group.transformOrder
 
                         Nothing ->
-                            data.defaults.globalTransformOrder
+                            groupDefaults.globalTransformOrder
                 , viewRangeStart = group.viewRangeStart
                 , viewRangeEnd = group.viewRangeEnd
                 , emitProgress = group.emitProgress

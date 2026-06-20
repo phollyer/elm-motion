@@ -74,7 +74,8 @@ animate containerToId sendToPort container pipeline =
 
 
 type AnimEvent
-    = Started AnimGroupName
+    = Run AnimGroupName
+    | Started AnimGroupName
     | Ended AnimGroupName
     | Cancelled AnimGroupName Float
     | Iteration AnimGroupName Int
@@ -129,6 +130,9 @@ decodeScrollEvent jsonValue =
 scrollStatusToEvent : AnimGroupName -> String -> Float -> AnimEvent
 scrollStatusToEvent animGroup status progress =
     case status of
+        "run" ->
+            Run animGroup
+
         "started" ->
             Started animGroup
 

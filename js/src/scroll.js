@@ -220,6 +220,8 @@ function attachScrollDrivenListeners(animGroup, animations, engine, element, dis
  * Builds start/end keyframes from each property config and calls element.animate().
  */
 function applyScrollDrivenAnimation(animGroup, element, elementConfig, timeline, rangeOptions, playbackOptions, engine, discreteEntry, discreteExit, emitProgress) {
+    sendScrollLifecycleEvent('run', animGroup, 0, engine);
+
     const effectiveDiscreteEntry = Object.assign({}, discreteEntry || {}, elementConfig.discreteEntry || {});
     const effectiveDiscreteExit = Object.assign({}, discreteExit || {}, elementConfig.discreteExit || {});
 

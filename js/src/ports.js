@@ -64,7 +64,7 @@ function getLifecycleProgress(status, animGroup) {
         return 1.0;
     }
 
-    if (status === 'started' || status === 'reset' || status === 'restarted') {
+    if (status === 'run' || status === 'started' || status === 'reset' || status === 'restarted') {
         return 0.0;
     }
 

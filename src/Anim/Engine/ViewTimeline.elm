@@ -224,7 +224,8 @@ animate =
 
 -}
 type AnimEvent
-    = Started AnimGroupName
+    = Run AnimGroupName
+    | Started AnimGroupName
     | Ended AnimGroupName
     | Cancelled AnimGroupName Float
     | Iteration AnimGroupName Int
@@ -333,6 +334,9 @@ update =
 toAnimEvent : Internal.AnimEvent -> AnimEvent
 toAnimEvent internalEvent =
     case internalEvent of
+        Internal.Run animGroup ->
+            Run animGroup
+
         Internal.Started animGroup ->
             Started animGroup
 

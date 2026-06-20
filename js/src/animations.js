@@ -689,6 +689,14 @@ function markAnimationGroupStarted(animGroup) {
     }
 }
 
+function markAnimationGroupRun(animGroup) {
+    const groupInfo = animationGroups.get(animGroup);
+    if (groupInfo && !groupInfo.run) {
+        groupInfo.run = true;
+        sendLifecycleEvent('run', animGroup);
+    }
+}
+
 /**
  * Convert the Elm-side `transformBaseline` payload (a snapshot of init/runtime
  * baseline values for translate, scale, rotate, skew) into the flat
@@ -792,6 +800,7 @@ export function processElementAnimation(animGroup, elementConfig, globalOptions 
     animationGroups.set(animGroup, {
         totalProperties: 0,
         completedProperties: 0,
+        run: false,
         started: false,
         generation: generation,
         nextPropertyIndex: 0,
@@ -802,6 +811,8 @@ export function processElementAnimation(animGroup, elementConfig, globalOptions 
             ? elementConfig.throttleIntervalMs
             : 0
     });
+
+    markAnimationGroupRun(animGroup);
 
     if (transformProperties.length > 0) {
         const mergedTransformProperties = [...transformProperties];
@@ -939,6 +950,7 @@ function createMergedTransformAnimation(animGroup, element, transformProperties,
     const currentTransform = getTransformState(animGroup, element);
     const order = getElementOrder(element);
     const resolved = buildDefaultResolvedTransform(currentTransform);
+    const maxDelay = Math.max(0, ...transformProperties.map(property => property.delay || 0));
 
     let maxDuration = 0;
 
@@ -984,8 +996,9 @@ function createMergedTransformAnimation(animGroup, element, transformProperties,
                 { transform: endTransform }
             ], {
                 duration: maxDuration,
+                delay: maxDelay,
                 easing: animationEasing,
-                fill: 'forwards',
+                fill: maxDelay > 0 ? 'both' : 'forwards',
                 iterations: globalOptions.iterations,
                 direction: globalOptions.direction
             }),
@@ -1019,8 +1032,9 @@ function createMergedTransformAnimation(animGroup, element, transformProperties,
     return {
         animation: element.animate(keyframes, {
             duration: maxDuration,
+            delay: maxDelay,
             easing: 'linear',
-            fill: 'forwards',
+            fill: maxDelay > 0 ? 'both' : 'forwards',
             iterations: globalOptions.iterations,
             direction: globalOptions.direction
         }),
