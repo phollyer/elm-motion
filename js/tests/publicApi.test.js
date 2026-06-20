@@ -767,7 +767,31 @@ describe('ElmMotion public API', () => {
                 rangeEnd: globalRangeEnd
             })
         );
-        expect(events).toEqual([]);
+        expect(events).toEqual(
+            expect.arrayContaining([
+                expect.objectContaining({
+                    type: 'animationUpdate',
+                    engine: 'viewTimeline',
+                    payload: expect.objectContaining({
+                        elementId: 'section-a',
+                        animGroup: 'section-a',
+                        status: 'run',
+                        progress: 0
+                    })
+                }),
+                expect.objectContaining({
+                    type: 'animationUpdate',
+                    engine: 'viewTimeline',
+                    payload: expect.objectContaining({
+                        elementId: 'section-b',
+                        animGroup: 'section-b',
+                        status: 'run',
+                        progress: 0
+                    })
+                })
+            ])
+        );
+        expect(events.filter((event) => event?.payload?.status !== 'run')).toEqual([]);
     });
 
     it('merges per-element discrete entry and exit settings over the timeline defaults', async () => {
