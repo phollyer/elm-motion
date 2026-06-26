@@ -183,7 +183,9 @@ update msg model =
                             ( 90, Just Forward )
             in
             ( { model
-                | animState = Sub.animate model.animState (animateRows targetX)
+                | animState =
+                    Sub.animate model.animState <|
+                        animateRows targetX
                 , direction = direction
               }
             , Cmd.none
