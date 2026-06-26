@@ -84,7 +84,7 @@ rowOneConfig : MotionConfig
 rowOneConfig =
     { delay = 0
     , speed = 85
-    , easing = EaseInOut
+    , easing = BackOut
     }
 
 
@@ -97,7 +97,7 @@ rowTwoConfig : MotionConfig
 rowTwoConfig =
     { delay = 250
     , speed = 75
-    , easing = SineInOut
+    , easing = ElasticOut
     }
 
 
