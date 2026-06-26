@@ -1,6 +1,6 @@
 {
   "name": "@phollyer/elm-motion",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "JavaScript companion for the phollyer/elm-motion Elm package - Web Animations API integration via Elm ports",
   "type": "module",
   "private": true,
