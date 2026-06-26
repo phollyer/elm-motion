@@ -154,6 +154,26 @@ Sub.scroll ScrollMsg model.scrollState scrollToSection
 elm install phollyer/elm-motion
 ```
 
+### Pre-release testing before Elm publish
+
+The Elm package is currently unpublished on package.elm-lang.org, so testers should pin to Git tags before first publication.
+
+Tag format:
+
+- `v0.1.0-alpha.1`
+- `v0.1.0-alpha.2`
+- `v0.1.0-alpha.3`
+
+Useful git checks:
+
+```bash
+git fetch --tags
+git describe --tags --exact-match || git rev-parse --short HEAD
+git tag -l "v*-alpha.*" --sort=-v:refname | head -n 1
+```
+
+Use npm to track the JavaScript companion version separately (`npm outdated @phollyer/elm-motion`), while Elm pre-release tracking is done by Git tags.
+
 ### Your First Animation
 
 ```elm
