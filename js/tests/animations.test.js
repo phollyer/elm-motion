@@ -446,6 +446,142 @@ describe('processAnimationData (WAAPI engine)', () => {
         expect(element.animate).toHaveBeenCalledTimes(2);
     });
 
+    it('restarts transform from authored start when isRestart is true', () => {
+        const animGroup = 'box-authored-restart';
+        const firstAnim = createFakeAnimation({ duration: 300 });
+        firstAnim.currentTime = 150;
+        firstAnim.playState = 'running';
+        const secondAnim = createFakeAnimation({ duration: 300 });
+
+        const element = makeElement({ animGroup, animations: [firstAnim, secondAnim] });
+        installDom({ element, targetId: animGroup });
+
+        processAnimationData({
+            elements: {
+                [animGroup]: {
+                    properties: [
+                        {
+                            type: 'translate',
+                            startX: 0, startY: 0, startZ: 0,
+                            endX: 100, endY: 0, endZ: 0,
+                            duration: 300, easing: 'linear', version: 1
+                        }
+                    ]
+                }
+            }
+        });
+
+        processAnimationData({
+            isRestart: true,
+            elements: {
+                [animGroup]: {
+                    properties: [
+                        {
+                            type: 'translate',
+                            startX: 0, startY: 0, startZ: 0,
+                            endX: 100, endY: 0, endZ: 0,
+                            duration: 300, easing: 'linear', version: 2
+                        }
+                    ]
+                }
+            }
+        });
+
+        expect(firstAnim.cancelCalls).toBe(1);
+        expect(element.animate).toHaveBeenCalledTimes(2);
+
+        const restartCall = element.animate.mock.calls[1];
+        const restartKeyframes = restartCall[0];
+        expect(restartKeyframes[0].transform).toContain('translate3d(0px, 0px, 0px)');
+    });
+
+    it('restarts from authored start after previous animation already finished', () => {
+        const animGroup = 'box-restart-after-finish';
+        const firstAnim = createFakeAnimation({ duration: 300 });
+        firstAnim.currentTime = 300;
+        firstAnim.playState = 'finished';
+        firstAnim.effect.getComputedTiming = vi.fn(() => ({ currentIteration: 0, progress: 1 }));
+        const secondAnim = createFakeAnimation({ duration: 300 });
+
+        const element = makeElement({ animGroup, animations: [firstAnim, secondAnim] });
+        installDom({ element, targetId: animGroup });
+
+        processAnimationData({
+            elements: {
+                [animGroup]: {
+                    properties: [
+                        {
+                            type: 'translate',
+                            startX: 0, startY: 0, startZ: 0,
+                            endX: 100, endY: 0, endZ: 0,
+                            duration: 300, easing: 'linear', version: 1
+                        }
+                    ]
+                }
+            }
+        });
+
+        processAnimationData({
+            isRestart: true,
+            elements: {
+                [animGroup]: {
+                    properties: [
+                        {
+                            type: 'translate',
+                            startX: 0, startY: 0, startZ: 0,
+                            endX: 100, endY: 0, endZ: 0,
+                            duration: 300, easing: 'linear', version: 2
+                        }
+                    ]
+                }
+            }
+        });
+
+        expect(element.animate).toHaveBeenCalledTimes(2);
+        const restartCall = element.animate.mock.calls[1];
+        const restartKeyframes = restartCall[0];
+        expect(restartKeyframes[0].transform).toContain('translate3d(0px, 0px, 0px)');
+    });
+
+    it('does not anchor restart starts to cached rest when no active transform entry exists', () => {
+        const animGroup = 'box-restart-no-active-entry';
+        const restartAnim = createFakeAnimation({ duration: 300 });
+
+        const element = makeElement({ animGroup, animations: [restartAnim] });
+        installDom({ element, targetId: animGroup });
+
+        // Simulate settled prior animation: no active entry, but committed rest cached at end.
+        lastKnownTransforms.set(animGroup, {
+            x: 0, y: 88, z: 0,
+            scaleX: 1, scaleY: 1, scaleZ: 1,
+            rotateX: 0, rotateY: 0, rotateZ: 0,
+            skewX: 0, skewY: 0,
+            translateUnitX: 'px', translateUnitY: 'px', translateUnitZ: 'px'
+        });
+
+        processAnimationData({
+            isRestart: true,
+            elements: {
+                [animGroup]: {
+                    properties: [
+                        {
+                            type: 'translate',
+                            startX: 0, startY: 0, startZ: 0,
+                            endX: 0, endY: 88, endZ: 0,
+                            duration: 300, easing: 'linear', version: 2
+                        }
+                    ]
+                }
+            }
+        });
+
+        expect(element.animate).toHaveBeenCalledTimes(1);
+        const restartCall = element.animate.mock.calls[0];
+        const restartKeyframes = restartCall[0];
+        expect(restartKeyframes[0].transform).toContain('translate3d(0px, 0px, 0px)');
+        expect(restartKeyframes[restartKeyframes.length - 1].transform).toContain('translate3d(0px, 88px, 0px)');
+    });
+
     // When `animate` lands for one transform sub-property (translate) while
     // a DIFFERENT sub-property (rotate) is mid-flight as part of the same
     // merged transform animation, the untouched axis must continue toward

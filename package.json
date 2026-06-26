@@ -22,6 +22,8 @@
     "test:elm": "elm-test-rs",
     "test:js": "vitest run",
     "test:js:coverage": "vitest run --coverage",
+    "test:e2e": "playwright test e2e/waapi-controlling-restart.spec.js",
+    "test:e2e:headed": "playwright test e2e/waapi-controlling-restart.spec.js --headed",
     "prepublishOnly": "npm test && npm run check-types",
     "publish:dist": "npm test && npm run check-types && npm run build && ELM_MOTION_APPROVED_PUBLISH=1 npm publish --access public dist/",
     "postinstall": "elm-tooling install"
@@ -48,6 +50,7 @@
     "access": "public"
   },
   "devDependencies": {
+    "@playwright/test": "^1.61.1",
     "@rollup/plugin-node-resolve": "^16.0.1",
     "@vitest/coverage-v8": "^3.2.4",
     "elm-tooling": "^1.17.0",

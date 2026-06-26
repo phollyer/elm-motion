@@ -866,11 +866,23 @@ export function processElementAnimation(animGroup, elementConfig, globalOptions 
 
         if (elementAnims.has('transform')) {
             const existingTransform = elementAnims.get('transform');
-            patchTransformStartsFromAnimation(element, existingTransform, mergedTransformProperties);
-            carryForwardMissingTransformProperties(animGroup, element, existingTransform, mergedTransformProperties);
+
+            // Restart must replay from the authored start values in the incoming
+            // config. Do not patch starts from the live in-flight transform.
+            // Also skip patching if the previous animation has already
+            // completed, because that snapshot would collapse start=end.
+            if (!isRestart && !isAnimationCompleted(existingTransform.animation)) {
+                patchTransformStartsFromAnimation(element, existingTransform, mergedTransformProperties);
+                carryForwardMissingTransformProperties(animGroup, element, existingTransform, mergedTransformProperties);
+            }
+
             existingTransform.animation.cancel();
         } else {
-            anchorFreshStartsToCachedRest(animGroup, mergedTransformProperties);
+            // Fresh animate calls should snap stale starts to the committed rest
+            // snapshot, but restart must always replay from authored starts.
+            if (!isRestart) {
+                anchorFreshStartsToCachedRest(animGroup, mergedTransformProperties);
+            }
         }
 
         cancelLegacyTransformAnimations(elementAnims);
@@ -1087,6 +1099,23 @@ function createMergedTransformAnimation(animGroup, element, transformProperties,
         }),
         resolved: resolved
     };
+}
+
+function isAnimationCompleted(animation) {
+    if (!animation) {
+        return false;
+    }
+
+    if (animation.playState === 'finished') {
+        return true;
+    }
+
+    const timing = animation.effect?.getComputedTiming?.();
+    if (!timing) {
+        return false;
+    }
+
+    return Number.isFinite(timing.progress) && timing.progress >= 1;
 }
 
 /**
