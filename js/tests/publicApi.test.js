@@ -249,6 +249,83 @@ describe('ElmMotion public API', () => {
         expect(lifecycleStatuses).not.toContain('cancelled');
     });
 
+    it('does not collapse next animate after reset on a completed transform animation', async () => {
+        const animGroup = 'box-reset-then-animate';
+        const firstAnimation = createFakeAnimation({ duration: 300 });
+        const secondAnimation = createFakeAnimation({ duration: 300 });
+
+        const animateSpy = vi.fn()
+            .mockImplementationOnce(() => firstAnimation)
+            .mockImplementationOnce(() => secondAnimation);
+
+        const element = {
+            id: animGroup,
+            style: {},
+            getAnimations: () => [],
+            getAttribute: () => null,
+            animate: animateSpy
+        };
+        installDom({ element, targetId: animGroup });
+
+        const ports = createPorts(() => {});
+        ElmMotion.init(ports.ports);
+
+        await ports.send({
+            type: 'animate',
+            elements: {
+                [animGroup]: {
+                    properties: [
+                        {
+                            type: 'translate',
+                            startX: 0,
+                            startY: 0,
+                            startZ: 0,
+                            endX: 0,
+                            endY: 88,
+                            endZ: 0,
+                            duration: 300,
+                            easing: 'linear',
+                            version: 1
+                        }
+                    ]
+                }
+            }
+        });
+
+        firstAnimation.finish();
+
+        await ports.send({ type: 'reset', elementId: animGroup });
+
+        await ports.send({
+            type: 'animate',
+            elements: {
+                [animGroup]: {
+                    properties: [
+                        {
+                            type: 'translate',
+                            startX: 0,
+                            startY: 0,
+                            startZ: 0,
+                            endX: 0,
+                            endY: 88,
+                            endZ: 0,
+                            duration: 300,
+                            easing: 'linear',
+                            version: 2
+                        }
+                    ]
+                }
+            }
+        });
+
+        expect(animateSpy).toHaveBeenCalledTimes(2);
+        const secondCall = animateSpy.mock.calls[1];
+        const keyframes = secondCall[0];
+
+        expect(keyframes[0].transform).toContain('translate3d(0px, 0px, 0px)');
+        expect(keyframes[keyframes.length - 1].transform).toContain('translate3d(0px, 88px, 0px)');
+    });
+
     it('emits a single scroll-driven iteration event when all property animations complete the loop', async () => {
         const animGroup = 'box-scroll';
         const sourceId = 'source-scroll';

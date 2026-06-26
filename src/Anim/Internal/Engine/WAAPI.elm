@@ -2919,10 +2919,6 @@ resetSingleKey animGroupName (AnimState state animGroups) =
                 startStates =
                     (Generator.propertyBounds properties).start
 
-                propertyConfigs : List ( String, Builder.ProcessedPropertyConfig )
-                propertyConfigs =
-                    List.map (\p -> ( Generator.propertyTypeString p, p )) properties
-
                 rewoundBuilder =
                     Builder.setBaselinesFromProcessedEnds
                         animGroupName
@@ -2936,23 +2932,9 @@ resetSingleKey animGroupName (AnimState state animGroups) =
             case AnimGroups.get animGroupName animGroups of
                 Nothing ->
                     let
-                        newPropertyStates =
-                            propertyConfigs
-                                |> List.map
-                                    (\( propType, config ) ->
-                                        ( propType
-                                        , { version = 1
-                                          , status = AnimGroup.NotStarted
-                                          , config = config
-                                          }
-                                        )
-                                    )
-                                |> AnimGroups.fromList
-
                         newAnimGroup =
                             AnimGroup.init
                                 |> AnimGroup.setSnapshot startStates
-                                |> AnimGroup.setPropertyStates newPropertyStates
                     in
                     ( AnimState
                         { state | subscriptionsActive = False, builder = rewoundBuilder }
@@ -2964,8 +2946,8 @@ resetSingleKey animGroupName (AnimState state animGroups) =
                     let
                         resetAnimGroup =
                             animGroup
-                                |> AnimGroup.bumpPropertyVersions propertyConfigs
                                 |> AnimGroup.setSnapshot startStates
+                                |> AnimGroup.setPropertyStates AnimGroups.init
                                 |> AnimGroup.setProgress 0
 
                         updatedAnimGroups =

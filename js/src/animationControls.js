@@ -1,5 +1,5 @@
 /* eslint-env browser */
-import { activeAnimations, animationGroups, elementTransformOrders, cleanupAnimGroup } from './state.js';
+import { activeAnimations, animationGroups, elementTransformOrders, cleanupAnimGroup, lastKnownTransforms } from './state.js';
 import { buildTransformString } from './transform.js';
 import { sendLifecycleEvent } from './ports.js';
 import { findAnimTarget } from './targets.js';
@@ -135,7 +135,14 @@ export function stopAnimation(animGroup, properties) {
 
 export function resetAnimation(animGroup, properties) {
     const elementAnims = activeAnimations.get(animGroup);
-    if (!elementAnims) return;
+    if (!elementAnims) {
+        // If reset happens after completion, there may be no active entries but
+        // a stale settled transform can still be cached. Drop it so the next
+        // animate starts from Elm's reset snapshot instead of old rest values.
+        lastKnownTransforms.delete(animGroup);
+        sendLifecycleEvent('reset', animGroup);
+        return;
+    }
 
     // Snapshot targets BEFORE mutating the Map, then drop tracking entries
     // BEFORE calling `animation.cancel()`. The cancel listener in
@@ -165,6 +172,7 @@ export function resetAnimation(animGroup, properties) {
         animation.cancel();
     }
 
+    lastKnownTransforms.delete(animGroup);
     sendLifecycleEvent('reset', animGroup);
 }
 

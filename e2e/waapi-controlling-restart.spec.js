@@ -52,3 +52,28 @@ test('restart works on first click after completion', async ({ page }) => {
     // First restart after completion must move away from settled end position.
     expect(restartedY).toBeLessThan(settledY - 10);
 });
+
+test('reset works after completion', async ({ page }) => {
+    await page.goto(exampleUrl);
+
+    const animate = page.getByRole('button', { name: /animate/i });
+    const reset = page.getByRole('button', { name: /reset/i });
+    const target = page.locator('[data-anim-target="bouncingBall"]');
+
+    const sampleY = async () => {
+        const transform = await target.evaluate((element) => getComputedStyle(element).transform);
+        return translateYFromMatrix(transform);
+    };
+
+    await animate.click();
+    await page.waitForTimeout(1500);
+
+    const settledY = await sampleY();
+    expect(settledY).toBeGreaterThan(300);
+
+    await reset.click();
+    await page.waitForTimeout(140);
+
+    const resetY = await sampleY();
+    expect(resetY).toBeLessThan(10);
+});
