@@ -142,7 +142,7 @@ view : Model msg -> Html msg
 view model =
     div
         [ class "example-stage"
-        , style "font-size" "clamp(28px, 10vw, 48px)"
+        , style "font-size" "clamp(22px, 7vw, 40px)"
         , style "font-weight" "bold"
         , style "text-align" "center"
         ]
