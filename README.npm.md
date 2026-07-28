@@ -106,6 +106,12 @@ Full documentation, guides, and live examples at **[phollyer.github.io/elm-motio
 
 BSD-3-Clause — see LICENSE file for details.
 
+### Third-party licenses
+
+This package bundles [`scroll-timeline-polyfill`](https://github.com/flackr/scroll-timeline)
+(Apache-2.0) into its distributed artifact. Its full license is reproduced in
+`THIRD-PARTY-LICENSES.md`, included in the published package.
+
 ## Author
 
 Created by [Paul Hollyer](https://github.com/phollyer)
