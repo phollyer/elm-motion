@@ -36,6 +36,9 @@
     "ports",
     "javascript"
   ],
+  "engines": {
+    "node": ">=18"
+  },
   "author": "phollyer",
   "license": "BSD-3-Clause",
   "repository": {
