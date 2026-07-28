@@ -1,0 +1,62 @@
+name: Release JS Companion
+
+# Publishes the @phollyer/elm-motion npm companion to the public registry with
+# build provenance. Triggered by pushing a tag of the form `npm-vX.Y.Z`, which
+# is deliberately distinct from the `vX.Y.Z-alpha.N` git tags used to pin the
+# (separately versioned) Elm package for testers.
+#
+# The Elm package itself is published manually via `elm publish`; only the npm
+# companion is automated here.
+#
+# Requires the repository/organization secret `NPM_TOKEN` (an npm automation
+# token with publish rights). Provenance additionally relies on the
+# `id-token: write` permission below and GitHub's OIDC.
+
+on:
+  push:
+    tags:
+      - 'npm-v*'
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  publish:
+    name: Publish to npm
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: '20'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Verify tag matches package.json version
+        run: |
+          TAG_VERSION="${GITHUB_REF_NAME#npm-v}"
+          PKG_VERSION="$(node -p "require('./package.json').version")"
+          if [ "$TAG_VERSION" != "$PKG_VERSION" ]; then
+            echo "::error ::Tag version ($TAG_VERSION) does not match package.json version ($PKG_VERSION)"
+            exit 1
+          fi
+
+      - name: Run tests
+        run: npm test
+
+      - name: Check type-definition drift
+        run: npm run check-types
+
+      - name: Build distributable
+        run: npm run build
+
+      - name: Publish with provenance
+        run: ELM_MOTION_APPROVED_PUBLISH=1 npm publish --provenance --access public dist/
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

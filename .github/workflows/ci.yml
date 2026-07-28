@@ -111,3 +111,30 @@ jobs:
             fi
           done
           exit 1
+
+  audit_dependencies:
+    name: Audit Dependencies
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: '20'
+
+      - name: Install JS dependencies
+        run: npm ci
+
+      # Blocking gate: the published package must ship no known high/critical
+      # advisories. The companion has zero runtime dependencies (the only
+      # bundled third-party code is scroll-timeline-polyfill), so this guards
+      # exactly what reaches consumers.
+      - name: Audit production dependencies (blocking)
+        run: npm audit --omit=dev --audit-level=high
+
+      # Informational: surface dev/toolchain advisories without failing CI.
+      # These affect the build environment only, never the published artifact.
+      - name: Audit full dependency tree (informational)
+        run: npm audit || true
