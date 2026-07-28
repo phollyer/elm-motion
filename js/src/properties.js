@@ -3,6 +3,7 @@
 import { easingFunctions, camelCase } from './utils.js';
 import { lastKnownPerspectiveOrigins } from './state.js';
 import { getTransformState } from './transform.js';
+import { applyReducedMotion } from './reducedMotion.js';
 
 /**
  * Parse an `rgb(...)`, `rgba(...)`, or 6-digit `#hhhhhh` color string
@@ -387,14 +388,14 @@ export function createPropertyAnimation(element, resolved, property, globalOptio
     const { keyframes, animationEasing } = buildPropertyKeyframes(resolved, property.easingKeyframes, property.easing);
     if (!keyframes) return null;
     const delayMs = property.delay || 0;
-    return element.animate(keyframes, {
+    return element.animate(keyframes, applyReducedMotion({
         duration: property.duration,
         delay: delayMs,
         easing: animationEasing,
         fill: delayMs > 0 ? 'both' : 'forwards',
         iterations: globalOptions.iterations,
         direction: globalOptions.direction
-    });
+    }));
 }
 
 /**

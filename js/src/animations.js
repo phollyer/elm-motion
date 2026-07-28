@@ -6,6 +6,7 @@ import { resolveNonTransformValues, createPropertyAnimation, extractPropertyConf
 import { sendLifecycleEvent } from './ports.js';
 import { findAnimTarget, findAllAnimTargets } from './targets.js';
 import { setupAnimationEvents } from './animationEvents.js';
+import { applyReducedMotion } from './reducedMotion.js';
 import { reportError } from './errors.js';
 
 function isFiniteNumber(value) {
@@ -1049,18 +1050,19 @@ function createMergedTransformAnimation(animGroup, element, transformProperties,
 
         const easing = activeProps[0].easing;
         const animationEasing = easingFunctions[easing] || easing;
+        const singleEasingTiming = {
+            duration: maxDuration,
+            delay: maxDelay,
+            easing: animationEasing,
+            fill: maxDelay > 0 ? 'both' : 'forwards',
+            iterations: globalOptions.iterations,
+            direction: globalOptions.direction
+        };
         return {
             animation: element.animate([
                 { transform: startTransform },
                 { transform: endTransform }
-            ], {
-                duration: maxDuration,
-                delay: maxDelay,
-                easing: animationEasing,
-                fill: maxDelay > 0 ? 'both' : 'forwards',
-                iterations: globalOptions.iterations,
-                direction: globalOptions.direction
-            }),
+            ], applyReducedMotion(singleEasingTiming)),
             resolved: resolved
         };
     }
@@ -1088,15 +1090,16 @@ function createMergedTransformAnimation(animGroup, element, transformProperties,
         });
     }
 
+    const perKeyframeTiming = {
+        duration: maxDuration,
+        delay: maxDelay,
+        easing: 'linear',
+        fill: maxDelay > 0 ? 'both' : 'forwards',
+        iterations: globalOptions.iterations,
+        direction: globalOptions.direction
+    };
     return {
-        animation: element.animate(keyframes, {
-            duration: maxDuration,
-            delay: maxDelay,
-            easing: 'linear',
-            fill: maxDelay > 0 ? 'both' : 'forwards',
-            iterations: globalOptions.iterations,
-            direction: globalOptions.direction
-        }),
+        animation: element.animate(keyframes, applyReducedMotion(perKeyframeTiming)),
         resolved: resolved
     };
 }

@@ -75,6 +75,7 @@ nav:
   - Home: index.md
   - Philosophy: philosophy.md
   - Installation: installation.md
+  - Accessibility: shared/accessibility.md
   - Error Reporting: shared/error-reporting.md
   - Animation:
     - Start Here: animation/start-here.md

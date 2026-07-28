@@ -272,12 +272,35 @@ export function useConsoleReporter(options?: ConsoleReporterOptions): Unsubscrib
  */
 export function setPropertyUpdateThrottle(intervalMs: number): void;
 
+/**
+ * How the compositor-driven engines (WAAPI, ScrollTimeline, ViewTimeline)
+ * respond to the user's motion preference.
+ *
+ * - `'auto'`   follow the OS `prefers-reduced-motion: reduce` setting (default)
+ * - `'always'` always collapse animations to their end state
+ * - `'never'`  always animate, ignoring the OS setting
+ */
+export type ReducedMotionMode = 'auto' | 'always' | 'never';
+
+/**
+ * Set how the compositor-driven engines respond to the user's motion
+ * preference.
+ *
+ * By default (`'auto'`) the WAAPI, ScrollTimeline, and ViewTimeline engines
+ * honour `prefers-reduced-motion: reduce`: animations snap straight to their
+ * end state instead of playing, while still firing their lifecycle events so
+ * Elm state stays consistent. Pass `'always'` to force this for every user,
+ * or `'never'` to always animate regardless of the OS setting.
+ */
+export function setReducedMotion(mode: ReducedMotionMode): void;
+
 export interface ElmMotion {
     init(ports: ElmPorts): void;
     dispose(): void;
     onError(handler: ErrorHandler): Unsubscribe;
     useConsoleReporter(options?: ConsoleReporterOptions): Unsubscribe;
     setPropertyUpdateThrottle(intervalMs: number): void;
+    setReducedMotion(mode: ReducedMotionMode): void;
 }
 
 declare global {

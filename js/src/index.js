@@ -25,6 +25,7 @@ import {
 import { ensureTimelineApi, processScrollDrivenData, processViewDrivenData } from './scroll.js';
 import { onError, useConsoleReporter, reportError } from './errors.js';
 import { setPropertyUpdateThrottle } from './animationEvents.js';
+import { setReducedMotion } from './reducedMotion.js';
 import { portsRef, clearAllState } from './state.js';
 import { resetPortMissingWarning } from './ports.js';
 
@@ -186,6 +187,6 @@ export function dispose() {
     resetPortMissingWarning();
 }
 
-export { onError, useConsoleReporter, setPropertyUpdateThrottle };
+export { onError, useConsoleReporter, setPropertyUpdateThrottle, setReducedMotion };
 
-export default { init: init, dispose: dispose, onError: onError, useConsoleReporter: useConsoleReporter, setPropertyUpdateThrottle: setPropertyUpdateThrottle };
+export default { init: init, dispose: dispose, onError: onError, useConsoleReporter: useConsoleReporter, setPropertyUpdateThrottle: setPropertyUpdateThrottle, setReducedMotion: setReducedMotion };

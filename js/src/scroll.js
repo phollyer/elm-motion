@@ -6,6 +6,7 @@ import { getTransformState, buildTransformString } from './transform.js';
 import { resolveNonTransformValues, buildPropertyKeyframes, resolveScrollDrivenTransformValues } from './properties.js';
 import { sendScrollLifecycleEvent } from './ports.js';
 import { findAnimTarget } from './targets.js';
+import { applyReducedMotion } from './reducedMotion.js';
 import { reportError } from './errors.js';
 
 // Shared load guard so multiple timeline commands do not trigger duplicate loads.
@@ -268,7 +269,7 @@ function applyScrollDrivenAnimation(animGroup, element, elementConfig, timeline,
         if (!keyframes) return;
 
         const propertyTimingOptions = Object.assign({}, baseTimingOptions, { easing: animationEasing });
-        animations.push(element.animate(keyframes, propertyTimingOptions));
+        animations.push(element.animate(keyframes, applyReducedMotion(propertyTimingOptions)));
     });
 
     if (transformProperties.length > 0) {
@@ -353,7 +354,7 @@ function applyScrollDrivenAnimation(animGroup, element, elementConfig, timeline,
             }
         }
 
-        animations.push(element.animate(transformKeyframes, transformTimingOptions));
+        animations.push(element.animate(transformKeyframes, applyReducedMotion(transformTimingOptions)));
     }
 
     if (animations.length > 0 && engine) {
