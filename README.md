@@ -76,6 +76,14 @@ ViewTimeline.animate motionCmd <|
         >> fadeIn
 ```
 
+> **Note:** The example above highlights reusing one builder (`fadeIn`) across
+> every engine. The trigger signatures themselves differ by engine: `WAAPI.animate`
+> returns `( AnimState, Cmd msg )` — destructure it and return the `Cmd` from your
+> `update` — while the timeline engines take extra arguments
+> (`ScrollTimeline.animate motionCmd Document`, `ViewTimeline.animate motionCmd`).
+> See [Engine Trigger Pipelines](https://phollyer.github.io/elm-motion/api-reference/#engine-trigger-pipelines)
+> for the exact shapes.
+
 ### Composability
 
 The builder API makes animations and their building blocks composable, so you

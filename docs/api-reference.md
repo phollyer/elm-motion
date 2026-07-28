@@ -11,6 +11,7 @@ The complete API documentation is available on the official Elm package reposito
 | Module | Description |
 | -------- | ------------- |
 | [Anim.Builder](https://package.elm-lang.org/packages/phollyer/elm-motion/latest/Anim-Builder) | `AnimBuilder eng` type for reusable animations |
+| [Scroll.Builder](https://package.elm-lang.org/packages/phollyer/elm-motion/latest/Scroll-Builder) | `ScrollBuilder` type for reusable per-scroll configuration |
 
 ### Engines
 
@@ -36,6 +37,7 @@ The complete API documentation is available on the official Elm package reposito
 | [Anim.Property.Skew](https://package.elm-lang.org/packages/phollyer/elm-motion/latest/Anim-Property-Skew) | Skew/shear animations |
 | [Anim.Property.Opacity](https://package.elm-lang.org/packages/phollyer/elm-motion/latest/Anim-Property-Opacity) | Fade animations |
 | [Anim.Property.Size](https://package.elm-lang.org/packages/phollyer/elm-motion/latest/Anim-Property-Size) | Width/height animations |
+| [Anim.Property.PerspectiveOrigin](https://package.elm-lang.org/packages/phollyer/elm-motion/latest/Anim-Property-PerspectiveOrigin) | 3D vanishing-point (`perspective-origin`) animations |
 | [Anim.Property.Custom](https://package.elm-lang.org/packages/phollyer/elm-motion/latest/Anim-Property-Custom) | Numeric CSS property animations |
 | [Anim.Property.CustomColor](https://package.elm-lang.org/packages/phollyer/elm-motion/latest/Anim-Property-CustomColor) | Color CSS property animations |
 
@@ -45,7 +47,9 @@ The complete API documentation is available on the official Elm package reposito
 | -------- | ------------- |
 | [Motion.Easing](https://package.elm-lang.org/packages/phollyer/elm-motion/latest/Motion-Easing) | Easing functions |
 | [Motion.Spring](https://package.elm-lang.org/packages/phollyer/elm-motion/latest/Motion-Spring) | Spring physics presets and custom configuration |
+| [Anim.Unit](https://package.elm-lang.org/packages/phollyer/elm-motion/latest/Anim-Unit) | Length unit (`px`, `rem`, `%`, viewport units, etc.) for length-bearing properties |
 | [Anim.Extra.Color](https://package.elm-lang.org/packages/phollyer/elm-motion/latest/Anim-Extra-Color) | Color utilities |
+| [Anim.Extra.TransformOrder](https://package.elm-lang.org/packages/phollyer/elm-motion/latest/Anim-Extra-TransformOrder) | Customize the order transform properties are applied |
 | [Anim.Extra.View3D](https://package.elm-lang.org/packages/phollyer/elm-motion/latest/Anim-Extra-View3D) | 3D perspective helpers |
 
 ## Common Patterns
