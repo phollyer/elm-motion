@@ -303,7 +303,7 @@ Elm Motion is free and open source, built and maintained in my own time. If it h
 
 [![Sponsor phollyer](https://img.shields.io/badge/%F0%9F%92%96%20Sponsor-phollyer-ea4aaa?style=for-the-badge)](https://github.com/sponsors/phollyer)
 
-Company and Corporate sponsors are featured below. Individual backers and fans are listed in [SPONSORS.md](SPONSORS.md). Thank you to everyone who helps keep this work going. 💖
+Company and Corporate sponsors are featured below. Individual backers and fans are listed in [SPONSORS.md](https://github.com/phollyer/elm-motion/blob/main/SPONSORS.md). Thank you to everyone who helps keep this work going. 💖
 
 **Corporate Sponsors**
 
