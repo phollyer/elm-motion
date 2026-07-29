@@ -17,6 +17,14 @@ The two version lines are **not kept in lockstep**. The npm companion can ship J
 
 ---
 
+## [1.0.3][1.0.3-elm] - 2026-07-29 (elm)
+
+Documentation-only patch release - no API changes.
+
+### Changed
+
+- **(docs)** README: streamlined for the package landing page - consolidated the capability lists, kept a single "one API, many engines" example, moved the full first-animation and first-scroll walkthroughs to the documentation site, and slimmed the sponsor section.
+
 ## [1.0.2] - 2026-07-29 (elm)
 
 Bug-fix patch release - no API changes.
@@ -54,7 +62,7 @@ Initial public release.
 - Motion helpers: `Motion.Spring` and `Motion.Easing`.
 - Extras: `Anim.Extra.Color`, `Anim.Extra.TransformOrder` and `Anim.Extra.View3D`.
 
-## [1.0.3] - 2026-07-29 (npm)
+## [1.0.3][1.0.3-npm] - 2026-07-29 (npm)
 
 Initial release of the `@phollyer/elm-motion` JavaScript companion. The in-repo version starts at `1.0.3`; earlier `1.0.x` numbers were used during pre-release preparation and never published.
 
@@ -66,8 +74,9 @@ Initial release of the `@phollyer/elm-motion` JavaScript companion. The in-repo 
 - ESM (`elm-motion.mjs`) and standalone browser (IIFE, global `ElmMotion`, `elm-motion.js`) builds, plus TypeScript definitions (`elm-motion.d.ts`), all shipped in `dist/`.
 - `engines` field (`node >= 18`) declared on the published package.
 
+[1.0.3-elm]: https://github.com/phollyer/elm-motion/compare/1.0.2...1.0.3
 [1.0.2]: https://github.com/phollyer/elm-motion/compare/1.0.1...1.0.2
 [1.0.1]: https://github.com/phollyer/elm-motion/compare/1.0.0...1.0.1
 [1.0.0]: https://github.com/phollyer/elm-motion/releases/tag/1.0.0
-[1.0.3]: https://www.npmjs.com/package/@phollyer/elm-motion/v/1.0.3
+[1.0.3-npm]: https://www.npmjs.com/package/@phollyer/elm-motion/v/1.0.3
 
