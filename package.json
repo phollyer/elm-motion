@@ -56,7 +56,7 @@
     "@playwright/test": "^1.61.1",
     "@rollup/plugin-node-resolve": "^16.0.1",
     "@vitest/coverage-v8": "^4.1.10",
-    "elm-tooling": "^1.17.0",
+    "elm-tooling": "^1.20.0",
     "rollup": "^4.52.4",
     "scroll-timeline-polyfill": "^1.1.0",
     "vitest": "^4.1.10"
