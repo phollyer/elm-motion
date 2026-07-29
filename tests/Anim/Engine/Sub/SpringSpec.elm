@@ -123,14 +123,24 @@ globalSpringTests =
         , test "overrides ProcessedAnimationConfig duration with settle time" <|
             \_ ->
                 let
-                    duration =
+                    springDuration =
                         initBuilder
                             |> Sub.spring Spring.stiff
                             |> animateOpacityTo 0.5
                             |> extractOpacityDuration
                             |> Maybe.withDefault 0
+
+                    defaultDuration =
+                        initBuilder
+                            |> animateOpacityTo 0.5
+                            |> extractOpacityDuration
+                            |> Maybe.withDefault 0
                 in
-                duration |> Expect.greaterThan 0
+                springDuration
+                    |> Expect.all
+                        [ \d -> d |> Expect.greaterThan 0
+                        , \d -> d |> Expect.notEqual defaultDuration
+                        ]
         , test "honours delay even when spring is set" <|
             \_ ->
                 initBuilder

@@ -174,15 +174,4 @@ overrideTests =
                 , Builder.getTransformOrder "el-2" builder
                 )
                     |> Expect.equal ( Just perGroupOrder, Just globalOrder )
-        , test "fireAndForget accepts a transformOrder-configured pipeline without crashing" <|
-            \_ ->
-                let
-                    cmd : Cmd ()
-                    cmd =
-                        WAAPI.fireAndForget (\_ -> Cmd.none)
-                            (WAAPI.transformOrder [ Scale, Translate, Rotate, Skew ]
-                                >> basePipeline
-                            )
-                in
-                cmd |> always Expect.pass
         ]

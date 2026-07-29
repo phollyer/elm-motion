@@ -13,9 +13,21 @@ afterEach(() => {
 
 describe('errors module', () => {
     it('is silent when no subscribers are registered', () => {
-        // No throw, no console output (we don't spy on console here because
-        // reportError must not touch it without a subscriber).
+        // "Silent" means: no throw AND no console output. Spying on the
+        // console and asserting it was never called is how we prove it.
+        const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+        const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+        const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+
         expect(() => reportError('boom', { source: 'test' })).not.toThrow();
+
+        expect(errorSpy).not.toHaveBeenCalled();
+        expect(warnSpy).not.toHaveBeenCalled();
+        expect(logSpy).not.toHaveBeenCalled();
+
+        errorSpy.mockRestore();
+        warnSpy.mockRestore();
+        logSpy.mockRestore();
     });
 
     it('delivers errors to a registered subscriber', () => {

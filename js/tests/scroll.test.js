@@ -1,6 +1,11 @@
 /* eslint-env node */
 /* global global */
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { processScrollDrivenData, processViewDrivenData } from '../src/scroll.js';
+import { onError, _resetSubscribers } from '../src/errors.js';
+import { resetPortMissingWarning } from '../src/ports.js';
+import { portsRef } from '../src/state.js';
+import { installDom, createFakeAnimation, cleanupDom } from './_publicApiHelpers.js';
 
 const POLYFILL_SPECIFIER = 'scroll-timeline-polyfill/dist/scroll-timeline.js';
 
@@ -102,5 +107,211 @@ describe('ensureTimelineApi', () => {
 
         await expect(ensureTimelineApi('ViewTimeline')).resolves.toBe(true);
         expect(reports).toHaveLength(0);
+    });
+});
+
+describe('processScrollDrivenData / processViewDrivenData', () => {
+    let reports;
+
+    function captureReports() {
+        reports = [];
+        onError((error, context) => reports.push({ error, context }));
+    }
+
+    function codes() {
+        return reports.map((report) => report.context && report.context.code);
+    }
+
+    afterEach(() => {
+        _resetSubscribers();
+        resetPortMissingWarning();
+        portsRef.ports = null;
+        cleanupDom();
+    });
+
+    describe('command validation', () => {
+        it('reports COMMAND_INVALID for null scroll-driven data', () => {
+            captureReports();
+
+            processScrollDrivenData(null);
+
+            expect(reports).toHaveLength(1);
+            expect(reports[0].context).toMatchObject({
+                source: 'scrollDriven',
+                severity: 'warning',
+                code: 'COMMAND_INVALID',
+                engine: 'ScrollTimeline'
+            });
+        });
+
+        it('reports COMMAND_INVALID when scroll-driven data omits elements', () => {
+            captureReports();
+
+            processScrollDrivenData({ timeline: { source: 'document' } });
+
+            expect(codes()).toEqual(['COMMAND_INVALID']);
+        });
+
+        it('reports API_UNSUPPORTED when ScrollTimeline is absent', () => {
+            captureReports();
+
+            processScrollDrivenData({ elements: {} });
+
+            expect(reports[0].context).toMatchObject({
+                code: 'API_UNSUPPORTED',
+                engine: 'ScrollTimeline'
+            });
+        });
+
+        it('reports COMMAND_INVALID for null view-driven data', () => {
+            captureReports();
+
+            processViewDrivenData(null);
+
+            expect(reports[0].context).toMatchObject({
+                source: 'viewDriven',
+                code: 'COMMAND_INVALID',
+                engine: 'ViewTimeline'
+            });
+        });
+
+        it('reports API_UNSUPPORTED when ViewTimeline is absent', () => {
+            captureReports();
+
+            processViewDrivenData({ elements: {} });
+
+            expect(reports[0].context).toMatchObject({
+                code: 'API_UNSUPPORTED',
+                engine: 'ViewTimeline'
+            });
+        });
+    });
+
+    describe('source and target resolution', () => {
+        it('reports SCROLL_SOURCE_NOT_FOUND and animates nothing when the source is missing', () => {
+            captureReports();
+            const element = { style: {}, animate: vi.fn(() => createFakeAnimation()) };
+            installDom({ element, targetId: 'box' });
+            global.ScrollTimeline = class {
+                constructor(options) { this.options = options; }
+            };
+
+            processScrollDrivenData({
+                timeline: { source: 'missing-source' },
+                elements: { box: { properties: [] } }
+            });
+
+            expect(codes()).toContain('SCROLL_SOURCE_NOT_FOUND');
+            expect(element.animate).not.toHaveBeenCalled();
+        });
+
+        it('reports TARGET_NOT_FOUND and skips the entry when the element target is missing', () => {
+            captureReports();
+            installDom({ element: { style: {}, animate: vi.fn() }, targetId: 'present-box' });
+            global.ScrollTimeline = class {
+                constructor(options) { this.options = options; }
+            };
+
+            processScrollDrivenData({
+                timeline: { source: 'document' },
+                elements: { ghost: { properties: [] } }
+            });
+
+            expect(codes()).toContain('TARGET_NOT_FOUND');
+            expect(reports[0].context).toMatchObject({ elementId: 'ghost' });
+        });
+    });
+
+    describe('happy paths', () => {
+        it('animates a resolved target through ScrollTimeline and emits a run event', () => {
+            const events = [];
+            portsRef.ports = { motionMsg: { send: (event) => events.push(event) } };
+            captureReports();
+            const animation = createFakeAnimation();
+            const element = { style: {}, animate: vi.fn(() => animation) };
+            installDom({ element, targetId: 'box' });
+            const timelineOptions = [];
+            global.ScrollTimeline = class {
+                constructor(options) { timelineOptions.push(options); }
+            };
+
+            processScrollDrivenData({
+                timeline: { source: 'document', axis: 'block' },
+                iterations: 1,
+                emitProgress: true,
+                elements: {
+                    box: {
+                        target: 'box',
+                        properties: [
+                            { type: 'opacity', startValue: 0, endValue: 1, duration: 300, easing: 'linear', version: 1 },
+                            { type: 'translate', startX: 0, endX: 100, easing: 'linear' }
+                        ]
+                    }
+                }
+            });
+
+            // One animate for the non-transform (opacity) property and one for
+            // the combined transform property.
+            expect(element.animate).toHaveBeenCalledTimes(2);
+            expect(timelineOptions[0]).toMatchObject({ source: global.document.documentElement, axis: 'block' });
+            expect(events.length).toBeGreaterThan(0);
+            expect(reports).toHaveLength(0);
+        });
+
+        it('honours a per-element emitProgress override over the command default', () => {
+            portsRef.ports = { motionMsg: { send() { } } };
+            captureReports();
+            const element = { style: {}, animate: vi.fn(() => createFakeAnimation()) };
+            installDom({ element, targetId: 'box' });
+            global.ScrollTimeline = class {
+                constructor(options) { this.options = options; }
+            };
+
+            processScrollDrivenData({
+                timeline: { source: 'document' },
+                emitProgress: false,
+                elements: {
+                    box: {
+                        emitProgress: true,
+                        properties: [
+                            { type: 'opacity', startValue: 0, endValue: 1, duration: 300, easing: 'linear', version: 1 }
+                        ]
+                    }
+                }
+            });
+
+            expect(element.animate).toHaveBeenCalledTimes(1);
+            expect(reports).toHaveLength(0);
+        });
+
+        it('animates a resolved target through ViewTimeline with per-element range overrides', () => {
+            portsRef.ports = { motionMsg: { send() { } } };
+            captureReports();
+            const element = { style: {}, animate: vi.fn(() => createFakeAnimation()) };
+            installDom({ element, targetId: 'box' });
+            const timelineOptions = [];
+            global.ViewTimeline = class {
+                constructor(options) { timelineOptions.push(options); }
+            };
+
+            processViewDrivenData({
+                timeline: { axis: 'block', rangeStart: 'cover 0%', rangeEnd: 'cover 100%' },
+                elements: {
+                    box: {
+                        target: 'box',
+                        rangeEnd: 'contain 100%',
+                        properties: [
+                            { type: 'opacity', startValue: 0, endValue: 1, duration: 300, easing: 'linear', version: 1 }
+                        ]
+                    }
+                }
+            });
+
+            expect(element.animate).toHaveBeenCalledTimes(1);
+            expect(timelineOptions[0]).toMatchObject({ subject: element, axis: 'block' });
+            const [, timingOptions] = element.animate.mock.calls[0];
+            expect(timingOptions).toMatchObject({ rangeStart: 'cover 0%', rangeEnd: 'contain 100%' });
+            expect(reports).toHaveLength(0);
+        });
     });
 });
