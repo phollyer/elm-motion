@@ -2,6 +2,8 @@
 
 A comprehensive Elm package for smooth, high-performance DOM animations and scrolling.
 
+[![Sponsor phollyer](https://img.shields.io/badge/%F0%9F%92%96%20Sponsor-phollyer-ea4aaa?style=for-the-badge)](https://github.com/sponsors/phollyer)
+
 ## 👀 At a Glance
 
 - **6 Animation Engines** — Transition, Keyframe, Sub, WAAPI, ScrollTimeline, ViewTimeline
@@ -75,14 +77,6 @@ ViewTimeline.animate motionCmd <|
     ViewTimeline.for "entranceAnim"
         >> fadeIn
 ```
-
-> **Note:** The example above highlights reusing one builder (`fadeIn`) across
-> every engine. The trigger signatures themselves differ by engine: `WAAPI.animate`
-> returns `( AnimState, Cmd msg )` — destructure it and return the `Cmd` from your
-> `update` — while the timeline engines take extra arguments
-> (`ScrollTimeline.animate motionCmd Document`, `ViewTimeline.animate motionCmd`).
-> See [Engine Trigger Pipelines](https://phollyer.github.io/elm-motion/api-reference/#engine-trigger-pipelines)
-> for the exact shapes.
 
 ### Composability
 
@@ -162,34 +156,16 @@ Sub.scroll ScrollMsg model.scrollState scrollToSection
 elm install phollyer/elm-motion
 ```
 
-### Pre-release testing before Elm publish
-
-The Elm package is currently unpublished on package.elm-lang.org, so testers should pin to Git tags before first publication.
-
-Tag format:
-
-- `v0.1.0-alpha.1`
-- `v0.1.0-alpha.2`
-- `v0.1.0-alpha.3`
-
-Useful git checks:
-
-```bash
-git fetch --tags
-git describe --tags --exact-match || git rev-parse --short HEAD
-git tag -l "v*-alpha.*" --sort=-v:refname | head -n 1
-```
-
-Use npm to track the JavaScript companion version separately (`npm outdated @phollyer/elm-motion`), while Elm pre-release tracking is done by Git tags.
-
 ### Your First Animation
 
 ```elm
 import Anim.Builder exposing (AnimBuilder)
 import Anim.Engine.Transition as Transition
 import Anim.Property.Opacity as Opacity
+import Process
+import Task
 
--- 1. Initialize state
+-- 1. Initialize state, then trigger the fade once the header has painted at opacity 0
 type alias Model =
     { animState : Transition.AnimState }
 
@@ -199,7 +175,8 @@ init =
             Transition.init <|
                 [ Opacity.init "headerAnim" 0 ]
       }
-    , Cmd.none
+    , Process.sleep 0
+        |> Task.perform (always Animate)
     )
 
 
@@ -208,7 +185,7 @@ fadeInHeader : AnimBuilder eng -> AnimBuilder eng
 fadeInHeader =
     Opacity.begin
         >> Opacity.to 1
-        >> Opacity.build
+        >> Opacity.end
 
 
 
@@ -320,9 +297,29 @@ Full documentation at **[phollyer.github.io/elm-motion](https://phollyer.github.
 
 ---
 
+## 💖 Sponsor
+
+Elm Motion is free and open source, built and maintained in my own time. If it helps you or your team, please consider [sponsoring my work on GitHub](https://github.com/sponsors/phollyer) - it directly supports the ongoing development of elm-motion and my other Elm packages. You can sponsor monthly or make a one-time donation of any amount.
+
+[![Sponsor phollyer](https://img.shields.io/badge/%F0%9F%92%96%20Sponsor-phollyer-ea4aaa?style=for-the-badge)](https://github.com/sponsors/phollyer)
+
+Company and Corporate sponsors are featured below. Individual backers and fans are listed in [SPONSORS.md](SPONSORS.md). Thank you to everyone who helps keep this work going. 💖
+
+**Corporate Sponsors**
+
+_Your logo here — [become a Corporate Sponsor](https://github.com/sponsors/phollyer)._
+
+**Company Sponsors**
+
+_Your logo here — [become a Company Sponsor](https://github.com/sponsors/phollyer)._
+
+---
+
 ## 🙏 Credits
 
 Uses code from [`linuss/smooth-scroll`](https://package.elm-lang.org/packages/linuss/smooth-scroll/latest/).
+
+The JavaScript companion bundles [`scroll-timeline-polyfill`](https://github.com/flackr/scroll-timeline) (Apache-2.0).
 
 ---
 
