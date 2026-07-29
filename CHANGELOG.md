@@ -17,6 +17,15 @@ The two version lines are **not kept in lockstep**. The npm companion can ship J
 
 ---
 
+## [1.0.2] - 2026-07-29 (elm)
+
+Bug-fix patch release - no API changes.
+
+### Fixed
+
+- **(elm)** `Anim.Extra.Color`: three-character shorthand hex strings are now expanded correctly. `hex "#f00"` previously decoded to `{ r = 240, g = 0, b = 0 }`; it now returns `{ r = 255, g = 0, b = 0 }`.
+- **(elm)** `Anim.Extra.Color`: `toRgba` now preserves the alpha channel of eight-character hex strings. `hex "#ff000080" |> toRgba` previously reported `a = 1`; it now returns `a ≈ 0.502`.
+
 ## [1.0.1] - 2026-07-29 (elm)
 
 Documentation-only patch release - no API changes.
