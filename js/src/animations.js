@@ -26,7 +26,7 @@ function distance2(a, b) {
     return Math.sqrt(dx * dx + dy * dy);
 }
 
-function computeLegProgress(oldCurrentTime, oldDuration, oldDirection, animation) {
+export function computeLegProgress(oldCurrentTime, oldDuration, oldDirection, animation) {
     if (!isFiniteNumber(oldCurrentTime) || !isFiniteNumber(oldDuration) || oldDuration <= 0) {
         return null;
     }
@@ -50,11 +50,11 @@ function computeLegProgress(oldCurrentTime, oldDuration, oldDirection, animation
     return oldLegProgress;
 }
 
-function axisBoundsChanged(oldStart, oldEnd, newStart, newEnd, epsilon = 0.001) {
+export function axisBoundsChanged(oldStart, oldEnd, newStart, newEnd, epsilon = 0.001) {
     return Math.abs(oldStart - newStart) > epsilon || Math.abs(oldEnd - newEnd) > epsilon;
 }
 
-function chooseEffectiveAxisValue(oldStart, oldEnd, newStart, newEnd, commandValue, liveValue) {
+export function chooseEffectiveAxisValue(oldStart, oldEnd, newStart, newEnd, commandValue, liveValue) {
     if (!isFiniteNumber(liveValue)) {
         return commandValue;
     }
@@ -64,7 +64,7 @@ function chooseEffectiveAxisValue(oldStart, oldEnd, newStart, newEnd, commandVal
         : liveValue;
 }
 
-function chooseDominantAxis(spans, epsilon = 0.0001) {
+export function chooseDominantAxis(spans, epsilon = 0.0001) {
     let chosenAxis = null;
     let maxAbsSpan = epsilon;
 
@@ -80,7 +80,7 @@ function chooseDominantAxis(spans, epsilon = 0.0001) {
     return chosenAxis;
 }
 
-function sanitizeResizeDuration(candidateDuration, oldDuration) {
+export function sanitizeResizeDuration(candidateDuration, oldDuration) {
     if (!isFiniteNumber(candidateDuration) || candidateDuration <= 0) {
         return oldDuration;
     }
@@ -102,7 +102,7 @@ function sanitizeResizeDuration(candidateDuration, oldDuration) {
 
 const DEFAULT_TRANSFORM_KEYFRAME_COUNT = 30;
 
-function deriveTransformKeyframeCount(resolved) {
+export function deriveTransformKeyframeCount(resolved) {
     const lengths = ['translate', 'scale', 'rotate', 'skew']
         .map((key) => resolved?.[key]?.easingKeyframes)
         .filter((keyframes) => Array.isArray(keyframes) && keyframes.length > 1)
@@ -115,7 +115,7 @@ function deriveTransformKeyframeCount(resolved) {
     return Math.max(...lengths);
 }
 
-function getAnimationActiveTiming(animation) {
+export function getAnimationActiveTiming(animation) {
     const duration = Number(animation?.effect?.getTiming?.()?.duration) || 0;
     if (duration <= 0) {
         return null;
@@ -151,7 +151,7 @@ function getAnimationActiveTiming(animation) {
  * the resolved slot byte-for-byte is the pure `currentTimeMs`-only case
  * we want to skip.
  */
-function isResizeGeometryUnchanged(commandData, slot, oldDuration) {
+export function isResizeGeometryUnchanged(commandData, slot, oldDuration) {
     if (!slot) {
         return false;
     }
@@ -179,7 +179,7 @@ function isResizeGeometryUnchanged(commandData, slot, oldDuration) {
  * the resolved non-transform slot does not store a `duration` field —
  * the animation's own effect timing is the source of truth.
  */
-function isPerspectiveOriginGeometryUnchanged(commandData, slot, oldDuration) {
+export function isPerspectiveOriginGeometryUnchanged(commandData, slot, oldDuration) {
     if (!slot) {
         return false;
     }
@@ -197,7 +197,7 @@ function isPerspectiveOriginGeometryUnchanged(commandData, slot, oldDuration) {
         && newDuration === oldDuration;
 }
 
-function isSizeGeometryUnchanged(commandData, slot, oldDuration) {
+export function isSizeGeometryUnchanged(commandData, slot, oldDuration) {
     if (!slot) {
         return false;
     }
