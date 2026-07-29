@@ -70,6 +70,10 @@ The same companion handles all three WAAPI-based engines:
 | `Anim.Engine.ScrollTimeline` | Animation progress tied to scroll position |
 | `Anim.Engine.ViewTimeline` | Animation progress tied to element viewport position |
 
+## Version compatibility
+
+This companion carries its own version number, separate from the Elm package - the two do not need to match. Any `1.x` companion works with any `1.x` Elm package.
+
 ## Error reporting
 
 The companion is **silent by default**. Opt in to receive reports via `onError` (your own subscriber) or the built-in console adapter `useConsoleReporter`.

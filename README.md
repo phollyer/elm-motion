@@ -290,6 +290,9 @@ JavaScript companion.
 npm install @phollyer/elm-motion
 ```
 
+The companion carries its own version number, separate from the Elm package -
+any `1.x` companion works with any `1.x` Elm package.
+
 See the [npm package README](https://www.npmjs.com/package/@phollyer/elm-motion)
 for setup, port wiring and error reporting.
 

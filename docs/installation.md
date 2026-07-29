@@ -68,6 +68,12 @@ If you plan to use the [WAAPI Engine](animation/engines/waapi.md), [Scroll Timel
     ElmMotion.init(app.ports);
     ```
 
+## Version Compatibility
+
+The Elm package and the `@phollyer/elm-motion` companion carry separate version numbers - they do not need to match. Any `1.x` companion works with any `1.x` Elm package.
+
+The companion is only needed for the WAAPI, ScrollTimeline and ViewTimeline engines. The Transition, Keyframe and Sub engines, and all scroll engines, are pure Elm and need no JavaScript.
+
 ## Handling JS Runtime Errors
 
 The JS is silent by default. To surface internal warnings during development or forward errors to a service in production, opt in via `ElmMotion.useConsoleReporter()` or `ElmMotion.onError(handler)`. See the [Error Reporting guide](shared/error-reporting.md) for the full API and the list of error codes.
