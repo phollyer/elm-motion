@@ -236,7 +236,7 @@ hexToRgb : String -> { r : Int, g : Int, b : Int }
 hexToRgb hex_ =
     let
         cleanHex_ =
-            cleanHex hex_
+            expandHex (cleanHex hex_)
 
         r =
             hexByteAt 0 0 cleanHex_
@@ -254,7 +254,7 @@ hexToRgba : String -> { r : Int, g : Int, b : Int, a : Float }
 hexToRgba hex_ =
     let
         cleanHex_ =
-            cleanHex hex_
+            expandHex (cleanHex hex_)
 
         rgb_ =
             hexToRgb cleanHex_
@@ -271,6 +271,18 @@ cleanHex : String -> String
 cleanHex hex_ =
     if String.startsWith "#" hex_ then
         String.dropLeft 1 hex_
+
+    else
+        hex_
+
+
+expandHex : String -> String
+expandHex hex_ =
+    if String.length hex_ == 3 then
+        hex_
+            |> String.toList
+            |> List.concatMap (\c -> [ c, c ])
+            |> String.fromList
 
     else
         hex_
@@ -623,6 +635,9 @@ fromRGBA { r, g, b, a } =
 toRgba : Color -> { r : Int, g : Int, b : Int, a : Float }
 toRgba color =
     case color of
+        Hex hex_ ->
+            hexToRgba hex_
+
         Rgba rgba_ ->
             rgba_
 

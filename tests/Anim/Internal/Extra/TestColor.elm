@@ -53,15 +53,18 @@ constructors =
         , test "fromHex with valid 6-digit hex" <|
             \_ ->
                 Color.fromHex "#FF8800"
-                    |> Expect.notEqual Nothing
+                    |> Maybe.map Color.toRgb
+                    |> Expect.equal (Just { r = 255, g = 136, b = 0 })
         , test "fromHex with valid 3-digit hex" <|
             \_ ->
                 Color.fromHex "#F80"
-                    |> Expect.notEqual Nothing
+                    |> Maybe.map Color.toRgb
+                    |> Expect.equal (Just { r = 255, g = 136, b = 0 })
         , test "fromHex with valid 8-digit hex (with alpha)" <|
             \_ ->
                 Color.fromHex "#FF880080"
-                    |> Expect.notEqual Nothing
+                    |> Maybe.map Color.toRgb
+                    |> Expect.equal (Just { r = 255, g = 136, b = 0 })
         , test "fromHex rejects invalid hex" <|
             \_ ->
                 Color.fromHex "#GGGGGG"
@@ -73,7 +76,8 @@ constructors =
         , test "fromHex without # prefix" <|
             \_ ->
                 Color.fromHex "FF8800"
-                    |> Expect.notEqual Nothing
+                    |> Maybe.map Color.toRgb
+                    |> Expect.equal (Just { r = 255, g = 136, b = 0 })
         , test "predefined black" <|
             \_ ->
                 Color.black
@@ -753,11 +757,13 @@ stringParsing =
         [ test "parses hex with #" <|
             \_ ->
                 Color.fromString "#FF0000"
-                    |> Expect.notEqual Nothing
+                    |> Maybe.map Color.toRgb
+                    |> Expect.equal (Just { r = 255, g = 0, b = 0 })
         , test "parses hex without #" <|
             \_ ->
                 Color.fromString "FF0000"
-                    |> Expect.notEqual Nothing
+                    |> Maybe.map Color.toRgb
+                    |> Expect.equal (Just { r = 255, g = 0, b = 0 })
         , test "parses rgb()" <|
             \_ ->
                 Color.fromString "rgb(255, 128, 0)"
@@ -786,7 +792,8 @@ stringParsing =
         , test "trims whitespace" <|
             \_ ->
                 Color.fromString "  #FF0000  "
-                    |> Expect.notEqual Nothing
+                    |> Maybe.map Color.toRgb
+                    |> Expect.equal (Just { r = 255, g = 0, b = 0 })
         ]
 
 

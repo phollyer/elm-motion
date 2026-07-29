@@ -146,11 +146,20 @@ hexTests =
         , test "hex accepts 3-char shorthand" <|
             \_ ->
                 Color.hex "#f00"
-                    |> Expect.notEqual Nothing
+                    |> Maybe.map Color.toRgb
+                    |> Expect.equal (Just { r = 255, g = 0, b = 0 })
         , test "hex accepts 8-char with alpha" <|
             \_ ->
-                Color.hex "#ff000080"
-                    |> Expect.notEqual Nothing
+                case Color.hex "#ff000080" of
+                    Just c ->
+                        Expect.all
+                            [ \col -> Color.toRgb col |> Expect.equal { r = 255, g = 0, b = 0 }
+                            , \col -> Color.toRgba col |> .a |> Expect.within (Expect.Absolute 0.01) (toFloat 0x80 / 255)
+                            ]
+                            c
+
+                    Nothing ->
+                        Expect.fail "expected #ff000080 to parse"
         , test "hex rejects empty string" <|
             \_ ->
                 Color.hex "" |> Expect.equal Nothing
