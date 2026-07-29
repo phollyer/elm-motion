@@ -20,17 +20,20 @@ function hasTimelineApi(apiName) {
 }
 
 /**
- * Lazy-load the scroll-timeline polyfill the first time it is needed.
- * Subsequent calls return the same Promise.
+ * Resolve the scroll-timeline polyfill, guarding against duplicate work so
+ * multiple timeline commands share one Promise.
  *
  * The polyfill is bundled into the elm-motion distribution at build time
- * (rollup `inlineDynamicImports: true`), so the dynamic import resolves
- * synchronously from the bundle - no third-party CDN fetch, no SRI, no
- * version drift between npm dependency and runtime fetch.
+ * (rollup `inlineDynamicImports: true`) - no third-party CDN fetch, no SRI,
+ * no version drift between npm dependency and runtime fetch.
  *
- * The polyfill module is a side-effect script: importing it runs an IIFE
- * that feature-detects ScrollTimeline / ViewTimeline and installs them on
- * `window` if absent.
+ * The polyfill module is a side-effect script: evaluating it runs an IIFE that
+ * feature-detects ScrollTimeline / ViewTimeline and installs them on `window`
+ * only when native support is missing. In the shipped bundle that evaluation
+ * happens once at module load (the inlined dynamic import is hoisted), so by
+ * the time this runs the polyfill has usually already installed and the import
+ * below resolves synchronously against the evaluated module. In the unbundled
+ * source (dev/tests) the dynamic import triggers that evaluation on first call.
  */
 function loadTimelinePolyfill() {
     if (timelinePolyfillLoadPromise) {
