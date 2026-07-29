@@ -17,6 +17,15 @@ The two version lines are **not kept in lockstep**. The npm companion can ship J
 
 ---
 
+## [1.0.1] - 2026-07-29 (elm)
+
+Documentation-only patch release - no API changes.
+
+### Fixed
+
+- **(docs)** README: corrected the `SPONSORS.md` link to an absolute GitHub URL so it resolves on package.elm-lang.org.
+- **(docs)** Changelog: corrected the companion build-format note (the companion ships ESM and a browser global, not CommonJS).
+
 ## [1.0.0] - 2026-07-29 (elm)
 
 Initial public release.
