@@ -66,3 +66,8 @@ Initial release of the `@phollyer/elm-motion` JavaScript companion. The in-repo 
 - ESM (`elm-motion.mjs`) and standalone browser (IIFE, global `ElmMotion`, `elm-motion.js`) builds, plus TypeScript definitions (`elm-motion.d.ts`), all shipped in `dist/`.
 - `engines` field (`node >= 18`) declared on the published package.
 
+[1.0.2]: https://github.com/phollyer/elm-motion/compare/1.0.1...1.0.2
+[1.0.1]: https://github.com/phollyer/elm-motion/compare/1.0.0...1.0.1
+[1.0.0]: https://github.com/phollyer/elm-motion/releases/tag/1.0.0
+[1.0.3]: https://www.npmjs.com/package/@phollyer/elm-motion/v/1.0.3
+
