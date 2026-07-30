@@ -22,6 +22,7 @@ module Anim.Engine.Sub exposing
     , freezeX, freezeY, freezeZ, freezeXY, freezeXZ, freezeYZ, freezeXYZ
     , unfreezeX, unfreezeY, unfreezeZ, unfreezeXY, unfreezeXZ, unfreezeYZ, unfreezeXYZ
     , anyRunning, isRunning, allComplete, isComplete, getProgress
+    , getDuration, getElapsed, getRemaining
     , getPropertyCurrent, getPropertyEnd, getPropertyRange, getPropertyStart
     , getColorPropertyCurrent, getColorPropertyEnd, getColorPropertyRange, getColorPropertyStart
     , getOpacityRange, getOpacityStart, getOpacityEnd, getOpacityCurrent
@@ -215,6 +216,11 @@ can remove axes on a per-group basis from the inherited global frozen axes for t
 📖 See [State Queries](https://phollyer.github.io/elm-motion/animation/engines/sub/#state-queries) for details.
 
 @docs anyRunning, isRunning, allComplete, isComplete, getProgress
+
+
+## Timing Queries
+
+@docs getDuration, getElapsed, getRemaining
 
 
 # Property Queries
@@ -1241,6 +1247,60 @@ Returns `Nothing` if there are no animations for the group.
 getProgress : AnimGroupName -> AnimState -> Maybe Float
 getProgress =
     Internal.getProgress
+
+
+{-| Get the total duration of an animation group, in milliseconds.
+
+This is the wall-clock time for a single iteration - the longest `delay + duration`
+across the group's properties. Looping does not multiply it; each iteration reports
+the same span.
+
+Returns `Nothing` if there are no animations for the group.
+
+    import Anim.Engine.Sub as Sub
+
+    Sub.getDuration "myAnimation" model.animState
+    -- Just 600
+
+-}
+getDuration : AnimGroupName -> AnimState -> Maybe Int
+getDuration =
+    Internal.getDuration
+
+
+{-| Get the elapsed time of an animation group within its current iteration, in milliseconds.
+
+Counts from the moment the animation is triggered, so it includes any `delay` before motion
+begins. Resets to `0` at each iteration boundary and never exceeds `getDuration`.
+
+Returns `Nothing` if there are no animations for the group.
+
+    import Anim.Engine.Sub as Sub
+
+    Sub.getElapsed "myAnimation" model.animState
+    -- Just 300 (halfway through a 600ms animation)
+
+-}
+getElapsed : AnimGroupName -> AnimState -> Maybe Int
+getElapsed =
+    Internal.getElapsed
+
+
+{-| Get the remaining time of an animation group within its current iteration, in milliseconds.
+
+Equal to `getDuration - getElapsed`, clamped at `0`.
+
+Returns `Nothing` if there are no animations for the group.
+
+    import Anim.Engine.Sub as Sub
+
+    Sub.getRemaining "myAnimation" model.animState
+    -- Just 300 (halfway through a 600ms animation)
+
+-}
+getRemaining : AnimGroupName -> AnimState -> Maybe Int
+getRemaining =
+    Internal.getRemaining
 
 
 

@@ -32,6 +32,8 @@ module Anim.Internal.Engine.Sub exposing
     , getColorPropertyEnd
     , getColorPropertyRange
     , getColorPropertyStart
+    , getDuration
+    , getElapsed
     , getOpacityCurrent
     , getOpacityEnd
     , getOpacityRange
@@ -45,6 +47,7 @@ module Anim.Internal.Engine.Sub exposing
     , getPropertyEnd
     , getPropertyRange
     , getPropertyStart
+    , getRemaining
     , getRotateCurrent
     , getRotateEnd
     , getRotateRange
@@ -1814,6 +1817,49 @@ overallProgress =
         >> List.map (Animation.foldTiming calculateProgress)
         >> List.maximum
         >> Maybe.withDefault 0
+
+
+getDuration : AnimGroupName -> AnimState -> Maybe Int
+getDuration animGroupName (AnimState _ animGroups) =
+    AnimGroups.get animGroupName animGroups
+        |> Maybe.map (groupSpanMs >> round)
+
+
+getElapsed : AnimGroupName -> AnimState -> Maybe Int
+getElapsed animGroupName (AnimState _ animGroups) =
+    AnimGroups.get animGroupName animGroups
+        |> Maybe.map (groupElapsedMs >> round)
+
+
+getRemaining : AnimGroupName -> AnimState -> Maybe Int
+getRemaining animGroupName (AnimState _ animGroups) =
+    AnimGroups.get animGroupName animGroups
+        |> Maybe.map (\group -> round (max 0 (groupSpanMs group - groupElapsedMs group)))
+
+
+{-| Wall-clock span of one iteration - the longest `delay + duration` across
+the group's properties. Includes delay so it pairs with `groupElapsedMs`.
+-}
+groupSpanMs : AnimGroup -> Float
+groupSpanMs =
+    AnimGroup.getAnimations
+        >> Animations.list
+        >> List.map (Animation.foldTiming (\t -> t.delayMs + t.totalDurationMs))
+        >> List.maximum
+        >> Maybe.withDefault 0
+
+
+{-| Wall-clock elapsed time within the current iteration, clamped to the span
+so a final over-shooting frame cannot report more than the total duration.
+-}
+groupElapsedMs : AnimGroup -> Float
+groupElapsedMs group =
+    AnimGroup.getAnimations group
+        |> Animations.list
+        |> List.map (Animation.foldTiming .elapsedMs)
+        |> List.maximum
+        |> Maybe.withDefault 0
+        |> min (groupSpanMs group)
 
 
 
