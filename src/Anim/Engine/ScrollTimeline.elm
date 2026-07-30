@@ -461,7 +461,7 @@ alternate =
 
 {-| Set the global easing function.
 
-    heroEntrance : AnimBuilder { eng | withEasing : () } -> AnimBuilder { eng | withEasing : () }
+    heroEntrance : AnimBuilder eng -> AnimBuilder eng
     heroEntrance =
         easing EaseInOut
             >> fadeInHeroTitle
