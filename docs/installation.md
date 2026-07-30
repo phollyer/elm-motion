@@ -70,7 +70,7 @@ If you plan to use the [WAAPI Engine](animation/engines/waapi.md), [Scroll Timel
 
 ## Version Compatibility
 
-The Elm package and the `@phollyer/elm-motion` companion carry separate version numbers - they do not need to match. Any `1.x` companion works with any `1.x` Elm package.
+The Elm package and the `@phollyer/elm-motion` companion carry separate version numbers - they do not need to match. The current `1.x` companion works with any `1.x` or `2.x` Elm package.
 
 The companion is only needed for the WAAPI, ScrollTimeline and ViewTimeline engines. The Transition, Keyframe and Sub engines, and all scroll engines, are pure Elm and need no JavaScript.
 

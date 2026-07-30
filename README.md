@@ -77,7 +77,7 @@ The `WAAPI`, `ScrollTimeline` and `ViewTimeline` engines also need the JavaScrip
 npm install @phollyer/elm-motion
 ```
 
-The companion carries its own version — any `1.x` companion works with any `1.x` Elm package.
+The companion carries its own version — the current `1.x` companion works with any `1.x` or `2.x` Elm package.
 
 ---
 

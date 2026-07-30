@@ -72,7 +72,7 @@ The same companion handles all three WAAPI-based engines:
 
 ## Version compatibility
 
-This companion carries its own version number, separate from the Elm package - the two do not need to match. Any `1.x` companion works with any `1.x` Elm package.
+This companion carries its own version number, separate from the Elm package - the two do not need to match. The current `1.x` companion works with any `1.x` or `2.x` Elm package.
 
 ## Error reporting
 

@@ -17,6 +17,19 @@ The two version lines are **not kept in lockstep**. The npm companion can ship J
 
 ---
 
+## [2.0.0] - 2026-07-30 (elm)
+
+Major release - a single breaking type-signature change to `Anim.Builder`.
+
+### Changed
+
+- **(elm)** `Anim.Builder.easing` is now `Easing -> AnimBuilder eng -> AnimBuilder eng`, dropping the previous `{ eng | withEasing : () }` capability constraint. That constraint required a `withEasing` row field that no engine capability record declares, so the engine-agnostic setter could not be applied to any concrete engine builder. Easing is supported by every engine, so no capability gating is warranted. Elm's type-based versioning classifies this as major, but in practice it only widens what already compiled and needs no changes at existing call sites.
+- **(docs)** Version-compatibility notes (README, npm README and installation guide) now state that the current `1.x` JavaScript companion works with any `1.x` or `2.x` Elm package. The `2.0.0` bump is an Elm-only type-signature change with no change to the `motionCmd` / `motionMsg` port protocol, so companion compatibility is unaffected.
+
+### Fixed
+
+- **(docs)** Corrected the `easing` doc-comment examples in `Anim.Builder` and the `Transition`, `ScrollTimeline` and `ViewTimeline` engine modules, which showed the invalid `{ eng | withEasing : () }` signature.
+
 ## [1.0.3][1.0.3-elm] - 2026-07-29 (elm)
 
 Documentation-only patch release - no API changes.
@@ -74,6 +87,7 @@ Initial release of the `@phollyer/elm-motion` JavaScript companion. The in-repo 
 - ESM (`elm-motion.mjs`) and standalone browser (IIFE, global `ElmMotion`, `elm-motion.js`) builds, plus TypeScript definitions (`elm-motion.d.ts`), all shipped in `dist/`.
 - `engines` field (`node >= 18`) declared on the published package.
 
+[2.0.0]: https://github.com/phollyer/elm-motion/compare/1.0.3...2.0.0
 [1.0.3-elm]: https://github.com/phollyer/elm-motion/compare/1.0.2...1.0.3
 [1.0.2]: https://github.com/phollyer/elm-motion/compare/1.0.1...1.0.2
 [1.0.1]: https://github.com/phollyer/elm-motion/compare/1.0.0...1.0.1
