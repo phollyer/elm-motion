@@ -747,7 +747,7 @@ alternate =
 
 {-| Set the global delay for all animations in this builder.
 
-    introAnim : AnimBuilder eng -> AnimBuilder eng
+    introAnim : EngineBuilder -> EngineBuilder
     introAnim =
         delay 500
             >> fadeInHeader
@@ -762,7 +762,7 @@ delay =
 
 {-| Set the global duration for all animations in this builder.
 
-    introAnim : AnimBuilder eng -> AnimBuilder eng
+    introAnim : EngineBuilder -> EngineBuilder
     introAnim =
         duration 500
             >> fadeInHeader
@@ -777,7 +777,7 @@ duration =
 
 {-| Set the global speed for all animations in this builder.
 
-    introAnim : AnimBuilder eng -> AnimBuilder eng
+    introAnim : EngineBuilder -> EngineBuilder
     introAnim =
         speed 300
             >> slideDownHeader
@@ -798,7 +798,7 @@ speed =
 
 {-| Set the global easing function.
 
-    heroEntrance : AnimBuilder eng -> AnimBuilder eng
+    heroEntrance : EngineBuilder -> EngineBuilder
     heroEntrance =
         easing EaseInOut
             >> fadeInHeroTitle
@@ -819,7 +819,7 @@ easing =
 
 {-| Set the global spring.
 
-    draggableCardSettle : AnimBuilder eng -> AnimBuilder eng
+    draggableCardSettle : EngineBuilder -> EngineBuilder
     draggableCardSettle =
         spring Spring.wobbly
             >> settleCardPosition
@@ -839,7 +839,7 @@ spring =
 
 {-| Set the default length unit for all length-bearing properties.
 
-    responsivePanelMotion : AnimBuilder eng -> AnimBuilder eng
+    responsivePanelMotion : EngineBuilder -> EngineBuilder
     responsivePanelMotion =
         cssUnit Unit.Vw
             >> slidePanelIn
@@ -853,7 +853,7 @@ cssUnit =
 
 {-| Set the default length unit for the X axis.
 
-    responsiveDrawerMotion : AnimBuilder eng -> AnimBuilder eng
+    responsiveDrawerMotion : EngineBuilder -> EngineBuilder
     responsiveDrawerMotion =
         cssUnitX Unit.Vw
             >> slideDrawerX
@@ -867,7 +867,7 @@ cssUnitX =
 
 {-| Set the default length unit for the Y axis.
 
-    responsiveSheetMotion : AnimBuilder eng -> AnimBuilder eng
+    responsiveSheetMotion : EngineBuilder -> EngineBuilder
     responsiveSheetMotion =
         cssUnitY Unit.Vh
             >> slideSheetY
@@ -881,7 +881,7 @@ cssUnitY =
 
 {-| Set the default length unit for the Z axis.
 
-    layeredSceneMotion : AnimBuilder eng -> AnimBuilder eng
+    layeredSceneMotion : EngineBuilder -> EngineBuilder
     layeredSceneMotion =
         cssUnitZ Unit.Px
             >> pushSceneBackgroundBack
@@ -895,7 +895,7 @@ cssUnitZ =
 
 {-| Set the default length unit used for width values in WAAPI animations.
 
-    responsiveCardWidth : AnimBuilder eng -> AnimBuilder eng
+    responsiveCardWidth : EngineBuilder -> EngineBuilder
     responsiveCardWidth =
         cssUnitWidth Unit.Vw
             >> growCardWidth
@@ -909,7 +909,7 @@ cssUnitWidth =
 
 {-| Set the default length unit used for height values in WAAPI animations.
 
-    responsivePanelHeight : AnimBuilder eng -> AnimBuilder eng
+    responsivePanelHeight : EngineBuilder -> EngineBuilder
     responsivePanelHeight =
         cssUnitHeight Unit.Vh
             >> expandPanelHeight
