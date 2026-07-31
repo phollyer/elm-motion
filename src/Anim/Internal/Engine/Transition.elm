@@ -4,7 +4,6 @@ module Anim.Internal.Engine.Transition exposing
     , AnimMsg
     , AnimState
     , EngineBuilder
-    , TimelineBuilder
     , animate
     , attributes
     , events
@@ -56,10 +55,6 @@ type alias AnimGroupName =
 
 type alias AnimBuilder eng =
     CSS.AnimBuilder eng
-
-
-type alias TimelineBuilder engine =
-    CSS.TimelineBuilder engine
 
 
 type alias EngineBuilder =

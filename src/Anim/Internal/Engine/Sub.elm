@@ -7,7 +7,6 @@ module Anim.Internal.Engine.Sub exposing
     , EngineBuilder
     , FreezeProperty
     , TickEvent(..)
-    , TimelineBuilder
     , allComplete
     , alternate
     , animate
@@ -140,10 +139,6 @@ type AnimState
 
 type alias AnimBuilder eng =
     Builder.AnimBuilder eng
-
-
-type alias TimelineBuilder engine =
-    Builder.AnimBuilder engine
 
 
 type alias EngineBuilder =

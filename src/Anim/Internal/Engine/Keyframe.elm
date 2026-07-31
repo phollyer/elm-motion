@@ -3,7 +3,6 @@ module Anim.Internal.Engine.Keyframe exposing
     , AnimMsg
     , AnimState
     , EngineBuilder
-    , TimelineBuilder
     , animate
     , attributes
     , events
@@ -54,10 +53,6 @@ type alias AnimState =
 
 type alias AnimGroupName =
     String
-
-
-type alias TimelineBuilder engine =
-    CSS.TimelineBuilder engine
 
 
 type alias EngineBuilder =

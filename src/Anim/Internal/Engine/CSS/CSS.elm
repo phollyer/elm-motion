@@ -3,7 +3,6 @@ module Anim.Internal.Engine.CSS.CSS exposing
     , AnimEvent(..)
     , AnimState(..)
     , SourceEventData
-    , TimelineBuilder
     , allComplete
     , alternate
     , animate
@@ -94,15 +93,11 @@ import Shared.TimeSpec exposing (TimeSpec(..))
 
 
 type AnimState engine a
-    = AnimState { builder : TimelineBuilder engine } (AnimGroups a)
+    = AnimState { builder : AnimBuilder engine } (AnimGroups a)
 
 
 type alias AnimBuilder eng =
     Builder.AnimBuilder eng
-
-
-type alias TimelineBuilder engine =
-    Builder.AnimBuilder engine
 
 
 type alias AnimGroupName =
@@ -115,7 +110,7 @@ type alias AnimGroupName =
 -- ============================================================
 
 
-init : (TimelineBuilder engine -> AnimGroupName -> Builder.AnimGroupConfig -> a) -> List (TimelineBuilder engine -> TimelineBuilder engine) -> AnimState engine a
+init : (AnimBuilder engine -> AnimGroupName -> Builder.AnimGroupConfig -> a) -> List (AnimBuilder engine -> AnimBuilder engine) -> AnimState engine a
 init initGroup propertyInitializers =
     case propertyInitializers of
         [] ->
@@ -148,10 +143,10 @@ init initGroup propertyInitializers =
 
 animate :
     (PlayState -> a -> a)
-    -> (Maybe (List TransformProperty) -> TimelineBuilder engine -> AnimGroupName -> Builder.ProcessedAnimGroupConfig -> a)
+    -> (Maybe (List TransformProperty) -> AnimBuilder engine -> AnimGroupName -> Builder.ProcessedAnimGroupConfig -> a)
     -> (AnimGroups Builder.ProcessedAnimGroupConfig -> AnimGroupName -> a -> AnimGroups a -> AnimGroups a)
     -> AnimState engine a
-    -> (TimelineBuilder engine -> TimelineBuilder engine)
+    -> (AnimBuilder engine -> AnimBuilder engine)
     -> AnimState engine a
 animate setPlayState generateData insertData (AnimState state animGroups) transform =
     let
@@ -187,10 +182,10 @@ animate setPlayState generateData insertData (AnimState state animGroups) transf
 
 retarget :
     (PlayState -> a -> a)
-    -> (Maybe (List TransformProperty) -> TimelineBuilder engine -> AnimGroupName -> Builder.ProcessedAnimGroupConfig -> a)
+    -> (Maybe (List TransformProperty) -> AnimBuilder engine -> AnimGroupName -> Builder.ProcessedAnimGroupConfig -> a)
     -> (AnimGroups Builder.ProcessedAnimGroupConfig -> AnimGroupName -> a -> AnimGroups a -> AnimGroups a)
     -> AnimState engine a
-    -> (TimelineBuilder engine -> TimelineBuilder engine)
+    -> (AnimBuilder engine -> AnimBuilder engine)
     -> AnimState engine a
 retarget setPlayState generateData insertData (AnimState state animGroups) transform =
     let
@@ -610,12 +605,12 @@ simpleControl fetchConfig setPlayState mapper buildStyles setStyles animGroupNam
 -- ============================================================
 
 
-discreteEntry : String -> String -> TimelineBuilder engine -> TimelineBuilder engine
+discreteEntry : String -> String -> AnimBuilder engine -> AnimBuilder engine
 discreteEntry =
     Builder.discreteEntry
 
 
-discreteExit : String -> String -> String -> TimelineBuilder engine -> TimelineBuilder engine
+discreteExit : String -> String -> String -> AnimBuilder engine -> AnimBuilder engine
 discreteExit =
     Builder.discreteExit
 
@@ -682,7 +677,7 @@ isCancelled getIsCancelled animGroupName (AnimState _ animGroups) =
 -- ============================
 
 
-getBuilder : AnimState engine a -> TimelineBuilder engine
+getBuilder : AnimState engine a -> AnimBuilder engine
 getBuilder (AnimState state _) =
     state.builder
 

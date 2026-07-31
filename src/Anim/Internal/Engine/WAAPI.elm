@@ -5,7 +5,6 @@ module Anim.Internal.Engine.WAAPI exposing
     , AnimState
     , EngineBuilder
     , FreezeProperty
-    , TimelineBuilder
     , allComplete
     , alternate
     , animate
@@ -140,10 +139,6 @@ type AnimState msg
 
 type alias AnimBuilder eng =
     Builder.AnimBuilder eng
-
-
-type alias TimelineBuilder engine =
-    Builder.AnimBuilder engine
 
 
 type alias EngineBuilder =
