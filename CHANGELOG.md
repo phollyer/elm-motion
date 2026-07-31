@@ -19,11 +19,15 @@ The two version lines are **not kept in lockstep**. The npm companion can ship J
 
 ## [Unreleased]
 
+Nothing
+
+## [2.1.0] - 2026-07-31 (elm)
+
 ### Added
 
-- **(docs)** Add timing (duration) to example code in README so that the examples match real world use.
-
 - **(elm)** `Anim.Engine.Sub`: new timing queries `getDuration`, `getElapsed` and `getRemaining`, each `AnimGroupName -> AnimState -> Maybe Int`. They report per-iteration wall-clock milliseconds for a named group - `getDuration` is the longest `delay + duration` across the group's properties, `getElapsed` is the time elapsed within the current iteration (clamped to the duration), and `getRemaining` is the difference (clamped at `0`). Values include delay and reset each iteration, complementing the existing `getProgress`.
+
+- **(docs)** Add timing (duration) to example code in README so that the examples match real world use.
 
 ## [2.0.0] - 2026-07-30 (elm)
 
@@ -95,6 +99,7 @@ Initial release of the `@phollyer/elm-motion` JavaScript companion. The in-repo 
 - ESM (`elm-motion.mjs`) and standalone browser (IIFE, global `ElmMotion`, `elm-motion.js`) builds, plus TypeScript definitions (`elm-motion.d.ts`), all shipped in `dist/`.
 - `engines` field (`node >= 18`) declared on the published package.
 
+[2.1.0]: https://github.com/phollyer/elm-motion/compare/2.0.0...2.1.0
 [2.0.0]: https://github.com/phollyer/elm-motion/compare/1.0.3...2.0.0
 [1.0.3-elm]: https://github.com/phollyer/elm-motion/compare/1.0.2...1.0.3
 [1.0.2]: https://github.com/phollyer/elm-motion/compare/1.0.1...1.0.2
