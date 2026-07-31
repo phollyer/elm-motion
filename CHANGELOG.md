@@ -21,6 +21,8 @@ The two version lines are **not kept in lockstep**. The npm companion can ship J
 
 ### Added
 
+- **(docs)** Add timing (duration) to example code in README so that the examples match real world use.
+
 - **(elm)** `Anim.Engine.Sub`: new timing queries `getDuration`, `getElapsed` and `getRemaining`, each `AnimGroupName -> AnimState -> Maybe Int`. They report per-iteration wall-clock milliseconds for a named group - `getDuration` is the longest `delay + duration` across the group's properties, `getElapsed` is the time elapsed within the current iteration (clamped to the duration), and `getRemaining` is the difference (clamped at `0`). Values include delay and reset each iteration, complementing the existing `getProgress`.
 
 ## [2.0.0] - 2026-07-30 (elm)
