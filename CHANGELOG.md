@@ -19,9 +19,18 @@ The two version lines are **not kept in lockstep**. The npm companion can ship J
 
 ## [Unreleased]
 
+Nothing
+
+## [2.1.1] - 2026-08-01 (elm)
+
 ### Removed
 
 - **(elm)** Internal cleanup: removed the unused, duplicate `TimelineBuilder` type alias from the internal engine modules (`CSS`, `Keyframe`, `Transition`, `WAAPI`, `Sub`), consolidating on the equivalent `AnimBuilder`. No public API change — these modules are not exposed.
+
+### Fixed
+
+- **(docs)** Corrected the doc-comment examples for the engine-specialized setters (delay, duration, speed, easing, spring, cssUnit*) in the Sub, Keyframe, WAAPI, Transition, ScrollTimeline and ViewTimeline modules, which annotated the helper functions as the too-general AnimBuilder eng -> AnimBuilder eng instead of the engine-specialized EngineBuilder -> EngineBuilder.
+
 
 ## [2.1.0] - 2026-07-31 (elm)
 
@@ -101,6 +110,7 @@ Initial release of the `@phollyer/elm-motion` JavaScript companion. The in-repo 
 - ESM (`elm-motion.mjs`) and standalone browser (IIFE, global `ElmMotion`, `elm-motion.js`) builds, plus TypeScript definitions (`elm-motion.d.ts`), all shipped in `dist/`.
 - `engines` field (`node >= 18`) declared on the published package.
 
+[2.1.1]: https://github.com/phollyer/elm-motion/compare/2.1.0...2.1.1
 [2.1.0]: https://github.com/phollyer/elm-motion/compare/2.0.0...2.1.0
 [2.0.0]: https://github.com/phollyer/elm-motion/compare/1.0.3...2.0.0
 [1.0.3-elm]: https://github.com/phollyer/elm-motion/compare/1.0.2...1.0.3
