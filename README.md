@@ -29,14 +29,17 @@ fadeIn =
 
 Transition.animate model.animState <|
     Transition.for "entrance" 
+        >> Transition.duration 600
         >> fadeIn
 
 Keyframe.animate model.animState <|
     Keyframe.for "entrance"
+        >> Keyframe.duration 600
         >> fadeIn
 
 Sub.animate model.animState <|
     Sub.for "entrance"
+        >> Sub.duration 600
         >> fadeIn
 
 -- … and WAAPI, ScrollTimeline and ViewTimeline take the same definition
