@@ -19,7 +19,9 @@ The two version lines are **not kept in lockstep**. The npm companion can ship J
 
 ## [Unreleased]
 
-Nothing
+### Removed
+
+- **(elm)** Internal cleanup: removed the unused, duplicate `TimelineBuilder` type alias from the internal engine modules (`CSS`, `Keyframe`, `Transition`, `WAAPI`, `Sub`), consolidating on the equivalent `AnimBuilder`. No public API change — these modules are not exposed.
 
 ## [2.1.0] - 2026-07-31 (elm)
 
