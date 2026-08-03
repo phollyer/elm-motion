@@ -21,6 +21,12 @@ The two version lines are **not kept in lockstep**. The npm companion can ship J
 
 Nothing
 
+## [2.1.2] - 2026-08-03 (elm)
+
+### Fixed
+
+- **(elm)** Per-animation playback settings (`iterations`, `loopForever`, `alternate`) set at global builder scope no longer leak into the next `animate` call. Previously, once an animation completed, a follow-up animation on the same group that specified no playback of its own inherited the prior iteration count and alternating direction. Playback is now reset between `animate` calls. Group-scoped playback (set after `for`) was never affected. The fix lives in the shared builder, so every engine benefits.
+
 ## [2.1.1] - 2026-08-01 (elm)
 
 ### Removed
@@ -110,6 +116,7 @@ Initial release of the `@phollyer/elm-motion` JavaScript companion. The in-repo 
 - ESM (`elm-motion.mjs`) and standalone browser (IIFE, global `ElmMotion`, `elm-motion.js`) builds, plus TypeScript definitions (`elm-motion.d.ts`), all shipped in `dist/`.
 - `engines` field (`node >= 18`) declared on the published package.
 
+[2.1.2]: https://github.com/phollyer/elm-motion/compare/2.1.1...2.1.2
 [2.1.1]: https://github.com/phollyer/elm-motion/compare/2.1.0...2.1.1
 [2.1.0]: https://github.com/phollyer/elm-motion/compare/2.0.0...2.1.0
 [2.0.0]: https://github.com/phollyer/elm-motion/compare/1.0.3...2.0.0
