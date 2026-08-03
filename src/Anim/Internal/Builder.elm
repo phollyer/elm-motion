@@ -1017,7 +1017,9 @@ clearAnimData (AnimBuilder data) =
             | animation = initAnimation
             , playback =
                 { pb
-                    | discreteEntryProperties = Dict.empty
+                    | iterations = Once
+                    , animationDirection = Normal
+                    , discreteEntryProperties = Dict.empty
                     , discreteExitProperties = Dict.empty
                 }
         }
