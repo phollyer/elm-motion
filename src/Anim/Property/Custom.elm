@@ -110,7 +110,8 @@ until you [Unclamp](#unclamp) it:
                 let
                     ( animState, cmd ) =
                         WAAPI.animate model.animState <|
-                            Custom.begin Px)
+                            Custom.begin (Custom.FontSize Px)
+                                >> Custom.to size
                                 >> Custom.clamp 12 32
                                 >> Custom.end
                 in

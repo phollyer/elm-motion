@@ -584,7 +584,7 @@ easing =
 
 {-| Set the global spring.
 
-    draggableCardSettle : AnimBuilder { eng | withSpring : () } -> AnimBuilder { eng | withSpring : () }
+    draggableCardSettle : EngineBuilder -> EngineBuilder
     draggableCardSettle =
         spring Spring.wobbly
             >> settleCardPosition
@@ -604,7 +604,7 @@ spring =
 
 {-| Set the default length unit for all length-bearing properties.
 
-    responsivePanelMotion : AnimBuilder { eng | withCssUnit : () } -> AnimBuilder { eng | withCssUnit : () }
+    responsivePanelMotion : EngineBuilder -> EngineBuilder
     responsivePanelMotion =
         cssUnit Unit.Vw
             >> slidePanelIn
@@ -618,7 +618,7 @@ cssUnit =
 
 {-| Set the default length unit for the X axis.
 
-    responsiveDrawerMotion : AnimBuilder { eng | withCssUnit : () } -> AnimBuilder { eng | withCssUnit : () }
+    responsiveDrawerMotion : EngineBuilder -> EngineBuilder
     responsiveDrawerMotion =
         cssUnitX Unit.Vw
             >> slideDrawerX
@@ -632,7 +632,7 @@ cssUnitX =
 
 {-| Set the default length unit for the Y axis.
 
-    responsiveSheetMotion : AnimBuilder { eng | withCssUnit : () } -> AnimBuilder { eng | withCssUnit : () }
+    responsiveSheetMotion : EngineBuilder -> EngineBuilder
     responsiveSheetMotion =
         cssUnitY Unit.Vh
             >> slideSheetY
@@ -646,7 +646,7 @@ cssUnitY =
 
 {-| Set the default length unit for the Z axis.
 
-    layeredSceneMotion : AnimBuilder { eng | withCssUnit : () } -> AnimBuilder { eng | withCssUnit : () }
+    layeredSceneMotion : EngineBuilder -> EngineBuilder
     layeredSceneMotion =
         cssUnitZ Unit.Px
             >> pushSceneBackgroundBack

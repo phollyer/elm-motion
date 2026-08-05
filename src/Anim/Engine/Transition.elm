@@ -506,7 +506,7 @@ Add `events` to your element with a message constructor that wraps `AnimMsg`.
 
     div
         (Transition.attributes "animGroupName" animState
-            ++ Transition.events "animGroupName" TransitionMsg
+            ++ Transition.events TransitionMsg
         )
         [ text "Animating element" ]
 
@@ -523,7 +523,7 @@ events =
 
     div
         (Transition.attributes "animGroupName" model.animState
-            ++ Transition.eventsStopPropagation "animGroupName" TransitionMsg
+            ++ Transition.eventsStopPropagation TransitionMsg
         )
         [ text "Animated element" ]
 
@@ -541,7 +541,7 @@ eventsStopPropagation =
 
 {-| Set the default length unit for all length-bearing properties.
 
-    responsivePanelMotion : AnimBuilder { eng | withCssUnit : () } -> AnimBuilder { eng | withCssUnit : () }
+    responsivePanelMotion : EngineBuilder -> EngineBuilder
     responsivePanelMotion =
         cssUnit Unit.Vw
             >> slidePanelIn
@@ -555,7 +555,7 @@ cssUnit =
 
 {-| Set the default length unit for the X axis.
 
-    responsiveDrawerMotion : AnimBuilder { eng | withCssUnit : () } -> AnimBuilder { eng | withCssUnit : () }
+    responsiveDrawerMotion : EngineBuilder -> EngineBuilder
     responsiveDrawerMotion =
         cssUnitX Unit.Vw
             >> slidePanelIn
@@ -569,7 +569,7 @@ cssUnitX =
 
 {-| Set the default length unit for the Y axis.
 
-    responsiveSheetMotion : AnimBuilder { eng | withCssUnit : () } -> AnimBuilder { eng | withCssUnit : () }
+    responsiveSheetMotion : EngineBuilder -> EngineBuilder
     responsiveSheetMotion =
         cssUnitY Unit.Vh
             >> slidePanelIn
@@ -583,7 +583,7 @@ cssUnitY =
 
 {-| Set the default length unit for the Z axis.
 
-    layeredSceneMotion : AnimBuilder { eng | withCssUnit : () } -> AnimBuilder { eng | withCssUnit : () }
+    layeredSceneMotion : EngineBuilder -> EngineBuilder
     layeredSceneMotion =
         cssUnitZ Unit.Px
             >> slidePanelIn
@@ -597,7 +597,7 @@ cssUnitZ =
 
 {-| Set the default length unit used for width values in Transition animations.
 
-    responsiveCardWidth : AnimBuilder { eng | withCssUnit : () } -> AnimBuilder { eng | withCssUnit : () }
+    responsiveCardWidth : EngineBuilder -> EngineBuilder
     responsiveCardWidth =
         cssUnitWidth Unit.Vw
             >> slidePanelIn
@@ -611,7 +611,7 @@ cssUnitWidth =
 
 {-| Set the default length unit used for height values in Transition animations.
 
-    responsivePanelHeight : AnimBuilder { eng | withCssUnit : () } -> AnimBuilder { eng | withCssUnit : () }
+    responsivePanelHeight : EngineBuilder -> EngineBuilder
     responsivePanelHeight =
         cssUnitHeight Unit.Vh
             >> slidePanelIn
@@ -631,7 +631,7 @@ cssUnitHeight =
 
 {-| Set the global delay for all animations in this builder.
 
-    introAnim : AnimBuilder { eng | withTiming : () } -> AnimBuilder { eng | withTiming : () }
+    introAnim : EngineBuilder -> EngineBuilder
     introAnim =
         delay 500
             >> fadeInHeader
@@ -646,7 +646,7 @@ delay =
 
 {-| Set the global duration for all animations in this builder.
 
-    introAnim : AnimBuilder { eng | withTiming : () } -> AnimBuilder { eng | withTiming : () }
+    introAnim : EngineBuilder -> EngineBuilder
     introAnim =
         duration 500
             >> fadeInHeader
@@ -661,7 +661,7 @@ duration =
 
 {-| Set the global speed for all animations in this builder.
 
-    introAnim : AnimBuilder { eng | withTiming : () } -> AnimBuilder { eng | withTiming : () }
+    introAnim : EngineBuilder -> EngineBuilder
     introAnim =
         speed 300
             >> slideDownHeader
