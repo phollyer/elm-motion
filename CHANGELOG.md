@@ -21,6 +21,19 @@ The two version lines are **not kept in lockstep**. The npm companion can ship J
 
 Nothing
 
+## [2.1.3] - 2026-08-05 (elm)
+
+Documentation-only patch release - no API changes.
+
+### Fixed
+
+- **(docs)** Fixed incorrect code examples across five public modules:
+  - `Anim.Engine.Keyframe`: `events` and `eventsStopPropagation` examples showed a spurious `String` first argument that does not exist in the actual `(AnimMsg -> msg) -> List (Html.Attribute msg)` signature.
+  - `Anim.Engine.Transition`: same spurious-argument fix for `events`/`eventsStopPropagation`; `cssUnit`, `cssUnitX`, `cssUnitY`, `cssUnitZ`, `cssUnitWidth`, `cssUnitHeight`, `delay`, `duration`, and `speed` examples annotated helper functions as `AnimBuilder { eng | with... }` instead of `EngineBuilder`.
+  - `Anim.Engine.ScrollTimeline`: `spring`, `cssUnit`, `cssUnitX`, `cssUnitY`, and `cssUnitZ` examples had the same stale `AnimBuilder { eng | with... }` annotation instead of `EngineBuilder`.
+  - `Anim.Engine.ViewTimeline`: same five functions as ScrollTimeline.
+  - `Anim.Property.Custom`: the module-level Clamping section example called `Custom.begin Px)` — `Px` is a `Unit`, not a `Property`, there was a stray `)`, and the `>> Custom.to size` step was missing.
+
 ## [2.1.2] - 2026-08-03 (elm)
 
 ### Fixed
@@ -116,6 +129,7 @@ Initial release of the `@phollyer/elm-motion` JavaScript companion. The in-repo 
 - ESM (`elm-motion.mjs`) and standalone browser (IIFE, global `ElmMotion`, `elm-motion.js`) builds, plus TypeScript definitions (`elm-motion.d.ts`), all shipped in `dist/`.
 - `engines` field (`node >= 18`) declared on the published package.
 
+[2.1.3]: https://github.com/phollyer/elm-motion/compare/2.1.2...2.1.3
 [2.1.2]: https://github.com/phollyer/elm-motion/compare/2.1.1...2.1.2
 [2.1.1]: https://github.com/phollyer/elm-motion/compare/2.1.0...2.1.1
 [2.1.0]: https://github.com/phollyer/elm-motion/compare/2.0.0...2.1.0
