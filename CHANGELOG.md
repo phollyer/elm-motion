@@ -21,6 +21,12 @@ The two version lines are **not kept in lockstep**. The npm companion can ship J
 
 Nothing
 
+## [2.1.4] - 2026-08-08 (elm)
+
+### Fixed
+
+**(elm)** Changing CSS Unit's across the same animation group with new animations now persists the new Unit correctly. This is an internal fix, no public facing modules are affected. Behaviour changes, but now behaves as expected.
+
 ## [2.1.3] - 2026-08-05 (elm)
 
 Documentation-only patch release - no API changes.
@@ -129,6 +135,7 @@ Initial release of the `@phollyer/elm-motion` JavaScript companion. The in-repo 
 - ESM (`elm-motion.mjs`) and standalone browser (IIFE, global `ElmMotion`, `elm-motion.js`) builds, plus TypeScript definitions (`elm-motion.d.ts`), all shipped in `dist/`.
 - `engines` field (`node >= 18`) declared on the published package.
 
+[2.1.4]: https://github.com/phollyer/elm-motion/compare/2.1.3...2.1.4
 [2.1.3]: https://github.com/phollyer/elm-motion/compare/2.1.2...2.1.3
 [2.1.2]: https://github.com/phollyer/elm-motion/compare/2.1.1...2.1.2
 [2.1.1]: https://github.com/phollyer/elm-motion/compare/2.1.0...2.1.1
