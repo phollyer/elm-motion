@@ -64,6 +64,7 @@ module Anim.Internal.Builder exposing
     , getCurrentAnimGroupConfig
     , getCurrentAnimGroupName
     , getCurrentAnimationConfig
+    , getCssUnitAxes
     , getDefaults
     , getDelay
     , getDelayWithDefault
@@ -79,17 +80,20 @@ module Anim.Internal.Builder exposing
     , getIterations
     , getLatestAnimateConfig
     , getPerspectiveOriginInitCssUnitAxes
+    , getPerspectiveOriginCssUnitAxes
     , getRuntimeBaseline
     , getScrollAxis
     , getScrollEmitProgress
     , getScrollEmitProgressFor
     , getScrollSource
+    , getSizeCssUnitAxes
     , getSizeInitCssUnitAxes
     , getSpring
     , getTimeSpec
     , getTimeSpecWithDefault
     , getTransformOrder
     , getTranslateInitCssUnitAxes
+    , getTranslateCssUnitAxes
     , getUpdateThrottle
     , getUpdateThrottleFor
     , getViewRangeEnd
@@ -304,6 +308,7 @@ type alias AnimGroupData =
     { currentAnimGroup : Maybe AnimGroupName
     , animGroups : AnimGroups AnimGroupConfig
     , groupDefaults : AnimGroups DefaultsConfig
+    , cssUnitOverrides : CssUnitStore.Store
     , frozenAxes : Dict String (List String)
     , touchedAxes : Dict ( AnimGroupName, String ) (Set String)
     }
@@ -597,6 +602,7 @@ initAnimation =
     { currentAnimGroup = Nothing
     , animGroups = AnimGroups.init
     , groupDefaults = AnimGroups.init
+    , cssUnitOverrides = CssUnitStore.empty
     , frozenAxes = Dict.empty
     , touchedAxes = Dict.empty
     }
@@ -1602,6 +1608,19 @@ getDelayWithDefault (AnimBuilder data) =
     (getScopedDefaults (AnimBuilder data)).globalDelay |> Maybe.withDefault 0
 
 
+getCssUnitAxes : AnimBuilder eng -> InternalUnit.CssUnitAxes
+getCssUnitAxes (AnimBuilder data) =
+    (getScopedDefaults (AnimBuilder data)).globalCssUnit
+
+
+getSizeCssUnitAxes : AnimGroupName -> AnimBuilder eng -> InternalUnit.CssUnitAxes
+getSizeCssUnitAxes animGroupName ((AnimBuilder data) as builder) =
+    CssUnitStore.getAxes animGroupName
+        { x = CssUnitStore.sizeWidth, y = CssUnitStore.sizeHeight, z = "" }
+        data.animation.cssUnitOverrides
+        |> InternalUnit.mergeBaselineUnits (Just ((getScopedDefaults builder).globalSizeCssUnit))
+
+
 perspectiveOriginStoreAxes : DefaultsConfig -> AnimGroupName -> InternalUnit.CssUnitAxes
 perspectiveOriginStoreAxes defaults animGroupName =
     CssUnitStore.getAxes animGroupName
@@ -1706,52 +1725,47 @@ cssUnit unit (AnimBuilder data) =
 
 cssUnitX : Unit -> AnimBuilder eng -> AnimBuilder eng
 cssUnitX unit (AnimBuilder data) =
-    let
-        defs =
-            data.defaults
-    in
-    AnimBuilder
-        { data | defaults = { defs | globalCssUnit = InternalUnit.setCssUnitX unit defs.globalCssUnit } }
+    updateScopedDefaults
+        (\defs ->
+            { defs | globalCssUnit = InternalUnit.setCssUnitX unit defs.globalCssUnit }
+        )
+        (AnimBuilder data)
 
 
 cssUnitY : Unit -> AnimBuilder eng -> AnimBuilder eng
 cssUnitY unit (AnimBuilder data) =
-    let
-        defs =
-            data.defaults
-    in
-    AnimBuilder
-        { data | defaults = { defs | globalCssUnit = InternalUnit.setCssUnitY unit defs.globalCssUnit } }
+    updateScopedDefaults
+        (\defs ->
+            { defs | globalCssUnit = InternalUnit.setCssUnitY unit defs.globalCssUnit }
+        )
+        (AnimBuilder data)
 
 
 cssUnitZ : Unit -> AnimBuilder eng -> AnimBuilder eng
 cssUnitZ unit (AnimBuilder data) =
-    let
-        defs =
-            data.defaults
-    in
-    AnimBuilder
-        { data | defaults = { defs | globalCssUnit = InternalUnit.setCssUnitZ unit defs.globalCssUnit } }
+    updateScopedDefaults
+        (\defs ->
+            { defs | globalCssUnit = InternalUnit.setCssUnitZ unit defs.globalCssUnit }
+        )
+        (AnimBuilder data)
 
 
 cssUnitWidth : Unit -> AnimBuilder eng -> AnimBuilder eng
 cssUnitWidth unit (AnimBuilder data) =
-    let
-        defs =
-            data.defaults
-    in
-    AnimBuilder
-        { data | defaults = { defs | globalSizeCssUnit = InternalUnit.setCssUnitX unit defs.globalSizeCssUnit } }
+    updateScopedDefaults
+        (\defs ->
+            { defs | globalSizeCssUnit = InternalUnit.setCssUnitX unit defs.globalSizeCssUnit }
+        )
+        (AnimBuilder data)
 
 
 cssUnitHeight : Unit -> AnimBuilder eng -> AnimBuilder eng
 cssUnitHeight unit (AnimBuilder data) =
-    let
-        defs =
-            data.defaults
-    in
-    AnimBuilder
-        { data | defaults = { defs | globalSizeCssUnit = InternalUnit.setCssUnitY unit defs.globalSizeCssUnit } }
+    updateScopedDefaults
+        (\defs ->
+            { defs | globalSizeCssUnit = InternalUnit.setCssUnitY unit defs.globalSizeCssUnit }
+        )
+        (AnimBuilder data)
 
 
 writeCssUnit : Maybe AnimGroupName -> String -> Unit -> AnimBuilder eng -> AnimBuilder eng
@@ -1765,8 +1779,18 @@ writeCssUnit maybeGroup slot unit (AnimBuilder data) =
                 let
                     defs =
                         data.defaults
+
+                    animation =
+                        data.animation
                 in
-                AnimBuilder { data | defaults = { defs | cssUnits = CssUnitStore.set group slot unit defs.cssUnits } }
+                AnimBuilder
+                    { data
+                        | defaults = { defs | cssUnits = CssUnitStore.set group slot unit defs.cssUnits }
+                        , animation =
+                            { animation
+                                | cssUnitOverrides = CssUnitStore.set group slot unit animation.cssUnitOverrides
+                            }
+                    }
 
             else
                 AnimBuilder data
@@ -1775,6 +1799,16 @@ writeCssUnit maybeGroup slot unit (AnimBuilder data) =
 writeCssUnits : Maybe AnimGroupName -> List String -> Unit -> AnimBuilder eng -> AnimBuilder eng
 writeCssUnits maybeGroup slots unit builder =
     List.foldl (\s b -> writeCssUnit maybeGroup s unit b) builder slots
+
+
+unitTargetGroup : BuilderData -> Maybe AnimGroupName -> Maybe AnimGroupName
+unitTargetGroup data initGroup =
+    case data.animation.currentAnimGroup of
+        Just animGroupName ->
+            Just animGroupName
+
+        Nothing ->
+            initGroup
 
 
 
@@ -1788,6 +1822,14 @@ getPerspectiveOriginInitCssUnitAxes group (AnimBuilder data) =
     CssUnitStore.getAxes group
         { x = CssUnitStore.perspectiveOriginX, y = CssUnitStore.perspectiveOriginY, z = "" }
         data.defaults.cssUnits
+
+
+getPerspectiveOriginCssUnitAxes : AnimGroupName -> AnimBuilder eng -> InternalUnit.CssUnitAxes
+getPerspectiveOriginCssUnitAxes animGroupName ((AnimBuilder data) as builder) =
+    CssUnitStore.getAxes animGroupName
+        { x = CssUnitStore.perspectiveOriginX, y = CssUnitStore.perspectiveOriginY, z = "" }
+        data.animation.cssUnitOverrides
+        |> InternalUnit.mergeBaselineUnits (Just ((getScopedDefaults builder).globalCssUnit))
 
 
 registerPerspectiveOriginInitAxes : List String -> AnimBuilder eng -> AnimBuilder eng
@@ -1806,7 +1848,7 @@ setPerspectiveOriginCurrentGroup name (AnimBuilder data) =
 
 setPerspectiveOriginInitCssUnit : Unit -> AnimBuilder eng -> AnimBuilder eng
 setPerspectiveOriginInitCssUnit unit ((AnimBuilder data) as builder) =
-    writeCssUnits data.defaults.perspectiveOriginCurrentGroup
+    writeCssUnits (unitTargetGroup data data.defaults.perspectiveOriginCurrentGroup)
         [ CssUnitStore.perspectiveOriginX, CssUnitStore.perspectiveOriginY ]
         unit
         builder
@@ -1814,12 +1856,12 @@ setPerspectiveOriginInitCssUnit unit ((AnimBuilder data) as builder) =
 
 setPerspectiveOriginInitCssUnitX : Unit -> AnimBuilder eng -> AnimBuilder eng
 setPerspectiveOriginInitCssUnitX unit ((AnimBuilder data) as builder) =
-    writeCssUnit data.defaults.perspectiveOriginCurrentGroup CssUnitStore.perspectiveOriginX unit builder
+    writeCssUnit (unitTargetGroup data data.defaults.perspectiveOriginCurrentGroup) CssUnitStore.perspectiveOriginX unit builder
 
 
 setPerspectiveOriginInitCssUnitY : Unit -> AnimBuilder eng -> AnimBuilder eng
 setPerspectiveOriginInitCssUnitY unit ((AnimBuilder data) as builder) =
-    writeCssUnit data.defaults.perspectiveOriginCurrentGroup CssUnitStore.perspectiveOriginY unit builder
+    writeCssUnit (unitTargetGroup data data.defaults.perspectiveOriginCurrentGroup) CssUnitStore.perspectiveOriginY unit builder
 
 
 
@@ -1851,7 +1893,7 @@ setSizeCurrentGroup name (AnimBuilder data) =
 
 setSizeInitCssUnit : Unit -> AnimBuilder eng -> AnimBuilder eng
 setSizeInitCssUnit unit ((AnimBuilder data) as builder) =
-    writeCssUnits data.defaults.sizeCurrentGroup
+    writeCssUnits (unitTargetGroup data data.defaults.sizeCurrentGroup)
         [ CssUnitStore.sizeWidth, CssUnitStore.sizeHeight ]
         unit
         builder
@@ -1859,12 +1901,12 @@ setSizeInitCssUnit unit ((AnimBuilder data) as builder) =
 
 setSizeInitCssUnitWidth : Unit -> AnimBuilder eng -> AnimBuilder eng
 setSizeInitCssUnitWidth unit ((AnimBuilder data) as builder) =
-    writeCssUnit data.defaults.sizeCurrentGroup CssUnitStore.sizeWidth unit builder
+    writeCssUnit (unitTargetGroup data data.defaults.sizeCurrentGroup) CssUnitStore.sizeWidth unit builder
 
 
 setSizeInitCssUnitHeight : Unit -> AnimBuilder eng -> AnimBuilder eng
 setSizeInitCssUnitHeight unit ((AnimBuilder data) as builder) =
-    writeCssUnit data.defaults.sizeCurrentGroup CssUnitStore.sizeHeight unit builder
+    writeCssUnit (unitTargetGroup data data.defaults.sizeCurrentGroup) CssUnitStore.sizeHeight unit builder
 
 
 
@@ -1878,6 +1920,14 @@ getTranslateInitCssUnitAxes group (AnimBuilder data) =
     CssUnitStore.getAxes group
         { x = CssUnitStore.translateX, y = CssUnitStore.translateY, z = CssUnitStore.translateZ }
         data.defaults.cssUnits
+
+
+getTranslateCssUnitAxes : AnimGroupName -> AnimBuilder eng -> InternalUnit.CssUnitAxes
+getTranslateCssUnitAxes animGroupName ((AnimBuilder data) as builder) =
+    CssUnitStore.getAxes animGroupName
+        { x = CssUnitStore.translateX, y = CssUnitStore.translateY, z = CssUnitStore.translateZ }
+        data.animation.cssUnitOverrides
+        |> InternalUnit.mergeBaselineUnits (Just ((getScopedDefaults builder).globalCssUnit))
 
 
 registerTranslateInitAxes : List String -> AnimBuilder eng -> AnimBuilder eng
@@ -1896,7 +1946,7 @@ setTranslateCurrentGroup name (AnimBuilder data) =
 
 setTranslateInitCssUnit : Unit -> AnimBuilder eng -> AnimBuilder eng
 setTranslateInitCssUnit unit ((AnimBuilder data) as builder) =
-    writeCssUnits data.defaults.translateCurrentGroup
+    writeCssUnits (unitTargetGroup data data.defaults.translateCurrentGroup)
         [ CssUnitStore.translateX, CssUnitStore.translateY, CssUnitStore.translateZ ]
         unit
         builder
@@ -1904,17 +1954,17 @@ setTranslateInitCssUnit unit ((AnimBuilder data) as builder) =
 
 setTranslateInitCssUnitX : Unit -> AnimBuilder eng -> AnimBuilder eng
 setTranslateInitCssUnitX unit ((AnimBuilder data) as builder) =
-    writeCssUnit data.defaults.translateCurrentGroup CssUnitStore.translateX unit builder
+    writeCssUnit (unitTargetGroup data data.defaults.translateCurrentGroup) CssUnitStore.translateX unit builder
 
 
 setTranslateInitCssUnitY : Unit -> AnimBuilder eng -> AnimBuilder eng
 setTranslateInitCssUnitY unit ((AnimBuilder data) as builder) =
-    writeCssUnit data.defaults.translateCurrentGroup CssUnitStore.translateY unit builder
+    writeCssUnit (unitTargetGroup data data.defaults.translateCurrentGroup) CssUnitStore.translateY unit builder
 
 
 setTranslateInitCssUnitZ : Unit -> AnimBuilder eng -> AnimBuilder eng
 setTranslateInitCssUnitZ unit ((AnimBuilder data) as builder) =
-    writeCssUnit data.defaults.translateCurrentGroup CssUnitStore.translateZ unit builder
+    writeCssUnit (unitTargetGroup data data.defaults.translateCurrentGroup) CssUnitStore.translateZ unit builder
 
 
 

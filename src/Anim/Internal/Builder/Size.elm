@@ -89,13 +89,17 @@ for animGroupName builder =
         storeUnits =
             Builder.getSizeInitCssUnitAxes animGroupName builder
 
+        scopedGlobalUnits =
+            Builder.getSizeCssUnitAxes animGroupName builder
+
         baseConfig =
             PropertyBuilder.for animGroupName "size" PropertyBaselines.getSize extractExisting defaultConfig builder
 
         config =
             { baseConfig
                 | cssUnit =
-                    InternalUnit.mergeBaselineUnits baselineUnits baseConfig.cssUnit
+                    InternalUnit.mergeBaselineUnits (Just scopedGlobalUnits) baseConfig.cssUnit
+                        |> InternalUnit.mergeBaselineUnits baselineUnits
                         |> InternalUnit.mergeBaselineUnits (Just storeUnits)
             }
     in

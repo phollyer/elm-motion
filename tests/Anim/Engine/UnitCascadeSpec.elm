@@ -12,7 +12,9 @@ Verifies the resolution order documented in `Anim.Unit`:
 -}
 
 import Anim.Engine.Keyframe as Keyframe
+import Anim.Engine.ScrollTimeline as ScrollTimeline
 import Anim.Engine.Transition as Transition
+import Anim.Engine.ViewTimeline as ViewTimeline
 import Anim.Engine.WAAPI as WAAPI
 import Anim.Internal.Builder as Builder
 import Anim.Internal.Engine.Shared.AnimGroups as AnimGroups
@@ -33,6 +35,7 @@ suite =
         [ translateCascade
         , sizeCascade
         , perspectiveOriginCascade
+        , sequentialUnitOverride
         , engineDefaults
         ]
 
@@ -116,7 +119,7 @@ firstPerspectiveOriginLength builder =
             )
 
 
-animateTranslate : Builder.AnimBuilder { eng | withTiming : () } -> Builder.AnimBuilder { eng | withTiming : () }
+animateTranslate : Builder.AnimBuilder eng -> Builder.AnimBuilder eng
 animateTranslate =
     Builder.for "box"
         >> Translate.begin
@@ -124,7 +127,7 @@ animateTranslate =
         >> Translate.end
 
 
-animateSize : Builder.AnimBuilder { eng | withTiming : () } -> Builder.AnimBuilder { eng | withTiming : () }
+animateSize : Builder.AnimBuilder eng -> Builder.AnimBuilder eng
 animateSize =
     Builder.for "box"
         >> Size.begin
@@ -132,12 +135,24 @@ animateSize =
         >> Size.end
 
 
-animatePerspectiveOrigin : Builder.AnimBuilder { eng | withTiming : () } -> Builder.AnimBuilder { eng | withTiming : () }
+animatePerspectiveOrigin : Builder.AnimBuilder eng -> Builder.AnimBuilder eng
 animatePerspectiveOrigin =
     Builder.for "scene"
         >> PerspectiveOrigin.begin
         >> PerspectiveOrigin.toX 25
         >> PerspectiveOrigin.end
+
+
+advanceBuilderAfterAnimate : Builder.AnimBuilder eng -> Builder.AnimBuilder eng
+advanceBuilderAfterAnimate builder =
+    let
+        processed =
+            Builder.process builder
+    in
+    builder
+        |> Builder.addAnimationToHistory processed
+        |> Builder.mergeBaselines
+        |> Builder.clearAnimData
 
 
 
@@ -226,6 +241,174 @@ perspectiveOriginCascade =
                     |> animatePerspectiveOrigin
                     |> firstPerspectiveOriginLength
                     |> Expect.equal (Just Unit.Px)
+        ]
+
+
+
+-- ============================================================
+-- SEQUENTIAL OVERRIDE
+-- ============================================================
+
+
+sequentialUnitOverride : Test
+sequentialUnitOverride =
+    describe "Sequential animate unit override"
+        [ test "Translate property unit overrides a completed animation baseline" <|
+            \_ ->
+                let
+                    initialized =
+                        Builder.init
+                            [ Translate.initX "box" 0
+                                >> Translate.cssUnitX Unit.Percent
+                            ]
+                            |> Builder.mergeBaselines
+                            |> Builder.clearAnimData
+
+                    afterPercentPhase =
+                        initialized
+                            |> animateTranslate
+                            |> advanceBuilderAfterAnimate
+
+                    pixelPhase =
+                        afterPercentPhase
+                            |> Builder.for "box"
+                            |> Translate.cssUnitX Unit.Px
+                            |> Translate.begin
+                            |> Translate.toX 20
+                            |> Translate.end
+                in
+                pixelPhase
+                    |> firstTranslateLength
+                    |> Expect.equal (Just Unit.Px)
+        , test "PerspectiveOrigin property unit overrides a completed animation baseline" <|
+            \_ ->
+                let
+                    initialized =
+                        Builder.init
+                            [ PerspectiveOrigin.initX "scene" 0
+                                >> PerspectiveOrigin.cssUnitX Unit.Percent
+                            ]
+                            |> Builder.mergeBaselines
+                            |> Builder.clearAnimData
+
+                    afterPercentPhase =
+                        initialized
+                            |> animatePerspectiveOrigin
+                            |> advanceBuilderAfterAnimate
+
+                    pixelPhase =
+                        afterPercentPhase
+                            |> Builder.for "scene"
+                            |> PerspectiveOrigin.cssUnitX Unit.Px
+                            |> PerspectiveOrigin.begin
+                            |> PerspectiveOrigin.toX 20
+                            |> PerspectiveOrigin.end
+                in
+                pixelPhase
+                    |> firstPerspectiveOriginLength
+                    |> Expect.equal (Just Unit.Px)
+        , test "Translate second phase unit overrides first phase unit" <|
+            \_ ->
+                let
+                    afterPhase1 =
+                        initBuilder
+                            |> Keyframe.cssUnit Unit.Cqw
+                            |> animateTranslate
+                            |> advanceBuilderAfterAnimate
+
+                    phase2 =
+                        afterPhase1
+                            |> Keyframe.cssUnit Unit.Vw
+                            |> animateTranslate
+                in
+                phase2
+                    |> firstTranslateLength
+                    |> Expect.equal (Just Unit.Vw)
+        , test "Size second phase unit overrides first phase unit" <|
+            \_ ->
+                let
+                    afterPhase1 =
+                        initBuilder
+                            |> Keyframe.cssUnit Unit.Percent
+                            |> animateSize
+                            |> advanceBuilderAfterAnimate
+
+                    phase2 =
+                        afterPhase1
+                            |> Keyframe.cssUnit Unit.Rem
+                            |> animateSize
+                in
+                phase2
+                    |> firstSizeLength
+                    |> Expect.equal (Just Unit.Rem)
+        , test "Transition second phase unit overrides first phase unit" <|
+            \_ ->
+                let
+                    afterPhase1 =
+                        initBuilder
+                            |> Transition.cssUnit Unit.Cqw
+                            |> animateTranslate
+                            |> advanceBuilderAfterAnimate
+
+                    phase2 =
+                        afterPhase1
+                            |> Transition.cssUnit Unit.Vw
+                            |> animateTranslate
+                in
+                phase2
+                    |> firstTranslateLength
+                    |> Expect.equal (Just Unit.Vw)
+        , test "WAAPI second phase unit overrides first phase unit" <|
+            \_ ->
+                let
+                    afterPhase1 =
+                        initBuilder
+                            |> WAAPI.cssUnit Unit.Percent
+                            |> animateTranslate
+                            |> advanceBuilderAfterAnimate
+
+                    phase2 =
+                        afterPhase1
+                            |> WAAPI.cssUnit Unit.Rem
+                            |> animateTranslate
+                in
+                phase2
+                    |> firstTranslateLength
+                    |> Expect.equal (Just Unit.Rem)
+        , test "ScrollTimeline second phase unit overrides first phase unit" <|
+            \_ ->
+                let
+                    afterPhase1 =
+                        initBuilder
+                            |> ScrollTimeline.cssUnit Unit.Cqw
+                            |> animateTranslate
+                            |> advanceBuilderAfterAnimate
+
+                    phase2 =
+                        afterPhase1
+                            |> ScrollTimeline.cssUnit Unit.Vw
+                            |> animateTranslate
+                in
+                phase2
+                    |> firstTranslateLength
+                    |> Expect.equal (Just Unit.Vw)
+        , test "ViewTimeline second phase unit overrides first phase unit" <|
+            \_ ->
+                let
+                    afterPhase1 =
+                        initBuilder
+                            |> ViewTimeline.cssUnit Unit.Cqh
+                            |> animateTranslate
+                            |> advanceBuilderAfterAnimate
+
+                    phase2 =
+                        afterPhase1
+                            |> ViewTimeline.cssUnit Unit.Vh
+                            |> animateTranslate
+                in
+                phase2
+                    |> firstTranslateLength
+                    |> Expect.equal (Just Unit.Vh)
         ]
 
 

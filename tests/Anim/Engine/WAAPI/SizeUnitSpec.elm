@@ -39,6 +39,51 @@ suite =
         , unitTest "emits cqh when Unit.Cqh is set" (Just Unit.Cqh) "cqh"
         , unitTest "emits cqmin when Unit.Cqmin is set" (Just Unit.Cqmin) "cqmin"
         , unitTest "emits cqmax when Unit.Cqmax is set" (Just Unit.Cqmax) "cqmax"
+        , test "property unit targets the group selected before Size.begin" <|
+            \_ ->
+                let
+                    initialized =
+                        Builder.init
+                            [ Size.initHW "leftLine" 3 0
+                                >> Size.cssUnitW Unit.Percent
+                            , Size.initHW "rightLine" 3 0
+                                >> Size.cssUnitW Unit.Percent
+                            ]
+                            |> Builder.mergeBaselines
+                            |> Builder.clearAnimData
+
+                    percentPhase =
+                        initialized
+                            |> Builder.for "leftLine"
+                            |> Size.begin
+                            |> Size.toW 100
+                            |> Size.end
+
+                    afterPercentPhase =
+                        let
+                            percentProcessed =
+                                Builder.process percentPhase
+                        in
+                        percentPhase
+                            |> Builder.addAnimationToHistory percentProcessed
+                            |> Builder.mergeBaselines
+                            |> Builder.clearAnimData
+
+                    processed =
+                        afterPercentPhase
+                            |> Builder.for "leftLine"
+                            |> Size.cssUnitW Unit.Px
+                            |> Size.begin
+                            |> Size.toW 1
+                            |> Size.end
+                            |> Builder.process
+
+                    json =
+                        Encoder.encode AnimGroups.init processed |> Encode.encode 0
+                in
+                json
+                    |> decodeSizeUnit "leftLine"
+                    |> Expect.equal (Just "px")
         ]
 
 

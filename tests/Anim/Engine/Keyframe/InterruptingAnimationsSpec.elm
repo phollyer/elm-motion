@@ -25,6 +25,17 @@ moveBoxX x =
         >> Translate.end
 
 
+moveBoxXWithUnit : Unit -> Float -> Keyframe.EngineBuilder -> Keyframe.EngineBuilder
+moveBoxXWithUnit unit x =
+    Keyframe.cssUnitX unit
+        >> Keyframe.for animGroup
+        >> Translate.begin
+        >> Translate.toX x
+        >> Translate.speed 100
+        >> Translate.easing BounceOut
+        >> Translate.end
+
+
 initBuilder : Keyframe.EngineBuilder -> Keyframe.EngineBuilder
 initBuilder =
     Translate.initXY animGroup 0 0
@@ -110,6 +121,74 @@ suite =
                             |> String.contains "translate3d(88px"
                             |> Expect.equal False
                             |> Expect.onFail ("Baseline regressed to px unit; got:\n" ++ css)
+                    ]
+                    ()
+        , test "mid-stream second animate switches to the new unit immediately" <|
+            \_ ->
+                let
+                    phase1 =
+                        Keyframe.animate
+                            (Keyframe.init [ initBuilder ])
+                            (moveBoxX 88)
+
+                    phase2 =
+                        Keyframe.animate phase1 (moveBoxXWithUnit Vw 12)
+
+                    css =
+                        Keyframe.maybeString animGroup phase2
+                            |> Maybe.withDefault ""
+                in
+                Expect.all
+                    [ \_ ->
+                        css
+                            |> String.contains "translate3d(88vw"
+                            |> Expect.equal True
+                            |> Expect.onFail ("Expected interruption baseline to adopt new unit immediately; got:\n" ++ css)
+                    , \_ ->
+                        css
+                            |> String.contains "translate3d(12vw"
+                            |> Expect.equal True
+                            |> Expect.onFail ("Expected second phase target to use new unit; got:\n" ++ css)
+                    , \_ ->
+                        css
+                            |> String.contains "translate3d(88cqw"
+                            |> Expect.equal False
+                            |> Expect.onFail ("Expected old unit to be replaced in second phase keyframes; got:\n" ++ css)
+                    ]
+                    ()
+        , test "idle second animate still applies the new unit and plays forward" <|
+            \_ ->
+                let
+                    phase1 =
+                        Keyframe.animate
+                            (Keyframe.init [ initBuilder ])
+                            (moveBoxX 88)
+
+                    stopped =
+                        Keyframe.stop animGroup phase1
+
+                    phase2 =
+                        Keyframe.animate stopped (moveBoxXWithUnit Vw 20)
+
+                    css =
+                        Keyframe.maybeString animGroup phase2
+                            |> Maybe.withDefault ""
+                in
+                Expect.all
+                    [ \_ ->
+                        css
+                            |> String.contains "@keyframes"
+                            |> Expect.equal True
+                    , \_ ->
+                        css
+                            |> String.contains "translate3d(88vw"
+                            |> Expect.equal True
+                            |> Expect.onFail ("Expected phase2 start to use new unit from idle baseline; got:\n" ++ css)
+                    , \_ ->
+                        css
+                            |> String.contains "translate3d(20vw"
+                            |> Expect.equal True
+                            |> Expect.onFail ("Expected phase2 end to use new unit; got:\n" ++ css)
                     ]
                     ()
         ]

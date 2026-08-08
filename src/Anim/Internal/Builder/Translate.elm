@@ -107,13 +107,17 @@ for animGroupName builder =
         storeUnits =
             Builder.getTranslateInitCssUnitAxes animGroupName builder
 
+        scopedGlobalUnits =
+            Builder.getTranslateCssUnitAxes animGroupName builder
+
         baseConfig =
             PropertyBuilder.for animGroupName "translate" PropertyBaselines.getTranslate extractExisting defaultConfig builder
 
         config =
             { baseConfig
                 | cssUnit =
-                    InternalUnit.mergeBaselineUnits baselineUnits baseConfig.cssUnit
+                    InternalUnit.mergeBaselineUnits (Just scopedGlobalUnits) baseConfig.cssUnit
+                        |> InternalUnit.mergeBaselineUnits baselineUnits
                         |> InternalUnit.mergeBaselineUnits (Just storeUnits)
             }
     in

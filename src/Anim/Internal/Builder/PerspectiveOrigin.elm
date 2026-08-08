@@ -88,13 +88,17 @@ for animGroupName builder =
         storeUnits =
             Builder.getPerspectiveOriginInitCssUnitAxes animGroupName builder
 
+        scopedGlobalUnits =
+            Builder.getPerspectiveOriginCssUnitAxes animGroupName builder
+
         baseConfig =
             PropertyBuilder.for animGroupName "perspectiveOrigin" PropertyBaselines.getPerspectiveOrigin extractExisting defaultConfig builder
 
         config =
             { baseConfig
                 | cssUnit =
-                    InternalUnit.mergeBaselineUnits baselineUnits baseConfig.cssUnit
+                    InternalUnit.mergeBaselineUnits (Just scopedGlobalUnits) baseConfig.cssUnit
+                        |> InternalUnit.mergeBaselineUnits baselineUnits
                         |> InternalUnit.mergeBaselineUnits (Just storeUnits)
             }
     in
