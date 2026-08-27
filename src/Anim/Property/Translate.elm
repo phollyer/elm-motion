@@ -116,7 +116,7 @@ for patterns and examples.
 
 Keep translate values within a range you choose. Values outside the range are clamped
 to the nearest boundary. An animation that is within the bounds, either mid-flight or
-paused, will me remapped proportionally inside the bounds.
+paused, will be remapped proportionally inside the bounds.
 
 @docs Bounds, AxisBounds, bounds
 
@@ -172,9 +172,9 @@ Snap to a specific position, cancelling any in-flight animation on this property
 
 -}
 
-import Anim.Internal.Builder as SB exposing (AnimBuilder)
+import Anim.Internal.Builder as InternalBuilder exposing (AnimBuilder)
 import Anim.Internal.Builder.CssUnitStore as CssUnitStore
-import Anim.Internal.Builder.Translate as TB
+import Anim.Internal.Builder.Translate as TranslateBuilder exposing (TranslateBuilder)
 import Anim.Unit exposing (Unit)
 import Motion.Easing exposing (Easing)
 import Motion.Spring exposing (Spring)
@@ -195,7 +195,7 @@ type alias AnimGroupName =
 {-| Builder type for translate animations.
 -}
 type alias Builder eng =
-    TB.TranslateBuilder eng
+    TranslateBuilder eng
 
 
 
@@ -218,11 +218,11 @@ type alias Builder eng =
 -}
 initXYZ : AnimGroupName -> Float -> Float -> Float -> AnimBuilder eng -> AnimBuilder eng
 initXYZ animationKey x y z =
-    TB.for animationKey
+    TranslateBuilder.for animationKey
         >> fromXYZ x y z
-        >> TB.toXYZ x y z
-        >> TB.build
-        >> SB.registerTranslateInitAxes [ CssUnitStore.translateX, CssUnitStore.translateY, CssUnitStore.translateZ ]
+        >> TranslateBuilder.toXYZ x y z
+        >> TranslateBuilder.build
+        >> InternalBuilder.registerTranslateInitAxes [ CssUnitStore.translateX, CssUnitStore.translateY, CssUnitStore.translateZ ]
 
 
 {-| Set the initial X and Y position.
@@ -230,11 +230,11 @@ initXYZ animationKey x y z =
 initXY : AnimGroupName -> Float -> Float -> AnimBuilder eng -> AnimBuilder eng
 initXY animationKey x y animBuilder =
     animBuilder
-        |> TB.for animationKey
+        |> TranslateBuilder.for animationKey
         |> fromXY x y
-        |> TB.toXY x y
-        |> TB.build
-        |> SB.registerTranslateInitAxes [ CssUnitStore.translateX, CssUnitStore.translateY ]
+        |> TranslateBuilder.toXY x y
+        |> TranslateBuilder.build
+        |> InternalBuilder.registerTranslateInitAxes [ CssUnitStore.translateX, CssUnitStore.translateY ]
 
 
 {-| Set the initial X and Z position.
@@ -242,11 +242,11 @@ initXY animationKey x y animBuilder =
 initXZ : AnimGroupName -> Float -> Float -> AnimBuilder eng -> AnimBuilder eng
 initXZ animationKey x z animBuilder =
     animBuilder
-        |> TB.for animationKey
+        |> TranslateBuilder.for animationKey
         |> fromXZ x z
-        |> TB.toXZ x z
-        |> TB.build
-        |> SB.registerTranslateInitAxes [ CssUnitStore.translateX, CssUnitStore.translateZ ]
+        |> TranslateBuilder.toXZ x z
+        |> TranslateBuilder.build
+        |> InternalBuilder.registerTranslateInitAxes [ CssUnitStore.translateX, CssUnitStore.translateZ ]
 
 
 {-| Set the initial X position.
@@ -254,11 +254,11 @@ initXZ animationKey x z animBuilder =
 initX : AnimGroupName -> Float -> AnimBuilder eng -> AnimBuilder eng
 initX animationKey x animBuilder =
     animBuilder
-        |> TB.for animationKey
+        |> TranslateBuilder.for animationKey
         |> fromX x
-        |> TB.toX x
-        |> TB.build
-        |> SB.registerTranslateInitAxes [ CssUnitStore.translateX ]
+        |> TranslateBuilder.toX x
+        |> TranslateBuilder.build
+        |> InternalBuilder.registerTranslateInitAxes [ CssUnitStore.translateX ]
 
 
 {-| Set the initial Y and Z position.
@@ -266,11 +266,11 @@ initX animationKey x animBuilder =
 initYZ : AnimGroupName -> Float -> Float -> AnimBuilder eng -> AnimBuilder eng
 initYZ animationKey y z animBuilder =
     animBuilder
-        |> TB.for animationKey
+        |> TranslateBuilder.for animationKey
         |> fromYZ y z
-        |> TB.toYZ y z
-        |> TB.build
-        |> SB.registerTranslateInitAxes [ CssUnitStore.translateY, CssUnitStore.translateZ ]
+        |> TranslateBuilder.toYZ y z
+        |> TranslateBuilder.build
+        |> InternalBuilder.registerTranslateInitAxes [ CssUnitStore.translateY, CssUnitStore.translateZ ]
 
 
 {-| Set the initial Y position.
@@ -278,11 +278,11 @@ initYZ animationKey y z animBuilder =
 initY : AnimGroupName -> Float -> AnimBuilder eng -> AnimBuilder eng
 initY animationKey y animBuilder =
     animBuilder
-        |> TB.for animationKey
+        |> TranslateBuilder.for animationKey
         |> fromY y
-        |> TB.toY y
-        |> TB.build
-        |> SB.registerTranslateInitAxes [ CssUnitStore.translateY ]
+        |> TranslateBuilder.toY y
+        |> TranslateBuilder.build
+        |> InternalBuilder.registerTranslateInitAxes [ CssUnitStore.translateY ]
 
 
 {-| Set the initial Z position.
@@ -290,11 +290,11 @@ initY animationKey y animBuilder =
 initZ : AnimGroupName -> Float -> AnimBuilder eng -> AnimBuilder eng
 initZ animationKey z animBuilder =
     animBuilder
-        |> TB.for animationKey
+        |> TranslateBuilder.for animationKey
         |> fromZ z
-        |> TB.toZ z
-        |> TB.build
-        |> SB.registerTranslateInitAxes [ CssUnitStore.translateZ ]
+        |> TranslateBuilder.toZ z
+        |> TranslateBuilder.build
+        |> InternalBuilder.registerTranslateInitAxes [ CssUnitStore.translateZ ]
 
 
 
@@ -315,12 +315,12 @@ Use this to start configuring a translate animation.
 -}
 begin : AnimBuilder eng -> Builder eng
 begin animBuilder =
-    case SB.getCurrentAnimGroupName animBuilder of
+    case InternalBuilder.getCurrentAnimGroupName animBuilder of
         Just animGroupName ->
-            TB.for animGroupName animBuilder
+            TranslateBuilder.for animGroupName animBuilder
 
         Nothing ->
-            TB.for "" animBuilder
+            TranslateBuilder.for "" animBuilder
 
 
 {-| Complete the [Builder](#Builder) animation configuration and return an `AnimBuilder`
@@ -336,7 +336,7 @@ so you can continue configuring other property animations or execute the animati
 -}
 end : Builder eng -> AnimBuilder eng
 end =
-    TB.build
+    TranslateBuilder.build
 
 
 
@@ -356,49 +356,49 @@ end =
 -}
 fromXYZ : Float -> Float -> Float -> Builder eng -> Builder eng
 fromXYZ =
-    TB.fromXYZ
+    TranslateBuilder.fromXYZ
 
 
 {-| Set the starting X and Y position. Z is left unchanged (or 0 if not set).
 -}
 fromXY : Float -> Float -> Builder eng -> Builder eng
 fromXY =
-    TB.fromXY
+    TranslateBuilder.fromXY
 
 
 {-| Set the starting X and Z position. Y is left unchanged (or 0 if not set).
 -}
 fromXZ : Float -> Float -> Builder eng -> Builder eng
 fromXZ =
-    TB.fromXZ
+    TranslateBuilder.fromXZ
 
 
 {-| Set the starting X position. Y and Z are left unchanged (or 0 if not set).
 -}
 fromX : Float -> Builder eng -> Builder eng
 fromX =
-    TB.fromX
+    TranslateBuilder.fromX
 
 
 {-| Set the starting Y and Z position. X is left unchanged (or 0 if not set).
 -}
 fromYZ : Float -> Float -> Builder eng -> Builder eng
 fromYZ =
-    TB.fromYZ
+    TranslateBuilder.fromYZ
 
 
 {-| Set the starting Y position. X and Z are left unchanged (or 0 if not set).
 -}
 fromY : Float -> Builder eng -> Builder eng
 fromY =
-    TB.fromY
+    TranslateBuilder.fromY
 
 
 {-| Set the starting Z position. X and Y are left unchanged (or 0 if not set).
 -}
 fromZ : Float -> Builder eng -> Builder eng
 fromZ =
-    TB.fromZ
+    TranslateBuilder.fromZ
 
 
 
@@ -411,49 +411,49 @@ fromZ =
 -}
 toXYZ : Float -> Float -> Float -> Builder eng -> Builder eng
 toXYZ =
-    TB.toXYZ
+    TranslateBuilder.toXYZ
 
 
 {-| Set the target X and Y position. Z is left unchanged (or 0 if not set).
 -}
 toXY : Float -> Float -> Builder eng -> Builder eng
 toXY =
-    TB.toXY
+    TranslateBuilder.toXY
 
 
 {-| Set the target X and Z position. Y is left unchanged (or 0 if not set).
 -}
 toXZ : Float -> Float -> Builder eng -> Builder eng
 toXZ =
-    TB.toXZ
+    TranslateBuilder.toXZ
 
 
 {-| Set the target X position. Y and Z are left unchanged (or 0 if not set).
 -}
 toX : Float -> Builder eng -> Builder eng
 toX =
-    TB.toX
+    TranslateBuilder.toX
 
 
 {-| Set the target Y and Z position. X is left unchanged (or 0 if not set).
 -}
 toYZ : Float -> Float -> Builder eng -> Builder eng
 toYZ =
-    TB.toYZ
+    TranslateBuilder.toYZ
 
 
 {-| Set the target Y position. X and Z are left unchanged (or 0 if not set).
 -}
 toY : Float -> Builder eng -> Builder eng
 toY =
-    TB.toY
+    TranslateBuilder.toY
 
 
 {-| Set the target Z position. X and Y are left unchanged (or 0 if not set).
 -}
 toZ : Float -> Builder eng -> Builder eng
 toZ =
-    TB.toZ
+    TranslateBuilder.toZ
 
 
 
@@ -466,49 +466,49 @@ toZ =
 -}
 setXYZ : Float -> Float -> Float -> Builder eng -> Builder eng
 setXYZ =
-    TB.setXYZ
+    TranslateBuilder.setXYZ
 
 
 {-| Snap target X and Y values, preserving the current Z value.
 -}
 setXY : Float -> Float -> Builder eng -> Builder eng
 setXY =
-    TB.setXY
+    TranslateBuilder.setXY
 
 
 {-| Snap target X and Z values, preserving the current Y value.
 -}
 setXZ : Float -> Float -> Builder eng -> Builder eng
 setXZ =
-    TB.setXZ
+    TranslateBuilder.setXZ
 
 
 {-| Snap target X value, preserving the current Y and Z values.
 -}
 setX : Float -> Builder eng -> Builder eng
 setX =
-    TB.setX
+    TranslateBuilder.setX
 
 
 {-| Snap target Y and Z values, preserving the current X value.
 -}
 setYZ : Float -> Float -> Builder eng -> Builder eng
 setYZ =
-    TB.setYZ
+    TranslateBuilder.setYZ
 
 
 {-| Snap target Y value, preserving the current X and Z values.
 -}
 setY : Float -> Builder eng -> Builder eng
 setY =
-    TB.setY
+    TranslateBuilder.setY
 
 
 {-| Snap target Z value, preserving the current X and Y values.
 -}
 setZ : Float -> Builder eng -> Builder eng
 setZ =
-    TB.setZ
+    TranslateBuilder.setZ
 
 
 
@@ -528,49 +528,49 @@ setZ =
 -}
 byXYZ : Float -> Float -> Float -> Builder { eng | withLiveDelta : () } -> Builder { eng | withLiveDelta : () }
 byXYZ =
-    TB.byXYZ
+    TranslateBuilder.byXYZ
 
 
 {-| Move by specific amounts on the X and Y axes. Z is unaffected.
 -}
 byXY : Float -> Float -> Builder { eng | withLiveDelta : () } -> Builder { eng | withLiveDelta : () }
 byXY =
-    TB.byXY
+    TranslateBuilder.byXY
 
 
 {-| Move by specific amounts on the X and Z axes. Y is unaffected.
 -}
 byXZ : Float -> Float -> Builder { eng | withLiveDelta : () } -> Builder { eng | withLiveDelta : () }
 byXZ =
-    TB.byXZ
+    TranslateBuilder.byXZ
 
 
 {-| Move by a specific amount on the X axis. Y and Z are unaffected.
 -}
 byX : Float -> Builder { eng | withLiveDelta : () } -> Builder { eng | withLiveDelta : () }
 byX =
-    TB.byX
+    TranslateBuilder.byX
 
 
 {-| Move by specific amounts on the Y and Z axes. X is unaffected.
 -}
 byYZ : Float -> Float -> Builder { eng | withLiveDelta : () } -> Builder { eng | withLiveDelta : () }
 byYZ =
-    TB.byYZ
+    TranslateBuilder.byYZ
 
 
 {-| Move by a specific amount on the Y axis. X and Z are unaffected.
 -}
 byY : Float -> Builder { eng | withLiveDelta : () } -> Builder { eng | withLiveDelta : () }
 byY =
-    TB.byY
+    TranslateBuilder.byY
 
 
 {-| Move by a specific amount on the Z axis. X and Y are unaffected.
 -}
 byZ : Float -> Builder { eng | withLiveDelta : () } -> Builder { eng | withLiveDelta : () }
 byZ =
-    TB.byZ
+    TranslateBuilder.byZ
 
 
 
@@ -583,14 +583,14 @@ byZ =
 -}
 delay : Int -> Builder { eng | withTiming : () } -> Builder { eng | withTiming : () }
 delay =
-    TB.delay
+    TranslateBuilder.delay
 
 
 {-| Set the animation duration (milliseconds).
 -}
 duration : Int -> Builder { eng | withTiming : () } -> Builder { eng | withTiming : () }
 duration =
-    TB.duration
+    TranslateBuilder.duration
 
 
 {-| The speed represents how many `Unit`s the element moves per second.
@@ -602,7 +602,7 @@ container's width per second.
 -}
 speed : Float -> Builder { eng | withTiming : () } -> Builder { eng | withTiming : () }
 speed =
-    TB.speed
+    TranslateBuilder.speed
 
 
 
@@ -620,7 +620,7 @@ speed =
 -}
 easing : Easing -> Builder eng -> Builder eng
 easing =
-    TB.easing
+    TranslateBuilder.easing
 
 
 
@@ -638,7 +638,7 @@ easing =
 -}
 spring : Spring -> Builder { eng | withSpring : () } -> Builder { eng | withSpring : () }
 spring =
-    TB.spring
+    TranslateBuilder.spring
 
 
 
@@ -659,28 +659,28 @@ spring =
 -}
 cssUnit : Unit -> AnimBuilder eng -> AnimBuilder eng
 cssUnit =
-    SB.setTranslateInitCssUnit
+    InternalBuilder.setTranslateInitCssUnit
 
 
 {-| Set the length [Unit](Anim-Unit#Unit) for the X axis.
 -}
 cssUnitX : Unit -> AnimBuilder eng -> AnimBuilder eng
 cssUnitX =
-    SB.setTranslateInitCssUnitX
+    InternalBuilder.setTranslateInitCssUnitX
 
 
 {-| Set the length [Unit](Anim-Unit#Unit) for the Y axis.
 -}
 cssUnitY : Unit -> AnimBuilder eng -> AnimBuilder eng
 cssUnitY =
-    SB.setTranslateInitCssUnitY
+    InternalBuilder.setTranslateInitCssUnitY
 
 
 {-| Set the length [Unit](Anim-Unit#Unit) for the Z axis.
 -}
 cssUnitZ : Unit -> AnimBuilder eng -> AnimBuilder eng
 cssUnitZ =
-    SB.setTranslateInitCssUnitZ
+    InternalBuilder.setTranslateInitCssUnitZ
 
 
 
@@ -736,7 +736,9 @@ anywhere else results in a type error.
 -}
 bounds : AnimGroupName -> AxisBounds -> AnimBuilder { eng | withBounds : () } -> AnimBuilder { eng | withBounds : () }
 bounds name ranges =
-    TB.for name >> TB.bounds ranges >> TB.build
+    TranslateBuilder.for name
+        >> TranslateBuilder.bounds ranges
+        >> TranslateBuilder.build
 
 
 
@@ -749,39 +751,39 @@ bounds name ranges =
 -}
 clampX : Float -> Float -> Builder eng -> Builder eng
 clampX =
-    TB.clampX
+    TranslateBuilder.clampX
 
 
 {-| Keep the Y axis translate within `min` and `max` values. If `min > max` the values are flipped.
 -}
 clampY : Float -> Float -> Builder eng -> Builder eng
 clampY =
-    TB.clampY
+    TranslateBuilder.clampY
 
 
 {-| Keep the Z axis translate within `min` and `max` values. If `min > max` the values are flipped.
 -}
 clampZ : Float -> Float -> Builder eng -> Builder eng
 clampZ =
-    TB.clampZ
+    TranslateBuilder.clampZ
 
 
 {-| Remove the X axis range for this animation group. Does nothing if no range is set.
 -}
 unclampX : Builder eng -> Builder eng
 unclampX =
-    TB.unclampX
+    TranslateBuilder.unclampX
 
 
 {-| Remove the Y axis range for this animation group. Does nothing if no range is set.
 -}
 unclampY : Builder eng -> Builder eng
 unclampY =
-    TB.unclampY
+    TranslateBuilder.unclampY
 
 
 {-| Remove the Z axis range for this animation group. Does nothing if no range is set.
 -}
 unclampZ : Builder eng -> Builder eng
 unclampZ =
-    TB.unclampZ
+    TranslateBuilder.unclampZ
