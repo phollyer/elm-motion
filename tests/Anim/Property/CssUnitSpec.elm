@@ -117,14 +117,14 @@ translateTests =
                         ]
                         |> queryTransition
                         |> Query.has [ Selector.style "translate" "50cqw 25vh 0cqw" ]
-            , test "cssUnitZ sets the Z-axis unit" <|
+            , test "initCssUnitZ sets Z when initXY does not initialize it" <|
                 \_ ->
                     initTransitionWith
-                        [ Translate.initXYZ "el" 0 0 10
+                        [ Translate.initXY "el" 0 0
                             >> Translate.initCssUnitZ Vw
                         ]
                         |> queryTransition
-                        |> Query.has [ Selector.style "translate" "0px 0px 10vw" ]
+                        |> Query.has [ Selector.style "translate" "0px 0px 0vw" ]
             , test "order matters - cssUnit before init has no effect" <|
                 \_ ->
                     initTransitionWith
@@ -251,7 +251,7 @@ translateTests =
                             >> Translate.initCssUnit Cqw
                         ]
                         |> queryWAAPI
-                        |> Query.has [ Selector.style "transform" "translate3d(50cqw, 25cqw, 0px)" ]
+                        |> Query.has [ Selector.style "transform" "translate3d(50cqw, 25cqw, 0cqw)" ]
             , test "cssUnitX overrides cssUnit on the X axis only" <|
                 \_ ->
                     initWAAPIWith
@@ -260,7 +260,7 @@ translateTests =
                             >> Translate.initCssUnitX Vw
                         ]
                         |> queryWAAPI
-                        |> Query.has [ Selector.style "transform" "translate3d(50vw, 25cqw, 0px)" ]
+                        |> Query.has [ Selector.style "transform" "translate3d(50vw, 25cqw, 0cqw)" ]
             , test "cssUnitY overrides cssUnit on the Y axis only" <|
                 \_ ->
                     initWAAPIWith
@@ -269,7 +269,7 @@ translateTests =
                             >> Translate.initCssUnitY Vh
                         ]
                         |> queryWAAPI
-                        |> Query.has [ Selector.style "transform" "translate3d(50cqw, 25vh, 0px)" ]
+                        |> Query.has [ Selector.style "transform" "translate3d(50cqw, 25vh, 0cqw)" ]
             , test "cssUnitZ sets the Z-axis unit" <|
                 \_ ->
                     initWAAPIWith
