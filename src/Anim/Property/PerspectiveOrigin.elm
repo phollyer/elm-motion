@@ -179,9 +179,9 @@ Snap to a specific perspective origin, cancelling any in-flight animation on thi
 
 -}
 
-import Anim.Internal.Builder as IB exposing (AnimBuilder)
+import Anim.Internal.Builder as InternalBuilder exposing (AnimBuilder)
 import Anim.Internal.Builder.CssUnitStore as CssUnitStore
-import Anim.Internal.Builder.PerspectiveOrigin as PB
+import Anim.Internal.Builder.PerspectiveOrigin as PerspectiveOriginBuilder exposing (PerspectiveOriginBuilder)
 import Anim.Unit as Unit
 import Motion.Easing exposing (Easing)
 import Motion.Spring exposing (Spring)
@@ -202,7 +202,7 @@ type alias AnimGroupName =
 {-| Builder type for perspective-origin animations.
 -}
 type alias Builder eng =
-    PB.PerspectiveOriginBuilder eng
+    PerspectiveOriginBuilder eng
 
 
 
@@ -226,11 +226,11 @@ type alias Builder eng =
 initXY : AnimGroupName -> Float -> Float -> AnimBuilder eng -> AnimBuilder eng
 initXY animationKey x y animBuilder =
     animBuilder
-        |> PB.for animationKey
+        |> PerspectiveOriginBuilder.for animationKey
         |> fromXY x y
         |> toXY x y
-        |> PB.build
-        |> IB.registerPerspectiveOriginInitAxes [ CssUnitStore.perspectiveOriginX, CssUnitStore.perspectiveOriginY ]
+        |> PerspectiveOriginBuilder.build
+        |> InternalBuilder.registerPerspectiveOriginInitAxes [ CssUnitStore.perspectiveOriginX, CssUnitStore.perspectiveOriginY ]
 
 
 {-| Set the initial X-axis perspective origin.
@@ -238,11 +238,11 @@ initXY animationKey x y animBuilder =
 initX : AnimGroupName -> Float -> AnimBuilder eng -> AnimBuilder eng
 initX animationKey x animBuilder =
     animBuilder
-        |> PB.for animationKey
+        |> PerspectiveOriginBuilder.for animationKey
         |> fromX x
         |> toX x
-        |> PB.build
-        |> IB.registerPerspectiveOriginInitAxes [ CssUnitStore.perspectiveOriginX ]
+        |> PerspectiveOriginBuilder.build
+        |> InternalBuilder.registerPerspectiveOriginInitAxes [ CssUnitStore.perspectiveOriginX ]
 
 
 {-| Set the initial Y-axis perspective origin.
@@ -250,11 +250,11 @@ initX animationKey x animBuilder =
 initY : AnimGroupName -> Float -> AnimBuilder eng -> AnimBuilder eng
 initY animationKey y animBuilder =
     animBuilder
-        |> PB.for animationKey
+        |> PerspectiveOriginBuilder.for animationKey
         |> fromY y
         |> toY y
-        |> PB.build
-        |> IB.registerPerspectiveOriginInitAxes [ CssUnitStore.perspectiveOriginY ]
+        |> PerspectiveOriginBuilder.build
+        |> InternalBuilder.registerPerspectiveOriginInitAxes [ CssUnitStore.perspectiveOriginY ]
 
 
 {-| Set the length [Unit](Anim-Unit#Unit) for both axes.
@@ -269,21 +269,21 @@ initY animationKey y animBuilder =
 -}
 cssUnit : Unit.Unit -> AnimBuilder eng -> AnimBuilder eng
 cssUnit =
-    IB.setPerspectiveOriginInitCssUnit
+    InternalBuilder.setPerspectiveOriginInitCssUnit
 
 
 {-| Set the length [Unit](Anim-Unit#Unit) for the X axis.
 -}
 cssUnitX : Unit.Unit -> AnimBuilder eng -> AnimBuilder eng
 cssUnitX =
-    IB.setPerspectiveOriginInitCssUnitX
+    InternalBuilder.setPerspectiveOriginInitCssUnitX
 
 
 {-| Set the length [Unit](Anim-Unit#Unit) for the Y axis.
 -}
 cssUnitY : Unit.Unit -> AnimBuilder eng -> AnimBuilder eng
 cssUnitY =
-    IB.setPerspectiveOriginInitCssUnitY
+    InternalBuilder.setPerspectiveOriginInitCssUnitY
 
 
 
@@ -304,12 +304,12 @@ Use this to start configuring a perspective origin animation.
 -}
 begin : AnimBuilder eng -> Builder eng
 begin animBuilder =
-    case IB.getCurrentAnimGroupName animBuilder of
+    case InternalBuilder.getCurrentAnimGroupName animBuilder of
         Just animGroupName ->
-            PB.for animGroupName animBuilder
+            PerspectiveOriginBuilder.for animGroupName animBuilder
 
         Nothing ->
-            PB.for "" animBuilder
+            PerspectiveOriginBuilder.for "" animBuilder
 
 
 {-| Complete the [Builder](#Builder) animation configuration and return an `AnimBuilder`
@@ -325,7 +325,7 @@ so you can continue configuring other property animations or execute the animati
 -}
 end : Builder eng -> AnimBuilder eng
 end =
-    PB.build
+    PerspectiveOriginBuilder.build
 
 
 
@@ -338,28 +338,28 @@ end =
 -}
 from : Float -> Builder eng -> Builder eng
 from xy =
-    PB.fromXY xy xy
+    PerspectiveOriginBuilder.fromXY xy xy
 
 
 {-| Set the starting X and Y values.
 -}
 fromXY : Float -> Float -> Builder eng -> Builder eng
 fromXY =
-    PB.fromXY
+    PerspectiveOriginBuilder.fromXY
 
 
 {-| Set the starting X value, preserving the current Y value.
 -}
 fromX : Float -> Builder eng -> Builder eng
 fromX =
-    PB.fromX
+    PerspectiveOriginBuilder.fromX
 
 
 {-| Set the starting Y value, preserving the current X value.
 -}
 fromY : Float -> Builder eng -> Builder eng
 fromY =
-    PB.fromY
+    PerspectiveOriginBuilder.fromY
 
 
 
@@ -372,28 +372,28 @@ fromY =
 -}
 to : Float -> Builder eng -> Builder eng
 to xy =
-    PB.toXY xy xy
+    PerspectiveOriginBuilder.toXY xy xy
 
 
 {-| Set the target X and Y values.
 -}
 toXY : Float -> Float -> Builder eng -> Builder eng
 toXY =
-    PB.toXY
+    PerspectiveOriginBuilder.toXY
 
 
 {-| Set the target X value, preserving the current Y value.
 -}
 toX : Float -> Builder eng -> Builder eng
 toX =
-    PB.toX
+    PerspectiveOriginBuilder.toX
 
 
 {-| Set the target Y value, preserving the current X value.
 -}
 toY : Float -> Builder eng -> Builder eng
 toY =
-    PB.toY
+    PerspectiveOriginBuilder.toY
 
 
 
@@ -406,28 +406,28 @@ toY =
 -}
 set : Float -> Builder eng -> Builder eng
 set xy =
-    PB.setXY xy xy
+    PerspectiveOriginBuilder.setXY xy xy
 
 
 {-| Snap target X and Y values.
 -}
 setXY : Float -> Float -> Builder eng -> Builder eng
 setXY =
-    PB.setXY
+    PerspectiveOriginBuilder.setXY
 
 
 {-| Snap target X value, preserving the current Y value.
 -}
 setX : Float -> Builder eng -> Builder eng
 setX =
-    PB.setX
+    PerspectiveOriginBuilder.setX
 
 
 {-| Snap target Y value, preserving the current X value.
 -}
 setY : Float -> Builder eng -> Builder eng
 setY =
-    PB.setY
+    PerspectiveOriginBuilder.setY
 
 
 
@@ -440,28 +440,28 @@ setY =
 -}
 by : Float -> Builder eng -> Builder eng
 by =
-    PB.by
+    PerspectiveOriginBuilder.by
 
 
 {-| Move by a delta on the X and Y axes.
 -}
 byXY : Float -> Float -> Builder eng -> Builder eng
 byXY =
-    PB.byXY
+    PerspectiveOriginBuilder.byXY
 
 
 {-| Move by a delta on the X axis. Y is unaffected.
 -}
 byX : Float -> Builder eng -> Builder eng
 byX =
-    PB.byX
+    PerspectiveOriginBuilder.byX
 
 
 {-| Move by a delta on the Y axis. X is unaffected.
 -}
 byY : Float -> Builder eng -> Builder eng
 byY =
-    PB.byY
+    PerspectiveOriginBuilder.byY
 
 
 
@@ -474,14 +474,14 @@ byY =
 -}
 delay : Int -> Builder { eng | withTiming : () } -> Builder { eng | withTiming : () }
 delay =
-    PB.delay
+    PerspectiveOriginBuilder.delay
 
 
 {-| Set the animation duration (milliseconds).
 -}
 duration : Int -> Builder { eng | withTiming : () } -> Builder { eng | withTiming : () }
 duration =
-    PB.duration
+    PerspectiveOriginBuilder.duration
 
 
 {-| The speed represents how many units per second the perspective origin changes.
@@ -492,7 +492,7 @@ will take 2 seconds to complete.
 -}
 speed : Float -> Builder { eng | withTiming : () } -> Builder { eng | withTiming : () }
 speed =
-    PB.speed
+    PerspectiveOriginBuilder.speed
 
 
 
@@ -510,7 +510,7 @@ speed =
 -}
 easing : Easing -> Builder eng -> Builder eng
 easing =
-    PB.easing
+    PerspectiveOriginBuilder.easing
 
 
 
@@ -528,7 +528,7 @@ easing =
 -}
 spring : Spring -> Builder { eng | withSpring : () } -> Builder { eng | withSpring : () }
 spring =
-    PB.spring
+    PerspectiveOriginBuilder.spring
 
 
 
@@ -585,7 +585,7 @@ anywhere else results in a type error.
 -}
 bounds : AnimGroupName -> AxisBounds -> AnimBuilder { eng | withBounds : () } -> AnimBuilder { eng | withBounds : () }
 bounds name ranges =
-    PB.for name >> PB.bounds ranges >> PB.build
+    PerspectiveOriginBuilder.for name >> PerspectiveOriginBuilder.bounds ranges >> PerspectiveOriginBuilder.build
 
 
 
@@ -598,25 +598,25 @@ bounds name ranges =
 -}
 clampX : Float -> Float -> Builder eng -> Builder eng
 clampX =
-    PB.clampX
+    PerspectiveOriginBuilder.clampX
 
 
 {-| Keep the Y axis perspective-origin within `min` and `max` values. If `min > max` the values are flipped.
 -}
 clampY : Float -> Float -> Builder eng -> Builder eng
 clampY =
-    PB.clampY
+    PerspectiveOriginBuilder.clampY
 
 
 {-| Remove the X axis range for this animation group. Does nothing if no range is set.
 -}
 unclampX : Builder eng -> Builder eng
 unclampX =
-    PB.unclampX
+    PerspectiveOriginBuilder.unclampX
 
 
 {-| Remove the Y axis range for this animation group. Does nothing if no range is set.
 -}
 unclampY : Builder eng -> Builder eng
 unclampY =
-    PB.unclampY
+    PerspectiveOriginBuilder.unclampY
