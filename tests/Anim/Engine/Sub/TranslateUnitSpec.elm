@@ -37,8 +37,8 @@ suite =
             \_ ->
                 Sub.init
                     [ Translate.initXY "el" 40 20
-                        >> Translate.cssUnitX Unit.Cqw
-                        >> Translate.cssUnitY Unit.Cqh
+                        >> Translate.initCssUnitX Unit.Cqw
+                        >> Translate.initCssUnitY Unit.Cqh
                     ]
                     |> rendered
                     |> Query.has [ Selector.style "transform" "translate3d(40cqw, 20cqh, 0px)" ]
@@ -46,8 +46,8 @@ suite =
             \_ ->
                 Sub.init
                     [ Translate.initXY "el" 0 0
-                        >> Translate.cssUnitX Unit.Vw
-                        >> Translate.cssUnitY Unit.Vh
+                        >> Translate.initCssUnitX Unit.Vw
+                        >> Translate.initCssUnitY Unit.Vh
                     ]
                     |> (\state ->
                             Sub.animate state

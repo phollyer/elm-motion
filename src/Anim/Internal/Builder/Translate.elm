@@ -26,6 +26,10 @@ module Anim.Internal.Builder.Translate exposing
     , fromYZ
     , fromZ
     , set
+    , setCssUnit
+    , setCssUnitX
+    , setCssUnitY
+    , setCssUnitZ
     , setX
     , setXY
     , setXYZ
@@ -54,6 +58,7 @@ import Anim.Internal.Builder.Property as PropertyBuilder
 import Anim.Internal.Builder.PropertyBaselines as PropertyBaselines
 import Anim.Internal.Property.Translate as Translate exposing (Translate)
 import Anim.Internal.Unit as InternalUnit
+import Anim.Unit exposing (Unit(..))
 import Motion.Easing exposing (Easing(..))
 import Motion.Spring exposing (Spring)
 import Shared.TimeSpec exposing (TimeSpec(..))
@@ -654,6 +659,32 @@ easing easing_ (TranslateBuilder config builder) =
 spring : Spring -> TranslateBuilder { eng | withSpring : () } -> TranslateBuilder { eng | withSpring : () }
 spring s (TranslateBuilder config builder) =
     TranslateBuilder (PropertyBuilder.spring s config) builder
+
+
+
+-- ============================================================
+-- CSS UNITS
+-- ============================================================
+
+
+setCssUnit : Unit -> TranslateBuilder eng -> TranslateBuilder eng
+setCssUnit unit (TranslateBuilder config builder) =
+    TranslateBuilder (PropertyBuilder.setCssUnit unit config) builder
+
+
+setCssUnitX : Unit -> TranslateBuilder eng -> TranslateBuilder eng
+setCssUnitX unit (TranslateBuilder config builder) =
+    TranslateBuilder (PropertyBuilder.setCssUnitX unit config) builder
+
+
+setCssUnitY : Unit -> TranslateBuilder eng -> TranslateBuilder eng
+setCssUnitY unit (TranslateBuilder config builder) =
+    TranslateBuilder (PropertyBuilder.setCssUnitY unit config) builder
+
+
+setCssUnitZ : Unit -> TranslateBuilder eng -> TranslateBuilder eng
+setCssUnitZ unit (TranslateBuilder config builder) =
+    TranslateBuilder (PropertyBuilder.setCssUnitZ unit config) builder
 
 
 

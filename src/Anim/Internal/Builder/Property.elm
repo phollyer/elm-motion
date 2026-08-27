@@ -34,6 +34,10 @@ module Anim.Internal.Builder.Property exposing
     , getTranslateEnd
     , getTranslateRange
     , getTranslateStart
+    , setCssUnit
+    , setCssUnitX
+    , setCssUnitY
+    , setCssUnitZ
     , setEnd
     , speed
     , spring
@@ -51,6 +55,7 @@ import Anim.Internal.Property.Size as Size
 import Anim.Internal.Property.Skew as Skew
 import Anim.Internal.Property.Translate as Translate
 import Anim.Internal.Unit as InternalUnit
+import Anim.Unit exposing (Unit(..))
 import Motion.Easing exposing (Easing)
 import Motion.Internal.Spring exposing (Spring)
 import Shared.TimeSpec exposing (TimeSpec(..))
@@ -424,6 +429,32 @@ spring :
     -> { config | easing : Maybe Easing, spring : Maybe Spring }
 spring spring_ config =
     { config | spring = Just spring_, easing = Nothing }
+
+
+
+-- ============================================================
+-- CSS UNITS
+-- ============================================================
+
+
+setCssUnit : Unit -> { config | cssUnit : InternalUnit.CssUnitAxes } -> { config | cssUnit : InternalUnit.CssUnitAxes }
+setCssUnit unit config =
+    { config | cssUnit = InternalUnit.setAllCssUnitAxes unit config.cssUnit }
+
+
+setCssUnitX : Unit -> { config | cssUnit : InternalUnit.CssUnitAxes } -> { config | cssUnit : InternalUnit.CssUnitAxes }
+setCssUnitX unit config =
+    { config | cssUnit = InternalUnit.setCssUnitX unit config.cssUnit }
+
+
+setCssUnitY : Unit -> { config | cssUnit : InternalUnit.CssUnitAxes } -> { config | cssUnit : InternalUnit.CssUnitAxes }
+setCssUnitY unit config =
+    { config | cssUnit = InternalUnit.setCssUnitY unit config.cssUnit }
+
+
+setCssUnitZ : Unit -> { config | cssUnit : InternalUnit.CssUnitAxes } -> { config | cssUnit : InternalUnit.CssUnitAxes }
+setCssUnitZ unit config =
+    { config | cssUnit = InternalUnit.setCssUnitZ unit config.cssUnit }
 
 
 

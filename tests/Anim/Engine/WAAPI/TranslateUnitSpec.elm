@@ -70,7 +70,7 @@ unitTest description maybeUnit expected =
                         Just unit ->
                             b
                                 |> Translate.initY "ball" 0
-                                |> Translate.cssUnit unit
+                                |> Translate.initCssUnit unit
 
                 processed =
                     Builder.init [ initStep, translateBuilder ] |> Builder.process

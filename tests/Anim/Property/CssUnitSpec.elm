@@ -95,40 +95,40 @@ translateTests =
                 \_ ->
                     initTransitionWith
                         [ Translate.initXY "el" 50 25
-                            >> Translate.cssUnit Cqw
+                            >> Translate.initCssUnit Cqw
                         ]
                         |> queryTransition
-                        |> Query.has [ Selector.style "translate" "50cqw 25cqw 0px" ]
+                        |> Query.has [ Selector.style "translate" "50cqw 25cqw 0cqw" ]
             , test "cssUnitX overrides cssUnit on the X axis only" <|
                 \_ ->
                     initTransitionWith
                         [ Translate.initXY "el" 50 25
-                            >> Translate.cssUnit Cqw
-                            >> Translate.cssUnitX Vw
+                            >> Translate.initCssUnit Cqw
+                            >> Translate.initCssUnitX Vw
                         ]
                         |> queryTransition
-                        |> Query.has [ Selector.style "translate" "50vw 25cqw 0px" ]
+                        |> Query.has [ Selector.style "translate" "50vw 25cqw 0cqw" ]
             , test "cssUnitY overrides cssUnit on the Y axis only" <|
                 \_ ->
                     initTransitionWith
                         [ Translate.initXY "el" 50 25
-                            >> Translate.cssUnit Cqw
-                            >> Translate.cssUnitY Vh
+                            >> Translate.initCssUnit Cqw
+                            >> Translate.initCssUnitY Vh
                         ]
                         |> queryTransition
-                        |> Query.has [ Selector.style "translate" "50cqw 25vh 0px" ]
+                        |> Query.has [ Selector.style "translate" "50cqw 25vh 0cqw" ]
             , test "cssUnitZ sets the Z-axis unit" <|
                 \_ ->
                     initTransitionWith
                         [ Translate.initXYZ "el" 0 0 10
-                            >> Translate.cssUnitZ Vw
+                            >> Translate.initCssUnitZ Vw
                         ]
                         |> queryTransition
                         |> Query.has [ Selector.style "translate" "0px 0px 10vw" ]
             , test "order matters - cssUnit before init has no effect" <|
                 \_ ->
                     initTransitionWith
-                        [ Translate.cssUnit Cqw
+                        [ Translate.initCssUnit Cqw
                             >> Translate.initXY "el" 50 25
                         ]
                         |> queryTransition
@@ -139,7 +139,7 @@ translateTests =
                         state =
                             initTransitionWith
                                 [ Translate.initXY "el" 50 25
-                                    >> Translate.cssUnit Cqw
+                                    >> Translate.initCssUnit Cqw
                                 ]
                     in
                     (Transition.animate state <|
@@ -149,25 +149,25 @@ translateTests =
                             >> Translate.end
                     )
                         |> queryTransition
-                        |> Query.has [ Selector.style "translate" "100cqw 50cqw 0px" ]
+                        |> Query.has [ Selector.style "translate" "100cqw 50cqw 0cqw" ]
             , test "cssUnit is changed for an animation" <|
                 \_ ->
                     let
                         state =
                             initTransitionWith
                                 [ Translate.initXY "el" 50 25
-                                    >> Translate.cssUnit Cqw
+                                    >> Translate.initCssUnit Cqw
                                 ]
                     in
                     (Transition.animate state <|
                         Transition.for "el"
-                            >> Translate.cssUnit Cqh
                             >> Translate.begin
+                            >> Translate.cssUnit Cqh
                             >> Translate.toXY 100 50
                             >> Translate.end
                     )
                         |> queryTransition
-                        |> Query.has [ Selector.style "translate" "100cqh 50cqh 0px" ]
+                        |> Query.has [ Selector.style "translate" "100cqh 50cqh 0cqh" ]
             ]
         , test "cssUnit is changed for only the targeted animation" <|
             \_ ->
@@ -175,18 +175,16 @@ translateTests =
                     state =
                         initTransitionWith
                             [ Translate.initXY "el" 50 25
-                                >> Translate.cssUnit Cqw
+                                >> Translate.initCssUnit Cqw
                             , Translate.initXY "el2" 50 25
-                                >> Translate.cssUnit Cqw
+                                >> Translate.initCssUnit Cqw
                             ]
 
                     animState =
                         Transition.animate state <|
-                            Translate.cssUnit Cqh
-                                >> Transition.for "el"
-                                -- testing that this CSS Unit change does not affect the other animation
-                                -->> Translate.cssUnit Cqh
+                            Transition.for "el"
                                 >> Translate.begin
+                                >> Translate.cssUnit Cqh
                                 >> Translate.toXY 100 50
                                 >> Translate.end
                                 >> Transition.for "el2"
@@ -198,11 +196,11 @@ translateTests =
                     [ \_ ->
                         animState
                             |> queryTransitionFor "el"
-                            |> Query.has [ Selector.style "translate" "100cqh 50cqh 0px" ]
+                            |> Query.has [ Selector.style "translate" "100cqh 50cqh 0cqh" ]
                     , \_ ->
                         animState
                             |> queryTransitionFor "el2"
-                            |> Query.has [ Selector.style "translate" "100cqw 50cqw 0px" ]
+                            |> Query.has [ Selector.style "translate" "100cqw 50cqw 0cqw" ]
                     ]
                     ()
         , test "cssUnit is changed for all animations" <|
@@ -211,9 +209,9 @@ translateTests =
                     state =
                         initTransitionWith
                             [ Translate.initXY "el" 50 25
-                                >> Translate.cssUnit Cqw
+                                >> Translate.initCssUnit Cqw
                             , Translate.initXY "el2" 50 25
-                                >> Translate.cssUnit Cqw
+                                >> Translate.initCssUnit Cqw
                             ]
 
                     animState =
@@ -250,7 +248,7 @@ translateTests =
                 \_ ->
                     initWAAPIWith
                         [ Translate.initXY "el" 50 25
-                            >> Translate.cssUnit Cqw
+                            >> Translate.initCssUnit Cqw
                         ]
                         |> queryWAAPI
                         |> Query.has [ Selector.style "transform" "translate3d(50cqw, 25cqw, 0px)" ]
@@ -258,8 +256,8 @@ translateTests =
                 \_ ->
                     initWAAPIWith
                         [ Translate.initXY "el" 50 25
-                            >> Translate.cssUnit Cqw
-                            >> Translate.cssUnitX Vw
+                            >> Translate.initCssUnit Cqw
+                            >> Translate.initCssUnitX Vw
                         ]
                         |> queryWAAPI
                         |> Query.has [ Selector.style "transform" "translate3d(50vw, 25cqw, 0px)" ]
@@ -267,8 +265,8 @@ translateTests =
                 \_ ->
                     initWAAPIWith
                         [ Translate.initXY "el" 50 25
-                            >> Translate.cssUnit Cqw
-                            >> Translate.cssUnitY Vh
+                            >> Translate.initCssUnit Cqw
+                            >> Translate.initCssUnitY Vh
                         ]
                         |> queryWAAPI
                         |> Query.has [ Selector.style "transform" "translate3d(50cqw, 25vh, 0px)" ]
@@ -276,14 +274,14 @@ translateTests =
                 \_ ->
                     initWAAPIWith
                         [ Translate.initXYZ "el" 0 0 10
-                            >> Translate.cssUnitZ Vw
+                            >> Translate.initCssUnitZ Vw
                         ]
                         |> queryWAAPI
                         |> Query.has [ Selector.style "transform" "translate3d(0px, 0px, 10vw)" ]
             , test "order matters - cssUnit before init has no effect" <|
                 \_ ->
                     initWAAPIWith
-                        [ Translate.cssUnit Cqw
+                        [ Translate.initCssUnit Cqw
                             >> Translate.initXY "el" 50 25
                         ]
                         |> queryWAAPI

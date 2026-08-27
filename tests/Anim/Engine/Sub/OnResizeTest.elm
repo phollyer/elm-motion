@@ -424,7 +424,7 @@ suite =
                         state =
                             Sub.init
                                 [ Translate.initXY groupName 0 0
-                                    >> Translate.cssUnitX Unit.Vw
+                                    >> Translate.initCssUnitX Unit.Vw
                                 ]
                                 |> (\s ->
                                         Sub.animate s
@@ -462,8 +462,8 @@ suite =
                         state =
                             Sub.init
                                 [ Translate.initXY groupName 0 0
-                                    >> Translate.cssUnitX Unit.Vw
-                                    >> Translate.cssUnitY Unit.Px
+                                    >> Translate.initCssUnitX Unit.Vw
+                                    >> Translate.initCssUnitY Unit.Px
                                 ]
                                 |> (\s ->
                                         Sub.animate s

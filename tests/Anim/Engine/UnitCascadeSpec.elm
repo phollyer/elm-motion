@@ -259,7 +259,7 @@ sequentialUnitOverride =
                     initialized =
                         Builder.init
                             [ Translate.initX "box" 0
-                                >> Translate.cssUnitX Unit.Percent
+                                >> Translate.initCssUnitX Unit.Percent
                             ]
                             |> Builder.mergeBaselines
                             |> Builder.clearAnimData
@@ -272,8 +272,8 @@ sequentialUnitOverride =
                     pixelPhase =
                         afterPercentPhase
                             |> Builder.for "box"
-                            |> Translate.cssUnitX Unit.Px
                             |> Translate.begin
+                            |> Translate.cssUnitX Unit.Px
                             |> Translate.toX 20
                             |> Translate.end
                 in
