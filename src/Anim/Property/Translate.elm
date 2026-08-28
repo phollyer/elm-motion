@@ -694,7 +694,7 @@ initCssUnitZ =
 
     Translate.begin
         >> Translate.cssUnit Cqw
-        ...
+        >> ... -- configure the animation
 
 -}
 cssUnit : Unit -> Builder eng -> Builder eng

@@ -64,6 +64,7 @@ suite =
                     |> Query.has [ Selector.style "transform" "translate3d(50vw, 25vh, 0px)" ]
         , test "size init units render width/height with configured suffixes" <|
             \_ ->
+                -- TODO: Move this test to SizeUnitSpec.elm once that file is created
                 let
                     q =
                         Sub.init
@@ -80,10 +81,11 @@ suite =
                     ()
         , test "perspective-origin animate cssUnit values render while running" <|
             \_ ->
+                -- TODO: Move this test to PerspectiveOriginUnitSpec.elm once that file is created
                 Sub.init
                     [ PerspectiveOrigin.initXY "el" 50 50
-                        >> PerspectiveOrigin.cssUnitX Unit.Vw
-                        >> PerspectiveOrigin.cssUnitY Unit.Vh
+                        >> PerspectiveOrigin.initCssUnitX Unit.Vw
+                        >> PerspectiveOrigin.initCssUnitY Unit.Vh
                     ]
                     |> (\state ->
                             Sub.animate state

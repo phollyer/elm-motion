@@ -17,6 +17,9 @@ module Anim.Internal.Builder.PerspectiveOrigin exposing
     , fromXY
     , fromY
     , set
+    , setCssUnit
+    , setCssUnitX
+    , setCssUnitY
     , setX
     , setXY
     , setY
@@ -36,6 +39,7 @@ import Anim.Internal.Builder.Property as PropertyBuilder
 import Anim.Internal.Builder.PropertyBaselines as PropertyBaselines
 import Anim.Internal.Property.PerspectiveOrigin as PerspectiveOrigin exposing (PerspectiveOrigin)
 import Anim.Internal.Unit as InternalUnit
+import Anim.Unit exposing (Unit)
 import Motion.Easing exposing (Easing)
 import Motion.Spring exposing (Spring)
 
@@ -366,6 +370,27 @@ easing easing_ (PerspectiveOriginBuilder config builder) =
 spring : Spring -> PerspectiveOriginBuilder { eng | withSpring : () } -> PerspectiveOriginBuilder { eng | withSpring : () }
 spring s (PerspectiveOriginBuilder config builder) =
     PerspectiveOriginBuilder (PropertyBuilder.spring s config) builder
+
+
+
+-- ============================================================
+-- CSS UNITS
+-- ============================================================
+
+
+setCssUnit : Unit -> PerspectiveOriginBuilder eng -> PerspectiveOriginBuilder eng
+setCssUnit unit (PerspectiveOriginBuilder config builder) =
+    PerspectiveOriginBuilder (PropertyBuilder.setCssUnit unit config) builder
+
+
+setCssUnitX : Unit -> PerspectiveOriginBuilder eng -> PerspectiveOriginBuilder eng
+setCssUnitX unit (PerspectiveOriginBuilder config builder) =
+    PerspectiveOriginBuilder (PropertyBuilder.setCssUnitX unit config) builder
+
+
+setCssUnitY : Unit -> PerspectiveOriginBuilder eng -> PerspectiveOriginBuilder eng
+setCssUnitY unit (PerspectiveOriginBuilder config builder) =
+    PerspectiveOriginBuilder (PropertyBuilder.setCssUnitY unit config) builder
 
 
 

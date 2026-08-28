@@ -69,6 +69,7 @@ queryTransitionFor animGroup state =
 
 suite : Test
 suite =
+    -- TODO: Ensure this test suite contains all the correct tests for cssUnit* across Translate, Size, and PerspectiveOrigin. Some of these tests are currently in other files and should be moved here.
     describe "Property.cssUnit"
         [ translateTests
         , sizeTests
@@ -378,7 +379,7 @@ perspectiveOriginTests =
             \_ ->
                 initWAAPIWith
                     [ PerspectiveOrigin.initXY "el" 200 150
-                        >> PerspectiveOrigin.cssUnit Px
+                        >> PerspectiveOrigin.initCssUnit Px
                     ]
                     |> queryWAAPI
                     |> Query.has [ Selector.style "perspective-origin" "200px 150px" ]
@@ -386,8 +387,8 @@ perspectiveOriginTests =
             \_ ->
                 initWAAPIWith
                     [ PerspectiveOrigin.initXY "el" 50 150
-                        >> PerspectiveOrigin.cssUnit Px
-                        >> PerspectiveOrigin.cssUnitX Percent
+                        >> PerspectiveOrigin.initCssUnit Px
+                        >> PerspectiveOrigin.initCssUnitX Percent
                     ]
                     |> queryWAAPI
                     |> Query.has [ Selector.style "perspective-origin" "50% 150px" ]
@@ -395,8 +396,8 @@ perspectiveOriginTests =
             \_ ->
                 initWAAPIWith
                     [ PerspectiveOrigin.initXY "el" 200 50
-                        >> PerspectiveOrigin.cssUnit Px
-                        >> PerspectiveOrigin.cssUnitY Percent
+                        >> PerspectiveOrigin.initCssUnit Px
+                        >> PerspectiveOrigin.initCssUnitY Percent
                     ]
                     |> queryWAAPI
                     |> Query.has [ Selector.style "perspective-origin" "200px 50%" ]
@@ -404,7 +405,7 @@ perspectiveOriginTests =
             \_ ->
                 initWAAPIWith
                     [ PerspectiveOrigin.initX "el" 200
-                        >> PerspectiveOrigin.cssUnitX Px
+                        >> PerspectiveOrigin.initCssUnitX Px
                     ]
                     |> queryWAAPI
                     |> Query.has [ Selector.style "perspective-origin" "200px 50%" ]
@@ -412,7 +413,7 @@ perspectiveOriginTests =
             \_ ->
                 initWAAPIWith
                     [ PerspectiveOrigin.initY "el" 150
-                        >> PerspectiveOrigin.cssUnitY Px
+                        >> PerspectiveOrigin.initCssUnitY Px
                     ]
                     |> queryWAAPI
                     |> Query.has [ Selector.style "perspective-origin" "50% 150px" ]

@@ -286,7 +286,7 @@ sequentialUnitOverride =
                     initialized =
                         Builder.init
                             [ PerspectiveOrigin.initX "scene" 0
-                                >> PerspectiveOrigin.cssUnitX Unit.Percent
+                                >> PerspectiveOrigin.initCssUnitX Unit.Percent
                             ]
                             |> Builder.mergeBaselines
                             |> Builder.clearAnimData
@@ -299,8 +299,8 @@ sequentialUnitOverride =
                     pixelPhase =
                         afterPercentPhase
                             |> Builder.for "scene"
-                            |> PerspectiveOrigin.cssUnitX Unit.Px
                             |> PerspectiveOrigin.begin
+                            |> PerspectiveOrigin.cssUnitX Unit.Px
                             |> PerspectiveOrigin.toX 20
                             |> PerspectiveOrigin.end
                 in
