@@ -104,19 +104,22 @@ for details.
 
 ## CSS Units
 
-Set the length [Unit](Anim-Unit#Unit) for one or both axes.
+Set the CSS [Unit](Anim-Unit#Unit) for one or both axes.
 
 
 ### Initializing
 
-Initialize the the CSS Unit to be used on first render and subsequent animations.
+Initialize the the CSS [Unit](Anim-Unit#Unit) to be used on first render and subsequent animations.
+
+**Note**: Must be called after an anim group has been initialized, otherwise it will have no effect.
 
 @docs initCssUnit, initCssUnitX, initCssUnitY
 
 
-### Changing
+### Animating
 
-Change the CSS Unit for one or both axes. This will affect all future animations on this property.
+Set the CSS [Unit](Anim-Unit#Unit) for one or both axes. This will also affect all future animations
+for the associated anim group.
 
 @docs cssUnit, cssUnitX, cssUnitY
 
@@ -521,16 +524,16 @@ spring =
 -- ============================================================
 
 
-{-| Initialize the length [Unit](Anim-Unit#Unit) for both axes.
+{-| Initialize the CSS [Unit](Anim-Unit#Unit) for both axes.
 
-    import Anim.Unit exposing (Unit(..))
+    import Anim.Engine.Keyframe as Keyframe
+    import Anim.Property.PerspectiveOrigin as PerspectiveOrigin
+    import Anim.Unit as Unit
 
-    Engine.init
-        [ PerspectiveOrigin.initXY "vp" 200 150
-            >> PerspectiveOrigin.initCssUnit Cqw
+    Keyframe.init
+        [ PerspectiveOrigin.initXY "animGroupName" 200 150
+            >> PerspectiveOrigin.initCssUnit Unit.Cqw
         ]
-
-**Note:**: Must be called after an init\* function, otherwise it will have no effect.
 
 -}
 initCssUnit : Unit.Unit -> AnimBuilder eng -> AnimBuilder eng
@@ -538,26 +541,27 @@ initCssUnit =
     InternalBuilder.setPerspectiveOriginInitCssUnit
 
 
-{-| Set the length [Unit](Anim-Unit#Unit) for the X axis.
+{-| Initialize the CSS [Unit](Anim-Unit#Unit) for the X axis.
 -}
 initCssUnitX : Unit.Unit -> AnimBuilder eng -> AnimBuilder eng
 initCssUnitX =
     InternalBuilder.setPerspectiveOriginInitCssUnitX
 
 
-{-| Set the length [Unit](Anim-Unit#Unit) for the Y axis.
+{-| Initialize the CSS [Unit](Anim-Unit#Unit) for the Y axis.
 -}
 initCssUnitY : Unit.Unit -> AnimBuilder eng -> AnimBuilder eng
 initCssUnitY =
     InternalBuilder.setPerspectiveOriginInitCssUnitY
 
 
-{-| Set the length [Unit](Anim-Unit#Unit) for both axes.
+{-| Set the CSS [Unit](Anim-Unit#Unit) for both axes.
 
-    import Anim.Unit exposing (Unit(..))
+    import Anim.Property.PerspectiveOrigin as PerspectiveOrigin
+    import Anim.Unit as Unit
 
     PerspectiveOrigin.begin
-        >> PerspectiveOrigin.cssUnit Cqh
+        >> PerspectiveOrigin.cssUnit Unit.Cqh
         >> ... -- configure the animation
 
 -}
@@ -566,14 +570,14 @@ cssUnit =
     PerspectiveOriginBuilder.setCssUnit
 
 
-{-| Set the length [Unit](Anim-Unit#Unit) for the X axis.
+{-| Set the CSS [Unit](Anim-Unit#Unit) for the X axis.
 -}
 cssUnitX : Unit.Unit -> Builder eng -> Builder eng
 cssUnitX =
     PerspectiveOriginBuilder.setCssUnitX
 
 
-{-| Set the length [Unit](Anim-Unit#Unit) for the Y axis.
+{-| Set the CSS [Unit](Anim-Unit#Unit) for the Y axis.
 -}
 cssUnitY : Unit.Unit -> Builder eng -> Builder eng
 cssUnitY =

@@ -101,9 +101,22 @@ for details.
 
 ## CSS Units
 
-Set the CSS length unit(s) used in size animations.
+Set the CSS [Unit](Anim-Unit#Unit) for one or both sides.
+
+
+### Initializing
+
+Initialize the the CSS [Unit](Anim-Unit#Unit) to be used on first render and subsequent animations.
+
+**Note**: Must be called after an anim group has been initialized, otherwise it will have no effect.
 
 @docs initCssUnit, initCssUnitW, initCssUnitH
+
+
+### Animating
+
+Set the CSS [Unit](Anim-Unit#Unit) for one or both sides. This will also affect all future animations
+for the associated anim group.
 
 @docs cssUnit, cssUnitW, cssUnitH
 
@@ -547,13 +560,15 @@ spring =
 -- ============================================================
 
 
-{-| Set the length [Unit](Anim-Unit#Unit) for all sides.
+{-| Initialize the CSS [Unit](Anim-Unit#Unit) for all sides.
 
-    import Anim.Unit exposing (Unit(..))
+    import Anim.Engine.Keyframe as Keyframe
+    import Anim.Property.Size as Size
+    import Anim.Unit as Unit
 
-    Engine.init
-        [ Size.initHW "btn" 8 25
-            >> Size.initCssUnit Cqmin
+    Keyframe.init
+        [ Size.initHW "animGroupName" 8 25
+            >> Size.initCssUnit Unit.Cqmin
         ]
 
 -}
@@ -562,26 +577,27 @@ initCssUnit =
     InternalBuilder.setSizeInitCssUnit
 
 
-{-| Set the length [Unit](Anim-Unit#Unit) for the width.
+{-| Initialize the CSS [Unit](Anim-Unit#Unit) for the width.
 -}
 initCssUnitW : Unit -> AnimBuilder eng -> AnimBuilder eng
 initCssUnitW =
     InternalBuilder.setSizeInitCssUnitW
 
 
-{-| Set the length [Unit](Anim-Unit#Unit) for the height.
+{-| Initialize the CSS [Unit](Anim-Unit#Unit) for the height.
 -}
 initCssUnitH : Unit -> AnimBuilder eng -> AnimBuilder eng
 initCssUnitH =
     InternalBuilder.setSizeInitCssUnitH
 
 
-{-| Set the length [Unit](Anim-Unit#Unit) for all sides.
+{-| Set the CSS [Unit](Anim-Unit#Unit) for both sides.
 
-    import Anim.Unit exposing (Unit(..))
+    import Anim.Property.Size as Size
+    import Anim.Unit as Unit
 
     Size.begin
-        >> Size.cssUnit Cqmin
+        >> Size.cssUnit Unit.Cqmin
         >> ... -- continue with animation
 
 -}
@@ -590,14 +606,14 @@ cssUnit =
     SizeBuilder.setCssUnit
 
 
-{-| Set the length [Unit](Anim-Unit#Unit) for the width.
+{-| Set the CSS [Unit](Anim-Unit#Unit) for the width.
 -}
 cssUnitW : Unit -> Builder eng -> Builder eng
 cssUnitW =
     SizeBuilder.setCssUnitW
 
 
-{-| Set the length [Unit](Anim-Unit#Unit) for the height.
+{-| Set the CSS [Unit](Anim-Unit#Unit) for the height.
 -}
 cssUnitH : Unit -> Builder eng -> Builder eng
 cssUnitH =

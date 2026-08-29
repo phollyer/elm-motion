@@ -97,9 +97,22 @@ for details.
 
 ## CSS Units
 
-Set the CSS length unit(s) used in translate animations.
+Set the CSS [Unit](Anim-Unit#Unit) for one or more axes.
+
+
+### Initializing
+
+Initialize the the CSS [Unit](Anim-Unit#Unit) to be used on first render and subsequent animations.
+
+**Note**: Must be called after an anim group has been initialized, otherwise it will have no effect.
 
 @docs initCssUnit, initCssUnitX, initCssUnitY, initCssUnitZ
+
+
+### Animating
+
+Set the CSS [Unit](Anim-Unit#Unit) for one or more axes. This will also affect all future animations
+for the associated anim group.
 
 @docs cssUnit, cssUnitX, cssUnitY, cssUnitZ
 
@@ -650,16 +663,16 @@ spring =
 -- ============================================================
 
 
-{-| Initialize the length [Unit](Anim-Unit#Unit) for all axes.
+{-| Initialize the CSS [Unit](Anim-Unit#Unit) for all axes.
 
-    import Anim.Unit exposing (Unit(..))
+    import Anim.Engine.Keyframe as Keyframe
+    import Anim.Property.Translate as Translate
+    import Anim.Unit as Unit
 
-    Engine.init
-        [ Translate.initX "box" 50
+    Keyframe.init
+        [ Translate.initX "animGroupName" 50
             >> Translate.initCssUnit Cqw
         ]
-
-**Note:** Must be called after an `init*` function, otherwise it will have no effect.
 
 -}
 initCssUnit : Unit -> AnimBuilder eng -> AnimBuilder eng
@@ -667,33 +680,34 @@ initCssUnit =
     InternalBuilder.setTranslateInitCssUnit
 
 
-{-| Initialize the length [Unit](Anim-Unit#Unit) for the X axis.
+{-| Initialize the CSS [Unit](Anim-Unit#Unit) for the X axis.
 -}
 initCssUnitX : Unit -> AnimBuilder eng -> AnimBuilder eng
 initCssUnitX =
     InternalBuilder.setTranslateInitCssUnitX
 
 
-{-| Initialize the length [Unit](Anim-Unit#Unit) for the Y axis.
+{-| Initialize the CSS [Unit](Anim-Unit#Unit) for the Y axis.
 -}
 initCssUnitY : Unit -> AnimBuilder eng -> AnimBuilder eng
 initCssUnitY =
     InternalBuilder.setTranslateInitCssUnitY
 
 
-{-| Initialize the length [Unit](Anim-Unit#Unit) for the Z axis.
+{-| Initialize the CSS [Unit](Anim-Unit#Unit) for the Z axis.
 -}
 initCssUnitZ : Unit -> AnimBuilder eng -> AnimBuilder eng
 initCssUnitZ =
     InternalBuilder.setTranslateInitCssUnitZ
 
 
-{-| Set the length [Unit](Anim-Unit#Unit) for all axes.
+{-| Set the CSS [Unit](Anim-Unit#Unit) for all axes.
 
-    import Anim.Unit exposing (Unit(..))
+    import Anim.Property.Translate as Translate
+    import Anim.Unit as Unit
 
     Translate.begin
-        >> Translate.cssUnit Cqw
+        >> Translate.cssUnit Unit.Cqw
         >> ... -- configure the animation
 
 -}
@@ -702,21 +716,21 @@ cssUnit =
     TranslateBuilder.setCssUnit
 
 
-{-| Set the length [Unit](Anim-Unit#Unit) for the X axis.
+{-| Set the CSS [Unit](Anim-Unit#Unit) for the X axis.
 -}
 cssUnitX : Unit -> Builder eng -> Builder eng
 cssUnitX =
     TranslateBuilder.setCssUnitX
 
 
-{-| Set the length [Unit](Anim-Unit#Unit) for the Y axis.
+{-| Set the CSS [Unit](Anim-Unit#Unit) for the Y axis.
 -}
 cssUnitY : Unit -> Builder eng -> Builder eng
 cssUnitY =
     TranslateBuilder.setCssUnitY
 
 
-{-| Set the length [Unit](Anim-Unit#Unit) for the Z axis.
+{-| Set the CSS [Unit](Anim-Unit#Unit) for the Z axis.
 -}
 cssUnitZ : Unit -> Builder eng -> Builder eng
 cssUnitZ =
