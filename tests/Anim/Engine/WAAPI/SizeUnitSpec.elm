@@ -45,9 +45,9 @@ suite =
                     initialized =
                         Builder.init
                             [ Size.initHW "leftLine" 3 0
-                                >> Size.cssUnitW Unit.Percent
+                                >> Size.initCssUnitW Unit.Percent
                             , Size.initHW "rightLine" 3 0
-                                >> Size.cssUnitW Unit.Percent
+                                >> Size.initCssUnitW Unit.Percent
                             ]
                             |> Builder.mergeBaselines
                             |> Builder.clearAnimData
@@ -72,8 +72,8 @@ suite =
                     processed =
                         afterPercentPhase
                             |> Builder.for "leftLine"
-                            |> Size.cssUnitW Unit.Px
                             |> Size.begin
+                            |> Size.cssUnitW Unit.Px
                             |> Size.toW 1
                             |> Size.end
                             |> Builder.process
@@ -111,7 +111,7 @@ unitTest description maybeUnit expected =
                         Just unit ->
                             b
                                 |> Size.initHW "card" 0 0
-                                |> Size.cssUnit unit
+                                |> Size.initCssUnit unit
 
                 processed =
                     Builder.init [ initStep, sizeBuilder ] |> Builder.process

@@ -134,8 +134,8 @@ module Anim.Internal.Builder exposing
     , setScrollSource
     , setSizeCurrentGroup
     , setSizeInitCssUnit
-    , setSizeInitCssUnitHeight
-    , setSizeInitCssUnitWidth
+    , setSizeInitCssUnitH
+    , setSizeInitCssUnitW
     , setTranslateCurrentGroup
     , setTranslateInitCssUnit
     , setTranslateInitCssUnitX
@@ -1754,7 +1754,7 @@ cssUnitWidth : Unit -> AnimBuilder eng -> AnimBuilder eng
 cssUnitWidth unit (AnimBuilder data) =
     updateScopedDefaults
         (\defs ->
-            { defs | globalSizeCssUnit = InternalUnit.setCssUnitX unit defs.globalSizeCssUnit }
+            { defs | globalSizeCssUnit = InternalUnit.setCssUnitW unit defs.globalSizeCssUnit }
         )
         (AnimBuilder data)
 
@@ -1763,42 +1763,9 @@ cssUnitHeight : Unit -> AnimBuilder eng -> AnimBuilder eng
 cssUnitHeight unit (AnimBuilder data) =
     updateScopedDefaults
         (\defs ->
-            { defs | globalSizeCssUnit = InternalUnit.setCssUnitY unit defs.globalSizeCssUnit }
+            { defs | globalSizeCssUnit = InternalUnit.setCssUnitH unit defs.globalSizeCssUnit }
         )
         (AnimBuilder data)
-
-
-writeCssUnit : Maybe AnimGroupName -> String -> Unit -> AnimBuilder eng -> AnimBuilder eng
-writeCssUnit maybeGroup slot unit (AnimBuilder data) =
-    case maybeGroup of
-        Nothing ->
-            AnimBuilder data
-
-        Just group ->
-            if Set.member ( group, slot ) data.defaults.touchedInitSlots then
-                let
-                    defs =
-                        data.defaults
-
-                    animation =
-                        data.animation
-                in
-                AnimBuilder
-                    { data
-                        | defaults = { defs | cssUnits = CssUnitStore.set group slot unit defs.cssUnits }
-                        , animation =
-                            { animation
-                                | cssUnitOverrides = CssUnitStore.set group slot unit animation.cssUnitOverrides
-                            }
-                    }
-
-            else
-                AnimBuilder data
-
-
-writeCssUnits : Maybe AnimGroupName -> List String -> Unit -> AnimBuilder eng -> AnimBuilder eng
-writeCssUnits maybeGroup slots unit builder =
-    List.foldl (\s b -> writeCssUnit maybeGroup s unit b) builder slots
 
 
 writeCssUnitForGroup : Maybe AnimGroupName -> String -> Unit -> AnimBuilder eng -> AnimBuilder eng
@@ -1877,7 +1844,7 @@ setPerspectiveOriginCurrentGroup name (AnimBuilder data) =
 
 setPerspectiveOriginInitCssUnit : Unit -> AnimBuilder eng -> AnimBuilder eng
 setPerspectiveOriginInitCssUnit unit ((AnimBuilder data) as builder) =
-    writeCssUnits (unitTargetGroup data data.defaults.perspectiveOriginCurrentGroup)
+    writeCssUnitsForGroup (unitTargetGroup data data.defaults.perspectiveOriginCurrentGroup)
         [ CssUnitStore.perspectiveOriginX, CssUnitStore.perspectiveOriginY ]
         unit
         builder
@@ -1885,12 +1852,12 @@ setPerspectiveOriginInitCssUnit unit ((AnimBuilder data) as builder) =
 
 setPerspectiveOriginInitCssUnitX : Unit -> AnimBuilder eng -> AnimBuilder eng
 setPerspectiveOriginInitCssUnitX unit ((AnimBuilder data) as builder) =
-    writeCssUnit (unitTargetGroup data data.defaults.perspectiveOriginCurrentGroup) CssUnitStore.perspectiveOriginX unit builder
+    writeCssUnitForGroup (unitTargetGroup data data.defaults.perspectiveOriginCurrentGroup) CssUnitStore.perspectiveOriginX unit builder
 
 
 setPerspectiveOriginInitCssUnitY : Unit -> AnimBuilder eng -> AnimBuilder eng
 setPerspectiveOriginInitCssUnitY unit ((AnimBuilder data) as builder) =
-    writeCssUnit (unitTargetGroup data data.defaults.perspectiveOriginCurrentGroup) CssUnitStore.perspectiveOriginY unit builder
+    writeCssUnitForGroup (unitTargetGroup data data.defaults.perspectiveOriginCurrentGroup) CssUnitStore.perspectiveOriginY unit builder
 
 
 
@@ -1922,20 +1889,20 @@ setSizeCurrentGroup name (AnimBuilder data) =
 
 setSizeInitCssUnit : Unit -> AnimBuilder eng -> AnimBuilder eng
 setSizeInitCssUnit unit ((AnimBuilder data) as builder) =
-    writeCssUnits (unitTargetGroup data data.defaults.sizeCurrentGroup)
+    writeCssUnitsForGroup (unitTargetGroup data data.defaults.sizeCurrentGroup)
         [ CssUnitStore.sizeWidth, CssUnitStore.sizeHeight ]
         unit
         builder
 
 
-setSizeInitCssUnitWidth : Unit -> AnimBuilder eng -> AnimBuilder eng
-setSizeInitCssUnitWidth unit ((AnimBuilder data) as builder) =
-    writeCssUnit (unitTargetGroup data data.defaults.sizeCurrentGroup) CssUnitStore.sizeWidth unit builder
+setSizeInitCssUnitW : Unit -> AnimBuilder eng -> AnimBuilder eng
+setSizeInitCssUnitW unit ((AnimBuilder data) as builder) =
+    writeCssUnitForGroup (unitTargetGroup data data.defaults.sizeCurrentGroup) CssUnitStore.sizeWidth unit builder
 
 
-setSizeInitCssUnitHeight : Unit -> AnimBuilder eng -> AnimBuilder eng
-setSizeInitCssUnitHeight unit ((AnimBuilder data) as builder) =
-    writeCssUnit (unitTargetGroup data data.defaults.sizeCurrentGroup) CssUnitStore.sizeHeight unit builder
+setSizeInitCssUnitH : Unit -> AnimBuilder eng -> AnimBuilder eng
+setSizeInitCssUnitH unit ((AnimBuilder data) as builder) =
+    writeCssUnitForGroup (unitTargetGroup data data.defaults.sizeCurrentGroup) CssUnitStore.sizeHeight unit builder
 
 
 

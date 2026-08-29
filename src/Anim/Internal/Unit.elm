@@ -7,6 +7,8 @@ module Anim.Internal.Unit exposing
     , mergeBaselineUnits
     , resolveCssUnitAxes
     , setAllCssUnitAxes
+    , setCssUnitH
+    , setCssUnitW
     , setCssUnitX
     , setCssUnitY
     , setCssUnitZ
@@ -113,6 +115,16 @@ setCssUnitY unit axes =
 setCssUnitZ : Unit -> CssUnitAxes -> CssUnitAxes
 setCssUnitZ unit axes =
     { axes | z = Just unit }
+
+
+setCssUnitH : Unit -> CssUnitAxes -> CssUnitAxes
+setCssUnitH unit axes =
+    { axes | y = Just unit }
+
+
+setCssUnitW : Unit -> CssUnitAxes -> CssUnitAxes
+setCssUnitW unit axes =
+    { axes | x = Just unit }
 
 
 

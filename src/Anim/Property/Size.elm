@@ -8,6 +8,7 @@ module Anim.Property.Size exposing
     , delay, duration, speed
     , easing
     , spring
+    , initCssUnit, initCssUnitW, initCssUnitH
     , cssUnit, cssUnitW, cssUnitH
     , Bounds, AxisBounds, bounds
     , clampWidth, clampHeight
@@ -102,6 +103,8 @@ for details.
 
 Set the CSS length unit(s) used in size animations.
 
+@docs initCssUnit, initCssUnitW, initCssUnitH
+
 @docs cssUnit, cssUnitW, cssUnitH
 
 
@@ -170,9 +173,9 @@ Snap to a specific size, cancelling any in-flight animation on this property.
 
 -}
 
-import Anim.Internal.Builder as IB exposing (AnimBuilder)
+import Anim.Internal.Builder as InternalBuilder exposing (AnimBuilder)
 import Anim.Internal.Builder.CssUnitStore as CssUnitStore
-import Anim.Internal.Builder.Size as SB
+import Anim.Internal.Builder.Size as SizeBuilder exposing (SizeBuilder)
 import Anim.Unit exposing (Unit)
 import Motion.Easing exposing (Easing)
 import Motion.Spring exposing (Spring)
@@ -193,7 +196,7 @@ type alias AnimGroupName =
 {-| Builder type for size animations.
 -}
 type alias Builder eng =
-    SB.SizeBuilder eng
+    SizeBuilder eng
 
 
 
@@ -219,13 +222,12 @@ This is equivalent to calling `initHW 100 100`.
 
 -}
 init : AnimGroupName -> Float -> AnimBuilder eng -> AnimBuilder eng
-init animationKey value animBuilder =
-    animBuilder
-        |> SB.for animationKey
-        |> fromHW value value
-        |> SB.toHW value value
-        |> SB.build
-        |> IB.registerSizeInitAxes [ CssUnitStore.sizeWidth, CssUnitStore.sizeHeight ]
+init animationKey value =
+    SizeBuilder.for animationKey
+        >> fromHW value value
+        >> SizeBuilder.toHW value value
+        >> SizeBuilder.build
+        >> InternalBuilder.registerSizeInitAxes [ CssUnitStore.sizeWidth, CssUnitStore.sizeHeight ]
 
 
 {-| Set the initial width and height.
@@ -241,13 +243,12 @@ init animationKey value animBuilder =
 
 -}
 initHW : AnimGroupName -> Float -> Float -> AnimBuilder eng -> AnimBuilder eng
-initHW animationKey h w animBuilder =
-    animBuilder
-        |> SB.for animationKey
-        |> fromHW h w
-        |> SB.toHW h w
-        |> SB.build
-        |> IB.registerSizeInitAxes [ CssUnitStore.sizeWidth, CssUnitStore.sizeHeight ]
+initHW animationKey h w =
+    SizeBuilder.for animationKey
+        >> fromHW h w
+        >> SizeBuilder.toHW h w
+        >> SizeBuilder.build
+        >> InternalBuilder.registerSizeInitAxes [ CssUnitStore.sizeWidth, CssUnitStore.sizeHeight ]
 
 
 {-| Set the initial width.
@@ -263,13 +264,12 @@ initHW animationKey h w animBuilder =
 
 -}
 initW : AnimGroupName -> Float -> AnimBuilder eng -> AnimBuilder eng
-initW animationKey w animBuilder =
-    animBuilder
-        |> SB.for animationKey
-        |> fromW w
-        |> SB.toW w
-        |> SB.build
-        |> IB.registerSizeInitAxes [ CssUnitStore.sizeWidth ]
+initW animationKey w =
+    SizeBuilder.for animationKey
+        >> fromW w
+        >> SizeBuilder.toW w
+        >> SizeBuilder.build
+        >> InternalBuilder.registerSizeInitAxes [ CssUnitStore.sizeWidth ]
 
 
 {-| Set the initial height.
@@ -285,46 +285,12 @@ initW animationKey w animBuilder =
 
 -}
 initH : AnimGroupName -> Float -> AnimBuilder eng -> AnimBuilder eng
-initH animationKey h animBuilder =
-    animBuilder
-        |> SB.for animationKey
-        |> fromH h
-        |> SB.toH h
-        |> SB.build
-        |> IB.registerSizeInitAxes [ CssUnitStore.sizeHeight ]
-
-
-
--- Initial Unit
-
-
-{-| Set the length [Unit](Anim-Unit#Unit) for all sides.
-
-    import Anim.Unit exposing (Unit(..))
-
-    Engine.init
-        [ Size.initHW "btn" 8 25
-            >> Size.cssUnit Cqmin
-        ]
-
--}
-cssUnit : Unit -> AnimBuilder eng -> AnimBuilder eng
-cssUnit =
-    IB.setSizeInitCssUnit
-
-
-{-| Set the length [Unit](Anim-Unit#Unit) for the width.
--}
-cssUnitW : Unit -> AnimBuilder eng -> AnimBuilder eng
-cssUnitW =
-    IB.setSizeInitCssUnitWidth
-
-
-{-| Set the length [Unit](Anim-Unit#Unit) for the height.
--}
-cssUnitH : Unit -> AnimBuilder eng -> AnimBuilder eng
-cssUnitH =
-    IB.setSizeInitCssUnitHeight
+initH animationKey h =
+    SizeBuilder.for animationKey
+        >> fromH h
+        >> SizeBuilder.toH h
+        >> SizeBuilder.build
+        >> InternalBuilder.registerSizeInitAxes [ CssUnitStore.sizeHeight ]
 
 
 
@@ -345,12 +311,12 @@ Use this to start configuring a size animation.
 -}
 begin : AnimBuilder eng -> Builder eng
 begin animBuilder =
-    case IB.getCurrentAnimGroupName animBuilder of
+    case InternalBuilder.getCurrentAnimGroupName animBuilder of
         Just animGroupName ->
-            SB.for animGroupName animBuilder
+            SizeBuilder.for animGroupName animBuilder
 
         Nothing ->
-            SB.for "" animBuilder
+            SizeBuilder.for "" animBuilder
 
 
 {-| Complete the [Builder](#Builder) animation configuration and return an `AnimBuilder`
@@ -366,7 +332,7 @@ so you can continue configuring other property animations or execute the animati
 -}
 end : Builder eng -> AnimBuilder eng
 end =
-    SB.build
+    SizeBuilder.build
 
 
 
@@ -386,21 +352,21 @@ end =
 -}
 fromHW : Float -> Float -> Builder eng -> Builder eng
 fromHW =
-    SB.fromHW
+    SizeBuilder.fromHW
 
 
 {-| Set the starting height. Width is left unchanged (or 0 if not set).
 -}
 fromH : Float -> Builder eng -> Builder eng
 fromH =
-    SB.fromH
+    SizeBuilder.fromH
 
 
 {-| Set the starting width. Height is left unchanged (or 0 if not set).
 -}
 fromW : Float -> Builder eng -> Builder eng
 fromW =
-    SB.fromW
+    SizeBuilder.fromW
 
 
 {-| Set both starting width and height to the same value.
@@ -410,7 +376,7 @@ This is equivalent to calling `fromHW value value`.
 -}
 from : Float -> Builder eng -> Builder eng
 from value =
-    SB.fromHW value value
+    SizeBuilder.fromHW value value
 
 
 
@@ -430,21 +396,21 @@ from value =
 -}
 toHW : Float -> Float -> Builder eng -> Builder eng
 toHW =
-    SB.toHW
+    SizeBuilder.toHW
 
 
 {-| Set the target height. Width is left unchanged (or 0 if not set).
 -}
 toH : Float -> Builder eng -> Builder eng
 toH =
-    SB.toH
+    SizeBuilder.toH
 
 
 {-| Set the target width. Height is left unchanged (or 0 if not set).
 -}
 toW : Float -> Builder eng -> Builder eng
 toW =
-    SB.toW
+    SizeBuilder.toW
 
 
 
@@ -457,28 +423,28 @@ toW =
 -}
 set : Float -> Builder eng -> Builder eng
 set hw =
-    SB.setHW hw hw
+    SizeBuilder.setHW hw hw
 
 
 {-| Snap target height and width values.
 -}
 setHW : Float -> Float -> Builder eng -> Builder eng
 setHW =
-    SB.setHW
+    SizeBuilder.setHW
 
 
 {-| Snap target height, preserving the current width.
 -}
 setH : Float -> Builder eng -> Builder eng
 setH =
-    SB.setH
+    SizeBuilder.setH
 
 
 {-| Snap target width, preserving the current height.
 -}
 setW : Float -> Builder eng -> Builder eng
 setW =
-    SB.setW
+    SizeBuilder.setW
 
 
 
@@ -491,21 +457,21 @@ setW =
 -}
 byHW : Float -> Float -> Builder eng -> Builder eng
 byHW =
-    SB.byHW
+    SizeBuilder.byHW
 
 
 {-| Move by a delta on height. Width is unaffected.
 -}
 byH : Float -> Builder eng -> Builder eng
 byH =
-    SB.byH
+    SizeBuilder.byH
 
 
 {-| Move by a delta on width. Height is unaffected.
 -}
 byW : Float -> Builder eng -> Builder eng
 byW =
-    SB.byW
+    SizeBuilder.byW
 
 
 
@@ -518,14 +484,14 @@ byW =
 -}
 delay : Int -> Builder { eng | withTiming : () } -> Builder { eng | withTiming : () }
 delay =
-    SB.delay
+    SizeBuilder.delay
 
 
 {-| Set the animation duration (milliseconds).
 -}
 duration : Int -> Builder { eng | withTiming : () } -> Builder { eng | withTiming : () }
 duration =
-    SB.duration
+    SizeBuilder.duration
 
 
 {-| The speed represents how many units the element's size changes per second.
@@ -536,7 +502,7 @@ of `50.0` will take 2 seconds to complete.
 -}
 speed : Float -> Builder { eng | withTiming : () } -> Builder { eng | withTiming : () }
 speed =
-    SB.speed
+    SizeBuilder.speed
 
 
 
@@ -554,7 +520,7 @@ speed =
 -}
 easing : Easing -> Builder eng -> Builder eng
 easing =
-    SB.easing
+    SizeBuilder.easing
 
 
 
@@ -572,12 +538,75 @@ easing =
 -}
 spring : Spring -> Builder { eng | withSpring : () } -> Builder { eng | withSpring : () }
 spring =
-    SB.spring
+    SizeBuilder.spring
 
 
 
 -- ============================================================
--- RESIZE
+-- CSS UNITS
+-- ============================================================
+
+
+{-| Set the length [Unit](Anim-Unit#Unit) for all sides.
+
+    import Anim.Unit exposing (Unit(..))
+
+    Engine.init
+        [ Size.initHW "btn" 8 25
+            >> Size.initCssUnit Cqmin
+        ]
+
+-}
+initCssUnit : Unit -> AnimBuilder eng -> AnimBuilder eng
+initCssUnit =
+    InternalBuilder.setSizeInitCssUnit
+
+
+{-| Set the length [Unit](Anim-Unit#Unit) for the width.
+-}
+initCssUnitW : Unit -> AnimBuilder eng -> AnimBuilder eng
+initCssUnitW =
+    InternalBuilder.setSizeInitCssUnitW
+
+
+{-| Set the length [Unit](Anim-Unit#Unit) for the height.
+-}
+initCssUnitH : Unit -> AnimBuilder eng -> AnimBuilder eng
+initCssUnitH =
+    InternalBuilder.setSizeInitCssUnitH
+
+
+{-| Set the length [Unit](Anim-Unit#Unit) for all sides.
+
+    import Anim.Unit exposing (Unit(..))
+
+    Size.begin
+        >> Size.cssUnit Cqmin
+        >> ... -- continue with animation
+
+-}
+cssUnit : Unit -> Builder eng -> Builder eng
+cssUnit =
+    SizeBuilder.setCssUnit
+
+
+{-| Set the length [Unit](Anim-Unit#Unit) for the width.
+-}
+cssUnitW : Unit -> Builder eng -> Builder eng
+cssUnitW =
+    SizeBuilder.setCssUnitW
+
+
+{-| Set the length [Unit](Anim-Unit#Unit) for the height.
+-}
+cssUnitH : Unit -> Builder eng -> Builder eng
+cssUnitH =
+    SizeBuilder.setCssUnitH
+
+
+
+-- ============================================================
+-- BOUNDS
 -- ============================================================
 
 
@@ -625,10 +654,12 @@ anywhere else results in a type error.
 -}
 bounds : AnimGroupName -> AxisBounds -> AnimBuilder { eng | withBounds : () } -> AnimBuilder { eng | withBounds : () }
 bounds name ranges =
-    SB.for name >> SB.bounds (toBuilderRanges ranges) >> SB.build
+    SizeBuilder.for name
+        >> SizeBuilder.bounds (toBuilderRanges ranges)
+        >> SizeBuilder.build
 
 
-toBuilderRanges : AxisBounds -> IB.AxisBounds
+toBuilderRanges : AxisBounds -> InternalBuilder.AxisBounds
 toBuilderRanges ranges =
     { x = ranges.width
     , y = ranges.height
@@ -638,7 +669,7 @@ toBuilderRanges ranges =
 
 
 -- ============================================================
--- BOUNDS
+-- CLAMP / UNCLAMP
 -- ============================================================
 
 
@@ -646,25 +677,25 @@ toBuilderRanges ranges =
 -}
 clampWidth : Float -> Float -> Builder eng -> Builder eng
 clampWidth =
-    SB.clampWidth
+    SizeBuilder.clampWidth
 
 
 {-| Keep height within `min` and `max` values. If `min > max` the values are flipped.
 -}
 clampHeight : Float -> Float -> Builder eng -> Builder eng
 clampHeight =
-    SB.clampHeight
+    SizeBuilder.clampHeight
 
 
 {-| Remove the width range for this animation group. Does nothing if no range is set.
 -}
 unclampWidth : Builder eng -> Builder eng
 unclampWidth =
-    SB.unclampWidth
+    SizeBuilder.unclampWidth
 
 
 {-| Remove the height range for this animation group. Does nothing if no range is set.
 -}
 unclampHeight : Builder eng -> Builder eng
 unclampHeight =
-    SB.unclampHeight
+    SizeBuilder.unclampHeight

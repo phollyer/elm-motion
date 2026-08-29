@@ -69,8 +69,8 @@ suite =
                     q =
                         Sub.init
                             [ Size.initHW "el" 80 120
-                                >> Size.cssUnitW Unit.Cqw
-                                >> Size.cssUnitH Unit.Cqh
+                                >> Size.initCssUnitW Unit.Cqw
+                                >> Size.initCssUnitH Unit.Cqh
                             ]
                             |> rendered
                 in

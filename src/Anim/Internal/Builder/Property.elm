@@ -35,6 +35,8 @@ module Anim.Internal.Builder.Property exposing
     , getTranslateRange
     , getTranslateStart
     , setCssUnit
+    , setCssUnitH
+    , setCssUnitW
     , setCssUnitX
     , setCssUnitY
     , setCssUnitZ
@@ -455,6 +457,16 @@ setCssUnitY unit config =
 setCssUnitZ : Unit -> { config | cssUnit : InternalUnit.CssUnitAxes } -> { config | cssUnit : InternalUnit.CssUnitAxes }
 setCssUnitZ unit config =
     { config | cssUnit = InternalUnit.setCssUnitZ unit config.cssUnit }
+
+
+setCssUnitH : Unit -> { config | cssUnit : InternalUnit.CssUnitAxes } -> { config | cssUnit : InternalUnit.CssUnitAxes }
+setCssUnitH unit config =
+    { config | cssUnit = InternalUnit.setCssUnitH unit config.cssUnit }
+
+
+setCssUnitW : Unit -> { config | cssUnit : InternalUnit.CssUnitAxes } -> { config | cssUnit : InternalUnit.CssUnitAxes }
+setCssUnitW unit config =
+    { config | cssUnit = InternalUnit.setCssUnitW unit config.cssUnit }
 
 
 

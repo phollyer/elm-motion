@@ -16,6 +16,9 @@ module Anim.Internal.Builder.Size exposing
     , fromHW
     , fromW
     , set
+    , setCssUnit
+    , setCssUnitH
+    , setCssUnitW
     , setH
     , setHW
     , setW
@@ -35,6 +38,7 @@ import Anim.Internal.Builder.Property as PropertyBuilder
 import Anim.Internal.Builder.PropertyBaselines as PropertyBaselines
 import Anim.Internal.Property.Size as Size exposing (Size)
 import Anim.Internal.Unit as InternalUnit
+import Anim.Unit exposing (Unit)
 import Motion.Easing exposing (Easing)
 import Motion.Spring exposing (Spring)
 import Shared.TimeSpec exposing (TimeSpec(..))
@@ -359,6 +363,27 @@ easing easingFunction (SizeBuilder config builder) =
 spring : Spring -> SizeBuilder { eng | withSpring : () } -> SizeBuilder { eng | withSpring : () }
 spring s (SizeBuilder config builder) =
     SizeBuilder (PropertyBuilder.spring s config) builder
+
+
+
+-- ============================================================
+-- CSS UNITS
+-- ============================================================
+
+
+setCssUnit : Unit -> SizeBuilder eng -> SizeBuilder eng
+setCssUnit unit (SizeBuilder config builder) =
+    SizeBuilder (PropertyBuilder.setCssUnit unit config) builder
+
+
+setCssUnitH : Unit -> SizeBuilder eng -> SizeBuilder eng
+setCssUnitH unit (SizeBuilder config builder) =
+    SizeBuilder (PropertyBuilder.setCssUnitH unit config) builder
+
+
+setCssUnitW : Unit -> SizeBuilder eng -> SizeBuilder eng
+setCssUnitW unit (SizeBuilder config builder) =
+    SizeBuilder (PropertyBuilder.setCssUnitW unit config) builder
 
 
 
