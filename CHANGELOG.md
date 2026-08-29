@@ -19,7 +19,13 @@ The two version lines are **not kept in lockstep**. The npm companion can ship J
 
 ## [Unreleased]
 
-Nothing
+### Added
+
+**(elm)** Add `initCssUnit*` group of functions to the `PerspectiveOrigin`, `Size` and `Translate` properties. Improve their docs.
+
+### Changed
+
+**(elm)** Changed the type annotations for the `cssUnit*` group of functions for the `PerspectiveOrigin`, `Size` and `Translate` properties, (`AnimBuilder eng` becomes a property specific `Builder eng`). This forces/enables the functions to be used inside the property builder chain, rather than outside. This is a breaking change, but makes their use clearer and more intuitive.
 
 ## [2.1.4] - 2026-08-08 (elm)
 
