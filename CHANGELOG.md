@@ -19,6 +19,10 @@ The two version lines are **not kept in lockstep**. The npm companion can ship J
 
 ## [Unreleased]
 
+Nothing
+
+## [3.0.0] - 2026-09-01 (elm)
+
 ### Removed
 
 **(elm)** Remove unsupported easings `BackInCustom`, `BackOutCustom` and `BackInOutCustom`.
