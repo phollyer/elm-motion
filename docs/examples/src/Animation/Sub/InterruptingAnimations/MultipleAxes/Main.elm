@@ -75,8 +75,8 @@ init =
     ( { animState =
             Sub.init
                 [ Translate.initXY animGroupName centerXCqw centerYCqh
-                    >> Translate.cssUnitX Cqw
-                    >> Translate.cssUnitY Cqh
+                    >> Translate.initCssUnitX Cqw
+                    >> Translate.initCssUnitY Cqh
                 ]
       }
     , Cmd.none

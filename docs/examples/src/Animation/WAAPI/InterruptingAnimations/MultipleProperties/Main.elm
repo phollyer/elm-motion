@@ -78,8 +78,10 @@ init : ( Model, Cmd Msg )
 init =
     ( { animState =
             WAAPI.init motionCmd motionMsg <|
-                [ Translate.initX animGroupName centerXCqw >> Translate.cssUnitX Cqw
-                , CustomColor.init animGroupName CustomColor.BackgroundColor <| Color.rgb 118 118 118
+                [ Translate.initX animGroupName centerXCqw
+                    >> Translate.initCssUnitX Cqw
+                , CustomColor.init animGroupName CustomColor.BackgroundColor <|
+                    Color.rgb 118 118 118
                 ]
       }
     , Cmd.none

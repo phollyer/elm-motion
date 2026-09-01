@@ -67,8 +67,10 @@ init : ( Model, Cmd Msg )
 init =
     ( { animState =
             Keyframe.init
-                [ Translate.initX animGroupName centerXCqw >> Translate.cssUnit Cqw
-                , CustomColor.init animGroupName CustomColor.BackgroundColor <| Color.rgb 118 118 118
+                [ Translate.initX animGroupName centerXCqw
+                    >> Translate.initCssUnit Cqw
+                , CustomColor.init animGroupName CustomColor.BackgroundColor <|
+                    Color.rgb 118 118 118
                 ]
       }
     , Cmd.none
