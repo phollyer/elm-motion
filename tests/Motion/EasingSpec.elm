@@ -95,9 +95,6 @@ cssCases =
     , ( BackIn, "cubic-bezier(0.36, 0, 0.66, -0.56)" )
     , ( BackOut, "cubic-bezier(0.34, 1.56, 0.64, 1)" )
     , ( BackInOut, "cubic-bezier(0.68, -0.6, 0.32, 1.6)" )
-    , ( BackInCustom 1.5, "linear" )
-    , ( BackOutCustom 1.5, "linear" )
-    , ( BackInOutCustom ( 1.0, 1.0 ), "linear" )
     , ( ElasticIn, "cubic-bezier(0.55, 0.055, 0.675, 0.19)" )
     , ( ElasticOut, "cubic-bezier(0.175, 0.885, 0.32, 1.275)" )
     , ( ElasticInOut, "cubic-bezier(0.445, 0.05, 0.55, 0.95)" )
@@ -142,9 +139,6 @@ waCases =
     , ( CubicOut, "cubic-bezier(0.67, 0, 0.32, 1)" )
     , ( BackOut, "cubic-bezier(0.34, 1.56, 0.64, 1)" )
     , ( BackInOut, "cubic-bezier(0.68, -0.6, 0.32, 1.6)" )
-    , ( BackInCustom 2, "linear" )
-    , ( BackOutCustom 2, "linear" )
-    , ( BackInOutCustom ( 1, 2 ), "linear" )
 
     -- Elastic and Bounce are sampled as keyframes by WAAPI so the
     -- timing function passed to the browser is always "linear".
@@ -320,9 +314,6 @@ allEasings =
         ++ [ BackIn
            , BackOut
            , BackInOut
-           , BackInCustom 1.7
-           , BackOutCustom 1.7
-           , BackInOutCustom ( 1.7, 1.7 )
            , ElasticIn
            , ElasticOut
            , ElasticInOut
@@ -422,15 +413,6 @@ easingLabel easing =
 
         BackInOut ->
             "BackInOut"
-
-        BackInCustom _ ->
-            "BackInCustom"
-
-        BackOutCustom _ ->
-            "BackOutCustom"
-
-        BackInOutCustom _ ->
-            "BackInOutCustom"
 
         ElasticIn ->
             "ElasticIn"

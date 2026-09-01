@@ -21,6 +21,12 @@ The two version lines are **not kept in lockstep**. The npm companion can ship J
 
 Nothing
 
+## [3.0.1] - 2026-09-01 (elm)
+
+### Fixed
+
+**(tooling)** Removed leftover `EasingSpec` test cases for `BackInCustom`, `BackOutCustom` and `BackInOutCustom`, which were deleted from the public API in 3.0.0 but not fully removed from the test suite.
+
 ## [3.0.0] - 2026-09-01 (elm)
 
 ### Removed
@@ -149,6 +155,8 @@ Initial release of the `@phollyer/elm-motion` JavaScript companion. The in-repo 
 - ESM (`elm-motion.mjs`) and standalone browser (IIFE, global `ElmMotion`, `elm-motion.js`) builds, plus TypeScript definitions (`elm-motion.d.ts`), all shipped in `dist/`.
 - `engines` field (`node >= 18`) declared on the published package.
 
+[3.0.1]: https://github.com/phollyer/elm-motion/compare/3.0.1...3.0.0
+[3.0.0]: https://github.com/phollyer/elm-motion/compare/3.0.0...2.1.4
 [2.1.4]: https://github.com/phollyer/elm-motion/compare/2.1.3...2.1.4
 [2.1.3]: https://github.com/phollyer/elm-motion/compare/2.1.2...2.1.3
 [2.1.2]: https://github.com/phollyer/elm-motion/compare/2.1.1...2.1.2
