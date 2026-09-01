@@ -19,6 +19,10 @@ The two version lines are **not kept in lockstep**. The npm companion can ship J
 
 ## [Unreleased]
 
+### Removed
+
+**(elm)** Remove unsupported easings `BackInCustom`, `BackOutCustom` and `BackInOutCustom`.
+
 ### Added
 
 **(elm)** Add `initCssUnit*` group of functions to the `PerspectiveOrigin`, `Size` and `Translate` properties. Improve their docs.
