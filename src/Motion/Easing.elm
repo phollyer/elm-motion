@@ -36,9 +36,6 @@ type Easing
     = BackIn
     | BackOut
     | BackInOut
-    | BackInCustom Float
-    | BackOutCustom Float
-    | BackInOutCustom ( Float, Float )
     | BounceIn
     | BounceOut
     | BounceInOut
@@ -96,19 +93,6 @@ toString easing =
 
         BackInOut ->
             "BackInOut"
-
-        BackInCustom overshoot ->
-            "BackInCustom(" ++ String.fromFloat overshoot ++ ")"
-
-        BackOutCustom overshoot ->
-            "BackOutCustom(" ++ String.fromFloat overshoot ++ ")"
-
-        BackInOutCustom ( inOvershoot, outOvershoot ) ->
-            "BackInOutCustom("
-                ++ String.fromFloat inOvershoot
-                ++ ", "
-                ++ String.fromFloat outOvershoot
-                ++ ")"
 
         BounceIn ->
             "BounceIn"

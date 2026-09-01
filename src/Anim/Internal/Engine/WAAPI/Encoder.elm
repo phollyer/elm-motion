@@ -1041,13 +1041,13 @@ isComplexEasing easing_ =
         BounceInOut ->
             True
 
-        BackInCustom _ ->
+        BackIn ->
             True
 
-        BackOutCustom _ ->
+        BackOut ->
             True
 
-        BackInOutCustom _ ->
+        BackInOut ->
             True
 
         _ ->

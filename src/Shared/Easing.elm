@@ -125,15 +125,6 @@ easingToCSS easing =
         BackInOut ->
             "cubic-bezier(0.68, -0.6, 0.32, 1.6)"
 
-        BackInCustom _ ->
-            "linear"
-
-        BackOutCustom _ ->
-            "linear"
-
-        BackInOutCustom _ ->
-            "linear"
-
         ElasticIn ->
             "cubic-bezier(0.55, 0.055, 0.675, 0.19)"
 
@@ -260,15 +251,6 @@ toWebAnimations easing =
         BackInOut ->
             "cubic-bezier(0.68, -0.6, 0.32, 1.6)"
 
-        BackInCustom _ ->
-            "linear"
-
-        BackOutCustom _ ->
-            "linear"
-
-        BackInOutCustom _ ->
-            "linear"
-
         ElasticIn ->
             "linear"
 
@@ -387,15 +369,6 @@ toFunction easing =
         BackInOut ->
             E.inOutBack
 
-        BackInCustom strength ->
-            customBackIn strength
-
-        BackOutCustom strength ->
-            customBackOut strength
-
-        BackInOutCustom strengthTuple ->
-            customBackInOut strengthTuple
-
         ElasticIn ->
             E.inElastic
 
@@ -413,39 +386,3 @@ toFunction easing =
 
         BounceInOut ->
             E.inOutBounce
-
-
-
--- ============================================================
--- BACK IMPLEMENTATIONS
--- ============================================================
-
-
-{-| Custom back easing with strength parameter controlling overshoot amount.
-The strength parameter directly controls the overshoot (standard back easing uses 1.70158).
-Higher values create more dramatic overshoot effects.
--}
-customBackOut : Float -> Float -> Float
-customBackOut strength t =
-    let
-        s =
-            strength
-
-        p =
-            t - 1
-    in
-    p * p * ((s + 1) * p + s) + 1
-
-
-customBackIn : Float -> Float -> Float
-customBackIn strength t =
-    1.0 - customBackOut strength (1.0 - t)
-
-
-customBackInOut : ( Float, Float ) -> Float -> Float
-customBackInOut ( strengthIn, strengthOut ) t =
-    if t < 0.5 then
-        customBackIn strengthIn (t * 2) * 0.5
-
-    else
-        0.5 + (customBackOut strengthOut ((t - 0.5) * 2) * 0.5)
