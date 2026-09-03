@@ -19,6 +19,11 @@ The two version lines are **not kept in lockstep**. The npm companion can ship J
 
 ## [Unreleased]
 
+Nothing
+
+## [3.0.3] - 2026-09-03 (elm)
+
+
 ### Fixed
 
 **(elm)** Discrete Properties: ensure a property initialized in the Transition engine directly before a global call to `discreteEntry` does not leak forward into the discrete property handling path.
@@ -168,6 +173,7 @@ Initial release of the `@phollyer/elm-motion` JavaScript companion. The in-repo 
 - ESM (`elm-motion.mjs`) and standalone browser (IIFE, global `ElmMotion`, `elm-motion.js`) builds, plus TypeScript definitions (`elm-motion.d.ts`), all shipped in `dist/`.
 - `engines` field (`node >= 18`) declared on the published package.
 
+[3.0.3]: https://github.com/phollyer/elm-motion/compare/3.0.3...3.0.2
 [3.0.2]: https://github.com/phollyer/elm-motion/compare/3.0.2...3.0.1
 [3.0.1]: https://github.com/phollyer/elm-motion/compare/3.0.1...3.0.0
 [3.0.0]: https://github.com/phollyer/elm-motion/compare/3.0.0...2.1.4
