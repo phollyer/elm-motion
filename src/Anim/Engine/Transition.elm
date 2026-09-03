@@ -129,6 +129,8 @@ To render a transition, add `attributes` to the element you want to animate.
 
 📖 See [Discrete Properties](https://phollyer.github.io/elm-motion/animation/concepts/discrete-properties/) for details.
 
+**Note**: You must have [Event Listeners](#event-listeners) set up so that the Engine can handle discrete property changes.
+
 @docs discreteEntry, startingStyleNode, startingStyleNodeFor, discreteExit
 
 
@@ -460,7 +462,10 @@ the transition.
     view model =
         div []
             [ Transition.startingStyleNode model.animState
-            , div (Transition.attributes "fadeIn" model.animState)
+            , div
+                (Transition.attributes "fadeIn" model.animState
+                    ++ Transition.events TransitionMsg
+                )
                 [ text "I fade in!" ]
             ]
 
@@ -478,7 +483,10 @@ startingStyleNode =
     view model =
         div []
             [ Transition.startingStyleNodeFor "fadeIn" model.animState
-            , div (Transition.attributes "fadeIn" model.animState)
+            , div
+                (Transition.attributes "fadeIn" model.animState
+                    ++ Transition.events TransitionMsg
+                )
                 [ text "I fade in!" ]
             ]
 
