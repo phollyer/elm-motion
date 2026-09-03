@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WAAPI Engine - Scroll Timeline Example</title>
+    <link rel="stylesheet" href="../../../css/base.css?v=1788409085">
+    <link rel="stylesheet" href="../../../css/responsive.css?v=1788409085">
+    <link rel="stylesheet" href="../../../css/ui-components.css?v=1788409085">
+    <style>
+        /* This example requires page scrolling; opt out of the
+           global no-scroll / flex-centred stage from base.css.
+           Only the root (html) scrolls so the document is the single
+           scroll source for ScrollTimeline. */
+        html {
+            width: auto;
+            height: auto;
+            min-height: 100vh;
+            overflow: auto;
+        }
+
+        body {
+            width: auto;
+            height: auto;
+            min-height: 100vh;
+            display: block;
+            overflow: visible;
+        }
+    </style>
+    <script src="../../../js/elm-motion.js"></script>
+    <script src="index.js?v=1788409085"></script>
+</head>
+
+<body>
+    <div id="elm"></div>
+    <script>
+        var app = Elm.Animation.ScrollTimeline.Main.init({
+            node: document.getElementById('elm'),
+            flags: { window: { width: window.innerWidth } }
+        });
+        ElmMotion.init(app.ports);
+    </script>
+</body>
+
+</html>

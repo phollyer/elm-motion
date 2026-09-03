@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WAAPI Engine - Springs Example</title>
+    <link rel="stylesheet" href="../../../../css/base.css?v=1788409085">
+    <link rel="stylesheet" href="../../../../css/ui-components.css?v=1788409085">
+    <link rel="stylesheet" href="../../../../css/responsive.css?v=1788409085">
+    <script src="../../../../js/elm-motion.js"></script>
+</head>
+
+<body>
+    <div id="elm"></div>
+    <script src="index.js?v=1788409085"></script>
+    <script>
+        var app = Elm.Animation.WAAPI.Springs.Main.init({
+            node: document.getElementById('elm')
+        });
+
+        ElmMotion.init(app.ports);
+    </script>
+</body>
+
+</html>
