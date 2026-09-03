@@ -21,6 +21,8 @@ The two version lines are **not kept in lockstep**. The npm companion can ship J
 
 ### Fixed
 
+**(elm)** Discrete Properties: ensure a property initialized in the Transition engine directly before a global call to `discreteEntry` does not leak forward into the discrete property handling path.
+
 **(elm)** Discrete Properties: depending on where the user positioned the `discreteEntry` and `discreteExit` functions in their builder chain, the Transition engine may not always render the exit state correctly. This now fixed internally.
 
 ### Added
