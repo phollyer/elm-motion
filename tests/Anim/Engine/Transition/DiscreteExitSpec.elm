@@ -54,4 +54,43 @@ suite =
                        )
                     |> rendered
                     |> Query.has [ Selector.style "display" "block" ]
+        , test "inherited global discrete entry does not force non-entry groups into stylesheet mode" <|
+            \_ ->
+                Transition.init
+                    [ Transition.discreteEntry "display" "block"
+                        >> Opacity.init "line" 1
+                    ]
+                    |> (\state ->
+                            Transition.animate state <|
+                                Transition.for "line"
+                                    >> Opacity.begin
+                                    >> Opacity.to 0
+                                    >> Opacity.duration 500
+                                    >> Opacity.end
+                       )
+                    |> (\state ->
+                            Html.div (Transition.attributes "line" state) []
+                                |> Query.fromHtml
+                       )
+                    |> Query.has [ Selector.style "opacity" "0" ]
+        , test "a preceding init entry is not treated as discrete when a later init entry sets discrete entry" <|
+            \_ ->
+                Transition.init
+                    [ Opacity.init "line" 1
+                    , Transition.discreteEntry "display" "block"
+                        >> Opacity.init "button" 1
+                    ]
+                    |> (\state ->
+                            Transition.animate state <|
+                                Transition.for "line"
+                                    >> Opacity.begin
+                                    >> Opacity.to 0
+                                    >> Opacity.duration 500
+                                    >> Opacity.end
+                       )
+                    |> (\state ->
+                            Html.div (Transition.attributes "line" state) []
+                                |> Query.fromHtml
+                       )
+                    |> Query.hasNot [ Selector.style "display" "block" ]
         ]

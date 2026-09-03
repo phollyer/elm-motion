@@ -87,4 +87,19 @@ suite =
                         ( Just (Dict.fromList [ ( "display", "flex" ), ( "opacity", "1" ) ])
                         , Dict.fromList [ ( "display", "flex" ), ( "opacity", "1" ) ]
                         )
+        , test "init entries do not leak current group selection into the next entry" <|
+            \_ ->
+                let
+                    builder =
+                        Builder.init
+                            [ Builder.for "top-line-group"
+                            , Builder.for "middle-line-group"
+                            , Builder.for "bottom-line-group"
+                            , Builder.discreteEntry "display" "block"
+                                >> Builder.for "phone-menu-button"
+                            ]
+                in
+                Builder.getAnimGroupConfig "bottom-line-group" builder
+                    |> Maybe.andThen .discreteEntryProperties
+                    |> Expect.equal Nothing
         ]

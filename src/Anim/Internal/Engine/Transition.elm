@@ -128,19 +128,38 @@ insertAnimGroup animGroupsConfig animGroupName newAnimGroup acc =
 
         Just currentGroup ->
             let
+                newAnimGroupForMerge =
+                    prepareStartingStylesForMerge newAnimGroup currentGroup
+
                 animatedCssProps =
                     AnimGroups.get animGroupName animGroupsConfig
                         |> Maybe.map (.properties >> toCssPropertyNames)
                         |> Maybe.withDefault []
 
                 discreteCssProps =
-                    Dict.keys (AnimGroup.getDiscreteEntry newAnimGroup)
-                        ++ Dict.keys (AnimGroup.getDiscreteExit newAnimGroup)
+                    Dict.keys (AnimGroup.getDiscreteEntry newAnimGroupForMerge)
+                        ++ Dict.keys (AnimGroup.getDiscreteExit newAnimGroupForMerge)
 
                 styles =
-                    AnimGroup.mergeStyles newAnimGroup currentGroup (animatedCssProps ++ discreteCssProps)
+                    AnimGroup.mergeStyles newAnimGroupForMerge currentGroup (animatedCssProps ++ discreteCssProps)
             in
             AnimGroups.insert animGroupName styles acc
+
+
+prepareStartingStylesForMerge : AnimGroup -> AnimGroup -> AnimGroup
+prepareStartingStylesForMerge newGroup currentGroup =
+    let
+        entryChanged =
+            AnimGroup.getDiscreteEntry newGroup /= AnimGroup.getDiscreteEntry currentGroup
+
+        comingFromExit =
+            not (Dict.isEmpty (AnimGroup.getDiscreteExit currentGroup))
+    in
+    if entryChanged || comingFromExit then
+        newGroup
+
+    else
+        AnimGroup.setStartingStyles [] newGroup
 
 
 retarget : AnimState -> (EngineBuilder -> EngineBuilder) -> AnimState
@@ -409,7 +428,7 @@ attributes animGroupName ((AnimState _ data) as animState) =
                                     Html.Attributes.style prop from
                             )
             in
-            if AnimGroup.usesDiscrete animGroup then
+            if usesStartingStyleMode animGroup then
                 Html.Attributes.attribute "data-anim-group-name" animGroupName
                     :: Html.Attributes.attribute "data-anim-state" (stateAttrValue animGroup)
                     :: discreteExitAttrs
@@ -423,6 +442,11 @@ attributes animGroupName ((AnimState _ data) as animState) =
                     animState
                     ++ discreteExitAttrs
                     ++ willChangeAttrs
+
+
+usesStartingStyleMode : AnimGroup -> Bool
+usesStartingStyleMode animGroup =
+    not (List.isEmpty (AnimGroup.getStartingStyles animGroup))
 
 
 stateAttrValue : AnimGroup -> String
@@ -461,7 +485,7 @@ generateGroupCss animGroupName (AnimState _ animGroups) =
     AnimGroups.get animGroupName animGroups
         |> Maybe.andThen
             (\animGroup ->
-                if AnimGroup.usesDiscrete animGroup then
+                if usesStartingStyleMode animGroup then
                     let
                         selector =
                             "[data-anim-group-name=\""

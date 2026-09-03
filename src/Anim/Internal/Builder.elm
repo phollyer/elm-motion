@@ -568,7 +568,33 @@ type alias ScrollDrivenConfig =
 
 init : List (AnimBuilder eng -> AnimBuilder eng) -> AnimBuilder eng
 init =
-    List.foldl (\f b -> f b) <|
+    let
+        resetInitEntryScope : AnimBuilder eng -> AnimBuilder eng
+        resetInitEntryScope (AnimBuilder data) =
+            let
+                anim =
+                    data.animation
+
+                defs =
+                    data.defaults
+            in
+            AnimBuilder
+                { data
+                    | animation = { anim | currentAnimGroup = Nothing }
+                    , defaults =
+                        { defs
+                            | translateCurrentGroup = Nothing
+                            , sizeCurrentGroup = Nothing
+                            , perspectiveOriginCurrentGroup = Nothing
+                        }
+                }
+
+        runInitEntry : (AnimBuilder eng -> AnimBuilder eng) -> AnimBuilder eng -> AnimBuilder eng
+        runInitEntry f builder =
+            f builder
+                |> resetInitEntryScope
+    in
+    List.foldl runInitEntry <|
         AnimBuilder
             { defaults = initDefaults
             , animation = initAnimation
@@ -1092,9 +1118,27 @@ updateCurrentConfig config (AnimBuilder data) =
                 anim =
                     data.animation
 
+                configWithDiscreteSnapshot =
+                    { config
+                        | discreteEntryProperties =
+                            case config.discreteEntryProperties of
+                                Just _ ->
+                                    config.discreteEntryProperties
+
+                                Nothing ->
+                                    Just data.playback.discreteEntryProperties
+                        , discreteExitProperties =
+                            case config.discreteExitProperties of
+                                Just _ ->
+                                    config.discreteExitProperties
+
+                                Nothing ->
+                                    Just data.playback.discreteExitProperties
+                    }
+
                 -- Get types of new properties to avoid duplicates
                 newPropertyTypes =
-                    List.map propertyType config.properties
+                    List.map propertyType configWithDiscreteSnapshot.properties
 
                 -- Replace properties of same type (not just append) to avoid accumulation
                 mergedConfig =
@@ -1108,17 +1152,17 @@ updateCurrentConfig config (AnimBuilder data) =
                                             (\p -> not (List.member (propertyType p) newPropertyTypes))
 
                                 mergedOrder =
-                                    case config.transformOrder of
+                                    case configWithDiscreteSnapshot.transformOrder of
                                         Just _ ->
-                                            config.transformOrder
+                                            configWithDiscreteSnapshot.transformOrder
 
                                         Nothing ->
                                             existing.transformOrder
                             in
                             { existing
-                                | properties = filteredExisting ++ config.properties
+                                | properties = filteredExisting ++ configWithDiscreteSnapshot.properties
                                 , playback =
-                                    case ( existing.playback, config.playback ) of
+                                    case ( existing.playback, configWithDiscreteSnapshot.playback ) of
                                         ( Just existingPlayback, Just incomingPlayback ) ->
                                             Just
                                                 { iterations =
@@ -1144,42 +1188,42 @@ updateCurrentConfig config (AnimBuilder data) =
                                             existing.playback
                                 , transformOrder = mergedOrder
                                 , viewRangeStart =
-                                    case config.viewRangeStart of
+                                    case configWithDiscreteSnapshot.viewRangeStart of
                                         Just _ ->
-                                            config.viewRangeStart
+                                            configWithDiscreteSnapshot.viewRangeStart
 
                                         Nothing ->
                                             existing.viewRangeStart
                                 , viewRangeEnd =
-                                    case config.viewRangeEnd of
+                                    case configWithDiscreteSnapshot.viewRangeEnd of
                                         Just _ ->
-                                            config.viewRangeEnd
+                                            configWithDiscreteSnapshot.viewRangeEnd
 
                                         Nothing ->
                                             existing.viewRangeEnd
                                 , emitProgress =
-                                    case config.emitProgress of
+                                    case configWithDiscreteSnapshot.emitProgress of
                                         Just _ ->
-                                            config.emitProgress
+                                            configWithDiscreteSnapshot.emitProgress
 
                                         Nothing ->
                                             existing.emitProgress
                                 , updateThrottleMs =
-                                    case config.updateThrottleMs of
+                                    case configWithDiscreteSnapshot.updateThrottleMs of
                                         Just _ ->
-                                            config.updateThrottleMs
+                                            configWithDiscreteSnapshot.updateThrottleMs
 
                                         Nothing ->
                                             existing.updateThrottleMs
                                 , frozenAxes =
-                                    case config.frozenAxes of
+                                    case configWithDiscreteSnapshot.frozenAxes of
                                         Just _ ->
-                                            config.frozenAxes
+                                            configWithDiscreteSnapshot.frozenAxes
 
                                         Nothing ->
                                             existing.frozenAxes
                                 , discreteEntryProperties =
-                                    case config.discreteEntryProperties of
+                                    case configWithDiscreteSnapshot.discreteEntryProperties of
                                         Just newDiscreteEntry ->
                                             Just
                                                 (Dict.union
@@ -1190,7 +1234,7 @@ updateCurrentConfig config (AnimBuilder data) =
                                         Nothing ->
                                             existing.discreteEntryProperties
                                 , discreteExitProperties =
-                                    case config.discreteExitProperties of
+                                    case configWithDiscreteSnapshot.discreteExitProperties of
                                         Just newDiscreteExit ->
                                             Just
                                                 (Dict.union
@@ -1203,7 +1247,7 @@ updateCurrentConfig config (AnimBuilder data) =
                             }
 
                         Nothing ->
-                            config
+                            configWithDiscreteSnapshot
             in
             AnimBuilder
                 { data
@@ -1384,7 +1428,7 @@ getDiscreteEntryPropertiesFor animGroupName builder =
     case getAnimGroupConfig animGroupName builder of
         Just config ->
             config.discreteEntryProperties
-                |> Maybe.map (\groupDiscrete -> mergeDiscreteEntryProperties groupDiscrete (getDiscreteEntryProperties builder))
+                |> Maybe.map identity
                 |> Maybe.withDefault (getDiscreteEntryProperties builder)
 
         Nothing ->
@@ -1396,7 +1440,7 @@ getDiscreteExitPropertiesFor animGroupName builder =
     case getAnimGroupConfig animGroupName builder of
         Just config ->
             config.discreteExitProperties
-                |> Maybe.map (\groupDiscrete -> mergeDiscreteExitProperties groupDiscrete (getDiscreteExitProperties builder))
+                |> Maybe.map identity
                 |> Maybe.withDefault (getDiscreteExitProperties builder)
 
         Nothing ->
@@ -1513,14 +1557,14 @@ getCurrentAnimGroupConfig (AnimBuilder data) =
                             , discreteEntryProperties =
                                 case config.discreteEntryProperties of
                                     Just groupDiscreteEntry ->
-                                        Just (mergeDiscreteEntryProperties groupDiscreteEntry data.playback.discreteEntryProperties)
+                                        Just groupDiscreteEntry
 
                                     Nothing ->
                                         Just data.playback.discreteEntryProperties
                             , discreteExitProperties =
                                 case config.discreteExitProperties of
                                     Just groupDiscreteExit ->
-                                        Just (mergeDiscreteExitProperties groupDiscreteExit data.playback.discreteExitProperties)
+                                        Just groupDiscreteExit
 
                                     Nothing ->
                                         Just data.playback.discreteExitProperties
@@ -2215,7 +2259,7 @@ discreteEntry propertyName value (AnimBuilder data) =
 
                 currentEntryProperties =
                     currentGroupConfig.discreteEntryProperties
-                        |> Maybe.withDefault Dict.empty
+                        |> Maybe.withDefault data.playback.discreteEntryProperties
             in
             updateCurrentConfig
                 { currentGroupConfig
@@ -2262,7 +2306,7 @@ discreteExit propertyName from to (AnimBuilder data) =
 
                 currentExitProperties =
                     currentGroupConfig.discreteExitProperties
-                        |> Maybe.withDefault Dict.empty
+                        |> Maybe.withDefault data.playback.discreteExitProperties
             in
             updateCurrentConfig
                 { currentGroupConfig
@@ -2796,14 +2840,14 @@ process (AnimBuilder data) =
                 , discreteEntryProperties =
                     case group.discreteEntryProperties of
                         Just overrides ->
-                            mergeDiscreteEntryProperties overrides data.playback.discreteEntryProperties
+                            overrides
 
                         Nothing ->
                             data.playback.discreteEntryProperties
                 , discreteExitProperties =
                     case group.discreteExitProperties of
                         Just overrides ->
-                            mergeDiscreteExitProperties overrides data.playback.discreteExitProperties
+                            overrides
 
                         Nothing ->
                             data.playback.discreteExitProperties
