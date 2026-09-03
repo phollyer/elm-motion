@@ -19,6 +19,14 @@ The two version lines are **not kept in lockstep**. The npm companion can ship J
 
 ## [Unreleased]
 
+### Fixed
+
+**(elm)** Discrete Properties: depending on where the user positioned the `discreteEntry` and `discreteExit` functions in their builder chain, the Transition engine may not always render the exit state correctly. This now fixed internally.
+
+### Added
+
+**(docs)** Clarify the Transition engine requires event listeners to be set up in order to handle discrete properties correctly.
+
 Nothing
 
 ## [3.0.2] - 2026-09-01 (elm)
