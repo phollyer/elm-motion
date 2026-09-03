@@ -27,7 +27,6 @@ The two version lines are **not kept in lockstep**. The npm companion can ship J
 
 **(docs)** Clarify the Transition engine requires event listeners to be set up in order to handle discrete properties correctly.
 
-Nothing
 
 ## [3.0.2] - 2026-09-01 (elm)
 
