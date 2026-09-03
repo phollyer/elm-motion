@@ -69,4 +69,22 @@ suite =
                             ]
                         , Dict.fromList [ ( "display", "inline" ) ]
                         )
+        , test "current group config keeps the global path and preserves per-group overrides" <|
+            \_ ->
+                let
+                    builder =
+                        Builder.init []
+                            |> Builder.discreteEntry "display" "block"
+                            |> Builder.discreteEntry "opacity" "1"
+                            |> Builder.for "el"
+                            |> Builder.discreteEntry "display" "flex"
+                in
+                ( Builder.getCurrentAnimGroupConfig builder
+                    |> .discreteEntryProperties
+                , Builder.getDiscreteEntryPropertiesFor "el" builder
+                )
+                    |> Expect.equal
+                        ( Just (Dict.fromList [ ( "display", "flex" ), ( "opacity", "1" ) ])
+                        , Dict.fromList [ ( "display", "flex" ), ( "opacity", "1" ) ]
+                        )
         ]

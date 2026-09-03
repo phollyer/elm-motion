@@ -396,26 +396,26 @@ attributes animGroupName ((AnimState _ data) as animState) =
 
                             value ->
                                 [ Html.Attributes.style "will-change" value ]
+
+                discreteExitAttrs =
+                    AnimGroup.getDiscreteExit animGroup
+                        |> Dict.toList
+                        |> List.map
+                            (\( prop, { from, to } ) ->
+                                if isComplete then
+                                    Html.Attributes.style prop to
+
+                                else
+                                    Html.Attributes.style prop from
+                            )
             in
             if AnimGroup.usesDiscrete animGroup then
                 Html.Attributes.attribute "data-anim-group-name" animGroupName
                     :: Html.Attributes.attribute "data-anim-state" (stateAttrValue animGroup)
-                    :: willChangeAttrs
+                    :: discreteExitAttrs
+                    ++ willChangeAttrs
 
             else
-                let
-                    discreteExitAttrs =
-                        AnimGroup.getDiscreteExit animGroup
-                            |> Dict.toList
-                            |> List.map
-                                (\( prop, { from, to } ) ->
-                                    if isComplete then
-                                        Html.Attributes.style prop to
-
-                                    else
-                                        Html.Attributes.style prop from
-                                )
-                in
                 CSS.attributes
                     []
                     AnimGroup.getStyles

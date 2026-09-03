@@ -1365,12 +1365,26 @@ getDiscreteExitProperties (AnimBuilder data) =
     data.playback.discreteExitProperties
 
 
+mergeDiscreteEntryProperties : Dict String DiscreteEntryProperty -> Dict String DiscreteEntryProperty -> Dict String DiscreteEntryProperty
+mergeDiscreteEntryProperties groupDefaults globalDefaults =
+    -- Group-scoped discrete values override the global defaults for the same
+    -- property, while preserving all other global keys.
+    Dict.union groupDefaults globalDefaults
+
+
+mergeDiscreteExitProperties : Dict String DiscreteExitProperty -> Dict String DiscreteExitProperty -> Dict String DiscreteExitProperty
+mergeDiscreteExitProperties groupDefaults globalDefaults =
+    -- Group-scoped discrete values override the global defaults for the same
+    -- property, while preserving all other global keys.
+    Dict.union groupDefaults globalDefaults
+
+
 getDiscreteEntryPropertiesFor : AnimGroupName -> AnimBuilder eng -> Dict String DiscreteEntryProperty
 getDiscreteEntryPropertiesFor animGroupName builder =
     case getAnimGroupConfig animGroupName builder of
         Just config ->
             config.discreteEntryProperties
-                |> Maybe.map (\groupDiscrete -> Dict.union groupDiscrete (getDiscreteEntryProperties builder))
+                |> Maybe.map (\groupDiscrete -> mergeDiscreteEntryProperties groupDiscrete (getDiscreteEntryProperties builder))
                 |> Maybe.withDefault (getDiscreteEntryProperties builder)
 
         Nothing ->
@@ -1382,7 +1396,7 @@ getDiscreteExitPropertiesFor animGroupName builder =
     case getAnimGroupConfig animGroupName builder of
         Just config ->
             config.discreteExitProperties
-                |> Maybe.map (\groupDiscrete -> Dict.union groupDiscrete (getDiscreteExitProperties builder))
+                |> Maybe.map (\groupDiscrete -> mergeDiscreteExitProperties groupDiscrete (getDiscreteExitProperties builder))
                 |> Maybe.withDefault (getDiscreteExitProperties builder)
 
         Nothing ->
@@ -1499,14 +1513,14 @@ getCurrentAnimGroupConfig (AnimBuilder data) =
                             , discreteEntryProperties =
                                 case config.discreteEntryProperties of
                                     Just groupDiscreteEntry ->
-                                        Just (Dict.union groupDiscreteEntry data.playback.discreteEntryProperties)
+                                        Just (mergeDiscreteEntryProperties groupDiscreteEntry data.playback.discreteEntryProperties)
 
                                     Nothing ->
                                         Just data.playback.discreteEntryProperties
                             , discreteExitProperties =
                                 case config.discreteExitProperties of
                                     Just groupDiscreteExit ->
-                                        Just (Dict.union groupDiscreteExit data.playback.discreteExitProperties)
+                                        Just (mergeDiscreteExitProperties groupDiscreteExit data.playback.discreteExitProperties)
 
                                     Nothing ->
                                         Just data.playback.discreteExitProperties
@@ -2782,14 +2796,14 @@ process (AnimBuilder data) =
                 , discreteEntryProperties =
                     case group.discreteEntryProperties of
                         Just overrides ->
-                            Dict.union overrides data.playback.discreteEntryProperties
+                            mergeDiscreteEntryProperties overrides data.playback.discreteEntryProperties
 
                         Nothing ->
                             data.playback.discreteEntryProperties
                 , discreteExitProperties =
                     case group.discreteExitProperties of
                         Just overrides ->
-                            Dict.union overrides data.playback.discreteExitProperties
+                            mergeDiscreteExitProperties overrides data.playback.discreteExitProperties
 
                         Nothing ->
                             data.playback.discreteExitProperties

@@ -6,6 +6,7 @@ module Anim.Engine.Transition.SequentialUnitSwitchSpec exposing (suite)
 These tests assert the inline styles emitted by `Transition.attributes`,
 ensuring that a second animate call on the same group/property immediately
 uses the new unit.
+
 -}
 
 import Anim.Engine.Transition as Transition
