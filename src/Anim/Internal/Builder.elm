@@ -1409,26 +1409,11 @@ getDiscreteExitProperties (AnimBuilder data) =
     data.playback.discreteExitProperties
 
 
-mergeDiscreteEntryProperties : Dict String DiscreteEntryProperty -> Dict String DiscreteEntryProperty -> Dict String DiscreteEntryProperty
-mergeDiscreteEntryProperties groupDefaults globalDefaults =
-    -- Group-scoped discrete values override the global defaults for the same
-    -- property, while preserving all other global keys.
-    Dict.union groupDefaults globalDefaults
-
-
-mergeDiscreteExitProperties : Dict String DiscreteExitProperty -> Dict String DiscreteExitProperty -> Dict String DiscreteExitProperty
-mergeDiscreteExitProperties groupDefaults globalDefaults =
-    -- Group-scoped discrete values override the global defaults for the same
-    -- property, while preserving all other global keys.
-    Dict.union groupDefaults globalDefaults
-
-
 getDiscreteEntryPropertiesFor : AnimGroupName -> AnimBuilder eng -> Dict String DiscreteEntryProperty
 getDiscreteEntryPropertiesFor animGroupName builder =
     case getAnimGroupConfig animGroupName builder of
         Just config ->
             config.discreteEntryProperties
-                |> Maybe.map identity
                 |> Maybe.withDefault (getDiscreteEntryProperties builder)
 
         Nothing ->
@@ -1440,7 +1425,6 @@ getDiscreteExitPropertiesFor animGroupName builder =
     case getAnimGroupConfig animGroupName builder of
         Just config ->
             config.discreteExitProperties
-                |> Maybe.map identity
                 |> Maybe.withDefault (getDiscreteExitProperties builder)
 
         Nothing ->
