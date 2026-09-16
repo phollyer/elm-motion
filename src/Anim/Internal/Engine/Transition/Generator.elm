@@ -60,6 +60,19 @@ baseStyles discreteTransitions discreteEntry discreteExit processedProps =
     ( "transition", generate discreteTransitions discreteEntry discreteExit processedProps ) :: transitionBehavior
 
 
+baseStylesWithControlledAxes : Bool -> Dict String String -> Dict String Builder.DiscreteExitProperty -> Dict String (Set.Set String) -> List Builder.ProcessedPropertyConfig -> List ( String, String )
+baseStylesWithControlledAxes discreteTransitions discreteEntry discreteExit controlledAxes processedProps =
+    let
+        transitionBehavior =
+            if discreteTransitions then
+                [ ( "transition-behavior", "allow-discrete" ) ]
+
+            else
+                []
+    in
+    ( "transition", generateWithControlledAxes controlledAxes discreteTransitions discreteEntry discreteExit processedProps ) :: transitionBehavior
+
+
 propertyKeysOf : List Builder.ProcessedPropertyConfig -> Set.Set String
 propertyKeysOf =
     List.foldl (Builder.processedPropertyType >> Set.insert) Set.empty
@@ -73,6 +86,11 @@ propertyKeysOf =
 
 generate : Bool -> Dict String String -> Dict String Builder.DiscreteExitProperty -> List Builder.ProcessedPropertyConfig -> String
 generate discreteTransitions discreteEntry discreteExit properties =
+    generateWithControlledAxes Dict.empty discreteTransitions discreteEntry discreteExit properties
+
+
+generateWithControlledAxes : Dict String (Set.Set String) -> Bool -> Dict String String -> Dict String Builder.DiscreteExitProperty -> List Builder.ProcessedPropertyConfig -> String
+generateWithControlledAxes controlledAxes discreteTransitions discreteEntry discreteExit properties =
     let
         animated =
             (Builder.partitionByMode properties).animate
@@ -134,7 +152,7 @@ generate discreteTransitions discreteEntry discreteExit properties =
                 transformTransitionFromProcessed animated
 
             nonTransformTransitions =
-                List.filterMap nonTransformTransitionFromProcessed animated
+                List.concatMap (nonTransformTransitionFromProcessed controlledAxes) animated
 
             mainDuration =
                 maxAnimationDuration animated
@@ -234,35 +252,53 @@ timingFunction easing =
     InternalEasing.toCSS (Just easing)
 
 
-nonTransformTransitionFromProcessed : Builder.ProcessedPropertyConfig -> Maybe String
-nonTransformTransitionFromProcessed property =
+nonTransformTransitionFromProcessed : Dict String (Set.Set String) -> Builder.ProcessedPropertyConfig -> List String
+nonTransformTransitionFromProcessed controlledAxes property =
     case property of
         Builder.ProcessedCustomPropertyConfig cssName _ config ->
-            Just (transitionRule cssName config)
+            [ transitionRule cssName config ]
 
         Builder.ProcessedCustomColorPropertyConfig cssName config ->
-            Just (transitionRule cssName config)
+            [ transitionRule cssName config ]
 
         Builder.ProcessedOpacityConfig config ->
-            Just (transitionRule "opacity" config)
+            [ transitionRule "opacity" config ]
 
         Builder.ProcessedPerspectiveOriginConfig config ->
-            Just (transitionRule "perspective-origin" config)
+            [ transitionRule "perspective-origin" config ]
 
         Builder.ProcessedRotateConfig _ ->
-            Nothing
+            []
 
         Builder.ProcessedScaleConfig config ->
-            Just (transitionRule "scale" config)
+            [ transitionRule "scale" config ]
 
         Builder.ProcessedSizeConfig config ->
-            Just (transitionRule "width" config ++ ", " ++ transitionRule "height" config)
+            let
+                hasAxis axis =
+                    controlledAxes
+                        |> Dict.get "size"
+                        |> Maybe.map (Set.member axis)
+                        |> Maybe.withDefault True
+            in
+            [ if hasAxis "width" then
+                Just (transitionRule "width" config)
+
+              else
+                Nothing
+            , if hasAxis "height" then
+                Just (transitionRule "height" config)
+
+              else
+                Nothing
+            ]
+                |> List.filterMap identity
 
         Builder.ProcessedSkewConfig _ ->
-            Nothing
+            []
 
         Builder.ProcessedTranslateConfig config ->
-            Just (transitionRule "translate" config)
+            [ transitionRule "translate" config ]
 
 
 {-| The longest animation duration across the processed properties, used
@@ -319,6 +355,6 @@ generateAnimation discreteTransitions discreteEntry discreteExit controlledAxes 
         |> AnimGroup.setStyles
             (TransitionStyles.fromProcessedPropertiesWithControlledAxes
                 controlledAxes
-                (baseStyles discreteTransitions discreteEntry discreteExit processedProps)
+                (baseStylesWithControlledAxes discreteTransitions discreteEntry discreteExit controlledAxes processedProps)
                 processedProps
             )

@@ -47,6 +47,7 @@ suite =
                         [ Query.has [ Selector.style "height" "240px" ]
                         , Query.hasNot [ Selector.style "width" "0px" ]
                         , Query.has [ Selector.style "will-change" "height" ]
+                        , Query.has [ Selector.style "transition" "height 500ms ease-in-out 0ms" ]
                         ]
         , test "first-use Size.toW emits width and omits height" <|
             \_ ->
@@ -65,6 +66,7 @@ suite =
                         [ Query.has [ Selector.style "width" "360px" ]
                         , Query.hasNot [ Selector.style "height" "0px" ]
                         , Query.has [ Selector.style "will-change" "width" ]
+                        , Query.has [ Selector.style "transition" "width 500ms ease-in-out 0ms" ]
                         ]
         , test "after Size.toHW, Size.toH keeps previously-owned width" <|
             \_ ->
@@ -92,6 +94,7 @@ suite =
                         [ Query.has [ Selector.style "width" "300px" ]
                         , Query.has [ Selector.style "height" "80px" ]
                         , Query.has [ Selector.style "will-change" "width, height" ]
+                        , Query.has [ Selector.style "transition" "width 500ms ease-in-out 0ms, height 500ms ease-in-out 0ms" ]
                         ]
         , test "after Size.toHW, Size.toW keeps previously-owned height" <|
             \_ ->
