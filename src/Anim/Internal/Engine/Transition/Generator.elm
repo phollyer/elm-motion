@@ -315,7 +315,7 @@ generateAnimation discreteTransitions discreteEntry discreteExit controlledAxes 
         |> AnimGroup.setDiscreteEntry discreteEntry
         |> AnimGroup.setDiscreteExit discreteExit
         |> AnimGroup.setPropertyKeys (propertyKeysOf processedProps)
-        |> AnimGroup.setWillChange (Builder.willChangeIndividual processedProps)
+        |> AnimGroup.setWillChange (Builder.willChangeIndividualWithControlledAxes controlledAxes processedProps)
         |> AnimGroup.setStyles
             (TransitionStyles.fromProcessedPropertiesWithControlledAxes
                 controlledAxes

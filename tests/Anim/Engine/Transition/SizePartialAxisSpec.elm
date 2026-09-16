@@ -46,6 +46,7 @@ suite =
                     |> Expect.all
                         [ Query.has [ Selector.style "height" "240px" ]
                         , Query.hasNot [ Selector.style "width" "0px" ]
+                        , Query.has [ Selector.style "will-change" "height" ]
                         ]
         , test "first-use Size.toW emits width and omits height" <|
             \_ ->
@@ -63,6 +64,7 @@ suite =
                     |> Expect.all
                         [ Query.has [ Selector.style "width" "360px" ]
                         , Query.hasNot [ Selector.style "height" "0px" ]
+                        , Query.has [ Selector.style "will-change" "width" ]
                         ]
         , test "after Size.toHW, Size.toH keeps previously-owned width" <|
             \_ ->
@@ -89,6 +91,7 @@ suite =
                     |> Expect.all
                         [ Query.has [ Selector.style "width" "300px" ]
                         , Query.has [ Selector.style "height" "80px" ]
+                        , Query.has [ Selector.style "will-change" "width, height" ]
                         ]
         , test "after Size.toHW, Size.toW keeps previously-owned height" <|
             \_ ->

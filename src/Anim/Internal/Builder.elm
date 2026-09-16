@@ -153,6 +153,7 @@ module Anim.Internal.Builder exposing
     , updateCurrentConfig
     , willChangeComposite
     , willChangeIndividual
+    , willChangeIndividualWithControlledAxes
     , withCurrentAnimGroup
     )
 
@@ -2668,6 +2669,11 @@ willChangeIndividual =
     toWillChangeString cssNamesIndividual
 
 
+willChangeIndividualWithControlledAxes : Dict String (Set String) -> List ProcessedPropertyConfig -> String
+willChangeIndividualWithControlledAxes =
+    toWillChangeString << cssNamesIndividualWithControlledAxes
+
+
 {-| Comma-joined `will-change` value for an animation that renders
 transforms via the composite `transform` property. Used by the Keyframe
 and Sub engines, which build a single `transform: translate(...) rotate(...)
@@ -2727,6 +2733,41 @@ cssNamesIndividual prop =
 
         ProcessedTranslateConfig _ ->
             [ "translate" ]
+
+
+cssNamesIndividualWithControlledAxes : Dict String (Set String) -> ProcessedPropertyConfig -> List String
+cssNamesIndividualWithControlledAxes controlledAxes prop =
+    case prop of
+        ProcessedSizeConfig _ ->
+            let
+                hasAxis axis =
+                    controlledAxes
+                        |> Dict.get "size"
+                        |> Maybe.map (Set.member axis)
+                        |> Maybe.withDefault False
+
+                selected =
+                    (if hasAxis "width" then
+                        [ "width" ]
+
+                     else
+                        []
+                    )
+                        ++ (if hasAxis "height" then
+                                [ "height" ]
+
+                            else
+                                []
+                           )
+            in
+            if List.isEmpty selected then
+                [ "width", "height" ]
+
+            else
+                selected
+
+        _ ->
+            cssNamesIndividual prop
 
 
 cssNamesComposite : ProcessedPropertyConfig -> List String
