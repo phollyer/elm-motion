@@ -309,15 +309,16 @@ maxAnimationDuration =
         0
 
 
-generateAnimation : Bool -> Dict String String -> Dict String Builder.DiscreteExitProperty -> List Builder.ProcessedPropertyConfig -> AnimGroup
-generateAnimation discreteTransitions discreteEntry discreteExit processedProps =
+generateAnimation : Bool -> Dict String String -> Dict String Builder.DiscreteExitProperty -> Dict String (Set.Set String) -> List Builder.ProcessedPropertyConfig -> AnimGroup
+generateAnimation discreteTransitions discreteEntry discreteExit controlledAxes processedProps =
     AnimGroup.init
         |> AnimGroup.setDiscreteEntry discreteEntry
         |> AnimGroup.setDiscreteExit discreteExit
         |> AnimGroup.setPropertyKeys (propertyKeysOf processedProps)
         |> AnimGroup.setWillChange (Builder.willChangeIndividual processedProps)
         |> AnimGroup.setStyles
-            (TransitionStyles.fromProcessedProperties
+            (TransitionStyles.fromProcessedPropertiesWithControlledAxes
+                controlledAxes
                 (baseStyles discreteTransitions discreteEntry discreteExit processedProps)
                 processedProps
             )

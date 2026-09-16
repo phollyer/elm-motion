@@ -79,7 +79,7 @@ generateAnimationTests =
                     processedProps =
                         Builder.processProperties Builder.initDefaults "test" [ translateConfig ]
                 in
-                Generator.generateAnimation False Dict.empty Dict.empty processedProps
+                Generator.generateAnimation False Dict.empty Dict.empty Dict.empty processedProps
                     |> (\animGroup ->
                             TransitionAnimGroup.getStyles animGroup
                                 |> Expect.notEqual Styles.empty
@@ -223,7 +223,7 @@ snapModeTests =
                     processed =
                         Builder.processProperties Builder.initDefaults "test" [ snapTranslateConfig ]
                 in
-                Generator.generateAnimation False Dict.empty Dict.empty processed
+                Generator.generateAnimation False Dict.empty Dict.empty Dict.empty processed
                     |> (\animGroup ->
                             TransitionAnimGroup.getStyles animGroup
                                 |> Expect.notEqual Styles.empty

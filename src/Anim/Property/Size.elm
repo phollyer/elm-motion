@@ -18,12 +18,10 @@ module Anim.Property.Size exposing
 
 {-| Animate the width and height of elements.
 
-**Default**: 0 for width and height
+If height or width is not defined in the animation configuration:
 
-When no start value is configured, the default will be used.
-
-If height or width is not defined in the animation configuration, it will remain unchanged,
-or 0 if not set.
+  - The unspecified dimension will remain unchanged if it was previously set.
+  - If it was not previously set, it will be ignored, and the element will retain it's CSS unit.
 
 
 # Types

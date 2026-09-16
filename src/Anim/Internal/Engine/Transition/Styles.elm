@@ -1,4 +1,4 @@
-module Anim.Internal.Engine.Transition.Styles exposing (fromProcessedProperties)
+module Anim.Internal.Engine.Transition.Styles exposing (fromProcessedProperties, fromProcessedPropertiesWithControlledAxes)
 
 import Anim.Internal.Builder as Builder
 import Anim.Internal.Engine.CSS.Styles as Styles exposing (Styles)
@@ -6,11 +6,18 @@ import Anim.Internal.Property.Rotate as Rotate
 import Anim.Internal.Property.Scale as Scale
 import Anim.Internal.Property.Skew as Skew
 import Anim.Internal.Property.Translate as Translate
+import Dict exposing (Dict)
+import Set exposing (Set)
 
 
 fromProcessedProperties : List ( String, String ) -> List Builder.ProcessedPropertyConfig -> Styles
 fromProcessedProperties baseStyles =
     Styles.fromProcessedProperties baseStyles extractTransformStyles
+
+
+fromProcessedPropertiesWithControlledAxes : Dict String (Set String) -> List ( String, String ) -> List Builder.ProcessedPropertyConfig -> Styles
+fromProcessedPropertiesWithControlledAxes controlledAxes baseStyles =
+    Styles.fromProcessedPropertiesWithControlledAxes (Just controlledAxes) baseStyles extractTransformStyles
 
 
 extractTransformStyles : List Builder.ProcessedPropertyConfig -> List ( String, String )

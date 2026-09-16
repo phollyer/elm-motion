@@ -348,6 +348,7 @@ type alias AnimGroupConfig =
 
 type alias ProcessedAnimGroupConfig =
     { properties : List ProcessedPropertyConfig
+    , controlledAxes : Dict String (Set String)
     , playback : Maybe GroupPlaybackConfig
     , transformOrder : Maybe (List TransformProperty)
     , viewRangeStart : Maybe String
@@ -2786,6 +2787,58 @@ process (AnimBuilder data) =
         getDefaultsForGroup groupName =
             AnimGroups.get groupName data.animation.groupDefaults
                 |> Maybe.withDefault data.defaults
+
+        mergeAxisSets : Dict String (Set String) -> Dict String (Set String) -> Dict String (Set String)
+        mergeAxisSets base incoming =
+            Dict.foldl
+                (\propName axes acc ->
+                    Dict.update propName
+                        (\maybeExisting ->
+                            case maybeExisting of
+                                Just existing ->
+                                    Just (Set.union existing axes)
+
+                                Nothing ->
+                                    Just axes
+                        )
+                        acc
+                )
+                base
+                incoming
+
+        currentTouchedAxesForGroup : AnimGroupName -> Dict String (Set String)
+        currentTouchedAxesForGroup groupName =
+            Dict.foldl
+                (\( touchedGroup, propName ) axes acc ->
+                    if touchedGroup == groupName then
+                        Dict.update propName
+                            (\maybeExisting ->
+                                case maybeExisting of
+                                    Just existing ->
+                                        Just (Set.union existing axes)
+
+                                    Nothing ->
+                                        Just axes
+                            )
+                            acc
+
+                    else
+                        acc
+                )
+                Dict.empty
+                data.animation.touchedAxes
+
+        historicalControlledAxesForGroup : AnimGroupName -> Dict String (Set String)
+        historicalControlledAxesForGroup groupName =
+            case AnimGroups.get groupName data.state.animationHistories of
+                Nothing ->
+                    Dict.empty
+
+                Just history ->
+                    (history.current :: history.history)
+                        |> List.foldl
+                            (\entry acc -> mergeAxisSets acc entry.config.controlledAxes)
+                            Dict.empty
     in
     { globalTiming = data.defaults.globalTiming
     , globalEasing = data.defaults.globalEasing
@@ -2800,8 +2853,14 @@ process (AnimBuilder data) =
                 let
                     groupDefaults =
                         getDefaultsForGroup groupName
+
+                    controlledAxes =
+                        mergeAxisSets
+                            (historicalControlledAxesForGroup groupName)
+                            (currentTouchedAxesForGroup groupName)
                 in
                 { properties = processProperties groupDefaults groupName group.properties
+                , controlledAxes = controlledAxes
                 , playback = group.playback
                 , transformOrder =
                     case group.transformOrder of

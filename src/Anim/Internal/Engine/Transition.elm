@@ -94,8 +94,8 @@ animate =
     CSS.animate AnimGroup.setPlayState generateAnimGroup insertAnimGroup
 
 
-generateAnimGroup : Maybe (List TransformProperty) -> EngineBuilder -> AnimGroupName -> { a | properties : List Builder.ProcessedPropertyConfig } -> AnimGroup
-generateAnimGroup _ builder animGroupName { properties } =
+generateAnimGroup : Maybe (List TransformProperty) -> EngineBuilder -> AnimGroupName -> Builder.ProcessedAnimGroupConfig -> AnimGroup
+generateAnimGroup _ builder animGroupName config =
     let
         freshEntry =
             Builder.getDiscreteEntryPropertiesFor animGroupName builder
@@ -110,13 +110,14 @@ generateAnimGroup _ builder animGroupName { properties } =
                 []
 
             else
-                extractStartingStyles properties
+                extractStartingStyles config.properties
     in
     Generator.generateAnimation
         (Builder.discreteTransitionsEnabled builder)
         freshEntry
         (Builder.getDiscreteExitPropertiesFor animGroupName builder)
-        properties
+        config.controlledAxes
+        config.properties
         |> AnimGroup.setStartingStyles startingStylesForThisAnimate
 
 

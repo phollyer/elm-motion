@@ -4,6 +4,7 @@ module Anim.Internal.Engine.CSS.Styles exposing
     , filter
     , fromList
     , fromProcessedProperties
+    , fromProcessedPropertiesWithControlledAxes
     , get
     , insert
     , insertList
@@ -22,6 +23,7 @@ import Anim.Internal.Property.Size as Size
 import Dict exposing (Dict)
 import Html
 import Html.Attributes
+import Set exposing (Set)
 
 
 
@@ -56,15 +58,20 @@ fromList =
 
 fromProcessedProperties : List ( String, String ) -> (List Builder.ProcessedPropertyConfig -> List ( String, String )) -> List Builder.ProcessedPropertyConfig -> Styles
 fromProcessedProperties baseStyles extractTransformStyles processedProps =
+    fromProcessedPropertiesWithControlledAxes Nothing baseStyles extractTransformStyles processedProps
+
+
+fromProcessedPropertiesWithControlledAxes : Maybe (Dict String (Set String)) -> List ( String, String ) -> (List Builder.ProcessedPropertyConfig -> List ( String, String )) -> List Builder.ProcessedPropertyConfig -> Styles
+fromProcessedPropertiesWithControlledAxes maybeControlledAxes baseStyles extractTransformStyles processedProps =
     baseStyles
         ++ extractTransformStyles processedProps
-        ++ extractNonTransformStyles processedProps
+        ++ extractNonTransformStyles maybeControlledAxes processedProps
         |> List.filter (Tuple.second >> String.isEmpty >> not)
         |> fromList
 
 
-extractNonTransformStyles : List Builder.ProcessedPropertyConfig -> List ( String, String )
-extractNonTransformStyles =
+extractNonTransformStyles : Maybe (Dict String (Set String)) -> List Builder.ProcessedPropertyConfig -> List ( String, String )
+extractNonTransformStyles maybeControlledAxes =
     List.concatMap
         (\prop ->
             case prop of
@@ -93,9 +100,30 @@ extractNonTransformStyles =
                     [ ( "perspective-origin", PerspectiveOrigin.toCssString config.cssUnit config.end ) ]
 
                 Builder.ProcessedSizeConfig config ->
-                    [ ( "width", Size.widthToCssString config.cssUnit config.end )
-                    , ( "height", Size.heightToCssString config.cssUnit config.end )
+                    let
+                        controls axis =
+                            case maybeControlledAxes of
+                                Nothing ->
+                                    True
+
+                                Just controlledAxes ->
+                                    controlledAxes
+                                        |> Dict.get "size"
+                                        |> Maybe.map (Set.member axis)
+                                        |> Maybe.withDefault False
+                    in
+                    [ if controls "width" then
+                        Just ( "width", Size.widthToCssString config.cssUnit config.end )
+
+                      else
+                        Nothing
+                    , if controls "height" then
+                        Just ( "height", Size.heightToCssString config.cssUnit config.end )
+
+                      else
+                        Nothing
                     ]
+                        |> List.filterMap identity
         )
 
 
