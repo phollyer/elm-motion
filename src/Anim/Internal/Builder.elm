@@ -152,6 +152,7 @@ module Anim.Internal.Builder exposing
     , updateBaselines
     , updateCurrentConfig
     , willChangeComposite
+    , willChangeCompositeWithControlledAxes
     , willChangeIndividual
     , willChangeIndividualWithControlledAxes
     , withCurrentAnimGroup
@@ -2696,6 +2697,11 @@ willChangeComposite =
     toWillChangeString cssNamesComposite
 
 
+willChangeCompositeWithControlledAxes : Dict String (Set String) -> List ProcessedPropertyConfig -> String
+willChangeCompositeWithControlledAxes =
+    toWillChangeString << cssNamesCompositeWithControlledAxes
+
+
 toWillChangeString : (ProcessedPropertyConfig -> List String) -> List ProcessedPropertyConfig -> String
 toWillChangeString toNames props =
     props
@@ -2799,6 +2805,41 @@ cssNamesComposite prop =
 
         ProcessedTranslateConfig _ ->
             [ "transform" ]
+
+
+cssNamesCompositeWithControlledAxes : Dict String (Set String) -> ProcessedPropertyConfig -> List String
+cssNamesCompositeWithControlledAxes controlledAxes prop =
+    case prop of
+        ProcessedSizeConfig _ ->
+            let
+                hasAxis axis =
+                    controlledAxes
+                        |> Dict.get "size"
+                        |> Maybe.map (Set.member axis)
+                        |> Maybe.withDefault False
+
+                selected =
+                    (if hasAxis "width" then
+                        [ "width" ]
+
+                     else
+                        []
+                    )
+                        ++ (if hasAxis "height" then
+                                [ "height" ]
+
+                            else
+                                []
+                           )
+            in
+            if List.isEmpty selected then
+                [ "width", "height" ]
+
+            else
+                selected
+
+        _ ->
+            cssNamesComposite prop
 
 
 dedupePreservingOrder : List String -> List String

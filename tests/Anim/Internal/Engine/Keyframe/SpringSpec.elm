@@ -18,6 +18,7 @@ import Anim.Internal.Engine.Keyframe.Animation as Animation
 import Anim.Internal.Engine.Keyframe.Generator as Generator
 import Anim.Internal.Property.Translate as Translate
 import Anim.Internal.Unit as InternalUnit
+import Dict
 import Expect
 import Motion.Easing exposing (Easing(..))
 import Motion.Spring as Spring
@@ -73,6 +74,7 @@ keyframesFor properties =
         Nothing
         Generator.emptyDiscreteConfig
         "test"
+        Dict.empty
         processed
         |> KeyframeAnimGroup.getAnimation
         |> Maybe.map Animation.getKeyframes

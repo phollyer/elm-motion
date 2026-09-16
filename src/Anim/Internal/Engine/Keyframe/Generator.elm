@@ -24,6 +24,7 @@ import Anim.Internal.Property.Translate as Translate
 import Char
 import Dict exposing (Dict)
 import Motion.Internal.Spring as SpringInt
+import Set
 import Shared.Easing as Easing
 import Shared.Easing.Keyframes as EasingKeyframes
 import Shared.Spring as SpringSolver
@@ -81,7 +82,7 @@ init defaults maybeOrder iterationCount direction discrete animGroupName propert
         name =
             generateName Nothing maybeOrder discrete animGroupName processedProps
     in
-    generate name 0 maybeOrder iterationCount direction Nothing discrete processedProps
+    generate name 0 maybeOrder iterationCount direction Nothing discrete Dict.empty processedProps
 
 
 
@@ -90,17 +91,17 @@ init defaults maybeOrder iterationCount direction discrete animGroupName propert
 -- ============================================================
 
 
-generateAnimation : Maybe (List TransformProperty) -> Builder.Iterations -> Builder.AnimationDirection -> Maybe PropertyBaselines -> DiscreteConfig -> AnimGroupName -> List Builder.ProcessedPropertyConfig -> AnimGroup
-generateAnimation maybeOrder iterationCount direction maybeTargetValues discrete animGroupName properties =
+generateAnimation : Maybe (List TransformProperty) -> Builder.Iterations -> Builder.AnimationDirection -> Maybe PropertyBaselines -> DiscreteConfig -> AnimGroupName -> Dict String (Set.Set String) -> List Builder.ProcessedPropertyConfig -> AnimGroup
+generateAnimation maybeOrder iterationCount direction maybeTargetValues discrete animGroupName controlledAxes properties =
     let
         name =
             generateName Nothing maybeOrder discrete animGroupName properties
     in
-    generate name 0 maybeOrder iterationCount direction maybeTargetValues discrete properties
+    generate name 0 maybeOrder iterationCount direction maybeTargetValues discrete controlledAxes properties
 
 
-generateRestart : Int -> Maybe (List TransformProperty) -> Builder.Iterations -> Builder.AnimationDirection -> Maybe PropertyBaselines -> DiscreteConfig -> AnimGroupName -> List Builder.ProcessedPropertyConfig -> AnimGroup
-generateRestart counter maybeOrder iterationCount direction maybeTargetValues discrete animGroupName properties =
+generateRestart : Int -> Maybe (List TransformProperty) -> Builder.Iterations -> Builder.AnimationDirection -> Maybe PropertyBaselines -> DiscreteConfig -> AnimGroupName -> Dict String (Set.Set String) -> List Builder.ProcessedPropertyConfig -> AnimGroup
+generateRestart counter maybeOrder iterationCount direction maybeTargetValues discrete animGroupName controlledAxes properties =
     let
         newCounter =
             counter + 1
@@ -111,11 +112,11 @@ generateRestart counter maybeOrder iterationCount direction maybeTargetValues di
         name =
             generateName (Just suffix) maybeOrder discrete animGroupName properties
     in
-    generate name newCounter maybeOrder iterationCount direction maybeTargetValues discrete properties
+    generate name newCounter maybeOrder iterationCount direction maybeTargetValues discrete controlledAxes properties
 
 
-generate : String -> Int -> Maybe (List TransformProperty) -> Builder.Iterations -> Builder.AnimationDirection -> Maybe PropertyBaselines -> DiscreteConfig -> List Builder.ProcessedPropertyConfig -> AnimGroup
-generate name counter maybeOrder iterationCount direction maybeTargetValues discrete properties =
+generate : String -> Int -> Maybe (List TransformProperty) -> Builder.Iterations -> Builder.AnimationDirection -> Maybe PropertyBaselines -> DiscreteConfig -> Dict String (Set.Set String) -> List Builder.ProcessedPropertyConfig -> AnimGroup
+generate name counter maybeOrder iterationCount direction maybeTargetValues discrete controlledAxes properties =
     let
         -- Snap properties are excluded from the @keyframes rule so the
         -- browser does not interpolate them; their end-value styles are
@@ -124,10 +125,10 @@ generate name counter maybeOrder iterationCount direction maybeTargetValues disc
             (Builder.partitionByMode properties).animate
     in
     AnimGroup.init
-        |> AnimGroup.setStyles (KeyframeStyles.fromProcessedProperties maybeOrder maybeTargetValues [] properties)
+        |> AnimGroup.setStyles (KeyframeStyles.fromProcessedPropertiesWithControlledAxes controlledAxes maybeOrder maybeTargetValues [] properties)
         |> AnimGroup.setRestartCounter counter
         |> AnimGroup.setIterationCount 0
-        |> AnimGroup.setWillChange (Builder.willChangeComposite animated)
+        |> AnimGroup.setWillChange (Builder.willChangeCompositeWithControlledAxes controlledAxes animated)
         |> AnimGroup.setDiscreteEntry discrete.entry
         |> AnimGroup.setDiscreteExit discrete.exit
         |> (\animGroup ->
@@ -154,7 +155,7 @@ generate name counter maybeOrder iterationCount direction maybeTargetValues disc
                         let
                             keyframesString =
                                 animated
-                                    |> generateSteps maybeOrder maybeTargetValues maxDuration maxDelay discrete
+                                    |> generateSteps controlledAxes maybeOrder maybeTargetValues maxDuration maxDelay discrete
                                     |> buildKeyframesString name
                         in
                         AnimGroup.setAnimation
@@ -175,8 +176,8 @@ generate name counter maybeOrder iterationCount direction maybeTargetValues disc
 -- ============================================================
 
 
-generateSteps : Maybe (List TransformProperty) -> Maybe PropertyBaselines -> Int -> Int -> DiscreteConfig -> List Builder.ProcessedPropertyConfig -> List ( Float, List ( String, String ) )
-generateSteps maybeOrder maybeTargetValues maxDuration maxDelay discrete processedProps =
+generateSteps : Dict String (Set.Set String) -> Maybe (List TransformProperty) -> Maybe PropertyBaselines -> Int -> Int -> DiscreteConfig -> List Builder.ProcessedPropertyConfig -> List ( Float, List ( String, String ) )
+generateSteps controlledAxes maybeOrder maybeTargetValues maxDuration maxDelay discrete processedProps =
     let
         totalAnimationTime =
             maxDuration + maxDelay
@@ -229,7 +230,7 @@ generateSteps maybeOrder maybeTargetValues maxDuration maxDelay discrete process
                             |> generateTransformStyle
 
                     otherStyles =
-                        generateNonTransformStyles totalTime processedProps
+                        generateNonTransformStyles controlledAxes totalTime processedProps
 
                     discreteStyles =
                         discreteStylesForStep i
@@ -317,8 +318,8 @@ generateTransformPart totalTime default interpolate toCssString cfg =
         |> toCssString
 
 
-generateNonTransformStyles : Float -> List Builder.ProcessedPropertyConfig -> List ( String, String )
-generateNonTransformStyles totalTime =
+generateNonTransformStyles : Dict String (Set.Set String) -> Float -> List Builder.ProcessedPropertyConfig -> List ( String, String )
+generateNonTransformStyles controlledAxes totalTime =
     let
         part : String -> a -> (Float -> a -> a -> a) -> (a -> String) -> Builder.ProcessedAnimationConfig a -> ( String, String )
         part cssName default interpolate toCssString cfg =
@@ -340,9 +341,25 @@ generateNonTransformStyles totalTime =
                     [ part "perspective-origin" PerspectiveOrigin.default PerspectiveOrigin.interpolate (PerspectiveOrigin.toCssString cfg.cssUnit) cfg ]
 
                 Builder.ProcessedSizeConfig cfg ->
-                    [ part "width" Size.default Size.interpolate (Size.widthToCssString cfg.cssUnit) cfg
-                    , part "height" Size.default Size.interpolate (Size.heightToCssString cfg.cssUnit) cfg
+                    let
+                        hasAxis axis =
+                            controlledAxes
+                                |> Dict.get "size"
+                                |> Maybe.map (Set.member axis)
+                                |> Maybe.withDefault True
+                    in
+                    [ if hasAxis "width" then
+                        Just (part "width" Size.default Size.interpolate (Size.widthToCssString cfg.cssUnit) cfg)
+
+                      else
+                        Nothing
+                    , if hasAxis "height" then
+                        Just (part "height" Size.default Size.interpolate (Size.heightToCssString cfg.cssUnit) cfg)
+
+                      else
+                        Nothing
                     ]
+                        |> List.filterMap identity
 
                 Builder.ProcessedRotateConfig _ ->
                     []

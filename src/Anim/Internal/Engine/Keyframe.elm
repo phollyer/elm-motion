@@ -37,6 +37,7 @@ import Anim.Internal.Property.Size exposing (Size(..))
 import Dict
 import Html exposing (Html)
 import Html.Attributes
+import Set
 import Shared.TimeSpec exposing (TimeSpec(..))
 import Task
 
@@ -233,6 +234,7 @@ runPipeline finaliseBuilder (AnimState state animGroups) transform =
                 (Builder.getBaseline animGroupName builder)
                 discrete
                 animGroupName
+                config.controlledAxes
                 config.properties
 
         insertAnimGroup : AnimGroupName -> AnimGroup -> AnimGroups AnimGroup -> AnimGroups AnimGroup
@@ -527,14 +529,14 @@ restart animGroupName toMsg ((AnimState state _) as animState) =
         Nothing ->
             ( animState, Cmd.none )
 
-        Just { properties } ->
-            ( restartAnimation animGroupName properties animState
+        Just config ->
+            ( restartAnimation animGroupName config.controlledAxes config.properties animState
             , toCmd animGroupName toMsg GotRestarted
             )
 
 
-restartAnimation : AnimGroupName -> List Builder.ProcessedPropertyConfig -> AnimState -> AnimState
-restartAnimation animGroupName properties (AnimState state animGroups) =
+restartAnimation : AnimGroupName -> Dict.Dict String (Set.Set String) -> List Builder.ProcessedPropertyConfig -> AnimState -> AnimState
+restartAnimation animGroupName controlledAxes properties (AnimState state animGroups) =
     let
         counter =
             AnimGroups.get animGroupName animGroups
@@ -556,6 +558,7 @@ restartAnimation animGroupName properties (AnimState state animGroups) =
                 (Builder.getBaseline animGroupName state.builder)
                 discrete
                 animGroupName
+                controlledAxes
                 properties
     in
     AnimState state animGroups

@@ -1,6 +1,7 @@
 module Anim.Internal.Engine.Keyframe.Styles exposing
     ( baselineTransformParts
     , fromProcessedProperties
+    , fromProcessedPropertiesWithControlledAxes
     , generateTransformComponents
     )
 
@@ -13,6 +14,8 @@ import Anim.Internal.Property.Scale as Scale
 import Anim.Internal.Property.Skew as Skew
 import Anim.Internal.Property.Translate as Translate
 import Anim.Internal.Unit as InternalUnit
+import Dict
+import Set
 
 
 
@@ -57,7 +60,13 @@ generateTransformComponents maybeOrder transformParts =
 
 fromProcessedProperties : Maybe (List TransformProperty) -> Maybe PropertyBaselines -> List ( String, String ) -> List Builder.ProcessedPropertyConfig -> Styles
 fromProcessedProperties maybeOrder maybeTargetValues baseStyles =
-    Styles.fromProcessedProperties baseStyles <|
+    Styles.fromProcessedPropertiesWithControlledAxes Nothing baseStyles <|
+        extractTransformStyles maybeOrder maybeTargetValues
+
+
+fromProcessedPropertiesWithControlledAxes : Dict.Dict String (Set.Set String) -> Maybe (List TransformProperty) -> Maybe PropertyBaselines -> List ( String, String ) -> List Builder.ProcessedPropertyConfig -> Styles
+fromProcessedPropertiesWithControlledAxes controlledAxes maybeOrder maybeTargetValues baseStyles =
+    Styles.fromProcessedPropertiesWithControlledAxes (Just controlledAxes) baseStyles <|
         extractTransformStyles maybeOrder maybeTargetValues
 
 
