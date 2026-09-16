@@ -18,10 +18,22 @@ module Anim.Property.Size exposing
 
 {-| Animate the width and height of elements.
 
-If height or width is not defined in the animation configuration:
+If only one axis/side is configured (`toH` or `toW`), then the other axis is left alone.
 
-  - The unspecified dimension will remain unchanged if it was previously set.
-  - If it was not previously set, it will be ignored, and the element will retain it's CSS unit.
+Once an axis has been animated, or configured with `init*`, it will be continually controlled
+by the Engine, and will override any external CSS for that axis.
+
+However, some behaviour can differ between Engines if an animating axis is pre-configured by external CSS:
+
+  - A Transition Engine animation will start from the CSS-defined value for that axis unless you:
+      - initialize the axis with an `init*` value or,
+
+  - A Keyframe Engine animation will start from 0 unless you provide:
+      - an `init*` value for that axis or,
+      - a `from*` value for that axis.
+
+To avoid potential first-run jumps, prefer `init`, `initHW`, `initH`, or `initW` over relying on external CSS.
+That gives the engine an explicit baseline instead of falling back to defaults.
 
 
 # Types
@@ -366,14 +378,14 @@ fromHW =
     SizeBuilder.fromHW
 
 
-{-| Set the starting height. Width is left unchanged (or 0 if not set).
+{-| Set the starting height. Width is left unchanged unless this anim group already controls width.
 -}
 fromH : Float -> Builder eng -> Builder eng
 fromH =
     SizeBuilder.fromH
 
 
-{-| Set the starting width. Height is left unchanged (or 0 if not set).
+{-| Set the starting width. Height is left unchanged unless this anim group already controls height.
 -}
 fromW : Float -> Builder eng -> Builder eng
 fromW =
@@ -410,14 +422,14 @@ toHW =
     SizeBuilder.toHW
 
 
-{-| Set the target height. Width is left unchanged (or 0 if not set).
+{-| Set the target height. Width is left unchanged unless this anim group already controls width.
 -}
 toH : Float -> Builder eng -> Builder eng
 toH =
     SizeBuilder.toH
 
 
-{-| Set the target width. Height is left unchanged (or 0 if not set).
+{-| Set the target width. Height is left unchanged unless this anim group already controls height.
 -}
 toW : Float -> Builder eng -> Builder eng
 toW =
