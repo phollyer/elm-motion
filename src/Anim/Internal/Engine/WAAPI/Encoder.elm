@@ -163,6 +163,16 @@ encodeAnimateLike typeTag animGroups touchedAxes processed =
                                     processed.iterations
                                     processed.animationDirection
                                     config.playback
+
+                            perGroupTouchedAxes =
+                                touchedAxesForGroup animGroupName touchedAxes
+
+                            effectiveTouchedAxes =
+                                if typeTag == "retarget" then
+                                    perGroupTouchedAxes
+
+                                else
+                                    config.controlledAxes
                         in
                         ( animGroupName
                         , encodeProcessedAnimGroupConfig
@@ -178,7 +188,8 @@ encodeAnimateLike typeTag animGroups touchedAxes processed =
                             config.frozenAxes
                             config.discreteEntryProperties
                             config.discreteExitProperties
-                            (touchedAxesForGroup animGroupName touchedAxes)
+                            effectiveTouchedAxes
+                            config.controlledAxes
                             playback.iterations
                             playback.animationDirection
                             config.properties
@@ -258,6 +269,7 @@ encodeRestart iterationsConfig directionConfig animGroup configGroup =
                             config.discreteEntryProperties
                             config.discreteExitProperties
                             Dict.empty
+                            config.controlledAxes
                             playback.iterations
                             playback.animationDirection
                             config.properties
@@ -303,6 +315,7 @@ encodeProcessedData data =
                             config.discreteEntryProperties
                             config.discreteExitProperties
                             Dict.empty
+                            config.controlledAxes
                             playback.iterations
                             playback.animationDirection
                             config.properties
@@ -454,11 +467,12 @@ encodeProcessedAnimGroupConfig :
     -> Dict.Dict String String
     -> Dict.Dict String Builder.DiscreteExitProperty
     -> Dict.Dict String (Set String)
+    -> Dict.Dict String (Set String)
     -> Builder.Iterations
     -> Builder.AnimationDirection
     -> List Builder.ProcessedPropertyConfig
     -> Encode.Value
-encodeProcessedAnimGroupConfig animGroupName targetId propertyState transformOrder_ transformBaseline viewRangeStart viewRangeEnd emitProgress_ updateThrottleMs frozenAxes discreteEntryProperties discreteExitProperties touchedAxes iterations_ direction_ propertyConfigs =
+encodeProcessedAnimGroupConfig animGroupName targetId propertyState transformOrder_ transformBaseline viewRangeStart viewRangeEnd emitProgress_ updateThrottleMs frozenAxes discreteEntryProperties discreteExitProperties touchedAxes controlledAxes iterations_ direction_ propertyConfigs =
     let
         baseFields =
             [ ( "properties", Encode.list (encodeProcessedPropertyConfig propertyState frozenAxes touchedAxes) propertyConfigs )
@@ -503,7 +517,7 @@ encodeProcessedAnimGroupConfig animGroupName targetId propertyState transformOrd
             encodeDiscreteExitFields discreteExitProperties
 
         willChangeField =
-            case Builder.willChangeComposite propertyConfigs of
+            case Builder.willChangeCompositeWithControlledAxes controlledAxes propertyConfigs of
                 "" ->
                     []
 
@@ -1108,6 +1122,7 @@ encodeScroll builder =
                             config.discreteEntryProperties
                             config.discreteExitProperties
                             Dict.empty
+                            config.controlledAxes
                             playback.iterations
                             playback.animationDirection
                             config.properties
@@ -1196,6 +1211,7 @@ encodeView builder =
                             config.discreteEntryProperties
                             config.discreteExitProperties
                             Dict.empty
+                            config.controlledAxes
                             playback.iterations
                             playback.animationDirection
                             config.properties

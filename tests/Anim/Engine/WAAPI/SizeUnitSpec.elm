@@ -84,6 +84,44 @@ suite =
                 json
                     |> decodeSizeUnit "leftLine"
                     |> Expect.equal (Just "px")
+        , test "first-use Size.toH marks touchedHeight only" <|
+            \_ ->
+                let
+                    processed =
+                        Builder.init
+                            [ Builder.for "card"
+                                >> Size.begin
+                                >> Size.toH 120
+                                >> Size.duration 500
+                                >> Size.end
+                            ]
+                            |> Builder.process
+
+                    json =
+                        Encoder.encode AnimGroups.init processed |> Encode.encode 0
+                in
+                json
+                    |> decodeSizeTouchedAxes "card"
+                    |> Expect.equal (Just ( False, True ))
+        , test "first-use Size.toW marks touchedWidth only" <|
+            \_ ->
+                let
+                    processed =
+                        Builder.init
+                            [ Builder.for "card"
+                                >> Size.begin
+                                >> Size.toW 120
+                                >> Size.duration 500
+                                >> Size.end
+                            ]
+                            |> Builder.process
+
+                    json =
+                        Encoder.encode AnimGroups.init processed |> Encode.encode 0
+                in
+                json
+                    |> decodeSizeTouchedAxes "card"
+                    |> Expect.equal (Just ( True, False ))
         ]
 
 
@@ -133,6 +171,33 @@ decodeSizeUnit animGroupName json =
                     (\ty ->
                         if ty == "size" then
                             Decode.field "unitWidth" Decode.string
+
+                        else
+                            Decode.fail "not size"
+                    )
+    in
+    Decode.decodeString
+        (Decode.at [ "elements", animGroupName, "properties" ]
+            (Decode.list (Decode.maybe propertyDecoder)
+                |> Decode.map (List.filterMap identity >> List.head)
+            )
+        )
+        json
+        |> Result.toMaybe
+        |> Maybe.andThen identity
+
+
+decodeSizeTouchedAxes : String -> String -> Maybe ( Bool, Bool )
+decodeSizeTouchedAxes animGroupName json =
+    let
+        propertyDecoder =
+            Decode.field "type" Decode.string
+                |> Decode.andThen
+                    (\ty ->
+                        if ty == "size" then
+                            Decode.map2 Tuple.pair
+                                (Decode.field "touchedWidth" Decode.bool)
+                                (Decode.field "touchedHeight" Decode.bool)
 
                         else
                             Decode.fail "not size"
