@@ -17,6 +17,7 @@ import Anim.Internal.Property.Translate as Translate
 import Dict exposing (Dict)
 import Motion.Internal.Spring as SpringInt
 import Motion.Spring exposing (Spring)
+import Set
 import Shared.Easing as Easing
 import Shared.Spring as SpringSolver
 
@@ -55,12 +56,13 @@ generateAnimation :
     Builder.Iterations
     -> Builder.AnimationDirection
     -> Maybe (List TransformProperty)
+    -> Dict String (Set.Set String)
     -> Dict String Builder.DiscreteEntryProperty
     -> Dict String Builder.DiscreteExitProperty
     -> Maybe AnimGroup
     -> List Builder.ProcessedPropertyConfig
     -> AnimGroup
-generateAnimation iterationCount directionConfig maybeOrder discreteEntryProps discreteExitProps existingAnimation properties =
+generateAnimation iterationCount directionConfig maybeOrder controlledAxes discreteEntryProps discreteExitProps existingAnimation properties =
     let
         adjustedProperties =
             properties
@@ -107,7 +109,8 @@ generateAnimation iterationCount directionConfig maybeOrder discreteEntryProps d
         |> AnimGroup.setTransformOrder transformOrder
         |> AnimGroup.setDiscreteEntry discreteEntryProps
         |> AnimGroup.setDiscreteExit discreteExitProps
-        |> AnimGroup.setWillChange (Builder.willChangeComposite adjustedProperties)
+        |> AnimGroup.setControlledAxes controlledAxes
+        |> AnimGroup.setWillChange (Builder.willChangeCompositeWithControlledAxes controlledAxes adjustedProperties)
 
 
 scaleInterruptDuration : Maybe AnimGroup -> Builder.ProcessedPropertyConfig -> Builder.ProcessedPropertyConfig

@@ -3,6 +3,7 @@ module Anim.Internal.Engine.Sub.AnimGroup exposing
     , addAnimation
     , getAnimationDirection
     , getAnimations
+    , getControlledAxes
     , getCurrentIteration
     , getDiscreteEntry
     , getDiscreteExit
@@ -16,6 +17,7 @@ module Anim.Internal.Engine.Sub.AnimGroup exposing
     , isRunning
     , setAnimationDirection
     , setAnimations
+    , setControlledAxes
     , setCurrentIteration
     , setDiscreteEntry
     , setDiscreteExit
@@ -30,6 +32,7 @@ import Anim.Internal.Builder exposing (AnimationDirection(..), DiscreteExitPrope
 import Anim.Internal.Engine.Shared.PlayState as PlayState exposing (PlayState)
 import Anim.Internal.Engine.Sub.Animations as Animations exposing (Animations)
 import Dict exposing (Dict)
+import Set exposing (Set)
 
 
 
@@ -49,6 +52,7 @@ type AnimGroup
         , discreteEntry : Dict String String
         , discreteExit : Dict String DiscreteExitProperty
         , willChange : String
+        , controlledAxes : Dict String (Set String)
         }
 
 
@@ -71,6 +75,11 @@ setAnimationDirection direction (AnimGroup group) =
 setCurrentIteration : Int -> AnimGroup -> AnimGroup
 setCurrentIteration currentIteration (AnimGroup group) =
     AnimGroup { group | currentIteration = currentIteration }
+
+
+setControlledAxes : Dict String (Set String) -> AnimGroup -> AnimGroup
+setControlledAxes controlledAxes (AnimGroup group) =
+    AnimGroup { group | controlledAxes = controlledAxes }
 
 
 setPlayState : PlayState -> AnimGroup -> AnimGroup
@@ -129,6 +138,7 @@ init =
         , discreteEntry = Dict.empty
         , discreteExit = Dict.empty
         , willChange = ""
+        , controlledAxes = Dict.empty
         }
 
 
@@ -156,6 +166,11 @@ getCurrentIteration (AnimGroup group) =
 getDiscreteEntry : AnimGroup -> Dict String String
 getDiscreteEntry (AnimGroup group) =
     group.discreteEntry
+
+
+getControlledAxes : AnimGroup -> Dict String (Set String)
+getControlledAxes (AnimGroup group) =
+    group.controlledAxes
 
 
 getDiscreteExit : AnimGroup -> Dict String DiscreteExitProperty

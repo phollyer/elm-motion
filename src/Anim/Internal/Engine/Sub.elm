@@ -226,6 +226,7 @@ animate (AnimState state animGroups) build =
                 playback.iterations
                 playback.animationDirection
                 config.transformOrder
+                config.controlledAxes
                 (Builder.getDiscreteEntryPropertiesFor animGroupName builder)
                 (Builder.getDiscreteExitPropertiesFor animGroupName builder)
                 (AnimGroups.get animGroupName animGroups)
@@ -317,6 +318,7 @@ retarget (AnimState state animGroups) build =
                 playback.iterations
                 playback.animationDirection
                 config.transformOrder
+                config.controlledAxes
                 (Builder.getDiscreteEntryPropertiesFor animGroupName builder)
                 (Builder.getDiscreteExitPropertiesFor animGroupName builder)
                 (AnimGroups.get animGroupName animGroups)
@@ -1312,7 +1314,7 @@ attributes animGroupName (AnimState _ animGroups) =
                         [ Html.Attributes.style "transform" transformString ]
 
                 nonTransformStyles =
-                    List.concatMap getNonTransformStyleAttribute anims
+                    List.concatMap (getNonTransformStyleAttribute (AnimGroup.getControlledAxes animGroup)) anims
 
                 discreteStyles =
                     discreteEntryStyles animGroup
@@ -1398,8 +1400,8 @@ discreteExitStyles animGroup =
             )
 
 
-getNonTransformStyleAttribute : Animation -> List (Html.Attribute msg)
-getNonTransformStyleAttribute anim =
+getNonTransformStyleAttribute : Dict.Dict String (Set String) -> Animation -> List (Html.Attribute msg)
+getNonTransformStyleAttribute controlledAxes anim =
     case anim of
         CustomProperty cssName unit a ->
             [ Html.Attributes.style cssName (String.fromFloat (interpolateEasedProgress interpolateFloat a) ++ unit) ]
@@ -1426,10 +1428,25 @@ getNonTransformStyleAttribute anim =
 
                 ( width, height ) =
                     Size.toTuple size
+
+                controls axis =
+                    controlledAxes
+                        |> Dict.get "size"
+                        |> Maybe.map (Set.member axis)
+                        |> Maybe.withDefault True
             in
-            [ Html.Attributes.style "width" (String.fromFloat width ++ InternalUnit.toCssSuffix units.x)
-            , Html.Attributes.style "height" (String.fromFloat height ++ InternalUnit.toCssSuffix units.y)
+            [ if controls "width" then
+                Just (Html.Attributes.style "width" (String.fromFloat width ++ InternalUnit.toCssSuffix units.x))
+
+              else
+                Nothing
+            , if controls "height" then
+                Just (Html.Attributes.style "height" (String.fromFloat height ++ InternalUnit.toCssSuffix units.y))
+
+              else
+                Nothing
             ]
+                |> List.filterMap identity
 
         Skew _ ->
             []
