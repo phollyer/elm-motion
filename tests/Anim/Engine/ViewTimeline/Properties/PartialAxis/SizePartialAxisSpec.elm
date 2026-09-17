@@ -225,12 +225,14 @@ suite =
         ]
 
 
+encodeView : (Builder.AnimBuilder Builder.ForView -> Builder.AnimBuilder Builder.ForView) -> String
 encodeView steps =
     Builder.init [ steps ]
         |> Encoder.encodeView
         |> Encode.encode 0
 
 
+encodeViewAfterSizeHistory : (Builder.AnimBuilder eng -> Builder.AnimBuilder eng) -> (Builder.AnimBuilder a -> b) -> String
 encodeViewAfterSizeHistory first second =
     let
         firstBuilder =
