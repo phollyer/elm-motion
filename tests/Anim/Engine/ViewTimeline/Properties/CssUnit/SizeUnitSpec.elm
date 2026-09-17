@@ -1,4 +1,4 @@
-module Anim.Engine.ViewTimeline.SizeUnitSpec exposing (suite)
+module Anim.Engine.ViewTimeline.Properties.CssUnit.SizeUnitSpec exposing (suite)
 
 import Anim.Engine.Shared.UnitMatrix as UnitMatrix
 import Anim.Internal.Builder as Builder

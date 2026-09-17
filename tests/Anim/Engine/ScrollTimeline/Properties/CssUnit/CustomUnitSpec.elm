@@ -1,4 +1,4 @@
-module Anim.Engine.ViewTimeline.CustomUnitSpec exposing (suite)
+module Anim.Engine.ScrollTimeline.Properties.CssUnit.CustomUnitSpec exposing (suite)
 
 import Anim.Engine.Shared.UnitMatrix as UnitMatrix
 import Anim.Internal.Builder as Builder
@@ -13,7 +13,7 @@ import Test exposing (Test, describe, test)
 
 suite : Test
 suite =
-    describe "ViewTimeline custom encoder unit"
+    describe "ScrollTimeline custom encoder unit"
         (List.map
             (\unitCase ->
                 unitTest
@@ -48,15 +48,16 @@ unitTest description unit expected =
                         >> Custom.to 16
                         >> Custom.end
             in
-            encodeView [ initStep, customBuilder ]
+            encodeScroll [ initStep, customBuilder ]
                 |> decodeCustomUnit "card"
                 |> Expect.equal (Just expected)
 
 
-encodeView : List (Builder.AnimBuilder Builder.ForView -> Builder.AnimBuilder Builder.ForView) -> String
-encodeView steps =
+encodeScroll : List (Builder.AnimBuilder Builder.ForScroll -> Builder.AnimBuilder Builder.ForScroll) -> String
+encodeScroll steps =
     Builder.init steps
-        |> Encoder.encodeView
+        |> Builder.setScrollSource "document"
+        |> Encoder.encodeScroll
         |> Encode.encode 0
 
 

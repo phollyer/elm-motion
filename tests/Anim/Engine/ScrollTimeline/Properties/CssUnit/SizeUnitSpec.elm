@@ -1,9 +1,9 @@
-module Anim.Engine.ScrollTimeline.TranslateUnitSpec exposing (suite)
+module Anim.Engine.ScrollTimeline.Properties.CssUnit.SizeUnitSpec exposing (suite)
 
 import Anim.Engine.Shared.UnitMatrix as UnitMatrix
 import Anim.Internal.Builder as Builder
 import Anim.Internal.Engine.WAAPI.Encoder as Encoder
-import Anim.Property.Translate as Translate
+import Anim.Property.Size as Size
 import Anim.Unit as Unit
 import Expect
 import Json.Decode as Decode
@@ -13,7 +13,7 @@ import Test exposing (Test, describe, test)
 
 suite : Test
 suite =
-    describe "ScrollTimeline translate encoder unit"
+    describe "ScrollTimeline size encoder unit"
         (unitTest "defaults to px when length is not set" Nothing "px"
             :: List.map
                 (\unitCase ->
@@ -34,21 +34,21 @@ unitTest description maybeUnit expected =
                 initStep b =
                     case maybeUnit of
                         Nothing ->
-                            b |> Translate.initY "dot" 0
+                            b |> Size.initHW "card" 0 0
 
                         Just unit ->
                             b
-                                |> Translate.initY "dot" 0
-                                |> Translate.initCssUnit unit
+                                |> Size.initHW "card" 0 0
+                                |> Size.initCssUnit unit
 
-                translateBuilder =
-                    Builder.for "dot"
-                        >> Translate.begin
-                        >> Translate.toY 62
-                        >> Translate.end
+                sizeBuilder =
+                    Builder.for "card"
+                        >> Size.begin
+                        >> Size.toHW 100 200
+                        >> Size.end
             in
-            encodeScroll [ initStep, translateBuilder ]
-                |> decodeTranslateUnit "dot"
+            encodeScroll [ initStep, sizeBuilder ]
+                |> decodeSizeUnit "card"
                 |> Expect.equal (Just expected)
 
 
@@ -60,18 +60,18 @@ encodeScroll steps =
         |> Encode.encode 0
 
 
-decodeTranslateUnit : String -> String -> Maybe String
-decodeTranslateUnit animGroupName json =
+decodeSizeUnit : String -> String -> Maybe String
+decodeSizeUnit animGroupName json =
     let
         propertyDecoder =
             Decode.field "type" Decode.string
                 |> Decode.andThen
                     (\ty ->
-                        if ty == "translate" then
-                            Decode.field "unitY" Decode.string
+                        if ty == "size" then
+                            Decode.field "unitWidth" Decode.string
 
                         else
-                            Decode.fail "not translate"
+                            Decode.fail "not size"
                     )
     in
     Decode.decodeString

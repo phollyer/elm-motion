@@ -1,12 +1,9 @@
-module Anim.Engine.WAAPI.TranslateUnitSpec exposing (suite)
+module Anim.Engine.WAAPI.Properties.CssUnit.PerspectiveOriginUnitSpec exposing (suite)
 
-{-| Verifies that the WAAPI translate encoder emits a `unit` field reflecting
-the length unit configured via `Translate.cssUnit`. The JS companion uses this
-field to build `translate3d(...)` keyframe strings with the matching CSS unit
-(`px`, `%`, `vw`/`vh`, dynamic-viewport `dvw`/`dvh`/`svw`/`svh`/`lvw`/`lvh`,
-`rem`, `em`, container-query `cqi`/`cqb`/`cqw`/`cqh`/`cqmin`/`cqmax`); without
-it the JS hardcoded `px` suffix and ignored any non-default unit chosen on the
-Elm side.
+{-| Verifies that the WAAPI perspective-origin encoder emits a `unit` field
+reflecting the length unit configured via `PerspectiveOrigin.cssUnit`. The JS
+companion uses this field to build `perspective-origin: <x> <y>` keyframe
+strings with the matching CSS unit.
 -}
 
 import Anim.Engine.Shared.UnitMatrix as UnitMatrix
@@ -14,7 +11,7 @@ import Anim.Internal.Builder as Builder
 import Anim.Internal.Engine.Shared.AnimGroups as AnimGroups
 import Anim.Internal.Engine.WAAPI.AnimGroup as AnimGroup
 import Anim.Internal.Engine.WAAPI.Encoder as Encoder
-import Anim.Property.Translate as Translate
+import Anim.Property.PerspectiveOrigin as PerspectiveOrigin
 import Anim.Unit as Unit
 import Expect
 import Json.Decode as Decode
@@ -24,8 +21,8 @@ import Test exposing (Test, describe, test)
 
 suite : Test
 suite =
-    describe "WAAPI translate encoder unit"
-        (unitTest "defaults to px when length is not set" Nothing "px"
+    describe "WAAPI perspective-origin encoder unit"
+        (unitTest "defaults to % when length is not set" Nothing "%"
             :: List.map
                 (\unitCase ->
                     unitTest
@@ -44,48 +41,48 @@ unitTest description maybeUnit expected =
             let
                 animGroups =
                     AnimGroups.init
-                        |> AnimGroups.insert "ball" AnimGroup.init
+                        |> AnimGroups.insert "card" AnimGroup.init
 
-                translateBuilder =
-                    Builder.for "ball"
-                        >> Translate.begin
-                        >> Translate.toY 62
-                        >> Translate.duration 500
-                        >> Translate.end
+                originBuilder =
+                    Builder.for "card"
+                        >> PerspectiveOrigin.begin
+                        >> PerspectiveOrigin.toXY 25 75
+                        >> PerspectiveOrigin.duration 500
+                        >> PerspectiveOrigin.end
 
                 initStep b =
                     case maybeUnit of
                         Nothing ->
-                            b |> Translate.initY "ball" 0
+                            b |> PerspectiveOrigin.initXY "card" 0 0
 
                         Just unit ->
                             b
-                                |> Translate.initY "ball" 0
-                                |> Translate.initCssUnit unit
+                                |> PerspectiveOrigin.initXY "card" 0 0
+                                |> PerspectiveOrigin.initCssUnit unit
 
                 processed =
-                    Builder.init [ initStep, translateBuilder ] |> Builder.process
+                    Builder.init [ initStep, originBuilder ] |> Builder.process
 
                 json =
                     Encoder.encode animGroups processed |> Encode.encode 0
             in
             json
-                |> decodeTranslateUnit "ball"
+                |> decodePerspectiveOriginUnit "card"
                 |> Expect.equal (Just expected)
 
 
-decodeTranslateUnit : String -> String -> Maybe String
-decodeTranslateUnit animGroupName json =
+decodePerspectiveOriginUnit : String -> String -> Maybe String
+decodePerspectiveOriginUnit animGroupName json =
     let
         propertyDecoder =
             Decode.field "type" Decode.string
                 |> Decode.andThen
                     (\ty ->
-                        if ty == "translate" then
-                            Decode.field "unitY" Decode.string
+                        if ty == "perspectiveOrigin" then
+                            Decode.field "unitX" Decode.string
 
                         else
-                            Decode.fail "not translate"
+                            Decode.fail "not perspectiveOrigin"
                     )
     in
     Decode.decodeString

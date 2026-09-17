@@ -1,9 +1,7 @@
-module Anim.Engine.WAAPI.CustomUnitSpec exposing (suite)
+module Anim.Engine.ViewTimeline.Properties.CssUnit.CustomUnitSpec exposing (suite)
 
 import Anim.Engine.Shared.UnitMatrix as UnitMatrix
 import Anim.Internal.Builder as Builder
-import Anim.Internal.Engine.Shared.AnimGroups as AnimGroups
-import Anim.Internal.Engine.WAAPI.AnimGroup as AnimGroup
 import Anim.Internal.Engine.WAAPI.Encoder as Encoder
 import Anim.Property.Custom as Custom
 import Anim.Unit as Unit
@@ -15,7 +13,7 @@ import Test exposing (Test, describe, test)
 
 suite : Test
 suite =
-    describe "WAAPI custom encoder unit"
+    describe "ViewTimeline custom encoder unit"
         (List.map
             (\unitCase ->
                 unitTest
@@ -41,10 +39,6 @@ unitTest description unit expected =
     test description <|
         \_ ->
             let
-                animGroups =
-                    AnimGroups.init
-                        |> AnimGroups.insert "card" AnimGroup.init
-
                 initStep =
                     Custom.init "card" (Custom.BorderRadius unit) 0
 
@@ -53,16 +47,17 @@ unitTest description unit expected =
                         >> Custom.begin (Custom.BorderRadius unit)
                         >> Custom.to 16
                         >> Custom.end
-
-                processed =
-                    Builder.init [ initStep, customBuilder ] |> Builder.process
-
-                json =
-                    Encoder.encode animGroups processed |> Encode.encode 0
             in
-            json
+            encodeView [ initStep, customBuilder ]
                 |> decodeCustomUnit "card"
                 |> Expect.equal (Just expected)
+
+
+encodeView : List (Builder.AnimBuilder Builder.ForView -> Builder.AnimBuilder Builder.ForView) -> String
+encodeView steps =
+    Builder.init steps
+        |> Encoder.encodeView
+        |> Encode.encode 0
 
 
 decodeCustomUnit : String -> String -> Maybe String
@@ -98,4 +93,3 @@ decodeCustomUnit animGroupName json =
         json
         |> Result.toMaybe
         |> Maybe.andThen identity
-

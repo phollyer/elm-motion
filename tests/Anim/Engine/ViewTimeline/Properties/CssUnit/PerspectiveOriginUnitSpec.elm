@@ -1,4 +1,4 @@
-module Anim.Engine.ViewTimeline.PerspectiveOriginUnitSpec exposing (suite)
+module Anim.Engine.ViewTimeline.Properties.CssUnit.PerspectiveOriginUnitSpec exposing (suite)
 
 import Anim.Engine.Shared.UnitMatrix as UnitMatrix
 import Anim.Internal.Builder as Builder

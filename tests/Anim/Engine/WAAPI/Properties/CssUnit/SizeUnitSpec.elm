@@ -1,4 +1,4 @@
-module Anim.Engine.WAAPI.SizeUnitSpec exposing (suite)
+module Anim.Engine.WAAPI.Properties.CssUnit.SizeUnitSpec exposing (suite)
 
 {-| Verifies that the WAAPI size encoder emits a `unit` field reflecting the
 cssUnit unit configured via `Size.cssUnit`. The JS companion uses this field to

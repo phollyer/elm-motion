@@ -1,9 +1,9 @@
-module Anim.Engine.ScrollTimeline.PerspectiveOriginUnitSpec exposing (suite)
+module Anim.Engine.ViewTimeline.Properties.CssUnit.TranslateUnitSpec exposing (suite)
 
 import Anim.Engine.Shared.UnitMatrix as UnitMatrix
 import Anim.Internal.Builder as Builder
 import Anim.Internal.Engine.WAAPI.Encoder as Encoder
-import Anim.Property.PerspectiveOrigin as PerspectiveOrigin
+import Anim.Property.Translate as Translate
 import Anim.Unit as Unit
 import Expect
 import Json.Decode as Decode
@@ -13,8 +13,8 @@ import Test exposing (Test, describe, test)
 
 suite : Test
 suite =
-    describe "ScrollTimeline perspective-origin encoder unit"
-        (unitTest "defaults to % when length is not set" Nothing "%"
+    describe "ViewTimeline translate encoder unit"
+        (unitTest "defaults to px when length is not set" Nothing "px"
             :: List.map
                 (\unitCase ->
                     unitTest
@@ -34,44 +34,43 @@ unitTest description maybeUnit expected =
                 initStep b =
                     case maybeUnit of
                         Nothing ->
-                            b |> PerspectiveOrigin.initXY "hero" 0 0
+                            b |> Translate.initY "dot" 0
 
                         Just unit ->
                             b
-                                |> PerspectiveOrigin.initXY "hero" 0 0
-                                |> PerspectiveOrigin.initCssUnit unit
+                                |> Translate.initY "dot" 0
+                                |> Translate.initCssUnit unit
 
-                perspectiveBuilder =
-                    Builder.for "hero"
-                        >> PerspectiveOrigin.begin
-                        >> PerspectiveOrigin.toXY 25 75
-                        >> PerspectiveOrigin.end
+                translateBuilder =
+                    Builder.for "dot"
+                        >> Translate.begin
+                        >> Translate.toY 62
+                        >> Translate.end
             in
-            encodeScroll [ initStep, perspectiveBuilder ]
-                |> decodePerspectiveOriginUnit "hero"
+            encodeView [ initStep, translateBuilder ]
+                |> decodeTranslateUnit "dot"
                 |> Expect.equal (Just expected)
 
 
-encodeScroll : List (Builder.AnimBuilder eng -> Builder.AnimBuilder eng) -> String
-encodeScroll steps =
+encodeView : List (Builder.AnimBuilder Builder.ForView -> Builder.AnimBuilder Builder.ForView) -> String
+encodeView steps =
     Builder.init steps
-        |> Builder.setScrollSource "document"
-        |> Encoder.encodeScroll
+        |> Encoder.encodeView
         |> Encode.encode 0
 
 
-decodePerspectiveOriginUnit : String -> String -> Maybe String
-decodePerspectiveOriginUnit animGroupName json =
+decodeTranslateUnit : String -> String -> Maybe String
+decodeTranslateUnit animGroupName json =
     let
         propertyDecoder =
             Decode.field "type" Decode.string
                 |> Decode.andThen
                     (\ty ->
-                        if ty == "perspectiveOrigin" then
-                            Decode.field "unitX" Decode.string
+                        if ty == "translate" then
+                            Decode.field "unitY" Decode.string
 
                         else
-                            Decode.fail "not perspectiveOrigin"
+                            Decode.fail "not translate"
                     )
     in
     Decode.decodeString
