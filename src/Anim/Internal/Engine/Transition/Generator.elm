@@ -298,7 +298,32 @@ nonTransformTransitionFromProcessed controlledAxes property =
             []
 
         Builder.ProcessedTranslateConfig config ->
-            [ transitionRule "translate" config ]
+            let
+                useTranslateProperty =
+                    controlledAxes
+                        |> Dict.get "translate"
+                        |> Maybe.map
+                            (\axes ->
+                                let
+                                    hasX =
+                                        Set.member "x" axes
+
+                                    hasY =
+                                        Set.member "y" axes
+
+                                    hasZ =
+                                        Set.member "z" axes
+                                in
+                                hasX && (hasY || not hasZ)
+                            )
+                        |> Maybe.withDefault True
+            in
+            [ if useTranslateProperty then
+                transitionRule "translate" config
+
+              else
+                transitionRule "transform" config
+            ]
 
 
 {-| The longest animation duration across the processed properties, used

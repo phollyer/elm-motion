@@ -37,6 +37,7 @@ import Anim.Internal.Property.Translate as Translate
 import Dict
 import Html exposing (Html)
 import Html.Attributes
+import Set
 
 
 
@@ -134,7 +135,7 @@ insertAnimGroup animGroupsConfig animGroupName newAnimGroup acc =
 
                 animatedCssProps =
                     AnimGroups.get animGroupName animGroupsConfig
-                        |> Maybe.map (.properties >> toCssPropertyNames)
+                        |> Maybe.map (\cfg -> toCssPropertyNames cfg.controlledAxes cfg.properties)
                         |> Maybe.withDefault []
 
                 discreteCssProps =
@@ -197,8 +198,8 @@ retarget ((AnimState origState _) as animState) build =
     AnimState newState snappedGroups
 
 
-toCssPropertyNames : List Builder.ProcessedPropertyConfig -> List String
-toCssPropertyNames props =
+toCssPropertyNames : Dict.Dict String (Set.Set String) -> List Builder.ProcessedPropertyConfig -> List String
+toCssPropertyNames controlledAxes props =
     List.concatMap
         (\prop ->
             case prop of
@@ -227,7 +228,31 @@ toCssPropertyNames props =
                     [ "transform" ]
 
                 Builder.ProcessedTranslateConfig _ ->
-                    [ "translate" ]
+                    let
+                        useTranslateProperty =
+                            controlledAxes
+                                |> Dict.get "translate"
+                                |> Maybe.map
+                                    (\axes ->
+                                        let
+                                            hasX =
+                                                Set.member "x" axes
+
+                                            hasY =
+                                                Set.member "y" axes
+
+                                            hasZ =
+                                                Set.member "z" axes
+                                        in
+                                        hasX && (hasY || not hasZ)
+                                    )
+                                |> Maybe.withDefault True
+                    in
+                    if useTranslateProperty then
+                        [ "translate" ]
+
+                    else
+                        [ "transform", "translate" ]
         )
         props
 
@@ -574,7 +599,14 @@ stop =
     CSS.stop
         AnimGroup.setPlayState
         AnimGroup.isActive
-        TransitionStyles.fromProcessedProperties
+        (\maybeProcessedConfig ->
+            case maybeProcessedConfig of
+                Just processedConfig ->
+                    TransitionStyles.fromProcessedPropertiesWithControlledAxes processedConfig.controlledAxes
+
+                Nothing ->
+                    TransitionStyles.fromProcessedProperties
+        )
         setStyles
 
 
@@ -582,7 +614,14 @@ reset : AnimGroupName -> AnimState -> AnimState
 reset =
     CSS.reset
         AnimGroup.setPlayState
-        TransitionStyles.fromProcessedProperties
+        (\maybeProcessedConfig ->
+            case maybeProcessedConfig of
+                Just processedConfig ->
+                    TransitionStyles.fromProcessedPropertiesWithControlledAxes processedConfig.controlledAxes
+
+                Nothing ->
+                    TransitionStyles.fromProcessedProperties
+        )
         setStyles
 
 

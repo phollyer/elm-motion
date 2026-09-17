@@ -468,7 +468,7 @@ cssUnitZ =
 -- ============================================================
 
 
-stop : (PlayState -> a -> a) -> (a -> Bool) -> (List ( String, String ) -> List Builder.ProcessedPropertyConfig -> Styles) -> (Styles -> a) -> AnimGroupName -> AnimState engine a -> AnimState engine a
+stop : (PlayState -> a -> a) -> (a -> Bool) -> (Maybe Builder.ProcessedAnimGroupConfig -> List ( String, String ) -> List Builder.ProcessedPropertyConfig -> Styles) -> (Styles -> a) -> AnimGroupName -> AnimState engine a -> AnimState engine a
 stop setPlayState getIsActive buildStyles setStyles animGroupName animState =
     case isActive getIsActive animGroupName animState of
         Just True ->
@@ -493,7 +493,7 @@ stop setPlayState getIsActive buildStyles setStyles animGroupName animState =
             animState
 
 
-reset : (PlayState -> a -> a) -> (List ( String, String ) -> List Builder.ProcessedPropertyConfig -> Styles) -> (Styles -> a) -> AnimGroupName -> AnimState engine a -> AnimState engine a
+reset : (PlayState -> a -> a) -> (Maybe Builder.ProcessedAnimGroupConfig -> List ( String, String ) -> List Builder.ProcessedPropertyConfig -> Styles) -> (Styles -> a) -> AnimGroupName -> AnimState engine a -> AnimState engine a
 reset setPlayState =
     let
         toStartOr : b -> Builder.ProcessedAnimationConfig b -> Builder.ProcessedAnimationConfig b
@@ -582,17 +582,21 @@ simpleControl :
     (AnimGroupName -> Builder.AnimBuilder engine -> Maybe Builder.ProcessedAnimGroupConfig)
     -> (a -> a)
     -> (Builder.ProcessedPropertyConfig -> Builder.ProcessedPropertyConfig)
-    -> (List ( String, String ) -> List Builder.ProcessedPropertyConfig -> Styles)
+    -> (Maybe Builder.ProcessedAnimGroupConfig -> List ( String, String ) -> List Builder.ProcessedPropertyConfig -> Styles)
     -> (Styles -> a)
     -> AnimGroupName
     -> AnimState engine a
     -> AnimState engine a
 simpleControl fetchConfig setPlayState mapper buildStyles setStyles animGroupName ((AnimState state animGroups) as animState) =
     let
-        getProcessedProperties : List Builder.ProcessedPropertyConfig
-        getProcessedProperties =
+        maybeProcessedConfig : Maybe Builder.ProcessedAnimGroupConfig
+        maybeProcessedConfig =
             state.builder
                 |> fetchConfig animGroupName
+
+        getProcessedProperties : List Builder.ProcessedPropertyConfig
+        getProcessedProperties =
+            maybeProcessedConfig
                 |> Maybe.map .properties
                 |> Maybe.withDefault []
     in
@@ -608,6 +612,7 @@ simpleControl fetchConfig setPlayState mapper buildStyles setStyles animGroupNam
                 animGroup =
                     snappedProperties
                         |> buildStyles
+                            maybeProcessedConfig
                             [ ( "animation", "none" )
                             , ( "transition", "none" )
                             ]

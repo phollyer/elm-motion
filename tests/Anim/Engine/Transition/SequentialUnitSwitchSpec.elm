@@ -13,6 +13,7 @@ import Anim.Engine.Transition as Transition
 import Anim.Property.Size as Size
 import Anim.Property.Translate as Translate
 import Anim.Unit exposing (Unit(..))
+import Expect
 import Html
 import Test exposing (Test, describe, test)
 import Test.Html.Query as Query
@@ -52,7 +53,10 @@ suite =
                                 )
                        )
                     |> rendered
-                    |> Query.has [ Selector.style "translate" "20vw 0px 0px" ]
+                    |> Expect.all
+                        [ Query.has [ Selector.style "translate" "20vw" ]
+                        , Query.hasNot [ Selector.style "translate" "20vw 0px 0px" ]
+                        ]
         , test "second size animate uses the new unit for width and height" <|
             \_ ->
                 Transition.init [ Size.initHW "el" 80 120 ]

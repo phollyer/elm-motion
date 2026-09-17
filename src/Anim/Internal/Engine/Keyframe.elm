@@ -507,7 +507,7 @@ stop =
     CSS.stop
         AnimGroup.setPlayState
         AnimGroup.isActive
-        (KeyframeStyles.fromProcessedProperties Nothing Nothing)
+        (\_ -> KeyframeStyles.fromProcessedProperties Nothing Nothing)
         setStyles
 
 
@@ -515,7 +515,7 @@ reset : AnimGroupName -> AnimState -> AnimState
 reset =
     CSS.reset
         AnimGroup.setPlayState
-        (KeyframeStyles.fromProcessedProperties Nothing Nothing)
+        (\_ -> KeyframeStyles.fromProcessedProperties Nothing Nothing)
         setStyles
 
 

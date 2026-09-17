@@ -232,8 +232,19 @@ mergeStyles (AnimGroup newGroup) (AnimGroup existingGroup) newCssProps =
         isMetaStyle key =
             key == "transition" || key == "transition-behavior"
 
+        partialTranslateRenderedAsTransform =
+            Set.member "translate" newGroup.propertyKeys
+                && (not <| Styles.member "translate" newGroup.styles)
+                && Styles.member "transform" newGroup.styles
+
         existingStyles =
-            existingGroup.styles
+            (if partialTranslateRenderedAsTransform then
+                existingGroup.styles
+                    |> Styles.remove "translate"
+
+             else
+                existingGroup.styles
+            )
                 |> Styles.remove "transition"
                 |> Styles.remove "transition-behavior"
 

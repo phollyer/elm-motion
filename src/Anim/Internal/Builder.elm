@@ -2744,6 +2744,33 @@ cssNamesIndividual prop =
 cssNamesIndividualWithControlledAxes : Dict String (Set String) -> ProcessedPropertyConfig -> List String
 cssNamesIndividualWithControlledAxes controlledAxes prop =
     case prop of
+        ProcessedTranslateConfig _ ->
+            let
+                useTranslateProperty =
+                    controlledAxes
+                        |> Dict.get "translate"
+                        |> Maybe.map
+                            (\axes ->
+                                let
+                                    hasX =
+                                        Set.member "x" axes
+
+                                    hasY =
+                                        Set.member "y" axes
+
+                                    hasZ =
+                                        Set.member "z" axes
+                                in
+                                hasX && (hasY || not hasZ)
+                            )
+                        |> Maybe.withDefault True
+            in
+            if useTranslateProperty then
+                [ "translate" ]
+
+            else
+                [ "transform" ]
+
         ProcessedSizeConfig _ ->
             let
                 hasAxis axis =

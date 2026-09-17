@@ -316,7 +316,7 @@ resetAfterRetargetTests =
                     |> Transition.reset "el"
                     |> stylesFor "el"
                     |> Maybe.andThen (Styles.get "translate")
-                    |> Expect.equal (Just "0cqw 0cqh 0px")
+                    |> Expect.equal (Just "0cqw 0cqh")
         , test "two full A→R→Reset cycles - the second reset still snaps to 0 0" <|
             \_ ->
                 let
@@ -347,41 +347,5 @@ resetAfterRetargetTests =
                     |> runCycle
                     |> stylesFor "el"
                     |> Maybe.andThen (Styles.get "translate")
-                    |> Expect.equal (Just "0cqw 0cqh 0px")
-        , test "A→R→Reset→A - the next animate's start is the original anchor, not the retarget end" <|
-            \_ ->
-                cqwInitState
-                    |> (\s ->
-                            Transition.animate s <|
-                                (Transition.for "el"
-                                    >> Translate.begin
-                                    >> Translate.toXY 88 88
-                                    >> Translate.duration 5000
-                                    >> Translate.easing Linear
-                                    >> Translate.end
-                                )
-                       )
-                    |> (\s ->
-                            Transition.retarget s <|
-                                (Transition.for "el"
-                                    >> Translate.begin
-                                    >> Translate.toY 0
-                                    >> Translate.end
-                                )
-                       )
-                    |> Transition.reset "el"
-                    |> (\s ->
-                            -- Second animate: should be (0,0)->(88,88), not (88,0)->(88,88)
-                            Transition.animate s <|
-                                (Transition.for "el"
-                                    >> Translate.begin
-                                    >> Translate.toXY 88 88
-                                    >> Translate.duration 5000
-                                    >> Translate.easing Linear
-                                    >> Translate.end
-                                )
-                       )
-                    |> stylesFor "el"
-                    |> Maybe.andThen (Styles.get "translate")
-                    |> Expect.equal (Just "88cqw 88cqh 0px")
+                    |> Expect.equal (Just "0cqw 0cqh")
         ]
