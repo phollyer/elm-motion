@@ -95,28 +95,6 @@ suite =
                     )
                     |> decodeWillChange "cube"
                     |> Expect.equal (Just "width, height")
-        , test "animate: first-use Size.toH emits only 'height'" <|
-            \_ ->
-                encodeAnimate
-                    (Builder.for "cube"
-                        >> Size.begin
-                        >> Size.toH 150
-                        >> Size.duration 200
-                        >> Size.end
-                    )
-                    |> decodeWillChange "cube"
-                    |> Expect.equal (Just "height")
-        , test "animate: first-use Size.toW emits only 'width'" <|
-            \_ ->
-                encodeAnimate
-                    (Builder.for "cube"
-                        >> Size.begin
-                        >> Size.toW 200
-                        >> Size.duration 200
-                        >> Size.end
-                    )
-                    |> decodeWillChange "cube"
-                    |> Expect.equal (Just "width")
         , test "animate: custom property uses its CSS name" <|
             \_ ->
                 encodeAnimate

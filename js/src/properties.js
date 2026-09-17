@@ -249,6 +249,10 @@ function resolveScrollTransformProperty(property, start, end, currentTransform) 
     }
 }
 
+function hasFiniteSizeAxis(startValue, endValue) {
+    return Number.isFinite(startValue) && Number.isFinite(endValue);
+}
+
 const SIMPLE_KEYFRAME_BUILDERS = {
     opacity(resolved) {
         return [
@@ -259,9 +263,26 @@ const SIMPLE_KEYFRAME_BUILDERS = {
     size(resolved) {
         const uW = resolved.unitWidth || 'px';
         const uH = resolved.unitHeight || 'px';
+
+        const includeWidth = hasFiniteSizeAxis(resolved.startWidth, resolved.endWidth);
+        const includeHeight = hasFiniteSizeAxis(resolved.startHeight, resolved.endHeight);
+
+        const startFrame = {};
+        const endFrame = {};
+
+        if (includeWidth) {
+            startFrame.width = resolved.startWidth + uW;
+            endFrame.width = resolved.endWidth + uW;
+        }
+
+        if (includeHeight) {
+            startFrame.height = resolved.startHeight + uH;
+            endFrame.height = resolved.endHeight + uH;
+        }
+
         return [
-            { width: resolved.startWidth + uW, height: resolved.startHeight + uH },
-            { width: resolved.endWidth + uW, height: resolved.endHeight + uH }
+            startFrame,
+            endFrame
         ];
     },
     customProperty(resolved) {
@@ -304,11 +325,23 @@ const COMPLEX_KEYFRAME_BUILDERS = {
     size(resolved, easingKeyframes) {
         const uW = resolved.unitWidth || 'px';
         const uH = resolved.unitHeight || 'px';
-        return easingKeyframes.map(({ offset, value }) => ({
-            offset,
-            width: (resolved.startWidth + (resolved.endWidth - resolved.startWidth) * value) + uW,
-            height: (resolved.startHeight + (resolved.endHeight - resolved.startHeight) * value) + uH
-        }));
+
+        const includeWidth = hasFiniteSizeAxis(resolved.startWidth, resolved.endWidth);
+        const includeHeight = hasFiniteSizeAxis(resolved.startHeight, resolved.endHeight);
+
+        return easingKeyframes.map(({ offset, value }) => {
+            const frame = { offset };
+
+            if (includeWidth) {
+                frame.width = (resolved.startWidth + (resolved.endWidth - resolved.startWidth) * value) + uW;
+            }
+
+            if (includeHeight) {
+                frame.height = (resolved.startHeight + (resolved.endHeight - resolved.startHeight) * value) + uH;
+            }
+
+            return frame;
+        });
     },
     customProperty(resolved, easingKeyframes) {
         return easingKeyframes.map(({ offset, value }) => ({

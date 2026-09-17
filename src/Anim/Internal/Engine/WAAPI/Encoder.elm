@@ -268,7 +268,7 @@ encodeRestart iterationsConfig directionConfig animGroup configGroup =
                             config.frozenAxes
                             config.discreteEntryProperties
                             config.discreteExitProperties
-                            Dict.empty
+                            config.controlledAxes
                             config.controlledAxes
                             playback.iterations
                             playback.animationDirection
@@ -314,7 +314,7 @@ encodeProcessedData data =
                             config.frozenAxes
                             config.discreteEntryProperties
                             config.discreteExitProperties
-                            Dict.empty
+                            config.controlledAxes
                             config.controlledAxes
                             playback.iterations
                             playback.animationDirection
@@ -475,7 +475,7 @@ encodeProcessedAnimGroupConfig :
 encodeProcessedAnimGroupConfig animGroupName targetId propertyState transformOrder_ transformBaseline viewRangeStart viewRangeEnd emitProgress_ updateThrottleMs frozenAxes discreteEntryProperties discreteExitProperties touchedAxes controlledAxes iterations_ direction_ propertyConfigs =
     let
         baseFields =
-            [ ( "properties", Encode.list (encodeProcessedPropertyConfig propertyState frozenAxes touchedAxes) propertyConfigs )
+            [ ( "properties", Encode.list (encodeProcessedPropertyConfig propertyState frozenAxes touchedAxes controlledAxes) propertyConfigs )
             , ( "animGroup", Encode.string animGroupName )
             , ( "target", Encode.string targetId )
             , ( "iterations", encodeIterations iterations_ )
@@ -666,8 +666,8 @@ encodeTransformOrder order =
         order
 
 
-encodeProcessedPropertyConfig : Maybe (AnimGroups PropertyState) -> Dict.Dict String (List String) -> Dict.Dict String (Set String) -> Builder.ProcessedPropertyConfig -> Encode.Value
-encodeProcessedPropertyConfig maybeVersions frozenAxes touchedAxes property =
+encodeProcessedPropertyConfig : Maybe (AnimGroups PropertyState) -> Dict.Dict String (List String) -> Dict.Dict String (Set String) -> Dict.Dict String (Set String) -> Builder.ProcessedPropertyConfig -> Encode.Value
+encodeProcessedPropertyConfig maybeVersions frozenAxes touchedAxes controlledAxes property =
     let
         frozenAxesField propName =
             case Dict.get propName frozenAxes |> Maybe.withDefault [] of
@@ -919,15 +919,49 @@ encodeProcessedPropertyConfig maybeVersions frozenAxes touchedAxes property =
 
                 ( endWidth, endHeight ) =
                     Size.toTuple config.end
+
+                maybeOwnedSizeAxes =
+                    Dict.get "size" controlledAxes
+
+                includeWidth =
+                    case maybeOwnedSizeAxes of
+                        Just axisSet ->
+                            Set.member "width" axisSet
+
+                        Nothing ->
+                            False
+
+                includeHeight =
+                    case maybeOwnedSizeAxes of
+                        Just axisSet ->
+                            Set.member "height" axisSet
+
+                        Nothing ->
+                            False
+
+                sizeAxisFields =
+                    (if includeWidth then
+                        [ ( "startWidth", Encode.float startWidth )
+                        , ( "endWidth", Encode.float endWidth )
+                        ]
+
+                     else
+                        []
+                    )
+                        ++ (if includeHeight then
+                                [ ( "startHeight", Encode.float startHeight )
+                                , ( "endHeight", Encode.float endHeight )
+                                ]
+
+                            else
+                                []
+                           )
             in
             Encode.object
                 (( "type", Encode.string "size" )
                     :: versionFields
-                    ++ [ ( "startWidth", Encode.float startWidth )
-                       , ( "startHeight", Encode.float startHeight )
-                       , ( "endWidth", Encode.float endWidth )
-                       , ( "endHeight", Encode.float endHeight )
-                       , ( "unitWidth", Encode.string (InternalUnit.toCssSuffix config.cssUnit.x) )
+                    ++ sizeAxisFields
+                    ++ [ ( "unitWidth", Encode.string (InternalUnit.toCssSuffix config.cssUnit.x) )
                        , ( "unitHeight", Encode.string (InternalUnit.toCssSuffix config.cssUnit.y) )
                        , ( "duration", Encode.int config.duration )
                        , ( "delay", Encode.int config.delay )
@@ -1121,7 +1155,7 @@ encodeScroll builder =
                             config.frozenAxes
                             config.discreteEntryProperties
                             config.discreteExitProperties
-                            Dict.empty
+                            config.controlledAxes
                             config.controlledAxes
                             playback.iterations
                             playback.animationDirection
@@ -1210,7 +1244,7 @@ encodeView builder =
                             config.frozenAxes
                             config.discreteEntryProperties
                             config.discreteExitProperties
-                            Dict.empty
+                            config.controlledAxes
                             config.controlledAxes
                             playback.iterations
                             playback.animationDirection
