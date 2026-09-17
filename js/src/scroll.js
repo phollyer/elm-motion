@@ -325,9 +325,9 @@ function applyScrollDrivenAnimation(animGroup, element, elementConfig, timeline,
                         sv.skewX + (ev.skewX - sv.skewX) * p,
                         sv.skewY + (ev.skewY - sv.skewY) * p,
                         order, forceGroups,
-                        ev.translateUnitX || sv.translateUnitX || 'px',
-                        ev.translateUnitY || sv.translateUnitY || 'px',
-                        ev.translateUnitZ || sv.translateUnitZ || 'px'
+                        ev.translateUnitX || sv.translateUnitX,
+                        ev.translateUnitY || sv.translateUnitY,
+                        ev.translateUnitZ || sv.translateUnitZ
                     )
                 };
             });
@@ -338,18 +338,18 @@ function applyScrollDrivenAnimation(animGroup, element, elementConfig, timeline,
                 sv.scaleX, sv.scaleY, sv.scaleZ,
                 sv.rotateX, sv.rotateY, sv.rotateZ,
                 sv.skewX, sv.skewY, order, forceGroups,
-                sv.translateUnitX || 'px',
-                sv.translateUnitY || 'px',
-                sv.translateUnitZ || 'px'
+                sv.translateUnitX,
+                sv.translateUnitY,
+                sv.translateUnitZ
             );
             const endTransform = buildTransformString(
                 ev.x, ev.y, ev.z,
                 ev.scaleX, ev.scaleY, ev.scaleZ,
                 ev.rotateX, ev.rotateY, ev.rotateZ,
                 ev.skewX, ev.skewY, order, forceGroups,
-                ev.translateUnitX || 'px',
-                ev.translateUnitY || 'px',
-                ev.translateUnitZ || 'px'
+                ev.translateUnitX,
+                ev.translateUnitY,
+                ev.translateUnitZ
             );
             transformKeyframes = [{ transform: startTransform }, { transform: endTransform }];
             if (firstTransform.easing) {

@@ -421,7 +421,7 @@ function applyFrozenAxesFromLive(property, currentState, domLiveState, element, 
         if (!isSettled && domLivePx != null) {
             if (property.type === 'translate') {
                 const unitKey = axis === 'x' ? 'unitX' : axis === 'y' ? 'unitY' : 'unitZ';
-                const converted = pxToTranslateUnit(domLivePx, property[unitKey] || 'px', axis, element);
+                const converted = pxToTranslateUnit(domLivePx, property[unitKey], axis, element);
                 if (Number.isFinite(converted)) {
                     liveValue = converted;
                 }
@@ -480,7 +480,7 @@ function patchTransformStartsFromAnimation(element, existingTransform, mergedTra
                 { axis: 'z', startKey: 'startZ', unitKey: 'unitZ' }
             ].forEach(({ axis, startKey, unitKey }) => {
                 const domPx = domLiveState?.[axis];
-                const converted = pxToTranslateUnit(domPx, property[unitKey] || 'px', axis, element);
+                const converted = pxToTranslateUnit(domPx, property[unitKey], axis, element);
                 if (Number.isFinite(converted)) {
                     property[startKey] = converted;
                 }
@@ -528,8 +528,8 @@ function anchorFreshStartsToCachedRest(animGroup, mergedTransformProperties) {
             // re-anchor when the new animation shares that unit, otherwise the
             // numeric value would be reinterpreted under the wrong unit.
             if (property.type === 'translate') {
-                const propUnit = property[`unit${suffix}`] || 'px';
-                const cachedUnit = cached[`translateUnit${suffix}`] || 'px';
+                const propUnit = property[`unit${suffix}`];
+                const cachedUnit = cached[`translateUnit${suffix}`];
                 if (propUnit !== cachedUnit) {
                     return;
                 }
@@ -641,9 +641,9 @@ function buildDefaultResolvedTransform(currentTransform) {
             startX: currentTransform.x, startY: currentTransform.y, startZ: currentTransform.z,
             endX: currentTransform.x, endY: currentTransform.y, endZ: currentTransform.z,
             easing: null, easingKeyframes: null, duration: 0,
-            unitX: currentTransform.translateUnitX || 'px',
-            unitY: currentTransform.translateUnitY || 'px',
-            unitZ: currentTransform.translateUnitZ || 'px'
+            unitX: currentTransform.translateUnitX,
+            unitY: currentTransform.translateUnitY,
+            unitZ: currentTransform.translateUnitZ
         },
         scale: {
             startX: currentTransform.scaleX, startY: currentTransform.scaleY, startZ: currentTransform.scaleZ,
@@ -1032,9 +1032,9 @@ function createMergedTransformAnimation(animGroup, element, transformProperties,
     const forceGroups = computeForceGroups(resolved);
 
     if (allSameEasing && allSameDuration) {
-        const tUx = resolved.translate.unitX || 'px';
-        const tUy = resolved.translate.unitY || 'px';
-        const tUz = resolved.translate.unitZ || 'px';
+        const tUx = resolved.translate.unitX;
+        const tUy = resolved.translate.unitY;
+        const tUz = resolved.translate.unitZ;
         const startTransform = buildTransformString(
             resolved.translate.startX, resolved.translate.startY, resolved.translate.startZ,
             resolved.scale.startX, resolved.scale.startY, resolved.scale.startZ,
@@ -1083,9 +1083,9 @@ function createMergedTransformAnimation(animGroup, element, transformProperties,
                 interpScale.x, interpScale.y, interpScale.z,
                 interpRotate.x, interpRotate.y, interpRotate.z,
                 interpSkew.x, interpSkew.y, order, forceGroups,
-                resolved.translate.unitX || 'px',
-                resolved.translate.unitY || 'px',
-                resolved.translate.unitZ || 'px'
+                resolved.translate.unitX,
+                resolved.translate.unitY,
+                resolved.translate.unitZ
             )
         });
     }
@@ -1155,9 +1155,9 @@ function persistResizedTransform(animGroup, element, propertyKey, currentResized
         updated.scaleX, updated.scaleY, updated.scaleZ,
         updated.rotateX, updated.rotateY, updated.rotateZ,
         updated.skewX, updated.skewY, order, undefined,
-        updated.translateUnitX || 'px',
-        updated.translateUnitY || 'px',
-        updated.translateUnitZ || 'px'
+        updated.translateUnitX,
+        updated.translateUnitY,
+        updated.translateUnitZ
     );
     element.style.transform = transformString;
 }
@@ -1469,9 +1469,9 @@ export function _resizeTransformAnimationImmediate(commandData) {
                 interpScale.x, interpScale.y, interpScale.z,
                 interpRotate.x, interpRotate.y, interpRotate.z,
                 interpSkew.x, interpSkew.y, order, forceGroups,
-                resolved.translate.unitX || 'px',
-                resolved.translate.unitY || 'px',
-                resolved.translate.unitZ || 'px'
+                resolved.translate.unitX,
+                resolved.translate.unitY,
+                resolved.translate.unitZ
             )
         });
     }
@@ -2318,9 +2318,9 @@ function retargetTransformWithContinuation(animGroup, element, transformProperti
                 interpScale.x, interpScale.y, interpScale.z,
                 interpRotate.x, interpRotate.y, interpRotate.z,
                 interpSkew.x, interpSkew.y, order, forceGroups,
-                resolved.translate.unitX || 'px',
-                resolved.translate.unitY || 'px',
-                resolved.translate.unitZ || 'px'
+                resolved.translate.unitX,
+                resolved.translate.unitY,
+                resolved.translate.unitZ
             )
         });
     }
@@ -2475,9 +2475,9 @@ function snapTransformProperties(animGroup, element, transformProperties, elemen
     });
 
     const forceGroups = computeForceGroups(resolved);
-    const tUx = resolved.translate.unitX || 'px';
-    const tUy = resolved.translate.unitY || 'px';
-    const tUz = resolved.translate.unitZ || 'px';
+    const tUx = resolved.translate.unitX;
+    const tUy = resolved.translate.unitY;
+    const tUz = resolved.translate.unitZ;
 
     element.style.transform = buildTransformString(
         resolved.translate.endX, resolved.translate.endY, resolved.translate.endZ,

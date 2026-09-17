@@ -71,8 +71,8 @@ function getPerspectiveOriginFallback(animGroup, computedStyle, unitX, unitY) {
 }
 
 function resolvePerspectiveOriginValues(animGroup, computedStyle, property) {
-    const unitX = property.unitX || '%';
-    const unitY = property.unitY || '%';
+    const unitX = property.unitX;
+    const unitY = property.unitY;
     const fallback = getPerspectiveOriginFallback(animGroup, computedStyle, unitX, unitY);
     const resolved = {
         type: 'perspectiveOrigin',
@@ -104,8 +104,8 @@ const NON_TRANSFORM_RESOLVERS = {
             startHeight: property.startHeight != null ? property.startHeight : parseFloat(computedStyle.height),
             endWidth: property.endWidth,
             endHeight: property.endHeight,
-            unitWidth: property.unitWidth || 'px',
-            unitHeight: property.unitHeight || 'px'
+            unitWidth: property.unitWidth,
+            unitHeight: property.unitHeight
         };
     },
     customProperty(_animGroup, computedStyle, property) {
@@ -187,8 +187,8 @@ const PROPERTY_CONFIG_BUILDERS = {
         const startHeight = property.startHeight != null ? property.startHeight : parseFloat(computedStyle.height);
         config.from = `${startWidth},${startHeight}`;
         config.to = `${property.endWidth},${property.endHeight}`;
-        config.unitWidth = property.unitWidth || 'px';
-        config.unitHeight = property.unitHeight || 'px';
+        config.unitWidth = property.unitWidth;
+        config.unitHeight = property.unitHeight;
     },
     customProperty(_animGroup, _element, computedStyle, property, config) {
         const computedValue = parseFloat(computedStyle.getPropertyValue(property.cssProperty)) || 0;
@@ -204,8 +204,8 @@ const PROPERTY_CONFIG_BUILDERS = {
         config.to = property.endColor;
     },
     perspectiveOrigin(_animGroup, _element, _computedStyle, property, config) {
-        const uX = property.unitX || '%';
-        const uY = property.unitY || '%';
+        const uX = property.unitX;
+        const uY = property.unitY;
         config.from = `${property.startX}${uX} ${property.startY}${uY}`;
         config.to = `${property.endX}${uX} ${property.endY}${uY}`;
     }
@@ -261,8 +261,8 @@ const SIMPLE_KEYFRAME_BUILDERS = {
         ];
     },
     size(resolved) {
-        const uW = resolved.unitWidth || 'px';
-        const uH = resolved.unitHeight || 'px';
+        const uW = resolved.unitWidth;
+        const uH = resolved.unitHeight;
 
         const includeWidth = hasFiniteSizeAxis(resolved.startWidth, resolved.endWidth);
         const includeHeight = hasFiniteSizeAxis(resolved.startHeight, resolved.endHeight);
@@ -298,8 +298,8 @@ const SIMPLE_KEYFRAME_BUILDERS = {
         ];
     },
     perspectiveOrigin(resolved) {
-        const uX = resolved.unitX || '%';
-        const uY = resolved.unitY || '%';
+        const uX = resolved.unitX;
+        const uY = resolved.unitY;
         return [
             { perspectiveOrigin: resolved.startX + uX + ' ' + resolved.startY + uY },
             { perspectiveOrigin: resolved.endX + uX + ' ' + resolved.endY + uY }
@@ -323,8 +323,8 @@ const COMPLEX_KEYFRAME_BUILDERS = {
         }));
     },
     size(resolved, easingKeyframes) {
-        const uW = resolved.unitWidth || 'px';
-        const uH = resolved.unitHeight || 'px';
+        const uW = resolved.unitWidth;
+        const uH = resolved.unitHeight;
 
         const includeWidth = hasFiniteSizeAxis(resolved.startWidth, resolved.endWidth);
         const includeHeight = hasFiniteSizeAxis(resolved.startHeight, resolved.endHeight);
@@ -356,8 +356,8 @@ const COMPLEX_KEYFRAME_BUILDERS = {
         }));
     },
     perspectiveOrigin(resolved, easingKeyframes) {
-        const uX = resolved.unitX || '%';
-        const uY = resolved.unitY || '%';
+        const uX = resolved.unitX;
+        const uY = resolved.unitY;
         return easingKeyframes.map(({ offset, value }) => ({
             offset,
             perspectiveOrigin: (resolved.startX + (resolved.endX - resolved.startX) * value) + uX
@@ -465,9 +465,9 @@ export function resolveScrollDrivenTransformValues(transformProperties, currentT
         scaleX: currentTransform.scaleX, scaleY: currentTransform.scaleY, scaleZ: currentTransform.scaleZ,
         rotateX: currentTransform.rotateX, rotateY: currentTransform.rotateY, rotateZ: currentTransform.rotateZ,
         skewX: currentTransform.skewX, skewY: currentTransform.skewY,
-        translateUnitX: currentTransform.translateUnitX || 'px',
-        translateUnitY: currentTransform.translateUnitY || 'px',
-        translateUnitZ: currentTransform.translateUnitZ || 'px'
+        translateUnitX: currentTransform.translateUnitX,
+        translateUnitY: currentTransform.translateUnitY,
+        translateUnitZ: currentTransform.translateUnitZ
     };
     const start = Object.assign({}, base);
     const end = Object.assign({}, base);
