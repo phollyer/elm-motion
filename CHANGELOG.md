@@ -23,6 +23,16 @@ The two version lines are **not kept in lockstep**. The npm companion can ship J
 
 **(elm)** Discrete Properties are now handled correctly for the Keyframe, Transition and Sub Engines when there is no property animation or when the property animation has no duration.
 
+**(elm)** Size animations - untouched sides/axes no longer emit 0 as a default. Therefore they no longer overwrite existing CSS rules. `will-change` and `transition` style attributes no longer emit untouched sides/axes.
+
+**(docs)** Updated the Size API docs to explain new behaviour - untouched sides/axes no longer overwrite existing CSS rules.
+
+**(JS)** Removed CSS unit `px` defaults - CSS units are completely controlled by Elm, so they are not required.
+
+### Added
+
+**(tooling)** Added test coverage to assert Size animations don't overwrite a users CSS for untouched sides/axes. Added more CSS Unit specs for all applicable properties ensuring all available CSS units are covered.
+
 
 ## [3.0.4] - 2026-09-08 (elm)
 
