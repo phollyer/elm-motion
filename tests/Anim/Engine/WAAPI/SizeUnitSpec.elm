@@ -5,6 +5,7 @@ cssUnit unit configured via `Size.cssUnit`. The JS companion uses this field to
 build `width`/`height` keyframes with the matching CSS unit.
 -}
 
+import Anim.Engine.Shared.UnitMatrix as UnitMatrix
 import Anim.Internal.Builder as Builder
 import Anim.Internal.Engine.Shared.AnimGroups as AnimGroups
 import Anim.Internal.Engine.WAAPI.AnimGroup as AnimGroup
@@ -20,71 +21,63 @@ import Test exposing (Test, describe, test)
 suite : Test
 suite =
     describe "WAAPI size encoder unit"
-        [ unitTest "defaults to px when length is not set" Nothing "px"
-        , unitTest "emits px when Unit.Px is set" (Just Unit.Px) "px"
-        , unitTest "emits % when Unit.Percent is set" (Just Unit.Percent) "%"
-        , unitTest "emits vw when Unit.Vw is set" (Just Unit.Vw) "vw"
-        , unitTest "emits vh when Unit.Vh is set" (Just Unit.Vh) "vh"
-        , unitTest "emits dvw when Unit.Dvw is set" (Just Unit.Dvw) "dvw"
-        , unitTest "emits dvh when Unit.Dvh is set" (Just Unit.Dvh) "dvh"
-        , unitTest "emits svw when Unit.Svw is set" (Just Unit.Svw) "svw"
-        , unitTest "emits svh when Unit.Svh is set" (Just Unit.Svh) "svh"
-        , unitTest "emits lvw when Unit.Lvw is set" (Just Unit.Lvw) "lvw"
-        , unitTest "emits lvh when Unit.Lvh is set" (Just Unit.Lvh) "lvh"
-        , unitTest "emits rem when Unit.Rem is set" (Just Unit.Rem) "rem"
-        , unitTest "emits em when Unit.Em is set" (Just Unit.Em) "em"
-        , unitTest "emits cqi when Unit.Cqi is set" (Just Unit.Cqi) "cqi"
-        , unitTest "emits cqb when Unit.Cqb is set" (Just Unit.Cqb) "cqb"
-        , unitTest "emits cqw when Unit.Cqw is set" (Just Unit.Cqw) "cqw"
-        , unitTest "emits cqh when Unit.Cqh is set" (Just Unit.Cqh) "cqh"
-        , unitTest "emits cqmin when Unit.Cqmin is set" (Just Unit.Cqmin) "cqmin"
-        , unitTest "emits cqmax when Unit.Cqmax is set" (Just Unit.Cqmax) "cqmax"
-        , test "property unit targets the group selected before Size.begin" <|
-            \_ ->
-                let
-                    initialized =
-                        Builder.init
-                            [ Size.initHW "leftLine" 3 0
-                                >> Size.initCssUnitW Unit.Percent
-                            , Size.initHW "rightLine" 3 0
-                                >> Size.initCssUnitW Unit.Percent
-                            ]
-                            |> Builder.mergeBaselines
-                            |> Builder.clearAnimData
-
-                    percentPhase =
-                        initialized
-                            |> Builder.for "leftLine"
-                            |> Size.begin
-                            |> Size.toW 100
-                            |> Size.end
-
-                    afterPercentPhase =
+        ((unitTest "defaults to px when length is not set" Nothing "px"
+            :: List.map
+                (\unitCase ->
+                    unitTest
+                        ("emits " ++ unitCase.css ++ " when Unit." ++ unitCase.name ++ " is set")
+                        (Just unitCase.unit)
+                        unitCase.css
+                )
+                UnitMatrix.all
+         )
+            ++ [ test "property unit targets the group selected before Size.begin" <|
+                    \_ ->
                         let
-                            percentProcessed =
-                                Builder.process percentPhase
+                            initialized =
+                                Builder.init
+                                    [ Size.initHW "leftLine" 3 0
+                                        >> Size.initCssUnitW Unit.Percent
+                                    , Size.initHW "rightLine" 3 0
+                                        >> Size.initCssUnitW Unit.Percent
+                                    ]
+                                    |> Builder.mergeBaselines
+                                    |> Builder.clearAnimData
+
+                            percentPhase =
+                                initialized
+                                    |> Builder.for "leftLine"
+                                    |> Size.begin
+                                    |> Size.toW 100
+                                    |> Size.end
+
+                            afterPercentPhase =
+                                let
+                                    percentProcessed =
+                                        Builder.process percentPhase
+                                in
+                                percentPhase
+                                    |> Builder.addAnimationToHistory percentProcessed
+                                    |> Builder.mergeBaselines
+                                    |> Builder.clearAnimData
+
+                            processed =
+                                afterPercentPhase
+                                    |> Builder.for "leftLine"
+                                    |> Size.begin
+                                    |> Size.cssUnitW Unit.Px
+                                    |> Size.toW 1
+                                    |> Size.end
+                                    |> Builder.process
+
+                            json =
+                                Encoder.encode AnimGroups.init processed |> Encode.encode 0
                         in
-                        percentPhase
-                            |> Builder.addAnimationToHistory percentProcessed
-                            |> Builder.mergeBaselines
-                            |> Builder.clearAnimData
-
-                    processed =
-                        afterPercentPhase
-                            |> Builder.for "leftLine"
-                            |> Size.begin
-                            |> Size.cssUnitW Unit.Px
-                            |> Size.toW 1
-                            |> Size.end
-                            |> Builder.process
-
-                    json =
-                        Encoder.encode AnimGroups.init processed |> Encode.encode 0
-                in
-                json
-                    |> decodeSizeUnit "leftLine"
-                    |> Expect.equal (Just "px")
-        ]
+                        json
+                            |> decodeSizeUnit "leftLine"
+                            |> Expect.equal (Just "px")
+               ]
+        )
 
 
 unitTest : String -> Maybe Unit.Unit -> String -> Test

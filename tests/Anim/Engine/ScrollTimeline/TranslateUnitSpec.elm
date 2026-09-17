@@ -1,18 +1,7 @@
-module Anim.Engine.WAAPI.TranslateUnitSpec exposing (suite)
-
-{-| Verifies that the WAAPI translate encoder emits a `unit` field reflecting
-the length unit configured via `Translate.cssUnit`. The JS companion uses this
-field to build `translate3d(...)` keyframe strings with the matching CSS unit
-(`px`, `%`, `vw`/`vh`, dynamic-viewport `dvw`/`dvh`/`svw`/`svh`/`lvw`/`lvh`,
-`rem`, `em`, container-query `cqi`/`cqb`/`cqw`/`cqh`/`cqmin`/`cqmax`); without
-it the JS hardcoded `px` suffix and ignored any non-default unit chosen on the
-Elm side.
--}
+module Anim.Engine.ScrollTimeline.TranslateUnitSpec exposing (suite)
 
 import Anim.Engine.Shared.UnitMatrix as UnitMatrix
 import Anim.Internal.Builder as Builder
-import Anim.Internal.Engine.Shared.AnimGroups as AnimGroups
-import Anim.Internal.Engine.WAAPI.AnimGroup as AnimGroup
 import Anim.Internal.Engine.WAAPI.Encoder as Encoder
 import Anim.Property.Translate as Translate
 import Anim.Unit as Unit
@@ -24,7 +13,7 @@ import Test exposing (Test, describe, test)
 
 suite : Test
 suite =
-    describe "WAAPI translate encoder unit"
+    describe "ScrollTimeline translate encoder unit"
         (unitTest "defaults to px when length is not set" Nothing "px"
             :: List.map
                 (\unitCase ->
@@ -42,36 +31,33 @@ unitTest description maybeUnit expected =
     test description <|
         \_ ->
             let
-                animGroups =
-                    AnimGroups.init
-                        |> AnimGroups.insert "ball" AnimGroup.init
-
-                translateBuilder =
-                    Builder.for "ball"
-                        >> Translate.begin
-                        >> Translate.toY 62
-                        >> Translate.duration 500
-                        >> Translate.end
-
                 initStep b =
                     case maybeUnit of
                         Nothing ->
-                            b |> Translate.initY "ball" 0
+                            b |> Translate.initY "dot" 0
 
                         Just unit ->
                             b
-                                |> Translate.initY "ball" 0
+                                |> Translate.initY "dot" 0
                                 |> Translate.initCssUnit unit
 
-                processed =
-                    Builder.init [ initStep, translateBuilder ] |> Builder.process
-
-                json =
-                    Encoder.encode animGroups processed |> Encode.encode 0
+                translateBuilder =
+                    Builder.for "dot"
+                        >> Translate.begin
+                        >> Translate.toY 62
+                        >> Translate.end
             in
-            json
-                |> decodeTranslateUnit "ball"
+            encodeScroll [ initStep, translateBuilder ]
+                |> decodeTranslateUnit "dot"
                 |> Expect.equal (Just expected)
+
+
+encodeScroll : List (Builder.AnimBuilder eng -> Builder.AnimBuilder eng) -> String
+encodeScroll steps =
+    Builder.init steps
+        |> Builder.setScrollSource "document"
+        |> Encoder.encodeScroll
+        |> Encode.encode 0
 
 
 decodeTranslateUnit : String -> String -> Maybe String

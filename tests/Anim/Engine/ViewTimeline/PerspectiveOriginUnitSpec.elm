@@ -1,15 +1,7 @@
-module Anim.Engine.WAAPI.PerspectiveOriginUnitSpec exposing (suite)
-
-{-| Verifies that the WAAPI perspective-origin encoder emits a `unit` field
-reflecting the length unit configured via `PerspectiveOrigin.cssUnit`. The JS
-companion uses this field to build `perspective-origin: <x> <y>` keyframe
-strings with the matching CSS unit.
--}
+module Anim.Engine.ViewTimeline.PerspectiveOriginUnitSpec exposing (suite)
 
 import Anim.Engine.Shared.UnitMatrix as UnitMatrix
 import Anim.Internal.Builder as Builder
-import Anim.Internal.Engine.Shared.AnimGroups as AnimGroups
-import Anim.Internal.Engine.WAAPI.AnimGroup as AnimGroup
 import Anim.Internal.Engine.WAAPI.Encoder as Encoder
 import Anim.Property.PerspectiveOrigin as PerspectiveOrigin
 import Anim.Unit as Unit
@@ -21,7 +13,7 @@ import Test exposing (Test, describe, test)
 
 suite : Test
 suite =
-    describe "WAAPI perspective-origin encoder unit"
+    describe "ViewTimeline perspective-origin encoder unit"
         (unitTest "defaults to % when length is not set" Nothing "%"
             :: List.map
                 (\unitCase ->
@@ -39,36 +31,32 @@ unitTest description maybeUnit expected =
     test description <|
         \_ ->
             let
-                animGroups =
-                    AnimGroups.init
-                        |> AnimGroups.insert "card" AnimGroup.init
-
-                originBuilder =
-                    Builder.for "card"
-                        >> PerspectiveOrigin.begin
-                        >> PerspectiveOrigin.toXY 25 75
-                        >> PerspectiveOrigin.duration 500
-                        >> PerspectiveOrigin.end
-
                 initStep b =
                     case maybeUnit of
                         Nothing ->
-                            b |> PerspectiveOrigin.initXY "card" 0 0
+                            b |> PerspectiveOrigin.initXY "hero" 0 0
 
                         Just unit ->
                             b
-                                |> PerspectiveOrigin.initXY "card" 0 0
+                                |> PerspectiveOrigin.initXY "hero" 0 0
                                 |> PerspectiveOrigin.initCssUnit unit
 
-                processed =
-                    Builder.init [ initStep, originBuilder ] |> Builder.process
-
-                json =
-                    Encoder.encode animGroups processed |> Encode.encode 0
+                perspectiveBuilder =
+                    Builder.for "hero"
+                        >> PerspectiveOrigin.begin
+                        >> PerspectiveOrigin.toXY 25 75
+                        >> PerspectiveOrigin.end
             in
-            json
-                |> decodePerspectiveOriginUnit "card"
+            encodeView [ initStep, perspectiveBuilder ]
+                |> decodePerspectiveOriginUnit "hero"
                 |> Expect.equal (Just expected)
+
+
+encodeView : List (Builder.AnimBuilder Builder.ForView -> Builder.AnimBuilder Builder.ForView) -> String
+encodeView steps =
+    Builder.init steps
+        |> Encoder.encodeView
+        |> Encode.encode 0
 
 
 decodePerspectiveOriginUnit : String -> String -> Maybe String
