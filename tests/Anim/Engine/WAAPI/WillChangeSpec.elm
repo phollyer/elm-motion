@@ -149,7 +149,7 @@ encodeAnimate steps =
         |> Encode.encode 0
 
 
-encodeScroll : (Builder.AnimBuilder { isScrollBased : () } -> Builder.AnimBuilder { isScrollBased : () }) -> String
+encodeScroll : (Builder.AnimBuilder Builder.ForScroll -> Builder.AnimBuilder Builder.ForScroll) -> String
 encodeScroll steps =
     Builder.init [ steps ]
         |> Encoder.encodeScroll

@@ -1112,7 +1112,7 @@ isComplexEasing easing_ =
 Duration and delay are omitted — the timeline drives progress.
 Iterations, direction, and easing are supported.
 -}
-encodeScroll : Builder.AnimBuilder { isScrollBased : () } -> Encode.Value
+encodeScroll : Builder.AnimBuilder Builder.ForScroll -> Encode.Value
 encodeScroll builder =
     let
         processed =

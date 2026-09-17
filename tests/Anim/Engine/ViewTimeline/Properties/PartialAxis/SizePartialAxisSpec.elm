@@ -232,7 +232,7 @@ encodeView steps =
         |> Encode.encode 0
 
 
-encodeViewAfterSizeHistory : (Builder.AnimBuilder eng -> Builder.AnimBuilder eng) -> (Builder.AnimBuilder a -> b) -> String
+encodeViewAfterSizeHistory : (Builder.AnimBuilder Builder.ForView -> Builder.AnimBuilder Builder.ForView) -> (Builder.AnimBuilder Builder.ForView -> Builder.AnimBuilder Builder.ForView) -> String
 encodeViewAfterSizeHistory first second =
     let
         firstBuilder =

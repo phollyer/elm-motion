@@ -225,14 +225,14 @@ suite =
         ]
 
 
-encodeScroll : (Builder.AnimBuilder { isScrollBased : () } -> Builder.AnimBuilder { isScrollBased : () }) -> String
+encodeScroll : (Builder.AnimBuilder Builder.ForScroll -> Builder.AnimBuilder Builder.ForScroll) -> String
 encodeScroll steps =
     Builder.init [ steps ]
         |> Encoder.encodeScroll
         |> Encode.encode 0
 
 
-encodeScrollAfterSizeHistory : (Builder.AnimBuilder eng -> Builder.AnimBuilder eng) -> (Builder.AnimBuilder a -> b) -> String
+encodeScrollAfterSizeHistory : (Builder.AnimBuilder Builder.ForScroll -> Builder.AnimBuilder Builder.ForScroll) -> (Builder.AnimBuilder Builder.ForScroll -> Builder.AnimBuilder Builder.ForScroll) -> String
 encodeScrollAfterSizeHistory first second =
     let
         firstBuilder =
