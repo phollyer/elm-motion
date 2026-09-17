@@ -1,19 +1,18 @@
-module Anim.Engine.Sub.SizePartialAxisSpec exposing (suite)
+module Anim.Engine.Keyframe.Properties.PartialAxis.SizePartialAxisSpec exposing (suite)
 
-{-| Render-level assertions for partial-axis size animations in
-`Anim.Engine.Sub`.
+{-| Render-level and keyframe-CSS assertions for partial-axis size animations
+in `Anim.Engine.Keyframe`.
 
-These tests lock the intended behavior before refactoring:
+These tests lock the expected behavior before any engine changes:
 
-  - First-use `toH` should not emit width.
-  - First-use `toW` should not emit height.
+  - First-use `toH` should not materialize width bookkeeping.
+  - First-use `toW` should not materialize height bookkeeping.
   - Once an axis has been animated by the group, subsequent single-axis
     updates may keep emitting that previously-owned axis.
 
 -}
 
-import Anim.Engine.Sub as Sub
-import Anim.Internal.Engine.Sub as Internal
+import Anim.Engine.Keyframe as Keyframe
 import Anim.Property.Size as Size
 import Expect
 import Html
@@ -22,29 +21,29 @@ import Test.Html.Query as Query
 import Test.Html.Selector as Selector
 
 
-rendered : Sub.AnimState -> Query.Single msg
+rendered : Keyframe.AnimState -> Query.Single msg
 rendered state =
-    Html.div (Sub.attributes "el" state) []
+    Html.div (Keyframe.attributes "el" state) []
         |> Query.fromHtml
 
 
-step : Float -> Sub.AnimState -> Sub.AnimState
-step deltaMs state =
-    Sub.update (Internal.AnimationFrame deltaMs) state
-        |> Tuple.first
+cssFor : Keyframe.AnimState -> String
+cssFor state =
+    Keyframe.maybeString "el" state
+        |> Maybe.withDefault ""
 
 
 suite : Test
 suite =
-    describe "Anim.Engine.Sub size partial-axis styles"
+    describe "Anim.Engine.Keyframe size partial-axis styles"
         [ test "first-use Size.toH emits height and omits width" <|
             \_ ->
                 let
-                    runningState =
-                        Sub.init []
-                            |> (\state ->
-                                    Sub.animate state
-                                        (Sub.for "el"
+                    state =
+                        Keyframe.init []
+                            |> (\s ->
+                                    Keyframe.animate s
+                                        (Keyframe.for "el"
                                             >> Size.begin
                                             >> Size.toH 240
                                             >> Size.duration 500
@@ -52,30 +51,31 @@ suite =
                                         )
                                )
 
-                    settledState =
-                        runningState
-                            |> step 500
+                    css =
+                        cssFor state
                 in
                 Expect.all
                     [ \_ ->
-                        rendered settledState
-                            |> Query.has [ Selector.style "height" "240px" ]
+                        css
+                            |> String.contains "height: 240px;"
+                            |> Expect.equal True
                     , \_ ->
-                        rendered settledState
-                            |> Query.hasNot [ Selector.style "width" "0px" ]
+                        css
+                            |> String.contains "width: 0px;"
+                            |> Expect.equal False
                     , \_ ->
-                        rendered runningState
+                        rendered state
                             |> Query.has [ Selector.style "will-change" "height" ]
                     ]
                     ()
         , test "first-use Size.toW emits width and omits height" <|
             \_ ->
                 let
-                    runningState =
-                        Sub.init []
-                            |> (\state ->
-                                    Sub.animate state
-                                        (Sub.for "el"
+                    state =
+                        Keyframe.init []
+                            |> (\s ->
+                                    Keyframe.animate s
+                                        (Keyframe.for "el"
                                             >> Size.begin
                                             >> Size.toW 360
                                             >> Size.duration 500
@@ -83,40 +83,40 @@ suite =
                                         )
                                )
 
-                    settledState =
-                        runningState
-                            |> step 500
+                    css =
+                        cssFor state
                 in
                 Expect.all
                     [ \_ ->
-                        rendered settledState
-                            |> Query.has [ Selector.style "width" "360px" ]
+                        css
+                            |> String.contains "width: 360px;"
+                            |> Expect.equal True
                     , \_ ->
-                        rendered settledState
-                            |> Query.hasNot [ Selector.style "height" "0px" ]
+                        css
+                            |> String.contains "height: 0px;"
+                            |> Expect.equal False
                     , \_ ->
-                        rendered runningState
+                        rendered state
                             |> Query.has [ Selector.style "will-change" "width" ]
                     ]
                     ()
         , test "after Size.toHW, Size.toH keeps previously-owned width" <|
             \_ ->
                 let
-                    runningState =
-                        Sub.init []
+                    state =
+                        Keyframe.init []
                             |> (\s ->
-                                    Sub.animate s
-                                        (Sub.for "el"
+                                    Keyframe.animate s
+                                        (Keyframe.for "el"
                                             >> Size.begin
                                             >> Size.toHW 120 300
                                             >> Size.duration 500
                                             >> Size.end
                                         )
                                )
-                            |> step 500
                             |> (\s ->
-                                    Sub.animate s
-                                        (Sub.for "el"
+                                    Keyframe.animate s
+                                        (Keyframe.for "el"
                                             >> Size.begin
                                             >> Size.toH 80
                                             >> Size.duration 500
@@ -124,40 +124,40 @@ suite =
                                         )
                                )
 
-                    settledState =
-                        runningState
-                            |> step 500
+                    css =
+                        cssFor state
                 in
                 Expect.all
                     [ \_ ->
-                        rendered settledState
-                            |> Query.has [ Selector.style "width" "300px" ]
+                        css
+                            |> String.contains "width: 300px;"
+                            |> Expect.equal True
                     , \_ ->
-                        rendered settledState
-                            |> Query.has [ Selector.style "height" "80px" ]
+                        css
+                            |> String.contains "height: 80px;"
+                            |> Expect.equal True
                     , \_ ->
-                        rendered runningState
+                        rendered state
                             |> Query.has [ Selector.style "will-change" "width, height" ]
                     ]
                     ()
         , test "after Size.toHW, Size.toW keeps previously-owned height" <|
             \_ ->
                 let
-                    runningState =
-                        Sub.init []
+                    state =
+                        Keyframe.init []
                             |> (\s ->
-                                    Sub.animate s
-                                        (Sub.for "el"
+                                    Keyframe.animate s
+                                        (Keyframe.for "el"
                                             >> Size.begin
                                             >> Size.toHW 120 300
                                             >> Size.duration 500
                                             >> Size.end
                                         )
                                )
-                            |> step 500
                             |> (\s ->
-                                    Sub.animate s
-                                        (Sub.for "el"
+                                    Keyframe.animate s
+                                        (Keyframe.for "el"
                                             >> Size.begin
                                             >> Size.toW 80
                                             >> Size.duration 500
@@ -165,40 +165,40 @@ suite =
                                         )
                                )
 
-                    settledState =
-                        runningState
-                            |> step 500
+                    css =
+                        cssFor state
                 in
                 Expect.all
                     [ \_ ->
-                        rendered settledState
-                            |> Query.has [ Selector.style "width" "80px" ]
+                        css
+                            |> String.contains "width: 80px;"
+                            |> Expect.equal True
                     , \_ ->
-                        rendered settledState
-                            |> Query.has [ Selector.style "height" "120px" ]
+                        css
+                            |> String.contains "height: 120px;"
+                            |> Expect.equal True
                     , \_ ->
-                        rendered runningState
+                        rendered state
                             |> Query.has [ Selector.style "will-change" "width, height" ]
                     ]
                     ()
         , test "after Size.toH, Size.toW keeps previously-owned height" <|
             \_ ->
                 let
-                    runningState =
-                        Sub.init []
-                            |> (\state ->
-                                    Sub.animate state
-                                        (Sub.for "el"
+                    state =
+                        Keyframe.init []
+                            |> (\s ->
+                                    Keyframe.animate s
+                                        (Keyframe.for "el"
                                             >> Size.begin
                                             >> Size.toH 120
                                             >> Size.duration 500
                                             >> Size.end
                                         )
                                )
-                            |> step 500
-                            |> (\state ->
-                                    Sub.animate state
-                                        (Sub.for "el"
+                            |> (\s ->
+                                    Keyframe.animate s
+                                        (Keyframe.for "el"
                                             >> Size.begin
                                             >> Size.toW 80
                                             >> Size.duration 500
@@ -206,40 +206,40 @@ suite =
                                         )
                                )
 
-                    settledState =
-                        runningState
-                            |> step 500
+                    css =
+                        cssFor state
                 in
                 Expect.all
                     [ \_ ->
-                        rendered settledState
-                            |> Query.has [ Selector.style "width" "80px" ]
+                        css
+                            |> String.contains "width: 80px;"
+                            |> Expect.equal True
                     , \_ ->
-                        rendered settledState
-                            |> Query.has [ Selector.style "height" "120px" ]
+                        css
+                            |> String.contains "height: 120px;"
+                            |> Expect.equal True
                     , \_ ->
-                        rendered runningState
+                        rendered state
                             |> Query.has [ Selector.style "will-change" "width, height" ]
                     ]
                     ()
         , test "after Size.toW, Size.toH keeps previously-owned width" <|
             \_ ->
                 let
-                    runningState =
-                        Sub.init []
-                            |> (\state ->
-                                    Sub.animate state
-                                        (Sub.for "el"
+                    state =
+                        Keyframe.init []
+                            |> (\s ->
+                                    Keyframe.animate s
+                                        (Keyframe.for "el"
                                             >> Size.begin
                                             >> Size.toW 80
                                             >> Size.duration 500
                                             >> Size.end
                                         )
                                )
-                            |> step 500
-                            |> (\state ->
-                                    Sub.animate state
-                                        (Sub.for "el"
+                            |> (\s ->
+                                    Keyframe.animate s
+                                        (Keyframe.for "el"
                                             >> Size.begin
                                             >> Size.toH 120
                                             >> Size.duration 500
@@ -247,19 +247,20 @@ suite =
                                         )
                                )
 
-                    settledState =
-                        runningState
-                            |> step 500
+                    css =
+                        cssFor state
                 in
                 Expect.all
                     [ \_ ->
-                        rendered settledState
-                            |> Query.has [ Selector.style "width" "80px" ]
+                        css
+                            |> String.contains "width: 80px;"
+                            |> Expect.equal True
                     , \_ ->
-                        rendered settledState
-                            |> Query.has [ Selector.style "height" "120px" ]
+                        css
+                            |> String.contains "height: 120px;"
+                            |> Expect.equal True
                     , \_ ->
-                        rendered runningState
+                        rendered state
                             |> Query.has [ Selector.style "will-change" "width, height" ]
                     ]
                     ()

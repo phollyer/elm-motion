@@ -1,4 +1,4 @@
-module Anim.Engine.ScrollTimeline.SizePartialAxisSpec exposing (suite)
+module Anim.Engine.ScrollTimeline.Properties.PartialAxis.SizePartialAxisSpec exposing (suite)
 
 {-| Payload-level assertions for partial-axis size animations in
 `Anim.Engine.ScrollTimeline`.

@@ -1,4 +1,4 @@
-module Anim.Engine.Transition.SizePartialAxisSpec exposing (suite)
+module Anim.Engine.Transition.Properties.PartialAxis.SizePartialAxisSpec exposing (suite)
 
 {-| Render-level assertions for partial-axis size animations in
 `Anim.Engine.Transition`.

@@ -1,4 +1,4 @@
-module Anim.Engine.WAAPI.SizePartialAxisSpec exposing (suite)
+module Anim.Engine.WAAPI.Properties.PartialAxis.SizePartialAxisSpec exposing (suite)
 
 {-| Payload-level assertions for partial-axis size animations in
 `Anim.Engine.WAAPI`.

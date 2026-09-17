@@ -1,4 +1,4 @@
-module Anim.Engine.ViewTimeline.SizePartialAxisSpec exposing (suite)
+module Anim.Engine.ViewTimeline.Properties.PartialAxis.SizePartialAxisSpec exposing (suite)
 
 {-| Payload-level assertions for partial-axis size animations in
 `Anim.Engine.ViewTimeline`.
