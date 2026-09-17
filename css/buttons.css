@@ -1,0 +1,6 @@
+/* Ensure adjacent .md-button elements keep a visible vertical gap when
+   they wrap onto multiple lines (e.g. narrow / portrait viewports), so
+   stacked buttons don't merge into one solid block. */
+.md-button {
+    margin-bottom: 0.5rem;
+}

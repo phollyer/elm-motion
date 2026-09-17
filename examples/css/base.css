@@ -1,0 +1,23 @@
+/* ============================================
+   Elm Animate - Base Styles
+   ============================================ */
+
+/* Full-viewport body that centres the animation stage on the page.
+   Each example page renders a single `.example-stage` element as its
+   top-level child; this body rule is what gives that stage its
+   horizontal+vertical centring inside the iframe (or standalone tab). */
+html,
+body {
+    margin: 0;
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+}
+
+body {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background-color: #e1d3d3;
+}
