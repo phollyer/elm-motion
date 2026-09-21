@@ -21,7 +21,10 @@ The two version lines are **not kept in lockstep**. The npm companion can ship J
 
 ### Fixed
 
+
 **(elm)** Discrete Properties are now handled correctly for the Keyframe, Transition and Sub Engines when there is no property animation or when the property animation has no duration.
+
+**(elm)** Translate animations - untouched axes no longer emit 0 as a default. Therefore they no longer overwrite existing CSS rules. Fixed for Transition and Keyframe engines. This is a wip, and will be released when all engines and scenarios are fixed.
 
 **(elm)** Size animations - untouched sides/axes no longer emit 0 as a default. Therefore they no longer overwrite existing CSS rules. `will-change` and `transition` style attributes no longer emit untouched sides/axes.
 
