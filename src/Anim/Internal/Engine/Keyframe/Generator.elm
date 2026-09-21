@@ -225,7 +225,7 @@ generateSteps controlledAxes maybeOrder maybeTargetValues maxDuration maxDelay d
                         globalProgress * toFloat totalAnimationTime
 
                     transformStyle =
-                        generateTransformParts maybeTargetValues totalTime processedProps
+                        generateTransformParts controlledAxes maybeTargetValues totalTime processedProps
                             |> KeyframeStyles.generateTransformComponents maybeOrder
                             |> generateTransformStyle
 
@@ -253,17 +253,25 @@ generateSteps controlledAxes maybeOrder maybeTargetValues maxDuration maxDelay d
 -- ============================================================
 
 
-generateTransformParts : Maybe PropertyBaselines -> Float -> List Builder.ProcessedPropertyConfig -> Builder.TransformParts
-generateTransformParts maybeTargetValues totalTime properties =
+generateTransformParts : Dict String (Set.Set String) -> Maybe PropertyBaselines -> Float -> List Builder.ProcessedPropertyConfig -> Builder.TransformParts
+generateTransformParts controlledAxes maybeTargetValues totalTime properties =
     let
         baselineParts =
-            KeyframeStyles.baselineTransformParts maybeTargetValues properties
+            KeyframeStyles.baselineTransformParts (Just controlledAxes) maybeTargetValues properties
     in
     List.foldl
         (\p acc ->
             case p of
                 Builder.ProcessedTranslateConfig cfg ->
-                    { acc | translate = generateTransformPart totalTime Translate.default Translate.interpolate (Translate.toCssString cfg.cssUnit) cfg }
+                    { acc
+                        | translate =
+                            generateTransformPart
+                                totalTime
+                                Translate.default
+                                Translate.interpolate
+                                (KeyframeStyles.translateToCss (Just controlledAxes) cfg.cssUnit)
+                                cfg
+                    }
 
                 Builder.ProcessedRotateConfig cfg ->
                     { acc | rotate = generateTransformPart totalTime Rotate.default Rotate.interpolate Rotate.toCssString cfg }

@@ -133,6 +133,7 @@ retarget ((AnimState origState _) as animState) build =
                 (\builder processed ->
                     builder
                         |> Builder.addRetargetToHistory processed
+                        |> Builder.mergeBaselines
                         |> Builder.clearAnimData
                 )
                 animState
@@ -249,8 +250,7 @@ runPipeline finaliseBuilder (AnimState state animGroups) transform =
                         acc
     in
     AnimState
-        { builder = finaliseBuilder builder processedAnimData
-        }
+        { builder = finaliseBuilder builder processedAnimData }
         (processedAnimData.groups
             |> AnimGroups.map generateAnimGroup
             |> AnimGroups.foldl insertAnimGroup animGroups
@@ -502,12 +502,22 @@ setStyles styles =
     AnimGroup.setStyles styles AnimGroup.init
 
 
+buildControlStyles : Maybe Builder.ProcessedAnimGroupConfig -> List ( String, String ) -> List Builder.ProcessedPropertyConfig -> Styles
+buildControlStyles maybeConfig =
+    case maybeConfig of
+        Just config ->
+            KeyframeStyles.fromProcessedPropertiesWithControlledAxes config.controlledAxes Nothing Nothing
+
+        Nothing ->
+            KeyframeStyles.fromProcessedProperties Nothing Nothing
+
+
 stop : AnimGroupName -> AnimState -> AnimState
 stop =
     CSS.stop
         AnimGroup.setPlayState
         AnimGroup.isActive
-        (\_ -> KeyframeStyles.fromProcessedProperties Nothing Nothing)
+        buildControlStyles
         setStyles
 
 
@@ -515,7 +525,7 @@ reset : AnimGroupName -> AnimState -> AnimState
 reset =
     CSS.reset
         AnimGroup.setPlayState
-        (\_ -> KeyframeStyles.fromProcessedProperties Nothing Nothing)
+        buildControlStyles
         setStyles
 
 

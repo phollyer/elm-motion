@@ -54,7 +54,7 @@ suite =
                        )
                     |> rendered
                     |> Expect.all
-                        [ Query.has [ Selector.style "translate" "20vw" ]
+                        [ Query.has [ Selector.style "translate" "20vw 0px" ]
                         , Query.hasNot [ Selector.style "translate" "20vw 0px 0px" ]
                         ]
         , test "second size animate uses the new unit for width and height" <|

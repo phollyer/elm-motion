@@ -37,6 +37,6 @@ suite =
                 in
                 Keyframe.maybeString "test-element" animations
                     |> Maybe.withDefault ""
-                    |> String.contains "translate3d(100px, 50px, 0px) rotateZ(45deg) scaleX(1.5) scaleY(1.2)"
+                    |> String.contains "translateX(100px) translateY(50px) rotateZ(45deg) scaleX(1.5) scaleY(1.2)"
                     |> Expect.equal True
         ]

@@ -2937,6 +2937,49 @@ process (AnimBuilder data) =
                 Dict.empty
                 data.animation.touchedAxes
 
+        initTouchedAxesForGroup : AnimGroupName -> Dict String (Set String)
+        initTouchedAxesForGroup groupName =
+            let
+                toPropertyAndAxis : String -> Maybe ( String, String )
+                toPropertyAndAxis slot =
+                    case String.split "." slot of
+                        [ "translate", axis ] ->
+                            Just ( "translate", axis )
+
+                        [ "size", axis ] ->
+                            Just ( "size", axis )
+
+                        [ "perspectiveOrigin", axis ] ->
+                            Just ( "perspective-origin", axis )
+
+                        _ ->
+                            Nothing
+            in
+            Set.foldl
+                (\( touchedGroup, slot ) acc ->
+                    if touchedGroup == groupName then
+                        case toPropertyAndAxis slot of
+                            Just ( propName, axisName ) ->
+                                Dict.update propName
+                                    (\maybeExisting ->
+                                        case maybeExisting of
+                                            Just existing ->
+                                                Just (Set.insert axisName existing)
+
+                                            Nothing ->
+                                                Just (Set.singleton axisName)
+                                    )
+                                    acc
+
+                            Nothing ->
+                                acc
+
+                    else
+                        acc
+                )
+                Dict.empty
+                data.defaults.touchedInitSlots
+
         historicalControlledAxesForGroup : AnimGroupName -> Dict String (Set String)
         historicalControlledAxesForGroup groupName =
             case AnimGroups.get groupName data.state.animationHistories of
@@ -2966,7 +3009,10 @@ process (AnimBuilder data) =
                     controlledAxes =
                         mergeAxisSets
                             (historicalControlledAxesForGroup groupName)
-                            (currentTouchedAxesForGroup groupName)
+                            (mergeAxisSets
+                                (initTouchedAxesForGroup groupName)
+                                (currentTouchedAxesForGroup groupName)
+                            )
                 in
                 { properties = processProperties groupDefaults groupName group.properties
                 , controlledAxes = controlledAxes

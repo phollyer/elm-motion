@@ -59,7 +59,7 @@ suite =
                             |> Maybe.withDefault ""
                 in
                 Expect.equal True (String.contains "@keyframes" css)
-        , test "first animate keyframes start at translate3d(0,0,0)" <|
+        , test "first animate keyframes start at translateX(0)" <|
             \_ ->
                 let
                     state =
@@ -72,9 +72,9 @@ suite =
                             |> Maybe.withDefault ""
                 in
                 css
-                    |> String.contains "translate3d(0cqw, 0cqh, 0px)"
+                    |> String.contains "translateX(0cqw)"
                     |> Expect.equal True
-        , test "first animate keyframes end at translate3d(88cqw, 0cqh, 0px)" <|
+        , test "first animate keyframes end at translateX(88cqw)" <|
             \_ ->
                 let
                     state =
@@ -87,7 +87,7 @@ suite =
                             |> Maybe.withDefault ""
                 in
                 css
-                    |> String.contains "translate3d(88cqw, 0cqh, 0px)"
+                    |> String.contains "translateX(88cqw)"
                     |> Expect.equal True
         , test "after a Translate(Cqw) animation, a subsequent non-Translate animation preserves the cqw unit in the translate baseline" <|
             \_ ->
@@ -113,12 +113,12 @@ suite =
                 Expect.all
                     [ \_ ->
                         css
-                            |> String.contains "translate3d(88cqw"
+                            |> String.contains "translateX(88cqw)"
                             |> Expect.equal True
                             |> Expect.onFail ("Expected baseline transform to keep cqw unit; got:\n" ++ css)
                     , \_ ->
                         css
-                            |> String.contains "translate3d(88px"
+                            |> String.contains "translateX(88px)"
                             |> Expect.equal False
                             |> Expect.onFail ("Baseline regressed to px unit; got:\n" ++ css)
                     ]
@@ -141,17 +141,17 @@ suite =
                 Expect.all
                     [ \_ ->
                         css
-                            |> String.contains "translate3d(88vw"
+                            |> String.contains "translateX(88vw)"
                             |> Expect.equal True
                             |> Expect.onFail ("Expected interruption baseline to adopt new unit immediately; got:\n" ++ css)
                     , \_ ->
                         css
-                            |> String.contains "translate3d(12vw"
+                            |> String.contains "translateX(12vw)"
                             |> Expect.equal True
                             |> Expect.onFail ("Expected second phase target to use new unit; got:\n" ++ css)
                     , \_ ->
                         css
-                            |> String.contains "translate3d(88cqw"
+                            |> String.contains "translateX(88cqw)"
                             |> Expect.equal False
                             |> Expect.onFail ("Expected old unit to be replaced in second phase keyframes; got:\n" ++ css)
                     ]
@@ -181,12 +181,12 @@ suite =
                             |> Expect.equal True
                     , \_ ->
                         css
-                            |> String.contains "translate3d(88vw"
+                            |> String.contains "translateX(88vw)"
                             |> Expect.equal True
                             |> Expect.onFail ("Expected phase2 start to use new unit from idle baseline; got:\n" ++ css)
                     , \_ ->
                         css
-                            |> String.contains "translate3d(20vw"
+                            |> String.contains "translateX(20vw)"
                             |> Expect.equal True
                             |> Expect.onFail ("Expected phase2 end to use new unit; got:\n" ++ css)
                     ]
