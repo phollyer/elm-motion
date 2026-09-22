@@ -91,13 +91,13 @@ init defaults maybeOrder iterationCount direction discrete animGroupName propert
 -- ============================================================
 
 
-generateAnimation : Maybe (List TransformProperty) -> Builder.Iterations -> Builder.AnimationDirection -> Maybe PropertyBaselines -> DiscreteConfig -> AnimGroupName -> Dict String (Set.Set String) -> List Builder.ProcessedPropertyConfig -> AnimGroup
-generateAnimation maybeOrder iterationCount direction maybeTargetValues discrete animGroupName controlledAxes properties =
+generateAnimation : Maybe (List TransformProperty) -> Builder.Iterations -> Builder.AnimationDirection -> DiscreteConfig -> AnimGroupName -> Dict String (Set.Set String) -> List Builder.ProcessedPropertyConfig -> AnimGroup
+generateAnimation maybeOrder iterationCount direction discrete animGroupName controlledAxes properties =
     let
         name =
             generateName Nothing maybeOrder discrete animGroupName properties
     in
-    generate name 0 maybeOrder iterationCount direction maybeTargetValues discrete controlledAxes properties
+    generate name 0 maybeOrder iterationCount direction Nothing discrete controlledAxes properties
 
 
 generateRestart : Int -> Maybe (List TransformProperty) -> Builder.Iterations -> Builder.AnimationDirection -> Maybe PropertyBaselines -> DiscreteConfig -> AnimGroupName -> Dict String (Set.Set String) -> List Builder.ProcessedPropertyConfig -> AnimGroup

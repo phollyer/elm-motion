@@ -67,42 +67,53 @@ type alias EngineBuilder =
 
 
 init : List (EngineBuilder -> EngineBuilder) -> AnimState
-init =
-    let
-        initGroup : EngineBuilder -> AnimGroupName -> Builder.AnimGroupConfig -> AnimGroup
-        initGroup builder name config =
-            let
-                discrete : DiscreteConfig
-                discrete =
-                    { entry = Builder.getDiscreteEntryPropertiesFor name builder
-                    , exit = Builder.getDiscreteExitPropertiesFor name builder
-                    }
+init propertyInitializers =
+    case propertyInitializers of
+        [] ->
+            AnimState
+                { builder = Builder.init [] }
+                AnimGroups.init
 
-                resolvedOrder =
-                    case config.transformOrder of
-                        Just _ ->
-                            config.transformOrder
-
-                        Nothing ->
-                            Builder.getTransformOrder name builder
-            in
+        _ ->
             let
-                playback =
-                    Builder.resolvePlayback
-                        (Builder.getIterations builder)
-                        (Builder.getAnimationDirection builder)
-                        config.playback
+                builder =
+                    Builder.init propertyInitializers
+
+                processedGroups =
+                    Builder.process builder
+                        |> .groups
+
+                initGroup : AnimGroupName -> Builder.ProcessedAnimGroupConfig -> AnimGroup
+                initGroup name config =
+                    let
+                        discrete : DiscreteConfig
+                        discrete =
+                            { entry = Builder.getDiscreteEntryPropertiesFor name builder
+                            , exit = Builder.getDiscreteExitPropertiesFor name builder
+                            }
+
+                        playback =
+                            Builder.resolvePlayback
+                                (Builder.getIterations builder)
+                                (Builder.getAnimationDirection builder)
+                                config.playback
+                    in
+                    Generator.generateAnimation
+                        config.transformOrder
+                        playback.iterations
+                        playback.animationDirection
+                        discrete
+                        name
+                        config.controlledAxes
+                        config.properties
             in
-            Generator.init
-                (Builder.getDefaults builder)
-                resolvedOrder
-                playback.iterations
-                playback.animationDirection
-                discrete
-                name
-                config.properties
-    in
-    CSS.init initGroup
+            AnimState
+                { builder =
+                    builder
+                        |> Builder.mergeBaselines
+                        |> Builder.clearAnimData
+                }
+                (AnimGroups.map initGroup processedGroups)
 
 
 
