@@ -21,6 +21,7 @@ The two version lines are **not kept in lockstep**. The npm companion can ship J
 
 ### Fixed
 
+**(elm)** initCssUnit* functions in PerspectiveOrigin, Size and Translate now behave correctly.
 
 **(elm)** Discrete Properties are now handled correctly for the Keyframe, Transition and Sub Engines when there is no property animation or when the property animation has no duration.
 
