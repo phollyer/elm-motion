@@ -116,7 +116,7 @@ type alias Builder eng =
 Use the escape hatch `Custom` to animate any CSS color property not currently supported out of the box.
 
     import Anim.Extra.Color as Color
-    import Anim.Property.CustomColor as CustomColor
+    import Anim.Property.CustomColor as CustomColor exposing (ColorProperty(..))
 
     CustomColor.begin (Custom "outline-color")
         >> CustomColor.to (Color.rgb 255 0 0)

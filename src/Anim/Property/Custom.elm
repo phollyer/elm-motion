@@ -257,7 +257,7 @@ type Property
 Use this to initialize the property in your Engine's `init` function.
 
     import Anim.Engine.* as Engine
-    import Anim.Property.Custom as Property
+    import Anim.Property.Custom as Property exposing (Property(..))
     import Anim.Unit exposing (Unit(..))
 
     init : ( Model, Cmd Msg )
