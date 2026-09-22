@@ -1826,13 +1826,26 @@ writeCssUnitForGroup maybeGroup slot unit (AnimBuilder data) =
 
                 animation =
                     data.animation
+
+                updateDefaultsCssUnits defaultsConfig =
+                    { defaultsConfig | cssUnits = CssUnitStore.set group slot unit defaultsConfig.cssUnits }
             in
             AnimBuilder
                 { data
-                    | defaults = { defs | cssUnits = CssUnitStore.set group slot unit defs.cssUnits }
+                    | defaults = updateDefaultsCssUnits defs
                     , animation =
                         { animation
                             | cssUnitOverrides = CssUnitStore.set group slot unit animation.cssUnitOverrides
+                            , groupDefaults =
+                                AnimGroups.update
+                                    group
+                                    (\maybeDefaults ->
+                                        Just
+                                            (updateDefaultsCssUnits
+                                                (Maybe.withDefault defs maybeDefaults)
+                                            )
+                                    )
+                                    animation.groupDefaults
                         }
                 }
 
