@@ -13,6 +13,7 @@ import Anim.Property.Size as Size
 import Anim.Property.Skew as Skew
 import Anim.Property.Translate as Translate
 import Anim.Unit exposing (Unit(..))
+import Expect
 import Html
 import Test exposing (Test, describe, test)
 import Test.Html.Query as Query
@@ -34,6 +35,89 @@ suite =
     describe "Keyframe.init, writes inline styles, and will-change" <|
         List.map sizeTestCaseTest sizeTestData
             ++ List.map testDataTest testData
+            ++ additionalContractTests
+
+
+otherAnimGroup : String
+otherAnimGroup =
+    "el2"
+
+
+renderedAttributes : String -> Keyframe.AnimState -> Query.Single msg
+renderedAttributes groupName state =
+    Html.div (Keyframe.attributes groupName state) []
+        |> Query.fromHtml
+
+
+additionalContractTests : List Test
+additionalContractTests =
+    [ test "composed init writes transform + opacity and combines will-change" <|
+        \_ ->
+            Keyframe.init
+                [ Opacity.init animGroup 0.5
+                , Translate.initX animGroup 10
+                ]
+                |> renderedAttributes animGroup
+                |> Query.has
+                    [ Selector.style "opacity" "0.5"
+                    , Selector.style "transform" "translateX(10px)"
+                    , Selector.style "will-change" "opacity, transform"
+                    ]
+    , test "Translate init css unit is isolated per group" <|
+        \_ ->
+            Keyframe.init
+                [ Translate.initX animGroup 10
+                    >> Translate.initCssUnitX Em
+                , Translate.initX otherAnimGroup 10
+                ]
+                |> (\state ->
+                        Expect.all
+                            [ \_ ->
+                                renderedAttributes animGroup state
+                                    |> Query.has [ Selector.style "transform" "translateX(10em)" ]
+                            , \_ ->
+                                renderedAttributes otherAnimGroup state
+                                    |> Query.has [ Selector.style "transform" "translateX(10px)" ]
+                            ]
+                            ()
+                   )
+    , test "Size init css unit is isolated per group" <|
+        \_ ->
+            Keyframe.init
+                [ Size.initH animGroup 10
+                    >> Size.initCssUnitH Em
+                , Size.initH otherAnimGroup 10
+                ]
+                |> (\state ->
+                        Expect.all
+                            [ \_ ->
+                                renderedAttributes animGroup state
+                                    |> Query.has [ Selector.style "height" "10em" ]
+                            , \_ ->
+                                renderedAttributes otherAnimGroup state
+                                    |> Query.has [ Selector.style "height" "10px" ]
+                            ]
+                            ()
+                   )
+    , test "PerspectiveOrigin init css unit is isolated per group" <|
+        \_ ->
+            Keyframe.init
+                [ PerspectiveOrigin.initX animGroup 10
+                    >> PerspectiveOrigin.initCssUnitX Px
+                , PerspectiveOrigin.initX otherAnimGroup 10
+                ]
+                |> (\state ->
+                        Expect.all
+                            [ \_ ->
+                                renderedAttributes animGroup state
+                                    |> Query.has [ Selector.style "perspective-origin" "10px 50%" ]
+                            , \_ ->
+                                renderedAttributes otherAnimGroup state
+                                    |> Query.has [ Selector.style "perspective-origin" "10% 50%" ]
+                            ]
+                            ()
+                   )
+    ]
 
 
 testDataTest : TestData -> Test
@@ -147,6 +231,10 @@ customPropertyTestData =
           , initAxis = Property.init animGroup (Property.Custom "my-custom-property" "unit") 10
           , expected = ( "my-custom-property", "10unit" )
           }
+        , { description = "Custom.init writes a unitless property without suffix"
+          , initAxis = Property.init animGroup (Property.LineHeight Unitless) 1.2
+          , expected = ( "line-height", "1.2" )
+          }
         ]
     }
 
@@ -246,6 +334,26 @@ perspectiveOriginTestData =
                 PerspectiveOrigin.initXY animGroup 10 20
                     >> PerspectiveOrigin.initCssUnit Px
           , expected = ( "perspective-origin", "10px 20px" )
+          }
+        , { description = "PerspectiveOrigin.initX prefers axis-specific unit when applied after global unit, and untouched Y inherits global unit"
+          , initAxis =
+                PerspectiveOrigin.initX animGroup 10
+                    >> PerspectiveOrigin.initCssUnit Em
+                    >> PerspectiveOrigin.initCssUnitX Px
+          , expected = ( "perspective-origin", "10px 50em" )
+          }
+        , { description = "PerspectiveOrigin.initX uses global unit when applied after axis-specific unit, including untouched Y"
+          , initAxis =
+                PerspectiveOrigin.initX animGroup 10
+                    >> PerspectiveOrigin.initCssUnitX Px
+                    >> PerspectiveOrigin.initCssUnit Em
+          , expected = ( "perspective-origin", "10em 50em" )
+          }
+        , { description = "PerspectiveOrigin.initX last write wins for duplicate initX calls"
+          , initAxis =
+                PerspectiveOrigin.initX animGroup 10
+                    >> PerspectiveOrigin.initX animGroup 15
+          , expected = ( "perspective-origin", "15% 50%" )
           }
         ]
     }
@@ -406,6 +514,32 @@ sizeTestData =
       , expectedWidth = Just "20em"
       , willChange = "width, height"
       }
+    , { description = "Size.initH prefers axis-specific unit when applied after global unit"
+      , initAxis =
+            Size.initH animGroup 10
+                >> Size.initCssUnit Em
+                >> Size.initCssUnitH Px
+      , expectedHeight = Just "10px"
+      , expectedWidth = Nothing
+      , willChange = "height"
+      }
+    , { description = "Size.initH uses global unit when applied after axis-specific unit"
+      , initAxis =
+            Size.initH animGroup 10
+                >> Size.initCssUnitH Px
+                >> Size.initCssUnit Em
+      , expectedHeight = Just "10em"
+      , expectedWidth = Nothing
+      , willChange = "height"
+      }
+    , { description = "Size.initH last write wins for duplicate initH calls"
+      , initAxis =
+            Size.initH animGroup 10
+                >> Size.initH animGroup 12
+      , expectedHeight = Just "12px"
+      , expectedWidth = Nothing
+      , willChange = "height"
+      }
     ]
 
 
@@ -525,6 +659,26 @@ translateTestData =
                 Translate.initXYZ animGroup 10 20 30
                     >> Translate.initCssUnit Em
           , expected = ( "transform", "translate3d(10em, 20em, 30em)" )
+          }
+        , { description = "Translate.initX prefers axis-specific unit when applied after global unit"
+          , initAxis =
+                Translate.initX animGroup 10
+                    >> Translate.initCssUnit Em
+                    >> Translate.initCssUnitX Px
+          , expected = ( "transform", "translateX(10px)" )
+          }
+        , { description = "Translate.initX uses global unit when applied after axis-specific unit"
+          , initAxis =
+                Translate.initX animGroup 10
+                    >> Translate.initCssUnitX Px
+                    >> Translate.initCssUnit Em
+          , expected = ( "transform", "translateX(10em)" )
+          }
+        , { description = "Translate.initX last write wins for duplicate initX calls"
+          , initAxis =
+                Translate.initX animGroup 10
+                    >> Translate.initX animGroup 11
+          , expected = ( "transform", "translateX(11px)" )
           }
         ]
     }
