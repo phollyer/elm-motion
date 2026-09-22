@@ -382,6 +382,30 @@ sizeTestData =
       , expectedWidth = Just "20px"
       , willChange = "width, height"
       }
+    , { description = "Size.initH with custom CSS unit writes height, and omits untouched width"
+      , initAxis =
+            Size.initH animGroup 10
+                >> Size.initCssUnitH Em
+      , expectedHeight = Just "10em"
+      , expectedWidth = Nothing
+      , willChange = "height"
+      }
+    , { description = "Size.initW with custom CSS unit writes width, and omits untouched height"
+      , initAxis =
+            Size.initW animGroup 10
+                >> Size.initCssUnitW Em
+      , expectedHeight = Nothing
+      , expectedWidth = Just "10em"
+      , willChange = "width"
+      }
+    , { description = "Size.initHW with custom CSS unit writes height and width"
+      , initAxis =
+            Size.initHW animGroup 10 20
+                >> Size.initCssUnit Em
+      , expectedHeight = Just "10em"
+      , expectedWidth = Just "20em"
+      , willChange = "width, height"
+      }
     ]
 
 
@@ -456,6 +480,51 @@ translateTestData =
         , { description = "Translate.initXYZ writes XYZ promoted to translate3d"
           , initAxis = Translate.initXYZ animGroup 10 20 30
           , expected = ( "transform", "translate3d(10px, 20px, 30px)" )
+          }
+        , { description = "Translate.initX with custom CSS unit writes X, and omits untouched YZ"
+          , initAxis =
+                Translate.initX animGroup 10
+                    >> Translate.initCssUnitX Em
+          , expected = ( "transform", "translateX(10em)" )
+          }
+        , { description = "Translate.initY with custom CSS unit writes Y, and omits untouched XZ"
+          , initAxis =
+                Translate.initY animGroup 20
+                    >> Translate.initCssUnitY Em
+          , expected = ( "transform", "translateY(20em)" )
+          }
+        , { description = "Translate.initZ with custom CSS unit writes Z, and omits untouched XY"
+          , initAxis =
+                Translate.initZ animGroup 30
+                    >> Translate.initCssUnitZ Em
+          , expected = ( "transform", "translateZ(30em)" )
+          }
+        , { description = "Translate.initXY with custom CSS unit writes XY and omits untouched Z"
+          , initAxis =
+                Translate.initXY animGroup 10 20
+                    >> Translate.initCssUnitX Em
+                    >> Translate.initCssUnitY Em
+          , expected = ( "transform", "translateX(10em) translateY(20em)" )
+          }
+        , { description = "Translate.initXZ with custom CSS unit writes XZ and omits untouched Y"
+          , initAxis =
+                Translate.initXZ animGroup 10 30
+                    >> Translate.initCssUnitX Em
+                    >> Translate.initCssUnitZ Em
+          , expected = ( "transform", "translateX(10em) translateZ(30em)" )
+          }
+        , { description = "Translate.initYZ with custom CSS unit writes YZ and omits untouched X"
+          , initAxis =
+                Translate.initYZ animGroup 20 30
+                    >> Translate.initCssUnitY Em
+                    >> Translate.initCssUnitZ Em
+          , expected = ( "transform", "translateY(20em) translateZ(30em)" )
+          }
+        , { description = "Translate.initXYZ with custom CSS unit writes XYZ promoted to translate3d"
+          , initAxis =
+                Translate.initXYZ animGroup 10 20 30
+                    >> Translate.initCssUnit Em
+          , expected = ( "transform", "translate3d(10em, 20em, 30em)" )
           }
         ]
     }
