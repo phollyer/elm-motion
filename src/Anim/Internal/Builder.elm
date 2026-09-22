@@ -734,11 +734,7 @@ updateScopedDefaults : (DefaultsConfig -> DefaultsConfig) -> AnimBuilder eng -> 
 updateScopedDefaults updateDefaults (AnimBuilder data) =
     case data.animation.currentAnimGroup of
         Nothing ->
-            let
-                defs =
-                    data.defaults
-            in
-            AnimBuilder { data | defaults = updateDefaults defs }
+            AnimBuilder { data | defaults = updateDefaults data.defaults }
 
         Just animGroupName ->
             let
@@ -801,6 +797,7 @@ mergeBaselines (AnimBuilder ({ state, animation, defaults } as data)) =
     let
         getDefaultsForGroup groupName =
             AnimGroups.get groupName animation.groupDefaults
+                |> Maybe.map (\groupDefaults -> { groupDefaults | cssUnits = defaults.cssUnits })
                 |> Maybe.withDefault defaults
 
         newBaselines =
@@ -1836,16 +1833,6 @@ writeCssUnitForGroup maybeGroup slot unit (AnimBuilder data) =
                     , animation =
                         { animation
                             | cssUnitOverrides = CssUnitStore.set group slot unit animation.cssUnitOverrides
-                            , groupDefaults =
-                                AnimGroups.update
-                                    group
-                                    (\maybeDefaults ->
-                                        Just
-                                            (updateDefaultsCssUnits
-                                                (Maybe.withDefault defs maybeDefaults)
-                                            )
-                                    )
-                                    animation.groupDefaults
                         }
                 }
 
@@ -2908,6 +2895,7 @@ process (AnimBuilder data) =
     let
         getDefaultsForGroup groupName =
             AnimGroups.get groupName data.animation.groupDefaults
+                |> Maybe.map (\groupDefaults -> { groupDefaults | cssUnits = data.defaults.cssUnits })
                 |> Maybe.withDefault data.defaults
 
         mergeAxisSets : Dict String (Set String) -> Dict String (Set String) -> Dict String (Set String)
