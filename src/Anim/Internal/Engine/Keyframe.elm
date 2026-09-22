@@ -69,8 +69,8 @@ type alias EngineBuilder =
 init : List (EngineBuilder -> EngineBuilder) -> AnimState
 init =
     let
-        initGroup : EngineBuilder -> AnimGroupName -> Builder.AnimGroupConfig -> AnimGroup
-        initGroup builder name config =
+        initGroup : EngineBuilder -> AnimGroups Builder.ProcessedAnimGroupConfig -> AnimGroupName -> Builder.AnimGroupConfig -> AnimGroup
+        initGroup builder processedGroups name config =
             let
                 discrete : DiscreteConfig
                 discrete =
@@ -85,24 +85,45 @@ init =
 
                         Nothing ->
                             Builder.getTransformOrder name builder
-            in
-            let
+
                 playback =
                     Builder.resolvePlayback
                         (Builder.getIterations builder)
                         (Builder.getAnimationDirection builder)
                         config.playback
             in
-            Generator.init
-                (Builder.getDefaults builder)
-                resolvedOrder
-                playback.iterations
-                playback.animationDirection
-                discrete
-                name
-                config.properties
+            case AnimGroups.get name processedGroups of
+                Just processedConfig ->
+                    Generator.generateAnimation
+                        resolvedOrder
+                        playback.iterations
+                        playback.animationDirection
+                        Nothing
+                        discrete
+                        name
+                        processedConfig.controlledAxes
+                        processedConfig.properties
+
+                Nothing ->
+                    Generator.init
+                        (Builder.getDefaults builder)
+                        resolvedOrder
+                        playback.iterations
+                        playback.animationDirection
+                        discrete
+                        name
+                        config.properties
+
+        initGroupForBuilder : EngineBuilder -> AnimGroupName -> Builder.AnimGroupConfig -> AnimGroup
+        initGroupForBuilder builder =
+            let
+                processedGroups =
+                    Builder.process builder
+                        |> .groups
+            in
+            initGroup builder processedGroups
     in
-    CSS.init initGroup
+    CSS.init initGroupForBuilder
 
 
 
