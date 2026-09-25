@@ -14,6 +14,7 @@ module Anim.Engine.Transition exposing
     , easing
     , stop, reset
     , discreteEntry, startingStyleNode, startingStyleNodeFor, discreteExit
+    , transformOrder
     , anyRunning, isRunning, allComplete, isComplete, isCancelled
     , getPropertyEnd
     , getColorPropertyEnd
@@ -134,6 +135,13 @@ To render a transition, add `attributes` to the element you want to animate.
 @docs discreteEntry, startingStyleNode, startingStyleNodeFor, discreteExit
 
 
+# Transform Order
+
+📖 See [Transform Ordering](https://phollyer.github.io/elm-motion/animation/concepts/transform-order/) for details.
+
+@docs transformOrder
+
+
 # State Queries
 
 📖 See [State Queries](https://phollyer.github.io/elm-motion/animation/engines/transition/#state-queries) for details.
@@ -194,6 +202,7 @@ To render a transition, add `attributes` to the element you want to animate.
 -}
 
 import Anim.Extra.Color exposing (Color)
+import Anim.Extra.TransformOrder exposing (TransformProperty)
 import Anim.Internal.Builder as Builder
 import Anim.Internal.Engine.CSS.CSS as CSS
 import Anim.Internal.Engine.Transition as Internal
@@ -795,6 +804,38 @@ Use when an element is disappearing (e.g., going from
 discreteExit : String -> String -> String -> EngineBuilder -> EngineBuilder
 discreteExit =
     CSS.discreteExit
+
+
+
+-- ============================================================
+-- TRANSFORM ORDER
+-- ============================================================
+
+
+{-| Set the transform order.
+
+The transform order specifies how `translate`, `rotate`, `skew` and `scale` transforms
+are combined. Start the list with the transform to apply first.
+
+This is a precedence function, so it can operate as a global setting for all groups in the
+builder chain, or you can set it on a per-group basis which overrides any global setting
+for that group.
+
+Any missing transforms are automatically appended in the default order
+(`Translate` → `Rotate` → `Skew` → `Scale`).
+
+    import Anim.Engine.Transition as Transition
+    import Anim.Extra.TransformOrder exposing (TransformProperty(..))
+
+    Transition.transformOrder [ Scale, Rotate, Translate, Skew ] -- global setting
+        >> Transition.for "box"
+        >> Transition.transformOrder [ Rotate, Translate ] -- overrides global for this group
+        >> ... -- other builders
+
+-}
+transformOrder : List TransformProperty -> EngineBuilder -> EngineBuilder
+transformOrder =
+    Internal.transformOrder
 
 
 

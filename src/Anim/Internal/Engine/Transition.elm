@@ -14,6 +14,7 @@ module Anim.Internal.Engine.Transition exposing
     , startingStyleNode
     , startingStyleNodeFor
     , stop
+    , transformOrder
     , update
     )
 
@@ -623,3 +624,14 @@ reset =
 setStyles : Styles -> AnimGroup
 setStyles styles =
     AnimGroup.setStyles styles AnimGroup.init
+
+
+
+-- ============================================================
+-- TRANSFORM ORDER
+-- ============================================================
+
+
+transformOrder : List TransformProperty -> EngineBuilder -> EngineBuilder
+transformOrder =
+    Builder.transformOrder
