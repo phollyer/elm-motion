@@ -2,9 +2,7 @@ module Anim.Internal.Engine.Transition.Styles exposing (fromProcessedProperties,
 
 import Anim.Internal.Builder as Builder
 import Anim.Internal.Engine.CSS.Styles as Styles exposing (Styles)
-import Anim.Internal.Property.Rotate as Rotate
 import Anim.Internal.Property.Scale as Scale
-import Anim.Internal.Property.Skew as Skew
 import Anim.Internal.Property.Translate as Translate
 import Anim.Internal.Unit as InternalUnit
 import Dict exposing (Dict)
@@ -32,7 +30,7 @@ extractTransformStyles maybeControlledAxes properties =
                             { acc | translate = translateTransformFor maybeControlledAxes config }
 
                         Builder.ProcessedRotateConfig config ->
-                            { acc | rotate = Rotate.toCssString config.end }
+                            { acc | rotate = Styles.rotateToCss maybeControlledAxes config.end }
 
                         Builder.ProcessedSkewConfig config ->
                             { acc | skew = Styles.skewToCss maybeControlledAxes config.end }
