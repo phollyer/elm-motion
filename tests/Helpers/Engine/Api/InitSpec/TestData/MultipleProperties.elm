@@ -1,16 +1,11 @@
 module Helpers.Engine.Api.InitSpec.TestData.MultipleProperties exposing (..)
 
 import Anim.Unit exposing (Unit(..))
+import Factories.Properties.Init exposing (MultiPropertyInitFactory)
 import Helpers.AnimGroups exposing (animGroup)
 import Helpers.Engine.Api.InitSpec.Runner exposing (..)
 import Helpers.Engine.Api.InitSpec.TestData.Opacity exposing (..)
 import Helpers.Engine.Api.InitSpec.TestData.Translate exposing (..)
-
-
-type alias MultiPropertyInitFactory builder =
-    { opacity : OpacityInitFactory builder
-    , translate : TranslateInitFactory builder
-    }
 
 
 multiPropertyTestData : MultiPropertyInitFactory (a -> a) -> TestData (a -> a)
@@ -28,6 +23,39 @@ multiPropertyTestData factory =
                     , NameValuePair "transform" "translateX(10px)"
                     ]
               , willChange = "opacity, transform"
+              }
+            , { description = "composed init writes translateX and skewX"
+              , initFuncs =
+                    [ factory.translate.initX animGroup 10
+                    , factory.skew.initX animGroup 5
+                    ]
+              , expected =
+                    [ NameValuePair "transform" "translateX(10px) skewX(5deg)"
+                    ]
+              , willChange = "transform"
+              }
+            , { description = "composed init writes translateX, scaleX and skewX"
+              , initFuncs =
+                    [ factory.translate.initX animGroup 10
+                    , factory.scale.initX animGroup 2
+                    , factory.skew.initX animGroup 5
+                    ]
+              , expected =
+                    [ NameValuePair "transform" "translateX(10px) skewX(5deg) scaleX(2)"
+                    ]
+              , willChange = "transform"
+              }
+            , { description = "composed init writes translateX, rotateX, scaleX and skewX"
+              , initFuncs =
+                    [ factory.translate.initX animGroup 10
+                    , factory.rotate.initX animGroup 15
+                    , factory.scale.initX animGroup 2
+                    , factory.skew.initX animGroup 0
+                    ]
+              , expected =
+                    [ NameValuePair "transform" "translateX(10px) rotateX(15deg) skewX(5deg) scaleX(2)"
+                    ]
+              , willChange = "transform"
               }
             ]
     }

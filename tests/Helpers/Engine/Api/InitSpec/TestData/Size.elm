@@ -1,18 +1,9 @@
 module Helpers.Engine.Api.InitSpec.TestData.Size exposing (..)
 
 import Anim.Unit exposing (Unit(..))
+import Factories.Properties.Init exposing (SizeInitFactory)
 import Helpers.AnimGroups exposing (animGroup)
 import Helpers.Engine.Api.InitSpec.Runner exposing (..)
-
-
-type alias SizeInitFactory builder =
-    { initH : String -> Float -> builder
-    , initW : String -> Float -> builder
-    , initHW : String -> Float -> Float -> builder
-    , initCssUnitH : Unit -> builder
-    , initCssUnitW : Unit -> builder
-    , initCssUnit : Unit -> builder
-    }
 
 
 sizeTestData : SizeInitFactory (a -> a) -> TestData (a -> a)

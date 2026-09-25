@@ -1,14 +1,11 @@
 module Helpers.Engine.Api.InitSpec.TestData.CustomColor exposing (..)
 
-import Anim.Extra.Color as Color exposing (Color)
-import Anim.Property.CustomColor as CustomColor exposing (ColorProperty)
+import Anim.Extra.Color as Color
+import Anim.Property.CustomColor as CustomColor
 import Anim.Unit exposing (Unit(..))
+import Factories.Properties.Init exposing (CustomColorInitFactory)
 import Helpers.AnimGroups exposing (animGroup)
 import Helpers.Engine.Api.InitSpec.Runner exposing (..)
-
-
-type alias CustomColorInitFactory builder =
-    { init : String -> ColorProperty -> Color -> builder }
 
 
 customColorTestData : CustomColorInitFactory (a -> a) -> TestData (a -> a)

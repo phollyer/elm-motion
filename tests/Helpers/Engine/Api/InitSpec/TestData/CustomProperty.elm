@@ -1,13 +1,10 @@
 module Helpers.Engine.Api.InitSpec.TestData.CustomProperty exposing (..)
 
-import Anim.Property.Custom as Property exposing (Property)
+import Anim.Property.Custom as Property
 import Anim.Unit exposing (Unit(..))
+import Factories.Properties.Init exposing (CustomPropertyInitFactory)
 import Helpers.AnimGroups exposing (animGroup)
 import Helpers.Engine.Api.InitSpec.Runner exposing (..)
-
-
-type alias CustomPropertyInitFactory builder =
-    { init : String -> Property -> Float -> builder }
 
 
 customPropertyTestData : CustomPropertyInitFactory (a -> a) -> TestData (a -> a)

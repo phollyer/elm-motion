@@ -1,19 +1,9 @@
 module Helpers.Engine.Api.InitSpec.TestData.Rotate exposing (..)
 
 import Anim.Unit exposing (Unit(..))
+import Factories.Properties.Init exposing (RotateInitFactory)
 import Helpers.AnimGroups exposing (animGroup)
 import Helpers.Engine.Api.InitSpec.Runner exposing (..)
-
-
-type alias RotateInitFactory builder =
-    { initX : String -> Float -> builder
-    , initY : String -> Float -> builder
-    , initZ : String -> Float -> builder
-    , initXY : String -> Float -> Float -> builder
-    , initXZ : String -> Float -> Float -> builder
-    , initYZ : String -> Float -> Float -> builder
-    , initXYZ : String -> Float -> Float -> Float -> builder
-    }
 
 
 rotateTestData : RotateInitFactory (a -> a) -> TestData (a -> a)

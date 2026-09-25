@@ -1,14 +1,8 @@
 module Helpers.Engine.Api.InitSpec.TestData.Skew exposing (..)
 
+import Factories.Properties.Init exposing (SkewInitFactory)
 import Helpers.AnimGroups exposing (animGroup)
 import Helpers.Engine.Api.InitSpec.Runner exposing (..)
-
-
-type alias SkewInitFactory builder =
-    { initX : String -> Float -> builder
-    , initY : String -> Float -> builder
-    , initXY : String -> Float -> Float -> builder
-    }
 
 
 skewTestData : SkewInitFactory (a -> a) -> TestData (a -> a)

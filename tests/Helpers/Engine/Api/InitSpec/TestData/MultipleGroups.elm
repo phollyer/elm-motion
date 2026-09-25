@@ -1,18 +1,9 @@
 module Helpers.Engine.Api.InitSpec.TestData.MultipleGroups exposing (..)
 
 import Anim.Unit exposing (Unit(..))
+import Factories.Properties.Init exposing (MultiGroupInitFactory)
 import Helpers.AnimGroups exposing (animGroup, otherAnimGroup)
 import Helpers.Engine.Api.InitSpec.Runner exposing (..)
-import Helpers.Engine.Api.InitSpec.TestData.PerspectiveOrigin exposing (PerspectiveOriginInitFactory)
-import Helpers.Engine.Api.InitSpec.TestData.Size exposing (SizeInitFactory)
-import Helpers.Engine.Api.InitSpec.TestData.Translate exposing (TranslateInitFactory)
-
-
-type alias MultiGroupInitFactory builder =
-    { translate : TranslateInitFactory builder
-    , size : SizeInitFactory builder
-    , perspectiveOrigin : PerspectiveOriginInitFactory builder
-    }
 
 
 multiGroupTestData : MultiGroupInitFactory (a -> a) -> TestData (a -> a)

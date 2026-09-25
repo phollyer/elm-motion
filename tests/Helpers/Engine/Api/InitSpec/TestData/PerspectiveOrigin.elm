@@ -1,18 +1,9 @@
 module Helpers.Engine.Api.InitSpec.TestData.PerspectiveOrigin exposing (..)
 
 import Anim.Unit exposing (Unit(..))
+import Factories.Properties.Init exposing (PerspectiveOriginInitFactory)
 import Helpers.AnimGroups exposing (animGroup)
 import Helpers.Engine.Api.InitSpec.Runner exposing (..)
-
-
-type alias PerspectiveOriginInitFactory builder =
-    { initX : String -> Float -> builder
-    , initY : String -> Float -> builder
-    , initXY : String -> Float -> Float -> builder
-    , initCssUnitX : Unit -> builder
-    , initCssUnitY : Unit -> builder
-    , initCssUnit : Unit -> builder
-    }
 
 
 perspectiveOriginTestData : PerspectiveOriginInitFactory (a -> a) -> TestData (a -> a)

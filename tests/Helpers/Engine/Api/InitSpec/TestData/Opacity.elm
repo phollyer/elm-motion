@@ -1,12 +1,9 @@
 module Helpers.Engine.Api.InitSpec.TestData.Opacity exposing (..)
 
 import Anim.Unit exposing (Unit(..))
+import Factories.Properties.Init exposing (OpacityInitFactory)
 import Helpers.AnimGroups exposing (animGroup)
 import Helpers.Engine.Api.InitSpec.Runner exposing (..)
-
-
-type alias OpacityInitFactory builder =
-    { init : String -> Float -> builder }
 
 
 opacityTestData : OpacityInitFactory (a -> a) -> TestData (a -> a)
