@@ -155,7 +155,7 @@ insertAnimGroup animGroupsConfig animGroupName newAnimGroup acc =
 
                 animatedCssProps =
                     AnimGroups.get animGroupName animGroupsConfig
-                        |> Maybe.map (\cfg -> toCssPropertyNames cfg.controlledAxes cfg.properties)
+                        |> Maybe.map (\cfg -> toCssPropertyNames cfg.properties)
                         |> Maybe.withDefault []
 
                 discreteCssProps =
@@ -218,8 +218,8 @@ retarget ((AnimState origState _) as animState) build =
     AnimState newState snappedGroups
 
 
-toCssPropertyNames : Dict.Dict String (Set.Set String) -> List Builder.ProcessedPropertyConfig -> List String
-toCssPropertyNames controlledAxes props =
+toCssPropertyNames : List Builder.ProcessedPropertyConfig -> List String
+toCssPropertyNames props =
     List.concatMap
         (\prop ->
             case prop of
