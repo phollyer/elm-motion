@@ -398,6 +398,27 @@ For entry animations, include `startingStyleNode` in your view. This generates `
 
 📖 See [Discrete Properties](../concepts/discrete-properties.md) for the full API, live examples, and source code.
 
+### Transform Order
+
+Use `transformOrder` to set the order in which transform properties are applied.
+
+Call it after `for` to set the current animation group's order.
+Call it before selecting a group to set the global default for groups that do not override it.
+
+??? example "View Source Code"
+
+    ```elm
+    import Anim.Extra.TransformOrder exposing (TransformProperty(..))
+
+    animateBox =
+        Transition.for "box"
+            >> Transition.transformOrder [ Scale, Rotate, Translate ]
+            >> Translate.begin
+            >> ...
+    ```
+
+📖 See [Transform Order](../concepts/transform-order.md) for full details.
+
 ### State Queries
 
 Query animation state.
