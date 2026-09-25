@@ -186,7 +186,7 @@ extractTransformsFromProcessed maybeControlledAxes properties =
                     { acc | translate = translateToCss maybeControlledAxes config.cssUnit config.end }
 
                 Builder.ProcessedRotateConfig config ->
-                    { acc | rotate = Rotate.toCssString config.end }
+                    { acc | rotate = Styles.rotateToCss maybeControlledAxes config.end }
 
                 Builder.ProcessedSkewConfig config ->
                     { acc | skew = Styles.skewToCss maybeControlledAxes config.end }

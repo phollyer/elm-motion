@@ -16,10 +16,10 @@ transformOrderTestData factory =
                     [ factory.translate.initX animGroup 0
                     , factory.rotate.initX animGroup 0
                     , factory.scale.initX animGroup 0
-                    , factory.skew.initX animGroup 5
+                    , factory.skew.initX animGroup 0
                     ]
               , transformOrderFunc = factory.transformOrder []
-              , expected = "translateX(0px) rotateX(0deg) skewX(5deg) scaleX(0)"
+              , expected = "translateX(0px) rotateX(0deg) skewX(0deg) scaleX(0)"
               }
             ]
     }

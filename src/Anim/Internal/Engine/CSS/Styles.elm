@@ -11,6 +11,7 @@ module Anim.Internal.Engine.CSS.Styles exposing
     , member
     , merge
     , remove
+    , rotateToCss
     , skewToCss
     , toAttrs
     , toList
@@ -20,6 +21,7 @@ import Anim.Internal.Builder as Builder
 import Anim.Internal.Extra.Color as Color
 import Anim.Internal.Property.Opacity as Opacity
 import Anim.Internal.Property.PerspectiveOrigin as PerspectiveOrigin
+import Anim.Internal.Property.Rotate as Rotate
 import Anim.Internal.Property.Size as Size
 import Anim.Internal.Property.Skew as Skew
 import Dict exposing (Dict)
@@ -248,3 +250,60 @@ skewToCss maybeControlledAxes value =
 
         Nothing ->
             Skew.toCssString value
+
+
+
+-- ============================================================
+-- ROTATE
+-- ============================================================
+
+
+rotateToCss : Maybe (Dict.Dict String (Set.Set String)) -> Rotate.Rotate -> String
+rotateToCss maybeControlledAxes value =
+    let
+        maybeAxes =
+            Maybe.andThen (Dict.get "rotate") maybeControlledAxes
+    in
+    case maybeAxes of
+        Just axes ->
+            let
+                hasX =
+                    Set.member "x" axes
+
+                hasY =
+                    Set.member "y" axes
+
+                hasZ =
+                    Set.member "z" axes
+
+                coords =
+                    Rotate.toRecord value
+
+                partial =
+                    [ if hasX then
+                        Just ("rotateX(" ++ String.fromFloat coords.x ++ "deg)")
+
+                      else
+                        Nothing
+                    , if hasY then
+                        Just ("rotateY(" ++ String.fromFloat coords.y ++ "deg)")
+
+                      else
+                        Nothing
+                    , if hasZ then
+                        Just ("rotateZ(" ++ String.fromFloat coords.z ++ "deg)")
+
+                      else
+                        Nothing
+                    ]
+                        |> List.filterMap identity
+                        |> String.join " "
+            in
+            if String.isEmpty partial then
+                Rotate.toCssString value
+
+            else
+                partial
+
+        Nothing ->
+            Rotate.toCssString value
