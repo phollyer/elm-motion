@@ -11,6 +11,7 @@ module Anim.Internal.Engine.CSS.Styles exposing
     , member
     , merge
     , remove
+    , skewToCss
     , toAttrs
     , toList
     )
@@ -20,6 +21,7 @@ import Anim.Internal.Extra.Color as Color
 import Anim.Internal.Property.Opacity as Opacity
 import Anim.Internal.Property.PerspectiveOrigin as PerspectiveOrigin
 import Anim.Internal.Property.Size as Size
+import Anim.Internal.Property.Skew as Skew
 import Dict exposing (Dict)
 import Html
 import Html.Attributes
@@ -197,3 +199,52 @@ toAttrs animGroupName (Styles dict) =
                 Html.Attributes.style key value
             )
             (Dict.toList dict)
+
+
+
+-- ============================================================
+-- SKEW
+-- ============================================================
+
+
+skewToCss : Maybe (Dict String (Set String)) -> Skew.Skew -> String
+skewToCss maybeControlledAxes value =
+    let
+        maybeAxes =
+            Maybe.andThen (Dict.get "skew") maybeControlledAxes
+    in
+    case maybeAxes of
+        Just axes ->
+            let
+                hasX =
+                    Set.member "x" axes
+
+                hasY =
+                    Set.member "y" axes
+
+                coords =
+                    Skew.toRecord value
+
+                partial =
+                    [ if hasX then
+                        Just ("skewX(" ++ String.fromFloat coords.x ++ "deg)")
+
+                      else
+                        Nothing
+                    , if hasY then
+                        Just ("skewY(" ++ String.fromFloat coords.y ++ "deg)")
+
+                      else
+                        Nothing
+                    ]
+                        |> List.filterMap identity
+                        |> String.join " "
+            in
+            if String.isEmpty partial then
+                Skew.toCssString value
+
+            else
+                partial
+
+        Nothing ->
+            Skew.toCssString value

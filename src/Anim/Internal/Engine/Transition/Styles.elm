@@ -35,7 +35,7 @@ extractTransformStyles maybeControlledAxes properties =
                             { acc | rotate = Rotate.toCssString config.end }
 
                         Builder.ProcessedSkewConfig config ->
-                            { acc | skew = skewTransformFor maybeControlledAxes config }
+                            { acc | skew = Styles.skewToCss maybeControlledAxes config.end }
 
                         Builder.ProcessedScaleConfig config ->
                             { acc | scale = Scale.toCssString config.end }
@@ -61,38 +61,6 @@ extractTransformStyles maybeControlledAxes properties =
     List.filterMap identity
         [ transformStyle
         ]
-
-
-skewTransformFor : Maybe (Dict String (Set String)) -> Builder.ProcessedAnimationConfig Skew.Skew -> String
-skewTransformFor maybeControlledAxes config =
-    case maybeControlledAxes |> Maybe.andThen (Dict.get "skew") of
-        Just axes ->
-            let
-                hasX =
-                    Set.member "x" axes
-
-                hasY =
-                    Set.member "y" axes
-
-                end =
-                    Skew.toRecord config.end
-            in
-            [ if hasX then
-                Just ("skewX(" ++ String.fromFloat end.x ++ "deg)")
-
-              else
-                Nothing
-            , if hasY then
-                Just ("skewY(" ++ String.fromFloat end.y ++ "deg)")
-
-              else
-                Nothing
-            ]
-                |> List.filterMap identity
-                |> String.join " "
-
-        Nothing ->
-            Skew.toCssString config.end
 
 
 translateTransformFor : Maybe (Dict String (Set String)) -> Builder.ProcessedAnimationConfig Translate.Translate -> String
