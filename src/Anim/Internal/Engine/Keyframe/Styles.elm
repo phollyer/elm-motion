@@ -189,7 +189,7 @@ extractTransformsFromProcessed maybeControlledAxes properties =
                     { acc | rotate = Rotate.toCssString config.end }
 
                 Builder.ProcessedSkewConfig config ->
-                    { acc | skew = Skew.toCssString config.end }
+                    { acc | skew = skewToCss maybeControlledAxes config.end }
 
                 Builder.ProcessedScaleConfig config ->
                     { acc | scale = Scale.toCssString config.end }
@@ -258,3 +258,42 @@ translateToCss maybeControlledAxes cssUnitAxes value =
 
         Nothing ->
             Translate.toCssString cssUnitAxes value
+
+
+skewToCss : Maybe (Dict.Dict String (Set.Set String)) -> Skew.Skew -> String
+skewToCss maybeControlledAxes value =
+    case maybeControlledAxes |> Maybe.andThen (Dict.get "skew") of
+        Just axes ->
+            let
+                hasX =
+                    Set.member "x" axes
+
+                hasY =
+                    Set.member "y" axes
+
+                coords =
+                    Skew.toRecord value
+
+                partial =
+                    [ if hasX then
+                        Just ("skewX(" ++ String.fromFloat coords.x ++ "deg)")
+
+                      else
+                        Nothing
+                    , if hasY then
+                        Just ("skewY(" ++ String.fromFloat coords.y ++ "deg)")
+
+                      else
+                        Nothing
+                    ]
+                        |> List.filterMap identity
+                        |> String.join " "
+            in
+            if String.isEmpty partial then
+                Skew.toCssString value
+
+            else
+                partial
+
+        Nothing ->
+            Skew.toCssString value
