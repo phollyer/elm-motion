@@ -71,7 +71,6 @@ keyframesFor properties =
     Generator.generateAnimation Nothing
         Builder.Once
         Builder.Normal
-        Nothing
         Generator.emptyDiscreteConfig
         "test"
         Dict.empty

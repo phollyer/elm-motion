@@ -69,19 +69,39 @@ type alias EngineBuilder =
 
 
 init : List (EngineBuilder -> EngineBuilder) -> AnimState
-init =
-    let
-        initGroup : EngineBuilder -> AnimGroupName -> Builder.AnimGroupConfig -> AnimGroup
-        initGroup builder animGroupName { properties } =
-            Generator.init
-                (Builder.getDefaults builder)
-                animGroupName
-                (Builder.discreteTransitionsEnabled builder)
-                (Builder.getDiscreteEntryPropertiesFor animGroupName builder)
-                (Builder.getDiscreteExitPropertiesFor animGroupName builder)
-                properties
-    in
-    CSS.init initGroup
+init propertyInitializers =
+    case propertyInitializers of
+        [] ->
+            CSS.AnimState
+                { builder = Builder.init [] }
+                AnimGroups.init
+
+        _ ->
+            let
+                builder =
+                    Builder.init propertyInitializers
+
+                processedInitData =
+                    Builder.process builder
+
+                initGroup : AnimGroupName -> Builder.ProcessedAnimGroupConfig -> AnimGroup
+                initGroup animGroupName config =
+                    Generator.generateAnimation
+                        (Builder.discreteTransitionsEnabled builder)
+                        (Builder.getDiscreteEntryPropertiesFor animGroupName builder)
+                        (Builder.getDiscreteExitPropertiesFor animGroupName builder)
+                        config.controlledAxes
+                        config.properties
+            in
+            CSS.AnimState
+                { builder =
+                    builder
+                        |> Builder.mergeBaselines
+                        |> Builder.clearAnimData
+                }
+                (processedInitData.groups
+                    |> AnimGroups.map initGroup
+                )
 
 
 
@@ -219,7 +239,7 @@ toCssPropertyNames controlledAxes props =
                     [ "transform" ]
 
                 Builder.ProcessedScaleConfig _ ->
-                    [ "scale" ]
+                    [ "transform" ]
 
                 Builder.ProcessedSizeConfig _ ->
                     [ "width", "height" ]
@@ -228,31 +248,7 @@ toCssPropertyNames controlledAxes props =
                     [ "transform" ]
 
                 Builder.ProcessedTranslateConfig _ ->
-                    let
-                        useTranslateProperty =
-                            controlledAxes
-                                |> Dict.get "translate"
-                                |> Maybe.map
-                                    (\axes ->
-                                        let
-                                            hasX =
-                                                Set.member "x" axes
-
-                                            hasY =
-                                                Set.member "y" axes
-
-                                            hasZ =
-                                                Set.member "z" axes
-                                        in
-                                        hasX && (hasY || not hasZ)
-                                    )
-                                |> Maybe.withDefault True
-                    in
-                    if useTranslateProperty then
-                        [ "translate" ]
-
-                    else
-                        [ "transform", "translate" ]
+                    [ "transform" ]
         )
         props
 

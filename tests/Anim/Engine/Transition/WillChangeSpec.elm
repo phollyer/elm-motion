@@ -2,9 +2,9 @@ module Anim.Engine.Transition.WillChangeSpec exposing (suite)
 
 {-| Verifies the Transition engine emits a `will-change` declaration
 covering the properties currently animating. The Transition engine
-renders transforms as the modern individual CSS properties
-(`translate:` / `scale:`) and falls back to the composite `transform:`
-for rotate / skew, so `will-change` mirrors that distinction.
+renders transform-family properties through a composite `transform:`
+declaration, so `will-change` collapses translate/rotate/skew/scale
+to `transform`.
 
 The clearing-on-complete branch piggybacks on the same `AnimGroup.isComplete`
 gate used for `discreteExitAttrs`; that gate is covered indirectly by
@@ -37,7 +37,7 @@ rendered state =
 suite : Test
 suite =
     describe "Transition will-change"
-        [ test "translate uses the individual translate name" <|
+        [ test "translate uses transform" <|
             \_ ->
                 Transition.init [ Translate.initXY "el" 0 0 ]
                     |> (\state ->
@@ -50,8 +50,8 @@ suite =
                                 )
                        )
                     |> rendered
-                    |> Query.has [ Selector.style "will-change" "translate" ]
-        , test "scale uses the individual scale name" <|
+                    |> Query.has [ Selector.style "will-change" "transform" ]
+        , test "scale uses transform" <|
             \_ ->
                 Transition.init [ Scale.init "el" 1 ]
                     |> (\state ->
@@ -64,7 +64,7 @@ suite =
                                 )
                        )
                     |> rendered
-                    |> Query.has [ Selector.style "will-change" "scale" ]
+                    |> Query.has [ Selector.style "will-change" "transform" ]
         , test "rotate falls back to transform" <|
             \_ ->
                 Transition.init [ Rotate.initZ "el" 0 ]
@@ -105,7 +105,7 @@ suite =
                        )
                     |> rendered
                     |> Query.has [ Selector.style "will-change" "transform" ]
-        , test "opacity + translate stay separate" <|
+        , test "opacity + translate stay separate with transform channel" <|
             \_ ->
                 Transition.init
                     [ Opacity.init "el" 0
@@ -130,7 +130,7 @@ suite =
                                    )
                        )
                     |> rendered
-                    |> Query.has [ Selector.style "will-change" "opacity, translate" ]
+                    |> Query.has [ Selector.style "will-change" "opacity, transform" ]
         , test "size emits width and height" <|
             \_ ->
                 Transition.init [ Size.initHW "el" 100 100 ]

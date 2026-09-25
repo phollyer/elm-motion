@@ -29,7 +29,7 @@ extractTransformStyles maybeControlledAxes properties =
                 (\prop acc ->
                     case prop of
                         Builder.ProcessedTranslateConfig config ->
-                            applyTranslateRender maybeControlledAxes config acc
+                            { acc | translate = translateTransformFor maybeControlledAxes config }
 
                         Builder.ProcessedRotateConfig config ->
                             { acc | rotate = Rotate.toCssString config.end }
@@ -38,16 +38,16 @@ extractTransformStyles maybeControlledAxes properties =
                             { acc | skew = Skew.toCssString config.end }
 
                         Builder.ProcessedScaleConfig config ->
-                            { acc | scale = Just ( "scale", Scale.toCssPropertyValue config.end ) }
+                            { acc | scale = Scale.toCssString config.end }
 
                         _ ->
                             acc
                 )
-                { translate = Nothing, translateTransform = "", rotate = "", skew = "", scale = Nothing }
+                { translate = "", rotate = "", skew = "", scale = "" }
                 properties
 
         transformPart =
-            [ collected.translateTransform, collected.rotate, collected.skew ]
+            [ collected.translate, collected.rotate, collected.skew, collected.scale ]
                 |> List.filter (String.isEmpty >> not)
                 |> String.join " "
 
@@ -59,24 +59,18 @@ extractTransformStyles maybeControlledAxes properties =
                 Just ( "transform", transformPart )
     in
     List.filterMap identity
-        [ collected.translate
-        , transformStyle
-        , collected.scale
+        [ transformStyle
         ]
 
 
-applyTranslateRender : Maybe (Dict String (Set String)) -> Builder.ProcessedAnimationConfig Translate.Translate -> { a | rotate : String, scale : Maybe ( String, String ), skew : String, translate : Maybe ( String, String ), translateTransform : String } -> { a | rotate : String, scale : Maybe ( String, String ), skew : String, translate : Maybe ( String, String ), translateTransform : String }
-applyTranslateRender maybeControlledAxes config acc =
+translateTransformFor : Maybe (Dict String (Set String)) -> Builder.ProcessedAnimationConfig Translate.Translate -> String
+translateTransformFor maybeControlledAxes config =
     case controlledTranslateAxes maybeControlledAxes of
         Just axes ->
-            if renderTranslateAsIndividualProperty axes then
-                { acc | translate = Just ( "translate", translatePropertyValueForAxes axes config ) }
-
-            else
-                { acc | translateTransform = translateTransformForAxes axes config }
+            translateTransformForAxes axes config
 
         Nothing ->
-            { acc | translate = Just ( "translate", Translate.toCssPropertyValue config.cssUnit config.end ) }
+            Translate.toCssString config.cssUnit config.end
 
 
 controlledTranslateAxes : Maybe (Dict String (Set String)) -> Maybe (Set String)
@@ -85,8 +79,8 @@ controlledTranslateAxes maybeControlledAxes =
         |> Maybe.andThen (Dict.get "translate")
 
 
-renderTranslateAsIndividualProperty : Set String -> Bool
-renderTranslateAsIndividualProperty axes =
+translateTransformForAxes : Set String -> Builder.ProcessedAnimationConfig Translate.Translate -> String
+translateTransformForAxes axes config =
     let
         hasX =
             Set.member "x" axes
@@ -96,36 +90,7 @@ renderTranslateAsIndividualProperty axes =
 
         hasZ =
             Set.member "z" axes
-    in
-    hasX && (hasY || not hasZ)
 
-
-translatePropertyValueForAxes : Set String -> Builder.ProcessedAnimationConfig Translate.Translate -> String
-translatePropertyValueForAxes axes config =
-    if Set.size axes == 3 then
-        Translate.toCssPropertyValue config.cssUnit config.end
-
-    else
-        let
-            end =
-                Translate.toRecord config.end
-
-            xSuffix =
-                InternalUnit.toCssSuffix config.cssUnit.x
-
-            ySuffix =
-                InternalUnit.toCssSuffix config.cssUnit.y
-        in
-        if Set.member "y" axes then
-            String.fromFloat end.x ++ xSuffix ++ " " ++ String.fromFloat end.y ++ ySuffix
-
-        else
-            String.fromFloat end.x ++ xSuffix
-
-
-translateTransformForAxes : Set String -> Builder.ProcessedAnimationConfig Translate.Translate -> String
-translateTransformForAxes axes config =
-    let
         end =
             Translate.toRecord config.end
 
@@ -138,21 +103,25 @@ translateTransformForAxes axes config =
         zSuffix =
             InternalUnit.toCssSuffix config.cssUnit.z
     in
-    [ if Set.member "x" axes then
-        Just ("translateX(" ++ String.fromFloat end.x ++ xSuffix ++ ")")
+    if hasX && hasY && hasZ then
+        "translate3d(" ++ String.fromFloat end.x ++ xSuffix ++ ", " ++ String.fromFloat end.y ++ ySuffix ++ ", " ++ String.fromFloat end.z ++ zSuffix ++ ")"
 
-      else
-        Nothing
-    , if Set.member "y" axes then
-        Just ("translateY(" ++ String.fromFloat end.y ++ ySuffix ++ ")")
+    else
+        [ if hasX then
+            Just ("translateX(" ++ String.fromFloat end.x ++ xSuffix ++ ")")
 
-      else
-        Nothing
-    , if Set.member "z" axes then
-        Just ("translateZ(" ++ String.fromFloat end.z ++ zSuffix ++ ")")
+          else
+            Nothing
+        , if hasY then
+            Just ("translateY(" ++ String.fromFloat end.y ++ ySuffix ++ ")")
 
-      else
-        Nothing
-    ]
-        |> List.filterMap identity
-        |> String.join " "
+          else
+            Nothing
+        , if hasZ then
+            Just ("translateZ(" ++ String.fromFloat end.z ++ zSuffix ++ ")")
+
+          else
+            Nothing
+        ]
+            |> List.filterMap identity
+            |> String.join " "

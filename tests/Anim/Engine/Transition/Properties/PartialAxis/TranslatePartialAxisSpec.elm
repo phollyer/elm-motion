@@ -46,8 +46,8 @@ suite =
                        )
                     |> rendered
                     |> Expect.all
-                        [ Query.has [ Selector.style "translate" "120px" ]
-                        , Query.hasNot [ Selector.style "translate" "120px 0px 0px" ]
+                        [ Query.has [ Selector.style "transform" "translateX(120px)" ]
+                        , Query.hasNot [ Selector.style "transform" "translate3d(120px, 0px, 0px)" ]
                         ]
         , test "first-use Translate.toY emits only Y and omits untouched axes" <|
             \_ ->
@@ -97,8 +97,8 @@ suite =
                        )
                     |> rendered
                     |> Expect.all
-                        [ Query.has [ Selector.style "translate" "120px 240px" ]
-                        , Query.hasNot [ Selector.style "translate" "120px 240px 0px" ]
+                        [ Query.has [ Selector.style "transform" "translateX(120px) translateY(240px)" ]
+                        , Query.hasNot [ Selector.style "transform" "translate3d(120px, 240px, 0px)" ]
                         ]
         , test "first-use Translate.toXZ emits XZ and omits Y" <|
             \_ ->
@@ -147,7 +147,7 @@ suite =
                                 )
                        )
                     |> rendered
-                    |> Query.has [ Selector.style "translate" "120px 240px 32px" ]
+                    |> Query.has [ Selector.style "transform" "translate3d(120px, 240px, 32px)" ]
         , test "after Translate.toXYZ, Translate.toX keeps previously-owned YZ" <|
             \_ ->
                 Transition.init []
@@ -170,7 +170,7 @@ suite =
                                 )
                        )
                     |> rendered
-                    |> Query.has [ Selector.style "translate" "60px 240px 32px" ]
+                    |> Query.has [ Selector.style "transform" "translate3d(60px, 240px, 32px)" ]
         , test "after Translate.toXYZ, Translate.toY keeps previously-owned XZ" <|
             \_ ->
                 Transition.init []
@@ -193,7 +193,7 @@ suite =
                                 )
                        )
                     |> rendered
-                    |> Query.has [ Selector.style "translate" "120px 60px 32px" ]
+                    |> Query.has [ Selector.style "transform" "translate3d(120px, 60px, 32px)" ]
         , test "after Translate.toXYZ, Translate.toZ keeps previously-owned XY" <|
             \_ ->
                 Transition.init []
@@ -216,7 +216,7 @@ suite =
                                 )
                        )
                     |> rendered
-                    |> Query.has [ Selector.style "translate" "120px 240px 60px" ]
+                    |> Query.has [ Selector.style "transform" "translate3d(120px, 240px, 60px)" ]
         , test "after Translate.toXY, Translate.toX keeps previously-owned Y" <|
             \_ ->
                 Transition.init []
@@ -240,8 +240,8 @@ suite =
                        )
                     |> rendered
                     |> Expect.all
-                        [ Query.has [ Selector.style "translate" "60px 240px" ]
-                        , Query.hasNot [ Selector.style "translate" "60px 240px 0px" ]
+                        [ Query.has [ Selector.style "transform" "translateX(60px) translateY(240px)" ]
+                        , Query.hasNot [ Selector.style "transform" "translate3d(60px, 240px, 0px)" ]
                         ]
         , test "after Translate.toXY, Translate.toY keeps previously-owned X, and omits Z" <|
             \_ ->
@@ -266,8 +266,8 @@ suite =
                        )
                     |> rendered
                     |> Expect.all
-                        [ Query.has [ Selector.style "translate" "120px 60px" ]
-                        , Query.hasNot [ Selector.style "translate" "120px 60px 0px" ]
+                        [ Query.has [ Selector.style "transform" "translateX(120px) translateY(60px)" ]
+                        , Query.hasNot [ Selector.style "transform" "translate3d(120px, 60px, 0px)" ]
                         ]
         , test "after Translate.toXZ, Translate.toX keeps previously-owned Z, and omits Y" <|
             \_ ->

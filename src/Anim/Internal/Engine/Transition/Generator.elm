@@ -190,13 +190,43 @@ discretePropertyNames discreteEntry discreteExit =
     entryKeys ++ List.filter (\k -> not (List.member k entryKeys)) exitKeys
 
 
-{-| Emits a single `transform` transition rule. When both rotate and skew are
-present, rotate's settings take priority. If only skew is present, skew's
-settings are used.
+{-| Emits a single `transform` transition rule for transform-family animations.
+
+Because Transition now renders translate/rotate/skew/scale through one
+composite `transform` declaration, only one timing config can drive that
+channel. Precedence is:
+
+    1. translate
+    2. rotate
+    3. skew
+    4. scale
+
+The first present config in that order is used to build the rule. Example:
+
+        transform 500ms ease-in-out 120ms
+
+If no transform-family property is present, returns `Nothing`.
+
+TODO: This will need to change to follow the user specified transform order once
+it has been implemented.
+
 -}
 transformTransitionFromProcessed : List Builder.ProcessedPropertyConfig -> Maybe String
 transformTransitionFromProcessed properties =
     let
+        translateConfig =
+            properties
+                |> List.filterMap
+                    (\p ->
+                        case p of
+                            Builder.ProcessedTranslateConfig config ->
+                                Just config
+
+                            _ ->
+                                Nothing
+                    )
+                |> List.head
+
         rotateConfig =
             properties
                 |> List.filterMap
@@ -222,13 +252,36 @@ transformTransitionFromProcessed properties =
                                 Nothing
                     )
                 |> List.head
+
+        scaleConfig =
+            properties
+                |> List.filterMap
+                    (\p ->
+                        case p of
+                            Builder.ProcessedScaleConfig config ->
+                                Just config
+
+                            _ ->
+                                Nothing
+                    )
+                |> List.head
     in
-    case rotateConfig of
+    case translateConfig of
         Just config ->
             Just (transitionRule "transform" config)
 
         Nothing ->
-            Maybe.map (transitionRule "transform") skewConfig
+            case rotateConfig of
+                Just config ->
+                    Just (transitionRule "transform" config)
+
+                Nothing ->
+                    case skewConfig of
+                        Just config ->
+                            Just (transitionRule "transform" config)
+
+                        Nothing ->
+                            Maybe.map (transitionRule "transform") scaleConfig
 
 
 {-| Build a single CSS `transition` rule for a given property name.
@@ -270,8 +323,8 @@ nonTransformTransitionFromProcessed controlledAxes property =
         Builder.ProcessedRotateConfig _ ->
             []
 
-        Builder.ProcessedScaleConfig config ->
-            [ transitionRule "scale" config ]
+        Builder.ProcessedScaleConfig _ ->
+            []
 
         Builder.ProcessedSizeConfig config ->
             let
@@ -297,33 +350,8 @@ nonTransformTransitionFromProcessed controlledAxes property =
         Builder.ProcessedSkewConfig _ ->
             []
 
-        Builder.ProcessedTranslateConfig config ->
-            let
-                useTranslateProperty =
-                    controlledAxes
-                        |> Dict.get "translate"
-                        |> Maybe.map
-                            (\axes ->
-                                let
-                                    hasX =
-                                        Set.member "x" axes
-
-                                    hasY =
-                                        Set.member "y" axes
-
-                                    hasZ =
-                                        Set.member "z" axes
-                                in
-                                hasX && (hasY || not hasZ)
-                            )
-                        |> Maybe.withDefault True
-            in
-            [ if useTranslateProperty then
-                transitionRule "translate" config
-
-              else
-                transitionRule "transform" config
-            ]
+        Builder.ProcessedTranslateConfig _ ->
+            []
 
 
 {-| The longest animation duration across the processed properties, used
@@ -376,7 +404,7 @@ generateAnimation discreteTransitions discreteEntry discreteExit controlledAxes 
         |> AnimGroup.setDiscreteEntry discreteEntry
         |> AnimGroup.setDiscreteExit discreteExit
         |> AnimGroup.setPropertyKeys (propertyKeysOf processedProps)
-        |> AnimGroup.setWillChange (Builder.willChangeIndividualWithControlledAxes controlledAxes processedProps)
+        |> AnimGroup.setWillChange (Builder.willChangeCompositeWithControlledAxes controlledAxes processedProps)
         |> AnimGroup.setStyles
             (TransitionStyles.fromProcessedPropertiesWithControlledAxes
                 controlledAxes

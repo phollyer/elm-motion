@@ -1,8 +1,9 @@
 module Anim.Engine.Keyframe.Properties.Translate.AxisSpec.RetargetTests exposing (suite)
 
 import Anim.Engine.Keyframe as Keyframe
-import Anim.Engine.Keyframe.Properties.Translate.AxisSpec.Helpers exposing (..)
 import Anim.Property.Translate as Translate
+import Helpers.AnimGroups exposing (animGroup)
+import Helpers.Engine.Keyframe exposing (..)
 import Html
 import Test exposing (Test, describe, test)
 import Test.Html.Query as Query
@@ -75,6 +76,10 @@ retargetWithUninitialisedAxesTestData : RetargetWithUninitialisedAxesTestData
 retargetWithUninitialisedAxesTestData =
     [ { description = "Translate.toX writes X and omits untouched YZ"
       , retargetAxisFunction = Translate.toX 120
+      , expected = "translateX(120px)"
+      }
+    , { description = "Translate.fromY with Translate.toX writes only X and omits untouched YZ"
+      , retargetAxisFunction = Translate.fromY 20 >> Translate.toX 120
       , expected = "translateX(120px)"
       }
     , { description = "Translate.toY writes Y and omits untouched XZ"

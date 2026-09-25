@@ -184,7 +184,7 @@ snapTests =
                                 )
                        )
                     |> stylesFor "el"
-                    |> Maybe.andThen (Styles.get "translate")
+                    |> Maybe.andThen (Styles.get "transform")
                     |> Maybe.map (String.contains "300px")
                     |> Expect.equal (Just True)
         , test "retarget on an idle group also snaps (transition: none)" <|
@@ -315,8 +315,8 @@ resetAfterRetargetTests =
                        )
                     |> Transition.reset "el"
                     |> stylesFor "el"
-                    |> Maybe.andThen (Styles.get "translate")
-                    |> Expect.equal (Just "0cqw 0cqh")
+                    |> Maybe.andThen (Styles.get "transform")
+                    |> Expect.equal (Just "translateX(0cqw) translateY(0cqh)")
         , test "two full A→R→Reset cycles - the second reset still snaps to 0 0" <|
             \_ ->
                 let
@@ -346,6 +346,6 @@ resetAfterRetargetTests =
                     |> runCycle
                     |> runCycle
                     |> stylesFor "el"
-                    |> Maybe.andThen (Styles.get "translate")
-                    |> Expect.equal (Just "0cqw 0cqh")
+                    |> Maybe.andThen (Styles.get "transform")
+                    |> Expect.equal (Just "translateX(0cqw) translateY(0cqh)")
         ]

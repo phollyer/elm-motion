@@ -1,9 +1,10 @@
 module Anim.Engine.Keyframe.Properties.Translate.AxisSpec.AnimateTests exposing (suite)
 
 import Anim.Engine.Keyframe as Keyframe
-import Anim.Engine.Keyframe.Properties.Translate.AxisSpec.Helpers exposing (..)
 import Anim.Property.Translate as Translate
 import Expect
+import Helpers.AnimGroups exposing (animGroup)
+import Helpers.Engine.Keyframe exposing (..)
 import Html
 import Test exposing (Test, describe, test)
 import Test.Html.Query as Query
@@ -34,6 +35,7 @@ suite =
     , animateWithZeroDurationAndInitialisedAxesTests
     , animateMultipleTimesWithZeroDurationAndUninitialisedAxesTests
     , animateMultipleTimesWithZeroDurationAndInitialisedAxesTests
+    , animateWithFromAxesTests
     , animateWithUninitialisedAxesTests
     , animateWithInitialisedAxesTests
     , animateMultipleTimesWithUninitialisedAxesTests
@@ -46,6 +48,10 @@ suite =
    ==========================================================
 
    Animate With Zero Duration And Uninitialised Axes Tests
+
+   Writes the inline transform style for the specified axes
+
+   Ignores untouched axes
 
    ==========================================================
 -}
@@ -846,6 +852,113 @@ animateMultipleTimesWithInitialisedAxesTestData =
             [ ( True, "transform: translate3d(120px, 0px, 360px);" )
             , ( True, "transform: translate3d(120px, 240px, 360px);" )
             , ( False, "translate3d(0px, 0px, 0px)" )
+            ]
+      }
+    ]
+
+
+
+{-
+   ==========================================================
+
+   Animate With From Axes Tests
+
+   ==========================================================
+-}
+
+
+animateWithFromAxesTests : Test
+animateWithFromAxesTests =
+    describe "with from values" <|
+        List.map
+            (\tc ->
+                test tc.description <|
+                    \_ ->
+                        Keyframe.init tc.initValues
+                            |> animateMultipleWithDuration 500 tc.previousAxesFunctions
+                            |> animateWithDuration 500 tc.axisFunction
+                            |> keyframeString
+                            |> Expect.all
+                                (List.map
+                                    (\( expected, transform ) ->
+                                        String.contains transform >> Expect.equal expected
+                                    )
+                                    tc.expectations
+                                )
+            )
+            animateWithFromAxesTestData
+
+
+type alias AnimateWithFromAxesTestData =
+    List
+        { description : String
+        , initValues : List KeyframeBuilderFunction
+        , previousAxesFunctions : List KeyframeAxisFunction
+        , axisFunction : KeyframeAxisFunction
+        , expectations : List ( Bool, String )
+        }
+
+
+animateWithFromAxesTestData : AnimateWithFromAxesTestData
+animateWithFromAxesTestData =
+    [ { description = "Translate.fromX with Translate.toX writes keyframe rule from X to X"
+      , initValues = []
+      , previousAxesFunctions = []
+      , axisFunction = Translate.fromX 10 >> Translate.toX 120
+      , expectations =
+            [ ( True, "transform: translateX(10px);" )
+            , ( True, "transform: translateX(120px);" )
+            , ( False, "transform: translateX(0px);" )
+            ]
+      }
+    , { description = "Translate.fromXY with Translate.toXY writes keyframe rule from XY to XY"
+      , initValues = []
+      , previousAxesFunctions = []
+      , axisFunction = Translate.fromXY 10 20 >> Translate.toXY 120 240
+      , expectations =
+            [ ( True, "transform: translateX(10px) translateY(20px);" )
+            , ( True, "transform: translateX(120px) translateY(240px);" )
+            , ( False, "transform: translateX(0px) translateY(0px);" )
+            ]
+      }
+    , { description = "Translate.fromXYZ with Translate.toXYZ writes keyframe rule from XYZ to XYZ"
+      , initValues = []
+      , previousAxesFunctions = []
+      , axisFunction = Translate.fromXYZ 10 20 30 >> Translate.toXYZ 120 240 360
+      , expectations =
+            [ ( True, "transform: translate3d(10px, 20px, 30px);" )
+            , ( True, "transform: translate3d(120px, 240px, 360px);" )
+            , ( False, "transform: translate3d(0px, 0px, 0px);" )
+            ]
+      }
+    , { description = "Translate.fromY with Translate.toX does not write untouched Y"
+      , initValues = []
+      , previousAxesFunctions = []
+      , axisFunction = Translate.fromY 20 >> Translate.toX 120
+      , expectations =
+            [ ( True, "transform: translateX(0px);" )
+            , ( True, "transform: translateX(120px);" )
+            , ( False, "translateY(20px)" )
+            ]
+      }
+    , { description = "Translate.fromX with Translate.toX after previous Y animation keeps baseline Y"
+      , initValues = []
+      , previousAxesFunctions = [ Translate.toY 240 ]
+      , axisFunction = Translate.fromX 10 >> Translate.toX 120
+      , expectations =
+            [ ( True, "transform: translateX(10px) translateY(240px);" )
+            , ( True, "transform: translateX(120px) translateY(240px);" )
+            , ( False, "transform: translateX(10px) translateY(0px);" )
+            ]
+      }
+    , { description = "Translate.fromX with Translate.toX overrides initialised X start"
+      , initValues = [ Translate.initX animGroup 50 ]
+      , previousAxesFunctions = []
+      , axisFunction = Translate.fromX 10 >> Translate.toX 120
+      , expectations =
+            [ ( True, "transform: translateX(10px);" )
+            , ( True, "transform: translateX(120px);" )
+            , ( False, "transform: translateX(50px);" )
             ]
       }
     ]

@@ -506,6 +506,85 @@ sizeInitCssUnitConfigs =
     ]
 
 
+sizeInitCssUnitConfigsTransition : List ( String, AnimBuilder eng -> AnimBuilder eng, List Selector.Selector )
+sizeInitCssUnitConfigsTransition =
+    [ ( "default unit (px) is used when initCssUnit is not called"
+      , Size.initHW "el" 25 25
+      , [ Selector.style "height" "25px"
+        , Selector.style "width" "25px"
+        ]
+      )
+    , ( "order matters - initCssUnit before initHW has no effect"
+      , Size.initCssUnit Cqw
+            >> Size.initHW "el" 100 100
+      , [ Selector.style "height" "100px"
+        , Selector.style "width" "100px"
+        ]
+      )
+    , ( "order matters - initCssUnit before initH has no effect"
+      , Size.initCssUnit Cqw
+            >> Size.initH "el" 100
+      , [ Selector.style "height" "100px"
+        ]
+      )
+    , ( "order matters - initCssUnit before initW has no effect"
+      , Size.initCssUnit Cqw
+            >> Size.initW "el" 100
+      , [ Selector.style "width" "100px"
+        ]
+      )
+    , ( "initCssUnit sets the unit for both sides when both sides are initialised"
+      , Size.initHW "el" 100 100
+            >> Size.initCssUnit Cqw
+      , [ Selector.style "height" "100cqw"
+        , Selector.style "width" "100cqw"
+        ]
+      )
+    , ( "initCssUnit sets the unit for both sides when only the height is initialised"
+      , Size.initH "el" 100
+            >> Size.initCssUnit Cqw
+      , [ Selector.style "height" "100cqw"
+        ]
+      )
+    , ( "initCssUnit sets the unit for both sides when only the width is initialised"
+      , Size.initW "el" 100
+            >> Size.initCssUnit Cqw
+      , [ Selector.style "width" "100cqw"
+        ]
+      )
+    , ( "initCssUnitH overrides initCssUnit on the height only"
+      , Size.initHW "el" 100 100
+            >> Size.initCssUnit Cqw
+            >> Size.initCssUnitH Vw
+      , [ Selector.style "height" "100vw"
+        , Selector.style "width" "100cqw"
+        ]
+      )
+    , ( "initCssUnitW overrides initCssUnit on the width only"
+      , Size.initHW "el" 100 100
+            >> Size.initCssUnit Cqw
+            >> Size.initCssUnitW Vh
+      , [ Selector.style "height" "100cqw"
+        , Selector.style "width" "100vh"
+        ]
+      )
+    , ( "initCssUnitH overrides initCssUnit when the height is not initialized"
+      , Size.initW "el" 100
+            >> Size.initCssUnit Cqw
+            >> Size.initCssUnitH Vw
+      , [ Selector.style "width" "100cqw"
+        ]
+      )
+    , ( "initCssUnitW overrides initCssUnit when the width is not initialized"
+      , Size.initH "el" 100
+            >> Size.initCssUnit Cqw
+            >> Size.initCssUnitW Vh
+      , [ Selector.style "height" "100cqw"
+        ]
+      )
+    ]
+
+
 sizeInitCssUnitTests : Test
 sizeInitCssUnitTests =
     describe "Size.initCssUnit configurations"
@@ -519,7 +598,7 @@ sizeInitCssUnitTests =
                                 |> Expect.all
                                     [ Query.has expectations ]
                 )
-                sizeInitCssUnitConfigs
+                sizeInitCssUnitConfigsTransition
             )
         , describe "WAAPI Engine"
             (List.map
@@ -823,95 +902,95 @@ translateInitCssUnitConfigs : List ( String, AnimBuilder eng -> AnimBuilder eng,
 translateInitCssUnitConfigs =
     [ ( "default unit (px) is used when initCssUnit is not called"
       , Translate.initXY "el" 25 25
-      , Selector.style "translate" "25px 25px 0px"
+      , Selector.style "transform" "translateX(25px) translateY(25px)"
       )
     , ( "order matters - initCssUnit before initXYZ has no effect"
       , Translate.initCssUnit Cqw
             >> Translate.initXYZ "el" 100 100 100
-      , Selector.style "translate" "100px 100px 100px"
+      , Selector.style "transform" "translate3d(100px, 100px, 100px)"
       )
     , ( "order matters - initCssUnit before initXY has no effect"
       , Translate.initCssUnit Cqw
             >> Translate.initXY "el" 100 100
-      , Selector.style "translate" "100px 100px 0px"
+      , Selector.style "transform" "translateX(100px) translateY(100px)"
       )
     , ( "order matters - initCssUnit before initXZ has no effect"
       , Translate.initCssUnit Cqw
             >> Translate.initXZ "el" 100 100
-      , Selector.style "translate" "100px 0px 100px"
+      , Selector.style "transform" "translateX(100px) translateZ(100px)"
       )
     , ( "order matters - initCssUnit before initYZ has no effect"
       , Translate.initCssUnit Cqw
             >> Translate.initYZ "el" 100 100
-      , Selector.style "translate" "0px 100px 100px"
+      , Selector.style "transform" "translateY(100px) translateZ(100px)"
       )
     , ( "order matters - initCssUnit before initX has no effect"
       , Translate.initCssUnit Cqw
             >> Translate.initX "el" 100
-      , Selector.style "translate" "100px 0px 0px"
+      , Selector.style "transform" "translateX(100px)"
       )
     , ( "order matters - initCssUnit before initY has no effect"
       , Translate.initCssUnit Cqw
             >> Translate.initY "el" 100
-      , Selector.style "translate" "0px 100px 0px"
+      , Selector.style "transform" "translateY(100px)"
       )
     , ( "order matters - initCssUnit before initZ has no effect"
       , Translate.initCssUnit Cqw
             >> Translate.initZ "el" 100
-      , Selector.style "translate" "0px 0px 100px"
+      , Selector.style "transform" "translateZ(100px)"
       )
     , ( "initCssUnit sets the unit for all axes when all axes are initialised"
       , Translate.initXYZ "el" 100 100 100
             >> Translate.initCssUnit Cqw
-      , Selector.style "translate" "100cqw 100cqw 100cqw"
+      , Selector.style "transform" "translate3d(100cqw, 100cqw, 100cqw)"
       )
     , ( "initCssUnit sets the unit for all axes when both X and Y axes are initialised"
       , Translate.initXY "el" 100 100
             >> Translate.initCssUnit Cqw
-      , Selector.style "translate" "100cqw 100cqw 0cqw"
+      , Selector.style "transform" "translateX(100cqw) translateY(100cqw)"
       )
     , ( "initCssUnit sets the unit for all axes when both X and Z axes are initialised"
       , Translate.initXZ "el" 100 100
             >> Translate.initCssUnit Cqw
-      , Selector.style "translate" "100cqw 0cqw 100cqw"
+      , Selector.style "transform" "translateX(100cqw) translateZ(100cqw)"
       )
     , ( "initCssUnit sets the unit for all axes when both Y and Z axes are initialised"
       , Translate.initYZ "el" 100 100
             >> Translate.initCssUnit Cqw
-      , Selector.style "translate" "0cqw 100cqw 100cqw"
+      , Selector.style "transform" "translateY(100cqw) translateZ(100cqw)"
       )
     , ( "initCssUnit sets the unit for all axes when only the X axis is initialised"
       , Translate.initX "el" 100
             >> Translate.initCssUnit Cqw
-      , Selector.style "translate" "100cqw 0cqw 0cqw"
+      , Selector.style "transform" "translateX(100cqw)"
       )
     , ( "initCssUnit sets the unit for all axes when only the Y axis is initialised"
       , Translate.initY "el" 100
             >> Translate.initCssUnit Cqw
-      , Selector.style "translate" "0cqw 100cqw 0cqw"
+      , Selector.style "transform" "translateY(100cqw)"
       )
     , ( "initCssUnit sets the unit for all axes when only the Z axis is initialised"
       , Translate.initZ "el" 100
             >> Translate.initCssUnit Cqw
-      , Selector.style "translate" "0cqw 0cqw 100cqw"
+      , Selector.style "transform" "translateZ(100cqw)"
       )
     , ( "initCssUnitX overrides initCssUnit on the X axis only"
       , Translate.initX "el" 100
             >> Translate.initCssUnit Cqw
             >> Translate.initCssUnitX Vw
-      , Selector.style "translate" "100vw 0cqw 0cqw"
+      , Selector.style "transform" "translateX(100vw)"
       )
     , ( "initCssUnitY overrides initCssUnit on the Y axis only"
       , Translate.initY "el" 100
             >> Translate.initCssUnit Cqw
             >> Translate.initCssUnitY Vh
-      , Selector.style "translate" "0cqw 100vh 0cqw"
+      , Selector.style "transform" "translateY(100vh)"
       )
     , ( "initCssUnitZ overrides initCssUnit on the Z axis only"
       , Translate.initZ "el" 100
             >> Translate.initCssUnit Cqw
             >> Translate.initCssUnitZ Vw
-      , Selector.style "translate" "0cqw 0cqw 100vw"
+      , Selector.style "transform" "translateZ(100vw)"
       )
     , ( "initCssUnit* overrides initCssUnit on their respective axes"
       , Translate.initXYZ "el" 100 100 100
@@ -919,25 +998,25 @@ translateInitCssUnitConfigs =
             >> Translate.initCssUnitX Vw
             >> Translate.initCssUnitY Vh
             >> Translate.initCssUnitZ Percent
-      , Selector.style "translate" "100vw 100vh 100%"
+      , Selector.style "transform" "translate3d(100vw, 100vh, 100%)"
       )
     , ( "initCssUnitX overrides initCssUnit when only the X axis is not initialised"
       , Translate.initYZ "el" 100 100
             >> Translate.initCssUnit Cqw
             >> Translate.initCssUnitX Vw
-      , Selector.style "translate" "0vw 100cqw 100cqw"
+      , Selector.style "transform" "translateY(100cqw) translateZ(100cqw)"
       )
     , ( "initCssUnitY overrides initCssUnit when only the Y axis is not initialised"
       , Translate.initXZ "el" 100 100
             >> Translate.initCssUnit Cqw
             >> Translate.initCssUnitY Vh
-      , Selector.style "translate" "100cqw 0vh 100cqw"
+      , Selector.style "transform" "translateX(100cqw) translateZ(100cqw)"
       )
     , ( "initCssUnitZ overrides initCssUnit when only the Z axis is not initialised"
       , Translate.initXY "el" 100 100
             >> Translate.initCssUnit Cqw
             >> Translate.initCssUnitZ Vw
-      , Selector.style "translate" "100cqw 100cqw 0vw"
+      , Selector.style "transform" "translateX(100cqw) translateY(100cqw)"
       )
     ]
 
