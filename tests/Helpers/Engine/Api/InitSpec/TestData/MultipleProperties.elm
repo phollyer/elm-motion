@@ -53,7 +53,7 @@ multiPropertyTestData factory =
                     , factory.skew.initX animGroup 0
                     ]
               , expected =
-                    [ NameValuePair "transform" "translateX(10px) rotateX(15deg) skewX(5deg) scaleX(2)"
+                    [ NameValuePair "transform" "translateX(10px) rotateX(15deg) skewX(0deg) scaleX(2)"
                     ]
               , willChange = "transform"
               }
