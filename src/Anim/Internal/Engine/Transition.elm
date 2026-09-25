@@ -37,7 +37,6 @@ import Anim.Internal.Property.Translate as Translate
 import Dict
 import Html exposing (Html)
 import Html.Attributes
-import Set
 
 
 
