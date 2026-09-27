@@ -1,4 +1,7 @@
-module Factories.Properties.PerspectiveOrigin exposing (..)
+module Factories.Properties.PerspectiveOrigin exposing
+    ( Factory
+    , factory
+    )
 
 import Anim.Builder exposing (AnimBuilder)
 import Anim.Property.PerspectiveOrigin as PerspectiveOrigin

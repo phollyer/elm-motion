@@ -1,4 +1,7 @@
-module Factories.Properties.Skew exposing (..)
+module Factories.Properties.Skew exposing
+    ( Factory
+    , factory
+    )
 
 import Anim.Builder exposing (AnimBuilder)
 import Anim.Property.Skew as Skew
