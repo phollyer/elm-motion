@@ -1,8 +1,13 @@
 module Factories.Capabilities exposing
-    ( WithLiveDelta
+    ( WithBounds
+    , WithLiveDelta
     , WithSpring
     , WithTiming
     )
+
+
+type alias WithBounds eng =
+    { eng | withBounds : () }
 
 
 type alias WithLiveDelta eng =
