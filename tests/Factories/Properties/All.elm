@@ -4,7 +4,6 @@ module Factories.Properties.All exposing
     )
 
 import Anim.Builder exposing (AnimBuilder)
-import Anim.Property.Rotate as Rotate
 import Anim.Property.Scale as Scale
 import Anim.Property.Size as Size
 import Anim.Property.Skew as Skew
