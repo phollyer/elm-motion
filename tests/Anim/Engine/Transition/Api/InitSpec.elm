@@ -2,7 +2,16 @@ module Anim.Engine.Transition.Api.InitSpec exposing (suite)
 
 import Anim.Engine.Transition as Transition
 import Anim.Unit exposing (Unit(..))
+import Factories.Properties.CustomColor as CustomColorFactory
+import Factories.Properties.CustomProperty as CustomPropertyFactory
 import Factories.Properties.Init exposing (..)
+import Factories.Properties.Opacity as OpacityFactory
+import Factories.Properties.PerspectiveOrigin as PerspectiveOriginFactory
+import Factories.Properties.Rotate as RotateFactory
+import Factories.Properties.Scale as ScaleFactory
+import Factories.Properties.Size as SizeFactory
+import Factories.Properties.Skew as SkewFactory
+import Factories.Properties.Translate as TranslateFactory
 import Helpers.Engine.Api.InitSpec.Runner as Runner exposing (..)
 import Helpers.Engine.Api.InitSpec.TestData.CustomColor exposing (..)
 import Helpers.Engine.Api.InitSpec.TestData.CustomProperty exposing (..)
@@ -32,15 +41,15 @@ suite : Test
 suite =
     describe "Transition.init, writes inline styles, and will-change" <|
         Runner.run Transition.init Transition.attributes <|
-            [ customPropertyTestData customPropertyFactory
-            , customColorTestData customColorFactory
-            , opacityTestData opacityFactory
-            , perspectiveOriginTestData perspectiveOriginFactory
-            , rotateTestData rotateFactory
-            , scaleTestData scaleFactory
-            , skewTestData skewFactory
-            , sizeTestData sizeFactory
-            , translateTestData translateFactory
+            [ customPropertyTestData CustomPropertyFactory.initFactory
+            , customColorTestData CustomColorFactory.initFactory
+            , opacityTestData OpacityFactory.initFactory
+            , perspectiveOriginTestData PerspectiveOriginFactory.initFactory
+            , rotateTestData RotateFactory.initFactory
+            , scaleTestData ScaleFactory.initFactory
+            , skewTestData SkewFactory.initFactory
+            , sizeTestData SizeFactory.initFactory
+            , translateTestData TranslateFactory.initFactory
             , multiPropertyTestData multiPropertyFactory
             , multiGroupTestData multiGroupFactory
             ]

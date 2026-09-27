@@ -5,6 +5,7 @@ module Helpers.Engine.Api.TransformOrderSpec.Runner exposing
     )
 
 import Anim.Extra.TransformOrder exposing (TransformProperty(..))
+import Factories.Engines.Factory exposing (Factory)
 import Helpers.AnimGroups exposing (animGroup)
 import Html
 import Test exposing (Test, describe, test)
@@ -12,51 +13,100 @@ import Test.Html.Query as Query
 import Test.Html.Selector as Selector
 
 
-type alias TestData builder =
+type alias TestData animBuilder =
     { description : String
-    , testCases : List (TestCase builder)
+    , testCases : List (TestCase animBuilder)
     }
 
 
-type TestCase builder
-    = GeneralTest (GeneralTestCase builder)
+type TestCase animBuilder
+    = InitTest (InitTestCase animBuilder)
+    | AnimateTest (AnimateTestCase animBuilder)
 
 
-type alias GeneralTestCase builder =
+
+{- Currently this documents existing behaviour, writes the default transform
+   order on initialisation - which is wrong.
+
+   It should test actually setting the Transform Order at initialization. This functionality
+   does not yet exist.
+-}
+-- TODO: Implement tests for setting the Transform Order at initialization.
+
+
+type alias InitTestCase animBuilder =
     { description : String
-    , initFuncs : List builder
-    , transformOrderFunc : builder
+    , initFuncs : List (animBuilder -> animBuilder)
     , expected : String
     }
 
 
-run : (List builder -> state) -> (String -> state -> List (Html.Attribute msg)) -> List (TestData builder) -> List Test
-run initFunc attributesFunc =
-    List.map (runTestData initFunc attributesFunc)
+type alias AnimateTestCase animBuilder =
+    { description : String
+    , animateFuncs : List (animBuilder -> animBuilder)
+    , transformOrderFunc : animBuilder -> animBuilder
+    , expected : String
+    }
 
 
-runTestData : (List builder -> state) -> (String -> state -> List (Html.Attribute msg)) -> TestData builder -> Test
-runTestData initFunc attributesFunc td =
+run :
+    Factory animBuilder state
+    -> (String -> state -> List (Html.Attribute msg))
+    -> List (TestData animBuilder)
+    -> List Test
+run factory attributesFunc =
+    List.map (runTestData factory attributesFunc)
+
+
+runTestData :
+    Factory animBuilder state
+    -> (String -> state -> List (Html.Attribute msg))
+    -> TestData animBuilder
+    -> Test
+runTestData factory attributesFunc td =
     describe td.description <|
-        List.map (runTestCase initFunc attributesFunc) td.testCases
+        List.map (runTestCase factory attributesFunc) td.testCases
 
 
 runTestCase :
-    (List builder -> state)
+    Factory animBuilder state
     -> (String -> state -> List (Html.Attribute msg))
-    -> TestCase builder
+    -> TestCase animBuilder
     -> Test
-runTestCase initFunc attributesFunc testCase =
+runTestCase factory attributesFunc testCase =
     case testCase of
-        GeneralTest tc ->
-            generalRunner initFunc attributesFunc tc
+        InitTest tc ->
+            initRunner factory attributesFunc tc
+
+        AnimateTest tc ->
+            animateRunner factory attributesFunc tc
 
 
-generalRunner : (List builder -> state) -> (String -> state -> List (Html.Attribute msg)) -> GeneralTestCase builder -> Test
-generalRunner initFunc attributesFunc tc =
+initRunner : Factory animBuilder state -> (String -> state -> List (Html.Attribute msg)) -> InitTestCase animBuilder -> Test
+initRunner factory attributesFunc tc =
     test tc.description <|
         \_ ->
-            initFunc tc.initFuncs
+            factory.init tc.initFuncs
+                |> attributesQueryFor attributesFunc animGroup
+                |> Query.has
+                    [ Selector.style "transform" tc.expected ]
+
+
+animateRunner :
+    Factory animBuilder state
+    -> (String -> state -> List (Html.Attribute msg))
+    -> AnimateTestCase animBuilder
+    -> Test
+animateRunner factory attributesFunc tc =
+    test tc.description <|
+        \_ ->
+            factory.init []
+                |> (\state ->
+                        factory.animate state <|
+                            factory.for animGroup
+                                >> tc.transformOrderFunc
+                                >> List.foldl (>>) identity tc.animateFuncs
+                   )
                 |> attributesQueryFor attributesFunc animGroup
                 |> Query.has
                     [ Selector.style "transform" tc.expected ]

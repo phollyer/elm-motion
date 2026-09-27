@@ -2,12 +2,12 @@ module Helpers.Engine.Api.InitSpec.TestData.CustomProperty exposing (..)
 
 import Anim.Property.Custom as Property
 import Anim.Unit exposing (Unit(..))
-import Factories.Properties.Init exposing (CustomPropertyInitFactory)
+import Factories.Properties.CustomProperty exposing (InitFactory)
 import Helpers.AnimGroups exposing (animGroup)
 import Helpers.Engine.Api.InitSpec.Runner exposing (..)
 
 
-customPropertyTestData : CustomPropertyInitFactory (a -> a) -> TestData (a -> a)
+customPropertyTestData : InitFactory (a -> a) -> TestData (a -> a)
 customPropertyTestData factory =
     { description = "Custom property tests"
     , testCases =

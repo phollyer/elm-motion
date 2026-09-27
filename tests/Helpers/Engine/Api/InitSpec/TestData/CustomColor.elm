@@ -3,12 +3,12 @@ module Helpers.Engine.Api.InitSpec.TestData.CustomColor exposing (..)
 import Anim.Extra.Color as Color
 import Anim.Property.CustomColor as CustomColor
 import Anim.Unit exposing (Unit(..))
-import Factories.Properties.Init exposing (CustomColorInitFactory)
+import Factories.Properties.CustomColor as CustomColorFactory
 import Helpers.AnimGroups exposing (animGroup)
 import Helpers.Engine.Api.InitSpec.Runner exposing (..)
 
 
-customColorTestData : CustomColorInitFactory (a -> a) -> TestData (a -> a)
+customColorTestData : CustomColorFactory.InitFactory (a -> a) -> TestData (a -> a)
 customColorTestData factory =
     { description = "Custom color tests"
     , testCases =

@@ -1,11 +1,11 @@
 module Helpers.Engine.Api.InitSpec.TestData.Skew exposing (..)
 
-import Factories.Properties.Init exposing (SkewInitFactory)
+import Factories.Properties.Skew exposing (InitFactory)
 import Helpers.AnimGroups exposing (animGroup)
 import Helpers.Engine.Api.InitSpec.Runner exposing (..)
 
 
-skewTestData : SkewInitFactory (a -> a) -> TestData (a -> a)
+skewTestData : InitFactory (a -> a) -> TestData (a -> a)
 skewTestData factory =
     { description = "Skew.init* tests"
     , testCases =

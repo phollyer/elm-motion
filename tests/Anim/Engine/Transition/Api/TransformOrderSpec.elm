@@ -2,6 +2,7 @@ module Anim.Engine.Transition.Api.TransformOrderSpec exposing (suite)
 
 import Anim.Engine.Transition as Transition
 import Factories.Engines.TransformOrder exposing (transformOrderFactory)
+import Factories.Engines.Transition as TransitionFactory
 import Helpers.Engine.Api.TransformOrderSpec.Runner as Runner
 import Helpers.Engine.Api.TransformOrderSpec.TestData exposing (..)
 import Test exposing (Test, describe)
@@ -20,7 +21,7 @@ import Test exposing (Test, describe)
 suite : Test
 suite =
     describe "Transition.transformOrder, writes the correct transform order" <|
-        Runner.run Transition.init Transition.attributes <|
+        Runner.run TransitionFactory.factory Transition.attributes <|
             [ transformOrderTestData <|
                 transformOrderFactory Transition.transformOrder
             ]
