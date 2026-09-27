@@ -22,10 +22,10 @@ import Factories.Properties.Skew as SkewFactory
 import Factories.Properties.Translate as TranslateFactory
 
 
-type alias Factory animBuilder customColorBuilder customPropertyBuilder opacityBuilder perspectiveOriginBuilder rotateBuilder scaleBuilder sizeBuilder skewBuilder translateBuilder =
-    { customColor : CustomColorFactory.Factory animBuilder customColorBuilder
-    , customProperty : CustomPropertyFactory.Factory animBuilder customPropertyBuilder
-    , opacity : OpacityFactory.Factory animBuilder opacityBuilder
+type alias Factory animBuilder customColorEng customPropertyEng opacityEng perspectiveOriginBuilder rotateBuilder scaleBuilder sizeBuilder skewBuilder translateBuilder =
+    { customColor : CustomColorFactory.Factory animBuilder customColorEng
+    , customProperty : CustomPropertyFactory.Factory animBuilder customPropertyEng
+    , opacity : OpacityFactory.Factory animBuilder opacityEng
     , perspectiveOrigin : PerspectiveOriginFactory.Factory animBuilder perspectiveOriginBuilder
     , rotate : RotateFactory.Factory animBuilder rotateBuilder
     , scale : ScaleFactory.Factory animBuilder scaleBuilder
@@ -35,7 +35,7 @@ type alias Factory animBuilder customColorBuilder customPropertyBuilder opacityB
     }
 
 
-factory : Factory (AnimBuilder eng) eng eng (Opacity.Builder eng) (PerspectiveOrigin.Builder eng) (Rotate.Builder eng) (Scale.Builder eng) (Size.Builder eng) (Skew.Builder eng) (Translate.Builder eng)
+factory : Factory (AnimBuilder eng) eng eng eng (PerspectiveOrigin.Builder eng) (Rotate.Builder eng) (Scale.Builder eng) (Size.Builder eng) (Skew.Builder eng) (Translate.Builder eng)
 factory =
     { customColor = CustomColorFactory.factory
     , customProperty = CustomPropertyFactory.factory
