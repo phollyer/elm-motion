@@ -1,4 +1,4 @@
-module Helpers.Engine.Api.InitSpec.Runner exposing
+module Specs.InitSpec.Runner exposing
     ( NameValuePair
     , TestCase(..)
     , TestData

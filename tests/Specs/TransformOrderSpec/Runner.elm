@@ -1,10 +1,10 @@
-module Helpers.Engine.Api.TransformOrderSpec.Runner exposing
+module Specs.TransformOrderSpec.Runner exposing
     ( TestCase(..)
     , TestData
     , run
     )
 
-import Anim.Extra.TransformOrder exposing (TransformProperty(..))
+import Anim.Extra.TransformOrder exposing (TransformProperty)
 import Factories.Engines.Factory exposing (Factory)
 import Helpers.AnimGroups exposing (animGroup)
 import Html
@@ -44,7 +44,7 @@ type alias InitTestCase animBuilder =
 type alias AnimateTestCase animBuilder =
     { description : String
     , animateFuncs : List (animBuilder -> animBuilder)
-    , transformOrderFunc : animBuilder -> animBuilder
+    , transformOrder : List TransformProperty
     , expected : String
     }
 
@@ -104,7 +104,7 @@ animateRunner factory attributesFunc tc =
                 |> (\state ->
                         factory.animate state <|
                             factory.for animGroup
-                                >> tc.transformOrderFunc
+                                >> factory.transformOrder tc.transformOrder
                                 >> List.foldl (>>) identity tc.animateFuncs
                    )
                 |> attributesQueryFor attributesFunc animGroup

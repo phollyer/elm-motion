@@ -1,13 +1,13 @@
-module Helpers.Engine.Api.InitSpec.TestData.Opacity exposing (..)
+module Specs.InitSpec.TestData.Opacity exposing (testData)
 
 import Anim.Unit exposing (Unit(..))
 import Factories.Properties.Opacity exposing (InitFactory)
 import Helpers.AnimGroups exposing (animGroup)
-import Helpers.Engine.Api.InitSpec.Runner exposing (..)
+import Specs.InitSpec.Runner exposing (..)
 
 
-opacityTestData : InitFactory (a -> a) -> TestData (a -> a)
-opacityTestData factory =
+testData : InitFactory (a -> a) -> TestData (a -> a)
+testData factory =
     { description = "Opacity.init tests"
     , testCases =
         List.map GeneralTest

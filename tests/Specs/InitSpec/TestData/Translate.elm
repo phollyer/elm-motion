@@ -1,13 +1,13 @@
-module Helpers.Engine.Api.InitSpec.TestData.Translate exposing (..)
+module Specs.InitSpec.TestData.Translate exposing (..)
 
 import Anim.Unit exposing (Unit(..))
 import Factories.Properties.Translate as TranslateFactory
 import Helpers.AnimGroups exposing (animGroup)
-import Helpers.Engine.Api.InitSpec.Runner exposing (..)
+import Specs.InitSpec.Runner exposing (..)
 
 
-translateTestData : TranslateFactory.InitFactory (a -> a) -> TestData (a -> a)
-translateTestData factory =
+testData : TranslateFactory.InitFactory (a -> a) -> TestData (a -> a)
+testData factory =
     { description = "Translate.init* tests"
     , testCases =
         List.map GeneralTest

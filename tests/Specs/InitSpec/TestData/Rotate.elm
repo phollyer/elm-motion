@@ -1,13 +1,13 @@
-module Helpers.Engine.Api.InitSpec.TestData.Rotate exposing (..)
+module Specs.InitSpec.TestData.Rotate exposing (..)
 
 import Anim.Unit exposing (Unit(..))
 import Factories.Properties.Rotate as RotateFactory
 import Helpers.AnimGroups exposing (animGroup)
-import Helpers.Engine.Api.InitSpec.Runner exposing (..)
+import Specs.InitSpec.Runner exposing (..)
 
 
-rotateTestData : RotateFactory.InitFactory (a -> a) -> TestData (a -> a)
-rotateTestData factory =
+testData : RotateFactory.InitFactory (a -> a) -> TestData (a -> a)
+testData factory =
     { description = "Rotate.init* tests"
     , testCases =
         List.map GeneralTest

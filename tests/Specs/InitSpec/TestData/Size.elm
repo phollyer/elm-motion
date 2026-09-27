@@ -1,13 +1,13 @@
-module Helpers.Engine.Api.InitSpec.TestData.Size exposing (..)
+module Specs.InitSpec.TestData.Size exposing (testData)
 
 import Anim.Unit exposing (Unit(..))
 import Factories.Properties.Size exposing (InitFactory)
 import Helpers.AnimGroups exposing (animGroup)
-import Helpers.Engine.Api.InitSpec.Runner exposing (..)
+import Specs.InitSpec.Runner exposing (..)
 
 
-sizeTestData : InitFactory (a -> a) -> TestData (a -> a)
-sizeTestData factory =
+testData : InitFactory (a -> a) -> TestData (a -> a)
+testData factory =
     { description = "Size.init* tests"
     , testCases =
         List.map SizeTest

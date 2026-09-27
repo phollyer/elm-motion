@@ -1,6 +1,6 @@
-module Factories.Engines.Keyframe exposing (..)
+module Factories.Engines.Keyframe exposing (factory)
 
-import Anim.Engine.Keyframe as Keyframe exposing (..)
+import Anim.Engine.Keyframe as Keyframe exposing (AnimState, EngineBuilder)
 import Factories.Engines.Factory exposing (Factory)
 
 
@@ -9,4 +9,5 @@ factory =
     { init = Keyframe.init
     , for = Keyframe.for
     , animate = Keyframe.animate
+    , transformOrder = Keyframe.transformOrder
     }

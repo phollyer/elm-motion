@@ -1,15 +1,15 @@
-module Helpers.Engine.Api.InitSpec.TestData.MultipleProperties exposing (..)
+module Specs.InitSpec.TestData.MultipleProperties exposing (testData)
 
 import Anim.Unit exposing (Unit(..))
-import Factories.Properties.Init exposing (MultiPropertyInitFactory)
+import Factories.Properties.All exposing (InitFactory)
 import Helpers.AnimGroups exposing (animGroup)
-import Helpers.Engine.Api.InitSpec.Runner exposing (..)
-import Helpers.Engine.Api.InitSpec.TestData.Opacity exposing (..)
-import Helpers.Engine.Api.InitSpec.TestData.Translate exposing (..)
+import Specs.InitSpec.Runner exposing (..)
+import Specs.InitSpec.TestData.Opacity exposing (..)
+import Specs.InitSpec.TestData.Translate exposing (..)
 
 
-multiPropertyTestData : MultiPropertyInitFactory (a -> a) -> TestData (a -> a)
-multiPropertyTestData factory =
+testData : InitFactory (a -> a) -> TestData (a -> a)
+testData factory =
     { description = "Multi-Property tests"
     , testCases =
         List.map MultiPropertyTest

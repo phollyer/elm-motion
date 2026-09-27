@@ -1,13 +1,13 @@
-module Helpers.Engine.Api.InitSpec.TestData.PerspectiveOrigin exposing (..)
+module Specs.InitSpec.TestData.PerspectiveOrigin exposing (testData)
 
 import Anim.Unit exposing (Unit(..))
 import Factories.Properties.PerspectiveOrigin as PerspectiveOriginFactory
 import Helpers.AnimGroups exposing (animGroup)
-import Helpers.Engine.Api.InitSpec.Runner exposing (..)
+import Specs.InitSpec.Runner exposing (..)
 
 
-perspectiveOriginTestData : PerspectiveOriginFactory.InitFactory (a -> a) -> TestData (a -> a)
-perspectiveOriginTestData factory =
+testData : PerspectiveOriginFactory.InitFactory (a -> a) -> TestData (a -> a)
+testData factory =
     { description = "PerspectiveOrigin.init tests"
     , testCases =
         List.map GeneralTest

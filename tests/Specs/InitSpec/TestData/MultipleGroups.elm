@@ -1,13 +1,13 @@
-module Helpers.Engine.Api.InitSpec.TestData.MultipleGroups exposing (..)
+module Specs.InitSpec.TestData.MultipleGroups exposing (testData)
 
 import Anim.Unit exposing (Unit(..))
-import Factories.Properties.Init exposing (MultiGroupInitFactory)
+import Factories.Properties.All exposing (InitFactory)
 import Helpers.AnimGroups exposing (animGroup, otherAnimGroup)
-import Helpers.Engine.Api.InitSpec.Runner exposing (..)
+import Specs.InitSpec.Runner exposing (..)
 
 
-multiGroupTestData : MultiGroupInitFactory (a -> a) -> TestData (a -> a)
-multiGroupTestData factory =
+testData : InitFactory (a -> a) -> TestData (a -> a)
+testData factory =
     { description = "Multi-Group tests"
     , testCases =
         List.map MultiGroupTest
