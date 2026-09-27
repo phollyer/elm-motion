@@ -5,7 +5,7 @@ import Anim.Engine.Keyframe as Keyframe
 import Anim.Engine.Transition as Transition
 import Factories.Engines.Keyframe as KeyframeFactory
 import Factories.Engines.Transition as TransitionFactory
-import Factories.Properties.All exposing (initFactory)
+import Factories.Properties.All exposing (factory)
 import Specs.TransformOrderSpec.Runner as Runner
 import Specs.TransformOrderSpec.TestData as TestData
 import Test exposing (Test, describe)
@@ -33,5 +33,4 @@ suite =
 
 testData : List (Runner.TestData (AnimBuilder eng))
 testData =
-    [ TestData.testData initFactory
-    ]
+    [ TestData.testData factory ]

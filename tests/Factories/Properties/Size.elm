@@ -5,6 +5,17 @@ import Anim.Property.Size as Size
 import Anim.Unit exposing (Unit(..))
 
 
+type alias Factory animBuilder =
+    { init : InitFactory animBuilder
+    }
+
+
+factory : Factory (AnimBuilder eng -> AnimBuilder eng)
+factory =
+    { init = initFactory
+    }
+
+
 type alias InitFactory animBuilder =
     { initH : String -> Float -> animBuilder
     , initW : String -> Float -> animBuilder

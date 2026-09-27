@@ -5,6 +5,16 @@ import Anim.Property.PerspectiveOrigin as PerspectiveOrigin
 import Anim.Unit exposing (Unit(..))
 
 
+type alias Factory animBuilder =
+    { init : InitFactory animBuilder }
+
+
+factory : Factory (AnimBuilder eng -> AnimBuilder eng)
+factory =
+    { init = initFactory
+    }
+
+
 type alias InitFactory animBuilder =
     { initX : String -> Float -> animBuilder
     , initY : String -> Float -> animBuilder

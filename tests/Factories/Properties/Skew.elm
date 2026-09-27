@@ -4,6 +4,17 @@ import Anim.Builder exposing (AnimBuilder)
 import Anim.Property.Skew as Skew
 
 
+type alias Factory animBuilder =
+    { init : InitFactory animBuilder
+    }
+
+
+factory : Factory (AnimBuilder eng -> AnimBuilder eng)
+factory =
+    { init = initFactory
+    }
+
+
 type alias InitFactory animBuilder =
     { initX : String -> Float -> animBuilder
     , initY : String -> Float -> animBuilder
