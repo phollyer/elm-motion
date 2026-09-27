@@ -143,7 +143,7 @@ to endPos (OpacityBuilder config builder) =
 -- ============================================================
 
 
-by : Float -> OpacityBuilder eng -> OpacityBuilder eng
+by : Float -> OpacityBuilder { eng | withLiveDelta : () } -> OpacityBuilder { eng | withLiveDelta : () }
 by delta (OpacityBuilder config builder) =
     let
         startPos =

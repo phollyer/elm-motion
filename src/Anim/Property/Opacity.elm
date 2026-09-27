@@ -287,7 +287,7 @@ to =
             >> ... -- continue with animation
 
 -}
-by : Float -> Builder eng -> Builder eng
+by : Float -> Builder { eng | withLiveDelta : () } -> Builder { eng | withLiveDelta : () }
 by =
     OB.by
 
