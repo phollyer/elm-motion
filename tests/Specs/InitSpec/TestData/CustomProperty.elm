@@ -7,7 +7,7 @@ import Helpers.AnimGroups exposing (animGroup)
 import Specs.InitSpec.Runner exposing (..)
 
 
-testData : Factory (a -> a) -> TestData (a -> a)
+testData : Factory a b -> TestData (a -> a)
 testData factory =
     { description = "Custom property tests"
     , testCases =

@@ -15,6 +15,8 @@ type alias Factory animBuilder builder =
     , initXZ : String -> Float -> Float -> (animBuilder -> animBuilder)
     , initYZ : String -> Float -> Float -> (animBuilder -> animBuilder)
     , initXYZ : String -> Float -> Float -> Float -> (animBuilder -> animBuilder)
+    , begin : animBuilder -> builder
+    , end : builder -> animBuilder
     , toX : Float -> (builder -> builder)
     , toY : Float -> (builder -> builder)
     , toZ : Float -> (builder -> builder)
@@ -34,6 +36,8 @@ factory =
     , initXZ = Scale.initXZ
     , initYZ = Scale.initYZ
     , initXYZ = Scale.initXYZ
+    , begin = Scale.begin
+    , end = Scale.end
     , toX = Scale.toX
     , toY = Scale.toY
     , toZ = Scale.toZ

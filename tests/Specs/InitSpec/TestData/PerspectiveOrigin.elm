@@ -6,7 +6,7 @@ import Helpers.AnimGroups exposing (animGroup)
 import Specs.InitSpec.Runner exposing (..)
 
 
-testData : Factory a -> TestData (a -> a)
+testData : Factory a b -> TestData (a -> a)
 testData factory =
     { description = "PerspectiveOrigin.init tests"
     , testCases =

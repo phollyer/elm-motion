@@ -6,7 +6,7 @@ import Helpers.AnimGroups exposing (animGroup)
 import Specs.TransformOrderSpec.Runner exposing (TestCase(..), TestData)
 
 
-testData : Factory a b c d -> TestData a
+testData : Factory a b c d e f g h i j -> TestData a
 testData f =
     { description = "transformOrder writes the correct inline styles"
     , testCases =

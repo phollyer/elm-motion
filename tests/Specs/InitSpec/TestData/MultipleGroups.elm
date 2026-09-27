@@ -6,7 +6,7 @@ import Helpers.AnimGroups exposing (animGroup, otherAnimGroup)
 import Specs.InitSpec.Runner exposing (..)
 
 
-testData : Factory a b c d -> TestData (a -> a)
+testData : Factory a b c d e f g h i j -> TestData (a -> a)
 testData factory =
     { description = "Multi-Group tests"
     , testCases =
