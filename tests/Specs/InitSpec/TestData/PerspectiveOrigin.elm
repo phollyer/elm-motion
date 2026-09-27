@@ -1,12 +1,12 @@
 module Specs.InitSpec.TestData.PerspectiveOrigin exposing (testData)
 
 import Anim.Unit exposing (Unit(..))
-import Factories.Properties.PerspectiveOrigin as PerspectiveOriginFactory
+import Factories.Properties.PerspectiveOrigin exposing (Factory)
 import Helpers.AnimGroups exposing (animGroup)
 import Specs.InitSpec.Runner exposing (..)
 
 
-testData : PerspectiveOriginFactory.InitFactory (a -> a) -> TestData (a -> a)
+testData : Factory a -> TestData (a -> a)
 testData factory =
     { description = "PerspectiveOrigin.init tests"
     , testCases =

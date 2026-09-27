@@ -1,12 +1,12 @@
 module Specs.InitSpec.TestData.MultipleGroups exposing (testData)
 
 import Anim.Unit exposing (Unit(..))
-import Factories.Properties.All exposing (InitFactory)
+import Factories.Properties.All exposing (Factory)
 import Helpers.AnimGroups exposing (animGroup, otherAnimGroup)
 import Specs.InitSpec.Runner exposing (..)
 
 
-testData : InitFactory (a -> a) -> TestData (a -> a)
+testData : Factory a b c d -> TestData (a -> a)
 testData factory =
     { description = "Multi-Group tests"
     , testCases =

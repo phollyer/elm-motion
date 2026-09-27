@@ -1,4 +1,7 @@
-module Factories.Properties.Size exposing (..)
+module Factories.Properties.Size exposing
+    ( Factory
+    , factory
+    )
 
 import Anim.Builder exposing (AnimBuilder)
 import Anim.Property.Size as Size
@@ -6,28 +9,17 @@ import Anim.Unit exposing (Unit(..))
 
 
 type alias Factory animBuilder =
-    { init : InitFactory animBuilder
+    { initH : String -> Float -> (animBuilder -> animBuilder)
+    , initW : String -> Float -> (animBuilder -> animBuilder)
+    , initHW : String -> Float -> Float -> (animBuilder -> animBuilder)
+    , initCssUnitH : Unit -> (animBuilder -> animBuilder)
+    , initCssUnitW : Unit -> (animBuilder -> animBuilder)
+    , initCssUnit : Unit -> (animBuilder -> animBuilder)
     }
 
 
-factory : Factory (AnimBuilder eng -> AnimBuilder eng)
+factory : Factory (AnimBuilder eng)
 factory =
-    { init = initFactory
-    }
-
-
-type alias InitFactory animBuilder =
-    { initH : String -> Float -> animBuilder
-    , initW : String -> Float -> animBuilder
-    , initHW : String -> Float -> Float -> animBuilder
-    , initCssUnitH : Unit -> animBuilder
-    , initCssUnitW : Unit -> animBuilder
-    , initCssUnit : Unit -> animBuilder
-    }
-
-
-initFactory : InitFactory (AnimBuilder eng -> AnimBuilder eng)
-initFactory =
     { initH = Size.initH
     , initW = Size.initW
     , initHW = Size.initHW

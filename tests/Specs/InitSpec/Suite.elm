@@ -50,15 +50,15 @@ suite =
 
 testData : List (Runner.TestData (AnimBuilder eng -> AnimBuilder eng))
 testData =
-    [ CustomColor.testData CustomColorFactory.initFactory
-    , CustomProperty.testData CustomPropertyFactory.initFactory
-    , Opacity.testData OpacityFactory.initFactory
-    , PerspectiveOrigin.testData PerspectiveOriginFactory.initFactory
-    , Rotate.testData RotateFactory.initFactory
-    , Scale.testData ScaleFactory.initFactory
-    , Size.testData SizeFactory.initFactory
-    , Skew.testData SkewFactory.initFactory
-    , Translate.testData TranslateFactory.initFactory
-    , MultipleProperties.testData AllFactory.initFactory
-    , MultipleGroups.testData AllFactory.initFactory
+    [ CustomColor.testData CustomColorFactory.factory
+    , CustomProperty.testData CustomPropertyFactory.factory
+    , Opacity.testData OpacityFactory.factory
+    , PerspectiveOrigin.testData PerspectiveOriginFactory.factory
+    , Rotate.testData RotateFactory.factory
+    , Scale.testData ScaleFactory.factory
+    , Size.testData SizeFactory.factory
+    , Skew.testData SkewFactory.factory
+    , Translate.testData TranslateFactory.factory
+    , MultipleProperties.testData AllFactory.factory
+    , MultipleGroups.testData AllFactory.factory
     ]

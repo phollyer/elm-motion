@@ -1,8 +1,6 @@
 module Factories.Properties.All exposing
     ( Factory
-    , InitFactory
     , factory
-    , initFactory
     )
 
 import Anim.Builder exposing (AnimBuilder)
@@ -29,7 +27,7 @@ type alias Factory animBuilder rotateBuilder scaleBuilder translateBuilder =
     }
 
 
-factory : Factory (AnimBuilder eng -> AnimBuilder eng) (Rotate.Builder eng -> Rotate.Builder eng) (Scale.Builder eng -> Scale.Builder eng) (Translate.Builder eng -> Translate.Builder eng)
+factory : Factory (AnimBuilder eng) (Rotate.Builder eng) (Scale.Builder eng) (Translate.Builder eng)
 factory =
     { opacity = OpacityFactory.factory
     , perspectiveOrigin = PerspectiveOriginFactory.factory
@@ -38,27 +36,4 @@ factory =
     , size = SizeFactory.factory
     , skew = SkewFactory.factory
     , translate = TranslateFactory.factory
-    }
-
-
-type alias InitFactory animBuilder =
-    { opacity : OpacityFactory.InitFactory animBuilder
-    , perspectiveOrigin : PerspectiveOriginFactory.InitFactory animBuilder
-    , rotate : RotateFactory.InitFactory animBuilder
-    , scale : ScaleFactory.InitFactory animBuilder
-    , size : SizeFactory.InitFactory animBuilder
-    , skew : SkewFactory.InitFactory animBuilder
-    , translate : TranslateFactory.InitFactory animBuilder
-    }
-
-
-initFactory : InitFactory (AnimBuilder eng -> AnimBuilder eng)
-initFactory =
-    { opacity = OpacityFactory.initFactory
-    , perspectiveOrigin = PerspectiveOriginFactory.initFactory
-    , rotate = RotateFactory.initFactory
-    , scale = ScaleFactory.initFactory
-    , size = SizeFactory.initFactory
-    , skew = SkewFactory.initFactory
-    , translate = TranslateFactory.initFactory
     }

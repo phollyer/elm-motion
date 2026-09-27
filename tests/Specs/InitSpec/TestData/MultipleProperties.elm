@@ -1,14 +1,14 @@
 module Specs.InitSpec.TestData.MultipleProperties exposing (testData)
 
 import Anim.Unit exposing (Unit(..))
-import Factories.Properties.All exposing (InitFactory)
+import Factories.Properties.All exposing (Factory)
 import Helpers.AnimGroups exposing (animGroup)
 import Specs.InitSpec.Runner exposing (..)
 import Specs.InitSpec.TestData.Opacity exposing (..)
 import Specs.InitSpec.TestData.Translate exposing (..)
 
 
-testData : InitFactory (a -> a) -> TestData (a -> a)
+testData : Factory a b c d -> TestData (a -> a)
 testData factory =
     { description = "Multi-Property tests"
     , testCases =

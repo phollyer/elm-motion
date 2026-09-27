@@ -1,14 +1,17 @@
-module Factories.Properties.CustomColor exposing (..)
+module Factories.Properties.CustomColor exposing
+    ( Factory
+    , factory
+    )
 
 import Anim.Builder exposing (AnimBuilder)
 import Anim.Extra.Color exposing (Color)
 import Anim.Property.CustomColor as CustomColor exposing (ColorProperty)
 
 
-type alias InitFactory animBuilder =
+type alias Factory animBuilder =
     { init : String -> ColorProperty -> Color -> animBuilder }
 
 
-initFactory : InitFactory (AnimBuilder eng -> AnimBuilder eng)
-initFactory =
+factory : Factory (AnimBuilder eng -> AnimBuilder eng)
+factory =
     { init = CustomColor.init }

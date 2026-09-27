@@ -1,12 +1,12 @@
 module Specs.InitSpec.TestData.Rotate exposing (..)
 
 import Anim.Unit exposing (Unit(..))
-import Factories.Properties.Rotate as RotateFactory
+import Factories.Properties.Rotate exposing (Factory)
 import Helpers.AnimGroups exposing (animGroup)
 import Specs.InitSpec.Runner exposing (..)
 
 
-testData : RotateFactory.InitFactory (a -> a) -> TestData (a -> a)
+testData : Factory a b -> TestData (a -> a)
 testData factory =
     { description = "Rotate.init* tests"
     , testCases =

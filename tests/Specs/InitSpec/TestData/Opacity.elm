@@ -1,12 +1,12 @@
 module Specs.InitSpec.TestData.Opacity exposing (testData)
 
 import Anim.Unit exposing (Unit(..))
-import Factories.Properties.Opacity exposing (InitFactory)
+import Factories.Properties.Opacity exposing (Factory)
 import Helpers.AnimGroups exposing (animGroup)
 import Specs.InitSpec.Runner exposing (..)
 
 
-testData : InitFactory (a -> a) -> TestData (a -> a)
+testData : Factory a -> TestData (a -> a)
 testData factory =
     { description = "Opacity.init tests"
     , testCases =

@@ -1,12 +1,12 @@
 module Specs.InitSpec.TestData.Scale exposing (testData)
 
 import Anim.Unit exposing (Unit(..))
-import Factories.Properties.Scale exposing (InitFactory)
+import Factories.Properties.Scale exposing (Factory)
 import Helpers.AnimGroups exposing (animGroup)
 import Specs.InitSpec.Runner exposing (..)
 
 
-testData : InitFactory (a -> a) -> TestData (a -> a)
+testData : Factory a b -> TestData (a -> a)
 testData factory =
     { description = "Scale.init* tests"
     , testCases =

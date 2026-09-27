@@ -1,11 +1,11 @@
 module Specs.InitSpec.TestData.Skew exposing (testData)
 
-import Factories.Properties.Skew exposing (InitFactory)
+import Factories.Properties.Skew exposing (Factory)
 import Helpers.AnimGroups exposing (animGroup)
 import Specs.InitSpec.Runner exposing (..)
 
 
-testData : InitFactory (a -> a) -> TestData (a -> a)
+testData : Factory a -> TestData (a -> a)
 testData factory =
     { description = "Skew.init* tests"
     , testCases =
