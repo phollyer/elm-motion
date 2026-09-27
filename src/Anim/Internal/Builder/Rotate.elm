@@ -380,7 +380,7 @@ markAxes axes builder =
 -- ============================================================
 
 
-byXYZ : Float -> Float -> Float -> RotateBuilder eng -> RotateBuilder eng
+byXYZ : Float -> Float -> Float -> RotateBuilder { eng | withLiveDelta : () } -> RotateBuilder { eng | withLiveDelta : () }
 byXYZ deltaX deltaY deltaZ (RotateBuilder config builder) =
     let
         startX =
@@ -397,32 +397,32 @@ byXYZ deltaX deltaY deltaZ (RotateBuilder config builder) =
         |> toXYZ (startX + deltaX) (startY + deltaY) (startZ + deltaZ)
 
 
-byXY : Float -> Float -> RotateBuilder eng -> RotateBuilder eng
+byXY : Float -> Float -> RotateBuilder { eng | withLiveDelta : () } -> RotateBuilder { eng | withLiveDelta : () }
 byXY deltaX deltaY =
     byXYZ deltaX deltaY 0
 
 
-byXZ : Float -> Float -> RotateBuilder eng -> RotateBuilder eng
+byXZ : Float -> Float -> RotateBuilder { eng | withLiveDelta : () } -> RotateBuilder { eng | withLiveDelta : () }
 byXZ deltaX deltaZ =
     byXYZ deltaX 0 deltaZ
 
 
-byX : Float -> RotateBuilder eng -> RotateBuilder eng
+byX : Float -> RotateBuilder { eng | withLiveDelta : () } -> RotateBuilder { eng | withLiveDelta : () }
 byX deltaX =
     byXYZ deltaX 0 0
 
 
-byYZ : Float -> Float -> RotateBuilder eng -> RotateBuilder eng
+byYZ : Float -> Float -> RotateBuilder { eng | withLiveDelta : () } -> RotateBuilder { eng | withLiveDelta : () }
 byYZ deltaY deltaZ =
     byXYZ 0 deltaY deltaZ
 
 
-byY : Float -> RotateBuilder eng -> RotateBuilder eng
+byY : Float -> RotateBuilder { eng | withLiveDelta : () } -> RotateBuilder { eng | withLiveDelta : () }
 byY deltaY =
     byXYZ 0 deltaY 0
 
 
-byZ : Float -> RotateBuilder eng -> RotateBuilder eng
+byZ : Float -> RotateBuilder { eng | withLiveDelta : () } -> RotateBuilder { eng | withLiveDelta : () }
 byZ deltaZ =
     byXYZ 0 0 deltaZ
 

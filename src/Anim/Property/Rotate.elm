@@ -547,49 +547,49 @@ setZ =
 
 {-| Move by a delta on the X, Y, and Z axes.
 -}
-byXYZ : Float -> Float -> Float -> Builder eng -> Builder eng
+byXYZ : Float -> Float -> Float -> Builder { eng | withLiveDelta : () } -> Builder { eng | withLiveDelta : () }
 byXYZ =
     RB.byXYZ
 
 
 {-| Move by a delta on the X and Y axes. Z is unaffected.
 -}
-byXY : Float -> Float -> Builder eng -> Builder eng
+byXY : Float -> Float -> Builder { eng | withLiveDelta : () } -> Builder { eng | withLiveDelta : () }
 byXY =
     RB.byXY
 
 
 {-| Move by a delta on the X and Z axes. Y is unaffected.
 -}
-byXZ : Float -> Float -> Builder eng -> Builder eng
+byXZ : Float -> Float -> Builder { eng | withLiveDelta : () } -> Builder { eng | withLiveDelta : () }
 byXZ =
     RB.byXZ
 
 
 {-| Move by a delta on the X axis. Y and Z are unaffected.
 -}
-byX : Float -> Builder eng -> Builder eng
+byX : Float -> Builder { eng | withLiveDelta : () } -> Builder { eng | withLiveDelta : () }
 byX =
     RB.byX
 
 
 {-| Move by a delta on the Y and Z axes. X is unaffected.
 -}
-byYZ : Float -> Float -> Builder eng -> Builder eng
+byYZ : Float -> Float -> Builder { eng | withLiveDelta : () } -> Builder { eng | withLiveDelta : () }
 byYZ =
     RB.byYZ
 
 
 {-| Move by a delta on the Y axis. X and Z are unaffected.
 -}
-byY : Float -> Builder eng -> Builder eng
+byY : Float -> Builder { eng | withLiveDelta : () } -> Builder { eng | withLiveDelta : () }
 byY =
     RB.byY
 
 
 {-| Move by a delta on the Z axis. X and Y are unaffected.
 -}
-byZ : Float -> Builder eng -> Builder eng
+byZ : Float -> Builder { eng | withLiveDelta : () } -> Builder { eng | withLiveDelta : () }
 byZ =
     RB.byZ
 
