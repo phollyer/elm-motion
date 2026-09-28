@@ -5,7 +5,7 @@ import Helpers.AnimGroups exposing (animGroup)
 import Specs.InitSpec.Runner exposing (NameValuePair, TestCase(..), TestData)
 
 
-testData : Factory a b -> TestData (a -> a)
+testData : Factory a b -> TestData a
 testData factory =
     { description = "Opacity.init tests"
     , testCases =

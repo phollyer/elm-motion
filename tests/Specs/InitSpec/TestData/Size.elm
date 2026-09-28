@@ -6,7 +6,7 @@ import Helpers.AnimGroups exposing (animGroup)
 import Specs.InitSpec.Runner exposing (..)
 
 
-testData : Factory a b -> TestData (a -> a)
+testData : Factory a b -> TestData a
 testData factory =
     { description = "Size.init* tests"
     , testCases =

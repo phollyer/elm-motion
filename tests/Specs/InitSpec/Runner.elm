@@ -6,6 +6,7 @@ module Specs.InitSpec.Runner exposing
     )
 
 import Expect
+import Factories.Engines.Factory exposing (Factory)
 import Helpers.AnimGroups exposing (animGroup)
 import Html
 import Test exposing (Test, describe, test)
@@ -13,47 +14,47 @@ import Test.Html.Query as Query
 import Test.Html.Selector as Selector
 
 
-type alias TestData builder =
+type alias TestData animBuilder =
     { description : String
-    , testCases : List (TestCase builder)
+    , testCases : List (TestCase animBuilder)
     }
 
 
-type TestCase builder
-    = GeneralTest (GeneralTestCase builder)
-    | SizeTest (SizeTestCase builder)
-    | MultiPropertyTest (MultiPropertyTestCase builder)
-    | MultiGroupTest (MultiGroupTestCase builder)
+type TestCase animBuilder
+    = GeneralTest (GeneralTestCase animBuilder)
+    | SizeTest (SizeTestCase animBuilder)
+    | MultiPropertyTest (MultiPropertyTestCase animBuilder)
+    | MultiGroupTest (MultiGroupTestCase animBuilder)
 
 
-type alias GeneralTestCase builder =
+type alias GeneralTestCase animBuilder =
     { description : String
-    , initFuncs : builder
+    , initFuncs : animBuilder -> animBuilder
     , expected : NameValuePair
     }
 
 
-type alias SizeTestCase builder =
+type alias SizeTestCase animBuilder =
     { description : String
-    , initFuncs : builder
+    , initFuncs : animBuilder -> animBuilder
     , expectedHeight : Maybe String
     , expectedWidth : Maybe String
     , willChange : String
     }
 
 
-type alias MultiPropertyTestCase builder =
+type alias MultiPropertyTestCase animBuilder =
     { description : String
-    , initFuncs : List builder
+    , initFuncs : List (animBuilder -> animBuilder)
     , expected : List NameValuePair
     , willChange : String
     }
 
 
-type alias MultiGroupTestCase builder =
+type alias MultiGroupTestCase animBuilder =
     { description : String
     , animGroups : List String
-    , initFuncs : List (List builder)
+    , initFuncs : List (List (animBuilder -> animBuilder))
     , expected : List (List NameValuePair)
     , willChange : List String
     }
@@ -65,42 +66,46 @@ type alias NameValuePair =
     }
 
 
-run : (List builder -> state) -> (String -> state -> List (Html.Attribute msg)) -> List (TestData builder) -> List Test
-run initFunc attributesFunc =
-    List.map (runTestData initFunc attributesFunc)
+run :
+    Factory animBuilder animState
+    -> (String -> animState -> List (Html.Attribute msg))
+    -> List (TestData animBuilder)
+    -> List Test
+run factory attributesFunc =
+    List.map (runTestData factory attributesFunc)
 
 
-runTestData : (List builder -> state) -> (String -> state -> List (Html.Attribute msg)) -> TestData builder -> Test
-runTestData initFunc attributesFunc td =
+runTestData : Factory animBuilder animState -> (String -> animState -> List (Html.Attribute msg)) -> TestData animBuilder -> Test
+runTestData factory attributesFunc td =
     describe td.description <|
-        List.map (runTestCase initFunc attributesFunc) td.testCases
+        List.map (runTestCase factory attributesFunc) td.testCases
 
 
 runTestCase :
-    (List builder -> state)
-    -> (String -> state -> List (Html.Attribute msg))
-    -> TestCase builder
+    Factory animBuilder animState
+    -> (String -> animState -> List (Html.Attribute msg))
+    -> TestCase animBuilder
     -> Test
-runTestCase initFunc attributesFunc testCase =
+runTestCase factory attributesFunc testCase =
     case testCase of
         GeneralTest tc ->
-            generalRunner initFunc attributesFunc tc
+            generalRunner factory attributesFunc tc
 
         SizeTest tc ->
-            sizeRunner initFunc attributesFunc tc
+            sizeRunner factory attributesFunc tc
 
         MultiPropertyTest tc ->
-            multiPropertyRunner initFunc attributesFunc tc
+            multiPropertyRunner factory attributesFunc tc
 
         MultiGroupTest tc ->
-            multiGroupRunner initFunc attributesFunc tc
+            multiGroupRunner factory attributesFunc tc
 
 
-generalRunner : (List builder -> state) -> (String -> state -> List (Html.Attribute msg)) -> GeneralTestCase builder -> Test
-generalRunner initFunc attributesFunc tc =
+generalRunner : Factory animBuilder animState -> (String -> animState -> List (Html.Attribute msg)) -> GeneralTestCase animBuilder -> Test
+generalRunner factory attributesFunc tc =
     test tc.description <|
         \_ ->
-            initFunc [ tc.initFuncs ]
+            factory.init [ tc.initFuncs ]
                 |> attributesQueryFor attributesFunc animGroup
                 |> Query.has
                     [ Selector.style tc.expected.name tc.expected.value
@@ -108,15 +113,15 @@ generalRunner initFunc attributesFunc tc =
                     ]
 
 
-multiGroupRunner : (List builder -> state) -> (String -> state -> List (Html.Attribute msg)) -> MultiGroupTestCase builder -> Test
-multiGroupRunner initFunc attributesFunc tc =
+multiGroupRunner : Factory animBuilder animState -> (String -> animState -> List (Html.Attribute msg)) -> MultiGroupTestCase animBuilder -> Test
+multiGroupRunner factory attributesFunc tc =
     test tc.description <|
         \_ ->
             Expect.all
                 (List.map4
                     (\init group expected willChange ->
                         \_ ->
-                            initFunc init
+                            factory.init init
                                 |> attributesQueryFor attributesFunc group
                                 |> Query.has
                                     (Selector.style "will-change" willChange
@@ -135,11 +140,11 @@ multiGroupRunner initFunc attributesFunc tc =
                 ()
 
 
-multiPropertyRunner : (List builder -> state) -> (String -> state -> List (Html.Attribute msg)) -> MultiPropertyTestCase builder -> Test
-multiPropertyRunner initFunc attributesFunc tc =
+multiPropertyRunner : Factory animBuilder animState -> (String -> animState -> List (Html.Attribute msg)) -> MultiPropertyTestCase animBuilder -> Test
+multiPropertyRunner factory attributesFunc tc =
     test tc.description <|
         \_ ->
-            initFunc tc.initFuncs
+            factory.init tc.initFuncs
                 |> attributesQueryFor attributesFunc animGroup
                 |> Query.has
                     (Selector.style "will-change" tc.willChange
@@ -151,11 +156,11 @@ multiPropertyRunner initFunc attributesFunc tc =
                     )
 
 
-sizeRunner : (List builder -> state) -> (String -> state -> List (Html.Attribute msg)) -> SizeTestCase builder -> Test
-sizeRunner initFunc attributesFunc tc =
+sizeRunner : Factory animBuilder animState -> (String -> animState -> List (Html.Attribute msg)) -> SizeTestCase animBuilder -> Test
+sizeRunner factory attributesFunc tc =
     test tc.description <|
         \_ ->
-            initFunc [ tc.initFuncs ]
+            factory.init [ tc.initFuncs ]
                 |> attributesQueryFor attributesFunc animGroup
                 |> (\query ->
                         case ( tc.expectedHeight, tc.expectedWidth ) of
@@ -186,7 +191,7 @@ sizeRunner initFunc attributesFunc tc =
                    )
 
 
-attributesQueryFor : (String -> state -> List (Html.Attribute msg)) -> String -> state -> Query.Single msg
-attributesQueryFor getAttributes groupName state =
-    Html.div (getAttributes groupName state) []
+attributesQueryFor : (String -> animState -> List (Html.Attribute msg)) -> String -> animState -> Query.Single msg
+attributesQueryFor getAttributes groupName animState =
+    Html.div (getAttributes groupName animState) []
         |> Query.fromHtml

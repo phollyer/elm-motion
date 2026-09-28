@@ -3,6 +3,8 @@ module Specs.InitSpec.Suite exposing (suite)
 import Anim.Builder exposing (AnimBuilder)
 import Anim.Engine.Keyframe as Keyframe
 import Anim.Engine.Transition as Transition
+import Factories.Engines.Keyframe as KeyframeFactory
+import Factories.Engines.Transition as TransitionFactory
 import Factories.Properties.All as AllFactory
 import Factories.Properties.CustomColor as CustomColorFactory
 import Factories.Properties.CustomProperty as CustomPropertyFactory
@@ -42,13 +44,13 @@ suite : Test
 suite =
     describe "init* functions write inline styles and will-change"
         [ describe "Keyframe engine" <|
-            Runner.run Keyframe.init Keyframe.attributes testData
+            Runner.run KeyframeFactory.factory Keyframe.attributes testData
         , describe "Transition engine" <|
-            Runner.run Transition.init Transition.attributes testData
+            Runner.run TransitionFactory.factory Transition.attributes testData
         ]
 
 
-testData : List (Runner.TestData (AnimBuilder eng -> AnimBuilder eng))
+testData : List (Runner.TestData (AnimBuilder eng))
 testData =
     [ CustomColor.testData CustomColorFactory.factory
     , CustomProperty.testData CustomPropertyFactory.factory

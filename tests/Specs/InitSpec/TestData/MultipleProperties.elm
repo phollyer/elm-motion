@@ -8,7 +8,7 @@ import Specs.InitSpec.TestData.Opacity exposing (..)
 import Specs.InitSpec.TestData.Translate exposing (..)
 
 
-testData : Factory a b c d e f g h i j -> TestData (a -> a)
+testData : Factory a b c d e f g h i j -> TestData a
 testData factory =
     { description = "Multi-Property tests"
     , testCases =

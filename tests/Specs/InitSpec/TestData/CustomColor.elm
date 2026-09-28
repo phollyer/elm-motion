@@ -8,7 +8,7 @@ import Helpers.AnimGroups exposing (animGroup)
 import Specs.InitSpec.Runner exposing (..)
 
 
-testData : CustomColorFactory.Factory a b -> TestData (a -> a)
+testData : CustomColorFactory.Factory a b -> TestData a
 testData factory =
     { description = "Custom color tests"
     , testCases =
