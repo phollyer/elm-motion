@@ -1,6 +1,5 @@
 module Specs.InitSpec.Runner exposing
-    ( NameValuePair
-    , TestCase(..)
+    ( TestCase(..)
     , TestData
     , run
     )
@@ -9,6 +8,7 @@ import Expect
 import Factories.Engines.Factory exposing (Factory)
 import Helpers.AnimGroups exposing (animGroup)
 import Html
+import Specs.Shared exposing (NameValuePair, attributesQueryFor)
 import Test exposing (Test, describe, test)
 import Test.Html.Query as Query
 import Test.Html.Selector as Selector
@@ -57,12 +57,6 @@ type alias MultiGroupTestCase animBuilder =
     , initFuncs : List (List (animBuilder -> animBuilder))
     , expected : List (List NameValuePair)
     , willChange : List String
-    }
-
-
-type alias NameValuePair =
-    { name : String
-    , value : String
     }
 
 
@@ -189,9 +183,3 @@ sizeRunner factory attributesFunc tc =
                             ( Nothing, Nothing ) ->
                                 Query.has [] query
                    )
-
-
-attributesQueryFor : (String -> animState -> List (Html.Attribute msg)) -> String -> animState -> Query.Single msg
-attributesQueryFor getAttributes groupName animState =
-    Html.div (getAttributes groupName animState) []
-        |> Query.fromHtml

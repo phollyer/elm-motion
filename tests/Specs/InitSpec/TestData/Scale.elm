@@ -2,7 +2,8 @@ module Specs.InitSpec.TestData.Scale exposing (testData)
 
 import Factories.Properties.Scale exposing (Factory)
 import Helpers.AnimGroups exposing (animGroup)
-import Specs.InitSpec.Runner exposing (NameValuePair, TestCase(..), TestData)
+import Specs.InitSpec.Runner exposing (TestCase(..), TestData)
+import Specs.Shared exposing (NameValuePair)
 
 
 testData : Factory a b -> TestData a

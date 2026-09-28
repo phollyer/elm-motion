@@ -4,7 +4,8 @@ import Anim.Extra.Color as Color
 import Anim.Property.CustomColor as CustomColor
 import Factories.Properties.CustomColor as CustomColorFactory
 import Helpers.AnimGroups exposing (animGroup)
-import Specs.InitSpec.Runner exposing (NameValuePair, TestCase(..), TestData)
+import Specs.InitSpec.Runner exposing (TestCase(..), TestData)
+import Specs.Shared exposing (NameValuePair)
 
 
 testData : CustomColorFactory.Factory a b -> TestData a
