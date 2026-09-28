@@ -3,7 +3,7 @@ module Specs.InitSpec.TestData.Size exposing (testData)
 import Anim.Unit exposing (Unit(..))
 import Factories.Properties.Size exposing (Factory)
 import Helpers.AnimGroups exposing (animGroup)
-import Specs.InitSpec.Runner exposing (..)
+import Specs.InitSpec.Runner exposing (TestCase(..), TestData)
 
 
 testData : Factory a b -> TestData a

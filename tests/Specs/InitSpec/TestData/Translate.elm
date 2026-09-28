@@ -1,9 +1,9 @@
-module Specs.InitSpec.TestData.Translate exposing (..)
+module Specs.InitSpec.TestData.Translate exposing (testData)
 
 import Anim.Unit exposing (Unit(..))
 import Factories.Properties.Translate as TranslateFactory
 import Helpers.AnimGroups exposing (animGroup)
-import Specs.InitSpec.Runner exposing (..)
+import Specs.InitSpec.Runner exposing (NameValuePair, TestCase(..), TestData)
 
 
 testData : TranslateFactory.Factory a b -> TestData a

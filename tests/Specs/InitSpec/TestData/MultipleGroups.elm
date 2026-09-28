@@ -3,7 +3,7 @@ module Specs.InitSpec.TestData.MultipleGroups exposing (testData)
 import Anim.Unit exposing (Unit(..))
 import Factories.Properties.All exposing (Factory)
 import Helpers.AnimGroups exposing (animGroup, otherAnimGroup)
-import Specs.InitSpec.Runner exposing (..)
+import Specs.InitSpec.Runner exposing (NameValuePair, TestCase(..), TestData)
 
 
 testData : Factory a b c d e f g h i j -> TestData a

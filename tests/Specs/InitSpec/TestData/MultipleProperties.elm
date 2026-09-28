@@ -1,11 +1,8 @@
 module Specs.InitSpec.TestData.MultipleProperties exposing (testData)
 
-import Anim.Unit exposing (Unit(..))
 import Factories.Properties.All exposing (Factory)
 import Helpers.AnimGroups exposing (animGroup)
-import Specs.InitSpec.Runner exposing (..)
-import Specs.InitSpec.TestData.Opacity exposing (..)
-import Specs.InitSpec.TestData.Translate exposing (..)
+import Specs.InitSpec.Runner exposing (NameValuePair, TestCase(..), TestData)
 
 
 testData : Factory a b c d e f g h i j -> TestData a

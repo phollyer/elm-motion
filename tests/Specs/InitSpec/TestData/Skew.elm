@@ -2,7 +2,7 @@ module Specs.InitSpec.TestData.Skew exposing (testData)
 
 import Factories.Properties.Skew exposing (Factory)
 import Helpers.AnimGroups exposing (animGroup)
-import Specs.InitSpec.Runner exposing (..)
+import Specs.InitSpec.Runner exposing (NameValuePair, TestCase(..), TestData)
 
 
 testData : Factory a b -> TestData a

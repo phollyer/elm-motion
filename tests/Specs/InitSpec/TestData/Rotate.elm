@@ -1,9 +1,8 @@
-module Specs.InitSpec.TestData.Rotate exposing (..)
+module Specs.InitSpec.TestData.Rotate exposing (testData)
 
-import Anim.Unit exposing (Unit(..))
 import Factories.Properties.Rotate exposing (Factory)
 import Helpers.AnimGroups exposing (animGroup)
-import Specs.InitSpec.Runner exposing (..)
+import Specs.InitSpec.Runner exposing (NameValuePair, TestCase(..), TestData)
 
 
 testData : Factory a b -> TestData a

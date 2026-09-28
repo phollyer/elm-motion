@@ -2,10 +2,9 @@ module Specs.InitSpec.TestData.CustomColor exposing (testData)
 
 import Anim.Extra.Color as Color
 import Anim.Property.CustomColor as CustomColor
-import Anim.Unit exposing (Unit(..))
 import Factories.Properties.CustomColor as CustomColorFactory
 import Helpers.AnimGroups exposing (animGroup)
-import Specs.InitSpec.Runner exposing (..)
+import Specs.InitSpec.Runner exposing (NameValuePair, TestCase(..), TestData)
 
 
 testData : CustomColorFactory.Factory a b -> TestData a
