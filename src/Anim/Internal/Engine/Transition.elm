@@ -87,6 +87,7 @@ init propertyInitializers =
                 initGroup : AnimGroupName -> Builder.ProcessedAnimGroupConfig -> AnimGroup
                 initGroup animGroupName config =
                     Generator.generateAnimation
+                        config.transformOrder
                         (Builder.discreteTransitionsEnabled builder)
                         (Builder.getDiscreteEntryPropertiesFor animGroupName builder)
                         (Builder.getDiscreteExitPropertiesFor animGroupName builder)
@@ -116,7 +117,7 @@ animate =
 
 
 generateAnimGroup : Maybe (List TransformProperty) -> EngineBuilder -> AnimGroupName -> Builder.ProcessedAnimGroupConfig -> AnimGroup
-generateAnimGroup _ builder animGroupName config =
+generateAnimGroup maybeOrder builder animGroupName config =
     let
         freshEntry =
             Builder.getDiscreteEntryPropertiesFor animGroupName builder
@@ -134,6 +135,7 @@ generateAnimGroup _ builder animGroupName config =
                 extractStartingStyles config.properties
     in
     Generator.generateAnimation
+        maybeOrder
         (Builder.discreteTransitionsEnabled builder)
         freshEntry
         (Builder.getDiscreteExitPropertiesFor animGroupName builder)
@@ -176,6 +178,7 @@ prepareStartingStylesForMerge newGroup currentGroup =
 
         comingFromExit =
             not (Dict.isEmpty (AnimGroup.getDiscreteExit currentGroup))
+
     in
     if entryChanged || comingFromExit then
         newGroup
@@ -598,10 +601,10 @@ stop =
         (\maybeProcessedConfig ->
             case maybeProcessedConfig of
                 Just processedConfig ->
-                    TransitionStyles.fromProcessedPropertiesWithControlledAxes processedConfig.controlledAxes
+                    TransitionStyles.fromProcessedPropertiesWithControlledAxes processedConfig.transformOrder processedConfig.controlledAxes
 
                 Nothing ->
-                    TransitionStyles.fromProcessedProperties
+                    TransitionStyles.fromProcessedProperties Nothing
         )
         setStyles
 
@@ -613,10 +616,10 @@ reset =
         (\maybeProcessedConfig ->
             case maybeProcessedConfig of
                 Just processedConfig ->
-                    TransitionStyles.fromProcessedPropertiesWithControlledAxes processedConfig.controlledAxes
+                    TransitionStyles.fromProcessedPropertiesWithControlledAxes processedConfig.transformOrder processedConfig.controlledAxes
 
                 Nothing ->
-                    TransitionStyles.fromProcessedProperties
+                    TransitionStyles.fromProcessedProperties Nothing
         )
         setStyles
 

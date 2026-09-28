@@ -1,5 +1,6 @@
 module Anim.Internal.Engine.Transition.Styles exposing (fromProcessedProperties, fromProcessedPropertiesWithControlledAxes)
 
+import Anim.Extra.TransformOrder exposing (TransformProperty(..))
 import Anim.Internal.Builder as Builder
 import Anim.Internal.Engine.CSS.Styles as Styles exposing (Styles)
 import Anim.Internal.Property.Scale as Scale
@@ -9,18 +10,18 @@ import Dict exposing (Dict)
 import Set exposing (Set)
 
 
-fromProcessedProperties : List ( String, String ) -> List Builder.ProcessedPropertyConfig -> Styles
-fromProcessedProperties baseStyles =
-    Styles.fromProcessedProperties baseStyles (extractTransformStyles Nothing)
+fromProcessedProperties : Maybe (List TransformProperty) -> List ( String, String ) -> List Builder.ProcessedPropertyConfig -> Styles
+fromProcessedProperties maybeOrder baseStyles =
+    Styles.fromProcessedProperties baseStyles (extractTransformStyles Nothing maybeOrder)
 
 
-fromProcessedPropertiesWithControlledAxes : Dict String (Set String) -> List ( String, String ) -> List Builder.ProcessedPropertyConfig -> Styles
-fromProcessedPropertiesWithControlledAxes controlledAxes baseStyles =
-    Styles.fromProcessedPropertiesWithControlledAxes (Just controlledAxes) baseStyles (extractTransformStyles (Just controlledAxes))
+fromProcessedPropertiesWithControlledAxes : Maybe (List TransformProperty) -> Dict String (Set String) -> List ( String, String ) -> List Builder.ProcessedPropertyConfig -> Styles
+fromProcessedPropertiesWithControlledAxes maybeOrder controlledAxes baseStyles =
+    Styles.fromProcessedPropertiesWithControlledAxes (Just controlledAxes) baseStyles (extractTransformStyles (Just controlledAxes) maybeOrder)
 
 
-extractTransformStyles : Maybe (Dict String (Set String)) -> List Builder.ProcessedPropertyConfig -> List ( String, String )
-extractTransformStyles maybeControlledAxes properties =
+extractTransformStyles : Maybe (Dict String (Set String)) -> Maybe (List TransformProperty) -> List Builder.ProcessedPropertyConfig -> List ( String, String )
+extractTransformStyles maybeControlledAxes maybeOrder properties =
     let
         collected =
             List.foldl
@@ -45,7 +46,7 @@ extractTransformStyles maybeControlledAxes properties =
                 properties
 
         transformPart =
-            [ collected.translate, collected.rotate, collected.skew, collected.scale ]
+            generateTransformComponents maybeOrder collected
                 |> List.filter (String.isEmpty >> not)
                 |> String.join " "
 
@@ -59,6 +60,39 @@ extractTransformStyles maybeControlledAxes properties =
     List.filterMap identity
         [ transformStyle
         ]
+
+
+generateTransformComponents : Maybe (List TransformProperty) -> { translate : String, rotate : String, skew : String, scale : String } -> List String
+generateTransformComponents maybeOrder parts =
+    case maybeOrder of
+        Nothing ->
+            [ parts.translate, parts.rotate, parts.skew, parts.scale ]
+
+        Just order ->
+            List.filterMap
+                (\prop ->
+                    let
+                        part =
+                            case prop of
+                                Translate ->
+                                    parts.translate
+
+                                Rotate ->
+                                    parts.rotate
+
+                                Skew ->
+                                    parts.skew
+
+                                Scale ->
+                                    parts.scale
+                    in
+                    if String.isEmpty part then
+                        Nothing
+
+                    else
+                        Just part
+                )
+                order
 
 
 translateTransformFor : Maybe (Dict String (Set String)) -> Builder.ProcessedAnimationConfig Translate.Translate -> String
