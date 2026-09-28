@@ -178,7 +178,6 @@ prepareStartingStylesForMerge newGroup currentGroup =
 
         comingFromExit =
             not (Dict.isEmpty (AnimGroup.getDiscreteExit currentGroup))
-
     in
     if entryChanged || comingFromExit then
         newGroup
@@ -598,14 +597,7 @@ stop =
     CSS.stop
         AnimGroup.setPlayState
         AnimGroup.isActive
-        (\maybeProcessedConfig ->
-            case maybeProcessedConfig of
-                Just processedConfig ->
-                    TransitionStyles.fromProcessedPropertiesWithControlledAxes processedConfig.transformOrder processedConfig.controlledAxes
-
-                Nothing ->
-                    TransitionStyles.fromProcessedProperties Nothing
-        )
+        (\config -> TransitionStyles.fromProcessedPropertiesWithControlledAxes config.transformOrder config.controlledAxes)
         setStyles
 
 
@@ -613,14 +605,7 @@ reset : AnimGroupName -> AnimState -> AnimState
 reset =
     CSS.reset
         AnimGroup.setPlayState
-        (\maybeProcessedConfig ->
-            case maybeProcessedConfig of
-                Just processedConfig ->
-                    TransitionStyles.fromProcessedPropertiesWithControlledAxes processedConfig.transformOrder processedConfig.controlledAxes
-
-                Nothing ->
-                    TransitionStyles.fromProcessedProperties Nothing
-        )
+        (\config -> TransitionStyles.fromProcessedPropertiesWithControlledAxes config.transformOrder config.controlledAxes)
         setStyles
 
 

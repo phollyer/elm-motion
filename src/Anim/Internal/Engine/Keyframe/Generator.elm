@@ -10,6 +10,8 @@ import Anim.Extra.TransformOrder exposing (TransformProperty(..))
 import Anim.Internal.Builder as Builder
 import Anim.Internal.Builder.PropertyBaselines exposing (PropertyBaselines)
 import Anim.Internal.Engine.CSS.CSS exposing (AnimState(..))
+import Anim.Internal.Engine.CSS.Styles as Styles
+import Anim.Internal.Engine.CSS.Transform as Transform
 import Anim.Internal.Engine.Keyframe.AnimGroup as AnimGroup exposing (AnimGroup)
 import Anim.Internal.Engine.Keyframe.Animation as Animation
 import Anim.Internal.Engine.Keyframe.Styles as KeyframeStyles
@@ -226,7 +228,7 @@ generateSteps controlledAxes maybeOrder maybeTargetValues maxDuration maxDelay d
 
                     transformStyle =
                         generateTransformParts controlledAxes maybeTargetValues totalTime processedProps
-                            |> KeyframeStyles.generateTransformComponents maybeOrder
+                            |> Transform.generateComponents maybeOrder
                             |> generateTransformStyle
 
                     otherStyles =
@@ -269,7 +271,7 @@ generateTransformParts controlledAxes maybeTargetValues totalTime properties =
                                 totalTime
                                 Translate.default
                                 Translate.interpolate
-                                (KeyframeStyles.translateToCss (Just controlledAxes) cfg.cssUnit)
+                                (Styles.translateToCss (Just controlledAxes) cfg.cssUnit)
                                 cfg
                     }
 

@@ -15,6 +15,7 @@ module Anim.Internal.Engine.CSS.Styles exposing
     , skewToCss
     , toAttrs
     , toList
+    , translateToCss
     )
 
 import Anim.Internal.Builder as Builder
@@ -24,6 +25,8 @@ import Anim.Internal.Property.PerspectiveOrigin as PerspectiveOrigin
 import Anim.Internal.Property.Rotate as Rotate
 import Anim.Internal.Property.Size as Size
 import Anim.Internal.Property.Skew as Skew
+import Anim.Internal.Property.Translate as Translate
+import Anim.Internal.Unit as Unit
 import Dict exposing (Dict)
 import Html
 import Html.Attributes
@@ -307,3 +310,68 @@ rotateToCss maybeControlledAxes value =
 
         Nothing ->
             Rotate.toCssString value
+
+
+
+-- ============================================================
+-- Translate
+-- ============================================================
+
+
+translateToCss : Maybe (Dict.Dict String (Set.Set String)) -> Unit.ResolvedCssUnitAxes -> Translate.Translate -> String
+translateToCss maybeControlledAxes cssUnitAxes value =
+    case maybeControlledAxes |> Maybe.andThen (Dict.get "translate") of
+        Just axes ->
+            let
+                hasX =
+                    Set.member "x" axes
+
+                hasY =
+                    Set.member "y" axes
+
+                hasZ =
+                    Set.member "z" axes
+
+                coords =
+                    Translate.toRecord value
+
+                xSuffix =
+                    Unit.toCssSuffix cssUnitAxes.x
+
+                ySuffix =
+                    Unit.toCssSuffix cssUnitAxes.y
+
+                zSuffix =
+                    Unit.toCssSuffix cssUnitAxes.z
+
+                partial =
+                    [ if hasX then
+                        Just ("translateX(" ++ String.fromFloat coords.x ++ xSuffix ++ ")")
+
+                      else
+                        Nothing
+                    , if hasY then
+                        Just ("translateY(" ++ String.fromFloat coords.y ++ ySuffix ++ ")")
+
+                      else
+                        Nothing
+                    , if hasZ then
+                        Just ("translateZ(" ++ String.fromFloat coords.z ++ zSuffix ++ ")")
+
+                      else
+                        Nothing
+                    ]
+                        |> List.filterMap identity
+                        |> String.join " "
+            in
+            if Set.size axes == 3 then
+                Translate.toCssString cssUnitAxes value
+
+            else if String.isEmpty partial then
+                Translate.toCssString cssUnitAxes value
+
+            else
+                partial
+
+        Nothing ->
+            Translate.toCssString cssUnitAxes value

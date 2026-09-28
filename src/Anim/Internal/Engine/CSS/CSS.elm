@@ -468,7 +468,7 @@ cssUnitZ =
 -- ============================================================
 
 
-stop : (PlayState -> a -> a) -> (a -> Bool) -> (Maybe Builder.ProcessedAnimGroupConfig -> List ( String, String ) -> List Builder.ProcessedPropertyConfig -> Styles) -> (Styles -> a) -> AnimGroupName -> AnimState engine a -> AnimState engine a
+stop : (PlayState -> a -> a) -> (a -> Bool) -> (Builder.ProcessedAnimGroupConfig -> List ( String, String ) -> List Builder.ProcessedPropertyConfig -> Styles) -> (Styles -> a) -> AnimGroupName -> AnimState engine a -> AnimState engine a
 stop setPlayState getIsActive buildStyles setStyles animGroupName animState =
     case isActive getIsActive animGroupName animState of
         Just True ->
@@ -493,7 +493,7 @@ stop setPlayState getIsActive buildStyles setStyles animGroupName animState =
             animState
 
 
-reset : (PlayState -> a -> a) -> (Maybe Builder.ProcessedAnimGroupConfig -> List ( String, String ) -> List Builder.ProcessedPropertyConfig -> Styles) -> (Styles -> a) -> AnimGroupName -> AnimState engine a -> AnimState engine a
+reset : (PlayState -> a -> a) -> (Builder.ProcessedAnimGroupConfig -> List ( String, String ) -> List Builder.ProcessedPropertyConfig -> Styles) -> (Styles -> a) -> AnimGroupName -> AnimState engine a -> AnimState engine a
 reset setPlayState =
     let
         toStartOr : b -> Builder.ProcessedAnimationConfig b -> Builder.ProcessedAnimationConfig b
@@ -517,6 +517,50 @@ reset setPlayState =
                 }
     in
     simpleControl Builder.getLatestAnimateConfig (setPlayState PlayState.Reset) toResetProperty
+
+
+simpleControl :
+    (AnimGroupName -> Builder.AnimBuilder engine -> Maybe Builder.ProcessedAnimGroupConfig)
+    -> (a -> a)
+    -> (Builder.ProcessedPropertyConfig -> Builder.ProcessedPropertyConfig)
+    -> (Builder.ProcessedAnimGroupConfig -> List ( String, String ) -> List Builder.ProcessedPropertyConfig -> Styles)
+    -> (Styles -> a)
+    -> AnimGroupName
+    -> AnimState engine a
+    -> AnimState engine a
+simpleControl fetchConfig setPlayState mapper buildStyles setStyles animGroupName ((AnimState state animGroups) as animState) =
+    case fetchConfig animGroupName state.builder of
+        Nothing ->
+            animState
+
+        Just config ->
+            if List.isEmpty config.properties then
+                animState
+
+            else
+                let
+                    snappedProperties =
+                        List.map mapper config.properties
+
+                    animGroup =
+                        snappedProperties
+                            |> buildStyles
+                                config
+                                [ ( "animation", "none" )
+                                , ( "transition", "none" )
+                                ]
+                            |> setStyles
+                            |> setPlayState
+                in
+                AnimState
+                    { state
+                        | builder =
+                            Builder.setBaselinesFromProcessedEnds
+                                animGroupName
+                                snappedProperties
+                                state.builder
+                    }
+                    (AnimGroups.insert animGroupName animGroup animGroups)
 
 
 snapTo : (Builder.ProcessedAnimationConfig a -> a) -> Builder.ProcessedAnimationConfig a -> Builder.ProcessedAnimationConfig a
@@ -576,58 +620,6 @@ mapProcessedProperty transforms prop =
 
         Builder.ProcessedTranslateConfig config ->
             Builder.ProcessedTranslateConfig (transforms.translate config)
-
-
-simpleControl :
-    (AnimGroupName -> Builder.AnimBuilder engine -> Maybe Builder.ProcessedAnimGroupConfig)
-    -> (a -> a)
-    -> (Builder.ProcessedPropertyConfig -> Builder.ProcessedPropertyConfig)
-    -> (Maybe Builder.ProcessedAnimGroupConfig -> List ( String, String ) -> List Builder.ProcessedPropertyConfig -> Styles)
-    -> (Styles -> a)
-    -> AnimGroupName
-    -> AnimState engine a
-    -> AnimState engine a
-simpleControl fetchConfig setPlayState mapper buildStyles setStyles animGroupName ((AnimState state animGroups) as animState) =
-    let
-        maybeProcessedConfig : Maybe Builder.ProcessedAnimGroupConfig
-        maybeProcessedConfig =
-            state.builder
-                |> fetchConfig animGroupName
-
-        getProcessedProperties : List Builder.ProcessedPropertyConfig
-        getProcessedProperties =
-            maybeProcessedConfig
-                |> Maybe.map .properties
-                |> Maybe.withDefault []
-    in
-    case getProcessedProperties of
-        [] ->
-            animState
-
-        properties ->
-            let
-                snappedProperties =
-                    List.map mapper properties
-
-                animGroup =
-                    snappedProperties
-                        |> buildStyles
-                            maybeProcessedConfig
-                            [ ( "animation", "none" )
-                            , ( "transition", "none" )
-                            ]
-                        |> setStyles
-                        |> setPlayState
-            in
-            AnimState
-                { state
-                    | builder =
-                        Builder.setBaselinesFromProcessedEnds
-                            animGroupName
-                            snappedProperties
-                            state.builder
-                }
-                (AnimGroups.insert animGroupName animGroup animGroups)
 
 
 

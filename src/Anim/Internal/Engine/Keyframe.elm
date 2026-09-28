@@ -24,7 +24,7 @@ module Anim.Internal.Engine.Keyframe exposing
 import Anim.Extra.TransformOrder exposing (TransformProperty)
 import Anim.Internal.Builder as Builder
 import Anim.Internal.Engine.CSS.CSS as CSS exposing (AnimState(..))
-import Anim.Internal.Engine.CSS.Styles as Styles exposing (Styles)
+import Anim.Internal.Engine.CSS.Styles as Styles
 import Anim.Internal.Engine.Keyframe.AnimGroup as AnimGroup exposing (AnimGroup)
 import Anim.Internal.Engine.Keyframe.Animation as Animation
 import Anim.Internal.Engine.Keyframe.Generator as Generator exposing (DiscreteConfig)
@@ -508,36 +508,21 @@ eventsStopPropagation toMsg =
 -- ============================================================
 
 
-setStyles : Styles -> AnimGroup
-setStyles styles =
-    AnimGroup.setStyles styles AnimGroup.init
-
-
-buildControlStyles : Maybe Builder.ProcessedAnimGroupConfig -> List ( String, String ) -> List Builder.ProcessedPropertyConfig -> Styles
-buildControlStyles maybeConfig =
-    case maybeConfig of
-        Just config ->
-            KeyframeStyles.fromProcessedPropertiesWithControlledAxes config.controlledAxes Nothing Nothing
-
-        Nothing ->
-            KeyframeStyles.fromProcessedProperties Nothing Nothing
-
-
 stop : AnimGroupName -> AnimState -> AnimState
 stop =
     CSS.stop
         AnimGroup.setPlayState
         AnimGroup.isActive
-        buildControlStyles
-        setStyles
+        (\config -> KeyframeStyles.fromProcessedPropertiesWithControlledAxes config.controlledAxes Nothing Nothing)
+        (\styles -> AnimGroup.setStyles styles AnimGroup.init)
 
 
 reset : AnimGroupName -> AnimState -> AnimState
 reset =
     CSS.reset
         AnimGroup.setPlayState
-        buildControlStyles
-        setStyles
+        (\config -> KeyframeStyles.fromProcessedPropertiesWithControlledAxes config.controlledAxes Nothing Nothing)
+        (\styles -> AnimGroup.setStyles styles AnimGroup.init)
 
 
 restart : AnimGroupName -> (AnimMsg -> msg) -> AnimState -> ( AnimState, Cmd msg )
