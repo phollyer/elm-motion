@@ -8,6 +8,7 @@ import Anim.Extra.TransformOrder exposing (TransformProperty)
 import Factories.Engines.Factory exposing (Factory)
 import Helpers.AnimGroups exposing (animGroup)
 import Html
+import Specs.Shared exposing (attributesQueryFor)
 import Test exposing (Test, describe, test)
 import Test.Html.Query as Query
 import Test.Html.Selector as Selector
@@ -110,9 +111,3 @@ animateRunner factory attributesFunc tc =
                 |> attributesQueryFor attributesFunc animGroup
                 |> Query.has
                     [ Selector.style "transform" tc.expected ]
-
-
-attributesQueryFor : (String -> state -> List (Html.Attribute msg)) -> String -> state -> Query.Single msg
-attributesQueryFor getAttributes groupName state =
-    Html.div (getAttributes groupName state) []
-        |> Query.fromHtml
