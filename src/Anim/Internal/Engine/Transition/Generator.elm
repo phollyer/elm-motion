@@ -1,7 +1,6 @@
 module Anim.Internal.Engine.Transition.Generator exposing
     ( generate
     , generateAnimation
-    , init
     )
 
 import Anim.Extra.TransformOrder exposing (TransformProperty(..))
@@ -20,8 +19,10 @@ import Shared.Easing as InternalEasing
 -- ============================================================
 
 
-type alias AnimGroupName =
-    String
+type alias DiscreteConfig =
+    { entry : Dict String String
+    , exit : Dict String Builder.DiscreteExitProperty
+    }
 
 
 
@@ -30,26 +31,8 @@ type alias AnimGroupName =
 -- ============================================================
 
 
-init : Builder.DefaultsConfig -> Maybe (List TransformProperty) -> AnimGroupName -> Bool -> Dict String String -> Dict String Builder.DiscreteExitProperty -> List Builder.PropertyConfig -> AnimGroup
-init defaults maybeOrder animGroupName discreteTransitions discreteEntry discreteExit properties =
-    let
-        processedProps =
-            Builder.processProperties defaults animGroupName properties
-    in
-    AnimGroup.init
-        |> AnimGroup.setDiscreteEntry discreteEntry
-        |> AnimGroup.setDiscreteExit discreteExit
-        |> AnimGroup.setPropertyKeys (propertyKeysOf processedProps)
-        |> AnimGroup.setWillChange (Builder.willChangeIndividual processedProps)
-        |> AnimGroup.setStyles
-            (TransitionStyles.fromProcessedProperties maybeOrder
-                (baseStyles maybeOrder discreteTransitions discreteEntry discreteExit processedProps)
-                processedProps
-            )
-
-
-baseStyles : Maybe (List TransformProperty) -> Bool -> Dict String String -> Dict String Builder.DiscreteExitProperty -> List Builder.ProcessedPropertyConfig -> List ( String, String )
-baseStyles maybeOrder discreteTransitions discreteEntry discreteExit processedProps =
+baseStylesWithControlledAxes : Maybe (List TransformProperty) -> Bool -> DiscreteConfig -> Dict String (Set.Set String) -> List Builder.ProcessedPropertyConfig -> List ( String, String )
+baseStylesWithControlledAxes maybeOrder discreteTransitions discrete controlledAxes processedProps =
     let
         transitionBehavior =
             if discreteTransitions then
@@ -58,20 +41,7 @@ baseStyles maybeOrder discreteTransitions discreteEntry discreteExit processedPr
             else
                 []
     in
-    ( "transition", generate maybeOrder discreteTransitions discreteEntry discreteExit processedProps ) :: transitionBehavior
-
-
-baseStylesWithControlledAxes : Maybe (List TransformProperty) -> Bool -> Dict String String -> Dict String Builder.DiscreteExitProperty -> Dict String (Set.Set String) -> List Builder.ProcessedPropertyConfig -> List ( String, String )
-baseStylesWithControlledAxes maybeOrder discreteTransitions discreteEntry discreteExit controlledAxes processedProps =
-    let
-        transitionBehavior =
-            if discreteTransitions then
-                [ ( "transition-behavior", "allow-discrete" ) ]
-
-            else
-                []
-    in
-    ( "transition", generateWithControlledAxes maybeOrder controlledAxes discreteTransitions discreteEntry discreteExit processedProps ) :: transitionBehavior
+    ( "transition", generateWithControlledAxes maybeOrder controlledAxes discreteTransitions discrete processedProps ) :: transitionBehavior
 
 
 propertyKeysOf : List Builder.ProcessedPropertyConfig -> Set.Set String
@@ -85,13 +55,13 @@ propertyKeysOf =
 -- ============================================================
 
 
-generate : Maybe (List TransformProperty) -> Bool -> Dict String String -> Dict String Builder.DiscreteExitProperty -> List Builder.ProcessedPropertyConfig -> String
-generate maybeOrder discreteTransitions discreteEntry discreteExit properties =
-    generateWithControlledAxes maybeOrder Dict.empty discreteTransitions discreteEntry discreteExit properties
+generate : Maybe (List TransformProperty) -> Bool -> DiscreteConfig -> List Builder.ProcessedPropertyConfig -> String
+generate maybeOrder discreteTransitions discrete properties =
+    generateWithControlledAxes maybeOrder Dict.empty discreteTransitions discrete properties
 
 
-generateWithControlledAxes : Maybe (List TransformProperty) -> Dict String (Set.Set String) -> Bool -> Dict String String -> Dict String Builder.DiscreteExitProperty -> List Builder.ProcessedPropertyConfig -> String
-generateWithControlledAxes maybeOrder controlledAxes discreteTransitions discreteEntry discreteExit properties =
+generateWithControlledAxes : Maybe (List TransformProperty) -> Dict String (Set.Set String) -> Bool -> DiscreteConfig -> List Builder.ProcessedPropertyConfig -> String
+generateWithControlledAxes maybeOrder controlledAxes discreteTransitions discrete properties =
     let
         animated =
             (Builder.partitionByMode properties).animate
@@ -131,7 +101,7 @@ generateWithControlledAxes maybeOrder controlledAxes discreteTransitions discret
 
         discretePropNames =
             if discreteTransitions then
-                discretePropertyNames discreteEntry discreteExit
+                discretePropertyNames discrete.entry discrete.exit
 
             else
                 []
@@ -404,17 +374,17 @@ maxAnimationDuration =
         0
 
 
-generateAnimation : Maybe (List TransformProperty) -> Bool -> Dict String String -> Dict String Builder.DiscreteExitProperty -> Dict String (Set.Set String) -> List Builder.ProcessedPropertyConfig -> AnimGroup
-generateAnimation maybeOrder discreteTransitions discreteEntry discreteExit controlledAxes processedProps =
+generateAnimation : Maybe (List TransformProperty) -> Bool -> DiscreteConfig -> Dict String (Set.Set String) -> List Builder.ProcessedPropertyConfig -> AnimGroup
+generateAnimation maybeOrder discreteTransitions discrete controlledAxes processedProps =
     AnimGroup.init
-        |> AnimGroup.setDiscreteEntry discreteEntry
-        |> AnimGroup.setDiscreteExit discreteExit
+        |> AnimGroup.setDiscreteEntry discrete.entry
+        |> AnimGroup.setDiscreteExit discrete.exit
         |> AnimGroup.setPropertyKeys (propertyKeysOf processedProps)
         |> AnimGroup.setWillChange (Builder.willChangeCompositeWithControlledAxes controlledAxes processedProps)
         |> AnimGroup.setStyles
             (TransitionStyles.fromProcessedPropertiesWithControlledAxes
                 maybeOrder
                 controlledAxes
-                (baseStylesWithControlledAxes maybeOrder discreteTransitions discreteEntry discreteExit controlledAxes processedProps)
+                (baseStylesWithControlledAxes maybeOrder discreteTransitions discrete controlledAxes processedProps)
                 processedProps
             )

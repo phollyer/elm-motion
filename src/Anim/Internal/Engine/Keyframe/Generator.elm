@@ -3,7 +3,6 @@ module Anim.Internal.Engine.Keyframe.Generator exposing
     , emptyDiscreteConfig
     , generateAnimation
     , generateRestart
-    , init
     )
 
 import Anim.Extra.TransformOrder exposing (TransformProperty(..))
@@ -59,32 +58,6 @@ emptyDiscreteConfig =
     { entry = Dict.empty
     , exit = Dict.empty
     }
-
-
-
--- ============================================================
--- INITIALIZE
--- ============================================================
-
-
-init :
-    Builder.DefaultsConfig
-    -> Maybe (List TransformProperty)
-    -> Builder.Iterations
-    -> Builder.AnimationDirection
-    -> DiscreteConfig
-    -> AnimGroupName
-    -> List Builder.PropertyConfig
-    -> AnimGroup
-init defaults maybeOrder iterationCount direction discrete animGroupName properties =
-    let
-        processedProps =
-            Builder.processProperties defaults animGroupName properties
-
-        name =
-            generateName Nothing maybeOrder discrete animGroupName processedProps
-    in
-    generate name 0 maybeOrder iterationCount direction Nothing discrete Dict.empty processedProps
 
 
 

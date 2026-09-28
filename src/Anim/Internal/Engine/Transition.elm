@@ -89,8 +89,9 @@ init propertyInitializers =
                     Generator.generateAnimation
                         config.transformOrder
                         (Builder.discreteTransitionsEnabled builder)
-                        (Builder.getDiscreteEntryPropertiesFor animGroupName builder)
-                        (Builder.getDiscreteExitPropertiesFor animGroupName builder)
+                        { entry = Builder.getDiscreteEntryPropertiesFor animGroupName builder
+                        , exit = Builder.getDiscreteExitPropertiesFor animGroupName builder
+                        }
                         config.controlledAxes
                         config.properties
             in
@@ -119,7 +120,7 @@ animate =
 generateAnimGroup : Maybe (List TransformProperty) -> EngineBuilder -> AnimGroupName -> Builder.ProcessedAnimGroupConfig -> AnimGroup
 generateAnimGroup maybeOrder builder animGroupName config =
     let
-        freshEntry =
+        discreteEntry =
             Builder.getDiscreteEntryPropertiesFor animGroupName builder
 
         -- `@starting-style` is only useful for ENTRY transitions
@@ -128,7 +129,7 @@ generateAnimGroup maybeOrder builder animGroupName config =
         -- on exit (Hide) or plain animates we skip them so we
         -- don't pollute the stylesheet with dead rules.
         startingStylesForThisAnimate =
-            if Dict.isEmpty freshEntry then
+            if Dict.isEmpty discreteEntry then
                 []
 
             else
@@ -137,8 +138,9 @@ generateAnimGroup maybeOrder builder animGroupName config =
     Generator.generateAnimation
         maybeOrder
         (Builder.discreteTransitionsEnabled builder)
-        freshEntry
-        (Builder.getDiscreteExitPropertiesFor animGroupName builder)
+        { entry = discreteEntry
+        , exit = Builder.getDiscreteExitPropertiesFor animGroupName builder
+        }
         config.controlledAxes
         config.properties
         |> AnimGroup.setStartingStyles startingStylesForThisAnimate
