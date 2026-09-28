@@ -21,21 +21,40 @@ The two version lines are **not kept in lockstep**. The npm companion can ship J
 
 ### Fixed
 
-**(elm)** initCssUnit* functions in PerspectiveOrigin, Size and Translate now behave correctly.
+**(elm)** Skew - correct the type annotation for the `by*` functions to correctly declare the `withLiveDelta` engine capability.
 
-**(elm)** Discrete Properties are now handled correctly for the Keyframe, Transition and Sub Engines when there is no property animation or when the property animation has no duration.
+**(elm)** Rotate - correct the type annotation for the `by*` functions to correctly declare the `withLiveDelta` engine capability.
+
+**(elm)** Opacity - correct the type annotation for the `by` function to correctly declare the `withLiveDelta` engine capability.
+
+**(elm)** Rotate (Transition & Keyframe engines) - initializing with x or y = 0 resulted in writing z = 0 - now fixed.
+
+**(elm)** Skew (Transition & Keyframe engines) - when writing a zero value to only one axis, ensure only that axis is written, not both.
+
+**(elm)** initCssUnit* functions in PerspectiveOrigin, Size and Translate now behave correctly.
 
 **(elm)** Translate animations - untouched axes no longer emit 0 as a default. Therefore they no longer overwrite existing CSS rules. Fixed for Transition and Keyframe engines. This is a wip, and will be released when all engines and scenarios are fixed.
 
-**(elm)** Size animations - untouched sides/axes no longer emit 0 as a default. Therefore they no longer overwrite existing CSS rules. `will-change` and `transition` style attributes no longer emit untouched sides/axes.
+**(JS)** Removed CSS unit `px` defaults - CSS units are completely controlled by Elm, so they are not required.
 
 **(docs)** Updated the Size API docs to explain new behaviour - untouched sides/axes no longer overwrite existing CSS rules.
 
-**(JS)** Removed CSS unit `px` defaults - CSS units are completely controlled by Elm, so they are not required.
+**(elm)** Size animations - untouched sides/axes no longer emit 0 as a default. Therefore they no longer overwrite existing CSS rules. `will-change` and `transition` style attributes no longer emit untouched sides/axes.
+
+**(docs)** Transition engine - clarify the transition engine requires event listeners to be set up to handle discrete properties correctly.
+
+**(elm)** Discrete Properties are now handled correctly for the Keyframe, Transition and Sub Engines when there is no property animation or when the property animation has no duration.
+
 
 ### Added
 
 **(tooling)** Added test coverage to assert Size animations don't overwrite a users CSS for untouched sides/axes. Added more CSS Unit specs for all applicable properties ensuring all available CSS units are covered.
+
+### Changed
+
+**(docs)** Transition engine - add transofrm order documentation.
+
+**(elm)** Transition engine now supports transform ordering control.
 
 
 ## [3.0.4] - 2026-09-08 (elm)
@@ -56,7 +75,6 @@ The two version lines are **not kept in lockstep**. The npm companion can ship J
 ### Added
 
 **(docs)** Clarify the Transition engine requires event listeners to be set up in order to handle discrete properties correctly.
-
 
 ## [3.0.2] - 2026-09-01 (elm)
 
