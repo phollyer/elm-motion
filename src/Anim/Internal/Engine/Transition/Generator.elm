@@ -8,7 +8,6 @@ import Anim.Internal.Builder as Builder
 import Anim.Internal.Engine.Transition.AnimGroup as AnimGroup exposing (AnimGroup)
 import Anim.Internal.Engine.Transition.Styles as TransitionStyles
 import Dict exposing (Dict)
-import Motion.Easing exposing (Easing)
 import Set
 import Shared.Easing as InternalEasing
 
@@ -27,32 +26,41 @@ type alias DiscreteConfig =
 
 
 -- ============================================================
--- INITIALIZE
--- ============================================================
-
-
-baseStylesWithControlledAxes : Maybe (List TransformProperty) -> Bool -> DiscreteConfig -> Dict String (Set.Set String) -> List Builder.ProcessedPropertyConfig -> List ( String, String )
-baseStylesWithControlledAxes maybeOrder discreteTransitions discrete controlledAxes processedProps =
-    let
-        transitionBehavior =
-            if discreteTransitions then
-                [ ( "transition-behavior", "allow-discrete" ) ]
-
-            else
-                []
-    in
-    ( "transition", generateWithControlledAxes maybeOrder controlledAxes discreteTransitions discrete processedProps ) :: transitionBehavior
-
-
-propertyKeysOf : List Builder.ProcessedPropertyConfig -> Set.Set String
-propertyKeysOf =
-    List.foldl (Builder.processedPropertyType >> Set.insert) Set.empty
-
-
-
--- ============================================================
 -- GENERATORS
 -- ============================================================
+
+
+generateAnimation : Maybe (List TransformProperty) -> Bool -> DiscreteConfig -> Dict String (Set.Set String) -> List Builder.ProcessedPropertyConfig -> AnimGroup
+generateAnimation maybeOrder discreteTransitions discrete controlledAxes processedProps =
+    let
+        propertyKeysOf : List Builder.ProcessedPropertyConfig -> Set.Set String
+        propertyKeysOf =
+            List.foldl (Builder.processedPropertyType >> Set.insert) Set.empty
+
+        baseStylesWithControlledAxes : List ( String, String )
+        baseStylesWithControlledAxes =
+            let
+                transitionBehavior =
+                    if discreteTransitions then
+                        [ ( "transition-behavior", "allow-discrete" ) ]
+
+                    else
+                        []
+            in
+            ( "transition", generateWithControlledAxes maybeOrder controlledAxes discreteTransitions discrete processedProps ) :: transitionBehavior
+    in
+    AnimGroup.init
+        |> AnimGroup.setDiscreteEntry discrete.entry
+        |> AnimGroup.setDiscreteExit discrete.exit
+        |> AnimGroup.setPropertyKeys (propertyKeysOf processedProps)
+        |> AnimGroup.setWillChange (Builder.willChangeCompositeWithControlledAxes controlledAxes processedProps)
+        |> AnimGroup.setStyles
+            (TransitionStyles.fromProcessedPropertiesWithControlledAxes
+                maybeOrder
+                controlledAxes
+                baseStylesWithControlledAxes
+                processedProps
+            )
 
 
 generate : Maybe (List TransformProperty) -> Bool -> DiscreteConfig -> List Builder.ProcessedPropertyConfig -> String
@@ -101,7 +109,14 @@ generateWithControlledAxes maybeOrder controlledAxes discreteTransitions discret
 
         discretePropNames =
             if discreteTransitions then
-                discretePropertyNames discrete.entry discrete.exit
+                let
+                    entryKeys =
+                        Dict.keys discrete.entry
+
+                    exitKeys =
+                        Dict.keys discrete.exit
+                in
+                entryKeys ++ List.filter (\k -> not (List.member k entryKeys)) exitKeys
 
             else
                 []
@@ -144,21 +159,53 @@ generateWithControlledAxes maybeOrder controlledAxes discreteTransitions discret
         String.join ", " allTransitions
 
 
-{-| Collect the distinct CSS property names that appear in `discreteEntry`
-or `discreteExit`. These need to be added to `transition-property` so the
-browser will respect `transition-behavior: allow-discrete` when flipping
-them.
--}
-discretePropertyNames : Dict String String -> Dict String Builder.DiscreteExitProperty -> List String
-discretePropertyNames discreteEntry discreteExit =
-    let
-        entryKeys =
-            Dict.keys discreteEntry
+nonTransformTransitionFromProcessed : Dict String (Set.Set String) -> Builder.ProcessedPropertyConfig -> List String
+nonTransformTransitionFromProcessed controlledAxes property =
+    case property of
+        Builder.ProcessedCustomPropertyConfig cssName _ config ->
+            [ transitionRule cssName config ]
 
-        exitKeys =
-            Dict.keys discreteExit
-    in
-    entryKeys ++ List.filter (\k -> not (List.member k entryKeys)) exitKeys
+        Builder.ProcessedCustomColorPropertyConfig cssName config ->
+            [ transitionRule cssName config ]
+
+        Builder.ProcessedOpacityConfig config ->
+            [ transitionRule "opacity" config ]
+
+        Builder.ProcessedPerspectiveOriginConfig config ->
+            [ transitionRule "perspective-origin" config ]
+
+        Builder.ProcessedSizeConfig config ->
+            let
+                hasAxis axis =
+                    controlledAxes
+                        |> Dict.get "size"
+                        |> Maybe.map (Set.member axis)
+                        |> Maybe.withDefault True
+            in
+            [ if hasAxis "width" then
+                Just (transitionRule "width" config)
+
+              else
+                Nothing
+            , if hasAxis "height" then
+                Just (transitionRule "height" config)
+
+              else
+                Nothing
+            ]
+                |> List.filterMap identity
+
+        Builder.ProcessedSkewConfig _ ->
+            []
+
+        Builder.ProcessedTranslateConfig _ ->
+            []
+
+        Builder.ProcessedRotateConfig _ ->
+            []
+
+        Builder.ProcessedScaleConfig _ ->
+            []
 
 
 {-| Emits a single `transform` transition rule for transform-family animations.
@@ -260,76 +307,6 @@ transformTransitionFromProcessed maybeOrder properties =
         |> List.head
 
 
-{-| Build a single CSS `transition` rule for a given property name.
--}
-transitionRule : String -> Builder.ProcessedAnimationConfig a -> String
-transitionRule cssName cfg =
-    cssName
-        ++ " "
-        ++ String.fromInt cfg.duration
-        ++ "ms "
-        ++ timingFunction cfg.easing
-        ++ " "
-        ++ String.fromInt cfg.delay
-        ++ "ms"
-
-
-{-| Resolve the CSS `transition-timing-function` for a property.
--}
-timingFunction : Easing -> String
-timingFunction easing =
-    InternalEasing.toCSS (Just easing)
-
-
-nonTransformTransitionFromProcessed : Dict String (Set.Set String) -> Builder.ProcessedPropertyConfig -> List String
-nonTransformTransitionFromProcessed controlledAxes property =
-    case property of
-        Builder.ProcessedCustomPropertyConfig cssName _ config ->
-            [ transitionRule cssName config ]
-
-        Builder.ProcessedCustomColorPropertyConfig cssName config ->
-            [ transitionRule cssName config ]
-
-        Builder.ProcessedOpacityConfig config ->
-            [ transitionRule "opacity" config ]
-
-        Builder.ProcessedPerspectiveOriginConfig config ->
-            [ transitionRule "perspective-origin" config ]
-
-        Builder.ProcessedRotateConfig _ ->
-            []
-
-        Builder.ProcessedScaleConfig _ ->
-            []
-
-        Builder.ProcessedSizeConfig config ->
-            let
-                hasAxis axis =
-                    controlledAxes
-                        |> Dict.get "size"
-                        |> Maybe.map (Set.member axis)
-                        |> Maybe.withDefault True
-            in
-            [ if hasAxis "width" then
-                Just (transitionRule "width" config)
-
-              else
-                Nothing
-            , if hasAxis "height" then
-                Just (transitionRule "height" config)
-
-              else
-                Nothing
-            ]
-                |> List.filterMap identity
-
-        Builder.ProcessedSkewConfig _ ->
-            []
-
-        Builder.ProcessedTranslateConfig _ ->
-            []
-
-
 {-| The longest animation duration across the processed properties, used
 to time discrete property flips so they finish in lockstep with the
 animatable properties (e.g. opacity fades to 0 before `display: none`
@@ -374,17 +351,15 @@ maxAnimationDuration =
         0
 
 
-generateAnimation : Maybe (List TransformProperty) -> Bool -> DiscreteConfig -> Dict String (Set.Set String) -> List Builder.ProcessedPropertyConfig -> AnimGroup
-generateAnimation maybeOrder discreteTransitions discrete controlledAxes processedProps =
-    AnimGroup.init
-        |> AnimGroup.setDiscreteEntry discrete.entry
-        |> AnimGroup.setDiscreteExit discrete.exit
-        |> AnimGroup.setPropertyKeys (propertyKeysOf processedProps)
-        |> AnimGroup.setWillChange (Builder.willChangeCompositeWithControlledAxes controlledAxes processedProps)
-        |> AnimGroup.setStyles
-            (TransitionStyles.fromProcessedPropertiesWithControlledAxes
-                maybeOrder
-                controlledAxes
-                (baseStylesWithControlledAxes maybeOrder discreteTransitions discrete controlledAxes processedProps)
-                processedProps
-            )
+{-| Build a single CSS `transition` rule for a given property name.
+-}
+transitionRule : String -> Builder.ProcessedAnimationConfig a -> String
+transitionRule cssName cfg =
+    cssName
+        ++ " "
+        ++ String.fromInt cfg.duration
+        ++ "ms "
+        ++ InternalEasing.toCSS (Just cfg.easing)
+        ++ " "
+        ++ String.fromInt cfg.delay
+        ++ "ms"
