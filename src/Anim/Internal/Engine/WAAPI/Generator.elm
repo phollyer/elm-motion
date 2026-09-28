@@ -41,7 +41,7 @@ init defaults animGroupName discreteEntryProps discreteExitProps properties =
 generateAnimation :
     Builder.Iterations
     -> Builder.AnimationDirection
-    -> Maybe (List TransformProperty)
+    -> List TransformProperty
     -> Dict String String
     -> Dict String Builder.DiscreteExitProperty
     -> Maybe AnimGroup
@@ -116,13 +116,13 @@ generateAnimation iterations animationDirection globalTransformOrder discreteEnt
 
         transformOrder =
             case globalTransformOrder of
-                Just order ->
-                    order
-
-                Nothing ->
+                [] ->
                     existingAnimation
                         |> Maybe.map AnimGroup.getTransformOrder
                         |> Maybe.withDefault TransformProperty.default
+
+                order ->
+                    order
     in
     AnimGroup.init
         |> AnimGroup.setSnapshot snapshot

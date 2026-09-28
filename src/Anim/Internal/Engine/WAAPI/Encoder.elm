@@ -179,7 +179,7 @@ encodeAnimateLike typeTag animGroups touchedAxes processed =
                             animGroupName
                             animGroupName
                             (Just propertyStatesGroup)
-                            (Just animTransformOrder)
+                            animTransformOrder
                             (encodeTransformBaseline snapshot)
                             Nothing
                             Nothing
@@ -259,7 +259,7 @@ encodeRestart iterationsConfig directionConfig animGroup configGroup =
                             animGroupName
                             animGroupName
                             (Just elementProps)
-                            (Just elemTransformOrder)
+                            elemTransformOrder
                             (encodeTransformBaseline snapshot)
                             Nothing
                             Nothing
@@ -305,7 +305,7 @@ encodeProcessedData data =
                             animGroupName
                             animGroupName
                             Nothing
-                            Nothing
+                            []
                             Nothing
                             Nothing
                             Nothing
@@ -457,7 +457,7 @@ encodeProcessedAnimGroupConfig :
     AnimGroupName
     -> String
     -> Maybe (AnimGroups PropertyState)
-    -> Maybe (List TransformProperty)
+    -> List TransformProperty
     -> Maybe Encode.Value
     -> Maybe String
     -> Maybe String
@@ -483,9 +483,7 @@ encodeProcessedAnimGroupConfig animGroupName targetId propertyState transformOrd
             ]
 
         orderField =
-            transformOrder_
-                |> Maybe.map (\order -> [ ( "transformOrder", encodeTransformOrder order ) ])
-                |> Maybe.withDefault []
+            [ ( "transformOrder", encodeTransformOrder transformOrder_ ) ]
 
         baselineField =
             transformBaseline

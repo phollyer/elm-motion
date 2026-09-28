@@ -29,14 +29,14 @@ suite =
                 Builder.init []
                     |> Builder.transformOrder globalOrder
                     |> Builder.getTransformOrder "unknown-group"
-                    |> Expect.equal (Just globalOrder)
+                    |> Expect.equal globalOrder
         , test "writes group transformOrder when a group is selected" <|
             \_ ->
                 Builder.init []
                     |> Builder.for "el"
                     |> Builder.transformOrder groupOrderA
                     |> Builder.getTransformOrder "el"
-                    |> Expect.equal (Just groupOrderA)
+                    |> Expect.equal groupOrderA
         , test "group transformOrder overrides global for the selected group" <|
             \_ ->
                 let
@@ -49,7 +49,7 @@ suite =
                 builder
                     |> Builder.getCurrentAnimGroupConfig
                     |> .transformOrder
-                    |> Expect.equal (Just groupOrderA)
+                    |> Expect.equal groupOrderA
         , test "current group config falls back to global when group has no explicit transformOrder" <|
             \_ ->
                 Builder.init []
@@ -57,7 +57,7 @@ suite =
                     |> Builder.for "el"
                     |> Builder.getCurrentAnimGroupConfig
                     |> .transformOrder
-                    |> Expect.equal (Just globalOrder)
+                    |> Expect.equal globalOrder
         , test "multiple groups keep independent transformOrder values" <|
             \_ ->
                 let
@@ -71,5 +71,5 @@ suite =
                 ( builder |> Builder.getTransformOrder "el-1"
                 , builder |> Builder.getTransformOrder "el-2"
                 )
-                    |> Expect.equal ( Just groupOrderA, Just groupOrderB )
+                    |> Expect.equal ( groupOrderA, groupOrderB )
         ]

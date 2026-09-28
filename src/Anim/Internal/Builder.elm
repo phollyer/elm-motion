@@ -326,7 +326,7 @@ type alias DefaultsConfig =
     , globalDelay : Maybe Int
     , globalCssUnit : InternalUnit.CssUnitAxes
     , globalSizeCssUnit : InternalUnit.CssUnitAxes
-    , globalTransformOrder : Maybe (List TransformProperty)
+    , globalTransformOrder : List TransformProperty
     , cssUnits : CssUnitStore.Store
     , touchedInitSlots : Set ( String, String )
     , translateCurrentGroup : Maybe AnimGroupName
@@ -338,7 +338,7 @@ type alias DefaultsConfig =
 type alias AnimGroupConfig =
     { properties : List PropertyConfig
     , playback : Maybe GroupPlaybackConfig
-    , transformOrder : Maybe (List TransformProperty)
+    , transformOrder : List TransformProperty
     , viewRangeStart : Maybe String
     , viewRangeEnd : Maybe String
     , emitProgress : Maybe Bool
@@ -353,7 +353,7 @@ type alias ProcessedAnimGroupConfig =
     { properties : List ProcessedPropertyConfig
     , controlledAxes : Dict String (Set String)
     , playback : Maybe GroupPlaybackConfig
-    , transformOrder : Maybe (List TransformProperty)
+    , transformOrder : List TransformProperty
     , viewRangeStart : Maybe String
     , viewRangeEnd : Maybe String
     , emitProgress : Maybe Bool
@@ -618,7 +618,7 @@ initDefaults =
     , globalDelay = Nothing
     , globalCssUnit = InternalUnit.emptyCssUnitAxes
     , globalSizeCssUnit = InternalUnit.emptyCssUnitAxes
-    , globalTransformOrder = Nothing
+    , globalTransformOrder = []
     , cssUnits = CssUnitStore.empty
     , touchedInitSlots = Set.empty
     , translateCurrentGroup = Nothing
@@ -1154,11 +1154,11 @@ updateCurrentConfig config (AnimBuilder data) =
 
                                 mergedOrder =
                                     case configWithDiscreteSnapshot.transformOrder of
-                                        Just _ ->
-                                            configWithDiscreteSnapshot.transformOrder
-
-                                        Nothing ->
+                                        [] ->
                                             existing.transformOrder
+
+                                        transformOrder_ ->
+                                            transformOrder_
                             in
                             { existing
                                 | properties = filteredExisting ++ configWithDiscreteSnapshot.properties
@@ -1506,11 +1506,11 @@ getCurrentAnimGroupConfig (AnimBuilder data) =
                         { config
                             | transformOrder =
                                 case config.transformOrder of
-                                    Just groupOrder ->
-                                        Just groupOrder
-
-                                    Nothing ->
+                                    [] ->
                                         data.defaults.globalTransformOrder
+
+                                    groupOrder ->
+                                        groupOrder
                             , viewRangeStart =
                                 case config.viewRangeStart of
                                     Just groupRangeStart ->
@@ -1588,21 +1588,11 @@ getRuntimeBaseline key (AnimBuilder data) =
     AnimGroups.get key data.state.runtimeBaselines
 
 
-getTransformOrder : AnimGroupName -> AnimBuilder eng -> Maybe (List TransformProperty)
+getTransformOrder : AnimGroupName -> AnimBuilder eng -> List TransformProperty
 getTransformOrder animGroupName (AnimBuilder data) =
     AnimGroups.get animGroupName data.animation.animGroups
-        |> Maybe.andThen .transformOrder
-        |> orElse data.defaults.globalTransformOrder
-
-
-orElse : Maybe a -> Maybe a -> Maybe a
-orElse fallback primary =
-    case primary of
-        Just _ ->
-            primary
-
-        Nothing ->
-            fallback
+        |> Maybe.map .transformOrder
+        |> Maybe.withDefault data.defaults.globalTransformOrder
 
 
 getScopedDefaults : AnimBuilder eng -> DefaultsConfig
@@ -2019,7 +2009,7 @@ transformOrder : List TransformProperty -> AnimBuilder { eng | withTransformOrde
 transformOrder order ((AnimBuilder data) as builder) =
     let
         normalizedOrder =
-            Just (normalizeTransformOrder order)
+            normalizeTransformOrder order
     in
     case data.animation.currentAnimGroup of
         Just animGroupName ->
@@ -2102,7 +2092,7 @@ iterations count (AnimBuilder data) =
             updateCurrentConfig
                 { properties = []
                 , playback = Just { iterations = Just (Times count), animationDirection = Nothing }
-                , transformOrder = Nothing
+                , transformOrder = []
                 , viewRangeStart = Nothing
                 , viewRangeEnd = Nothing
                 , emitProgress = Nothing
@@ -2128,7 +2118,7 @@ loopForever (AnimBuilder data) =
             updateCurrentConfig
                 { properties = []
                 , playback = Just { iterations = Just Infinite, animationDirection = Nothing }
-                , transformOrder = Nothing
+                , transformOrder = []
                 , viewRangeStart = Nothing
                 , viewRangeEnd = Nothing
                 , emitProgress = Nothing
@@ -2169,7 +2159,7 @@ alternate (AnimBuilder data) =
             updateCurrentConfig
                 { properties = []
                 , playback = Just { iterations = Nothing, animationDirection = Just Alternate }
-                , transformOrder = Nothing
+                , transformOrder = []
                 , viewRangeStart = Nothing
                 , viewRangeEnd = Nothing
                 , emitProgress = Nothing
@@ -2235,7 +2225,7 @@ discreteEntry propertyName value (AnimBuilder data) =
                         |> Maybe.withDefault
                             { properties = []
                             , playback = Nothing
-                            , transformOrder = Nothing
+                            , transformOrder = []
                             , viewRangeStart = Nothing
                             , viewRangeEnd = Nothing
                             , emitProgress = Nothing
@@ -2282,7 +2272,7 @@ discreteExit propertyName from to (AnimBuilder data) =
                         |> Maybe.withDefault
                             { properties = []
                             , playback = Nothing
-                            , transformOrder = Nothing
+                            , transformOrder = []
                             , viewRangeStart = Nothing
                             , viewRangeEnd = Nothing
                             , emitProgress = Nothing
@@ -2358,7 +2348,7 @@ freezeAxes axes properties (AnimBuilder data) =
             updateCurrentConfig
                 { properties = []
                 , playback = Nothing
-                , transformOrder = Nothing
+                , transformOrder = []
                 , viewRangeStart = Nothing
                 , viewRangeEnd = Nothing
                 , emitProgress = Nothing
@@ -2406,7 +2396,7 @@ unfreezeAxes axes properties (AnimBuilder data) =
             updateCurrentConfig
                 { properties = []
                 , playback = Nothing
-                , transformOrder = Nothing
+                , transformOrder = []
                 , viewRangeStart = Nothing
                 , viewRangeEnd = Nothing
                 , emitProgress = Nothing
@@ -3021,11 +3011,11 @@ process (AnimBuilder data) =
                 , playback = group.playback
                 , transformOrder =
                     case group.transformOrder of
-                        Just _ ->
-                            group.transformOrder
-
-                        Nothing ->
+                        [] ->
                             groupDefaults.globalTransformOrder
+
+                        transformOrder_ ->
+                            transformOrder_
                 , viewRangeStart = group.viewRangeStart
                 , viewRangeEnd = group.viewRangeEnd
                 , emitProgress = group.emitProgress
@@ -3558,7 +3548,7 @@ setViewRangeStart range (AnimBuilder data) =
             updateCurrentConfig
                 { properties = []
                 , playback = Nothing
-                , transformOrder = Nothing
+                , transformOrder = []
                 , viewRangeStart = Just range
                 , viewRangeEnd = Nothing
                 , emitProgress = Nothing
@@ -3586,7 +3576,7 @@ setViewRangeEnd range (AnimBuilder data) =
             updateCurrentConfig
                 { properties = []
                 , playback = Nothing
-                , transformOrder = Nothing
+                , transformOrder = []
                 , viewRangeStart = Nothing
                 , viewRangeEnd = Just range
                 , emitProgress = Nothing
@@ -3684,7 +3674,7 @@ setEmitProgress enabled (AnimBuilder data) =
             updateCurrentConfig
                 { properties = []
                 , playback = Nothing
-                , transformOrder = Nothing
+                , transformOrder = []
                 , viewRangeStart = Nothing
                 , viewRangeEnd = Nothing
                 , emitProgress = Just enabled
@@ -3765,7 +3755,7 @@ setScrollEmitProgress enabled (AnimBuilder data) =
             updateCurrentConfig
                 { properties = []
                 , playback = Nothing
-                , transformOrder = Nothing
+                , transformOrder = []
                 , viewRangeStart = Nothing
                 , viewRangeEnd = Nothing
                 , emitProgress = Just enabled
@@ -3821,7 +3811,7 @@ setUpdateThrottle intervalMs (AnimBuilder data) =
             updateCurrentConfig
                 { properties = []
                 , playback = Nothing
-                , transformOrder = Nothing
+                , transformOrder = []
                 , viewRangeStart = Nothing
                 , viewRangeEnd = Nothing
                 , emitProgress = Nothing

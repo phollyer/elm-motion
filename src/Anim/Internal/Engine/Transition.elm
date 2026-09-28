@@ -117,7 +117,7 @@ animate =
     CSS.animate AnimGroup.setPlayState generateAnimGroup insertAnimGroup
 
 
-generateAnimGroup : Maybe (List TransformProperty) -> EngineBuilder -> AnimGroupName -> Builder.ProcessedAnimGroupConfig -> AnimGroup
+generateAnimGroup : List TransformProperty -> EngineBuilder -> AnimGroupName -> Builder.ProcessedAnimGroupConfig -> AnimGroup
 generateAnimGroup maybeOrder builder animGroupName config =
     let
         discreteEntry =

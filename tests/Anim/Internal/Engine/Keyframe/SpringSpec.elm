@@ -68,7 +68,7 @@ keyframesFor properties =
         processed =
             Builder.processProperties Builder.initDefaults "test" properties
     in
-    Generator.generateAnimation Nothing
+    Generator.generateAnimation []
         Builder.Once
         Builder.Normal
         Generator.emptyDiscreteConfig

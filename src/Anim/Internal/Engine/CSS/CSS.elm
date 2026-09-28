@@ -143,7 +143,7 @@ init initGroup propertyInitializers =
 
 animate :
     (PlayState -> a -> a)
-    -> (Maybe (List TransformProperty) -> AnimBuilder engine -> AnimGroupName -> Builder.ProcessedAnimGroupConfig -> a)
+    -> (List TransformProperty -> AnimBuilder engine -> AnimGroupName -> Builder.ProcessedAnimGroupConfig -> a)
     -> (AnimGroups Builder.ProcessedAnimGroupConfig -> AnimGroupName -> a -> AnimGroups a -> AnimGroups a)
     -> AnimState engine a
     -> (AnimBuilder engine -> AnimBuilder engine)
@@ -208,7 +208,7 @@ animate setPlayState generateData insertData (AnimState state animGroups) transf
 
 retarget :
     (PlayState -> a -> a)
-    -> (Maybe (List TransformProperty) -> AnimBuilder engine -> AnimGroupName -> Builder.ProcessedAnimGroupConfig -> a)
+    -> (List TransformProperty -> AnimBuilder engine -> AnimGroupName -> Builder.ProcessedAnimGroupConfig -> a)
     -> (AnimGroups Builder.ProcessedAnimGroupConfig -> AnimGroupName -> a -> AnimGroups a -> AnimGroups a)
     -> AnimState engine a
     -> (AnimBuilder engine -> AnimBuilder engine)

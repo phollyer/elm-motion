@@ -22,13 +22,13 @@ import Set exposing (Set)
 -- ============================================================
 
 
-fromProcessedPropertiesWithControlledAxes : Dict String (Set String) -> Maybe (List TransformProperty) -> Maybe PropertyBaselines -> List ( String, String ) -> List Builder.ProcessedPropertyConfig -> Styles
+fromProcessedPropertiesWithControlledAxes : Dict String (Set String) -> List TransformProperty -> Maybe PropertyBaselines -> List ( String, String ) -> List Builder.ProcessedPropertyConfig -> Styles
 fromProcessedPropertiesWithControlledAxes controlledAxes maybeOrder maybeTargetValues baseStyles =
     Styles.fromProcessedPropertiesWithControlledAxes (Just controlledAxes) baseStyles <|
         extractTransformStyles (Just controlledAxes) maybeOrder maybeTargetValues
 
 
-extractTransformStyles : Maybe (Dict String (Set String)) -> Maybe (List TransformProperty) -> Maybe PropertyBaselines -> List Builder.ProcessedPropertyConfig -> List ( String, String )
+extractTransformStyles : Maybe (Dict String (Set String)) -> List TransformProperty -> Maybe PropertyBaselines -> List Builder.ProcessedPropertyConfig -> List ( String, String )
 extractTransformStyles maybeControlledAxes maybeOrder maybeTargetValues properties =
     let
         transformParts =

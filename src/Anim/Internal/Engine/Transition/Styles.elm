@@ -8,19 +8,19 @@ import Dict exposing (Dict)
 import Set exposing (Set)
 
 
-fromProcessedProperties : Maybe (List TransformProperty) -> List ( String, String ) -> List Builder.ProcessedPropertyConfig -> Styles
+fromProcessedProperties : List TransformProperty -> List ( String, String ) -> List Builder.ProcessedPropertyConfig -> Styles
 fromProcessedProperties maybeOrder baseStyles =
     Styles.fromProcessedProperties baseStyles <|
         extractTransformStyles Nothing maybeOrder
 
 
-fromProcessedPropertiesWithControlledAxes : Maybe (List TransformProperty) -> Dict String (Set String) -> List ( String, String ) -> List Builder.ProcessedPropertyConfig -> Styles
+fromProcessedPropertiesWithControlledAxes : List TransformProperty -> Dict String (Set String) -> List ( String, String ) -> List Builder.ProcessedPropertyConfig -> Styles
 fromProcessedPropertiesWithControlledAxes maybeOrder controlledAxes baseStyles =
     Styles.fromProcessedPropertiesWithControlledAxes (Just controlledAxes) baseStyles <|
         extractTransformStyles (Just controlledAxes) maybeOrder
 
 
-extractTransformStyles : Maybe (Dict String (Set String)) -> Maybe (List TransformProperty) -> List Builder.ProcessedPropertyConfig -> List ( String, String )
+extractTransformStyles : Maybe (Dict String (Set String)) -> List TransformProperty -> List Builder.ProcessedPropertyConfig -> List ( String, String )
 extractTransformStyles maybeControlledAxes maybeOrder properties =
     let
         transformParts =

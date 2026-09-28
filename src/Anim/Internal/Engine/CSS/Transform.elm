@@ -12,15 +12,15 @@ import Dict exposing (Dict)
 import Set exposing (Set)
 
 
-generateComponents : Maybe (List TransformProperty) -> Builder.TransformParts -> List String
-generateComponents maybeOrder transformParts =
+generateComponents : List TransformProperty -> Builder.TransformParts -> List String
+generateComponents transformOrder transformParts =
     let
         ordered =
-            case maybeOrder of
-                Nothing ->
+            case transformOrder of
+                [] ->
                     [ transformParts.translate, transformParts.rotate, transformParts.skew, transformParts.scale ]
 
-                Just order ->
+                order ->
                     List.filterMap
                         (\o ->
                             let
@@ -81,7 +81,7 @@ extractParts maybeControlledAxes properties =
         properties
 
 
-toStyle : Maybe (List TransformProperty) -> Builder.TransformParts -> Maybe ( String, String )
+toStyle : List TransformProperty -> Builder.TransformParts -> Maybe ( String, String )
 toStyle maybeOrder transformParts =
     let
         value =
@@ -94,7 +94,7 @@ toStyle maybeOrder transformParts =
         Just ( "transform", value )
 
 
-toCssString : Maybe (List TransformProperty) -> Builder.TransformParts -> String
+toCssString : List TransformProperty -> Builder.TransformParts -> String
 toCssString maybeOrder transformParts =
     generateComponents maybeOrder transformParts
         |> String.join " "

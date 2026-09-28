@@ -3,7 +3,7 @@ module Anim.Internal.Engine.Transition.Generator exposing
     , generateAnimation
     )
 
-import Anim.Extra.TransformOrder exposing (TransformProperty(..))
+import Anim.Extra.TransformOrder as TransformOrder exposing (TransformProperty(..))
 import Anim.Internal.Builder as Builder
 import Anim.Internal.Engine.Transition.AnimGroup as AnimGroup exposing (AnimGroup)
 import Anim.Internal.Engine.Transition.Styles as TransitionStyles
@@ -30,7 +30,7 @@ type alias DiscreteConfig =
 -- ============================================================
 
 
-generateAnimation : Maybe (List TransformProperty) -> Bool -> DiscreteConfig -> Dict String (Set.Set String) -> List Builder.ProcessedPropertyConfig -> AnimGroup
+generateAnimation : List TransformProperty -> Bool -> DiscreteConfig -> Dict String (Set.Set String) -> List Builder.ProcessedPropertyConfig -> AnimGroup
 generateAnimation maybeOrder discreteTransitions discrete controlledAxes processedProps =
     let
         propertyKeysOf : List Builder.ProcessedPropertyConfig -> Set.Set String
@@ -63,12 +63,12 @@ generateAnimation maybeOrder discreteTransitions discrete controlledAxes process
             )
 
 
-generate : Maybe (List TransformProperty) -> Bool -> DiscreteConfig -> List Builder.ProcessedPropertyConfig -> String
+generate : List TransformProperty -> Bool -> DiscreteConfig -> List Builder.ProcessedPropertyConfig -> String
 generate maybeOrder discreteTransitions discrete properties =
     generateWithControlledAxes maybeOrder Dict.empty discreteTransitions discrete properties
 
 
-generateWithControlledAxes : Maybe (List TransformProperty) -> Dict String (Set.Set String) -> Bool -> DiscreteConfig -> List Builder.ProcessedPropertyConfig -> String
+generateWithControlledAxes : List TransformProperty -> Dict String (Set.Set String) -> Bool -> DiscreteConfig -> List Builder.ProcessedPropertyConfig -> String
 generateWithControlledAxes maybeOrder controlledAxes discreteTransitions discrete properties =
     let
         animated =
@@ -229,8 +229,8 @@ TODO: This will need to change to follow the user specified transform order once
 it has been implemented.
 
 -}
-transformTransitionFromProcessed : Maybe (List TransformProperty) -> List Builder.ProcessedPropertyConfig -> Maybe String
-transformTransitionFromProcessed maybeOrder properties =
+transformTransitionFromProcessed : List TransformProperty -> List Builder.ProcessedPropertyConfig -> Maybe String
+transformTransitionFromProcessed transformOrder properties =
     let
         translateConfig =
             properties
@@ -283,10 +283,9 @@ transformTransitionFromProcessed maybeOrder properties =
                                 Nothing
                     )
                 |> List.head
-    in
-    let
-        transitionFor order =
-            case order of
+
+        transitionFor transformProperty =
+            case transformProperty of
                 Translate ->
                     Maybe.map (transitionRule "transform") translateConfig
 
@@ -300,7 +299,12 @@ transformTransitionFromProcessed maybeOrder properties =
                     Maybe.map (transitionRule "transform") scaleConfig
 
         orderToUse =
-            Maybe.withDefault [ Translate, Rotate, Skew, Scale ] maybeOrder
+            case transformOrder of
+                [] ->
+                    TransformOrder.default
+
+                order ->
+                    order
     in
     orderToUse
         |> List.filterMap transitionFor

@@ -513,7 +513,7 @@ stop =
     CSS.stop
         AnimGroup.setPlayState
         AnimGroup.isActive
-        (\config -> KeyframeStyles.fromProcessedPropertiesWithControlledAxes config.controlledAxes Nothing Nothing)
+        (\config -> KeyframeStyles.fromProcessedPropertiesWithControlledAxes config.controlledAxes [] Nothing)
         (\styles -> AnimGroup.setStyles styles AnimGroup.init)
 
 
@@ -521,7 +521,7 @@ reset : AnimGroupName -> AnimState -> AnimState
 reset =
     CSS.reset
         AnimGroup.setPlayState
-        (\config -> KeyframeStyles.fromProcessedPropertiesWithControlledAxes config.controlledAxes Nothing Nothing)
+        (\config -> KeyframeStyles.fromProcessedPropertiesWithControlledAxes config.controlledAxes [] Nothing)
         (\styles -> AnimGroup.setStyles styles AnimGroup.init)
 
 

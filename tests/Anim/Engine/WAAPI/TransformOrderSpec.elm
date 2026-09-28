@@ -75,7 +75,7 @@ propagationTests =
             \_ ->
                 applyBuilder basePipeline
                     |> Builder.getTransformOrder "el"
-                    |> Expect.equal Nothing
+                    |> Expect.equal []
         , test "[Scale, Rotate, Translate, Skew] is recorded verbatim" <|
             \_ ->
                 applyBuilder
@@ -83,7 +83,7 @@ propagationTests =
                         >> basePipeline
                     )
                     |> Builder.getTransformOrder "el"
-                    |> Expect.equal (Just [ Scale, Rotate, Translate, Skew ])
+                    |> Expect.equal [ Scale, Rotate, Translate, Skew ]
         , test "[Rotate, Scale] is normalized to a full ordering" <|
             \_ ->
                 -- normalizeTransformOrder appends any missing
@@ -95,8 +95,8 @@ propagationTests =
                         >> basePipeline
                     )
                     |> Builder.getTransformOrder "el"
-                    |> Maybe.map (List.take 2)
-                    |> Expect.equal (Just [ Rotate, Scale ])
+                    |> List.take 2
+                    |> Expect.equal [ Rotate, Scale ]
         , test "empty list is normalized to the engine default order" <|
             \_ ->
                 applyBuilder
@@ -104,8 +104,8 @@ propagationTests =
                         >> basePipeline
                     )
                     |> Builder.getTransformOrder "el"
-                    |> Maybe.map List.length
-                    |> Expect.equal (Just 4)
+                    |> List.length
+                    |> Expect.equal 4
         ]
 
 
@@ -126,7 +126,7 @@ overrideTests =
                         >> basePipeline
                     )
                     |> Builder.getTransformOrder "el"
-                    |> Expect.equal (Just [ Scale, Skew, Rotate, Translate ])
+                    |> Expect.equal [ Scale, Skew, Rotate, Translate ]
         , test "transformOrder is independent of property pipeline order" <|
             \_ ->
                 let
@@ -173,5 +173,5 @@ overrideTests =
                 ( Builder.getTransformOrder "el" builder
                 , Builder.getTransformOrder "el-2" builder
                 )
-                    |> Expect.equal ( Just perGroupOrder, Just globalOrder )
+                    |> Expect.equal ( perGroupOrder, globalOrder )
         ]

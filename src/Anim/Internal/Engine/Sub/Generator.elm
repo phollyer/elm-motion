@@ -55,14 +55,14 @@ init defaults animGroupName discreteEntryProps discreteExitProps properties =
 generateAnimation :
     Builder.Iterations
     -> Builder.AnimationDirection
-    -> Maybe (List TransformProperty)
+    -> List TransformProperty
     -> Dict String (Set.Set String)
     -> Dict String Builder.DiscreteEntryProperty
     -> Dict String Builder.DiscreteExitProperty
     -> Maybe AnimGroup
     -> List Builder.ProcessedPropertyConfig
     -> AnimGroup
-generateAnimation iterationCount directionConfig maybeOrder controlledAxes discreteEntryProps discreteExitProps existingAnimation properties =
+generateAnimation iterationCount directionConfig transformOrder controlledAxes discreteEntryProps discreteExitProps existingAnimation properties =
     let
         adjustedProperties =
             properties
@@ -90,15 +90,15 @@ generateAnimation iterationCount directionConfig maybeOrder controlledAxes discr
             List.filterMap (toAnimation False) adjustedProperties
                 |> Animations.fromList
 
-        transformOrder =
-            case maybeOrder of
-                Just order ->
-                    order
-
-                Nothing ->
+        transformOrder_ =
+            case transformOrder of
+                [] ->
                     existingAnimation
                         |> Maybe.map AnimGroup.getTransformOrder
                         |> Maybe.withDefault TransformProperty.default
+
+                order ->
+                    order
     in
     AnimGroup.init
         |> AnimGroup.setAnimations animations
@@ -106,7 +106,7 @@ generateAnimation iterationCount directionConfig maybeOrder controlledAxes discr
         |> AnimGroup.setIterationCount iterationCount
         |> AnimGroup.setAnimationDirection directionConfig
         |> AnimGroup.setCurrentIteration 1
-        |> AnimGroup.setTransformOrder transformOrder
+        |> AnimGroup.setTransformOrder transformOrder_
         |> AnimGroup.setDiscreteEntry discreteEntryProps
         |> AnimGroup.setDiscreteExit discreteExitProps
         |> AnimGroup.setControlledAxes controlledAxes
