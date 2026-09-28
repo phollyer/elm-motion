@@ -398,7 +398,7 @@ For entry animations, include `startingStyleNode` in your view. This generates `
 
 📖 See [Discrete Properties](../concepts/discrete-properties.md) for the full API, live examples, and source code.
 
-### Transform Order
+### Transform Order (Available in the next release)
 
 Use `transformOrder` to set the order in which transform properties are applied.
 
