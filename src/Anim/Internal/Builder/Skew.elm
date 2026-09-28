@@ -228,7 +228,7 @@ markAxes axes builder =
 -- ============================================================
 
 
-byXY : Float -> Float -> SkewBuilder eng -> SkewBuilder eng
+byXY : Float -> Float -> SkewBuilder { eng | withLiveDelta : () } -> SkewBuilder { eng | withLiveDelta : () }
 byXY deltaX deltaY (SkewBuilder config builder) =
     let
         startX =
@@ -242,12 +242,12 @@ byXY deltaX deltaY (SkewBuilder config builder) =
         |> toXY (startX + deltaX) (startY + deltaY)
 
 
-byX : Float -> SkewBuilder eng -> SkewBuilder eng
+byX : Float -> SkewBuilder { eng | withLiveDelta : () } -> SkewBuilder { eng | withLiveDelta : () }
 byX deltaX =
     byXY deltaX 0
 
 
-byY : Float -> SkewBuilder eng -> SkewBuilder eng
+byY : Float -> SkewBuilder { eng | withLiveDelta : () } -> SkewBuilder { eng | withLiveDelta : () }
 byY deltaY =
     byXY 0 deltaY
 

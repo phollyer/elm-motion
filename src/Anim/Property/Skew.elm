@@ -360,21 +360,21 @@ setY =
 
 {-| Move by a delta on the X and Y axes.
 -}
-byXY : Float -> Float -> Builder eng -> Builder eng
+byXY : Float -> Float -> Builder { eng | withLiveDelta : () } -> Builder { eng | withLiveDelta : () }
 byXY =
     SB.byXY
 
 
 {-| Move by a delta on the X axis. Y is unaffected.
 -}
-byX : Float -> Builder eng -> Builder eng
+byX : Float -> Builder { eng | withLiveDelta : () } -> Builder { eng | withLiveDelta : () }
 byX =
     SB.byX
 
 
 {-| Move by a delta on the Y axis. X is unaffected.
 -}
-byY : Float -> Builder eng -> Builder eng
+byY : Float -> Builder { eng | withLiveDelta : () } -> Builder { eng | withLiveDelta : () }
 byY =
     SB.byY
 
