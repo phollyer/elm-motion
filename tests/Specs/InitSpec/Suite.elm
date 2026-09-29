@@ -3,6 +3,7 @@ module Specs.InitSpec.Suite exposing (suite)
 import Anim.Builder exposing (AnimBuilder)
 import Anim.Engine.Keyframe as Keyframe
 import Anim.Engine.Transition as Transition
+import Factories.Engines.Factory as Factory
 import Factories.Engines.Keyframe as KeyframeFactory
 import Factories.Engines.Transition as TransitionFactory
 import Factories.Properties.All as AllFactory
@@ -44,9 +45,9 @@ suite : Test
 suite =
     describe "init* functions write inline styles and will-change"
         [ describe "Keyframe engine" <|
-            Runner.run KeyframeFactory.factory Keyframe.attributes testData
+            Runner.run (Factory.Keyframe KeyframeFactory.factory) Keyframe.attributes testData
         , describe "Transition engine" <|
-            Runner.run TransitionFactory.factory Transition.attributes testData
+            Runner.run (Factory.Transition TransitionFactory.factory) Transition.attributes testData
         ]
 
 

@@ -5,7 +5,7 @@ module Specs.InitSpec.Runner exposing
     )
 
 import Expect
-import Factories.Engines.Factory exposing (Factory)
+import Factories.Engines.Factory as Factory exposing (Factory(..))
 import Helpers.AnimGroups exposing (animGroup)
 import Html
 import Specs.Shared exposing (NameValuePair, attributesQueryFor)
@@ -99,7 +99,11 @@ generalRunner : Factory animBuilder animState -> (String -> animState -> List (H
 generalRunner factory attributesFunc tc =
     test tc.description <|
         \_ ->
-            factory.init [ tc.initFuncs ]
+            let
+                f =
+                    Factory.initFactory factory
+            in
+            f.init [ tc.initFuncs ]
                 |> attributesQueryFor attributesFunc animGroup
                 |> Query.has
                     [ Selector.style tc.expected.name tc.expected.value
@@ -115,7 +119,11 @@ multiGroupRunner factory attributesFunc tc =
                 (List.map4
                     (\init group expected willChange ->
                         \_ ->
-                            factory.init init
+                            let
+                                f =
+                                    Factory.initFactory factory
+                            in
+                            f.init init
                                 |> attributesQueryFor attributesFunc group
                                 |> Query.has
                                     (Selector.style "will-change" willChange
@@ -138,7 +146,11 @@ multiPropertyRunner : Factory animBuilder animState -> (String -> animState -> L
 multiPropertyRunner factory attributesFunc tc =
     test tc.description <|
         \_ ->
-            factory.init tc.initFuncs
+            let
+                f =
+                    Factory.initFactory factory
+            in
+            f.init tc.initFuncs
                 |> attributesQueryFor attributesFunc animGroup
                 |> Query.has
                     (Selector.style "will-change" tc.willChange
@@ -154,7 +166,11 @@ sizeRunner : Factory animBuilder animState -> (String -> animState -> List (Html
 sizeRunner factory attributesFunc tc =
     test tc.description <|
         \_ ->
-            factory.init [ tc.initFuncs ]
+            let
+                f =
+                    Factory.initFactory factory
+            in
+            f.init [ tc.initFuncs ]
                 |> attributesQueryFor attributesFunc animGroup
                 |> (\query ->
                         case ( tc.expectedHeight, tc.expectedWidth ) of

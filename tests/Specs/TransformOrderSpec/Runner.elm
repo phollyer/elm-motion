@@ -5,7 +5,7 @@ module Specs.TransformOrderSpec.Runner exposing
     )
 
 import Anim.Extra.TransformOrder exposing (TransformProperty)
-import Factories.Engines.Factory exposing (Factory)
+import Factories.Engines.Factory as Factory exposing (Factory(..))
 import Helpers.AnimGroups exposing (animGroup)
 import Html
 import Specs.Shared exposing (attributesQueryFor)
@@ -44,7 +44,7 @@ type alias InitTestCase animBuilder =
 
 type alias AnimateTestCase animBuilder =
     { description : String
-    , animateFuncs : List (animBuilder -> animBuilder)
+    , animateFuncs : animBuilder -> animBuilder
     , transformOrder : List TransformProperty
     , expected : String
     }
@@ -87,7 +87,11 @@ initRunner : Factory animBuilder state -> (String -> state -> List (Html.Attribu
 initRunner factory attributesFunc tc =
     test tc.description <|
         \_ ->
-            factory.init tc.initFuncs
+            let
+                f =
+                    Factory.initFactory factory
+            in
+            f.init tc.initFuncs
                 |> attributesQueryFor attributesFunc animGroup
                 |> Query.has
                     [ Selector.style "transform" tc.expected ]
@@ -101,12 +105,16 @@ animateRunner :
 animateRunner factory attributesFunc tc =
     test tc.description <|
         \_ ->
-            factory.init []
+            let
+                f =
+                    Factory.transformOrderFactory factory
+            in
+            f.init []
                 |> (\state ->
-                        factory.animate state <|
-                            factory.for animGroup
-                                >> factory.transformOrder tc.transformOrder
-                                >> List.foldl (>>) identity tc.animateFuncs
+                        f.animate state <|
+                            f.for animGroup
+                                >> f.transformOrder tc.transformOrder
+                                >> tc.animateFuncs
                    )
                 |> attributesQueryFor attributesFunc animGroup
                 |> Query.has

@@ -1,4 +1,4 @@
-module Specs.TransformOrderSpec.TestData exposing (..)
+module Specs.TransformOrderSpec.TestData exposing (testData)
 
 import Anim.Extra.TransformOrder exposing (TransformProperty(..))
 import Factories.Properties.All exposing (Factory)
@@ -72,18 +72,17 @@ testData f =
     }
 
 
-animateFuncs : Factory a b c d e f g h i j -> List (a -> a)
+animateFuncs : Factory a b c d e f g h i j -> (a -> a)
 animateFuncs f =
-    [ f.translate.begin
+    f.translate.begin
         >> f.translate.toX 0
         >> f.translate.end
-    , f.rotate.begin
+        >> f.rotate.begin
         >> f.rotate.toX 0
         >> f.rotate.end
-    , f.scale.begin
+        >> f.scale.begin
         >> f.scale.toX 0
         >> f.scale.end
-    , f.skew.begin
+        >> f.skew.begin
         >> f.skew.toX 0
         >> f.skew.end
-    ]
