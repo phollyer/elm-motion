@@ -1,7 +1,4 @@
-module Anim.Internal.Engine.Transition.Generator exposing
-    ( generate
-    , generateAnimation
-    )
+module Anim.Internal.Engine.Transition.Generator exposing (generateAnimation)
 
 import Anim.Extra.TransformOrder as TransformOrder exposing (TransformProperty(..))
 import Anim.Internal.Builder as Builder
@@ -31,7 +28,7 @@ type alias DiscreteConfig =
 
 
 generateAnimation : List TransformProperty -> Bool -> DiscreteConfig -> Dict String (Set.Set String) -> List Builder.ProcessedPropertyConfig -> AnimGroup
-generateAnimation maybeOrder discreteTransitions discrete controlledAxes processedProps =
+generateAnimation transformOrder discreteTransitions discrete controlledAxes processedProps =
     let
         propertyKeysOf : List Builder.ProcessedPropertyConfig -> Set.Set String
         propertyKeysOf =
@@ -47,7 +44,7 @@ generateAnimation maybeOrder discreteTransitions discrete controlledAxes process
                     else
                         []
             in
-            ( "transition", generateWithControlledAxes maybeOrder controlledAxes discreteTransitions discrete processedProps ) :: transitionBehavior
+            ( "transition", generateWithControlledAxes transformOrder controlledAxes discreteTransitions discrete processedProps ) :: transitionBehavior
     in
     AnimGroup.init
         |> AnimGroup.setDiscreteEntry discrete.entry
@@ -56,20 +53,15 @@ generateAnimation maybeOrder discreteTransitions discrete controlledAxes process
         |> AnimGroup.setWillChange (Builder.willChangeCompositeWithControlledAxes controlledAxes processedProps)
         |> AnimGroup.setStyles
             (TransitionStyles.fromProcessedPropertiesWithControlledAxes
-                maybeOrder
+                transformOrder
                 controlledAxes
                 baseStylesWithControlledAxes
                 processedProps
             )
 
 
-generate : List TransformProperty -> Bool -> DiscreteConfig -> List Builder.ProcessedPropertyConfig -> String
-generate maybeOrder discreteTransitions discrete properties =
-    generateWithControlledAxes maybeOrder Dict.empty discreteTransitions discrete properties
-
-
 generateWithControlledAxes : List TransformProperty -> Dict String (Set.Set String) -> Bool -> DiscreteConfig -> List Builder.ProcessedPropertyConfig -> String
-generateWithControlledAxes maybeOrder controlledAxes discreteTransitions discrete properties =
+generateWithControlledAxes transformOrder controlledAxes discreteTransitions discrete properties =
     let
         animated =
             (Builder.partitionByMode properties).animate
@@ -135,7 +127,7 @@ generateWithControlledAxes maybeOrder controlledAxes discreteTransitions discret
     else
         let
             transformTransition =
-                transformTransitionFromProcessed maybeOrder animated
+                transformTransitionFromProcessed transformOrder animated
 
             nonTransformTransitions =
                 List.concatMap (nonTransformTransitionFromProcessed controlledAxes) animated
