@@ -1,6 +1,7 @@
 module Factories.Engines.Factory exposing
     ( Factory(..)
     , animateFactory
+    , delayFactory
     , initFactory
     , transformOrderFactory
     )
@@ -50,6 +51,32 @@ animateFactory factory =
                 f.init
                 f.animate
                 f.for
+
+
+type alias DelayFactory animBuilder state =
+    { init : List (animBuilder -> animBuilder) -> state
+    , animate : state -> (animBuilder -> animBuilder) -> state
+    , for : String -> animBuilder -> animBuilder
+    , delay : Int -> animBuilder -> animBuilder
+    }
+
+
+delayFactory : Factory a b -> DelayFactory a b
+delayFactory factory =
+    case factory of
+        Keyframe f ->
+            DelayFactory
+                f.init
+                f.animate
+                f.for
+                f.delay
+
+        Transition f ->
+            DelayFactory
+                f.init
+                f.animate
+                f.for
+                f.delay
 
 
 type alias TransformOrderFactory animBuilder state =

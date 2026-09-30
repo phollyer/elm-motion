@@ -11,6 +11,7 @@ type alias Factory builder animState =
     { init : List (builder -> builder) -> animState
     , for : String -> (builder -> builder)
     , animate : animState -> (builder -> builder) -> animState
+    , delay : Int -> builder -> builder
     , transformOrder : List TransformProperty -> builder -> builder
     }
 
@@ -20,5 +21,6 @@ factory =
     { init = Transition.init
     , for = Transition.for
     , animate = Transition.animate
+    , delay = Transition.delay
     , transformOrder = Transition.transformOrder
     }
