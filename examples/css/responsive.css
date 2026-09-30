@@ -1,0 +1,151 @@
+/* ============================================
+   Elm Animate - Responsive Design CSS
+   ============================================ */
+
+/* ============================================
+   Example stage helpers (responsive scaffold)
+   ============================================ */
+
+/* The visible "stage" sitting middle-centred on the page (the body
+   provides the centring). Sized at 90vw × 90vh so it always fits
+   within the iframe wrapper, which is itself capped at 600px wide.
+   Demos render their subject + controls inside this box. */
+.example-stage {
+    position: relative;
+    box-sizing: border-box;
+    width: 90vw;
+    height: 90vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: clamp(8px, 2vmin, 24px);
+    padding:
+        max(10px, env(safe-area-inset-top)) max(10px, env(safe-area-inset-right)) max(10px, env(safe-area-inset-bottom)) max(10px, env(safe-area-inset-left));
+    background-color: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    overflow: hidden;
+}
+
+@media (orientation: landscape) and (max-height: 480px) {
+    .example-stage {
+        padding-top: 6px;
+        padding-bottom: 6px;
+        gap: 6px;
+    }
+}
+
+/* Small pill that tags static examples (layout responds, while the
+    animation itself does not adapt mid-flight). Fixed to the iframe
+    viewport, centred
+   in the 5vh gutter above the stage. Sizing is expressed in vh with
+   clamp() floors/ceilings so the pill grows with the iframe height
+   without ever spilling onto the stage or ballooning on tall pages. */
+.example-badge {
+    position: fixed;
+    top: 2.5vh;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    padding: clamp(1px, 0.3vh, 3px) clamp(6px, 1.4vh, 14px);
+    font-size: clamp(8px, 1.6vh, 13px);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border-radius: 999px;
+    line-height: 1.4;
+    z-index: 200;
+    pointer-events: none;
+    user-select: none;
+}
+
+.example-badge--static {
+    background-color: #fef3c7;
+    color: #92400e;
+}
+
+
+/* Horizontal row of action buttons sitting inside .example-stage.
+   Wraps onto multiple lines on phones so adjacent buttons stay readable. */
+.example-controls {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+}
+
+/* Static decorative box used by Border/Discrete/Hover/Radius demos.
+   Shrinks on phones, capped at the original 200×200 desktop size. */
+.example-box {
+    aspect-ratio: 1 / 1;
+    width: clamp(140px, 50vmin, 200px);
+    height: auto;
+}
+
+/* Generic playing-field used by Controlling/TransformOrder/Interrupting demos.
+   Flexes to fill the remaining stage height once controls have laid out. */
+.example-canvas {
+    width: 100%;
+    flex: 1 1 auto;
+    min-height: 0;
+    box-sizing: border-box;
+    border-radius: 8px;
+}
+
+/* Fluid playing-field for translation demos that re-anchor on resize.
+   Same flex behaviour as .example-canvas plus relative positioning and
+   overflow clipping for absolutely-positioned subjects. */
+.example-canvas--fluid {
+    position: relative;
+    width: 100%;
+    flex: 1 1 auto;
+    min-height: 0;
+    box-sizing: border-box;
+    overflow: hidden;
+}
+
+/* Two-row stage used by the Responsive Animations example.
+   Width is set inline as a percentage by the Elm app so the user can
+   widen / narrow the stage. The width change is applied instantly so
+   the example can re-measure the new track size on the very next
+   frame; a CSS transition would put the measurement mid-flight. */
+.responsive-stage {
+    margin: 12px 0;
+    border: 2px solid #555;
+    border-radius: 8px;
+    padding: 12px;
+    box-sizing: border-box;
+    max-width: 100%;
+}
+
+.responsive-row {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 4px;
+    margin-bottom: 12px;
+}
+
+.responsive-row:last-child {
+    margin-bottom: 0;
+}
+
+.responsive-row__label {
+    font-family: var(--ui-font, sans-serif);
+    font-size: 0.85rem;
+    color: #666;
+    text-align: left;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.responsive-row__track {
+    position: relative;
+    width: 100%;
+    height: 60px;
+    background: rgba(0, 0, 0, 0.04);
+    border-radius: 6px;
+    overflow: hidden;
+}
