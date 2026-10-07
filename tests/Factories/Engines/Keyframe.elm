@@ -10,12 +10,14 @@ import Anim.Internal.Engine.CSS.CSS as InternalCss
 import Anim.Internal.Engine.Keyframe.AnimGroup as InternalAnimGroup
 import Anim.Internal.Engine.Keyframe.Animation as InternalAnimation
 import Anim.Internal.Engine.Shared.AnimGroups as InternalAnimGroups
+import Html
 
 
 type alias Factory builder animState =
     { init : List (builder -> builder) -> animState
     , for : String -> (builder -> builder)
     , animate : animState -> (builder -> builder) -> animState
+    , attributes : String -> animState -> List (Html.Attribute Never)
     , delay : Int -> builder -> builder
     , transformOrder : List TransformProperty -> builder -> builder
     , animationString : String -> animState -> Maybe String
@@ -28,6 +30,7 @@ factory =
     { init = Keyframe.init
     , for = Keyframe.for
     , animate = Keyframe.animate
+    , attributes = Keyframe.attributes
     , delay = Keyframe.delay
     , transformOrder = Keyframe.transformOrder
     , animationString = animationString

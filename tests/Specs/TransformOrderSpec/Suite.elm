@@ -1,12 +1,9 @@
 module Specs.TransformOrderSpec.Suite exposing (suite)
 
 import Anim.Builder exposing (AnimBuilder)
-import Anim.Engine.Keyframe as Keyframe
-import Anim.Engine.Transition as Transition
 import Factories.Engines.Factory as Factory
 import Factories.Engines.Keyframe as KeyframeFactory
 import Factories.Engines.Transition as TransitionFactory
-import Factories.Properties.All exposing (factory)
 import Specs.TransformOrderSpec.Runner as Runner
 import Specs.TransformOrderSpec.TestData exposing (TestData)
 import Specs.TransformOrderSpec.TestData.Animate as Animate
@@ -28,14 +25,14 @@ suite : Test
 suite =
     describe "transformOrder writes the correct transform order"
         [ describe "Keyframe engine" <|
-            Runner.run (Factory.Keyframe KeyframeFactory.factory) Keyframe.attributes testData
+            Runner.run (Factory.Keyframe KeyframeFactory.factory) testData
         , describe "Transition engine" <|
-            Runner.run (Factory.Transition TransitionFactory.factory) Transition.attributes testData
+            Runner.run (Factory.Transition TransitionFactory.factory) testData
         ]
 
 
 testData : List (TestData (AnimBuilder eng))
 testData =
-    [ Animate.testData factory
-    , Init.testData factory
+    [ Animate.testData
+    , Init.testData
     ]
