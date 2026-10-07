@@ -5,7 +5,6 @@ import Anim.Property.PerspectiveOrigin as PerspectiveOrigin
 import Anim.Property.Size as Size
 import Anim.Property.Translate as Translate
 import Anim.Unit exposing (Unit(..))
-import Factories.Properties.All exposing (Factory)
 import Helpers.AnimGroups exposing (animGroup, otherAnimGroup)
 import Specs.InitSpec.TestData exposing (TestCase(..), TestData)
 import Specs.Shared exposing (NameValuePair)

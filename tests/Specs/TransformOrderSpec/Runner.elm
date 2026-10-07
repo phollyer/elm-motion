@@ -1,28 +1,13 @@
-module Specs.TransformOrderSpec.Runner exposing
-    ( TestCase(..)
-    , TestData
-    , run
-    )
+module Specs.TransformOrderSpec.Runner exposing (run)
 
-import Anim.Extra.TransformOrder exposing (TransformProperty)
 import Factories.Engines.Factory as Factory exposing (EngineFactory(..))
 import Helpers.AnimGroups exposing (animGroup)
 import Html
 import Specs.Shared exposing (attributesQueryFor)
+import Specs.TransformOrderSpec.TestData exposing (AnimateTestCase, InitTestCase, TestCase(..), TestData)
 import Test exposing (Test, describe, test)
 import Test.Html.Query as Query
 import Test.Html.Selector as Selector
-
-
-type alias TestData animBuilder =
-    { description : String
-    , testCases : List (TestCase animBuilder)
-    }
-
-
-type TestCase animBuilder
-    = InitTest (InitTestCase animBuilder)
-    | AnimateTest (AnimateTestCase animBuilder)
 
 
 
@@ -33,21 +18,6 @@ type TestCase animBuilder
    does not yet exist.
 -}
 -- TODO: Implement tests for setting the Transform Order at initialization.
-
-
-type alias InitTestCase animBuilder =
-    { description : String
-    , initFuncs : List (animBuilder -> animBuilder)
-    , expected : String
-    }
-
-
-type alias AnimateTestCase animBuilder =
-    { description : String
-    , animateFuncs : animBuilder -> animBuilder
-    , transformOrder : List TransformProperty
-    , expected : String
-    }
 
 
 run :
