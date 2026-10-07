@@ -81,8 +81,7 @@ initRunner factory tc =
                 let
                     f =
                         Factory.create factory
-                in
-                let
+
                     state =
                         f.init (tc.initFuncs ++ [ f.transformOrder tc.transformOrder ])
                 in
@@ -100,21 +99,41 @@ animateRunner :
     -> AnimateTestCase animBuilder
     -> Test
 animateRunner factory tc =
-    test tc.description <|
-        \_ ->
-            let
-                f =
-                    Factory.create factory
+    describe tc.description <|
+        [ test "with transform order first" <|
+            \_ ->
+                let
+                    f =
+                        Factory.create factory
 
-                state =
-                    f.animate (f.init []) <|
-                        f.for animGroup
-                            >> f.transformOrder tc.transformOrder
-                            >> tc.animateFuncs
-            in
-            case factory of
-                Factory.Keyframe f_ ->
-                    Expect.attributes animGroup f_.attributes tc state
+                    state =
+                        f.animate (f.init []) <|
+                            f.for animGroup
+                                >> f.transformOrder tc.transformOrder
+                                >> tc.animateFuncs
+                in
+                case factory of
+                    Factory.Keyframe f_ ->
+                        Expect.attributes animGroup f_.attributes tc state
 
-                Factory.Transition f_ ->
-                    Expect.attributes animGroup f_.attributes tc state
+                    Factory.Transition f_ ->
+                        Expect.attributes animGroup f_.attributes tc state
+        , test "with transform order last" <|
+            \_ ->
+                let
+                    f =
+                        Factory.create factory
+
+                    state =
+                        f.animate (f.init []) <|
+                            f.for animGroup
+                                >> tc.animateFuncs
+                                >> f.transformOrder tc.transformOrder
+                in
+                case factory of
+                    Factory.Keyframe f_ ->
+                        Expect.attributes animGroup f_.attributes tc state
+
+                    Factory.Transition f_ ->
+                        Expect.attributes animGroup f_.attributes tc state
+        ]
