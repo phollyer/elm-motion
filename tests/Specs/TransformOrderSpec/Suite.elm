@@ -10,6 +10,7 @@ import Factories.Properties.All exposing (factory)
 import Specs.TransformOrderSpec.Runner as Runner
 import Specs.TransformOrderSpec.TestData exposing (TestData)
 import Specs.TransformOrderSpec.TestData.Animate as Animate
+import Specs.TransformOrderSpec.TestData.Init as Init
 import Test exposing (Test, describe)
 
 
@@ -35,4 +36,6 @@ suite =
 
 testData : List (TestData (AnimBuilder eng))
 testData =
-    [ Animate.testData factory ]
+    [ Animate.testData factory
+    , Init.testData factory
+    ]

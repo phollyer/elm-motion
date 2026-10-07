@@ -10,16 +10,6 @@ import Test.Html.Query as Query
 import Test.Html.Selector as Selector
 
 
-
-{- Currently this documents existing behaviour, writes the default transform
-   order on initialisation - which is wrong.
-
-   It should test actually setting the Transform Order at initialization. This functionality
-   does not yet exist.
--}
--- TODO: Implement tests for setting the Transform Order at initialization.
-
-
 run :
     EngineFactory animBuilder state
     -> (String -> state -> List (Html.Attribute msg))
@@ -55,16 +45,44 @@ runTestCase factory attributesFunc testCase =
 
 initRunner : EngineFactory animBuilder state -> (String -> state -> List (Html.Attribute msg)) -> InitTestCase animBuilder -> Test
 initRunner factory attributesFunc tc =
-    test tc.description <|
-        \_ ->
-            let
-                f =
-                    Factory.create factory
-            in
-            f.init tc.initFuncs
-                |> attributesQueryFor attributesFunc animGroup
-                |> Query.has
-                    [ Selector.style "transform" tc.expected ]
+    describe tc.description <|
+        [ test "with transform order first" <|
+            \_ ->
+                let
+                    f =
+                        Factory.create factory
+                in
+                f.init (f.transformOrder tc.transformOrder :: tc.initFuncs)
+                    |> attributesQueryFor attributesFunc animGroup
+                    |> Query.has
+                        [ Selector.style "transform" tc.expected ]
+        , test "with transform order in the middle" <|
+            \_ ->
+                let
+                    f =
+                        Factory.create factory
+
+                    middle =
+                        List.length tc.initFuncs // 2
+
+                    initFuncs =
+                        List.take middle tc.initFuncs ++ (f.transformOrder tc.transformOrder :: List.drop middle tc.initFuncs)
+                in
+                f.init initFuncs
+                    |> attributesQueryFor attributesFunc animGroup
+                    |> Query.has
+                        [ Selector.style "transform" tc.expected ]
+        , test "with transform order last" <|
+            \_ ->
+                let
+                    f =
+                        Factory.create factory
+                in
+                f.init (tc.initFuncs ++ [ f.transformOrder tc.transformOrder ])
+                    |> attributesQueryFor attributesFunc animGroup
+                    |> Query.has
+                        [ Selector.style "transform" tc.expected ]
+        ]
 
 
 animateRunner :

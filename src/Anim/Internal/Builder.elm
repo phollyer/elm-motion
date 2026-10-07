@@ -2039,9 +2039,23 @@ transformOrder order ((AnimBuilder data) as builder) =
             let
                 defs =
                     data.defaults
+
+                anim =
+                    data.animation
             in
             AnimBuilder
-                { data | defaults = { defs | globalTransformOrder = normalizedOrder } }
+                { data
+                    | defaults = { defs | globalTransformOrder = normalizedOrder }
+                    , animation =
+                        { anim
+                            | groupDefaults =
+                                AnimGroups.map
+                                    (\_ groupDefaults ->
+                                        { groupDefaults | globalTransformOrder = normalizedOrder }
+                                    )
+                                    anim.groupDefaults
+                        }
+                }
 
 
 normalizeTransformOrder : List TransformProperty -> List TransformProperty

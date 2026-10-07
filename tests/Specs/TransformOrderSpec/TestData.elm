@@ -22,6 +22,7 @@ type TestCase animBuilder
 type alias InitTestCase animBuilder =
     { description : String
     , initFuncs : List (animBuilder -> animBuilder)
+    , transformOrder : List TransformProperty
     , expected : String
     }
 
