@@ -5,7 +5,7 @@ module Specs.TransformOrderSpec.Runner exposing
     )
 
 import Anim.Extra.TransformOrder exposing (TransformProperty)
-import Factories.Engines.Factory as Factory exposing (Factory(..))
+import Factories.Engines.Factory as Factory exposing (EngineFactory(..))
 import Helpers.AnimGroups exposing (animGroup)
 import Html
 import Specs.Shared exposing (attributesQueryFor)
@@ -51,7 +51,7 @@ type alias AnimateTestCase animBuilder =
 
 
 run :
-    Factory animBuilder state
+    EngineFactory animBuilder state
     -> (String -> state -> List (Html.Attribute msg))
     -> List (TestData animBuilder)
     -> List Test
@@ -60,7 +60,7 @@ run factory attributesFunc =
 
 
 runTestData :
-    Factory animBuilder state
+    EngineFactory animBuilder state
     -> (String -> state -> List (Html.Attribute msg))
     -> TestData animBuilder
     -> Test
@@ -70,7 +70,7 @@ runTestData factory attributesFunc td =
 
 
 runTestCase :
-    Factory animBuilder state
+    EngineFactory animBuilder state
     -> (String -> state -> List (Html.Attribute msg))
     -> TestCase animBuilder
     -> Test
@@ -83,13 +83,13 @@ runTestCase factory attributesFunc testCase =
             animateRunner factory attributesFunc tc
 
 
-initRunner : Factory animBuilder state -> (String -> state -> List (Html.Attribute msg)) -> InitTestCase animBuilder -> Test
+initRunner : EngineFactory animBuilder state -> (String -> state -> List (Html.Attribute msg)) -> InitTestCase animBuilder -> Test
 initRunner factory attributesFunc tc =
     test tc.description <|
         \_ ->
             let
                 f =
-                    Factory.initFactory factory
+                    Factory.create factory
             in
             f.init tc.initFuncs
                 |> attributesQueryFor attributesFunc animGroup
@@ -98,7 +98,7 @@ initRunner factory attributesFunc tc =
 
 
 animateRunner :
-    Factory animBuilder state
+    EngineFactory animBuilder state
     -> (String -> state -> List (Html.Attribute msg))
     -> AnimateTestCase animBuilder
     -> Test
@@ -107,7 +107,7 @@ animateRunner factory attributesFunc tc =
         \_ ->
             let
                 f =
-                    Factory.transformOrderFactory factory
+                    Factory.create factory
             in
             f.init []
                 |> (\state ->

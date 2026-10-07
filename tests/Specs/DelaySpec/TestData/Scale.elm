@@ -1,56 +1,56 @@
-module Specs.DelaySpec.TestData.Size exposing (testData)
+module Specs.DelaySpec.TestData.Scale exposing (testData)
 
 import Anim.Builder exposing (AnimBuilder)
-import Anim.Property.Size as Size
+import Anim.Property.Scale as Scale
 import Factories.Capabilities exposing (WithTiming)
 import Specs.DelaySpec.TestData exposing (TestData, engineCase, propertyCase)
 
 
 testData : TestData (AnimBuilder (WithTiming eng))
 testData =
-    { description = "Size.delay tests"
+    { description = "Scale.delay tests"
     , testCases =
         [ propertyCase
             { description = "a property delay with a duration is written correctly"
-            , propertyName = "height"
+            , propertyName = "transform"
             , delayMs = 100
             , buildAnimate =
                 \d ->
-                    Size.begin
-                        >> Size.toH 120
-                        >> Size.duration 100
-                        >> Size.delay d
-                        >> Size.end
+                    Scale.begin
+                        >> Scale.toX 10
+                        >> Scale.duration 100
+                        >> Scale.delay d
+                        >> Scale.end
             }
         , propertyCase
             { description = "a property delay with no duration is written correctly"
-            , propertyName = "width"
+            , propertyName = "transform"
             , delayMs = 200
             , buildAnimate =
                 \d ->
-                    Size.begin
-                        >> Size.toW 200
-                        >> Size.delay d
-                        >> Size.end
+                    Scale.begin
+                        >> Scale.toY 20
+                        >> Scale.delay d
+                        >> Scale.end
             }
         , engineCase
             { description = "an engine delay with no duration is written correctly"
-            , propertyName = "width"
+            , propertyName = "transform"
             , delayMs = 300
             , animateFuncs =
-                Size.begin
-                    >> Size.toW 200
-                    >> Size.end
+                Scale.begin
+                    >> Scale.toZ 30
+                    >> Scale.end
             }
         , engineCase
             { description = "an engine delay with a duration is written correctly"
-            , propertyName = "height"
+            , propertyName = "transform"
             , delayMs = 400
             , animateFuncs =
-                Size.begin
-                    >> Size.toH 120
-                    >> Size.duration 1000
-                    >> Size.end
+                Scale.begin
+                    >> Scale.toXY 10 20
+                    >> Scale.duration 1000
+                    >> Scale.end
             }
         ]
     }

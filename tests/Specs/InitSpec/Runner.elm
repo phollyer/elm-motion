@@ -5,7 +5,7 @@ module Specs.InitSpec.Runner exposing
     )
 
 import Expect
-import Factories.Engines.Factory as Factory exposing (Factory(..))
+import Factories.Engines.Factory as Factory exposing (EngineFactory(..))
 import Helpers.AnimGroups exposing (animGroup)
 import Html
 import Specs.Shared exposing (NameValuePair, attributesQueryFor)
@@ -61,7 +61,7 @@ type alias MultiGroupTestCase animBuilder =
 
 
 run :
-    Factory animBuilder animState
+    EngineFactory animBuilder animState
     -> (String -> animState -> List (Html.Attribute msg))
     -> List (TestData animBuilder)
     -> List Test
@@ -69,14 +69,14 @@ run factory attributesFunc =
     List.map (runTestData factory attributesFunc)
 
 
-runTestData : Factory animBuilder animState -> (String -> animState -> List (Html.Attribute msg)) -> TestData animBuilder -> Test
+runTestData : EngineFactory animBuilder animState -> (String -> animState -> List (Html.Attribute msg)) -> TestData animBuilder -> Test
 runTestData factory attributesFunc td =
     describe td.description <|
         List.map (runTestCase factory attributesFunc) td.testCases
 
 
 runTestCase :
-    Factory animBuilder animState
+    EngineFactory animBuilder animState
     -> (String -> animState -> List (Html.Attribute msg))
     -> TestCase animBuilder
     -> Test
@@ -95,13 +95,13 @@ runTestCase factory attributesFunc testCase =
             multiGroupRunner factory attributesFunc tc
 
 
-generalRunner : Factory animBuilder animState -> (String -> animState -> List (Html.Attribute msg)) -> GeneralTestCase animBuilder -> Test
+generalRunner : EngineFactory animBuilder animState -> (String -> animState -> List (Html.Attribute msg)) -> GeneralTestCase animBuilder -> Test
 generalRunner factory attributesFunc tc =
     test tc.description <|
         \_ ->
             let
                 f =
-                    Factory.initFactory factory
+                    Factory.create factory
             in
             f.init [ tc.initFuncs ]
                 |> attributesQueryFor attributesFunc animGroup
@@ -111,7 +111,7 @@ generalRunner factory attributesFunc tc =
                     ]
 
 
-multiGroupRunner : Factory animBuilder animState -> (String -> animState -> List (Html.Attribute msg)) -> MultiGroupTestCase animBuilder -> Test
+multiGroupRunner : EngineFactory animBuilder animState -> (String -> animState -> List (Html.Attribute msg)) -> MultiGroupTestCase animBuilder -> Test
 multiGroupRunner factory attributesFunc tc =
     test tc.description <|
         \_ ->
@@ -121,7 +121,7 @@ multiGroupRunner factory attributesFunc tc =
                         \_ ->
                             let
                                 f =
-                                    Factory.initFactory factory
+                                    Factory.create factory
                             in
                             f.init init
                                 |> attributesQueryFor attributesFunc group
@@ -142,13 +142,13 @@ multiGroupRunner factory attributesFunc tc =
                 ()
 
 
-multiPropertyRunner : Factory animBuilder animState -> (String -> animState -> List (Html.Attribute msg)) -> MultiPropertyTestCase animBuilder -> Test
+multiPropertyRunner : EngineFactory animBuilder animState -> (String -> animState -> List (Html.Attribute msg)) -> MultiPropertyTestCase animBuilder -> Test
 multiPropertyRunner factory attributesFunc tc =
     test tc.description <|
         \_ ->
             let
                 f =
-                    Factory.initFactory factory
+                    Factory.create factory
             in
             f.init tc.initFuncs
                 |> attributesQueryFor attributesFunc animGroup
@@ -162,13 +162,13 @@ multiPropertyRunner factory attributesFunc tc =
                     )
 
 
-sizeRunner : Factory animBuilder animState -> (String -> animState -> List (Html.Attribute msg)) -> SizeTestCase animBuilder -> Test
+sizeRunner : EngineFactory animBuilder animState -> (String -> animState -> List (Html.Attribute msg)) -> SizeTestCase animBuilder -> Test
 sizeRunner factory attributesFunc tc =
     test tc.description <|
         \_ ->
             let
                 f =
-                    Factory.initFactory factory
+                    Factory.create factory
             in
             f.init [ tc.initFuncs ]
                 |> attributesQueryFor attributesFunc animGroup

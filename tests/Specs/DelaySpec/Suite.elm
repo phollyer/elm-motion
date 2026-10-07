@@ -1,29 +1,20 @@
-module Specs.DelaySpec.Suite exposing (..)
-
-{-
-   import Specs.InitSpec.TestData.CustomColor as CustomColor
-   import Specs.InitSpec.TestData.CustomProperty as CustomProperty
-   import Specs.InitSpec.TestData.MultipleGroups as MultipleGroups
-   import Specs.InitSpec.TestData.MultipleProperties as MultipleProperties
-
-   import Specs.InitSpec.TestData.PerspectiveOrigin as PerspectiveOrigin
-   import Specs.InitSpec.TestData.Rotate as Rotate
-   import Specs.InitSpec.TestData.Scale as Scale
-   import Specs.InitSpec.TestData.Size as Size
-   import Specs.InitSpec.TestData.Skew as Skew
-   import Specs.InitSpec.TestData.Translate as Translate
--}
+module Specs.DelaySpec.Suite exposing (suite)
 
 import Anim.Builder exposing (AnimBuilder)
-import Anim.Engine.Keyframe as Keyframe
-import Anim.Engine.Transition as Transition
 import Factories.Capabilities exposing (WithTiming)
 import Factories.Engines.Factory as Factory
 import Factories.Engines.Keyframe as KeyframeFactory
 import Factories.Engines.Transition as TransitionFactory
 import Specs.DelaySpec.Runner as Runner
+import Specs.DelaySpec.TestData exposing (TestData)
+import Specs.DelaySpec.TestData.CustomColor as CustomColor
+import Specs.DelaySpec.TestData.CustomProperty as CustomProperty
+import Specs.DelaySpec.TestData.MultipleProperties as Scale
 import Specs.DelaySpec.TestData.Opacity as Opacity
+import Specs.DelaySpec.TestData.PerspectiveOrigin as PerspectiveOrigin
+import Specs.DelaySpec.TestData.Rotate as Rotate
 import Specs.DelaySpec.TestData.Size as Size
+import Specs.DelaySpec.TestData.Skew as Skew
 import Specs.DelaySpec.TestData.Translate as Translate
 import Test exposing (Test, describe)
 
@@ -42,31 +33,21 @@ suite : Test
 suite =
     describe "delay functions write the correct delay"
         [ describe "Keyframe engine" <|
-            Runner.run (Factory.Keyframe KeyframeFactory.factory) Keyframe.attributes testData
+            Runner.run (Factory.Keyframe KeyframeFactory.factory) testData
         , describe "Transition engine" <|
-            Runner.run (Factory.Transition TransitionFactory.factory) Transition.attributes testData
+            Runner.run (Factory.Transition TransitionFactory.factory) testData
         ]
 
 
-testData : List (Runner.TestData (AnimBuilder (WithTiming eng)))
+testData : List (TestData (AnimBuilder (WithTiming eng)))
 testData =
-    [ {- CustomColor.testData CustomColorFactory.factory
-         , CustomProperty.testData CustomPropertyFactory.factory
-
-         ,
-      -}
-      Opacity.testData
+    [ CustomColor.testData
+    , CustomProperty.testData
+    , Opacity.testData
+    , PerspectiveOrigin.testData
+    , Rotate.testData
+    , Scale.testData
     , Size.testData
+    , Skew.testData
     , Translate.testData
-
-    {-
-       , PerspectiveOrigin.testData PerspectiveOriginFactory.factory
-       , Rotate.testData RotateFactory.factory
-       , Scale.testData ScaleFactory.factory
-       , Size.testData SizeFactory.factory
-       , Skew.testData SkewFactory.factory
-       , Translate.testData TranslateFactory.factory
-       , MultipleProperties.testData AllFactory.factory
-       , MultipleGroups.testData AllFactory.factory
-    -}
     ]

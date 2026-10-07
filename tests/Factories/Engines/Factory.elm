@@ -1,105 +1,62 @@
 module Factories.Engines.Factory exposing
-    ( Factory(..)
-    , animateFactory
-    , delayFactory
-    , initFactory
-    , transformOrderFactory
+    ( EngineFactory(..)
+    , animate
+    , build
+    , create
     )
 
 import Anim.Extra.TransformOrder exposing (TransformProperty)
 import Factories.Engines.Keyframe as Keyframe
 import Factories.Engines.Transition as Transition
+import Helpers.AnimGroups exposing (animGroup)
 
 
-type Factory animBuilder animState
+type EngineFactory animBuilder animState
     = Keyframe (Keyframe.Factory animBuilder animState)
     | Transition (Transition.Factory animBuilder animState)
 
 
-type alias InitFactory animBuilder state =
-    { init : List (animBuilder -> animBuilder) -> state }
-
-
-initFactory : Factory a b -> InitFactory a b
-initFactory factory =
-    case factory of
-        Keyframe f ->
-            { init = f.init }
-
-        Transition f ->
-            { init = f.init }
-
-
-type alias AnimateFactory animBuilder state =
-    { init : List (animBuilder -> animBuilder) -> state
-    , animate : state -> (animBuilder -> animBuilder) -> state
-    , for : String -> animBuilder -> animBuilder
-    }
-
-
-animateFactory : Factory a b -> AnimateFactory a b
-animateFactory factory =
-    case factory of
-        Keyframe f ->
-            AnimateFactory
-                f.init
-                f.animate
-                f.for
-
-        Transition f ->
-            AnimateFactory
-                f.init
-                f.animate
-                f.for
-
-
-type alias DelayFactory animBuilder state =
+type alias Factory animBuilder state =
     { init : List (animBuilder -> animBuilder) -> state
     , animate : state -> (animBuilder -> animBuilder) -> state
     , for : String -> animBuilder -> animBuilder
     , delay : Int -> animBuilder -> animBuilder
-    }
-
-
-delayFactory : Factory a b -> DelayFactory a b
-delayFactory factory =
-    case factory of
-        Keyframe f ->
-            DelayFactory
-                f.init
-                f.animate
-                f.for
-                f.delay
-
-        Transition f ->
-            DelayFactory
-                f.init
-                f.animate
-                f.for
-                f.delay
-
-
-type alias TransformOrderFactory animBuilder state =
-    { init : List (animBuilder -> animBuilder) -> state
-    , animate : state -> (animBuilder -> animBuilder) -> state
-    , for : String -> animBuilder -> animBuilder
     , transformOrder : List TransformProperty -> animBuilder -> animBuilder
     }
 
 
-transformOrderFactory : Factory a b -> TransformOrderFactory a b
-transformOrderFactory factory =
-    case factory of
+create : EngineFactory a b -> Factory a b
+create factory_ =
+    case factory_ of
         Keyframe f ->
-            TransformOrderFactory
+            Factory
                 f.init
                 f.animate
                 f.for
+                f.delay
                 f.transformOrder
 
         Transition f ->
-            TransformOrderFactory
+            Factory
                 f.init
                 f.animate
                 f.for
+                f.delay
                 f.transformOrder
+
+
+build : Factory a b -> List (a -> a) -> (a -> a) -> b
+build f initFuncs =
+    f.init initFuncs
+        |> (\initialState -> f.animate initialState)
+
+
+animate : EngineFactory a b -> List (a -> a) -> (a -> a) -> b
+animate factory initFuncs animateFuncs =
+    let
+        f =
+            create factory
+    in
+    build f initFuncs <|
+        f.for animGroup
+            >> animateFuncs

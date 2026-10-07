@@ -3,33 +3,54 @@ module Specs.DelaySpec.TestData.Translate exposing (testData)
 import Anim.Builder exposing (AnimBuilder)
 import Anim.Property.Translate as Translate
 import Factories.Capabilities exposing (WithTiming)
-import Specs.DelaySpec.Runner exposing (TestCase(..), TestData)
-import Specs.Shared exposing (NameValuePair)
+import Specs.DelaySpec.TestData exposing (TestData, engineCase, propertyCase)
 
 
 testData : TestData (AnimBuilder (WithTiming eng))
 testData =
     { description = "Translate.delay tests"
     , testCases =
-        [ PropertyTest
-            { description = "a local delay is preserved when no duration is supplied"
-            , animateFuncs =
-                Translate.begin
-                    >> Translate.toX 120
-                    >> Translate.delay 1000
-                    >> Translate.end
-            , transitionExpected = NameValuePair "transition" "transform 0ms ease-in-out 1000ms"
-            , keyframeExpected = "1000ms"
+        [ propertyCase
+            { description = "a property delay with a duration is written correctly"
+            , propertyName = "transform"
+            , delayMs = 100
+            , buildAnimate =
+                \d ->
+                    Translate.begin
+                        >> Translate.toX 10
+                        >> Translate.duration 100
+                        >> Translate.delay d
+                        >> Translate.end
             }
-        , EngineTest
-            { description = "a global delay is preserved when no duration is supplied"
+        , propertyCase
+            { description = "a property delay with no duration is written correctly"
+            , propertyName = "transform"
+            , delayMs = 200
+            , buildAnimate =
+                \d ->
+                    Translate.begin
+                        >> Translate.toX 10
+                        >> Translate.delay d
+                        >> Translate.end
+            }
+        , engineCase
+            { description = "an engine delay with no duration is written correctly"
+            , propertyName = "transform"
+            , delayMs = 300
             , animateFuncs =
                 Translate.begin
-                    >> Translate.toX 120
+                    >> Translate.toX 10
                     >> Translate.end
-            , delayMs = 1000
-            , transitionExpected = NameValuePair "transition" "transform 0ms ease-in-out 1000ms"
-            , keyframeExpected = "1000ms"
+            }
+        , engineCase
+            { description = "an engine delay with a duration is written correctly"
+            , propertyName = "transform"
+            , delayMs = 400
+            , animateFuncs =
+                Translate.begin
+                    >> Translate.toX 10
+                    >> Translate.duration 1000
+                    >> Translate.end
             }
         ]
     }

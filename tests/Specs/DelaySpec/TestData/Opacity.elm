@@ -3,33 +3,55 @@ module Specs.DelaySpec.TestData.Opacity exposing (testData)
 import Anim.Builder exposing (AnimBuilder)
 import Anim.Property.Opacity as Opacity
 import Factories.Capabilities exposing (WithTiming)
-import Specs.DelaySpec.Runner exposing (TestCase(..), TestData)
-import Specs.Shared exposing (NameValuePair)
+import Motion.Easing exposing (Easing(..))
+import Specs.DelaySpec.TestData exposing (TestData, engineCase, propertyCase)
 
 
 testData : TestData (AnimBuilder (WithTiming eng))
 testData =
     { description = "Opacity.delay tests"
     , testCases =
-        [ PropertyTest
-            { description = "a local delay is preserved when no duration is supplied"
-            , animateFuncs =
-                Opacity.begin
-                    >> Opacity.to 0.4
-                    >> Opacity.delay 1000
-                    >> Opacity.end
-            , transitionExpected = NameValuePair "transition" "opacity 0ms ease-in-out 1000ms"
-            , keyframeExpected = "1000ms"
+        [ propertyCase
+            { description = "a property delay with a duration is written correctly"
+            , propertyName = "opacity"
+            , delayMs = 100
+            , buildAnimate =
+                \d ->
+                    Opacity.begin
+                        >> Opacity.to 0.8
+                        >> Opacity.duration 100
+                        >> Opacity.delay d
+                        >> Opacity.end
             }
-        , EngineTest
-            { description = "a global delay is preserved when no duration is supplied"
+        , propertyCase
+            { description = "a property delay with no duration is written correctly"
+            , propertyName = "opacity"
+            , delayMs = 200
+            , buildAnimate =
+                \d ->
+                    Opacity.begin
+                        >> Opacity.to 0.8
+                        >> Opacity.delay d
+                        >> Opacity.end
+            }
+        , engineCase
+            { description = "an engine delay with no duration is written correctly"
+            , propertyName = "opacity"
+            , delayMs = 300
             , animateFuncs =
                 Opacity.begin
-                    >> Opacity.to 0.4
+                    >> Opacity.to 0.8
                     >> Opacity.end
-            , delayMs = 1000
-            , transitionExpected = NameValuePair "transition" "opacity 0ms ease-in-out 1000ms"
-            , keyframeExpected = "1000ms"
+            }
+        , engineCase
+            { description = "an engine delay with a duration is written correctly"
+            , propertyName = "opacity"
+            , delayMs = 400
+            , animateFuncs =
+                Opacity.begin
+                    >> Opacity.to 0.8
+                    >> Opacity.duration 1000
+                    >> Opacity.end
             }
         ]
     }
