@@ -1,83 +1,79 @@
 module Specs.InitSpec.TestData.Size exposing (testData)
 
+import Anim.Builder exposing (AnimBuilder)
+import Anim.Property.Size as Size
 import Anim.Unit exposing (Unit(..))
-import Factories.Properties.Size exposing (Factory)
 import Helpers.AnimGroups exposing (animGroup)
-import Specs.InitSpec.Runner exposing (TestCase(..), TestData)
+import Specs.InitSpec.TestData exposing (TestCase(..), TestData)
+import Specs.Shared exposing (NameValuePair)
 
 
-testData : Factory a b -> TestData a
-testData factory =
+testData : TestData (AnimBuilder eng)
+testData =
     { description = "Size.init* tests"
     , testCases =
-        List.map SizeTest
+        List.map PropertyTest
             [ { description = "Size.initH writes height, and omits untouched width"
-              , initFuncs = factory.initH animGroup 10
-              , expectedHeight = Just "10px"
-              , expectedWidth = Nothing
-              , willChange = "height"
+              , initFuncs = [ Size.initH animGroup 10 ]
+              , expected = [ NameValuePair "height" "10px" ]
               }
             , { description = "Size.initW writes width, and omits untouched height"
-              , initFuncs = factory.initW animGroup 20
-              , expectedHeight = Nothing
-              , expectedWidth = Just "20px"
-              , willChange = "width"
+              , initFuncs = [ Size.initW animGroup 20 ]
+              , expected = [ NameValuePair "width" "20px" ]
               }
             , { description = "Size.initHW writes height and width"
-              , initFuncs = factory.initHW animGroup 10 20
-              , expectedHeight = Just "10px"
-              , expectedWidth = Just "20px"
-              , willChange = "width, height"
+              , initFuncs = [ Size.initHW animGroup 10 20 ]
+              , expected =
+                    [ NameValuePair "width" "20px"
+                    , NameValuePair "height" "10px"
+                    ]
               }
             , { description = "Size.initH with custom CSS unit writes height, and omits untouched width"
               , initFuncs =
-                    factory.initH animGroup 10
-                        >> factory.initCssUnitH Em
-              , expectedHeight = Just "10em"
-              , expectedWidth = Nothing
-              , willChange = "height"
+                    [ Size.initH animGroup 10
+                        >> Size.initCssUnitH Em
+                    ]
+              , expected = [ NameValuePair "height" "10em" ]
               }
             , { description = "Size.initW with custom CSS unit writes width, and omits untouched height"
               , initFuncs =
-                    factory.initW animGroup 10
-                        >> factory.initCssUnitW Em
-              , expectedHeight = Nothing
-              , expectedWidth = Just "10em"
-              , willChange = "width"
+                    [ Size.initW animGroup 10
+                        >> Size.initCssUnitW Em
+                    ]
+              , expected = [ NameValuePair "width" "10em" ]
               }
             , { description = "Size.initHW with custom CSS unit writes height and width"
               , initFuncs =
-                    factory.initHW animGroup 10 20
-                        >> factory.initCssUnit Em
-              , expectedHeight = Just "10em"
-              , expectedWidth = Just "20em"
-              , willChange = "width, height"
+                    [ Size.initHW animGroup 10 20
+                        >> Size.initCssUnit Em
+                    ]
+              , expected =
+                    [ NameValuePair "width" "20em"
+                    , NameValuePair "height" "10em"
+                    ]
               }
             , { description = "Size.initH prefers axis-specific unit when applied after global unit"
               , initFuncs =
-                    factory.initH animGroup 10
-                        >> factory.initCssUnit Em
-                        >> factory.initCssUnitH Px
-              , expectedHeight = Just "10px"
-              , expectedWidth = Nothing
-              , willChange = "height"
+                    [ Size.initH animGroup 10
+                        >> Size.initCssUnit Em
+                        >> Size.initCssUnitH Px
+                    ]
+              , expected = [ NameValuePair "height" "10px" ]
               }
             , { description = "Size.initH uses global unit when applied after axis-specific unit"
               , initFuncs =
-                    factory.initH animGroup 10
-                        >> factory.initCssUnitH Px
-                        >> factory.initCssUnit Em
-              , expectedHeight = Just "10em"
-              , expectedWidth = Nothing
-              , willChange = "height"
+                    [ Size.initH animGroup 10
+                        >> Size.initCssUnitH Px
+                        >> Size.initCssUnit Em
+                    ]
+              , expected = [ NameValuePair "height" "10em" ]
               }
             , { description = "Size.initH last write wins for duplicate initH calls"
               , initFuncs =
-                    factory.initH animGroup 10
-                        >> factory.initH animGroup 12
-              , expectedHeight = Just "12px"
-              , expectedWidth = Nothing
-              , willChange = "height"
+                    [ Size.initH animGroup 10
+                        >> Size.initH animGroup 12
+                    ]
+              , expected = [ NameValuePair "height" "12px" ]
               }
             ]
     }

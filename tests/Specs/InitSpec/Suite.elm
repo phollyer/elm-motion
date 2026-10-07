@@ -6,17 +6,8 @@ import Anim.Engine.Transition as Transition
 import Factories.Engines.Factory as Factory
 import Factories.Engines.Keyframe as KeyframeFactory
 import Factories.Engines.Transition as TransitionFactory
-import Factories.Properties.All as AllFactory
-import Factories.Properties.CustomColor as CustomColorFactory
-import Factories.Properties.CustomProperty as CustomPropertyFactory
-import Factories.Properties.Opacity as OpacityFactory
-import Factories.Properties.PerspectiveOrigin as PerspectiveOriginFactory
-import Factories.Properties.Rotate as RotateFactory
-import Factories.Properties.Scale as ScaleFactory
-import Factories.Properties.Size as SizeFactory
-import Factories.Properties.Skew as SkewFactory
-import Factories.Properties.Translate as TranslateFactory
 import Specs.InitSpec.Runner as Runner
+import Specs.InitSpec.TestData exposing (TestData)
 import Specs.InitSpec.TestData.CustomColor as CustomColor
 import Specs.InitSpec.TestData.CustomProperty as CustomProperty
 import Specs.InitSpec.TestData.MultipleGroups as MultipleGroups
@@ -51,17 +42,17 @@ suite =
         ]
 
 
-testData : List (Runner.TestData (AnimBuilder eng))
+testData : List (TestData (AnimBuilder eng))
 testData =
-    [ CustomColor.testData CustomColorFactory.factory
-    , CustomProperty.testData CustomPropertyFactory.factory
-    , Opacity.testData OpacityFactory.factory
-    , PerspectiveOrigin.testData PerspectiveOriginFactory.factory
-    , Rotate.testData RotateFactory.factory
-    , Scale.testData ScaleFactory.factory
-    , Size.testData SizeFactory.factory
-    , Skew.testData SkewFactory.factory
-    , Translate.testData TranslateFactory.factory
-    , MultipleProperties.testData AllFactory.factory
-    , MultipleGroups.testData AllFactory.factory
+    [ CustomColor.testData
+    , CustomProperty.testData
+    , Opacity.testData
+    , PerspectiveOrigin.testData
+    , Rotate.testData
+    , Scale.testData
+    , Size.testData
+    , Skew.testData
+    , Translate.testData
+    , MultipleProperties.testData
+    , MultipleGroups.testData
     ]

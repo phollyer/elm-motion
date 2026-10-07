@@ -1,63 +1,12 @@
-module Specs.InitSpec.Runner exposing
-    ( TestCase(..)
-    , TestData
-    , run
-    )
+module Specs.InitSpec.Runner exposing (run)
 
 import Expect
-import Factories.Engines.Factory as Factory exposing (EngineFactory(..))
+import Expectations.Expect as Expect
+import Factories.Engines.Factory exposing (EngineFactory(..))
 import Helpers.AnimGroups exposing (animGroup)
 import Html
-import Specs.Shared exposing (NameValuePair, attributesQueryFor)
+import Specs.InitSpec.TestData exposing (..)
 import Test exposing (Test, describe, test)
-import Test.Html.Query as Query
-import Test.Html.Selector as Selector
-
-
-type alias TestData animBuilder =
-    { description : String
-    , testCases : List (TestCase animBuilder)
-    }
-
-
-type TestCase animBuilder
-    = GeneralTest (GeneralTestCase animBuilder)
-    | SizeTest (SizeTestCase animBuilder)
-    | MultiPropertyTest (MultiPropertyTestCase animBuilder)
-    | MultiGroupTest (MultiGroupTestCase animBuilder)
-
-
-type alias GeneralTestCase animBuilder =
-    { description : String
-    , initFuncs : animBuilder -> animBuilder
-    , expected : NameValuePair
-    }
-
-
-type alias SizeTestCase animBuilder =
-    { description : String
-    , initFuncs : animBuilder -> animBuilder
-    , expectedHeight : Maybe String
-    , expectedWidth : Maybe String
-    , willChange : String
-    }
-
-
-type alias MultiPropertyTestCase animBuilder =
-    { description : String
-    , initFuncs : List (animBuilder -> animBuilder)
-    , expected : List NameValuePair
-    , willChange : String
-    }
-
-
-type alias MultiGroupTestCase animBuilder =
-    { description : String
-    , animGroups : List String
-    , initFuncs : List (List (animBuilder -> animBuilder))
-    , expected : List (List NameValuePair)
-    , willChange : List String
-    }
 
 
 run :
@@ -82,11 +31,8 @@ runTestCase :
     -> Test
 runTestCase factory attributesFunc testCase =
     case testCase of
-        GeneralTest tc ->
+        PropertyTest tc ->
             generalRunner factory attributesFunc tc
-
-        SizeTest tc ->
-            sizeRunner factory attributesFunc tc
 
         MultiPropertyTest tc ->
             multiPropertyRunner factory attributesFunc tc
@@ -95,20 +41,18 @@ runTestCase factory attributesFunc testCase =
             multiGroupRunner factory attributesFunc tc
 
 
-generalRunner : EngineFactory animBuilder animState -> (String -> animState -> List (Html.Attribute msg)) -> GeneralTestCase animBuilder -> Test
+generalRunner : EngineFactory animBuilder animState -> (String -> animState -> List (Html.Attribute msg)) -> PropertyTestCase animBuilder -> Test
 generalRunner factory attributesFunc tc =
     test tc.description <|
         \_ ->
-            let
-                f =
-                    Factory.create factory
-            in
-            f.init [ tc.initFuncs ]
-                |> attributesQueryFor attributesFunc animGroup
-                |> Query.has
-                    [ Selector.style tc.expected.name tc.expected.value
-                    , Selector.style "will-change" tc.expected.name
-                    ]
+            Expect.initialStyles factory animGroup attributesFunc { initFuncs = tc.initFuncs, expected = tc.expected }
+
+
+multiPropertyRunner : EngineFactory animBuilder animState -> (String -> animState -> List (Html.Attribute msg)) -> MultiPropertyTestCase animBuilder -> Test
+multiPropertyRunner factory attributesFunc tc =
+    test tc.description <|
+        \_ ->
+            Expect.initialStyles factory animGroup attributesFunc tc
 
 
 multiGroupRunner : EngineFactory animBuilder animState -> (String -> animState -> List (Html.Attribute msg)) -> MultiGroupTestCase animBuilder -> Test
@@ -116,86 +60,13 @@ multiGroupRunner factory attributesFunc tc =
     test tc.description <|
         \_ ->
             Expect.all
-                (List.map4
-                    (\init group expected willChange ->
+                (List.map3
+                    (\init group expected ->
                         \_ ->
-                            let
-                                f =
-                                    Factory.create factory
-                            in
-                            f.init init
-                                |> attributesQueryFor attributesFunc group
-                                |> Query.has
-                                    (Selector.style "will-change" willChange
-                                        :: List.map
-                                            (\nvp ->
-                                                Selector.style nvp.name nvp.value
-                                            )
-                                            expected
-                                    )
+                            Expect.initialStyles factory group attributesFunc { initFuncs = init, expected = expected }
                     )
                     tc.initFuncs
                     tc.animGroups
                     tc.expected
-                    tc.willChange
                 )
                 ()
-
-
-multiPropertyRunner : EngineFactory animBuilder animState -> (String -> animState -> List (Html.Attribute msg)) -> MultiPropertyTestCase animBuilder -> Test
-multiPropertyRunner factory attributesFunc tc =
-    test tc.description <|
-        \_ ->
-            let
-                f =
-                    Factory.create factory
-            in
-            f.init tc.initFuncs
-                |> attributesQueryFor attributesFunc animGroup
-                |> Query.has
-                    (Selector.style "will-change" tc.willChange
-                        :: List.map
-                            (\nvp ->
-                                Selector.style nvp.name nvp.value
-                            )
-                            tc.expected
-                    )
-
-
-sizeRunner : EngineFactory animBuilder animState -> (String -> animState -> List (Html.Attribute msg)) -> SizeTestCase animBuilder -> Test
-sizeRunner factory attributesFunc tc =
-    test tc.description <|
-        \_ ->
-            let
-                f =
-                    Factory.create factory
-            in
-            f.init [ tc.initFuncs ]
-                |> attributesQueryFor attributesFunc animGroup
-                |> (\query ->
-                        case ( tc.expectedHeight, tc.expectedWidth ) of
-                            ( Just height, Just width ) ->
-                                Query.has
-                                    [ Selector.style "height" height
-                                    , Selector.style "width" width
-                                    , Selector.style "will-change" tc.willChange
-                                    ]
-                                    query
-
-                            ( Just height, Nothing ) ->
-                                Query.has
-                                    [ Selector.style "height" height
-                                    , Selector.style "will-change" tc.willChange
-                                    ]
-                                    query
-
-                            ( Nothing, Just width ) ->
-                                Query.has
-                                    [ Selector.style "width" width
-                                    , Selector.style "will-change" tc.willChange
-                                    ]
-                                    query
-
-                            ( Nothing, Nothing ) ->
-                                Query.has [] query
-                   )
