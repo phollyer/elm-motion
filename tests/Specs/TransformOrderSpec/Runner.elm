@@ -3,11 +3,8 @@ module Specs.TransformOrderSpec.Runner exposing (run)
 import Expectations.Expect as Expect
 import Factories.Engines.Factory as Factory exposing (EngineFactory(..))
 import Helpers.AnimGroups exposing (animGroup)
-import Specs.Shared exposing (attributesQueryFor)
 import Specs.TransformOrderSpec.TestData exposing (AnimateTestCase, InitTestCase, TestCase(..), TestData)
 import Test exposing (Test, describe, test)
-import Test.Html.Query as Query
-import Test.Html.Selector as Selector
 
 
 run :
