@@ -7,9 +7,13 @@ import Factories.Engines.Keyframe as Keyframe
 import Factories.Engines.Transition as Transition
 import Helpers.AnimGroups exposing (animGroup)
 import Helpers.Properties as Properties
+import Html
 import Parsers.Keyframe as KeyframeParser
 import Specs.DelaySpec.TestData exposing (EngineTestCase, MultiPropertyTestCase, MultiPropertyTransformOrderTestCase, PropertyTestCase, TestCase(..), TestData)
+import Specs.Shared exposing (attributesQueryFor)
 import Test exposing (Test, describe, test)
+import Test.Html.Query as Query
+import Test.Html.Selector as Selector
 
 
 run :
@@ -190,7 +194,13 @@ expectTransformDelay factory transformOrder transformProperties state =
                     Expect.fail "Expected a transform delay, but none was configured"
 
                 Just delayMs ->
-                    expectDelayFor "transform" delayMs transitionString
+                    Expect.all
+                        [ \_ ->
+                            expectRenderedTransitionString factory.attributes transitionString state
+                        , \_ ->
+                            expectDelayFor "transform" delayMs transitionString
+                        ]
+                        ()
 
 
 expectTransitionPropertyDelay : Transition.Factory animBuilder animState -> PropertyTestCase animBuilder -> animState -> Expect.Expectation
@@ -205,7 +215,19 @@ expectTransitionPropertyDelay factory tc state =
                     Expect.fail ("Expected property string for property: " ++ tc.propertyName ++ ", but got: " ++ transitionString)
 
                 Just propertyString ->
-                    expectDelayFor tc.propertyName tc.delayMs propertyString
+                    Expect.all
+                        [ \_ ->
+                            expectRenderedTransitionString factory.attributes transitionString state
+                        , \_ ->
+                            expectDelayFor tc.propertyName tc.delayMs propertyString
+                        ]
+                        ()
+
+
+expectRenderedTransitionString : (String -> animState -> List (Html.Attribute Never)) -> String -> animState -> Expect.Expectation
+expectRenderedTransitionString attributes transitionString =
+    attributesQueryFor attributes animGroup
+        >> Query.has [ Selector.style "transition" transitionString ]
 
 
 expectDelayFor : String -> Int -> String -> Expect.Expectation
