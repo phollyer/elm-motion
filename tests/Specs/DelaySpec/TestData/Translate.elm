@@ -14,7 +14,7 @@ testData =
             { description = "a property delay with a duration is written correctly"
             , propertyName = "transform"
             , delayMs = 100
-            , buildAnimate =
+            , pipelineWithDelay =
                 \d ->
                     Translate.begin
                         >> Translate.toX 10
@@ -26,7 +26,7 @@ testData =
             { description = "a property delay with no duration is written correctly"
             , propertyName = "transform"
             , delayMs = 200
-            , buildAnimate =
+            , pipelineWithDelay =
                 \d ->
                     Translate.begin
                         >> Translate.toX 10
@@ -37,7 +37,7 @@ testData =
             { description = "an engine delay with no duration is written correctly"
             , propertyName = "transform"
             , delayMs = 300
-            , animateFuncs =
+            , propertyPipeline =
                 Translate.begin
                     >> Translate.toX 10
                     >> Translate.end
@@ -46,7 +46,7 @@ testData =
             { description = "an engine delay with a duration is written correctly"
             , propertyName = "transform"
             , delayMs = 400
-            , animateFuncs =
+            , propertyPipeline =
                 Translate.begin
                     >> Translate.toX 10
                     >> Translate.duration 1000

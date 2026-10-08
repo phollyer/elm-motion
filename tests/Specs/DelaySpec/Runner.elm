@@ -56,7 +56,7 @@ propertyRunner factory tc =
             let
                 state =
                     Factory.animate factory [] <|
-                        tc.animateFuncs
+                        tc.propertyPipeline
             in
             case factory of
                 Keyframe f ->
@@ -78,7 +78,7 @@ engineRunner factory tc =
                     Factory.build f [] <|
                         f.for animGroup
                             >> f.delay tc.delayMs
-                            >> tc.animateFuncs
+                            >> tc.propertyPipeline
             in
             case factory of
                 Keyframe f_ ->
@@ -95,7 +95,7 @@ multiPropertyRunner factory tc =
             let
                 state =
                     Factory.animate factory [] <|
-                        List.foldl (\prop acc -> acc >> prop.animateFuncs) identity tc.properties
+                        List.foldl (\prop acc -> acc >> prop.propertyPipeline) identity tc.properties
             in
             case factory of
                 Keyframe f ->
@@ -124,7 +124,7 @@ multiPropertyTransformOrderRunner factory tc =
                     Factory.build f [] <|
                         f.for animGroup
                             >> f.transformOrder tc.transformOrder
-                            >> List.foldl (\prop acc -> acc >> prop.animateFuncs) identity tc.properties
+                            >> List.foldl (\prop acc -> acc >> prop.propertyPipeline) identity tc.properties
             in
             case factory of
                 Keyframe f_ ->
@@ -139,6 +139,35 @@ multiPropertyTransformOrderRunner factory tc =
 
                 Transition f_ ->
                     expectTransitionMultiPropertyDelay f_ tc.transformOrder tc.properties state
+
+
+expectTransitionPropertyDelay : Transition.Factory animBuilder animState -> PropertyTestCase animBuilder -> animState -> Expect.Expectation
+expectTransitionPropertyDelay factory tc state =
+    case factory.transitionString animGroup state of
+        Nothing ->
+            Expect.fail "Expected generated transition style, but none was produced"
+
+        Just transitionString ->
+            Expect.all
+                [ \_ ->
+                    Expect.transition transitionString factory.attributes animGroup state
+                , \_ ->
+                    case factory.propertyString tc.propertyName transitionString of
+                        Nothing ->
+                            Expect.fail ("Expected property string for property: " ++ tc.propertyName ++ ", but got: " ++ transitionString)
+
+                        Just propertyString ->
+                            let
+                                delaySuffix =
+                                    String.fromInt tc.delayMs ++ "ms"
+                            in
+                            if not <| String.endsWith delaySuffix propertyString then
+                                Expect.fail ("Expected property string to end with delay suffix: " ++ delaySuffix ++ ", but got: " ++ propertyString)
+
+                            else
+                                Expect.pass
+                ]
+                ()
 
 
 expectTransitionMultiPropertyDelay : Transition.Factory animBuilder animState -> List TransformProperty -> List (PropertyTestCase animBuilder) -> animState -> Expect.Expectation
@@ -168,78 +197,44 @@ expectTransitionMultiPropertyDelay factory transformOrder properties state =
             \_ -> Expect.pass
 
           else
-            \_ -> expectTransformDelay factory transformOrder transformProperties state
-        ]
-        ()
+            \_ ->
+                case factory.transitionString animGroup state of
+                    Nothing ->
+                        Expect.fail "Expected generated transition style, but none was produced"
 
+                    Just transitionString ->
+                        Expect.all
+                            [ \_ ->
+                                Expect.transition transitionString factory.attributes animGroup state
+                            , \_ ->
+                                if not <| String.startsWith "transform" transitionString then
+                                    Expect.fail ("Expected transition string to start with: transform, but got: " ++ transitionString)
 
-expectTransformDelay : Transition.Factory animBuilder animState -> List TransformProperty -> List (PropertyTestCase animBuilder) -> animState -> Expect.Expectation
-expectTransformDelay factory transformOrder transformProperties state =
-    case factory.transitionString animGroup state of
-        Nothing ->
-            Expect.fail "Expected generated transition style, but none was produced"
+                                else
+                                    Expect.pass
+                            , \_ ->
+                                let
+                                    maybeTargetDelay =
+                                        Properties.toTransformOrder transformOrder transformProperties
+                                            |> List.map .delayMs
+                                            |> List.head
+                                in
+                                case maybeTargetDelay of
+                                    Nothing ->
+                                        Expect.fail "Expected a transform delay, but none was configured"
 
-        Just transitionString ->
-            let
-                maybeTargetDelay =
-                    Properties.toTransformOrder transformOrder transformProperties
-                        |> List.map .delayMs
-                        |> List.head
-            in
-            case maybeTargetDelay of
-                Nothing ->
-                    Expect.fail "Expected a transform delay, but none was configured"
+                                    Just delayMs ->
+                                        let
+                                            delaySuffix =
+                                                String.fromInt delayMs ++ "ms"
+                                        in
+                                        if not <| String.endsWith delaySuffix transitionString then
+                                            Expect.fail ("Expected transition string to end with delay suffix: " ++ delaySuffix ++ ", but got: " ++ transitionString)
 
-                Just delayMs ->
-                    Expect.all
-                        [ \_ ->
-                            Expect.transition transitionString factory.attributes animGroup state
-                        , \_ ->
-                            expectDelayFor "transform" delayMs transitionString
-                        ]
-                        ()
-
-
-expectTransitionPropertyDelay : Transition.Factory animBuilder animState -> PropertyTestCase animBuilder -> animState -> Expect.Expectation
-expectTransitionPropertyDelay factory tc state =
-    case factory.transitionString animGroup state of
-        Nothing ->
-            Expect.fail "Expected generated transition style, but none was produced"
-
-        Just transitionString ->
-            case factory.propertyString tc.propertyName transitionString of
-                Nothing ->
-                    Expect.fail ("Expected property string for property: " ++ tc.propertyName ++ ", but got: " ++ transitionString)
-
-                Just propertyString ->
-                    Expect.all
-                        [ \_ ->
-                            Expect.transition transitionString factory.attributes animGroup state
-                        , \_ ->
-                            expectDelayFor tc.propertyName tc.delayMs propertyString
-                        ]
-                        ()
-
-
-expectDelayFor : String -> Int -> String -> Expect.Expectation
-expectDelayFor propertyName delayMs propertyString =
-    Expect.all
-        [ \_ ->
-            if String.startsWith propertyName propertyString then
-                Expect.pass
-
-            else
-                Expect.fail ("Expected transition string to start with property name: " ++ propertyName ++ ", but got: " ++ propertyString)
-        , \_ ->
-            let
-                delaySuffix =
-                    String.fromInt delayMs ++ "ms"
-            in
-            if String.endsWith delaySuffix propertyString then
-                Expect.pass
-
-            else
-                Expect.fail ("Expected transition string to end with delay suffix: " ++ delaySuffix ++ ", but got: " ++ propertyString)
+                                        else
+                                            Expect.pass
+                            ]
+                            ()
         ]
         ()
 

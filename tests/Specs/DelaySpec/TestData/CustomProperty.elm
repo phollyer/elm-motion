@@ -15,7 +15,7 @@ testData =
             { description = "a property delay with a duration is written correctly"
             , propertyName = "border-radius"
             , delayMs = 100
-            , buildAnimate =
+            , pipelineWithDelay =
                 \d ->
                     CustomProperty.begin (BorderRadius Em)
                         >> CustomProperty.to 20
@@ -27,7 +27,7 @@ testData =
             { description = "a property delay with no duration is written correctly"
             , propertyName = "line-height"
             , delayMs = 200
-            , buildAnimate =
+            , pipelineWithDelay =
                 \d ->
                     CustomProperty.begin (LineHeight Unitless)
                         >> CustomProperty.to 1.2
@@ -38,7 +38,7 @@ testData =
             { description = "an engine delay with no duration is written correctly"
             , propertyName = "border-width"
             , delayMs = 300
-            , animateFuncs =
+            , propertyPipeline =
                 CustomProperty.begin (BorderWidth Px)
                     >> CustomProperty.to 2
                     >> CustomProperty.end
@@ -47,7 +47,7 @@ testData =
             { description = "an engine delay with a duration is written correctly"
             , propertyName = "my-custom-property"
             , delayMs = 400
-            , animateFuncs =
+            , propertyPipeline =
                 CustomProperty.begin (Custom "my-custom-property" "unit")
                     >> CustomProperty.to 10
                     >> CustomProperty.duration 1000

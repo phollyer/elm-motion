@@ -15,7 +15,7 @@ testData =
             { description = "a property delay with a duration is written correctly"
             , propertyName = "opacity"
             , delayMs = 100
-            , buildAnimate =
+            , pipelineWithDelay =
                 \d ->
                     Opacity.begin
                         >> Opacity.to 0.8
@@ -27,7 +27,7 @@ testData =
             { description = "a property delay with no duration is written correctly"
             , propertyName = "opacity"
             , delayMs = 200
-            , buildAnimate =
+            , pipelineWithDelay =
                 \d ->
                     Opacity.begin
                         >> Opacity.to 0.8
@@ -38,7 +38,7 @@ testData =
             { description = "an engine delay with no duration is written correctly"
             , propertyName = "opacity"
             , delayMs = 300
-            , animateFuncs =
+            , propertyPipeline =
                 Opacity.begin
                     >> Opacity.to 0.8
                     >> Opacity.end
@@ -47,7 +47,7 @@ testData =
             { description = "an engine delay with a duration is written correctly"
             , propertyName = "opacity"
             , delayMs = 400
-            , animateFuncs =
+            , propertyPipeline =
                 Opacity.begin
                     >> Opacity.to 0.8
                     >> Opacity.duration 1000

@@ -14,7 +14,7 @@ testData =
             { description = "a property delay with a duration is written correctly"
             , propertyName = "height"
             , delayMs = 100
-            , buildAnimate =
+            , pipelineWithDelay =
                 \d ->
                     Size.begin
                         >> Size.toH 120
@@ -26,7 +26,7 @@ testData =
             { description = "a property delay with no duration is written correctly"
             , propertyName = "width"
             , delayMs = 200
-            , buildAnimate =
+            , pipelineWithDelay =
                 \d ->
                     Size.begin
                         >> Size.toW 200
@@ -37,7 +37,7 @@ testData =
             { description = "an engine delay with no duration is written correctly"
             , propertyName = "width"
             , delayMs = 300
-            , animateFuncs =
+            , propertyPipeline =
                 Size.begin
                     >> Size.toW 200
                     >> Size.end
@@ -46,7 +46,7 @@ testData =
             { description = "an engine delay with a duration is written correctly"
             , propertyName = "height"
             , delayMs = 400
-            , animateFuncs =
+            , propertyPipeline =
                 Size.begin
                     >> Size.toH 120
                     >> Size.duration 1000

@@ -14,7 +14,7 @@ testData =
             { description = "a property delay with a duration is written correctly"
             , propertyName = "transform"
             , delayMs = 100
-            , buildAnimate =
+            , pipelineWithDelay =
                 \d ->
                     Skew.begin
                         >> Skew.toX 10
@@ -26,7 +26,7 @@ testData =
             { description = "a property delay with no duration is written correctly"
             , propertyName = "transform"
             , delayMs = 200
-            , buildAnimate =
+            , pipelineWithDelay =
                 \d ->
                     Skew.begin
                         >> Skew.toY 20
@@ -37,7 +37,7 @@ testData =
             { description = "an engine delay with no duration is written correctly"
             , propertyName = "transform"
             , delayMs = 300
-            , animateFuncs =
+            , propertyPipeline =
                 Skew.begin
                     >> Skew.toX 10
                     >> Skew.end
@@ -46,7 +46,7 @@ testData =
             { description = "an engine delay with a duration is written correctly"
             , propertyName = "transform"
             , delayMs = 400
-            , animateFuncs =
+            , propertyPipeline =
                 Skew.begin
                     >> Skew.toXY 10 20
                     >> Skew.duration 1000

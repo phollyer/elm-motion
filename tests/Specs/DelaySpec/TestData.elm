@@ -34,7 +34,7 @@ type alias PropertyTestCase animBuilder =
     { description : String
     , propertyName : String
     , delayMs : Int
-    , animateFuncs : animBuilder -> animBuilder
+    , propertyPipeline : animBuilder -> animBuilder
     }
 
 
@@ -55,7 +55,7 @@ type alias EngineTestCase animBuilder =
     { description : String
     , propertyName : String
     , delayMs : Int
-    , animateFuncs : animBuilder -> animBuilder
+    , propertyPipeline : animBuilder -> animBuilder
     }
 
 
@@ -63,7 +63,7 @@ propertyCase :
     { description : String
     , propertyName : String
     , delayMs : Int
-    , buildAnimate : Int -> AnimBuilder (WithTiming eng) -> AnimBuilder (WithTiming eng)
+    , pipelineWithDelay : Int -> AnimBuilder (WithTiming eng) -> AnimBuilder (WithTiming eng)
     }
     -> TestCase (AnimBuilder (WithTiming eng))
 propertyCase cfg =
@@ -75,14 +75,14 @@ propertyTestCase :
     { description : String
     , propertyName : String
     , delayMs : Int
-    , buildAnimate : Int -> AnimBuilder (WithTiming eng) -> AnimBuilder (WithTiming eng)
+    , pipelineWithDelay : Int -> AnimBuilder (WithTiming eng) -> AnimBuilder (WithTiming eng)
     }
     -> PropertyTestCase (AnimBuilder (WithTiming eng))
 propertyTestCase cfg =
     { description = cfg.description
     , propertyName = cfg.propertyName
     , delayMs = cfg.delayMs
-    , animateFuncs = cfg.buildAnimate cfg.delayMs
+    , propertyPipeline = cfg.pipelineWithDelay cfg.delayMs
     }
 
 
@@ -90,7 +90,7 @@ engineCase :
     { description : String
     , propertyName : String
     , delayMs : Int
-    , animateFuncs : AnimBuilder (WithTiming eng) -> AnimBuilder (WithTiming eng)
+    , propertyPipeline : AnimBuilder (WithTiming eng) -> AnimBuilder (WithTiming eng)
     }
     -> TestCase (AnimBuilder (WithTiming eng))
 engineCase cfg =
@@ -98,7 +98,7 @@ engineCase cfg =
         { description = cfg.description
         , propertyName = cfg.propertyName
         , delayMs = cfg.delayMs
-        , animateFuncs = cfg.animateFuncs
+        , propertyPipeline = cfg.propertyPipeline
         }
 
 

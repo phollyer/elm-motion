@@ -14,7 +14,7 @@ testData =
             { description = "a property delay with a duration is written correctly"
             , propertyName = "perspective-origin"
             , delayMs = 100
-            , buildAnimate =
+            , pipelineWithDelay =
                 \d ->
                     PerspectiveOrigin.begin
                         >> PerspectiveOrigin.toX 10
@@ -26,7 +26,7 @@ testData =
             { description = "a property delay with no duration is written correctly"
             , propertyName = "perspective-origin"
             , delayMs = 200
-            , buildAnimate =
+            , pipelineWithDelay =
                 \d ->
                     PerspectiveOrigin.begin
                         >> PerspectiveOrigin.toY 20
@@ -37,7 +37,7 @@ testData =
             { description = "an engine delay with no duration is written correctly"
             , propertyName = "perspective-origin"
             , delayMs = 300
-            , animateFuncs =
+            , propertyPipeline =
                 PerspectiveOrigin.begin
                     >> PerspectiveOrigin.toX 10
                     >> PerspectiveOrigin.end
@@ -46,7 +46,7 @@ testData =
             { description = "an engine delay with a duration is written correctly"
             , propertyName = "perspective-origin"
             , delayMs = 400
-            , animateFuncs =
+            , propertyPipeline =
                 PerspectiveOrigin.begin
                     >> PerspectiveOrigin.toXY 10 20
                     >> PerspectiveOrigin.duration 1000

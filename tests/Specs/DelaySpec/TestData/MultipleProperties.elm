@@ -27,7 +27,7 @@ testData =
                     { description = "a Custom font size delay is written correctly"
                     , propertyName = "font-size"
                     , delayMs = 100
-                    , buildAnimate =
+                    , pipelineWithDelay =
                         \d ->
                             Custom.begin (FontSize Em)
                                 >> Custom.to 1
@@ -39,7 +39,7 @@ testData =
                     { description = "a Custom border width delay is written correctly"
                     , propertyName = "border-width"
                     , delayMs = 150
-                    , buildAnimate =
+                    , pipelineWithDelay =
                         \d ->
                             Custom.begin (BorderWidth Em)
                                 >> Custom.to 1
@@ -51,7 +51,7 @@ testData =
                     { description = "a Custom border color delay is written correctly"
                     , propertyName = "border-color"
                     , delayMs = 160
-                    , buildAnimate =
+                    , pipelineWithDelay =
                         \d ->
                             CustomColor.begin BorderColor
                                 >> CustomColor.to (Color.rgb 255 0 0)
@@ -63,7 +63,7 @@ testData =
                     { description = "a Custom font color delay is written correctly"
                     , propertyName = "color"
                     , delayMs = 170
-                    , buildAnimate =
+                    , pipelineWithDelay =
                         \d ->
                             CustomColor.begin TextColor
                                 >> CustomColor.to (Color.rgb 255 0 0)
@@ -75,7 +75,7 @@ testData =
                     { description = "an Opacity delay is written correctly"
                     , propertyName = "opacity"
                     , delayMs = 200
-                    , buildAnimate =
+                    , pipelineWithDelay =
                         \d ->
                             Opacity.begin
                                 >> Opacity.to 0.5
@@ -87,7 +87,7 @@ testData =
                     { description = "a PerspectiveOrigin delay is written correctly"
                     , propertyName = "perspective-origin"
                     , delayMs = 300
-                    , buildAnimate =
+                    , pipelineWithDelay =
                         \d ->
                             PerspectiveOrigin.begin
                                 >> PerspectiveOrigin.toX 10
@@ -99,7 +99,7 @@ testData =
                     { description = "a Size (width) delay is written correctly"
                     , propertyName = "width"
                     , delayMs = 400
-                    , buildAnimate =
+                    , pipelineWithDelay =
                         \d ->
                             Size.begin
                                 >> Size.toW 100
@@ -116,7 +116,7 @@ testData =
                     { description = "a Translate delay is written correctly"
                     , propertyName = "translate"
                     , delayMs = 500
-                    , buildAnimate =
+                    , pipelineWithDelay =
                         \d ->
                             Translate.begin
                                 >> Translate.toX 100
@@ -127,7 +127,7 @@ testData =
                     { description = "a Scale delay is written correctly"
                     , propertyName = "scale"
                     , delayMs = 600
-                    , buildAnimate =
+                    , pipelineWithDelay =
                         \d ->
                             Scale.begin
                                 >> Scale.to 2
@@ -143,7 +143,7 @@ testData =
                     { description = "a Scale delay is written correctly"
                     , propertyName = "scale"
                     , delayMs = 600
-                    , buildAnimate =
+                    , pipelineWithDelay =
                         \d ->
                             Scale.begin
                                 >> Scale.to 2
@@ -154,7 +154,7 @@ testData =
                     { description = "a Rotate delay is written correctly"
                     , propertyName = "rotate"
                     , delayMs = 700
-                    , buildAnimate =
+                    , pipelineWithDelay =
                         \d ->
                             Rotate.begin
                                 >> Rotate.toX 90
@@ -171,7 +171,7 @@ testData =
                     { description = "a Rotate delay is written correctly"
                     , propertyName = "rotate"
                     , delayMs = 600
-                    , buildAnimate =
+                    , pipelineWithDelay =
                         \d ->
                             Rotate.begin
                                 >> Rotate.toX 90
@@ -183,7 +183,7 @@ testData =
                     { description = "a Scale delay is written correctly"
                     , propertyName = "scale"
                     , delayMs = 700
-                    , buildAnimate =
+                    , pipelineWithDelay =
                         \d ->
                             Scale.begin
                                 >> Scale.to 2
@@ -195,7 +195,7 @@ testData =
                     { description = "a Translate delay is written correctly"
                     , propertyName = "translate"
                     , delayMs = 700
-                    , buildAnimate =
+                    , pipelineWithDelay =
                         \d ->
                             Translate.begin
                                 >> Translate.toX 200

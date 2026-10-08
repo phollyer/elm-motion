@@ -16,7 +16,7 @@ testData =
             { description = "a property delay with a duration is written correctly"
             , propertyName = "background-color"
             , delayMs = 100
-            , buildAnimate =
+            , pipelineWithDelay =
                 \d ->
                     CustomColor.begin BackgroundColor
                         >> CustomColor.to (Color.rgba 0 0 0 0)
@@ -28,7 +28,7 @@ testData =
             { description = "a property delay with no duration is written correctly"
             , propertyName = "color"
             , delayMs = 200
-            , buildAnimate =
+            , pipelineWithDelay =
                 \d ->
                     CustomColor.begin TextColor
                         >> CustomColor.to (Color.rgba 0 0 0 0.8)
@@ -39,7 +39,7 @@ testData =
             { description = "an engine delay with no duration is written correctly"
             , propertyName = "border-color"
             , delayMs = 300
-            , animateFuncs =
+            , propertyPipeline =
                 CustomColor.begin BorderColor
                     >> CustomColor.to (Color.rgba 0 0 0 0)
                     >> CustomColor.end
@@ -48,7 +48,7 @@ testData =
             { description = "an engine delay with a duration is written correctly"
             , propertyName = "accent-color"
             , delayMs = 400
-            , animateFuncs =
+            , propertyPipeline =
                 CustomColor.begin AccentColor
                     >> CustomColor.to (Color.rgba 0 0 0 0.8)
                     >> CustomColor.duration 1000
