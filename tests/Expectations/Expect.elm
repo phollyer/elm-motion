@@ -13,21 +13,21 @@ import Test.Html.Query as Query
 import Test.Html.Selector as Selector
 
 
-initialStyles : EngineFactory animBuilder animState -> String -> (String -> animState -> List (Html.Attribute msg)) -> { a | initFuncs : List (animBuilder -> animBuilder), expected : List NameValuePair } -> Expect.Expectation
-initialStyles factory animGroupName attributesFunc tc =
+initialStyles : EngineFactory animBuilder animState -> { a | initFuncs : List (animBuilder -> animBuilder), expected : List NameValuePair } -> (String -> animState -> List (Html.Attribute msg)) -> String -> Expect.Expectation
+initialStyles factory tc attributesFunc animGroupName =
     let
         f =
             Factory.create factory
     in
     f.init tc.initFuncs
-        |> styles animGroupName attributesFunc tc
+        |> styles tc.expected attributesFunc animGroupName
 
 
-styles : String -> (String -> animState -> List (Html.Attribute msg)) -> { a | initFuncs : List (animBuilder -> animBuilder), expected : List NameValuePair } -> animState -> Expect.Expectation
-styles animGroupName attributesFunc tc =
+styles : List NameValuePair -> (String -> animState -> List (Html.Attribute msg)) -> String -> animState -> Expect.Expectation
+styles expected attributesFunc animGroupName =
     let
         willChange =
-            List.map (\nvp -> nvp.name) tc.expected
+            List.map (\nvp -> nvp.name) expected
                 |> String.join ", "
     in
     attributesQueryFor attributesFunc animGroupName
@@ -37,7 +37,7 @@ styles animGroupName attributesFunc tc =
                     (\nvp ->
                         Selector.style nvp.name nvp.value
                     )
-                    tc.expected
+                    expected
             )
 
 

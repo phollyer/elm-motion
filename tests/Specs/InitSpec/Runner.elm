@@ -32,38 +32,38 @@ runTestCase :
 runTestCase factory attributesFunc testCase =
     case testCase of
         PropertyTest tc ->
-            generalRunner factory attributesFunc tc
+            generalRunner factory tc attributesFunc
 
         MultiPropertyTest tc ->
-            multiPropertyRunner factory attributesFunc tc
+            multiPropertyRunner factory tc attributesFunc
 
         MultiGroupTest tc ->
-            multiGroupRunner factory attributesFunc tc
+            multiGroupRunner factory tc attributesFunc
 
 
-generalRunner : EngineFactory animBuilder animState -> (String -> animState -> List (Html.Attribute msg)) -> PropertyTestCase animBuilder -> Test
-generalRunner factory attributesFunc tc =
+generalRunner : EngineFactory animBuilder animState -> PropertyTestCase animBuilder -> (String -> animState -> List (Html.Attribute msg)) -> Test
+generalRunner factory tc attributesFunc =
     test tc.description <|
         \_ ->
-            Expect.initialStyles factory animGroup attributesFunc { initFuncs = tc.initFuncs, expected = tc.expected }
+            Expect.initialStyles factory { initFuncs = tc.initFuncs, expected = tc.expected } attributesFunc animGroup
 
 
-multiPropertyRunner : EngineFactory animBuilder animState -> (String -> animState -> List (Html.Attribute msg)) -> MultiPropertyTestCase animBuilder -> Test
-multiPropertyRunner factory attributesFunc tc =
+multiPropertyRunner : EngineFactory animBuilder animState -> MultiPropertyTestCase animBuilder -> (String -> animState -> List (Html.Attribute msg)) -> Test
+multiPropertyRunner factory tc attributesFunc =
     test tc.description <|
         \_ ->
-            Expect.initialStyles factory animGroup attributesFunc tc
+            Expect.initialStyles factory tc attributesFunc animGroup
 
 
-multiGroupRunner : EngineFactory animBuilder animState -> (String -> animState -> List (Html.Attribute msg)) -> MultiGroupTestCase animBuilder -> Test
-multiGroupRunner factory attributesFunc tc =
+multiGroupRunner : EngineFactory animBuilder animState -> MultiGroupTestCase animBuilder -> (String -> animState -> List (Html.Attribute msg)) -> Test
+multiGroupRunner factory tc attributesFunc =
     test tc.description <|
         \_ ->
             Expect.all
                 (List.map3
                     (\init group expected ->
                         \_ ->
-                            Expect.initialStyles factory group attributesFunc { initFuncs = init, expected = expected }
+                            Expect.initialStyles factory { initFuncs = init, expected = expected } attributesFunc group
                     )
                     tc.initFuncs
                     tc.animGroups
