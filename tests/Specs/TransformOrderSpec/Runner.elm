@@ -51,10 +51,10 @@ initRunner factory tc =
                 in
                 case factory of
                     Factory.Keyframe f_ ->
-                        Expect.attributes animGroup f_.attributes tc state
+                        Expect.transform tc.expected f_.attributes animGroup state
 
                     Factory.Transition f_ ->
-                        Expect.attributes animGroup f_.attributes tc state
+                        Expect.transform tc.expected f_.attributes animGroup state
         , test "with transform order in the middle" <|
             \_ ->
                 let
@@ -72,10 +72,10 @@ initRunner factory tc =
                 in
                 case factory of
                     Factory.Keyframe f_ ->
-                        Expect.attributes animGroup f_.attributes tc state
+                        Expect.transform tc.expected f_.attributes animGroup state
 
                     Factory.Transition f_ ->
-                        Expect.attributes animGroup f_.attributes tc state
+                        Expect.transform tc.expected f_.attributes animGroup state
         , test "with transform order last" <|
             \_ ->
                 let
@@ -87,10 +87,10 @@ initRunner factory tc =
                 in
                 case factory of
                     Factory.Keyframe f_ ->
-                        Expect.attributes animGroup f_.attributes tc state
+                        Expect.transform tc.expected f_.attributes animGroup state
 
                     Factory.Transition f_ ->
-                        Expect.attributes animGroup f_.attributes tc state
+                        Expect.transform tc.expected f_.attributes animGroup state
         ]
 
 
@@ -114,10 +114,10 @@ animateRunner factory tc =
                 in
                 case factory of
                     Factory.Keyframe f_ ->
-                        Expect.attributes animGroup f_.attributes tc state
+                        Expect.transform tc.expected f_.attributes animGroup state
 
                     Factory.Transition f_ ->
-                        Expect.attributes animGroup f_.attributes tc state
+                        Expect.transform tc.expected f_.attributes animGroup state
         , test "with transform order last" <|
             \_ ->
                 let
@@ -132,8 +132,8 @@ animateRunner factory tc =
                 in
                 case factory of
                     Factory.Keyframe f_ ->
-                        Expect.attributes animGroup f_.attributes tc state
+                        Expect.transform tc.expected f_.attributes animGroup state
 
                     Factory.Transition f_ ->
-                        Expect.attributes animGroup f_.attributes tc state
+                        Expect.transform tc.expected f_.attributes animGroup state
         ]

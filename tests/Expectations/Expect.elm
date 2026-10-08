@@ -1,7 +1,8 @@
 module Expectations.Expect exposing
-    ( attributes
-    , initialStyles
+    ( initialStyles
     , styles
+    , transform
+    , transition
     )
 
 import Expect
@@ -40,8 +41,18 @@ styles animGroupName attributesFunc tc =
             )
 
 
-attributes : String -> (String -> animState -> List (Html.Attribute msg)) -> { a | expected : String } -> animState -> Expect.Expectation
-attributes animGroupName attributesFunc tc =
+transform : String -> (String -> animState -> List (Html.Attribute msg)) -> String -> animState -> Expect.Expectation
+transform =
+    attributesFor "transform"
+
+
+transition : String -> (String -> animState -> List (Html.Attribute msg)) -> String -> animState -> Expect.Expectation
+transition =
+    attributesFor "transition"
+
+
+attributesFor : String -> String -> (String -> animState -> List (Html.Attribute msg)) -> String -> animState -> Expect.Expectation
+attributesFor name expected attributesFunc animGroupName =
     attributesQueryFor attributesFunc animGroupName
         >> Query.has
-            [ Selector.style "transform" tc.expected ]
+            [ Selector.style name expected ]
