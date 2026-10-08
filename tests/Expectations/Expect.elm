@@ -8,7 +8,7 @@ module Expectations.Expect exposing
 import Expect
 import Factories.Engines.Factory as Factory exposing (EngineFactory(..))
 import Html
-import Specs.Shared exposing (NameValuePair, attributesQueryFor)
+import Specs.Shared exposing (NameValuePair)
 import Test.Html.Query as Query
 import Test.Html.Selector as Selector
 
@@ -56,3 +56,9 @@ attributesFor name expected attributesFunc animGroupName =
     attributesQueryFor attributesFunc animGroupName
         >> Query.has
             [ Selector.style name expected ]
+
+
+attributesQueryFor : (String -> animState -> List (Html.Attribute msg)) -> String -> animState -> Query.Single msg
+attributesQueryFor getAttributes groupName animState =
+    Html.div (getAttributes groupName animState) []
+        |> Query.fromHtml
