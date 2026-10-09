@@ -3,6 +3,7 @@ module Expectations.Expect exposing
     , styles
     , transform
     , transition
+    , willChange
     )
 
 import Expect
@@ -20,25 +21,34 @@ initialStyles factory tc attributesFunc animGroupName =
             Factory.create factory
     in
     f.init tc.initFuncs
-        |> styles tc.expected attributesFunc animGroupName
+        |> Expect.all
+            [ \s -> styles tc.expected attributesFunc animGroupName s
+            , \s -> willChange tc.expected attributesFunc animGroupName s
+            ]
 
 
 styles : List NameValuePair -> (String -> animState -> List (Html.Attribute msg)) -> String -> animState -> Expect.Expectation
 styles expected attributesFunc animGroupName =
+    attributesQueryFor attributesFunc animGroupName
+        >> Query.has
+            (List.map
+                (\nvp ->
+                    Selector.style nvp.name nvp.value
+                )
+                expected
+            )
+
+
+willChange : List NameValuePair -> (String -> animState -> List (Html.Attribute msg)) -> String -> animState -> Expect.Expectation
+willChange expected attributesFunc animGroupName =
     let
-        willChange =
+        willChange_ =
             List.map (\nvp -> nvp.name) expected
                 |> String.join ", "
     in
     attributesQueryFor attributesFunc animGroupName
         >> Query.has
-            (Selector.style "will-change" willChange
-                :: List.map
-                    (\nvp ->
-                        Selector.style nvp.name nvp.value
-                    )
-                    expected
-            )
+            [ Selector.style "will-change" willChange_ ]
 
 
 transform : String -> (String -> animState -> List (Html.Attribute msg)) -> String -> animState -> Expect.Expectation
