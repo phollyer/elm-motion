@@ -4,7 +4,6 @@ import Anim.Builder exposing (AnimBuilder)
 import Anim.Property.Translate as Translate
 import Anim.Unit exposing (Unit(..))
 import Specs.AnimateSpec.TestData as TD exposing (PropertyCase, TestCase(..), TestData, TimingProfile(..))
-import Specs.Shared exposing (NameValuePair)
 
 
 testData : TestData (AnimBuilder eng)
@@ -13,6 +12,7 @@ testData =
     , testCases =
         TD.buildPropertyCases "transform" TD.NoTiming propertyCases
             ++ TD.buildPropertyCases "transform" (TD.DelayMs 500) propertyCases
+            ++ TD.buildPropertyCases "transform" (TD.DurationMs 500) propertyCases
     }
 
 

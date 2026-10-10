@@ -4,7 +4,6 @@ import Anim.Builder exposing (AnimBuilder)
 import Anim.Property.PerspectiveOrigin as PerspectiveOrigin
 import Anim.Unit exposing (Unit(..))
 import Specs.AnimateSpec.TestData as TD exposing (PropertyCase, TestCase(..), TestData, TimingProfile(..))
-import Specs.Shared exposing (NameValuePair)
 
 
 testData : TestData (AnimBuilder eng)
@@ -13,6 +12,7 @@ testData =
     , testCases =
         TD.buildPropertyCases "perspective-origin" NoTiming propertyCases
             ++ TD.buildPropertyCases "perspective-origin" (DelayMs 500) propertyCases
+            ++ TD.buildPropertyCases "perspective-origin" (DurationMs 500) propertyCases
     }
 
 

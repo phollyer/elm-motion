@@ -22,6 +22,7 @@ type alias Factory builder animState =
     , animate : animState -> (builder -> builder) -> animState
     , attributes : String -> animState -> List (Html.Attribute Never)
     , delay : Int -> builder -> builder
+    , duration : Int -> builder -> builder
     , transformOrder : List TransformProperty -> builder -> builder
     , animationString : String -> animState -> Maybe String
     , keyframesString : String -> animState -> Maybe String
@@ -37,6 +38,7 @@ factory =
     , animate = Keyframe.animate
     , attributes = Keyframe.attributes
     , delay = Keyframe.delay
+    , duration = Keyframe.duration
     , transformOrder = Keyframe.transformOrder
     , animationString = animationString
     , keyframesString = Keyframe.maybeString

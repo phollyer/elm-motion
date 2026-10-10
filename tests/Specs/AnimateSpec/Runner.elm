@@ -170,6 +170,9 @@ timingSuffix timing =
         DelayMs delayMs ->
             " [delay " ++ String.fromInt delayMs ++ "ms]"
 
+        DurationMs durationMs ->
+            " [duration " ++ String.fromInt durationMs ++ "ms]"
+
 
 applyTiming : EngineFactory animBuilder animState -> TimingProfile -> (animBuilder -> animBuilder) -> (animBuilder -> animBuilder)
 applyTiming factory timing pipeline =
@@ -183,4 +186,8 @@ applyTiming factory timing pipeline =
 
         DelayMs delayMs ->
             f.delay delayMs
+                >> pipeline
+
+        DurationMs durationMs ->
+            f.duration durationMs
                 >> pipeline

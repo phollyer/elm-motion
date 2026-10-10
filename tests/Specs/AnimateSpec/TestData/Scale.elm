@@ -3,7 +3,6 @@ module Specs.AnimateSpec.TestData.Scale exposing (testData)
 import Anim.Builder exposing (AnimBuilder)
 import Anim.Property.Scale as Scale
 import Specs.AnimateSpec.TestData as TD exposing (PropertyCase, TestCase(..), TestData, TimingProfile(..))
-import Specs.Shared exposing (NameValuePair)
 
 
 testData : TestData (AnimBuilder eng)
@@ -12,6 +11,7 @@ testData =
     , testCases =
         TD.buildPropertyCases "transform" NoTiming propertyCases
             ++ TD.buildPropertyCases "transform" (DelayMs 500) propertyCases
+            ++ TD.buildPropertyCases "transform" (DurationMs 500) propertyCases
     }
 
 

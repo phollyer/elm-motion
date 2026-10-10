@@ -21,6 +21,7 @@ type alias Factory builder animState =
     , animate : animState -> (builder -> builder) -> animState
     , attributes : String -> animState -> List (Html.Attribute Never)
     , delay : Int -> builder -> builder
+    , duration : Int -> builder -> builder
     , transformOrder : List TransformProperty -> builder -> builder
     , transitionString : String -> animState -> Maybe String
     , propertyString : String -> String -> Maybe String
@@ -36,6 +37,7 @@ factory =
     , animate = Transition.animate
     , attributes = Transition.attributes
     , delay = Transition.delay
+    , duration = Transition.duration
     , transformOrder = Transition.transformOrder
     , transitionString = transitionString
     , propertyString = propertyString

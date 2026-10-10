@@ -4,7 +4,6 @@ import Anim.Builder exposing (AnimBuilder)
 import Anim.Extra.Color as Color
 import Anim.Property.CustomColor as CustomColor exposing (ColorProperty)
 import Specs.AnimateSpec.TestData as TD exposing (PropertyCase, TestCase(..), TestData, TimingProfile(..))
-import Specs.Shared exposing (NameValuePair)
 
 
 testData : TestData (AnimBuilder eng)
@@ -13,6 +12,7 @@ testData =
     , testCases =
         buildPropertyCases NoTiming properties
             ++ buildPropertyCases (DelayMs 500) properties
+            ++ buildPropertyCases (DurationMs 500) properties
     }
 
 

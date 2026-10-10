@@ -23,6 +23,7 @@ type alias TestData animBuilder =
 type TimingProfile
     = NoTiming
     | DelayMs Int
+    | DurationMs Int
 
 
 type TestCase animBuilder

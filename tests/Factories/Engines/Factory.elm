@@ -21,6 +21,7 @@ type alias Factory animBuilder state =
     , animate : state -> (animBuilder -> animBuilder) -> state
     , for : String -> animBuilder -> animBuilder
     , delay : Int -> animBuilder -> animBuilder
+    , duration : Int -> animBuilder -> animBuilder
     , transformOrder : List TransformProperty -> animBuilder -> animBuilder
     }
 
@@ -34,6 +35,7 @@ create factory_ =
                 f.animate
                 f.for
                 f.delay
+                f.duration
                 f.transformOrder
 
         Transition f ->
@@ -42,6 +44,7 @@ create factory_ =
                 f.animate
                 f.for
                 f.delay
+                f.duration
                 f.transformOrder
 
 

@@ -3,7 +3,6 @@ module Specs.AnimateSpec.TestData.Skew exposing (testData)
 import Anim.Builder exposing (AnimBuilder)
 import Anim.Property.Skew as Skew
 import Specs.AnimateSpec.TestData as TD exposing (PropertyCase, TestCase(..), TestData, TimingProfile(..))
-import Specs.Shared exposing (NameValuePair)
 
 
 testData : TestData (AnimBuilder eng)
@@ -12,6 +11,7 @@ testData =
     , testCases =
         TD.buildPropertyCases "transform" TD.NoTiming propertyCases
             ++ TD.buildPropertyCases "transform" (TD.DelayMs 500) propertyCases
+            ++ TD.buildPropertyCases "transform" (TD.DurationMs 500) propertyCases
     }
 
 
