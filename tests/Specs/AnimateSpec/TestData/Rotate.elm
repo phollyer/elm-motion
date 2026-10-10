@@ -2,7 +2,7 @@ module Specs.AnimateSpec.TestData.Rotate exposing (testData)
 
 import Anim.Builder exposing (AnimBuilder)
 import Anim.Property.Rotate as Rotate
-import Specs.AnimateSpec.TestData exposing (PropertyCase, TestCase(..), TestData)
+import Specs.AnimateSpec.TestData as TD exposing (PropertyCase, TestCase(..), TestData, TimingProfile(..))
 import Specs.Shared exposing (NameValuePair)
 
 
@@ -10,17 +10,8 @@ testData : TestData (AnimBuilder eng)
 testData =
     { description = "Rotate tests"
     , testCases =
-        List.map
-            (\c ->
-                PropertyTest
-                    { description = c.description
-                    , propertyName = "transform"
-                    , propertyPipeline = c.propertyPipeline
-                    , expected = [ NameValuePair "transform" c.expected ]
-                    , notExpected = []
-                    }
-            )
-            propertyCases
+        TD.buildPropertyCases "transform" NoTiming propertyCases
+            ++ TD.buildPropertyCases "transform" (DelayMs 500) propertyCases
     }
 
 

@@ -37,11 +37,12 @@ runTestCase factory testCase =
 
 propertyRunner : EngineFactory animBuilder animState -> PropertyTestCase animBuilder -> Test
 propertyRunner factory tc =
-    test tc.description <|
+    test (tc.description ++ timingSuffix tc.timing) <|
         \_ ->
             let
                 state =
-                    Factory.animate factory animGroup [] tc.propertyPipeline
+                    Factory.animate factory animGroup [] <|
+                        applyTiming factory tc.timing tc.propertyPipeline
             in
             case factory of
                 Keyframe f ->
@@ -134,11 +135,11 @@ multiGroupRunner factory tc =
 
 animate2Runner : EngineFactory animBuilder animState -> Animate2TestCase animBuilder -> Test
 animate2Runner factory tc =
-    test tc.description <|
+    test (tc.description ++ timingSuffix tc.timing) <|
         \_ ->
             let
                 state =
-                    Factory.animate2 factory animGroup [] tc.propertyPipeline1 tc.propertyPipeline2
+                    Factory.animate2 factory animGroup [] (applyTiming factory tc.timing tc.propertyPipeline1) (applyTiming factory tc.timing tc.propertyPipeline2)
             in
             case factory of
                 Keyframe f ->
@@ -158,3 +159,28 @@ animate2Runner factory tc =
                             Expect.stylesNotPresent tc.notExpected f.styleDeclarations animGroup state
                         ]
                         ()
+
+
+timingSuffix : TimingProfile -> String
+timingSuffix timing =
+    case timing of
+        NoTiming ->
+            ""
+
+        DelayMs delayMs ->
+            " [delay " ++ String.fromInt delayMs ++ "ms]"
+
+
+applyTiming : EngineFactory animBuilder animState -> TimingProfile -> (animBuilder -> animBuilder) -> (animBuilder -> animBuilder)
+applyTiming factory timing pipeline =
+    let
+        f =
+            Factory.create factory
+    in
+    case timing of
+        NoTiming ->
+            pipeline
+
+        DelayMs delayMs ->
+            f.delay delayMs
+                >> pipeline

@@ -3,7 +3,7 @@ module Specs.AnimateSpec.TestData.Size exposing (testData)
 import Anim.Builder exposing (AnimBuilder)
 import Anim.Property.Size as Size
 import Anim.Unit exposing (Unit(..))
-import Specs.AnimateSpec.TestData exposing (PropertyCase, TestCase(..), TestData)
+import Specs.AnimateSpec.TestData exposing (PropertyCase, TestCase(..), TestData, TimingProfile(..))
 import Specs.Shared exposing (NameValuePair)
 
 
@@ -11,30 +11,42 @@ testData : TestData (AnimBuilder eng)
 testData =
     { description = "Size tests"
     , testCases =
-        List.map
-            (\c ->
-                PropertyTest
-                    { description = c.description
-                    , propertyName = "transform"
-                    , propertyPipeline = c.propertyPipeline
-                    , expected = toNameValuePairs c.expected
-                    , notExpected = c.notExpected
-                    }
-            )
-            propertyCases
-            ++ List.map
-                (\c ->
-                    Animate2Test
-                        { description = c.description
-                        , propertyName = "transform"
-                        , propertyPipeline1 = c.propertyPipeline1
-                        , propertyPipeline2 = c.propertyPipeline2
-                        , expected = toNameValuePairs c.expected
-                        , notExpected = c.notExpected
-                        }
-                )
-                animate2Cases
+        buildPropertyCases NoTiming
+            ++ buildPropertyCases (DelayMs 500)
+            ++ buildAnimate2Cases NoTiming
+            ++ buildAnimate2Cases (DelayMs 500)
     }
+
+
+buildPropertyCases : TimingProfile -> List (TestCase (AnimBuilder eng))
+buildPropertyCases timing =
+    List.map
+        (\c ->
+            PropertyTest
+                { description = c.description
+                , timing = timing
+                , propertyPipeline = c.propertyPipeline
+                , expected = toNameValuePairs c.expected
+                , notExpected = c.notExpected
+                }
+        )
+        propertyCases
+
+
+buildAnimate2Cases : TimingProfile -> List (TestCase (AnimBuilder eng))
+buildAnimate2Cases timing =
+    List.map
+        (\c ->
+            Animate2Test
+                { description = c.description
+                , timing = timing
+                , propertyPipeline1 = c.propertyPipeline1
+                , propertyPipeline2 = c.propertyPipeline2
+                , expected = toNameValuePairs c.expected
+                , notExpected = c.notExpected
+                }
+        )
+        animate2Cases
 
 
 toNameValuePairs : String -> List NameValuePair

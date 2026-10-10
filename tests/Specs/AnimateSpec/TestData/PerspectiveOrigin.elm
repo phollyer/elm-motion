@@ -3,7 +3,7 @@ module Specs.AnimateSpec.TestData.PerspectiveOrigin exposing (testData)
 import Anim.Builder exposing (AnimBuilder)
 import Anim.Property.PerspectiveOrigin as PerspectiveOrigin
 import Anim.Unit exposing (Unit(..))
-import Specs.AnimateSpec.TestData exposing (PropertyCase, TestCase(..), TestData)
+import Specs.AnimateSpec.TestData as TD exposing (PropertyCase, TestCase(..), TestData, TimingProfile(..))
 import Specs.Shared exposing (NameValuePair)
 
 
@@ -11,17 +11,8 @@ testData : TestData (AnimBuilder eng)
 testData =
     { description = "PerspectiveOrigin tests"
     , testCases =
-        List.map
-            (\c ->
-                PropertyTest
-                    { description = c.description
-                    , propertyName = "perspective-origin"
-                    , propertyPipeline = c.propertyPipeline
-                    , expected = [ NameValuePair "perspective-origin" c.expected ]
-                    , notExpected = []
-                    }
-            )
-            propertyCases
+        TD.buildPropertyCases "perspective-origin" NoTiming propertyCases
+            ++ TD.buildPropertyCases "perspective-origin" (DelayMs 500) propertyCases
     }
 
 
