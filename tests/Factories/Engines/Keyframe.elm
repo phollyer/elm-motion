@@ -2,11 +2,14 @@ module Factories.Engines.Keyframe exposing
     ( Factory
     , animationString
     , factory
+    , styleDeclarations
+    , styleValue
     )
 
 import Anim.Engine.Keyframe as Keyframe exposing (AnimState, EngineBuilder)
 import Anim.Extra.TransformOrder exposing (TransformProperty)
 import Anim.Internal.Engine.CSS.CSS as InternalCss
+import Anim.Internal.Engine.CSS.Styles as InternalStyles
 import Anim.Internal.Engine.Keyframe.AnimGroup as InternalAnimGroup
 import Anim.Internal.Engine.Keyframe.Animation as InternalAnimation
 import Anim.Internal.Engine.Shared.AnimGroups as InternalAnimGroups
@@ -22,6 +25,8 @@ type alias Factory builder animState =
     , transformOrder : List TransformProperty -> builder -> builder
     , animationString : String -> animState -> Maybe String
     , keyframesString : String -> animState -> Maybe String
+    , styleValue : String -> String -> animState -> Maybe String
+    , styleDeclarations : String -> animState -> List String
     }
 
 
@@ -35,6 +40,8 @@ factory =
     , transformOrder = Keyframe.transformOrder
     , animationString = animationString
     , keyframesString = Keyframe.maybeString
+    , styleValue = styleValue
+    , styleDeclarations = styleDeclarations
     }
 
 
@@ -44,3 +51,21 @@ animationString animGroupName (InternalCss.AnimState _ animGroups) =
         |> InternalAnimGroups.get animGroupName
         |> Maybe.andThen InternalAnimGroup.getAnimation
         |> Maybe.map InternalAnimation.toCssString
+
+
+styleValue : String -> String -> AnimState -> Maybe String
+styleValue animGroupName propertyName (InternalCss.AnimState _ animGroups) =
+    animGroups
+        |> InternalAnimGroups.get animGroupName
+        |> Maybe.map InternalAnimGroup.getStyles
+        |> Maybe.andThen (InternalStyles.get propertyName)
+
+
+styleDeclarations : String -> AnimState -> List String
+styleDeclarations animGroupName (InternalCss.AnimState _ animGroups) =
+    animGroups
+        |> InternalAnimGroups.get animGroupName
+        |> Maybe.map InternalAnimGroup.getStyles
+        |> Maybe.map InternalStyles.toList
+        |> Maybe.withDefault []
+        |> List.map (\( name, value ) -> name ++ ":" ++ value)

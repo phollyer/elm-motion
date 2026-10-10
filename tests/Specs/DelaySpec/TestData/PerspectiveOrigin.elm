@@ -3,7 +3,7 @@ module Specs.DelaySpec.TestData.PerspectiveOrigin exposing (testData)
 import Anim.Builder exposing (AnimBuilder)
 import Anim.Property.PerspectiveOrigin as PerspectiveOrigin
 import Factories.Capabilities exposing (WithTiming)
-import Specs.DelaySpec.TestData exposing (TestData, engineCase, propertyCase)
+import Specs.DelaySpec.TestData exposing (TestCase(..), TestData, propertyCase)
 
 
 testData : TestData (AnimBuilder (WithTiming eng))
@@ -33,7 +33,7 @@ testData =
                         >> PerspectiveOrigin.delay d
                         >> PerspectiveOrigin.end
             }
-        , engineCase
+        , EngineTest
             { description = "an engine delay with no duration is written correctly"
             , propertyName = "perspective-origin"
             , delayMs = 300
@@ -42,7 +42,7 @@ testData =
                     >> PerspectiveOrigin.toX 10
                     >> PerspectiveOrigin.end
             }
-        , engineCase
+        , EngineTest
             { description = "an engine delay with a duration is written correctly"
             , propertyName = "perspective-origin"
             , delayMs = 400

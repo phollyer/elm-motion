@@ -15,30 +15,37 @@ testData =
             [ { description = "Rotate.initX writes X, and omits untouched YZ"
               , initFuncs = [ Rotate.initX animGroup 10 ]
               , expected = [ NameValuePair "transform" "rotateX(10deg)" ]
+              , notExpected = [ "rotateY", "rotateZ" ]
               }
             , { description = "Rotate.initY writes Y, and omits untouched XZ"
               , initFuncs = [ Rotate.initY animGroup 20 ]
               , expected = [ NameValuePair "transform" "rotateY(20deg)" ]
+              , notExpected = [ "rotateX", "rotateZ" ]
               }
             , { description = "Rotate.initZ writes Z, and omits untouched XY"
               , initFuncs = [ Rotate.initZ animGroup 30 ]
               , expected = [ NameValuePair "transform" "rotateZ(30deg)" ]
+              , notExpected = [ "rotateX", "rotateY" ]
               }
             , { description = "Rotate.initXY writes XY and omits untouched Z"
               , initFuncs = [ Rotate.initXY animGroup 10 20 ]
               , expected = [ NameValuePair "transform" "rotateX(10deg) rotateY(20deg)" ]
+              , notExpected = [ "rotateZ" ]
               }
             , { description = "Rotate.initXZ writes XZ and omits untouched Y"
               , initFuncs = [ Rotate.initXZ animGroup 10 30 ]
               , expected = [ NameValuePair "transform" "rotateX(10deg) rotateZ(30deg)" ]
+              , notExpected = [ "rotateY" ]
               }
             , { description = "Rotate.initYZ writes YZ and omits untouched X"
               , initFuncs = [ Rotate.initYZ animGroup 20 30 ]
               , expected = [ NameValuePair "transform" "rotateY(20deg) rotateZ(30deg)" ]
+              , notExpected = [ "rotateX" ]
               }
             , { description = "Rotate.initXYZ writes XYZ"
               , initFuncs = [ Rotate.initXYZ animGroup 10 20 30 ]
               , expected = [ NameValuePair "transform" "rotateX(10deg) rotateY(20deg) rotateZ(30deg)" ]
+              , notExpected = []
               }
             ]
     }

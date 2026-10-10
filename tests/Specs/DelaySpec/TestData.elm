@@ -5,9 +5,6 @@ module Specs.DelaySpec.TestData exposing
     , PropertyTestCase
     , TestCase(..)
     , TestData
-    , engineCase
-    , multiPropertyCase
-    , multiPropertyTransformOrderCase
     , propertyCase
     , propertyTestCase
     )
@@ -46,8 +43,8 @@ type alias MultiPropertyTestCase animBuilder =
 
 type alias MultiPropertyTransformOrderTestCase animBuilder =
     { description : String
-    , transformOrder : List TransformProperty
     , properties : List (PropertyTestCase animBuilder)
+    , transformOrder : List TransformProperty
     }
 
 
@@ -84,45 +81,3 @@ propertyTestCase cfg =
     , delayMs = cfg.delayMs
     , propertyPipeline = cfg.pipelineWithDelay cfg.delayMs
     }
-
-
-engineCase :
-    { description : String
-    , propertyName : String
-    , delayMs : Int
-    , propertyPipeline : AnimBuilder (WithTiming eng) -> AnimBuilder (WithTiming eng)
-    }
-    -> TestCase (AnimBuilder (WithTiming eng))
-engineCase cfg =
-    EngineTest
-        { description = cfg.description
-        , propertyName = cfg.propertyName
-        , delayMs = cfg.delayMs
-        , propertyPipeline = cfg.propertyPipeline
-        }
-
-
-multiPropertyCase :
-    { description : String
-    , properties : List (PropertyTestCase (AnimBuilder (WithTiming eng)))
-    }
-    -> TestCase (AnimBuilder (WithTiming eng))
-multiPropertyCase cfg =
-    MultiPropertyTest
-        { description = cfg.description
-        , properties = cfg.properties
-        }
-
-
-multiPropertyTransformOrderCase :
-    { description : String
-    , transformOrder : List TransformProperty
-    , properties : List (PropertyTestCase (AnimBuilder (WithTiming eng)))
-    }
-    -> TestCase (AnimBuilder (WithTiming eng))
-multiPropertyTransformOrderCase cfg =
-    MultiPropertyTransformOrderTest
-        { description = cfg.description
-        , transformOrder = cfg.transformOrder
-        , properties = cfg.properties
-        }

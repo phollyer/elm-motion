@@ -16,7 +16,7 @@ testData =
     { description = "Multi-Property tests"
     , testCases =
         List.map MultiPropertyTest
-            [ { description = "composed init writes transform + opacity and combines will-change"
+            [ { description = "Opacity.init and Translate.initX write opacity and translateX"
               , initFuncs =
                     [ Opacity.init animGroup 0.5
                     , Translate.initX animGroup 10
@@ -25,16 +25,18 @@ testData =
                     [ NameValuePair "opacity" "0.5"
                     , NameValuePair "transform" "translateX(10px)"
                     ]
+              , notExpected = [ "translateY", "translateZ" ]
               }
-            , { description = "composed init writes translateX and skewX"
+            , { description = "Translate.initX and Skew.initX write translateX and skewX"
               , initFuncs =
                     [ Translate.initX animGroup 10
                     , Skew.initX animGroup 5
                     ]
               , expected =
                     [ NameValuePair "transform" "translateX(10px) skewX(5deg)" ]
+              , notExpected = [ "translateY", "translateZ", "skewY" ]
               }
-            , { description = "composed init writes translateX, scaleX and skewX"
+            , { description = "Translate.initX, Scale.initX and Skew.initX write translateX, scaleX and skewX"
               , initFuncs =
                     [ Translate.initX animGroup 10
                     , Scale.initX animGroup 2
@@ -42,8 +44,9 @@ testData =
                     ]
               , expected =
                     [ NameValuePair "transform" "translateX(10px) skewX(5deg) scaleX(2)" ]
+              , notExpected = [ "translateY", "translateZ", "scaleY", "scaleZ", "skewY" ]
               }
-            , { description = "composed init writes translateX, rotateX, scaleX and skewX"
+            , { description = "Translate.initX, Rotate.initX, Scale.initX and Skew.initX write translateX, rotateX, scaleX and skewX"
               , initFuncs =
                     [ Translate.initX animGroup 10
                     , Rotate.initX animGroup 15
@@ -52,6 +55,7 @@ testData =
                     ]
               , expected =
                     [ NameValuePair "transform" "translateX(10px) rotateX(15deg) skewX(0deg) scaleX(2)" ]
+              , notExpected = [ "translateY", "translateZ", "rotateY", "rotateZ", "scaleY", "scaleZ", "skewY" ]
               }
             ]
     }

@@ -15,30 +15,37 @@ testData =
             [ { description = "Scale.initX writes X, and omits untouched YZ"
               , initFuncs = [ Scale.initX animGroup 10 ]
               , expected = [ NameValuePair "transform" "scaleX(10)" ]
+              , notExpected = [ "scaleY", "scaleZ" ]
               }
             , { description = "Scale.initY writes Y, and omits untouched XZ"
               , initFuncs = [ Scale.initY animGroup 20 ]
               , expected = [ NameValuePair "transform" "scaleY(20)" ]
+              , notExpected = [ "scaleX", "scaleZ" ]
               }
             , { description = "Scale.initZ writes Z, and omits untouched XY"
               , initFuncs = [ Scale.initZ animGroup 30 ]
               , expected = [ NameValuePair "transform" "scaleZ(30)" ]
+              , notExpected = [ "scaleX", "scaleY" ]
               }
             , { description = "Scale.initXY writes XY and omits untouched Z"
               , initFuncs = [ Scale.initXY animGroup 10 20 ]
               , expected = [ NameValuePair "transform" "scaleX(10) scaleY(20)" ]
+              , notExpected = [ "scaleZ" ]
               }
             , { description = "Scale.initXZ writes XZ and omits untouched Y"
               , initFuncs = [ Scale.initXZ animGroup 10 30 ]
               , expected = [ NameValuePair "transform" "scaleX(10) scaleZ(30)" ]
+              , notExpected = [ "scaleY" ]
               }
             , { description = "Scale.initYZ writes YZ and omits untouched X"
               , initFuncs = [ Scale.initYZ animGroup 20 30 ]
               , expected = [ NameValuePair "transform" "scaleY(20) scaleZ(30)" ]
+              , notExpected = [ "scaleX" ]
               }
             , { description = "Scale.initXYZ writes XYZ"
               , initFuncs = [ Scale.initXYZ animGroup 10 20 30 ]
               , expected = [ NameValuePair "transform" "scaleX(10) scaleY(20) scaleZ(30)" ]
+              , notExpected = []
               }
             ]
     }

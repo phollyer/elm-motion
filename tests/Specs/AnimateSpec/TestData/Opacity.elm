@@ -18,6 +18,7 @@ testData =
                     >> Opacity.to 0.5
                     >> Opacity.end
             , expected = [ NameValuePair "opacity" "0.5" ]
+            , notExpected = []
             }
         ]
     }

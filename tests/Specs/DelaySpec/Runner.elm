@@ -55,8 +55,7 @@ propertyRunner factory tc =
         \_ ->
             let
                 state =
-                    Factory.animate factory [] <|
-                        tc.propertyPipeline
+                    Factory.animate factory animGroup [] tc.propertyPipeline
             in
             case factory of
                 Keyframe f ->
@@ -75,9 +74,8 @@ engineRunner factory tc =
                     Factory.create factory
 
                 state =
-                    Factory.build f [] <|
-                        f.for animGroup
-                            >> f.delay tc.delayMs
+                    Factory.animate factory animGroup [] <|
+                        f.delay tc.delayMs
                             >> tc.propertyPipeline
             in
             case factory of
@@ -94,7 +92,7 @@ multiPropertyRunner factory tc =
         \_ ->
             let
                 state =
-                    Factory.animate factory [] <|
+                    Factory.animate factory animGroup [] <|
                         List.foldl (\prop acc -> acc >> prop.propertyPipeline) identity tc.properties
             in
             case factory of

@@ -13,14 +13,14 @@ import Anim.Property.Size as Size
 import Anim.Property.Translate as Translate
 import Anim.Unit exposing (Unit(..))
 import Factories.Capabilities exposing (WithTiming)
-import Specs.DelaySpec.TestData exposing (TestData, multiPropertyCase, multiPropertyTransformOrderCase, propertyTestCase)
+import Specs.DelaySpec.TestData exposing (TestCase(..), TestData, propertyTestCase)
 
 
 testData : TestData (AnimBuilder (WithTiming eng))
 testData =
     { description = "Multiple property delay tests"
     , testCases =
-        [ multiPropertyCase
+        [ MultiPropertyTest
             { description = "Non transform property delays with a duration are written correctly"
             , properties =
                 [ propertyTestCase
@@ -109,7 +109,7 @@ testData =
                     }
                 ]
             }
-        , multiPropertyCase
+        , MultiPropertyTest
             { description = "Translate and Scale property delays without a transform order are written correctly"
             , properties =
                 [ propertyTestCase
@@ -136,7 +136,7 @@ testData =
                     }
                 ]
             }
-        , multiPropertyCase
+        , MultiPropertyTest
             { description = "Scale and Rotate property delays without a transform order are written correctly"
             , properties =
                 [ propertyTestCase
@@ -163,7 +163,7 @@ testData =
                     }
                 ]
             }
-        , multiPropertyTransformOrderCase
+        , MultiPropertyTransformOrderTest
             { description = "Transform property delays with a transform order are written correctly"
             , transformOrder = [ Scale, Rotate, Translate ]
             , properties =

@@ -3,7 +3,7 @@ module Specs.DelaySpec.TestData.Translate exposing (testData)
 import Anim.Builder exposing (AnimBuilder)
 import Anim.Property.Translate as Translate
 import Factories.Capabilities exposing (WithTiming)
-import Specs.DelaySpec.TestData exposing (TestData, engineCase, propertyCase)
+import Specs.DelaySpec.TestData exposing (TestCase(..), TestData, propertyCase)
 
 
 testData : TestData (AnimBuilder (WithTiming eng))
@@ -33,7 +33,7 @@ testData =
                         >> Translate.delay d
                         >> Translate.end
             }
-        , engineCase
+        , EngineTest
             { description = "an engine delay with no duration is written correctly"
             , propertyName = "transform"
             , delayMs = 300
@@ -42,7 +42,7 @@ testData =
                     >> Translate.toX 10
                     >> Translate.end
             }
-        , engineCase
+        , EngineTest
             { description = "an engine delay with a duration is written correctly"
             , propertyName = "transform"
             , delayMs = 400

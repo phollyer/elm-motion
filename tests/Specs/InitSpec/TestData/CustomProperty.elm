@@ -16,18 +16,22 @@ testData =
             [ { description = "Custom.init writes the border-radius"
               , initFuncs = [ Property.init animGroup (Property.BorderRadius Em) 20 ]
               , expected = [ NameValuePair "border-radius" "20em" ]
+              , notExpected = []
               }
             , { description = "Custom.init writes the border-width"
               , initFuncs = [ Property.init animGroup (Property.BorderWidth Px) 1 ]
               , expected = [ NameValuePair "border-width" "1px" ]
-              }
-            , { description = "Custom.init writes the custom property"
-              , initFuncs = [ Property.init animGroup (Property.Custom "my-custom-property" "unit") 10 ]
-              , expected = [ NameValuePair "my-custom-property" "10unit" ]
+              , notExpected = []
               }
             , { description = "Custom.init writes a unitless property without suffix"
               , initFuncs = [ Property.init animGroup (Property.LineHeight Unitless) 1.2 ]
               , expected = [ NameValuePair "line-height" "1.2" ]
+              , notExpected = []
+              }
+            , { description = "Custom.init writes the custom property"
+              , initFuncs = [ Property.init animGroup (Property.Custom "my-custom-property" "unit") 10 ]
+              , expected = [ NameValuePair "my-custom-property" "10unit" ]
+              , notExpected = []
               }
             ]
     }

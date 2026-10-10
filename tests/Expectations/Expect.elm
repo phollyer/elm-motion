@@ -1,6 +1,7 @@
 module Expectations.Expect exposing
     ( initialStyles
     , styles
+    , stylesNotPresent
     , transform
     , transition
     , willChange
@@ -37,6 +38,32 @@ styles expected attributesFunc animGroupName =
                 )
                 expected
             )
+
+
+stylesNotPresent : List String -> (String -> animState -> List String) -> String -> animState -> Expect.Expectation
+stylesNotPresent notExpected getStyleDeclarations animGroupName animState =
+    if List.isEmpty notExpected then
+        Expect.pass
+
+    else
+        let
+            declarations =
+                getStyleDeclarations animGroupName animState
+        in
+        notExpected
+            |> List.map
+                (\token ->
+                    \_ ->
+                        case List.filter (String.contains token) declarations |> List.head of
+                            Nothing ->
+                                Expect.pass
+
+                            Just decl ->
+                                Expect.fail ("Expected style output not to contain: " ++ token ++ ", but got declaration: " ++ decl)
+                )
+            |> (\expectations ->
+                    Expect.all expectations ()
+               )
 
 
 willChange : List NameValuePair -> (String -> animState -> List (Html.Attribute msg)) -> String -> animState -> Expect.Expectation

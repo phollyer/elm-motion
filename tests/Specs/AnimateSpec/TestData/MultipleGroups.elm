@@ -15,44 +15,68 @@ testData =
     { description = "Multi-Group tests"
     , testCases =
         List.map MultiGroupTest
-            [ { description = "Translate init css unit is isolated per group"
+            [ { description = "Translate.animate and css unit is isolated per group"
               , animGroups = [ animGroup, otherAnimGroup ]
               , propertyPipelines =
-                    [ [ Translate.initX animGroup 10
-                            >> Translate.initCssUnitX Em
+                    [ [ Translate.begin
+                            >> Translate.toX 10
+                            >> Translate.cssUnitX Em
+                            >> Translate.end
                       ]
-                    , [ Translate.initX otherAnimGroup 10 ]
+                    , [ Translate.begin
+                            >> Translate.toZ 10
+                            >> Translate.end
+                      ]
                     ]
               , expected =
                     [ [ NameValuePair "transform" "translateX(10em)" ]
-                    , [ NameValuePair "transform" "translateX(10px)" ]
+                    , [ NameValuePair "transform" "translateZ(10px)" ]
+                    ]
+              , notExpected =
+                    [ [ "translateY", "translateZ" ]
+                    , [ "translateX", "translateY" ]
                     ]
               }
-            , { description = "Size init css unit is isolated per group"
+            , { description = "Size.animate and css unit is isolated per group"
               , animGroups = [ animGroup, otherAnimGroup ]
               , propertyPipelines =
-                    [ [ Size.initH animGroup 10
-                            >> Size.initCssUnitH Em
+                    [ [ Size.begin
+                            >> Size.toH 10
+                            >> Size.cssUnitH Em
+                            >> Size.end
                       ]
-                    , [ Size.initH otherAnimGroup 10 ]
+                    , [ Size.begin
+                            >> Size.toW 10
+                            >> Size.end
+                      ]
                     ]
               , expected =
                     [ [ NameValuePair "height" "10em" ]
-                    , [ NameValuePair "height" "10px" ]
+                    , [ NameValuePair "width" "10px" ]
+                    ]
+              , notExpected =
+                    [ [ "width" ]
+                    , [ "height" ]
                     ]
               }
-            , { description = "PerspectiveOrigin init css unit is isolated per group"
+            , { description = "PerspectiveOrigin.animate and css unit is isolated per group"
               , animGroups = [ animGroup, otherAnimGroup ]
               , propertyPipelines =
-                    [ [ PerspectiveOrigin.initX animGroup 10
-                            >> PerspectiveOrigin.initCssUnitX Em
+                    [ [ PerspectiveOrigin.begin
+                            >> PerspectiveOrigin.toX 10
+                            >> PerspectiveOrigin.cssUnitX Em
+                            >> PerspectiveOrigin.end
                       ]
-                    , [ PerspectiveOrigin.initX otherAnimGroup 10 ]
+                    , [ PerspectiveOrigin.begin
+                            >> PerspectiveOrigin.toX 10
+                            >> PerspectiveOrigin.end
+                      ]
                     ]
               , expected =
                     [ [ NameValuePair "perspective-origin" "10em 50%" ]
                     , [ NameValuePair "perspective-origin" "10% 50%" ]
                     ]
+              , notExpected = [ [], [] ]
               }
             ]
     }

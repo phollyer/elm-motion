@@ -18,9 +18,22 @@ testData =
                     , propertyName = "transform"
                     , propertyPipeline = c.propertyPipeline
                     , expected = toNameValuePairs c.expected
+                    , notExpected = c.notExpected
                     }
             )
             propertyCases
+            ++ List.map
+                (\c ->
+                    Animate2Test
+                        { description = c.description
+                        , propertyName = "transform"
+                        , propertyPipeline1 = c.propertyPipeline1
+                        , propertyPipeline2 = c.propertyPipeline2
+                        , expected = toNameValuePairs c.expected
+                        , notExpected = c.notExpected
+                        }
+                )
+                animate2Cases
     }
 
 
@@ -49,6 +62,7 @@ propertyCases =
                 >> Size.toH 10
                 >> Size.end
       , expected = "height:10px"
+      , notExpected = [ "width" ]
       }
     , { description = "Size.toW writes width, and omits untouched height"
       , propertyPipeline =
@@ -56,6 +70,7 @@ propertyCases =
                 >> Size.toW 20
                 >> Size.end
       , expected = "width:20px"
+      , notExpected = [ "height" ]
       }
     , { description = "Size.toHW writes height and width"
       , propertyPipeline =
@@ -63,6 +78,7 @@ propertyCases =
                 >> Size.toHW 10 20
                 >> Size.end
       , expected = "width:20px;height:10px"
+      , notExpected = []
       }
     , { description = "Size.toH with custom CSS unit writes height, and omits untouched width"
       , propertyPipeline =
@@ -71,6 +87,7 @@ propertyCases =
                 >> Size.cssUnitH Em
                 >> Size.end
       , expected = "height:10em"
+      , notExpected = [ "width" ]
       }
     , { description = "Size.toW with custom CSS unit writes width, and omits untouched height"
       , propertyPipeline =
@@ -79,6 +96,7 @@ propertyCases =
                 >> Size.cssUnitW Em
                 >> Size.end
       , expected = "width:10em"
+      , notExpected = [ "height" ]
       }
     , { description = "Size.toHW with custom CSS unit writes height and width"
       , propertyPipeline =
@@ -87,8 +105,9 @@ propertyCases =
                 >> Size.cssUnit Em
                 >> Size.end
       , expected = "width:20em;height:10em"
+      , notExpected = []
       }
-    , { description = "Size.initH prefers axis-specific unit when applied after general unit"
+    , { description = "Size.toH prefers axis-specific unit when applied after general unit"
       , propertyPipeline =
             Size.begin
                 >> Size.toH 10
@@ -96,6 +115,7 @@ propertyCases =
                 >> Size.cssUnitH Px
                 >> Size.end
       , expected = "height:10px"
+      , notExpected = [ "width" ]
       }
     , { description = "Size.toH uses general unit when applied after axis-specific unit"
       , propertyPipeline =
@@ -105,13 +125,53 @@ propertyCases =
                 >> Size.cssUnit Em
                 >> Size.end
       , expected = "height:10em"
+      , notExpected = [ "width" ]
       }
-    , { description = "Size.initH last write wins for duplicate initH calls"
+    , { description = "Size.toH last write wins for duplicate toH calls"
       , propertyPipeline =
             Size.begin
                 >> Size.toH 10
                 >> Size.toH 12
                 >> Size.end
       , expected = "height:12px"
+      , notExpected = [ "width" ]
+      }
+    ]
+
+
+type alias Animate2Case animBuilder =
+    { description : String
+    , propertyPipeline1 : animBuilder -> animBuilder
+    , propertyPipeline2 : animBuilder -> animBuilder
+    , expected : String
+    , notExpected : List String
+    }
+
+
+animate2Cases : List (Animate2Case (AnimBuilder eng))
+animate2Cases =
+    [ { description = "Size.toHW then Size.toH writes new height and keeps prior width"
+      , propertyPipeline1 =
+            Size.begin
+                >> Size.toHW 10 20
+                >> Size.end
+      , propertyPipeline2 =
+            Size.begin
+                >> Size.toH 30
+                >> Size.end
+      , expected = "width:20px;height:30px"
+      , notExpected = []
+      }
+    , { description = "Size.toHW then Size.toW writes new width and keeps prior height"
+      , propertyPipeline1 =
+            Size.begin
+                >> Size.toHW 10 20
+                >> Size.end
+      , propertyPipeline2 =
+            Size.begin
+                >> Size.toW 30
+                >> Size.end
+      , expected = "width:30px;height:10px"
+      , notExpected = []
       }
     ]

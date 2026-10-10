@@ -4,7 +4,7 @@ import Anim.Builder exposing (AnimBuilder)
 import Anim.Property.Custom as CustomProperty exposing (Property(..))
 import Anim.Unit exposing (Unit(..))
 import Factories.Capabilities exposing (WithTiming)
-import Specs.DelaySpec.TestData exposing (TestData, engineCase, propertyCase)
+import Specs.DelaySpec.TestData exposing (TestCase(..), TestData, propertyCase)
 
 
 testData : TestData (AnimBuilder (WithTiming eng))
@@ -34,7 +34,7 @@ testData =
                         >> CustomProperty.delay d
                         >> CustomProperty.end
             }
-        , engineCase
+        , EngineTest
             { description = "an engine delay with no duration is written correctly"
             , propertyName = "border-width"
             , delayMs = 300
@@ -43,7 +43,7 @@ testData =
                     >> CustomProperty.to 2
                     >> CustomProperty.end
             }
-        , engineCase
+        , EngineTest
             { description = "an engine delay with a duration is written correctly"
             , propertyName = "my-custom-property"
             , delayMs = 400

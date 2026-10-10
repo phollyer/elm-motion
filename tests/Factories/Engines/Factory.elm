@@ -1,6 +1,7 @@
 module Factories.Engines.Factory exposing
     ( EngineFactory(..)
     , animate
+    , animate2
     , build
     , create
     )
@@ -8,7 +9,6 @@ module Factories.Engines.Factory exposing
 import Anim.Extra.TransformOrder exposing (TransformProperty)
 import Factories.Engines.Keyframe as Keyframe
 import Factories.Engines.Transition as Transition
-import Helpers.AnimGroups exposing (animGroup)
 
 
 type EngineFactory animBuilder animState
@@ -51,8 +51,8 @@ build f initFuncs =
         |> (\initialState -> f.animate initialState)
 
 
-animate : EngineFactory a b -> List (a -> a) -> (a -> a) -> b
-animate factory initFuncs animateFuncs =
+animate : EngineFactory a b -> String -> List (a -> a) -> (a -> a) -> b
+animate factory animGroup initFuncs animateFuncs =
     let
         f =
             create factory
@@ -60,3 +60,17 @@ animate factory initFuncs animateFuncs =
     build f initFuncs <|
         f.for animGroup
             >> animateFuncs
+
+
+animate2 : EngineFactory a b -> String -> List (a -> a) -> (a -> a) -> (a -> a) -> b
+animate2 factory animGroup initFuncs animateFuncs animateFuncs2 =
+    let
+        f =
+            create factory
+
+        state =
+            animate factory animGroup initFuncs animateFuncs
+    in
+    f.animate state <|
+        f.for animGroup
+            >> animateFuncs2

@@ -1,6 +1,8 @@
 module Factories.Engines.Transition exposing
     ( Factory
     , factory
+    , styleDeclarations
+    , styleValue
     , transitionString
     )
 
@@ -22,6 +24,8 @@ type alias Factory builder animState =
     , transformOrder : List TransformProperty -> builder -> builder
     , transitionString : String -> animState -> Maybe String
     , propertyString : String -> String -> Maybe String
+    , styleValue : String -> String -> animState -> Maybe String
+    , styleDeclarations : String -> animState -> List String
     }
 
 
@@ -35,6 +39,8 @@ factory =
     , transformOrder = Transition.transformOrder
     , transitionString = transitionString
     , propertyString = propertyString
+    , styleValue = styleValue
+    , styleDeclarations = styleDeclarations
     }
 
 
@@ -52,3 +58,21 @@ propertyString propertyName =
         >> List.map String.trim
         >> List.filter (String.startsWith propertyName)
         >> List.head
+
+
+styleValue : String -> String -> AnimState -> Maybe String
+styleValue animGroupName propertyName (InternalCss.AnimState _ animGroups) =
+    animGroups
+        |> InternalAnimGroups.get animGroupName
+        |> Maybe.map InternalAnimGroup.getStyles
+        |> Maybe.andThen (InternalStyles.get propertyName)
+
+
+styleDeclarations : String -> AnimState -> List String
+styleDeclarations animGroupName (InternalCss.AnimState _ animGroups) =
+    animGroups
+        |> InternalAnimGroups.get animGroupName
+        |> Maybe.map InternalAnimGroup.getStyles
+        |> Maybe.map InternalStyles.toList
+        |> Maybe.withDefault []
+        |> List.map (\( name, value ) -> name ++ ":" ++ value)

@@ -14,7 +14,7 @@ testData =
         List.map
             (\( colorProp, cssProp, colorValue ) ->
                 PropertyTest
-                    { description = "CustomColor writes the " ++ cssProp
+                    { description = "CustomColor.to writes the " ++ cssProp
                     , propertyName = cssProp
                     , propertyPipeline =
                         case Color.fromString colorValue of
@@ -26,6 +26,7 @@ testData =
                             Nothing ->
                                 identity
                     , expected = [ NameValuePair cssProp colorValue ]
+                    , notExpected = []
                     }
             )
             colorProperties

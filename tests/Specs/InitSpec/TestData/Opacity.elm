@@ -15,6 +15,7 @@ testData =
             [ { description = "Opacity.init writes the opacity inline style"
               , initFuncs = [ Opacity.init animGroup 0.5 ]
               , expected = [ NameValuePair "opacity" "0.5" ]
+              , notExpected = []
               }
             ]
     }

@@ -16,14 +16,17 @@ testData =
             [ { description = "PerspectiveOrigin.initX writes X, and defaults Y to 50%"
               , initFuncs = [ PerspectiveOrigin.initX animGroup 10 ]
               , expected = [ NameValuePair "perspective-origin" "10% 50%" ]
+              , notExpected = []
               }
             , { description = "PerspectiveOrigin.initY writes Y, and defaults X to 50%"
               , initFuncs = [ PerspectiveOrigin.initY animGroup 20 ]
               , expected = [ NameValuePair "perspective-origin" "50% 20%" ]
+              , notExpected = []
               }
             , { description = "PerspectiveOrigin.initXY writes XY"
               , initFuncs = [ PerspectiveOrigin.initXY animGroup 10 20 ]
               , expected = [ NameValuePair "perspective-origin" "10% 20%" ]
+              , notExpected = []
               }
             , { description = "PerspectiveOrigin.initX with custom css unit writes X, and defaults Y to 50%"
               , initFuncs =
@@ -31,6 +34,7 @@ testData =
                         >> PerspectiveOrigin.initCssUnitX Px
                     ]
               , expected = [ NameValuePair "perspective-origin" "10px 50%" ]
+              , notExpected = []
               }
             , { description = "PerspectiveOrigin.initY with custom css unit writes Y, and defaults X to 50%"
               , initFuncs =
@@ -38,6 +42,7 @@ testData =
                         >> PerspectiveOrigin.initCssUnitY Px
                     ]
               , expected = [ NameValuePair "perspective-origin" "50% 20px" ]
+              , notExpected = []
               }
             , { description = "PerspectiveOrigin.initXY with custom css unit writes XY"
               , initFuncs =
@@ -45,22 +50,25 @@ testData =
                         >> PerspectiveOrigin.initCssUnit Px
                     ]
               , expected = [ NameValuePair "perspective-origin" "10px 20px" ]
+              , notExpected = []
               }
-            , { description = "PerspectiveOrigin.initX prefers axis-specific unit when applied after global unit, and untouched Y inherits global unit"
+            , { description = "PerspectiveOrigin.initX prefers axis-specific unit when applied after general unit, and untouched Y inherits general unit"
               , initFuncs =
                     [ PerspectiveOrigin.initX animGroup 10
                         >> PerspectiveOrigin.initCssUnit Em
                         >> PerspectiveOrigin.initCssUnitX Px
                     ]
               , expected = [ NameValuePair "perspective-origin" "10px 50em" ]
+              , notExpected = []
               }
-            , { description = "PerspectiveOrigin.initX uses global unit when applied after axis-specific unit, including untouched Y"
+            , { description = "PerspectiveOrigin.initX uses general unit when applied after axis-specific unit, including untouched Y"
               , initFuncs =
                     [ PerspectiveOrigin.initX animGroup 10
                         >> PerspectiveOrigin.initCssUnitX Px
                         >> PerspectiveOrigin.initCssUnit Em
                     ]
               , expected = [ NameValuePair "perspective-origin" "10em 50em" ]
+              , notExpected = []
               }
             , { description = "PerspectiveOrigin.initX last write wins for duplicate initX calls"
               , initFuncs =
@@ -68,6 +76,7 @@ testData =
                         >> PerspectiveOrigin.initX animGroup 15
                     ]
               , expected = [ NameValuePair "perspective-origin" "15% 50%" ]
+              , notExpected = []
               }
             ]
     }

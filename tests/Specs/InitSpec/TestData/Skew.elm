@@ -15,22 +15,27 @@ testData =
             [ { description = "Skew.initX writes skewX, and omits untouched Y"
               , initFuncs = [ Skew.initX animGroup 10 ]
               , expected = [ NameValuePair "transform" "skewX(10deg)" ]
+              , notExpected = [ "skewY" ]
               }
             , { description = "Skew.initX with 0 writes only skewX, and omits untouched Y"
               , initFuncs = [ Skew.initX animGroup 0 ]
               , expected = [ NameValuePair "transform" "skewX(0deg)" ]
+              , notExpected = [ "skewY" ]
               }
             , { description = "Skew.initY writes skewY, and omits untouched X"
               , initFuncs = [ Skew.initY animGroup 20 ]
               , expected = [ NameValuePair "transform" "skewY(20deg)" ]
+              , notExpected = [ "skewX" ]
               }
             , { description = "Skew.initY with 0 writes only skewY, and omits untouched X"
               , initFuncs = [ Skew.initY animGroup 0 ]
               , expected = [ NameValuePair "transform" "skewY(0deg)" ]
+              , notExpected = [ "skewX" ]
               }
             , { description = "Skew.initXY writes skewX and skewY"
               , initFuncs = [ Skew.initXY animGroup 10 20 ]
               , expected = [ NameValuePair "transform" "skewX(10deg) skewY(20deg)" ]
+              , notExpected = []
               }
             ]
     }

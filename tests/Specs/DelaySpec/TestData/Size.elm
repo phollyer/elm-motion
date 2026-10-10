@@ -3,7 +3,7 @@ module Specs.DelaySpec.TestData.Size exposing (testData)
 import Anim.Builder exposing (AnimBuilder)
 import Anim.Property.Size as Size
 import Factories.Capabilities exposing (WithTiming)
-import Specs.DelaySpec.TestData exposing (TestData, engineCase, propertyCase)
+import Specs.DelaySpec.TestData exposing (TestCase(..), TestData, propertyCase)
 
 
 testData : TestData (AnimBuilder (WithTiming eng))
@@ -33,7 +33,7 @@ testData =
                         >> Size.delay d
                         >> Size.end
             }
-        , engineCase
+        , EngineTest
             { description = "an engine delay with no duration is written correctly"
             , propertyName = "width"
             , delayMs = 300
@@ -42,7 +42,7 @@ testData =
                     >> Size.toW 200
                     >> Size.end
             }
-        , engineCase
+        , EngineTest
             { description = "an engine delay with a duration is written correctly"
             , propertyName = "height"
             , delayMs = 400

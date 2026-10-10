@@ -25,6 +25,7 @@ type alias PropertyTestCase animBuilder =
     { description : String
     , initFuncs : List (animBuilder -> animBuilder)
     , expected : List NameValuePair
+    , notExpected : List String
     }
 
 
@@ -32,6 +33,7 @@ type alias MultiPropertyTestCase animBuilder =
     { description : String
     , initFuncs : List (animBuilder -> animBuilder)
     , expected : List NameValuePair
+    , notExpected : List String
     }
 
 
@@ -40,4 +42,5 @@ type alias MultiGroupTestCase animBuilder =
     , animGroups : List String
     , initFuncs : List (List (animBuilder -> animBuilder))
     , expected : List (List NameValuePair)
+    , notExpected : List (List String)
     }

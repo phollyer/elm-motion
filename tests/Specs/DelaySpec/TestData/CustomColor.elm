@@ -5,7 +5,7 @@ import Anim.Extra.Color as Color
 import Anim.Property.CustomColor as CustomColor exposing (ColorProperty(..))
 import Factories.Capabilities exposing (WithTiming)
 import Motion.Easing exposing (Easing(..))
-import Specs.DelaySpec.TestData exposing (TestData, engineCase, propertyCase)
+import Specs.DelaySpec.TestData exposing (TestCase(..), TestData, propertyCase)
 
 
 testData : TestData (AnimBuilder (WithTiming eng))
@@ -35,7 +35,7 @@ testData =
                         >> CustomColor.delay d
                         >> CustomColor.end
             }
-        , engineCase
+        , EngineTest
             { description = "an engine delay with no duration is written correctly"
             , propertyName = "border-color"
             , delayMs = 300
@@ -44,7 +44,7 @@ testData =
                     >> CustomColor.to (Color.rgba 0 0 0 0)
                     >> CustomColor.end
             }
-        , engineCase
+        , EngineTest
             { description = "an engine delay with a duration is written correctly"
             , propertyName = "accent-color"
             , delayMs = 400

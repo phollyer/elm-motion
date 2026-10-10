@@ -4,7 +4,7 @@ import Anim.Builder exposing (AnimBuilder)
 import Anim.Property.Opacity as Opacity
 import Factories.Capabilities exposing (WithTiming)
 import Motion.Easing exposing (Easing(..))
-import Specs.DelaySpec.TestData exposing (TestData, engineCase, propertyCase)
+import Specs.DelaySpec.TestData exposing (TestCase(..), TestData, propertyCase)
 
 
 testData : TestData (AnimBuilder (WithTiming eng))
@@ -34,7 +34,7 @@ testData =
                         >> Opacity.delay d
                         >> Opacity.end
             }
-        , engineCase
+        , EngineTest
             { description = "an engine delay with no duration is written correctly"
             , propertyName = "opacity"
             , delayMs = 300
@@ -43,7 +43,7 @@ testData =
                     >> Opacity.to 0.8
                     >> Opacity.end
             }
-        , engineCase
+        , EngineTest
             { description = "an engine delay with a duration is written correctly"
             , propertyName = "opacity"
             , delayMs = 400

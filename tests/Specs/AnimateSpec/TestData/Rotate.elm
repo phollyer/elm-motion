@@ -17,6 +17,7 @@ testData =
                     , propertyName = "transform"
                     , propertyPipeline = c.propertyPipeline
                     , expected = [ NameValuePair "transform" c.expected ]
+                    , notExpected = []
                     }
             )
             propertyCases
@@ -31,6 +32,7 @@ propertyCases =
                 >> Rotate.toX 10
                 >> Rotate.end
       , expected = "rotateX(10deg)"
+      , notExpected = [ "rotateY", "rotateZ" ]
       }
     , { description = "Rotate.toY writes Y, and omits untouched XZ"
       , propertyPipeline =
@@ -38,6 +40,7 @@ propertyCases =
                 >> Rotate.toY 20
                 >> Rotate.end
       , expected = "rotateY(20deg)"
+      , notExpected = [ "rotateX", "rotateZ" ]
       }
     , { description = "Rotate.toZ writes Z, and omits untouched XY"
       , propertyPipeline =
@@ -45,6 +48,7 @@ propertyCases =
                 >> Rotate.toZ 30
                 >> Rotate.end
       , expected = "rotateZ(30deg)"
+      , notExpected = [ "rotateX", "rotateY" ]
       }
     , { description = "Rotate.toXY writes XY and omits untouched Z"
       , propertyPipeline =
@@ -52,6 +56,7 @@ propertyCases =
                 >> Rotate.toXY 10 20
                 >> Rotate.end
       , expected = "rotateX(10deg) rotateY(20deg)"
+      , notExpected = [ "rotateZ" ]
       }
     , { description = "Rotate.toXZ writes XZ and omits untouched Y"
       , propertyPipeline =
@@ -59,6 +64,7 @@ propertyCases =
                 >> Rotate.toXZ 10 30
                 >> Rotate.end
       , expected = "rotateX(10deg) rotateZ(30deg)"
+      , notExpected = [ "rotateY" ]
       }
     , { description = "Rotate.toYZ writes YZ and omits untouched X"
       , propertyPipeline =
@@ -66,6 +72,7 @@ propertyCases =
                 >> Rotate.toYZ 20 30
                 >> Rotate.end
       , expected = "rotateY(20deg) rotateZ(30deg)"
+      , notExpected = [ "rotateX" ]
       }
     , { description = "Rotate.toXYZ writes XYZ"
       , propertyPipeline =
@@ -73,5 +80,6 @@ propertyCases =
                 >> Rotate.toXYZ 10 20 30
                 >> Rotate.end
       , expected = "rotateX(10deg) rotateY(20deg) rotateZ(30deg)"
+      , notExpected = []
       }
     ]

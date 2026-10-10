@@ -17,6 +17,7 @@ testData =
                     , propertyName = "transform"
                     , propertyPipeline = c.propertyPipeline
                     , expected = [ NameValuePair "transform" c.expected ]
+                    , notExpected = []
                     }
             )
             propertyCases
@@ -31,47 +32,54 @@ propertyCases =
                 >> Scale.toX 10
                 >> Scale.end
       , expected = "scaleX(10)"
+      , notExpected = [ "scaleY", "scaleZ" ]
       }
-    , { description = "Scale.initY writes Y, and omits untouched XZ"
+    , { description = "Scale.toY writes Y, and omits untouched XZ"
       , propertyPipeline =
             Scale.begin
                 >> Scale.toY 20
                 >> Scale.end
       , expected = "scaleY(20)"
+      , notExpected = [ "scaleX", "scaleZ" ]
       }
-    , { description = "Scale.initZ writes Z, and omits untouched XY"
+    , { description = "Scale.toZ writes Z, and omits untouched XY"
       , propertyPipeline =
             Scale.begin
                 >> Scale.toZ 30
                 >> Scale.end
       , expected = "scaleZ(30)"
+      , notExpected = [ "scaleX", "scaleY" ]
       }
-    , { description = "Scale.initXY writes XY and omits untouched Z"
+    , { description = "Scale.toXY writes XY and omits untouched Z"
       , propertyPipeline =
             Scale.begin
                 >> Scale.toXY 10 20
                 >> Scale.end
       , expected = "scaleX(10) scaleY(20)"
+      , notExpected = [ "scaleZ" ]
       }
-    , { description = "Scale.initXZ writes XZ and omits untouched Y"
+    , { description = "Scale.toXZ writes XZ and omits untouched Y"
       , propertyPipeline =
             Scale.begin
                 >> Scale.toXZ 10 30
                 >> Scale.end
       , expected = "scaleX(10) scaleZ(30)"
+      , notExpected = [ "scaleY" ]
       }
-    , { description = "Scale.initYZ writes YZ and omits untouched X"
+    , { description = "Scale.toYZ writes YZ and omits untouched X"
       , propertyPipeline =
             Scale.begin
                 >> Scale.toYZ 20 30
                 >> Scale.end
       , expected = "scaleY(20) scaleZ(30)"
+      , notExpected = [ "scaleX" ]
       }
-    , { description = "Scale.initXYZ writes XYZ"
+    , { description = "Scale.toXYZ writes XYZ"
       , propertyPipeline =
             Scale.begin
                 >> Scale.toXYZ 10 20 30
                 >> Scale.end
       , expected = "scaleX(10) scaleY(20) scaleZ(30)"
+      , notExpected = []
       }
     ]

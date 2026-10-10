@@ -14,13 +14,14 @@ testData =
         List.map
             (\( ( property, value ), ( cssProp, expected ) ) ->
                 PropertyTest
-                    { description = "Custom writes the " ++ cssProp ++ " property value"
+                    { description = "Custom.to writes the " ++ cssProp ++ " property value"
                     , propertyName = cssProp
                     , propertyPipeline =
                         Property.begin property
                             >> Property.to value
                             >> Property.end
                     , expected = [ NameValuePair cssProp expected ]
+                    , notExpected = []
                     }
             )
             properties
