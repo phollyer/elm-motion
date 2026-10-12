@@ -5,6 +5,7 @@ import Expectations.Expect as Expect
 import Factories.Engines.Factory as Factory exposing (EngineFactory(..))
 import Helpers.AnimGroups exposing (animGroup)
 import Specs.AnimateSpec.TestData exposing (..)
+import Specs.Shared exposing (TimingProfile(..))
 import Test exposing (Test, describe, test)
 
 
@@ -66,12 +67,13 @@ propertyRunner factory tc =
 
 multiPropertyRunner : EngineFactory animBuilder animState -> MultiPropertyTestCase animBuilder -> Test
 multiPropertyRunner factory tc =
-    test tc.description <|
+    test (tc.description ++ timingSuffix tc.timing) <|
         \_ ->
             let
                 state =
                     Factory.animate factory animGroup [] <|
-                        List.foldl (>>) identity tc.propertyPipeline
+                        applyTiming factory tc.timing <|
+                            List.foldl (>>) identity tc.propertyPipeline
             in
             case factory of
                 Keyframe f ->

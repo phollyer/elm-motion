@@ -1,29 +1,24 @@
 module Specs.AnimateSpec.TestData exposing
     ( Animate2TestCase
     , MultiGroupTestCase
+    , MultiPropertyCase
     , MultiPropertyTestCase
     , PropertyCase
     , PropertyTestCase
     , TestCase(..)
     , TestData
-    , TimingProfile(..)
+    , buildMultiPropertyCases
     , buildPropertyCase
     , buildPropertyCases
     )
 
-import Specs.Shared exposing (NameValuePair)
+import Specs.Shared exposing (NameValuePair, TimingProfile(..))
 
 
 type alias TestData animBuilder =
     { description : String
     , testCases : List (TestCase animBuilder)
     }
-
-
-type TimingProfile
-    = NoTiming
-    | DelayMs Int
-    | DurationMs Int
 
 
 type TestCase animBuilder
@@ -51,6 +46,15 @@ type alias PropertyCase animBuilder =
 
 
 type alias MultiPropertyTestCase animBuilder =
+    { description : String
+    , timing : TimingProfile
+    , propertyPipeline : List (animBuilder -> animBuilder)
+    , expected : List NameValuePair
+    , notExpected : List String
+    }
+
+
+type alias MultiPropertyCase animBuilder =
     { description : String
     , propertyPipeline : List (animBuilder -> animBuilder)
     , expected : List NameValuePair
@@ -89,5 +93,21 @@ buildPropertyCase propertyName timing c =
         , timing = timing
         , propertyPipeline = c.propertyPipeline
         , expected = [ NameValuePair propertyName c.expected ]
+        , notExpected = c.notExpected
+        }
+
+
+buildMultiPropertyCases : TimingProfile -> List (MultiPropertyCase animBuilder) -> List (TestCase animBuilder)
+buildMultiPropertyCases timing =
+    List.map (buildMultiPropertyCase timing)
+
+
+buildMultiPropertyCase : TimingProfile -> MultiPropertyCase animBuilder -> TestCase animBuilder
+buildMultiPropertyCase timing c =
+    MultiPropertyTest
+        { description = c.description
+        , timing = timing
+        , propertyPipeline = c.propertyPipeline
+        , expected = c.expected
         , notExpected = c.notExpected
         }

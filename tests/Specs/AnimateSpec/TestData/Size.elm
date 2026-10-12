@@ -3,8 +3,8 @@ module Specs.AnimateSpec.TestData.Size exposing (testData)
 import Anim.Builder exposing (AnimBuilder)
 import Anim.Property.Size as Size
 import Anim.Unit exposing (Unit(..))
-import Specs.AnimateSpec.TestData exposing (PropertyCase, TestCase(..), TestData, TimingProfile(..))
-import Specs.Shared exposing (NameValuePair)
+import Specs.AnimateSpec.TestData exposing (PropertyCase, TestCase(..), TestData)
+import Specs.Shared exposing (NameValuePair, TimingProfile(..))
 
 
 testData : TestData (AnimBuilder eng)

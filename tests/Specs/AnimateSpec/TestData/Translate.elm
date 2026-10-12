@@ -3,16 +3,17 @@ module Specs.AnimateSpec.TestData.Translate exposing (testData)
 import Anim.Builder exposing (AnimBuilder)
 import Anim.Property.Translate as Translate
 import Anim.Unit exposing (Unit(..))
-import Specs.AnimateSpec.TestData as TD exposing (PropertyCase, TestCase(..), TestData, TimingProfile(..))
+import Specs.AnimateSpec.TestData as TD exposing (PropertyCase, TestCase(..), TestData)
+import Specs.Shared exposing (TimingProfile(..))
 
 
 testData : TestData (AnimBuilder eng)
 testData =
     { description = "Translate.animate tests"
     , testCases =
-        TD.buildPropertyCases "transform" TD.NoTiming propertyCases
-            ++ TD.buildPropertyCases "transform" (TD.DelayMs 500) propertyCases
-            ++ TD.buildPropertyCases "transform" (TD.DurationMs 500) propertyCases
+        TD.buildPropertyCases "transform" NoTiming propertyCases
+            ++ TD.buildPropertyCases "transform" (DelayMs 500) propertyCases
+            ++ TD.buildPropertyCases "transform" (DurationMs 500) propertyCases
     }
 
 

@@ -3,7 +3,8 @@ module Specs.AnimateSpec.TestData.CustomColor exposing (testData)
 import Anim.Builder exposing (AnimBuilder)
 import Anim.Extra.Color as Color
 import Anim.Property.CustomColor as CustomColor exposing (ColorProperty)
-import Specs.AnimateSpec.TestData as TD exposing (PropertyCase, TestCase(..), TestData, TimingProfile(..))
+import Specs.AnimateSpec.TestData as TD exposing (PropertyCase, TestCase(..), TestData)
+import Specs.Shared exposing (TimingProfile(..))
 import Specs.Shared.CustomColor as Custom
 
 
