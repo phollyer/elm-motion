@@ -8,7 +8,7 @@ import Specs.Shared exposing (TimingProfile(..))
 
 testData : TestData (AnimBuilder eng)
 testData =
-    { description = "Scale tests"
+    { description = "the Scale property writes transform components and omits untouched axes across timing profiles"
     , testCases =
         TD.buildPropertyCases "transform" NoTiming propertyCases
             ++ TD.buildPropertyCases "transform" (DelayMs 500) propertyCases
@@ -18,7 +18,7 @@ testData =
 
 propertyCases : List (PropertyCase (AnimBuilder eng))
 propertyCases =
-    [ { description = "Scale.toX writes X, and omits untouched YZ"
+    [ { description = "toX writes X, and omits untouched YZ"
       , propertyPipeline =
             Scale.begin
                 >> Scale.toX 10
@@ -26,7 +26,7 @@ propertyCases =
       , expected = "scaleX(10)"
       , notExpected = [ "scaleY", "scaleZ" ]
       }
-    , { description = "Scale.toY writes Y, and omits untouched XZ"
+    , { description = "toY writes Y, and omits untouched XZ"
       , propertyPipeline =
             Scale.begin
                 >> Scale.toY 20
@@ -34,7 +34,7 @@ propertyCases =
       , expected = "scaleY(20)"
       , notExpected = [ "scaleX", "scaleZ" ]
       }
-    , { description = "Scale.toZ writes Z, and omits untouched XY"
+    , { description = "toZ writes Z, and omits untouched XY"
       , propertyPipeline =
             Scale.begin
                 >> Scale.toZ 30
@@ -42,7 +42,7 @@ propertyCases =
       , expected = "scaleZ(30)"
       , notExpected = [ "scaleX", "scaleY" ]
       }
-    , { description = "Scale.toXY writes XY and omits untouched Z"
+    , { description = "toXY writes XY and omits untouched Z"
       , propertyPipeline =
             Scale.begin
                 >> Scale.toXY 10 20
@@ -50,7 +50,7 @@ propertyCases =
       , expected = "scaleX(10) scaleY(20)"
       , notExpected = [ "scaleZ" ]
       }
-    , { description = "Scale.toXZ writes XZ and omits untouched Y"
+    , { description = "toXZ writes XZ and omits untouched Y"
       , propertyPipeline =
             Scale.begin
                 >> Scale.toXZ 10 30
@@ -58,7 +58,7 @@ propertyCases =
       , expected = "scaleX(10) scaleZ(30)"
       , notExpected = [ "scaleY" ]
       }
-    , { description = "Scale.toYZ writes YZ and omits untouched X"
+    , { description = "toYZ writes YZ and omits untouched X"
       , propertyPipeline =
             Scale.begin
                 >> Scale.toYZ 20 30
@@ -66,7 +66,7 @@ propertyCases =
       , expected = "scaleY(20) scaleZ(30)"
       , notExpected = [ "scaleX" ]
       }
-    , { description = "Scale.toXYZ writes XYZ"
+    , { description = "toXYZ writes XYZ"
       , propertyPipeline =
             Scale.begin
                 >> Scale.toXYZ 10 20 30

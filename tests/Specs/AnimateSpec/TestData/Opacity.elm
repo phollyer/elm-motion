@@ -8,7 +8,7 @@ import Specs.Shared exposing (TimingProfile(..))
 
 testData : TestData (AnimBuilder eng)
 testData =
-    { description = "Opacity tests"
+    { description = "the Opacity property writes opacity values across timing profiles"
     , testCases =
         TD.buildPropertyCases "opacity" NoTiming propertyCases
             ++ TD.buildPropertyCases "opacity" (DelayMs 500) propertyCases
@@ -18,7 +18,7 @@ testData =
 
 propertyCases : List (TD.PropertyCase (AnimBuilder eng))
 propertyCases =
-    [ { description = "Opacity.to writes the opacity value"
+    [ { description = "`to` writes the opacity value"
       , propertyPipeline =
             Opacity.begin
                 >> Opacity.to 0.5

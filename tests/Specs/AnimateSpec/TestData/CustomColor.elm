@@ -10,7 +10,7 @@ import Specs.Shared.CustomColor as Custom
 
 testData : TestData (AnimBuilder eng)
 testData =
-    { description = "Custom color tests"
+    { description = "the CustomColor property writes supported color properties across timing profiles"
     , testCases =
         buildPropertyCases NoTiming Custom.all
             ++ buildPropertyCases (DelayMs 500) Custom.all
@@ -29,7 +29,7 @@ buildPropertyCases timing =
 
 buildPropertyCase : ColorProperty -> String -> String -> PropertyCase (AnimBuilder eng)
 buildPropertyCase colorProp propertyName colorValue =
-    { description = "CustomColor.to writes the " ++ propertyName ++ " property value"
+    { description = "`to` writes the " ++ propertyName ++ " color " ++ colorValue
     , propertyPipeline =
         case Color.fromString colorValue of
             Just color ->

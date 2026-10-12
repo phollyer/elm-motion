@@ -12,7 +12,7 @@ import Specs.Shared exposing (NameValuePair, TimingProfile(..))
 
 testData : TestData (AnimBuilder eng)
 testData =
-    { description = "Multi-Property tests"
+    { description = "multiple properties combine and write expected CSS values"
     , testCases =
         TD.buildMultiPropertyCases NoTiming propertyCases
             ++ TD.buildMultiPropertyCases (DelayMs 500) propertyCases

@@ -12,7 +12,7 @@ import Specs.Shared exposing (NameValuePair)
 
 testData : TestData (AnimBuilder eng)
 testData =
-    { description = "Multi-Group tests"
+    { description = "multiple groups for the same animation state keep their animations and CSS units isolated"
     , testCases =
         List.map MultiGroupTest
             [ { description = "Translate.animate and css unit is isolated per group"

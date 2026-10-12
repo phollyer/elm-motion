@@ -9,12 +9,14 @@ import Specs.Shared exposing (NameValuePair, TimingProfile(..))
 
 testData : TestData (AnimBuilder eng)
 testData =
-    { description = "Size tests"
+    { description = "the Size property writes only configured dimensions and omits untouched height/width across timing profiles"
     , testCases =
         buildPropertyCases NoTiming
             ++ buildPropertyCases (DelayMs 500)
+            ++ buildPropertyCases (DurationMs 500)
             ++ buildAnimate2Cases NoTiming
             ++ buildAnimate2Cases (DelayMs 500)
+            ++ buildAnimate2Cases (DurationMs 500)
     }
 
 
@@ -68,7 +70,7 @@ toNameValuePairs str =
 
 propertyCases : List (PropertyCase (AnimBuilder eng))
 propertyCases =
-    [ { description = "Size.toH writes height, and omits untouched width"
+    [ { description = "toH writes height, and omits untouched width"
       , propertyPipeline =
             Size.begin
                 >> Size.toH 10
@@ -76,7 +78,7 @@ propertyCases =
       , expected = "height:10px"
       , notExpected = [ "width" ]
       }
-    , { description = "Size.toW writes width, and omits untouched height"
+    , { description = "toW writes width, and omits untouched height"
       , propertyPipeline =
             Size.begin
                 >> Size.toW 20
@@ -84,7 +86,7 @@ propertyCases =
       , expected = "width:20px"
       , notExpected = [ "height" ]
       }
-    , { description = "Size.toHW writes height and width"
+    , { description = "toHW writes height and width"
       , propertyPipeline =
             Size.begin
                 >> Size.toHW 10 20
@@ -92,7 +94,7 @@ propertyCases =
       , expected = "width:20px;height:10px"
       , notExpected = []
       }
-    , { description = "Size.toH with custom CSS unit writes height, and omits untouched width"
+    , { description = "toH with custom CSS unit writes height, and omits untouched width"
       , propertyPipeline =
             Size.begin
                 >> Size.toH 10
@@ -101,7 +103,7 @@ propertyCases =
       , expected = "height:10em"
       , notExpected = [ "width" ]
       }
-    , { description = "Size.toW with custom CSS unit writes width, and omits untouched height"
+    , { description = "toW with custom CSS unit writes width, and omits untouched height"
       , propertyPipeline =
             Size.begin
                 >> Size.toW 10
@@ -110,7 +112,7 @@ propertyCases =
       , expected = "width:10em"
       , notExpected = [ "height" ]
       }
-    , { description = "Size.toHW with custom CSS unit writes height and width"
+    , { description = "toHW with custom CSS unit writes height and width"
       , propertyPipeline =
             Size.begin
                 >> Size.toHW 10 20
@@ -119,7 +121,7 @@ propertyCases =
       , expected = "width:20em;height:10em"
       , notExpected = []
       }
-    , { description = "Size.toH prefers axis-specific unit when applied after general unit"
+    , { description = "toH prefers axis-specific unit when applied after general unit"
       , propertyPipeline =
             Size.begin
                 >> Size.toH 10
@@ -129,7 +131,7 @@ propertyCases =
       , expected = "height:10px"
       , notExpected = [ "width" ]
       }
-    , { description = "Size.toH uses general unit when applied after axis-specific unit"
+    , { description = "toH uses general unit when applied after axis-specific unit"
       , propertyPipeline =
             Size.begin
                 >> Size.toH 10
@@ -139,7 +141,7 @@ propertyCases =
       , expected = "height:10em"
       , notExpected = [ "width" ]
       }
-    , { description = "Size.toH last write wins for duplicate toH calls"
+    , { description = "toH last write wins for duplicate toH calls"
       , propertyPipeline =
             Size.begin
                 >> Size.toH 10
@@ -162,7 +164,7 @@ type alias Animate2Case animBuilder =
 
 animate2Cases : List (Animate2Case (AnimBuilder eng))
 animate2Cases =
-    [ { description = "Size.toHW then Size.toH writes new height and keeps prior width"
+    [ { description = "toHW then toH writes new height and keeps prior width"
       , propertyPipeline1 =
             Size.begin
                 >> Size.toHW 10 20
@@ -174,7 +176,7 @@ animate2Cases =
       , expected = "width:20px;height:30px"
       , notExpected = []
       }
-    , { description = "Size.toHW then Size.toW writes new width and keeps prior height"
+    , { description = "toHW then toW writes new width and keeps prior height"
       , propertyPipeline1 =
             Size.begin
                 >> Size.toHW 10 20

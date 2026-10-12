@@ -9,7 +9,7 @@ import Specs.Shared exposing (TimingProfile(..))
 
 testData : TestData (AnimBuilder eng)
 testData =
-    { description = "PerspectiveOrigin tests"
+    { description = "the PerspectiveOrigin property writes expected XY values with untouched axes defaulting to 50% across timing profiles"
     , testCases =
         TD.buildPropertyCases "perspective-origin" NoTiming propertyCases
             ++ TD.buildPropertyCases "perspective-origin" (DelayMs 500) propertyCases
@@ -19,7 +19,7 @@ testData =
 
 propertyCases : List (PropertyCase (AnimBuilder eng))
 propertyCases =
-    [ { description = "PerspectiveOrigin.toX writes X, and defaults Y to 50%"
+    [ { description = "toX writes X, and defaults Y to 50%"
       , propertyPipeline =
             PerspectiveOrigin.begin
                 >> PerspectiveOrigin.toX 10
@@ -27,7 +27,7 @@ propertyCases =
       , expected = "10% 50%"
       , notExpected = []
       }
-    , { description = "PerspectiveOrigin.toY writes Y, and defaults X to 50%"
+    , { description = "toY writes Y, and defaults X to 50%"
       , propertyPipeline =
             PerspectiveOrigin.begin
                 >> PerspectiveOrigin.toY 20
@@ -35,7 +35,7 @@ propertyCases =
       , expected = "50% 20%"
       , notExpected = []
       }
-    , { description = "PerspectiveOrigin.toXY writes XY"
+    , { description = "toXY writes XY"
       , propertyPipeline =
             PerspectiveOrigin.begin
                 >> PerspectiveOrigin.toXY 10 20
@@ -43,7 +43,7 @@ propertyCases =
       , expected = "10% 20%"
       , notExpected = []
       }
-    , { description = "PerspectiveOrigin.toX with custom css unit writes X, and defaults Y to 50%"
+    , { description = "toX with custom css unit writes X, and defaults Y to 50%"
       , propertyPipeline =
             PerspectiveOrigin.begin
                 >> PerspectiveOrigin.toX 10
@@ -52,7 +52,7 @@ propertyCases =
       , expected = "10px 50%"
       , notExpected = []
       }
-    , { description = "PerspectiveOrigin.toY with custom css unit writes Y, and defaults X to 50%"
+    , { description = "toY with custom css unit writes Y, and defaults X to 50%"
       , propertyPipeline =
             PerspectiveOrigin.begin
                 >> PerspectiveOrigin.toY 20
@@ -61,7 +61,7 @@ propertyCases =
       , expected = "50% 20px"
       , notExpected = []
       }
-    , { description = "PerspectiveOrigin.toXY with custom css unit writes XY"
+    , { description = "toXY with custom css unit writes XY"
       , propertyPipeline =
             PerspectiveOrigin.begin
                 >> PerspectiveOrigin.toXY 10 20
@@ -70,7 +70,7 @@ propertyCases =
       , expected = "10px 20px"
       , notExpected = []
       }
-    , { description = "PerspectiveOrigin.toX prefers axis-specific unit when applied after general unit, and untouched Y inherits general unit"
+    , { description = "toX prefers axis-specific unit when applied after general unit, and untouched Y inherits general unit"
       , propertyPipeline =
             PerspectiveOrigin.begin
                 >> PerspectiveOrigin.toX 10
@@ -80,7 +80,7 @@ propertyCases =
       , expected = "10px 50em"
       , notExpected = []
       }
-    , { description = "PerspectiveOrigin.toX uses general unit when applied after axis-specific unit, including untouched Y"
+    , { description = "toX uses general unit when applied after axis-specific unit, including untouched Y"
       , propertyPipeline =
             PerspectiveOrigin.begin
                 >> PerspectiveOrigin.toX 10
@@ -90,7 +90,7 @@ propertyCases =
       , expected = "10em 50em"
       , notExpected = []
       }
-    , { description = "PerspectiveOrigin.toX last write wins for duplicate toX calls"
+    , { description = "toX last write wins for duplicate toX calls"
       , propertyPipeline =
             PerspectiveOrigin.begin
                 >> PerspectiveOrigin.toX 10

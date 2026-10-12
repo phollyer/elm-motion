@@ -10,7 +10,7 @@ import Specs.Shared.CustomProperty as Custom
 
 testData : TestData (AnimBuilder eng)
 testData =
-    { description = "Custom property tests"
+    { description = "the Custom property writes supported numeric CSS properties across timing profiles"
     , testCases =
         buildPropertyCases NoTiming
             ++ buildPropertyCases (DelayMs 500)
@@ -30,7 +30,7 @@ buildPropertyCases timing =
 
 buildPropertyCase : Property -> Float -> String -> String -> PropertyCase (AnimBuilder eng)
 buildPropertyCase property value propertyName expected =
-    { description = "Custom.to writes the " ++ propertyName ++ " property value"
+    { description = "`to` writes the " ++ propertyName ++ " with a value of " ++ expected
     , propertyPipeline =
         Property.begin property
             >> Property.to value

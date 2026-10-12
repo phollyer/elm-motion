@@ -8,7 +8,7 @@ import Specs.Shared exposing (TimingProfile(..))
 
 testData : TestData (AnimBuilder eng)
 testData =
-    { description = "Rotate tests"
+    { description = "the Rotate property writes transform components and omits untouched axes across timing profiles"
     , testCases =
         TD.buildPropertyCases "transform" NoTiming propertyCases
             ++ TD.buildPropertyCases "transform" (DelayMs 500) propertyCases
@@ -18,7 +18,7 @@ testData =
 
 propertyCases : List (PropertyCase (AnimBuilder eng))
 propertyCases =
-    [ { description = "Rotate.toX writes X, and omits untouched YZ"
+    [ { description = "toX writes X, and omits untouched YZ"
       , propertyPipeline =
             Rotate.begin
                 >> Rotate.toX 10
@@ -26,7 +26,7 @@ propertyCases =
       , expected = "rotateX(10deg)"
       , notExpected = [ "rotateY", "rotateZ" ]
       }
-    , { description = "Rotate.toY writes Y, and omits untouched XZ"
+    , { description = "toY writes Y, and omits untouched XZ"
       , propertyPipeline =
             Rotate.begin
                 >> Rotate.toY 20
@@ -34,7 +34,7 @@ propertyCases =
       , expected = "rotateY(20deg)"
       , notExpected = [ "rotateX", "rotateZ" ]
       }
-    , { description = "Rotate.toZ writes Z, and omits untouched XY"
+    , { description = "toZ writes Z, and omits untouched XY"
       , propertyPipeline =
             Rotate.begin
                 >> Rotate.toZ 30
@@ -42,7 +42,7 @@ propertyCases =
       , expected = "rotateZ(30deg)"
       , notExpected = [ "rotateX", "rotateY" ]
       }
-    , { description = "Rotate.toXY writes XY and omits untouched Z"
+    , { description = "toXY writes XY and omits untouched Z"
       , propertyPipeline =
             Rotate.begin
                 >> Rotate.toXY 10 20
@@ -50,7 +50,7 @@ propertyCases =
       , expected = "rotateX(10deg) rotateY(20deg)"
       , notExpected = [ "rotateZ" ]
       }
-    , { description = "Rotate.toXZ writes XZ and omits untouched Y"
+    , { description = "toXZ writes XZ and omits untouched Y"
       , propertyPipeline =
             Rotate.begin
                 >> Rotate.toXZ 10 30
@@ -58,7 +58,7 @@ propertyCases =
       , expected = "rotateX(10deg) rotateZ(30deg)"
       , notExpected = [ "rotateY" ]
       }
-    , { description = "Rotate.toYZ writes YZ and omits untouched X"
+    , { description = "toYZ writes YZ and omits untouched X"
       , propertyPipeline =
             Rotate.begin
                 >> Rotate.toYZ 20 30
@@ -66,7 +66,7 @@ propertyCases =
       , expected = "rotateY(20deg) rotateZ(30deg)"
       , notExpected = [ "rotateX" ]
       }
-    , { description = "Rotate.toXYZ writes XYZ"
+    , { description = "toXYZ writes XYZ"
       , propertyPipeline =
             Rotate.begin
                 >> Rotate.toXYZ 10 20 30

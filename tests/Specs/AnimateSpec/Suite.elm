@@ -32,10 +32,10 @@ import Test exposing (Test, describe)
 
 suite : Test
 suite =
-    describe "animate function"
-        [ describe "Keyframe engine" <|
+    describe "when the animate function writes configured styles, including 'will-change'"
+        [ describe "for the Keyframe engine" <|
             Runner.run (Factory.Keyframe KeyframeFactory.factory) testData
-        , describe "Transition engine" <|
+        , describe "for the Transition engine" <|
             Runner.run (Factory.Transition TransitionFactory.factory) testData
         ]
 
