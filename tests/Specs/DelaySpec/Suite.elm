@@ -9,6 +9,7 @@ import Specs.DelaySpec.Runner as Runner
 import Specs.DelaySpec.TestData exposing (TestData)
 import Specs.DelaySpec.TestData.CustomColor as CustomColor
 import Specs.DelaySpec.TestData.CustomProperty as CustomProperty
+import Specs.DelaySpec.TestData.MultipleGroups as MultipleGroups
 import Specs.DelaySpec.TestData.MultipleProperties as Scale
 import Specs.DelaySpec.TestData.Opacity as Opacity
 import Specs.DelaySpec.TestData.PerspectiveOrigin as PerspectiveOrigin
@@ -46,6 +47,7 @@ testData =
     , Opacity.testData
     , PerspectiveOrigin.testData
     , Rotate.testData
+    , MultipleGroups.testData
     , Scale.testData
     , Size.testData
     , Skew.testData

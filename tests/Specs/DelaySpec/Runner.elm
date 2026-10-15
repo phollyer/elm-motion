@@ -9,7 +9,7 @@ import Factories.Engines.Transition as Transition
 import Helpers.AnimGroups exposing (animGroup)
 import Helpers.Properties as Properties
 import Parsers.Keyframe as KeyframeParser
-import Specs.DelaySpec.TestData exposing (EngineTestCase, MultiPropertyTestCase, MultiPropertyTransformOrderTestCase, PropertyTestCase, TestCase(..), TestData)
+import Specs.DelaySpec.TestData exposing (EngineTestCase, MultiGroupTestCase, MultiPropertyTestCase, MultiPropertyTransformOrderTestCase, PropertyTestCase, TestCase(..), TestData)
 import Test exposing (Test, describe, test)
 
 
@@ -48,6 +48,9 @@ runTestCase factory testCase =
         MultiPropertyTransformOrderTest tc ->
             multiPropertyTransformOrderRunner factory tc
 
+        MultiGroupTest tc ->
+            multiGroupRunner factory tc
+
 
 propertyRunner : EngineFactory animBuilder animState -> PropertyTestCase animBuilder -> Test
 propertyRunner factory tc =
@@ -59,10 +62,10 @@ propertyRunner factory tc =
             in
             case factory of
                 Keyframe f ->
-                    expectKeyframeDelay f tc state
+                    expectKeyframeDelayForGroup f animGroup tc state
 
                 Transition f ->
-                    expectTransitionPropertyDelay f tc state
+                    expectTransitionDelayForGroup f animGroup tc state
 
 
 engineRunner : EngineFactory animBuilder animState -> EngineTestCase animBuilder -> Test
@@ -80,10 +83,10 @@ engineRunner factory tc =
             in
             case factory of
                 Keyframe f_ ->
-                    expectKeyframeDelay f_ tc state
+                    expectKeyframeDelayForGroup f_ animGroup tc state
 
                 Transition f_ ->
-                    expectTransitionPropertyDelay f_ tc state
+                    expectTransitionDelayForGroup f_ animGroup tc state
 
 
 multiPropertyRunner : EngineFactory animBuilder animState -> MultiPropertyTestCase animBuilder -> Test
@@ -97,17 +100,10 @@ multiPropertyRunner factory tc =
             in
             case factory of
                 Keyframe f ->
-                    Expect.all
-                        (List.map
-                            (\prop _ ->
-                                expectKeyframeDelay f prop state
-                            )
-                            tc.properties
-                        )
-                        ()
+                    expectKeyframeMultiPropertyDelaysForGroup f animGroup tc.properties state
 
                 Transition f ->
-                    expectTransitionMultiPropertyDelay f [] tc.properties state
+                    expectTransitionMultiPropertyDelaysForGroup f animGroup [] tc.properties state
 
 
 multiPropertyTransformOrderRunner : EngineFactory animBuilder animState -> MultiPropertyTransformOrderTestCase animBuilder -> Test
@@ -126,41 +122,67 @@ multiPropertyTransformOrderRunner factory tc =
             in
             case factory of
                 Keyframe f_ ->
-                    Expect.all
-                        (List.map
-                            (\prop _ ->
-                                expectKeyframeDelay f_ prop state
-                            )
-                            tc.properties
-                        )
-                        ()
+                    expectKeyframeMultiPropertyDelaysForGroup f_ animGroup tc.properties state
 
                 Transition f_ ->
-                    expectTransitionMultiPropertyDelay f_ tc.transformOrder tc.properties state
+                    expectTransitionMultiPropertyDelaysForGroup f_ animGroup tc.transformOrder tc.properties state
 
 
-expectTransitionPropertyDelay : Transition.Factory animBuilder animState -> PropertyTestCase animBuilder -> animState -> Expect.Expectation
-expectTransitionPropertyDelay factory tc state =
-    case factory.transitionString animGroup state of
+multiGroupRunner : EngineFactory animBuilder animState -> MultiGroupTestCase animBuilder -> Test
+multiGroupRunner factory tc =
+    test tc.description <|
+        \_ ->
+            let
+                f =
+                    Factory.create factory
+
+                state =
+                    List.foldl
+                        (\group acc ->
+                            f.animate acc <|
+                                f.for group.animGroup
+                                    >> group.property.propertyPipeline
+                        )
+                        (f.init [])
+                        tc.groups
+            in
+            Expect.all
+                (List.map
+                    (\group _ ->
+                        case factory of
+                            Keyframe f_ ->
+                                expectKeyframeDelayForGroup f_ group.animGroup group.property state
+
+                            Transition f_ ->
+                                expectTransitionDelayForGroup f_ group.animGroup group.property state
+                    )
+                    tc.groups
+                )
+                ()
+
+
+expectTransitionDelayForGroup : Transition.Factory animBuilder animState -> String -> { a | propertyName : String, delayMs : Int } -> animState -> Expect.Expectation
+expectTransitionDelayForGroup factory animGroupName { propertyName, delayMs } state =
+    case factory.transitionString animGroupName state of
         Nothing ->
             Expect.fail "Expected generated transition style, but none was produced"
 
         Just transitionString ->
             Expect.all
                 [ \_ ->
-                    Expect.transition transitionString factory.attributes animGroup state
+                    Expect.transition transitionString factory.attributes animGroupName state
                 , \_ ->
-                    case factory.propertyString tc.propertyName transitionString of
+                    case factory.propertyString propertyName transitionString of
                         Nothing ->
-                            Expect.fail ("Expected property string for property: " ++ tc.propertyName ++ ", but got: " ++ transitionString)
+                            Expect.fail ("Expected property string for property: " ++ propertyName ++ ", but got: " ++ transitionString)
 
                         Just propertyString ->
                             let
                                 delaySuffix =
-                                    String.fromInt tc.delayMs ++ "ms"
+                                    String.fromInt delayMs ++ "ms"
                             in
                             if not <| String.endsWith delaySuffix propertyString then
-                                Expect.fail ("Expected property string to end with delay suffix: " ++ delaySuffix ++ ", but got: " ++ propertyString)
+                                Expect.fail ("Expected string to end with delay suffix: " ++ delaySuffix ++ ", but got: " ++ propertyString)
 
                             else
                                 Expect.pass
@@ -168,83 +190,79 @@ expectTransitionPropertyDelay factory tc state =
                 ()
 
 
-expectTransitionMultiPropertyDelay : Transition.Factory animBuilder animState -> List TransformProperty -> List (PropertyTestCase animBuilder) -> animState -> Expect.Expectation
-expectTransitionMultiPropertyDelay factory transformOrder properties state =
+expectTransitionMultiPropertyDelaysForGroup : Transition.Factory animBuilder animState -> String -> List TransformProperty -> List (PropertyTestCase animBuilder) -> animState -> Expect.Expectation
+expectTransitionMultiPropertyDelaysForGroup factory animGroupName transformOrder properties state =
     let
         transformProperties =
             Properties.transformOnly properties
 
         nonTransforms =
             Properties.nonTransformOnly properties
-    in
-    Expect.all
-        [ \_ ->
-            if List.isEmpty nonTransforms then
-                Expect.pass
 
-            else
-                Expect.all
-                    (List.map
-                        (\prop _ ->
-                            expectTransitionPropertyDelay factory prop state
-                        )
-                        nonTransforms
+        expectTransformDelay =
+            let
+                maybeTargetDelay =
+                    Properties.toTransformOrder transformOrder transformProperties
+                        |> List.map .delayMs
+                        |> List.head
+            in
+            case maybeTargetDelay of
+                Nothing ->
+                    Expect.fail "Expected a transform delay, but none was configured"
+
+                Just delayMs ->
+                    expectTransitionDelayForGroup factory animGroupName { propertyName = "transform", delayMs = delayMs } state
+
+        expectNonTransformDelays =
+            Expect.all
+                (List.map
+                    (\prop _ ->
+                        expectTransitionDelayForGroup factory animGroupName prop state
                     )
-                    ()
-        , if List.isEmpty transformProperties then
-            \_ -> Expect.pass
+                    nonTransforms
+                )
+                ()
+    in
+    case ( transformProperties, nonTransforms ) of
+        ( [], [] ) ->
+            Expect.fail "Expected at least one property, but none were provided"
 
-          else
-            \_ ->
-                case factory.transitionString animGroup state of
-                    Nothing ->
-                        Expect.fail "Expected generated transition style, but none was produced"
+        ( _, [] ) ->
+            expectTransformDelay
 
-                    Just transitionString ->
-                        Expect.all
-                            [ \_ ->
-                                Expect.transition transitionString factory.attributes animGroup state
-                            , \_ ->
-                                if not <| String.startsWith "transform" transitionString then
-                                    Expect.fail ("Expected transition string to start with: transform, but got: " ++ transitionString)
+        ( [], _ ) ->
+            expectNonTransformDelays
 
-                                else
-                                    Expect.pass
-                            , \_ ->
-                                let
-                                    maybeTargetDelay =
-                                        Properties.toTransformOrder transformOrder transformProperties
-                                            |> List.map .delayMs
-                                            |> List.head
-                                in
-                                case maybeTargetDelay of
-                                    Nothing ->
-                                        Expect.fail "Expected a transform delay, but none was configured"
+        _ ->
+            Expect.all
+                [ \_ ->
+                    expectTransformDelay
+                , \_ ->
+                    expectNonTransformDelays
+                ]
+                ()
 
-                                    Just delayMs ->
-                                        let
-                                            delaySuffix =
-                                                String.fromInt delayMs ++ "ms"
-                                        in
-                                        if not <| String.endsWith delaySuffix transitionString then
-                                            Expect.fail ("Expected transition string to end with delay suffix: " ++ delaySuffix ++ ", but got: " ++ transitionString)
 
-                                        else
-                                            Expect.pass
-                            ]
-                            ()
-        ]
+expectKeyframeMultiPropertyDelaysForGroup : Keyframe.Factory animBuilder animState -> String -> List (PropertyTestCase animBuilder) -> animState -> Expect.Expectation
+expectKeyframeMultiPropertyDelaysForGroup factory animGroupName propertyTestCases state =
+    Expect.all
+        (List.map
+            (\prop _ ->
+                expectKeyframeDelayForGroup factory animGroupName prop state
+            )
+            propertyTestCases
+        )
         ()
 
 
-expectKeyframeDelay : Keyframe.Factory animBuilder animState -> PropertyTestCase animBuilder -> animState -> Expect.Expectation
-expectKeyframeDelay factory tc state =
+expectKeyframeDelayForGroup : Keyframe.Factory animBuilder animState -> String -> PropertyTestCase animBuilder -> animState -> Expect.Expectation
+expectKeyframeDelayForGroup factory animGroupName tc state =
     let
         maybeAnimationString =
-            factory.animationString animGroup state
+            factory.animationString animGroupName state
 
         maybeKeyframesString =
-            factory.keyframesString animGroup state
+            factory.keyframesString animGroupName state
     in
     case ( maybeAnimationString, maybeKeyframesString ) of
         ( Nothing, Nothing ) ->

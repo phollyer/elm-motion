@@ -1,10 +1,13 @@
 module Specs.DelaySpec.TestData exposing
     ( EngineTestCase
+    , GroupPropertyTestCase
+    , MultiGroupTestCase
     , MultiPropertyTestCase
     , MultiPropertyTransformOrderTestCase
     , PropertyTestCase
     , TestCase(..)
     , TestData
+    , groupPropertyTestCase
     , propertyCase
     , propertyTestCase
     )
@@ -25,6 +28,7 @@ type TestCase animBuilder
     | EngineTest (EngineTestCase animBuilder)
     | MultiPropertyTest (MultiPropertyTestCase animBuilder)
     | MultiPropertyTransformOrderTest (MultiPropertyTransformOrderTestCase animBuilder)
+    | MultiGroupTest (MultiGroupTestCase animBuilder)
 
 
 type alias PropertyTestCase animBuilder =
@@ -45,6 +49,18 @@ type alias MultiPropertyTransformOrderTestCase animBuilder =
     { description : String
     , properties : List (PropertyTestCase animBuilder)
     , transformOrder : List TransformProperty
+    }
+
+
+type alias GroupPropertyTestCase animBuilder =
+    { animGroup : String
+    , property : PropertyTestCase animBuilder
+    }
+
+
+type alias MultiGroupTestCase animBuilder =
+    { description : String
+    , groups : List (GroupPropertyTestCase animBuilder)
     }
 
 
@@ -80,4 +96,24 @@ propertyTestCase cfg =
     , propertyName = cfg.propertyName
     , delayMs = cfg.delayMs
     , propertyPipeline = cfg.pipelineWithDelay cfg.delayMs
+    }
+
+
+groupPropertyTestCase :
+    { description : String
+    , animGroup : String
+    , propertyName : String
+    , delayMs : Int
+    , pipelineWithDelay : Int -> AnimBuilder (WithTiming eng) -> AnimBuilder (WithTiming eng)
+    }
+    -> GroupPropertyTestCase (AnimBuilder (WithTiming eng))
+groupPropertyTestCase cfg =
+    { animGroup = cfg.animGroup
+    , property =
+        propertyTestCase
+            { description = cfg.description ++ " for " ++ cfg.animGroup
+            , propertyName = cfg.propertyName
+            , delayMs = cfg.delayMs
+            , pipelineWithDelay = cfg.pipelineWithDelay
+            }
     }
