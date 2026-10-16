@@ -3,7 +3,7 @@ module Specs.AnimateSpec.TestData.Skew exposing (testData)
 import Anim.Builder exposing (AnimBuilder)
 import Anim.Property.Skew as Skew
 import Specs.AnimateSpec.TestData as TD exposing (PropertyCase, TestCase(..), TestData)
-import Specs.Shared exposing (TimingProfile(..))
+import Specs.Shared.TimingProfile exposing (TimingProfile(..))
 
 
 testData : TestData (AnimBuilder eng)

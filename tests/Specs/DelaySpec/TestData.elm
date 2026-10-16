@@ -24,7 +24,7 @@ module Specs.DelaySpec.TestData exposing
 import Anim.Builder exposing (AnimBuilder)
 import Anim.Extra.TransformOrder exposing (TransformProperty)
 import Factories.Capabilities exposing (WithTiming)
-import Specs.Shared exposing (TimingProfile(..))
+import Specs.Shared.TimingProfile exposing (TimingProfile(..))
 
 
 type alias TestData animBuilder =

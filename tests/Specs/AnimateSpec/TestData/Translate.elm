@@ -4,7 +4,7 @@ import Anim.Builder exposing (AnimBuilder)
 import Anim.Property.Translate as Translate
 import Anim.Unit exposing (Unit(..))
 import Specs.AnimateSpec.TestData as TD exposing (PropertyCase, TestCase(..), TestData)
-import Specs.Shared exposing (TimingProfile(..))
+import Specs.Shared.TimingProfile exposing (TimingProfile(..))
 
 
 testData : TestData (AnimBuilder eng)

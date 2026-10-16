@@ -14,7 +14,7 @@ import Anim.Property.Translate as Translate
 import Anim.Unit exposing (Unit(..))
 import Factories.Capabilities exposing (WithTiming)
 import Specs.DelaySpec.TestData as TD exposing (MultiPropertyCase, MultiPropertyTransformOrderCase, TestCase(..), TestData)
-import Specs.Shared exposing (TimingProfile(..))
+import Specs.Shared.TimingProfile exposing (TimingProfile(..))
 
 
 testData : TestData (AnimBuilder (WithTiming eng))

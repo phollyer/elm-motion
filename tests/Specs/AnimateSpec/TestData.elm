@@ -12,7 +12,8 @@ module Specs.AnimateSpec.TestData exposing
     , buildPropertyCases
     )
 
-import Specs.Shared exposing (NameValuePair, TimingProfile(..))
+import Specs.Shared exposing (NameValuePair)
+import Specs.Shared.TimingProfile exposing (TimingProfile)
 
 
 type alias TestData animBuilder =

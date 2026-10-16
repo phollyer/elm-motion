@@ -6,8 +6,8 @@ import Anim.Property.CustomColor as CustomColor exposing (ColorProperty(..))
 import Factories.Capabilities exposing (WithTiming)
 import Motion.Easing exposing (Easing(..))
 import Specs.DelaySpec.TestData as TD exposing (EngineCase, PropertyCase, TestCase(..), TestData)
-import Specs.Shared exposing (TimingProfile(..))
 import Specs.Shared.CustomColor as CustomColor
+import Specs.Shared.TimingProfile exposing (TimingProfile(..))
 
 
 testData : TestData (AnimBuilder (WithTiming eng))

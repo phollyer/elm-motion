@@ -1,16 +1,7 @@
-module Specs.Shared exposing
-    ( NameValuePair
-    , TimingProfile(..)
-    )
+module Specs.Shared exposing (NameValuePair)
 
 
 type alias NameValuePair =
     { name : String
     , value : String
     }
-
-
-type TimingProfile
-    = NoTiming
-    | DelayMs Int
-    | DurationMs Int

@@ -7,7 +7,8 @@ import Anim.Property.Scale as Scale
 import Anim.Property.Skew as Skew
 import Anim.Property.Translate as Translate
 import Specs.AnimateSpec.TestData as TD exposing (TestCase(..), TestData)
-import Specs.Shared exposing (NameValuePair, TimingProfile(..))
+import Specs.Shared exposing (NameValuePair)
+import Specs.Shared.TimingProfile exposing (TimingProfile(..))
 
 
 testData : TestData (AnimBuilder eng)

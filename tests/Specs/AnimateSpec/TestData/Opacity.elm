@@ -3,7 +3,7 @@ module Specs.AnimateSpec.TestData.Opacity exposing (testData)
 import Anim.Builder exposing (AnimBuilder)
 import Anim.Property.Opacity as Opacity
 import Specs.AnimateSpec.TestData as TD exposing (TestCase(..), TestData)
-import Specs.Shared exposing (TimingProfile(..))
+import Specs.Shared.TimingProfile exposing (TimingProfile(..))
 
 
 testData : TestData (AnimBuilder eng)

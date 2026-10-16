@@ -4,7 +4,7 @@ import Anim.Builder exposing (AnimBuilder)
 import Anim.Property.Scale as Scale
 import Factories.Capabilities exposing (WithTiming)
 import Specs.DelaySpec.TestData as TD exposing (EngineCase, PropertyCase, TestData)
-import Specs.Shared exposing (TimingProfile(..))
+import Specs.Shared.TimingProfile exposing (TimingProfile(..))
 
 
 testData : TestData (AnimBuilder (WithTiming eng))

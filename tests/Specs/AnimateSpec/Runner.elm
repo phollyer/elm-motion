@@ -5,7 +5,7 @@ import Expectations.Expect as Expect
 import Factories.Engines.Factory as Factory exposing (EngineFactory(..))
 import Helpers.AnimGroups exposing (animGroup)
 import Specs.AnimateSpec.TestData exposing (..)
-import Specs.Shared exposing (TimingProfile(..))
+import Specs.Shared.TimingProfile as TimingProfile exposing (TimingProfile(..))
 import Test exposing (Test, describe, test)
 
 
@@ -38,12 +38,12 @@ runTestCase factory testCase =
 
 propertyRunner : EngineFactory animBuilder animState -> PropertyTestCase animBuilder -> Test
 propertyRunner factory tc =
-    test (tc.description ++ timingSuffix tc.timing) <|
+    test (tc.description ++ TimingProfile.suffix tc.timing) <|
         \_ ->
             let
                 state =
                     Factory.animate factory animGroup [] <|
-                        applyTiming factory tc.timing tc.propertyPipeline
+                        TimingProfile.apply factory tc.timing tc.propertyPipeline
             in
             case factory of
                 Keyframe f ->
@@ -67,12 +67,12 @@ propertyRunner factory tc =
 
 multiPropertyRunner : EngineFactory animBuilder animState -> MultiPropertyTestCase animBuilder -> Test
 multiPropertyRunner factory tc =
-    test (tc.description ++ timingSuffix tc.timing) <|
+    test (tc.description ++ TimingProfile.suffix tc.timing) <|
         \_ ->
             let
                 state =
                     Factory.animate factory animGroup [] <|
-                        applyTiming factory tc.timing <|
+                        TimingProfile.apply factory tc.timing <|
                             List.foldl (>>) identity tc.propertyPipeline
             in
             case factory of
@@ -137,11 +137,11 @@ multiGroupRunner factory tc =
 
 animate2Runner : EngineFactory animBuilder animState -> Animate2TestCase animBuilder -> Test
 animate2Runner factory tc =
-    test (tc.description ++ timingSuffix tc.timing) <|
+    test (tc.description ++ TimingProfile.suffix tc.timing) <|
         \_ ->
             let
                 state =
-                    Factory.animate2 factory animGroup [] (applyTiming factory tc.timing tc.propertyPipeline1) (applyTiming factory tc.timing tc.propertyPipeline2)
+                    Factory.animate2 factory animGroup [] (TimingProfile.apply factory tc.timing tc.propertyPipeline1) (TimingProfile.apply factory tc.timing tc.propertyPipeline2)
             in
             case factory of
                 Keyframe f ->
@@ -161,35 +161,3 @@ animate2Runner factory tc =
                             Expect.stylesNotPresent tc.notExpected f.styleDeclarations animGroup state
                         ]
                         ()
-
-
-timingSuffix : TimingProfile -> String
-timingSuffix timing =
-    case timing of
-        NoTiming ->
-            ""
-
-        DelayMs delayMs ->
-            " [delay " ++ String.fromInt delayMs ++ "ms]"
-
-        DurationMs durationMs ->
-            " [duration " ++ String.fromInt durationMs ++ "ms]"
-
-
-applyTiming : EngineFactory animBuilder animState -> TimingProfile -> (animBuilder -> animBuilder) -> (animBuilder -> animBuilder)
-applyTiming factory timing pipeline =
-    let
-        f =
-            Factory.create factory
-    in
-    case timing of
-        NoTiming ->
-            pipeline
-
-        DelayMs delayMs ->
-            f.delay delayMs
-                >> pipeline
-
-        DurationMs durationMs ->
-            f.duration durationMs
-                >> pipeline

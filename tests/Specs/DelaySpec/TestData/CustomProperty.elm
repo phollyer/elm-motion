@@ -5,8 +5,8 @@ import Anim.Property.Custom as CustomProperty exposing (Property(..))
 import Anim.Unit exposing (Unit(..))
 import Factories.Capabilities exposing (WithTiming)
 import Specs.DelaySpec.TestData as TD exposing (EngineCase, PropertyCase, TestCase(..), TestData)
-import Specs.Shared exposing (TimingProfile(..))
 import Specs.Shared.CustomProperty as Custom
+import Specs.Shared.TimingProfile exposing (TimingProfile(..))
 
 
 testData : TestData (AnimBuilder (WithTiming eng))

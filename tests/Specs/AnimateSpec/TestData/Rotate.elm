@@ -3,7 +3,7 @@ module Specs.AnimateSpec.TestData.Rotate exposing (testData)
 import Anim.Builder exposing (AnimBuilder)
 import Anim.Property.Rotate as Rotate
 import Specs.AnimateSpec.TestData as TD exposing (PropertyCase, TestCase(..), TestData)
-import Specs.Shared exposing (TimingProfile(..))
+import Specs.Shared.TimingProfile exposing (TimingProfile(..))
 
 
 testData : TestData (AnimBuilder eng)
