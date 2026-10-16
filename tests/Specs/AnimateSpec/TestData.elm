@@ -1,5 +1,6 @@
 module Specs.AnimateSpec.TestData exposing
     ( Animate2TestCase
+    , MultiGroupCase
     , MultiGroupTestCase
     , MultiPropertyCase
     , MultiPropertyTestCase
@@ -7,6 +8,7 @@ module Specs.AnimateSpec.TestData exposing
     , PropertyTestCase
     , TestCase(..)
     , TestData
+    , buildMultiGroupCases
     , buildMultiPropertyCases
     , buildPropertyCase
     , buildPropertyCases
@@ -65,6 +67,16 @@ type alias MultiPropertyCase animBuilder =
 
 type alias MultiGroupTestCase animBuilder =
     { description : String
+    , timing : TimingProfile
+    , animGroups : List String
+    , propertyPipelines : List (List (animBuilder -> animBuilder))
+    , expected : List (List NameValuePair)
+    , notExpected : List (List String)
+    }
+
+
+type alias MultiGroupCase animBuilder =
+    { description : String
     , animGroups : List String
     , propertyPipelines : List (List (animBuilder -> animBuilder))
     , expected : List (List NameValuePair)
@@ -109,6 +121,23 @@ buildMultiPropertyCase timing c =
         { description = c.description
         , timing = timing
         , propertyPipeline = c.propertyPipeline
+        , expected = c.expected
+        , notExpected = c.notExpected
+        }
+
+
+buildMultiGroupCases : TimingProfile -> List (MultiGroupCase animBuilder) -> List (TestCase animBuilder)
+buildMultiGroupCases timing =
+    List.map (buildMultiGroupCase timing)
+
+
+buildMultiGroupCase : TimingProfile -> MultiGroupCase animBuilder -> TestCase animBuilder
+buildMultiGroupCase timing c =
+    MultiGroupTest
+        { description = c.description
+        , timing = timing
+        , animGroups = c.animGroups
+        , propertyPipelines = c.propertyPipelines
         , expected = c.expected
         , notExpected = c.notExpected
         }

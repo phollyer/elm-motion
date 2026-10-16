@@ -97,7 +97,7 @@ multiPropertyRunner factory tc =
 
 multiGroupRunner : EngineFactory animBuilder animState -> MultiGroupTestCase animBuilder -> Test
 multiGroupRunner factory tc =
-    test tc.description <|
+    test (tc.description ++ TimingProfile.suffix tc.timing) <|
         \_ ->
             Expect.all
                 (List.map4
@@ -106,7 +106,8 @@ multiGroupRunner factory tc =
                             let
                                 state =
                                     Factory.animate factory group [] <|
-                                        List.foldl (>>) identity propertyPipeline
+                                        TimingProfile.apply factory tc.timing <|
+                                            List.foldl (>>) identity propertyPipeline
                             in
                             case factory of
                                 Keyframe f ->
