@@ -5,33 +5,38 @@ import Anim.Property.Opacity as Opacity
 import Anim.Property.Translate as Translate
 import Factories.Capabilities exposing (WithTiming)
 import Helpers.AnimGroups exposing (animGroup, otherAnimGroup)
-import Specs.DelaySpec.TestData exposing (GroupPropertyTestCase, TestCase(..), TestData, groupPropertyTestCase)
+import Specs.DelaySpec.TestData as TD exposing (GroupPropertyTestCase, MultiGroupCase, TestCase(..), TestData, groupPropertyTestCase)
+import Specs.Shared exposing (TimingProfile(..))
 
 
 testData : TestData (AnimBuilder (WithTiming eng))
 testData =
-    { description = "multiple groups for the same animation state keeps delays isolated"
+    { description = "multiple groups for the same animation state keeps delays isolated across timing profiles"
     , testCases =
-        [ MultiGroupTest
-            { description = "delay stays scoped to each group when animating the same property"
-            , groups =
-                List.map
-                    (\( animGroupName, delayMs ) ->
-                        nonTransformCase animGroupName delayMs
-                    )
-                    groups
-            }
-        , MultiGroupTest
-            { description = "delay stays scoped to each group for transform animations"
-            , groups =
-                List.map
-                    (\( animGroupName, delayMs ) ->
-                        transformCase animGroupName delayMs
-                    )
-                    groups
-            }
-        ]
+        TD.buildMultiGroupCases NoTiming multiGroupCases
+            ++ TD.buildMultiGroupCases (DurationMs 500) multiGroupCases
     }
+
+
+multiGroupCases : List (MultiGroupCase (AnimBuilder (WithTiming eng)))
+multiGroupCases =
+    [ { description = "delay stays scoped to each group when animating the same property"
+      , groups =
+            List.map
+                (\( animGroupName, delayMs ) ->
+                    nonTransformCase animGroupName delayMs
+                )
+                groups
+      }
+    , { description = "delay stays scoped to each group for transform animations"
+      , groups =
+            List.map
+                (\( animGroupName, delayMs ) ->
+                    transformCase animGroupName delayMs
+                )
+                groups
+      }
+    ]
 
 
 groups : List ( String, Int )

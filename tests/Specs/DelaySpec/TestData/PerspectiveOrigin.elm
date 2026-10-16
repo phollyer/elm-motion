@@ -3,54 +3,64 @@ module Specs.DelaySpec.TestData.PerspectiveOrigin exposing (testData)
 import Anim.Builder exposing (AnimBuilder)
 import Anim.Property.PerspectiveOrigin as PerspectiveOrigin
 import Factories.Capabilities exposing (WithTiming)
-import Specs.DelaySpec.TestData exposing (TestCase(..), TestData, propertyCase)
+import Specs.DelaySpec.TestData as TD exposing (EngineCase, PropertyCase, TestCase(..), TestData)
+import Specs.Shared exposing (TimingProfile(..))
 
 
 testData : TestData (AnimBuilder (WithTiming eng))
 testData =
     { description = "PerspectiveOrigin.delay tests"
     , testCases =
-        [ propertyCase
-            { description = "a property delay with a duration is written correctly"
-            , propertyName = "perspective-origin"
-            , delayMs = 100
-            , pipelineWithDelay =
-                \d ->
-                    PerspectiveOrigin.begin
-                        >> PerspectiveOrigin.toX 10
-                        >> PerspectiveOrigin.duration 100
-                        >> PerspectiveOrigin.delay d
-                        >> PerspectiveOrigin.end
-            }
-        , propertyCase
-            { description = "a property delay with no duration is written correctly"
-            , propertyName = "perspective-origin"
-            , delayMs = 200
-            , pipelineWithDelay =
-                \d ->
-                    PerspectiveOrigin.begin
-                        >> PerspectiveOrigin.toY 20
-                        >> PerspectiveOrigin.delay d
-                        >> PerspectiveOrigin.end
-            }
-        , EngineTest
-            { description = "an engine delay with no duration is written correctly"
-            , propertyName = "perspective-origin"
-            , delayMs = 300
-            , propertyPipeline =
+        TD.buildPropertyCases NoTiming propertyCases
+            ++ TD.buildPropertyCases (DurationMs 100) propertyCases
+            ++ TD.buildEngineCases NoTiming engineCases
+            ++ TD.buildEngineCases (DurationMs 100) engineCases
+    }
+
+
+propertyCases : List (PropertyCase (AnimBuilder (WithTiming eng)))
+propertyCases =
+    [ { description = "a property delay with a duration is written correctly"
+      , propertyName = "perspective-origin"
+      , delayMs = 100
+      , pipelineWithDelay =
+            \d ->
                 PerspectiveOrigin.begin
                     >> PerspectiveOrigin.toX 10
+                    >> PerspectiveOrigin.duration 100
+                    >> PerspectiveOrigin.delay d
                     >> PerspectiveOrigin.end
-            }
-        , EngineTest
-            { description = "an engine delay with a duration is written correctly"
-            , propertyName = "perspective-origin"
-            , delayMs = 400
-            , propertyPipeline =
+      }
+    , { description = "a property delay with no duration is written correctly"
+      , propertyName = "perspective-origin"
+      , delayMs = 200
+      , pipelineWithDelay =
+            \d ->
                 PerspectiveOrigin.begin
-                    >> PerspectiveOrigin.toXY 10 20
-                    >> PerspectiveOrigin.duration 1000
+                    >> PerspectiveOrigin.toY 20
+                    >> PerspectiveOrigin.delay d
                     >> PerspectiveOrigin.end
-            }
-        ]
-    }
+      }
+    ]
+
+
+engineCases : List (EngineCase (AnimBuilder (WithTiming eng)))
+engineCases =
+    [ { description = "an engine delay with no duration is written correctly"
+      , propertyName = "perspective-origin"
+      , delayMs = 300
+      , propertyPipeline =
+            PerspectiveOrigin.begin
+                >> PerspectiveOrigin.toX 10
+                >> PerspectiveOrigin.end
+      }
+    , { description = "an engine delay with a duration is written correctly"
+      , propertyName = "perspective-origin"
+      , delayMs = 400
+      , propertyPipeline =
+            PerspectiveOrigin.begin
+                >> PerspectiveOrigin.toXY 10 20
+                >> PerspectiveOrigin.duration 1000
+                >> PerspectiveOrigin.end
+      }
+    ]

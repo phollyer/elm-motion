@@ -3,54 +3,44 @@ module Specs.DelaySpec.TestData.Translate exposing (testData)
 import Anim.Builder exposing (AnimBuilder)
 import Anim.Property.Translate as Translate
 import Factories.Capabilities exposing (WithTiming)
-import Specs.DelaySpec.TestData exposing (TestCase(..), TestData, propertyCase)
+import Specs.DelaySpec.TestData as TD exposing (EngineCase, PropertyCase, TestCase(..), TestData)
+import Specs.Shared exposing (TimingProfile(..))
 
 
 testData : TestData (AnimBuilder (WithTiming eng))
 testData =
     { description = "Translate.delay tests"
     , testCases =
-        [ propertyCase
-            { description = "a property delay with a duration is written correctly"
-            , propertyName = "transform"
-            , delayMs = 100
-            , pipelineWithDelay =
-                \d ->
-                    Translate.begin
-                        >> Translate.toX 10
-                        >> Translate.duration 100
-                        >> Translate.delay d
-                        >> Translate.end
-            }
-        , propertyCase
-            { description = "a property delay with no duration is written correctly"
-            , propertyName = "transform"
-            , delayMs = 200
-            , pipelineWithDelay =
-                \d ->
-                    Translate.begin
-                        >> Translate.toX 10
-                        >> Translate.delay d
-                        >> Translate.end
-            }
-        , EngineTest
-            { description = "an engine delay with no duration is written correctly"
-            , propertyName = "transform"
-            , delayMs = 300
-            , propertyPipeline =
-                Translate.begin
-                    >> Translate.toX 10
-                    >> Translate.end
-            }
-        , EngineTest
-            { description = "an engine delay with a duration is written correctly"
-            , propertyName = "transform"
-            , delayMs = 400
-            , propertyPipeline =
-                Translate.begin
-                    >> Translate.toX 10
-                    >> Translate.duration 1000
-                    >> Translate.end
-            }
-        ]
+        TD.buildPropertyCases NoTiming propertyCases
+            ++ TD.buildPropertyCases (DurationMs 500) propertyCases
+            ++ TD.buildEngineCases NoTiming engineCases
+            ++ TD.buildEngineCases (DurationMs 500) engineCases
     }
+
+
+propertyCases : List (PropertyCase (AnimBuilder (WithTiming eng)))
+propertyCases =
+    [ { description = "a property delay with no duration is written correctly"
+      , propertyName = "transform"
+      , delayMs = 200
+      , pipelineWithDelay =
+            \d ->
+                Translate.begin
+                    >> Translate.toX 10
+                    >> Translate.delay d
+                    >> Translate.end
+      }
+    ]
+
+
+engineCases : List (EngineCase (AnimBuilder (WithTiming eng)))
+engineCases =
+    [ { description = "an engine delay with no duration is written correctly"
+      , propertyName = "transform"
+      , delayMs = 300
+      , propertyPipeline =
+            Translate.begin
+                >> Translate.toX 10
+                >> Translate.end
+      }
+    ]

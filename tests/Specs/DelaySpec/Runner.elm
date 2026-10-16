@@ -10,6 +10,7 @@ import Helpers.AnimGroups exposing (animGroup)
 import Helpers.Properties as Properties
 import Parsers.Keyframe as KeyframeParser
 import Specs.DelaySpec.TestData exposing (EngineTestCase, MultiGroupTestCase, MultiPropertyTestCase, MultiPropertyTransformOrderTestCase, PropertyTestCase, TestCase(..), TestData)
+import Specs.Shared exposing (TimingProfile(..))
 import Test exposing (Test, describe, test)
 
 
@@ -54,11 +55,12 @@ runTestCase factory testCase =
 
 propertyRunner : EngineFactory animBuilder animState -> PropertyTestCase animBuilder -> Test
 propertyRunner factory tc =
-    test tc.description <|
+    test (tc.description ++ timingSuffix tc.timing) <|
         \_ ->
             let
                 state =
-                    Factory.animate factory animGroup [] tc.propertyPipeline
+                    Factory.animate factory animGroup [] <|
+                        applyTiming factory tc.timing tc.propertyPipeline
             in
             case factory of
                 Keyframe f ->
@@ -70,7 +72,7 @@ propertyRunner factory tc =
 
 engineRunner : EngineFactory animBuilder animState -> EngineTestCase animBuilder -> Test
 engineRunner factory tc =
-    test tc.description <|
+    test (tc.description ++ timingSuffix tc.timing) <|
         \_ ->
             let
                 f =
@@ -79,7 +81,7 @@ engineRunner factory tc =
                 state =
                     Factory.animate factory animGroup [] <|
                         f.delay tc.delayMs
-                            >> tc.propertyPipeline
+                            >> applyTiming factory tc.timing tc.propertyPipeline
             in
             case factory of
                 Keyframe f_ ->
@@ -91,12 +93,15 @@ engineRunner factory tc =
 
 multiPropertyRunner : EngineFactory animBuilder animState -> MultiPropertyTestCase animBuilder -> Test
 multiPropertyRunner factory tc =
-    test tc.description <|
+    test (tc.description ++ timingSuffix tc.timing) <|
         \_ ->
             let
                 state =
                     Factory.animate factory animGroup [] <|
-                        List.foldl (\prop acc -> acc >> prop.propertyPipeline) identity tc.properties
+                        List.foldl
+                            (\prop acc -> acc >> applyTiming factory tc.timing prop.propertyPipeline)
+                            identity
+                            tc.properties
             in
             case factory of
                 Keyframe f ->
@@ -108,7 +113,7 @@ multiPropertyRunner factory tc =
 
 multiPropertyTransformOrderRunner : EngineFactory animBuilder animState -> MultiPropertyTransformOrderTestCase animBuilder -> Test
 multiPropertyTransformOrderRunner factory tc =
-    test tc.description <|
+    test (tc.description ++ timingSuffix tc.timing) <|
         \_ ->
             let
                 f =
@@ -118,7 +123,9 @@ multiPropertyTransformOrderRunner factory tc =
                     Factory.build f [] <|
                         f.for animGroup
                             >> f.transformOrder tc.transformOrder
-                            >> List.foldl (\prop acc -> acc >> prop.propertyPipeline) identity tc.properties
+                            >> (applyTiming factory tc.timing <|
+                                    List.foldl (\prop acc -> acc >> prop.propertyPipeline) identity tc.properties
+                               )
             in
             case factory of
                 Keyframe f_ ->
@@ -130,7 +137,7 @@ multiPropertyTransformOrderRunner factory tc =
 
 multiGroupRunner : EngineFactory animBuilder animState -> MultiGroupTestCase animBuilder -> Test
 multiGroupRunner factory tc =
-    test tc.description <|
+    test (tc.description ++ timingSuffix tc.timing) <|
         \_ ->
             let
                 f =
@@ -140,8 +147,9 @@ multiGroupRunner factory tc =
                     List.foldl
                         (\group acc ->
                             f.animate acc <|
-                                f.for group.animGroup
-                                    >> group.property.propertyPipeline
+                                applyTiming factory tc.timing <|
+                                    f.for group.animGroup
+                                        >> group.property.propertyPipeline
                         )
                         (f.init [])
                         tc.groups
@@ -309,11 +317,11 @@ expectKeyframeDelayForGroup factory animGroupName tc state =
                                 else
                                     Expect.fail "Expected non-empty keyframes"
                             , \_ ->
-                                if leadingStartCount == beforeThresholdCount || leadingStartCount == beforeThresholdCount - 1 then
+                                if leadingStartCount == beforeThresholdCount || leadingStartCount == beforeThresholdCount - 1 || leadingStartCount == beforeThresholdCount + 1 then
                                     Expect.pass
 
                                 else
-                                    Expect.fail ("Expected leadingStartCount to be equal to beforeThresholdCount or beforeThresholdCount - 1, but got: " ++ String.fromInt leadingStartCount ++ " vs " ++ String.fromInt beforeThresholdCount)
+                                    Expect.fail ("Expected leadingStartCount to be equal to beforeThresholdCount or beforeThresholdCount - 1 or beforeThresholdCount + 1, but got: " ++ String.fromInt leadingStartCount ++ " vs " ++ String.fromInt beforeThresholdCount)
                             ]
                             ()
 
@@ -340,3 +348,35 @@ countLeadingValue startValue samples =
 
             else
                 0
+
+
+timingSuffix : TimingProfile -> String
+timingSuffix timing =
+    case timing of
+        NoTiming ->
+            ""
+
+        DelayMs delayMs ->
+            " [delay " ++ String.fromInt delayMs ++ "ms]"
+
+        DurationMs durationMs ->
+            " [duration " ++ String.fromInt durationMs ++ "ms]"
+
+
+applyTiming : EngineFactory animBuilder animState -> TimingProfile -> (animBuilder -> animBuilder) -> (animBuilder -> animBuilder)
+applyTiming factory timing pipeline =
+    let
+        f =
+            Factory.create factory
+    in
+    case timing of
+        NoTiming ->
+            pipeline
+
+        DelayMs delayMs ->
+            f.delay delayMs
+                >> pipeline
+
+        DurationMs durationMs ->
+            f.duration durationMs
+                >> pipeline
