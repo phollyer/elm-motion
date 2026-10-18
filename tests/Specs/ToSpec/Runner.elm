@@ -1,11 +1,11 @@
-module Specs.AnimateSpec.Runner exposing (run)
+module Specs.ToSpec.Runner exposing (run)
 
 import Expect
 import Expectations.Expect as Expect
 import Factories.Engines.Factory as Factory exposing (EngineFactory(..))
 import Helpers.AnimGroups exposing (animGroup)
-import Specs.AnimateSpec.TestData exposing (..)
 import Specs.Shared.TimingProfile as TimingProfile exposing (TimingProfile(..))
+import Specs.ToSpec.TestData exposing (..)
 import Test exposing (Test, describe, test)
 
 

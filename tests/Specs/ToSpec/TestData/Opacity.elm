@@ -1,9 +1,9 @@
-module Specs.AnimateSpec.TestData.Opacity exposing (testData)
+module Specs.ToSpec.TestData.Opacity exposing (testData)
 
 import Anim.Builder exposing (AnimBuilder)
 import Anim.Property.Opacity as Opacity
-import Specs.AnimateSpec.TestData as TD exposing (TestCase(..), TestData)
 import Specs.Shared.TimingProfile exposing (TimingProfile(..))
+import Specs.ToSpec.TestData as TD exposing (TestCase(..), TestData)
 
 
 testData : TestData (AnimBuilder eng)
@@ -24,6 +24,14 @@ propertyCases =
                 >> Opacity.to 0.5
                 >> Opacity.end
       , expected = "0.5"
+      , notExpected = []
+      }
+    , { description = "`to` writes the opacity value of 0"
+      , propertyPipeline =
+            Opacity.begin
+                >> Opacity.to 0
+                >> Opacity.end
+      , expected = "0"
       , notExpected = []
       }
     ]

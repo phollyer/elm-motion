@@ -1,4 +1,4 @@
-module Specs.AnimateSpec.TestData exposing
+module Specs.ToSpec.TestData exposing
     ( Animate2TestCase
     , MultiGroupCase
     , MultiGroupTestCase

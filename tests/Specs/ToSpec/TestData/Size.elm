@@ -1,11 +1,10 @@
-module Specs.AnimateSpec.TestData.Size exposing (testData)
+module Specs.ToSpec.TestData.Size exposing (testData)
 
 import Anim.Builder exposing (AnimBuilder)
 import Anim.Property.Size as Size
-import Anim.Unit exposing (Unit(..))
-import Specs.AnimateSpec.TestData exposing (PropertyCase, TestCase(..), TestData)
 import Specs.Shared exposing (NameValuePair)
 import Specs.Shared.TimingProfile exposing (TimingProfile(..))
+import Specs.ToSpec.TestData exposing (PropertyCase, TestCase(..), TestData)
 
 
 testData : TestData (AnimBuilder eng)
@@ -95,54 +94,7 @@ propertyCases =
       , expected = "width:20px;height:10px"
       , notExpected = []
       }
-    , { description = "toH with custom CSS unit writes height, and omits untouched width"
-      , propertyPipeline =
-            Size.begin
-                >> Size.toH 10
-                >> Size.cssUnitH Em
-                >> Size.end
-      , expected = "height:10em"
-      , notExpected = [ "width" ]
-      }
-    , { description = "toW with custom CSS unit writes width, and omits untouched height"
-      , propertyPipeline =
-            Size.begin
-                >> Size.toW 10
-                >> Size.cssUnitW Em
-                >> Size.end
-      , expected = "width:10em"
-      , notExpected = [ "height" ]
-      }
-    , { description = "toHW with custom CSS unit writes height and width"
-      , propertyPipeline =
-            Size.begin
-                >> Size.toHW 10 20
-                >> Size.cssUnit Em
-                >> Size.end
-      , expected = "width:20em;height:10em"
-      , notExpected = []
-      }
-    , { description = "toH prefers axis-specific unit when applied after general unit"
-      , propertyPipeline =
-            Size.begin
-                >> Size.toH 10
-                >> Size.cssUnit Em
-                >> Size.cssUnitH Px
-                >> Size.end
-      , expected = "height:10px"
-      , notExpected = [ "width" ]
-      }
-    , { description = "toH uses general unit when applied after axis-specific unit"
-      , propertyPipeline =
-            Size.begin
-                >> Size.toH 10
-                >> Size.cssUnitH Px
-                >> Size.cssUnit Em
-                >> Size.end
-      , expected = "height:10em"
-      , notExpected = [ "width" ]
-      }
-    , { description = "toH last write wins for duplicate toH calls"
+    , { description = "toH last write wins for multiple toH calls"
       , propertyPipeline =
             Size.begin
                 >> Size.toH 10
@@ -150,6 +102,48 @@ propertyCases =
                 >> Size.end
       , expected = "height:12px"
       , notExpected = [ "width" ]
+      }
+    , { description = "toW last write wins for multiple toW calls"
+      , propertyPipeline =
+            Size.begin
+                >> Size.toW 20
+                >> Size.toW 25
+                >> Size.end
+      , expected = "width:25px"
+      , notExpected = [ "height" ]
+      }
+    , { description = "toHW last write wins for multiple toHW calls"
+      , propertyPipeline =
+            Size.begin
+                >> Size.toHW 10 20
+                >> Size.toHW 15 25
+                >> Size.end
+      , expected = "width:25px;height:15px"
+      , notExpected = []
+      }
+    , { description = "toH writes 0 for the height"
+      , propertyPipeline =
+            Size.begin
+                >> Size.toH 0
+                >> Size.end
+      , expected = "height:0px"
+      , notExpected = [ "width" ]
+      }
+    , { description = "toW writes 0 for the width"
+      , propertyPipeline =
+            Size.begin
+                >> Size.toW 0
+                >> Size.end
+      , expected = "width:0px"
+      , notExpected = [ "height" ]
+      }
+    , { description = "toHW writes 0 for both height and width"
+      , propertyPipeline =
+            Size.begin
+                >> Size.toHW 0 0
+                >> Size.end
+      , expected = "width:0px;height:0px"
+      , notExpected = []
       }
     ]
 

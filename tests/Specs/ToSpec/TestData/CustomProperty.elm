@@ -1,11 +1,10 @@
-module Specs.AnimateSpec.TestData.CustomProperty exposing (testData)
+module Specs.ToSpec.TestData.CustomProperty exposing (testData)
 
 import Anim.Builder exposing (AnimBuilder)
 import Anim.Property.Custom as Property exposing (Property)
-import Anim.Unit exposing (Unit(..))
-import Specs.AnimateSpec.TestData as TD exposing (PropertyCase, TestCase(..), TestData)
 import Specs.Shared.CustomProperty as Custom
 import Specs.Shared.TimingProfile exposing (TimingProfile(..))
+import Specs.ToSpec.TestData as TD exposing (PropertyCase, TestCase(..), TestData)
 
 
 testData : TestData (AnimBuilder eng)

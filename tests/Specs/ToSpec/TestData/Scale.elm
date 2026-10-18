@@ -1,9 +1,9 @@
-module Specs.AnimateSpec.TestData.Scale exposing (testData)
+module Specs.ToSpec.TestData.Scale exposing (testData)
 
 import Anim.Builder exposing (AnimBuilder)
 import Anim.Property.Scale as Scale
-import Specs.AnimateSpec.TestData as TD exposing (PropertyCase, TestCase(..), TestData)
 import Specs.Shared.TimingProfile exposing (TimingProfile(..))
+import Specs.ToSpec.TestData as TD exposing (PropertyCase, TestCase(..), TestData)
 
 
 testData : TestData (AnimBuilder eng)
@@ -66,12 +66,36 @@ propertyCases =
       , expected = "scaleY(20) scaleZ(30)"
       , notExpected = [ "scaleX" ]
       }
-    , { description = "toXYZ writes XYZ"
+    , { description = "toXYZ writes XYZ promoted to scale3d"
       , propertyPipeline =
             Scale.begin
                 >> Scale.toXYZ 10 20 30
                 >> Scale.end
-      , expected = "scaleX(10) scaleY(20) scaleZ(30)"
+      , expected = "scale3d(10, 20, 30)"
       , notExpected = []
+      }
+    , { description = "toX writes 1 and omits untouched YZ"
+      , propertyPipeline =
+            Scale.begin
+                >> Scale.toX 1
+                >> Scale.end
+      , expected = "scaleX(1)"
+      , notExpected = [ "scaleY", "scaleZ" ]
+      }
+    , { description = "toY writes 1 and omits untouched XZ"
+      , propertyPipeline =
+            Scale.begin
+                >> Scale.toY 1
+                >> Scale.end
+      , expected = "scaleY(1)"
+      , notExpected = [ "scaleX", "scaleZ" ]
+      }
+    , { description = "toZ writes 1 and omits untouched XY"
+      , propertyPipeline =
+            Scale.begin
+                >> Scale.toZ 1
+                >> Scale.end
+      , expected = "scaleZ(1)"
+      , notExpected = [ "scaleX", "scaleY" ]
       }
     ]

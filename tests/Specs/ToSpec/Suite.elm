@@ -1,22 +1,22 @@
-module Specs.AnimateSpec.Suite exposing (suite)
+module Specs.ToSpec.Suite exposing (suite)
 
 import Anim.Builder exposing (AnimBuilder)
 import Factories.Engines.Factory as Factory
 import Factories.Engines.Keyframe as KeyframeFactory
 import Factories.Engines.Transition as TransitionFactory
-import Specs.AnimateSpec.Runner as Runner
-import Specs.AnimateSpec.TestData exposing (TestData)
-import Specs.AnimateSpec.TestData.CustomColor as CustomColor
-import Specs.AnimateSpec.TestData.CustomProperty as CustomProperty
-import Specs.AnimateSpec.TestData.MultipleGroups as MultipleGroups
-import Specs.AnimateSpec.TestData.MultipleProperties as MultipleProperties
-import Specs.AnimateSpec.TestData.Opacity as Opacity
-import Specs.AnimateSpec.TestData.PerspectiveOrigin as PerspectiveOrigin
-import Specs.AnimateSpec.TestData.Rotate as Rotate
-import Specs.AnimateSpec.TestData.Scale as Scale
-import Specs.AnimateSpec.TestData.Size as Size
-import Specs.AnimateSpec.TestData.Skew as Skew
-import Specs.AnimateSpec.TestData.Translate as Translate
+import Specs.ToSpec.Runner as Runner
+import Specs.ToSpec.TestData exposing (TestData)
+import Specs.ToSpec.TestData.CustomColor as CustomColor
+import Specs.ToSpec.TestData.CustomProperty as CustomProperty
+import Specs.ToSpec.TestData.MultipleGroups as MultipleGroups
+import Specs.ToSpec.TestData.MultipleProperties as MultipleProperties
+import Specs.ToSpec.TestData.Opacity as Opacity
+import Specs.ToSpec.TestData.PerspectiveOrigin as PerspectiveOrigin
+import Specs.ToSpec.TestData.Rotate as Rotate
+import Specs.ToSpec.TestData.Scale as Scale
+import Specs.ToSpec.TestData.Size as Size
+import Specs.ToSpec.TestData.Skew as Skew
+import Specs.ToSpec.TestData.Translate as Translate
 import Test exposing (Test, describe)
 
 

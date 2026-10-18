@@ -1,9 +1,9 @@
-module Specs.AnimateSpec.TestData.Rotate exposing (testData)
+module Specs.ToSpec.TestData.Rotate exposing (testData)
 
 import Anim.Builder exposing (AnimBuilder)
 import Anim.Property.Rotate as Rotate
-import Specs.AnimateSpec.TestData as TD exposing (PropertyCase, TestCase(..), TestData)
 import Specs.Shared.TimingProfile exposing (TimingProfile(..))
+import Specs.ToSpec.TestData as TD exposing (PropertyCase, TestCase(..), TestData)
 
 
 testData : TestData (AnimBuilder eng)
@@ -73,5 +73,29 @@ propertyCases =
                 >> Rotate.end
       , expected = "rotateX(10deg) rotateY(20deg) rotateZ(30deg)"
       , notExpected = []
+      }
+    , { description = "toX writes 0 and omits untouched YZ"
+      , propertyPipeline =
+            Rotate.begin
+                >> Rotate.toX 0
+                >> Rotate.end
+      , expected = "rotateX(0deg)"
+      , notExpected = [ "rotateY", "rotateZ" ]
+      }
+    , { description = "toY writes 0 and omits untouched XZ"
+      , propertyPipeline =
+            Rotate.begin
+                >> Rotate.toY 0
+                >> Rotate.end
+      , expected = "rotateY(0deg)"
+      , notExpected = [ "rotateX", "rotateZ" ]
+      }
+    , { description = "toZ writes 0 and omits untouched XY"
+      , propertyPipeline =
+            Rotate.begin
+                >> Rotate.toZ 0
+                >> Rotate.end
+      , expected = "rotateZ(0deg)"
+      , notExpected = [ "rotateX", "rotateY" ]
       }
     ]

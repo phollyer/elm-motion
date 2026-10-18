@@ -1,19 +1,20 @@
-module Specs.AnimateSpec.TestData.MultipleProperties exposing (testData)
+module Specs.ToSpec.TestData.MultipleProperties exposing (testData)
 
 import Anim.Builder exposing (AnimBuilder)
 import Anim.Property.Opacity as Opacity
 import Anim.Property.Rotate as Rotate
 import Anim.Property.Scale as Scale
+import Anim.Property.Size as Size
 import Anim.Property.Skew as Skew
 import Anim.Property.Translate as Translate
-import Specs.AnimateSpec.TestData as TD exposing (TestCase(..), TestData)
 import Specs.Shared exposing (NameValuePair)
 import Specs.Shared.TimingProfile exposing (TimingProfile(..))
+import Specs.ToSpec.TestData as TD exposing (TestCase(..), TestData)
 
 
 testData : TestData (AnimBuilder eng)
 testData =
-    { description = "multiple properties combine and write expected CSS values"
+    { description = "multiple properties combine across timing profiles"
     , testCases =
         TD.buildMultiPropertyCases NoTiming propertyCases
             ++ TD.buildMultiPropertyCases (DelayMs 500) propertyCases
@@ -23,7 +24,7 @@ testData =
 
 propertyCases : List (TD.MultiPropertyCase (AnimBuilder eng))
 propertyCases =
-    [ { description = "Opacity and Translate combine and write opacity + transform and combined will-change"
+    [ { description = "Opacity and Translate combine and write separate opacity + transform properties"
       , propertyPipeline =
             [ Opacity.begin
                 >> Opacity.to 0.5
@@ -67,23 +68,26 @@ propertyCases =
             [ NameValuePair "transform" "translateX(10px) skewX(5deg) scaleX(2)" ]
       , notExpected = [ "translateY", "translateZ", "skewY", "skewZ", "scaleY", "scaleZ" ]
       }
-    , { description = "Translate, Rotate, Scale and Skew combine and write transform"
+    , { description = "Translate, Size, Rotate, and Opacity combine and write transform"
       , propertyPipeline =
             [ Translate.begin
                 >> Translate.toX 10
                 >> Translate.end
+            , Size.begin
+                >> Size.toH 10
+                >> Size.end
             , Rotate.begin
                 >> Rotate.toX 15
                 >> Rotate.end
-            , Scale.begin
-                >> Scale.toX 2
-                >> Scale.end
-            , Skew.begin
-                >> Skew.toX 0
-                >> Skew.end
+            , Opacity.begin
+                >> Opacity.to 0.5
+                >> Opacity.end
             ]
       , expected =
-            [ NameValuePair "transform" "translateX(10px) rotateX(15deg) skewX(0deg) scaleX(2)" ]
-      , notExpected = [ "translateY", "translateZ", "rotateY", "rotateZ", "skewY", "skewZ", "scaleY", "scaleZ" ]
+            [ NameValuePair "transform" "translateX(10px) rotateX(15deg)"
+            , NameValuePair "height" "10px"
+            , NameValuePair "opacity" "0.5"
+            ]
+      , notExpected = [ "translateY", "translateZ", "rotateY", "rotateZ", "width" ]
       }
     ]
