@@ -1,4 +1,4 @@
-module Anim.Internal.Engine.Transition.Styles exposing (fromProcessedProperties, fromProcessedPropertiesWithControlledAxes)
+module Anim.Internal.Engine.Transition.Styles exposing (fromProcessedPropertiesWithControlledAxes)
 
 import Anim.Extra.TransformOrder exposing (TransformProperty)
 import Anim.Internal.Builder as Builder
@@ -6,12 +6,6 @@ import Anim.Internal.Engine.CSS.Styles as Styles exposing (Styles)
 import Anim.Internal.Engine.CSS.Transform as Transform
 import Dict exposing (Dict)
 import Set exposing (Set)
-
-
-fromProcessedProperties : List TransformProperty -> List ( String, String ) -> List Builder.ProcessedPropertyConfig -> Styles
-fromProcessedProperties maybeOrder baseStyles =
-    Styles.fromProcessedProperties baseStyles <|
-        extractTransformStyles Nothing maybeOrder
 
 
 fromProcessedPropertiesWithControlledAxes : List TransformProperty -> Dict String (Set String) -> List ( String, String ) -> List Builder.ProcessedPropertyConfig -> Styles
