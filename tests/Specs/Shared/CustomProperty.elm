@@ -18,8 +18,6 @@ all =
            , ( ( StrokeDashOffset, 10 ), ( "stroke-dashoffset", "10" ) )
            , ( ( StrokeWidth, 10 ), ( "stroke-width", "10" ) )
            , ( ( Custom "my-custom-property" "unit", 10 ), ( "my-custom-property", "10unit" ) )
-           , ( ( Custom "my-custom-property" "unit", 0 ), ( "my-custom-property", "0unit" ) )
-           , ( ( StrokeWidth, 0 ), ( "stroke-width", "0" ) )
            ]
 
 

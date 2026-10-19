@@ -72,7 +72,7 @@ extractParts maybeControlledAxes properties =
                     { acc | skew = Styles.skewToCss maybeControlledAxes config.end }
 
                 Builder.ProcessedScaleConfig config ->
-                    { acc | scale = Scale.toCssString config.end }
+                    { acc | scale = Styles.scaleToCss maybeControlledAxes config.end }
 
                 _ ->
                     acc

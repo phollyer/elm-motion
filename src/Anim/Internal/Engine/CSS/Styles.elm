@@ -12,6 +12,7 @@ module Anim.Internal.Engine.CSS.Styles exposing
     , merge
     , remove
     , rotateToCss
+    , scaleToCss
     , skewToCss
     , toAttrs
     , toList
@@ -23,6 +24,7 @@ import Anim.Internal.Extra.Color as Color
 import Anim.Internal.Property.Opacity as Opacity
 import Anim.Internal.Property.PerspectiveOrigin as PerspectiveOrigin
 import Anim.Internal.Property.Rotate as Rotate
+import Anim.Internal.Property.Scale as Scale
 import Anim.Internal.Property.Size as Size
 import Anim.Internal.Property.Skew as Skew
 import Anim.Internal.Property.Translate as Translate
@@ -204,6 +206,68 @@ toAttrs animGroupName (Styles dict) =
                 Html.Attributes.style key value
             )
             (Dict.toList dict)
+
+
+
+-- ============================================================
+-- SCALE
+-- ============================================================
+
+
+scaleToCss : Maybe (Dict String (Set String)) -> Scale.Scale -> String
+scaleToCss maybeControlledAxes value =
+    case maybeControlledAxes |> Maybe.andThen (Dict.get "scale") of
+        Just axes ->
+            let
+                hasX =
+                    Set.member "x" axes
+
+                hasY =
+                    Set.member "y" axes
+
+                hasZ =
+                    Set.member "z" axes
+
+                coords =
+                    Scale.toRecord value
+
+                partial =
+                    [ if hasX then
+                        Just ("scaleX(" ++ String.fromFloat coords.x ++ ")")
+
+                      else
+                        Nothing
+                    , if hasY then
+                        Just ("scaleY(" ++ String.fromFloat coords.y ++ ")")
+
+                      else
+                        Nothing
+                    , if hasZ then
+                        Just ("scaleZ(" ++ String.fromFloat coords.z ++ ")")
+
+                      else
+                        Nothing
+                    ]
+                        |> List.filterMap identity
+                        |> String.join " "
+            in
+            if Set.size axes == 3 then
+                "scale3d("
+                    ++ String.fromFloat coords.x
+                    ++ ", "
+                    ++ String.fromFloat coords.y
+                    ++ ", "
+                    ++ String.fromFloat coords.z
+                    ++ ")"
+
+            else if String.isEmpty partial then
+                Scale.toCssString value
+
+            else
+                partial
+
+        Nothing ->
+            Scale.toCssString value
 
 
 

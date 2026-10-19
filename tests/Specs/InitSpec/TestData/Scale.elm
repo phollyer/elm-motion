@@ -42,9 +42,9 @@ testData =
               , expected = [ NameValuePair "transform" "scaleY(20) scaleZ(30)" ]
               , notExpected = [ "scaleX" ]
               }
-            , { description = "Scale.initXYZ writes XYZ"
+            , { description = "Scale.initXYZ writes XYZ promoted to scale3d"
               , initFuncs = [ Scale.initXYZ animGroup 10 20 30 ]
-              , expected = [ NameValuePair "transform" "scaleX(10) scaleY(20) scaleZ(30)" ]
+              , expected = [ NameValuePair "transform" "scale3d(10, 20, 30)" ]
               , notExpected = []
               }
             ]
