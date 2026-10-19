@@ -7,7 +7,6 @@ module Anim.Internal.Engine.CSS.Transform exposing
 import Anim.Extra.TransformOrder exposing (TransformProperty(..))
 import Anim.Internal.Builder as Builder
 import Anim.Internal.Engine.CSS.Styles as Styles
-import Anim.Internal.Property.Scale as Scale
 import Dict exposing (Dict)
 import Set exposing (Set)
 

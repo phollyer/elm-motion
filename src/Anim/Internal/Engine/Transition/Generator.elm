@@ -52,7 +52,7 @@ generateAnimation transformOrder discreteTransitions discrete controlledAxes pro
         |> AnimGroup.setPropertyKeys (propertyKeysOf processedProps)
         |> AnimGroup.setWillChange (Builder.willChangeCompositeWithControlledAxes controlledAxes processedProps)
         |> AnimGroup.setStyles
-            (TransitionStyles.fromProcessedPropertiesWithControlledAxes
+            (TransitionStyles.fromProcessedProperties
                 transformOrder
                 controlledAxes
                 baseStylesWithControlledAxes

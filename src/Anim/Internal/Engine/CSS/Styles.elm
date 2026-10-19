@@ -4,7 +4,6 @@ module Anim.Internal.Engine.CSS.Styles exposing
     , filter
     , fromList
     , fromProcessedProperties
-    , fromProcessedPropertiesWithControlledAxes
     , get
     , insert
     , insertList
@@ -65,13 +64,8 @@ fromList =
     Dict.fromList >> Styles
 
 
-fromProcessedProperties : List ( String, String ) -> (List Builder.ProcessedPropertyConfig -> List ( String, String )) -> List Builder.ProcessedPropertyConfig -> Styles
-fromProcessedProperties baseStyles extractTransformStyles processedProps =
-    fromProcessedPropertiesWithControlledAxes Nothing baseStyles extractTransformStyles processedProps
-
-
-fromProcessedPropertiesWithControlledAxes : Maybe (Dict String (Set String)) -> List ( String, String ) -> (List Builder.ProcessedPropertyConfig -> List ( String, String )) -> List Builder.ProcessedPropertyConfig -> Styles
-fromProcessedPropertiesWithControlledAxes maybeControlledAxes baseStyles extractTransformStyles processedProps =
+fromProcessedProperties : Maybe (Dict String (Set String)) -> List ( String, String ) -> (List Builder.ProcessedPropertyConfig -> List ( String, String )) -> List Builder.ProcessedPropertyConfig -> Styles
+fromProcessedProperties maybeControlledAxes baseStyles extractTransformStyles processedProps =
     baseStyles
         ++ extractTransformStyles processedProps
         ++ extractNonTransformStyles maybeControlledAxes processedProps

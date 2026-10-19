@@ -599,7 +599,7 @@ stop =
     CSS.stop
         AnimGroup.setPlayState
         AnimGroup.isActive
-        (\config -> TransitionStyles.fromProcessedPropertiesWithControlledAxes config.transformOrder config.controlledAxes)
+        (\config -> TransitionStyles.fromProcessedProperties config.transformOrder config.controlledAxes)
         setStyles
 
 
@@ -607,7 +607,7 @@ reset : AnimGroupName -> AnimState -> AnimState
 reset =
     CSS.reset
         AnimGroup.setPlayState
-        (\config -> TransitionStyles.fromProcessedPropertiesWithControlledAxes config.transformOrder config.controlledAxes)
+        (\config -> TransitionStyles.fromProcessedProperties config.transformOrder config.controlledAxes)
         setStyles
 
 

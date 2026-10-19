@@ -1,6 +1,6 @@
 module Anim.Internal.Engine.Keyframe.Styles exposing
     ( baselineTransformParts
-    , fromProcessedPropertiesWithControlledAxes
+    , fromProcessedProperties
     )
 
 import Anim.Extra.TransformOrder exposing (TransformProperty)
@@ -22,14 +22,14 @@ import Set exposing (Set)
 -- ============================================================
 
 
-fromProcessedPropertiesWithControlledAxes : Dict String (Set String) -> List TransformProperty -> Maybe PropertyBaselines -> List ( String, String ) -> List Builder.ProcessedPropertyConfig -> Styles
-fromProcessedPropertiesWithControlledAxes controlledAxes maybeOrder maybeTargetValues baseStyles =
-    Styles.fromProcessedPropertiesWithControlledAxes (Just controlledAxes) baseStyles <|
-        extractTransformStyles (Just controlledAxes) maybeOrder maybeTargetValues
+fromProcessedProperties : List TransformProperty -> Dict String (Set String) -> Maybe PropertyBaselines -> List ( String, String ) -> List Builder.ProcessedPropertyConfig -> Styles
+fromProcessedProperties transformOrder controlledAxes maybeTargetValues baseStyles =
+    Styles.fromProcessedProperties (Just controlledAxes) baseStyles <|
+        extractTransformStyles (Just controlledAxes) transformOrder maybeTargetValues
 
 
 extractTransformStyles : Maybe (Dict String (Set String)) -> List TransformProperty -> Maybe PropertyBaselines -> List Builder.ProcessedPropertyConfig -> List ( String, String )
-extractTransformStyles maybeControlledAxes maybeOrder maybeTargetValues properties =
+extractTransformStyles maybeControlledAxes transformOrder maybeTargetValues properties =
     let
         transformParts =
             Transform.extractParts maybeControlledAxes properties
@@ -38,7 +38,7 @@ extractTransformStyles maybeControlledAxes maybeOrder maybeTargetValues properti
             mergeWithBaselines maybeControlledAxes maybeTargetValues properties transformParts
     in
     List.filterMap identity
-        [ Transform.toStyle maybeOrder merged ]
+        [ Transform.toStyle transformOrder merged ]
 
 
 

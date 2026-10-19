@@ -1,4 +1,4 @@
-module Anim.Internal.Engine.Transition.Styles exposing (fromProcessedPropertiesWithControlledAxes)
+module Anim.Internal.Engine.Transition.Styles exposing (fromProcessedProperties)
 
 import Anim.Extra.TransformOrder exposing (TransformProperty)
 import Anim.Internal.Builder as Builder
@@ -8,17 +8,17 @@ import Dict exposing (Dict)
 import Set exposing (Set)
 
 
-fromProcessedPropertiesWithControlledAxes : List TransformProperty -> Dict String (Set String) -> List ( String, String ) -> List Builder.ProcessedPropertyConfig -> Styles
-fromProcessedPropertiesWithControlledAxes maybeOrder controlledAxes baseStyles =
-    Styles.fromProcessedPropertiesWithControlledAxes (Just controlledAxes) baseStyles <|
-        extractTransformStyles (Just controlledAxes) maybeOrder
+fromProcessedProperties : List TransformProperty -> Dict String (Set String) -> List ( String, String ) -> List Builder.ProcessedPropertyConfig -> Styles
+fromProcessedProperties transformOrder controlledAxes baseStyles =
+    Styles.fromProcessedProperties (Just controlledAxes) baseStyles <|
+        extractTransformStyles (Just controlledAxes) transformOrder
 
 
 extractTransformStyles : Maybe (Dict String (Set String)) -> List TransformProperty -> List Builder.ProcessedPropertyConfig -> List ( String, String )
-extractTransformStyles maybeControlledAxes maybeOrder properties =
+extractTransformStyles maybeControlledAxes transformOrder properties =
     let
         transformParts =
             Transform.extractParts maybeControlledAxes properties
     in
     List.filterMap identity
-        [ Transform.toStyle maybeOrder transformParts ]
+        [ Transform.toStyle transformOrder transformParts ]

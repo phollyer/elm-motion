@@ -91,7 +91,7 @@ generateRestart counter maybeOrder iterationCount direction maybeTargetValues di
 
 
 generate : String -> Int -> List TransformProperty -> Builder.Iterations -> Builder.AnimationDirection -> Maybe PropertyBaselines -> DiscreteConfig -> Dict String (Set.Set String) -> List Builder.ProcessedPropertyConfig -> AnimGroup
-generate name counter maybeOrder iterationCount direction maybeTargetValues discrete controlledAxes properties =
+generate name counter transformOrder iterationCount direction maybeTargetValues discrete controlledAxes properties =
     let
         -- Snap properties are excluded from the @keyframes rule so the
         -- browser does not interpolate them; their end-value styles are
@@ -100,7 +100,7 @@ generate name counter maybeOrder iterationCount direction maybeTargetValues disc
             (Builder.partitionByMode properties).animate
     in
     AnimGroup.init
-        |> AnimGroup.setStyles (KeyframeStyles.fromProcessedPropertiesWithControlledAxes controlledAxes maybeOrder maybeTargetValues [] properties)
+        |> AnimGroup.setStyles (KeyframeStyles.fromProcessedProperties transformOrder controlledAxes maybeTargetValues [] properties)
         |> AnimGroup.setRestartCounter counter
         |> AnimGroup.setIterationCount 0
         |> AnimGroup.setWillChange (Builder.willChangeCompositeWithControlledAxes controlledAxes animated)
@@ -130,7 +130,7 @@ generate name counter maybeOrder iterationCount direction maybeTargetValues disc
                         let
                             keyframesString =
                                 animated
-                                    |> generateSteps controlledAxes maybeOrder maybeTargetValues maxDuration maxDelay discrete
+                                    |> generateSteps controlledAxes transformOrder maybeTargetValues maxDuration maxDelay discrete
                                     |> buildKeyframesString name
                         in
                         AnimGroup.setAnimation
