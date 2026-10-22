@@ -14,12 +14,16 @@ import Anim.Internal.Engine.CSS.Styles as InternalStyles
 import Anim.Internal.Engine.Shared.AnimGroups as InternalAnimGroups
 import Anim.Internal.Engine.Transition.AnimGroup as InternalAnimGroup
 import Html
+import Json.Encode as Encode
+import Test.Html.Event as Event
+import Test.Html.Query as Query
 
 
 type alias Factory builder animState =
     { init : List (builder -> builder) -> animState
     , for : String -> (builder -> builder)
     , animate : animState -> (builder -> builder) -> animState
+    , complete : String -> animState -> Result String animState
     , seedInit : String -> builder -> builder
     , seedAnimation : String -> builder -> builder
     , attributes : String -> animState -> List (Html.Attribute Never)
@@ -41,6 +45,7 @@ factory =
     { init = Transition.init
     , for = Transition.for
     , animate = Transition.animate
+    , complete = complete
     , seedInit = seedInit
     , seedAnimation = seedAnimation
     , attributes = Transition.attributes
@@ -55,6 +60,36 @@ factory =
     , styleValue = styleValue
     , styleDeclarations = styleDeclarations
     }
+
+
+type Msg
+    = GotAnim Transition.AnimMsg
+
+
+complete : String -> AnimState -> Result String AnimState
+complete animGroupName state =
+    Html.div (Transition.attributes animGroupName state ++ Transition.events GotAnim) []
+        |> Query.fromHtml
+        |> Event.simulate ( "transitionend", completionPayload animGroupName )
+        |> Event.toResult
+        |> Result.map
+            (\(GotAnim animMsg) ->
+                Transition.update animMsg state
+                    |> Tuple.first
+            )
+
+
+completionPayload : String -> Encode.Value
+completionPayload animGroupName =
+    Encode.object
+        [ ( "target"
+          , Encode.object
+                [ ( "dataset", Encode.object [ ( "animGroupName", Encode.string animGroupName ) ] )
+                , ( "id", Encode.string animGroupName )
+                ]
+          )
+        , ( "currentTarget", Encode.object [ ( "id", Encode.string animGroupName ) ] )
+        ]
 
 
 seedAnimation : String -> EngineBuilder -> EngineBuilder

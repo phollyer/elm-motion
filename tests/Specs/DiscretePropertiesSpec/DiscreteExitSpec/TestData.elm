@@ -1,10 +1,14 @@
 module Specs.DiscretePropertiesSpec.DiscreteExitSpec.TestData exposing
     ( AnimateCase
+    , AnimateCompleteCase
+    , AnimateCompleteTestCase
     , AnimateTestCase
     , InitCase
     , InitTestCase
     , TestCase(..)
     , TestData
+    , buildAnimateCompleteTest
+    , buildAnimateCompleteTests
     , buildAnimateTest
     , buildAnimateTests
     , buildInitTest
@@ -23,6 +27,7 @@ type alias TestData =
 type TestCase
     = InitTest InitTestCase
     | AnimateTest AnimateTestCase
+    | AnimateCompleteTest AnimateCompleteTestCase
 
 
 type alias InitTestCase =
@@ -59,6 +64,23 @@ type alias AnimateCase =
     }
 
 
+type alias AnimateCompleteTestCase =
+    { description : String
+    , timing : TimingProfile
+    , discreteProperty : String
+    , fromValue : String
+    , toValue : String
+    }
+
+
+type alias AnimateCompleteCase =
+    { description : String
+    , discreteProperty : String
+    , fromValue : String
+    , toValue : String
+    }
+
+
 buildInitTests : TimingProfile -> List InitCase -> List TestCase
 buildInitTests timing =
     List.map (buildInitTest timing)
@@ -83,6 +105,22 @@ buildAnimateTests timing =
 buildAnimateTest : TimingProfile -> AnimateCase -> TestCase
 buildAnimateTest timing c =
     AnimateTest
+        { description = c.description
+        , timing = timing
+        , discreteProperty = c.discreteProperty
+        , fromValue = c.fromValue
+        , toValue = c.toValue
+        }
+
+
+buildAnimateCompleteTests : TimingProfile -> List AnimateCompleteCase -> List TestCase
+buildAnimateCompleteTests timing =
+    List.map (buildAnimateCompleteTest timing)
+
+
+buildAnimateCompleteTest : TimingProfile -> AnimateCompleteCase -> TestCase
+buildAnimateCompleteTest timing c =
+    AnimateCompleteTest
         { description = c.description
         , timing = timing
         , discreteProperty = c.discreteProperty

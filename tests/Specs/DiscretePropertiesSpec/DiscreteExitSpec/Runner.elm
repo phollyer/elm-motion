@@ -3,7 +3,7 @@ module Specs.DiscretePropertiesSpec.DiscreteExitSpec.Runner exposing (run)
 import Expect
 import Expectations.Expect as Expect
 import Factories.Engines.Factory as Factory exposing (EngineFactory(..))
-import Specs.DiscretePropertiesSpec.DiscreteExitSpec.TestData exposing (AnimateTestCase, InitTestCase, TestCase(..), TestData)
+import Specs.DiscretePropertiesSpec.DiscreteExitSpec.TestData exposing (AnimateCompleteTestCase, AnimateTestCase, InitTestCase, TestCase(..), TestData)
 import Specs.Shared exposing (NameValuePair)
 import Specs.Shared.AnimGroups exposing (animGroup)
 import Specs.Shared.TimingProfile as TimingProfile
@@ -29,6 +29,9 @@ runTestCase factory testCase =
 
         AnimateTest tc ->
             animateRunner factory tc
+
+        AnimateCompleteTest tc ->
+            animateCompleteRunner factory tc
 
 
 initRunner : EngineFactory animBuilder animState -> InitTestCase -> Test
@@ -82,6 +85,36 @@ animateRunner factory tc =
 
                 Transition f_ ->
                     Expect.styles expected f_.attributes animGroup state
+
+
+animateCompleteRunner : EngineFactory animBuilder animState -> AnimateCompleteTestCase -> Test
+animateCompleteRunner factory tc =
+    test (tc.description ++ TimingProfile.suffix tc.timing) <|
+        \_ ->
+            let
+                f =
+                    Factory.create factory
+
+                expected =
+                    [ NameValuePair tc.discreteProperty tc.toValue ]
+
+                stateBeforeCompletion =
+                    Factory.animate factory animGroup [] <|
+                        TimingProfile.apply factory tc.timing <|
+                            f.discreteExit tc.discreteProperty tc.fromValue tc.toValue
+                                >> f.seedAnimation animGroup
+            in
+            case f.complete animGroup stateBeforeCompletion of
+                Err message ->
+                    Expect.fail message
+
+                Ok completedState ->
+                    case factory of
+                        Keyframe f_ ->
+                            Expect.styles expected f_.attributes animGroup completedState
+
+                        Transition f_ ->
+                            Expect.styles expected f_.attributes animGroup completedState
 
 
 expectedDiscreteValue : TimingProfile.TimingProfile -> String -> String -> String

@@ -19,6 +19,7 @@ type EngineFactory animBuilder animState
 type alias Factory animBuilder state =
     { init : List (animBuilder -> animBuilder) -> state
     , animate : state -> (animBuilder -> animBuilder) -> state
+    , complete : String -> state -> Result String state
     , for : String -> animBuilder -> animBuilder
     , seedInit : String -> animBuilder -> animBuilder
     , seedAnimation : String -> animBuilder -> animBuilder
@@ -37,6 +38,7 @@ create factory_ =
             Factory
                 f.init
                 f.animate
+                f.complete
                 f.for
                 f.seedInit
                 f.seedAnimation
@@ -50,6 +52,7 @@ create factory_ =
             Factory
                 f.init
                 f.animate
+                f.complete
                 f.for
                 f.seedInit
                 f.seedAnimation

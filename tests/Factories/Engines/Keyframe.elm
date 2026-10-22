@@ -15,12 +15,16 @@ import Anim.Internal.Engine.Keyframe.AnimGroup as InternalAnimGroup
 import Anim.Internal.Engine.Keyframe.Animation as InternalAnimation
 import Anim.Internal.Engine.Shared.AnimGroups as InternalAnimGroups
 import Html
+import Json.Encode as Encode
+import Test.Html.Event as Event
+import Test.Html.Query as Query
 
 
 type alias Factory builder animState =
     { init : List (builder -> builder) -> animState
     , for : String -> (builder -> builder)
     , animate : animState -> (builder -> builder) -> animState
+    , complete : String -> animState -> Result String animState
     , seedInit : String -> builder -> builder
     , seedAnimation : String -> builder -> builder
     , attributes : String -> animState -> List (Html.Attribute Never)
@@ -41,6 +45,7 @@ factory =
     { init = Keyframe.init
     , for = Keyframe.for
     , animate = Keyframe.animate
+    , complete = complete
     , seedInit = seedInit
     , seedAnimation = seedAnimation
     , attributes = Keyframe.attributes
@@ -54,6 +59,36 @@ factory =
     , styleValue = styleValue
     , styleDeclarations = styleDeclarations
     }
+
+
+type Msg
+    = GotAnim Keyframe.AnimMsg
+
+
+complete : String -> AnimState -> Result String AnimState
+complete animGroupName state =
+    Html.div (Keyframe.attributes animGroupName state ++ Keyframe.events GotAnim) []
+        |> Query.fromHtml
+        |> Event.simulate ( "animationend", completionPayload animGroupName )
+        |> Event.toResult
+        |> Result.map
+            (\(GotAnim animMsg) ->
+                Keyframe.update animMsg state
+                    |> Tuple.first
+            )
+
+
+completionPayload : String -> Encode.Value
+completionPayload animGroupName =
+    Encode.object
+        [ ( "target"
+          , Encode.object
+                [ ( "dataset", Encode.object [ ( "animGroupName", Encode.string animGroupName ) ] )
+                , ( "id", Encode.string animGroupName )
+                ]
+          )
+        , ( "currentTarget", Encode.object [ ( "id", Encode.string animGroupName ) ] )
+        ]
 
 
 seedAnimation : String -> EngineBuilder -> EngineBuilder
