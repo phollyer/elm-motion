@@ -180,8 +180,7 @@ init propertyInitializers =
                     Generator.init
                         (Builder.getDefaults builder)
                         animGroupName
-                        (Builder.getDiscreteEntryPropertiesFor animGroupName builder)
-                        (Builder.getDiscreteExitPropertiesFor animGroupName builder)
+                        (Builder.getDiscreteConfigFor animGroupName builder)
                         properties
             in
             AnimState
@@ -227,8 +226,7 @@ animate (AnimState state animGroups) build =
                 playback.animationDirection
                 config.transformOrder
                 config.controlledAxes
-                (Builder.getDiscreteEntryPropertiesFor animGroupName builder)
-                (Builder.getDiscreteExitPropertiesFor animGroupName builder)
+                (Builder.getDiscreteConfigFor animGroupName builder)
                 (AnimGroups.get animGroupName animGroups)
                 config.properties
 
@@ -319,8 +317,7 @@ retarget (AnimState state animGroups) build =
                 playback.animationDirection
                 config.transformOrder
                 config.controlledAxes
-                (Builder.getDiscreteEntryPropertiesFor animGroupName builder)
-                (Builder.getDiscreteExitPropertiesFor animGroupName builder)
+                (Builder.getDiscreteConfigFor animGroupName builder)
                 (AnimGroups.get animGroupName animGroups)
                 config.properties
 

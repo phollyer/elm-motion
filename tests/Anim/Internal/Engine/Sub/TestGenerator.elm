@@ -7,6 +7,7 @@ import Anim.Internal.Engine.Sub.Animation as SubAnimation
 import Anim.Internal.Engine.Sub.Animations as SubAnimations
 import Anim.Internal.Engine.Sub.Generator as SubGenerator
 import Anim.Internal.Property.Opacity as Opacity
+import Anim.Internal.Property.Shared.Discrete as Discrete
 import Anim.Internal.Property.Translate as Translate
 import Anim.Internal.Unit as InternalUnit
 import Dict
@@ -50,27 +51,27 @@ initTests =
     describe "init"
         [ test "init with no properties creates a Complete AnimGroup" <|
             \_ ->
-                SubGenerator.init Builder.initDefaults "test" Dict.empty Dict.empty []
+                SubGenerator.init Builder.initDefaults "test" Discrete.empty []
                     |> SubAnimGroup.isComplete
                     |> Expect.equal True
         , test "init is not Running" <|
             \_ ->
-                SubGenerator.init Builder.initDefaults "test" Dict.empty Dict.empty []
+                SubGenerator.init Builder.initDefaults "test" Discrete.empty []
                     |> SubAnimGroup.isRunning
                     |> Expect.equal False
         , test "init with translate property creates a Complete AnimGroup" <|
             \_ ->
-                SubGenerator.init Builder.initDefaults "test" Dict.empty Dict.empty [ translateConfig ]
+                SubGenerator.init Builder.initDefaults "test" Discrete.empty [ translateConfig ]
                     |> SubAnimGroup.isComplete
                     |> Expect.equal True
         , test "init with translate property is not Running" <|
             \_ ->
-                SubGenerator.init Builder.initDefaults "test" Dict.empty Dict.empty [ translateConfig ]
+                SubGenerator.init Builder.initDefaults "test" Discrete.empty [ translateConfig ]
                     |> SubAnimGroup.isRunning
                     |> Expect.equal False
         , test "default transform order is set on init" <|
             \_ ->
-                SubGenerator.init Builder.initDefaults "test" Dict.empty Dict.empty []
+                SubGenerator.init Builder.initDefaults "test" Discrete.empty []
                     |> SubAnimGroup.getTransformOrder
                     |> List.isEmpty
                     |> Expect.equal False
@@ -82,17 +83,17 @@ generateAnimationTests =
     describe "generateAnimation"
         [ test "creates a Running AnimGroup" <|
             \_ ->
-                SubGenerator.generateAnimation Builder.Once Builder.Normal [] Dict.empty Dict.empty Dict.empty Nothing processedConfigs
+                SubGenerator.generateAnimation Builder.Once Builder.Normal [] Dict.empty Discrete.empty Nothing processedConfigs
                     |> SubAnimGroup.isRunning
                     |> Expect.equal True
         , test "is not Complete when Running" <|
             \_ ->
-                SubGenerator.generateAnimation Builder.Once Builder.Normal [] Dict.empty Dict.empty Dict.empty Nothing processedConfigs
+                SubGenerator.generateAnimation Builder.Once Builder.Normal [] Dict.empty Discrete.empty Nothing processedConfigs
                     |> SubAnimGroup.isComplete
                     |> Expect.equal False
         , test "default transform order is set when maybeOrder is Nothing" <|
             \_ ->
-                SubGenerator.generateAnimation Builder.Once Builder.Normal [] Dict.empty Dict.empty Dict.empty Nothing processedConfigs
+                SubGenerator.generateAnimation Builder.Once Builder.Normal [] Dict.empty Discrete.empty Nothing processedConfigs
                     |> SubAnimGroup.getTransformOrder
                     |> List.isEmpty
                     |> Expect.equal False
@@ -102,17 +103,17 @@ generateAnimationTests =
                     customOrder =
                         [ Scale, Translate, Rotate ]
                 in
-                SubGenerator.generateAnimation Builder.Once Builder.Normal customOrder Dict.empty Dict.empty Dict.empty Nothing processedConfigs
+                SubGenerator.generateAnimation Builder.Once Builder.Normal customOrder Dict.empty Discrete.empty Nothing processedConfigs
                     |> SubAnimGroup.getTransformOrder
                     |> Expect.equal customOrder
         , test "Infinite iterations is preserved in the AnimGroup" <|
             \_ ->
-                SubGenerator.generateAnimation Builder.Infinite Builder.Normal [] Dict.empty Dict.empty Dict.empty Nothing processedConfigs
+                SubGenerator.generateAnimation Builder.Infinite Builder.Normal [] Dict.empty Discrete.empty Nothing processedConfigs
                     |> SubAnimGroup.getIterations
                     |> Expect.equal Builder.Infinite
         , test "Reverse direction is preserved in the AnimGroup" <|
             \_ ->
-                SubGenerator.generateAnimation Builder.Once Builder.Alternate [] Dict.empty Dict.empty Dict.empty Nothing processedConfigs
+                SubGenerator.generateAnimation Builder.Once Builder.Alternate [] Dict.empty Discrete.empty Nothing processedConfigs
                     |> SubAnimGroup.getAnimationDirection
                     |> Expect.equal Builder.Alternate
         ]
@@ -142,7 +143,7 @@ snapModeTests =
                     processed =
                         Builder.processProperties Builder.initDefaults "test" [ snapTranslateConfig ]
                 in
-                SubGenerator.generateAnimation Builder.Once Builder.Normal [] Dict.empty Dict.empty Dict.empty Nothing processed
+                SubGenerator.generateAnimation Builder.Once Builder.Normal [] Dict.empty Discrete.empty Nothing processed
                     |> SubAnimGroup.getAnimations
                     |> SubAnimations.list
                     |> List.all (SubAnimation.foldTiming .isComplete)
@@ -153,7 +154,7 @@ snapModeTests =
                     processed =
                         Builder.processProperties Builder.initDefaults "test" [ translateConfig ]
                 in
-                SubGenerator.generateAnimation Builder.Once Builder.Normal [] Dict.empty Dict.empty Dict.empty Nothing processed
+                SubGenerator.generateAnimation Builder.Once Builder.Normal [] Dict.empty Discrete.empty Nothing processed
                     |> SubAnimGroup.getAnimations
                     |> SubAnimations.list
                     |> List.all (SubAnimation.foldTiming .isComplete >> not)
@@ -198,7 +199,7 @@ interruptDurationScalingTests =
                     processedIncomingOpacity =
                         Builder.processProperties Builder.initDefaults "test" [ incomingOpacity ]
                 in
-                SubGenerator.generateAnimation Builder.Once Builder.Normal [] Dict.empty Dict.empty Dict.empty (Just existingGroup) processedIncomingOpacity
+                SubGenerator.generateAnimation Builder.Once Builder.Normal [] Dict.empty Discrete.empty (Just existingGroup) processedIncomingOpacity
                     |> SubAnimGroup.getAnimations
                     |> SubAnimations.get "opacity"
                     |> (\maybeAnim ->

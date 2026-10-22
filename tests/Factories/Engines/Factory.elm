@@ -20,6 +20,10 @@ type alias Factory animBuilder state =
     { init : List (animBuilder -> animBuilder) -> state
     , animate : state -> (animBuilder -> animBuilder) -> state
     , for : String -> animBuilder -> animBuilder
+    , seedInit : String -> animBuilder -> animBuilder
+    , seedAnimation : String -> animBuilder -> animBuilder
+    , discreteEntry : String -> String -> animBuilder -> animBuilder
+    , discreteExit : String -> String -> String -> animBuilder -> animBuilder
     , delay : Int -> animBuilder -> animBuilder
     , duration : Int -> animBuilder -> animBuilder
     , transformOrder : List TransformProperty -> animBuilder -> animBuilder
@@ -34,6 +38,10 @@ create factory_ =
                 f.init
                 f.animate
                 f.for
+                f.seedInit
+                f.seedAnimation
+                f.discreteEntry
+                f.discreteExit
                 f.delay
                 f.duration
                 f.transformOrder
@@ -43,6 +51,10 @@ create factory_ =
                 f.init
                 f.animate
                 f.for
+                f.seedInit
+                f.seedAnimation
+                f.discreteEntry
+                f.discreteExit
                 f.delay
                 f.duration
                 f.transformOrder

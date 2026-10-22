@@ -19,6 +19,7 @@ module Anim.Internal.Engine.Sub.AnimGroup exposing
     , setAnimations
     , setControlledAxes
     , setCurrentIteration
+    , setDiscreteConfig
     , setDiscreteEntry
     , setDiscreteExit
     , setIterationCount
@@ -28,9 +29,10 @@ module Anim.Internal.Engine.Sub.AnimGroup exposing
     )
 
 import Anim.Extra.TransformOrder as TransformProperty exposing (TransformProperty)
-import Anim.Internal.Builder exposing (AnimationDirection(..), DiscreteExitProperty, Iterations(..))
+import Anim.Internal.Builder exposing (AnimationDirection(..), Iterations(..))
 import Anim.Internal.Engine.Shared.PlayState as PlayState exposing (PlayState)
 import Anim.Internal.Engine.Sub.Animations as Animations exposing (Animations)
+import Anim.Internal.Property.Shared.Discrete as Discrete
 import Dict exposing (Dict)
 import Set exposing (Set)
 
@@ -49,8 +51,7 @@ type AnimGroup
         , iterations : Iterations
         , animationDirection : AnimationDirection
         , currentIteration : Int
-        , discreteEntry : Dict String String
-        , discreteExit : Dict String DiscreteExitProperty
+        , discreteConfig : Discrete.Config
         , willChange : String
         , controlledAxes : Dict String (Set String)
         }
@@ -110,14 +111,19 @@ setWillChange value (AnimGroup group) =
     AnimGroup { group | willChange = value }
 
 
-setDiscreteEntry : Dict String String -> AnimGroup -> AnimGroup
+setDiscreteConfig : Discrete.Config -> AnimGroup -> AnimGroup
+setDiscreteConfig discreteConfig (AnimGroup group) =
+    AnimGroup { group | discreteConfig = discreteConfig }
+
+
+setDiscreteEntry : Discrete.Entry -> AnimGroup -> AnimGroup
 setDiscreteEntry entry (AnimGroup group) =
-    AnimGroup { group | discreteEntry = entry }
+    AnimGroup { group | discreteConfig = Discrete.setEntry entry group.discreteConfig }
 
 
-setDiscreteExit : Dict String DiscreteExitProperty -> AnimGroup -> AnimGroup
+setDiscreteExit : Discrete.Exit -> AnimGroup -> AnimGroup
 setDiscreteExit exit (AnimGroup group) =
-    AnimGroup { group | discreteExit = exit }
+    AnimGroup { group | discreteConfig = Discrete.setExit exit group.discreteConfig }
 
 
 
@@ -135,8 +141,7 @@ init =
         , iterations = Once
         , animationDirection = Normal
         , currentIteration = 0
-        , discreteEntry = Dict.empty
-        , discreteExit = Dict.empty
+        , discreteConfig = Discrete.empty
         , willChange = ""
         , controlledAxes = Dict.empty
         }
@@ -163,9 +168,9 @@ getCurrentIteration (AnimGroup group) =
     group.currentIteration
 
 
-getDiscreteEntry : AnimGroup -> Dict String String
+getDiscreteEntry : AnimGroup -> Discrete.Entry
 getDiscreteEntry (AnimGroup group) =
-    group.discreteEntry
+    group.discreteConfig.entry
 
 
 getControlledAxes : AnimGroup -> Dict String (Set String)
@@ -173,9 +178,9 @@ getControlledAxes (AnimGroup group) =
     group.controlledAxes
 
 
-getDiscreteExit : AnimGroup -> Dict String DiscreteExitProperty
+getDiscreteExit : AnimGroup -> Discrete.Exit
 getDiscreteExit (AnimGroup group) =
-    group.discreteExit
+    group.discreteConfig.exit
 
 
 getIterations : AnimGroup -> Iterations

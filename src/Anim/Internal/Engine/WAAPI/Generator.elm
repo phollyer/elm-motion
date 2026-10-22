@@ -11,7 +11,7 @@ import Anim.Internal.Builder as Builder
 import Anim.Internal.Builder.PropertyBaselines as PropertyBaselines exposing (PropertyBaselines)
 import Anim.Internal.Engine.Shared.AnimGroups as AnimGroups
 import Anim.Internal.Engine.WAAPI.AnimGroup as AnimGroup exposing (AnimGroup, AnimationStatus(..))
-import Dict exposing (Dict)
+import Anim.Internal.Property.Shared.Discrete as Discrete
 
 
 
@@ -20,16 +20,15 @@ import Dict exposing (Dict)
 -- ============================================================
 
 
-init : Builder.DefaultsConfig -> Builder.AnimGroupName -> Dict String String -> Dict String Builder.DiscreteExitProperty -> List Builder.PropertyConfig -> AnimGroup
-init defaults animGroupName discreteEntryProps discreteExitProps properties =
+init : Builder.DefaultsConfig -> Builder.AnimGroupName -> Discrete.Config -> List Builder.PropertyConfig -> AnimGroup
+init defaults animGroupName discreteConfig properties =
     let
         processedProps =
             Builder.processProperties defaults animGroupName properties
     in
     AnimGroup.init
         |> AnimGroup.setSnapshot (endBounds processedProps)
-        |> AnimGroup.setDiscreteEntry discreteEntryProps
-        |> AnimGroup.setDiscreteExit discreteExitProps
+        |> AnimGroup.setDiscreteConfig discreteConfig
 
 
 
@@ -42,12 +41,11 @@ generateAnimation :
     Builder.Iterations
     -> Builder.AnimationDirection
     -> List TransformProperty
-    -> Dict String String
-    -> Dict String Builder.DiscreteExitProperty
+    -> Discrete.Config
     -> Maybe AnimGroup
     -> List Builder.ProcessedPropertyConfig
     -> AnimGroup
-generateAnimation iterations animationDirection globalTransformOrder discreteEntryProps discreteExitProps existingAnimation properties =
+generateAnimation iterations animationDirection globalTransformOrder discreteConfig existingAnimation properties =
     let
         animationBounds =
             propertyBounds properties
@@ -130,8 +128,7 @@ generateAnimation iterations animationDirection globalTransformOrder discreteEnt
         |> AnimGroup.setTransformOrder transformOrder
         |> AnimGroup.setIterationCount iterations
         |> AnimGroup.setAnimationDirection animationDirection
-        |> AnimGroup.setDiscreteEntry discreteEntryProps
-        |> AnimGroup.setDiscreteExit discreteExitProps
+        |> AnimGroup.setDiscreteConfig discreteConfig
 
 
 propertyTypeString : Builder.ProcessedPropertyConfig -> String

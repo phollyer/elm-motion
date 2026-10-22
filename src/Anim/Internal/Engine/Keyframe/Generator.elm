@@ -1,7 +1,5 @@
 module Anim.Internal.Engine.Keyframe.Generator exposing
-    ( DiscreteConfig
-    , emptyDiscreteConfig
-    , generateAnimation
+    ( generateAnimation
     , generateRestart
     )
 
@@ -19,6 +17,7 @@ import Anim.Internal.Property.Opacity as Opacity
 import Anim.Internal.Property.PerspectiveOrigin as PerspectiveOrigin
 import Anim.Internal.Property.Rotate as Rotate
 import Anim.Internal.Property.Scale as Scale
+import Anim.Internal.Property.Shared.Discrete as Discrete
 import Anim.Internal.Property.Size as Size
 import Anim.Internal.Property.Skew as Skew
 import Anim.Internal.Property.Translate as Translate
@@ -37,27 +36,8 @@ import Shared.Spring as SpringSolver
 -- ============================================================
 
 
-type alias DiscreteConfig =
-    { entry : Dict String String
-    , exit : Dict String Builder.DiscreteExitProperty
-    }
-
-
 type alias AnimGroupName =
     String
-
-
-
--- ============================================================
--- BUILD
--- ============================================================
-
-
-emptyDiscreteConfig : DiscreteConfig
-emptyDiscreteConfig =
-    { entry = Dict.empty
-    , exit = Dict.empty
-    }
 
 
 
@@ -66,16 +46,16 @@ emptyDiscreteConfig =
 -- ============================================================
 
 
-generateAnimation : List TransformProperty -> Builder.Iterations -> Builder.AnimationDirection -> DiscreteConfig -> AnimGroupName -> Dict String (Set.Set String) -> List Builder.ProcessedPropertyConfig -> AnimGroup
-generateAnimation maybeOrder iterationCount direction discrete animGroupName controlledAxes properties =
+generateAnimation : List TransformProperty -> Builder.Iterations -> Builder.AnimationDirection -> Discrete.Config -> AnimGroupName -> Dict String (Set.Set String) -> List Builder.ProcessedPropertyConfig -> AnimGroup
+generateAnimation maybeOrder iterationCount direction discreteConfig animGroupName controlledAxes properties =
     let
         name =
-            generateName Nothing maybeOrder discrete animGroupName properties
+            generateName Nothing maybeOrder discreteConfig animGroupName properties
     in
-    generate name 0 maybeOrder iterationCount direction Nothing discrete controlledAxes properties
+    generate name 0 maybeOrder iterationCount direction Nothing discreteConfig controlledAxes properties
 
 
-generateRestart : Int -> List TransformProperty -> Builder.Iterations -> Builder.AnimationDirection -> Maybe PropertyBaselines -> DiscreteConfig -> AnimGroupName -> Dict String (Set.Set String) -> List Builder.ProcessedPropertyConfig -> AnimGroup
+generateRestart : Int -> List TransformProperty -> Builder.Iterations -> Builder.AnimationDirection -> Maybe PropertyBaselines -> Discrete.Config -> AnimGroupName -> Dict String (Set.Set String) -> List Builder.ProcessedPropertyConfig -> AnimGroup
 generateRestart counter maybeOrder iterationCount direction maybeTargetValues discrete animGroupName controlledAxes properties =
     let
         newCounter =
@@ -90,7 +70,7 @@ generateRestart counter maybeOrder iterationCount direction maybeTargetValues di
     generate name newCounter maybeOrder iterationCount direction maybeTargetValues discrete controlledAxes properties
 
 
-generate : String -> Int -> List TransformProperty -> Builder.Iterations -> Builder.AnimationDirection -> Maybe PropertyBaselines -> DiscreteConfig -> Dict String (Set.Set String) -> List Builder.ProcessedPropertyConfig -> AnimGroup
+generate : String -> Int -> List TransformProperty -> Builder.Iterations -> Builder.AnimationDirection -> Maybe PropertyBaselines -> Discrete.Config -> Dict String (Set.Set String) -> List Builder.ProcessedPropertyConfig -> AnimGroup
 generate name counter transformOrder iterationCount direction maybeTargetValues discrete controlledAxes properties =
     let
         -- Snap properties are excluded from the @keyframes rule so the
@@ -151,7 +131,7 @@ generate name counter transformOrder iterationCount direction maybeTargetValues 
 -- ============================================================
 
 
-generateSteps : Dict String (Set.Set String) -> List TransformProperty -> Maybe PropertyBaselines -> Int -> Int -> DiscreteConfig -> List Builder.ProcessedPropertyConfig -> List ( Float, List ( String, String ) )
+generateSteps : Dict String (Set.Set String) -> List TransformProperty -> Maybe PropertyBaselines -> Int -> Int -> Discrete.Config -> List Builder.ProcessedPropertyConfig -> List ( Float, List ( String, String ) )
 generateSteps controlledAxes maybeOrder maybeTargetValues maxDuration maxDelay discrete processedProps =
     let
         totalAnimationTime =
@@ -401,7 +381,7 @@ buildKeyframesString name steps =
 -- ============================================================
 
 
-generateHash : List TransformProperty -> DiscreteConfig -> AnimGroupName -> Int -> Int -> List Builder.ProcessedPropertyConfig -> String
+generateHash : List TransformProperty -> Discrete.Config -> AnimGroupName -> Int -> Int -> List Builder.ProcessedPropertyConfig -> String
 generateHash transformOrder discrete animGroupName maxDuration maxDelay processedProps =
     let
         orderHash =
@@ -519,7 +499,7 @@ generateHash transformOrder discrete animGroupName maxDuration maxDelay processe
 -- ============================================================
 
 
-generateName : Maybe String -> List TransformProperty -> DiscreteConfig -> AnimGroupName -> List Builder.ProcessedPropertyConfig -> String
+generateName : Maybe String -> List TransformProperty -> Discrete.Config -> AnimGroupName -> List Builder.ProcessedPropertyConfig -> String
 generateName maybeSuffix maybeOrder discrete animGroupName properties =
     let
         ( maxDuration, maxDelay ) =

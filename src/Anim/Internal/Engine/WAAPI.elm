@@ -181,8 +181,7 @@ init commandPort subscriptionPort propertyInitializers =
                     Generator.init
                         (Builder.getDefaults builder)
                         animGroupName
-                        (Builder.getDiscreteEntryPropertiesFor animGroupName builder)
-                        (Builder.getDiscreteExitPropertiesFor animGroupName builder)
+                        (Builder.getDiscreteConfigFor animGroupName builder)
                         properties
             in
             AnimState
@@ -236,8 +235,7 @@ animate (AnimState state animGroups) build =
                 playback.iterations
                 playback.animationDirection
                 config.transformOrder
-                (Builder.getDiscreteEntryPropertiesFor animGroupName builder)
-                (Builder.getDiscreteExitPropertiesFor animGroupName builder)
+                (Builder.getDiscreteConfigFor animGroupName builder)
                 (AnimGroups.get animGroupName animGroups)
                 config.properties
 
@@ -324,8 +322,7 @@ retarget (AnimState state animGroups) build =
                 playback.iterations
                 playback.animationDirection
                 config.transformOrder
-                (Builder.getDiscreteEntryPropertiesFor animGroupName builder)
-                (Builder.getDiscreteExitPropertiesFor animGroupName builder)
+                (Builder.getDiscreteConfigFor animGroupName builder)
                 (AnimGroups.get animGroupName animGroups)
                 config.properties
 

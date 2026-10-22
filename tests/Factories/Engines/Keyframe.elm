@@ -8,6 +8,7 @@ module Factories.Engines.Keyframe exposing
 
 import Anim.Engine.Keyframe as Keyframe exposing (AnimState, EngineBuilder)
 import Anim.Extra.TransformOrder exposing (TransformProperty)
+import Anim.Property.Opacity as Opacity
 import Anim.Internal.Engine.CSS.CSS as InternalCss
 import Anim.Internal.Engine.CSS.Styles as InternalStyles
 import Anim.Internal.Engine.Keyframe.AnimGroup as InternalAnimGroup
@@ -20,7 +21,11 @@ type alias Factory builder animState =
     { init : List (builder -> builder) -> animState
     , for : String -> (builder -> builder)
     , animate : animState -> (builder -> builder) -> animState
+    , seedInit : String -> builder -> builder
+    , seedAnimation : String -> builder -> builder
     , attributes : String -> animState -> List (Html.Attribute Never)
+    , discreteEntry : String -> String -> builder -> builder
+    , discreteExit : String -> String -> String -> builder -> builder
     , delay : Int -> builder -> builder
     , duration : Int -> builder -> builder
     , transformOrder : List TransformProperty -> builder -> builder
@@ -36,7 +41,11 @@ factory =
     { init = Keyframe.init
     , for = Keyframe.for
     , animate = Keyframe.animate
+    , seedInit = seedInit
+    , seedAnimation = seedAnimation
     , attributes = Keyframe.attributes
+    , discreteEntry = Keyframe.discreteEntry
+    , discreteExit = Keyframe.discreteExit
     , delay = Keyframe.delay
     , duration = Keyframe.duration
     , transformOrder = Keyframe.transformOrder
@@ -45,6 +54,19 @@ factory =
     , styleValue = styleValue
     , styleDeclarations = styleDeclarations
     }
+
+
+seedAnimation : String -> EngineBuilder -> EngineBuilder
+seedAnimation animGroup =
+    Keyframe.for animGroup
+        >> Opacity.begin
+        >> Opacity.to 0.5
+        >> Opacity.end
+
+
+seedInit : String -> EngineBuilder -> EngineBuilder
+seedInit animGroup =
+    Opacity.init animGroup 1
 
 
 animationString : String -> AnimState -> Maybe String

@@ -25,12 +25,12 @@ module Anim.Internal.Engine.WAAPI.AnimGroup exposing
     , isRunning
     , setAnimationDirection
     , setCurrentIteration
+    , setDiscreteConfig
     , setDiscreteEntry
     , setDiscreteExit
     , setIterationCount
     , setProgress
     , setPropertyStates
-    , setResizeProportion
     , setResizeState
     , setSnapshot
     , setStatus
@@ -42,6 +42,7 @@ import Anim.Extra.TransformOrder as TransformProperty exposing (TransformPropert
 import Anim.Internal.Builder as Builder
 import Anim.Internal.Builder.PropertyBaselines as PropertyBaselines exposing (PropertyBaselines)
 import Anim.Internal.Engine.Shared.AnimGroups as AnimGroups exposing (AnimGroups)
+import Anim.Internal.Property.Shared.Discrete as Discrete
 import Dict exposing (Dict)
 
 
@@ -61,8 +62,7 @@ type AnimGroup
         , currentIteration : Int
         , resizeStates : Dict String ResizeAxisState
         , animationDirection : Builder.AnimationDirection
-        , discreteEntry : Dict String Builder.DiscreteEntryProperty
-        , discreteExit : Dict String Builder.DiscreteExitProperty
+        , discreteConfig : Discrete.Config
         }
 
 
@@ -129,8 +129,7 @@ init =
         , currentIteration = 0
         , resizeStates = Dict.empty
         , animationDirection = Builder.Normal
-        , discreteEntry = Dict.empty
-        , discreteExit = Dict.empty
+        , discreteConfig = Discrete.empty
         }
 
 
@@ -199,30 +198,19 @@ setResizeState propName newState (AnimGroup group) =
         { group | resizeStates = Dict.insert propName newState group.resizeStates }
 
 
-{-| Update _only_ the per-axis proportion snapshot of the cached leg
-state for the given property name, leaving `start`/`end`/`durationMs`
-untouched. A no-op if no state has been cached yet for that property
-(animation hasn't reported a first frame or no resize has fired).
--}
-setResizeProportion : String -> AxisProportion -> AnimGroup -> AnimGroup
-setResizeProportion propName proportion (AnimGroup group) =
-    AnimGroup
-        { group
-            | resizeStates =
-                Dict.update propName
-                    (Maybe.map (\state -> { state | proportion = proportion }))
-                    group.resizeStates
-        }
+setDiscreteConfig : Discrete.Config -> AnimGroup -> AnimGroup
+setDiscreteConfig config (AnimGroup group) =
+    AnimGroup { group | discreteConfig = config }
 
 
-setDiscreteEntry : Dict String Builder.DiscreteEntryProperty -> AnimGroup -> AnimGroup
+setDiscreteEntry : Discrete.Entry -> AnimGroup -> AnimGroup
 setDiscreteEntry entry (AnimGroup group) =
-    AnimGroup { group | discreteEntry = entry }
+    AnimGroup { group | discreteConfig = Discrete.setEntry entry group.discreteConfig }
 
 
-setDiscreteExit : Dict String Builder.DiscreteExitProperty -> AnimGroup -> AnimGroup
+setDiscreteExit : Discrete.Exit -> AnimGroup -> AnimGroup
 setDiscreteExit exit (AnimGroup group) =
-    AnimGroup { group | discreteExit = exit }
+    AnimGroup { group | discreteConfig = Discrete.setExit exit group.discreteConfig }
 
 
 setIterationCount : Builder.Iterations -> AnimGroup -> AnimGroup
@@ -312,14 +300,14 @@ getResizeState propName (AnimGroup group) =
     Dict.get propName group.resizeStates
 
 
-getDiscreteEntry : AnimGroup -> Dict String Builder.DiscreteEntryProperty
+getDiscreteEntry : AnimGroup -> Discrete.Entry
 getDiscreteEntry (AnimGroup group) =
-    group.discreteEntry
+    group.discreteConfig.entry
 
 
-getDiscreteExit : AnimGroup -> Dict String Builder.DiscreteExitProperty
+getDiscreteExit : AnimGroup -> Discrete.Exit
 getDiscreteExit (AnimGroup group) =
-    group.discreteExit
+    group.discreteConfig.exit
 
 
 getIterations : AnimGroup -> Builder.Iterations

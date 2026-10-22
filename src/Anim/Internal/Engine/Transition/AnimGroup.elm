@@ -21,13 +21,12 @@ module Anim.Internal.Engine.Transition.AnimGroup exposing
     , setStartingStyles
     , setStyles
     , setWillChange
-    , usesDiscrete
     )
 
-import Anim.Internal.Builder as Builder
 import Anim.Internal.Engine.CSS.Styles as Styles exposing (Styles)
 import Anim.Internal.Engine.Shared.PlayState as PlayState exposing (PlayState)
-import Dict exposing (Dict)
+import Anim.Internal.Property.Shared.Discrete as Discrete
+import Dict
 import Set exposing (Set)
 
 
@@ -41,8 +40,7 @@ type AnimGroup
     = AnimGroup
         { styles : Styles
         , playState : PlayState
-        , discreteEntry : Dict String String
-        , discreteExit : Dict String Builder.DiscreteExitProperty
+        , discreteConfig : Discrete.Config
         , startingStyles : List String
         , propertyKeys : Set String
         , willChange : String
@@ -61,8 +59,7 @@ init =
     AnimGroup
         { styles = Styles.empty
         , playState = PlayState.NotStarted
-        , discreteEntry = Dict.empty
-        , discreteExit = Dict.empty
+        , discreteConfig = Discrete.empty
         , startingStyles = []
         , propertyKeys = Set.empty
         , willChange = ""
@@ -76,14 +73,14 @@ init =
 -- ============================================================
 
 
-setDiscreteEntry : Dict String String -> AnimGroup -> AnimGroup
+setDiscreteEntry : Discrete.Entry -> AnimGroup -> AnimGroup
 setDiscreteEntry entry (AnimGroup animGroup) =
-    AnimGroup { animGroup | discreteEntry = entry }
+    AnimGroup { animGroup | discreteConfig = Discrete.setEntry entry animGroup.discreteConfig }
 
 
-setDiscreteExit : Dict String Builder.DiscreteExitProperty -> AnimGroup -> AnimGroup
+setDiscreteExit : Discrete.Exit -> AnimGroup -> AnimGroup
 setDiscreteExit exit (AnimGroup animGroup) =
-    AnimGroup { animGroup | discreteExit = exit }
+    AnimGroup { animGroup | discreteConfig = Discrete.setExit exit animGroup.discreteConfig }
 
 
 setPlayState : PlayState -> AnimGroup -> AnimGroup
@@ -127,7 +124,7 @@ getStartingStyles (AnimGroup animGroup) =
 
 getStyles : AnimGroup -> Styles
 getStyles (AnimGroup animGroup) =
-    Dict.foldl Styles.insert animGroup.styles animGroup.discreteEntry
+    Dict.foldl Styles.insert animGroup.styles animGroup.discreteConfig.entry
 
 
 {-| Compute the destination CSS for a selector-driven stylesheet rule:
@@ -140,29 +137,23 @@ animate call where it was freshly set; subsequent animates clear
 getStylesheetRule : AnimGroup -> Styles
 getStylesheetRule (AnimGroup animGroup) =
     animGroup.styles
-        |> (\s -> Dict.foldl Styles.insert s animGroup.discreteEntry)
+        |> (\s -> Dict.foldl Styles.insert s animGroup.discreteConfig.entry)
         |> (\s ->
                 Dict.foldl
                     (\key { to } acc -> Styles.insert key to acc)
                     s
-                    animGroup.discreteExit
+                    animGroup.discreteConfig.exit
            )
 
 
-usesDiscrete : AnimGroup -> Bool
-usesDiscrete (AnimGroup animGroup) =
-    not (Dict.isEmpty animGroup.discreteEntry)
-        || not (Dict.isEmpty animGroup.discreteExit)
-
-
-getDiscreteEntry : AnimGroup -> Dict String String
+getDiscreteEntry : AnimGroup -> Discrete.Entry
 getDiscreteEntry (AnimGroup animGroup) =
-    animGroup.discreteEntry
+    animGroup.discreteConfig.entry
 
 
-getDiscreteExit : AnimGroup -> Dict String Builder.DiscreteExitProperty
+getDiscreteExit : AnimGroup -> Discrete.Exit
 getDiscreteExit (AnimGroup animGroup) =
-    animGroup.discreteExit
+    animGroup.discreteConfig.exit
 
 
 {-| Get the set of Builder property keys (e.g. "translate", "opacity",
@@ -298,25 +289,16 @@ mergeStyles (AnimGroup newGroup) (AnimGroup existingGroup) newCssProps =
                         else
                             s
                    )
-
-        mergedDiscreteEntry =
-            Dict.union newGroup.discreteEntry existingGroup.discreteEntry
-
-        mergedDiscreteExit =
-            -- discreteExit is per-animate. The new group's exit dict is
-            -- whatever was freshly set on this animate call (the builder
-            -- clears it between animates). We do NOT carry forward the
-            -- previous group's exit, so a Hide → Show cycle correctly
-            -- drops the `to: none` once the next animate runs.
-            newGroup.discreteExit
     in
     AnimGroup
         { styles = styles
         , playState = newGroup.playState
-        , discreteEntry = mergedDiscreteEntry
-        , discreteExit = mergedDiscreteExit
         , startingStyles = newGroup.startingStyles
         , propertyKeys = Set.union newGroup.propertyKeys existingGroup.propertyKeys
+        , discreteConfig =
+            { entry = Dict.union newGroup.discreteConfig.entry existingGroup.discreteConfig.entry
+            , exit = newGroup.discreteConfig.exit
+            }
         , willChange = mergeWillChange existingGroup.willChange newGroup.willChange
         , stateId = existingGroup.stateId + 1
         }

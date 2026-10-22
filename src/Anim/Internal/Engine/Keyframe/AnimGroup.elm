@@ -27,11 +27,10 @@ module Anim.Internal.Engine.Keyframe.AnimGroup exposing
     , setWillChange
     )
 
-import Anim.Internal.Builder exposing (DiscreteExitProperty)
 import Anim.Internal.Engine.CSS.Styles as Styles exposing (Styles)
 import Anim.Internal.Engine.Keyframe.Animation exposing (Animation)
 import Anim.Internal.Engine.Shared.PlayState as PlayState exposing (PlayState)
-import Dict exposing (Dict)
+import Anim.Internal.Property.Shared.Discrete as Discrete
 
 
 
@@ -48,8 +47,7 @@ type AnimGroup
         , iterationCount : Int
         , maybeAnimation : Maybe Animation
         , willChange : String
-        , discreteEntry : Dict String String
-        , discreteExit : Dict String DiscreteExitProperty
+        , discreteConfig : Discrete.Config
         }
 
 
@@ -68,8 +66,7 @@ init =
         , iterationCount = 0
         , maybeAnimation = Nothing
         , willChange = ""
-        , discreteEntry = Dict.empty
-        , discreteExit = Dict.empty
+        , discreteConfig = Discrete.empty
         }
 
 
@@ -214,7 +211,11 @@ setWillChange value (AnimGroup animGroup) =
 
 mergeStyles : AnimGroup -> AnimGroup -> AnimGroup
 mergeStyles (AnimGroup new) (AnimGroup existing) =
-    AnimGroup { new | styles = Styles.merge new.styles existing.styles }
+    AnimGroup
+        { new
+            | styles = Styles.merge new.styles existing.styles
+            , discreteConfig = Discrete.firstNonEmpty new.discreteConfig existing.discreteConfig
+        }
 
 
 setStyles : Styles -> AnimGroup -> AnimGroup
@@ -228,21 +229,21 @@ setStyles styles (AnimGroup animGroup) =
 -- ============================================================
 
 
-getDiscreteEntry : AnimGroup -> Dict String String
+getDiscreteEntry : AnimGroup -> Discrete.Entry
 getDiscreteEntry (AnimGroup animGroup) =
-    animGroup.discreteEntry
+    animGroup.discreteConfig.entry
 
 
-getDiscreteExit : AnimGroup -> Dict String DiscreteExitProperty
+getDiscreteExit : AnimGroup -> Discrete.Exit
 getDiscreteExit (AnimGroup animGroup) =
-    animGroup.discreteExit
+    animGroup.discreteConfig.exit
 
 
-setDiscreteEntry : Dict String String -> AnimGroup -> AnimGroup
+setDiscreteEntry : Discrete.Entry -> AnimGroup -> AnimGroup
 setDiscreteEntry entry (AnimGroup animGroup) =
-    AnimGroup { animGroup | discreteEntry = entry }
+    AnimGroup { animGroup | discreteConfig = Discrete.setEntry entry animGroup.discreteConfig }
 
 
-setDiscreteExit : Dict String DiscreteExitProperty -> AnimGroup -> AnimGroup
+setDiscreteExit : Discrete.Exit -> AnimGroup -> AnimGroup
 setDiscreteExit exit (AnimGroup animGroup) =
-    AnimGroup { animGroup | discreteExit = exit }
+    AnimGroup { animGroup | discreteConfig = Discrete.setExit exit animGroup.discreteConfig }

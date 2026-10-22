@@ -80,11 +80,12 @@ suite =
                             |> Builder.discreteEntry "display" "flex"
                 in
                 ( Builder.getCurrentAnimGroupConfig builder
-                    |> .discreteEntryProperties
+                    |> .discreteConfig
+                    |> .entry
                 , Builder.getDiscreteEntryPropertiesFor "el" builder
                 )
                     |> Expect.equal
-                        ( Just (Dict.fromList [ ( "display", "flex" ), ( "opacity", "1" ) ])
+                        ( Dict.fromList [ ( "display", "flex" ), ( "opacity", "1" ) ]
                         , Dict.fromList [ ( "display", "flex" ), ( "opacity", "1" ) ]
                         )
         , test "init entries do not leak current group selection into the next entry" <|
@@ -100,6 +101,6 @@ suite =
                             ]
                 in
                 Builder.getAnimGroupConfig "bottom-line-group" builder
-                    |> Maybe.andThen .discreteEntryProperties
+                    |> Maybe.map (.discreteConfig >> .entry)
                     |> Expect.equal Nothing
         ]

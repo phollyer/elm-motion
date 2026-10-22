@@ -27,12 +27,13 @@ import Anim.Internal.Engine.CSS.CSS as CSS exposing (AnimState(..))
 import Anim.Internal.Engine.CSS.Styles as Styles
 import Anim.Internal.Engine.Keyframe.AnimGroup as AnimGroup exposing (AnimGroup)
 import Anim.Internal.Engine.Keyframe.Animation as Animation
-import Anim.Internal.Engine.Keyframe.Generator as Generator exposing (DiscreteConfig)
+import Anim.Internal.Engine.Keyframe.Generator as Generator
 import Anim.Internal.Engine.Keyframe.Styles as KeyframeStyles
 import Anim.Internal.Engine.Shared.AnimGroups as AnimGroups exposing (AnimGroups)
 import Anim.Internal.Engine.Shared.PlayState as PlayState
 import Anim.Internal.Extra.Color exposing (Color(..))
 import Anim.Internal.Property.Opacity exposing (Opacity(..))
+import Anim.Internal.Property.Shared.Discrete as Discrete
 import Anim.Internal.Property.Size exposing (Size(..))
 import Dict
 import Html exposing (Html)
@@ -86,7 +87,7 @@ init propertyInitializers =
                 initGroup : AnimGroupName -> Builder.ProcessedAnimGroupConfig -> AnimGroup
                 initGroup name config =
                     let
-                        discrete : DiscreteConfig
+                        discrete : Discrete.Config
                         discrete =
                             { entry = Builder.getDiscreteEntryPropertiesFor name builder
                             , exit = Builder.getDiscreteExitPropertiesFor name builder
@@ -220,7 +221,7 @@ runPipeline finaliseBuilder (AnimState state animGroups) transform =
         generateAnimGroup : AnimGroupName -> Builder.ProcessedAnimGroupConfig -> AnimGroup
         generateAnimGroup animGroupName config =
             let
-                discrete : DiscreteConfig
+                discrete : Discrete.Config
                 discrete =
                     { entry = Builder.getDiscreteEntryPropertiesFor animGroupName builder
                     , exit = Builder.getDiscreteExitPropertiesFor animGroupName builder
@@ -549,7 +550,7 @@ restartAnimation animGroupName controlledAxes properties (AnimState state animGr
                 |> Maybe.map AnimGroup.getRestartCounter
                 |> Maybe.withDefault 0
 
-        discrete : DiscreteConfig
+        discrete : Discrete.Config
         discrete =
             { entry = Builder.getDiscreteEntryPropertiesFor animGroupName state.builder
             , exit = Builder.getDiscreteExitPropertiesFor animGroupName state.builder

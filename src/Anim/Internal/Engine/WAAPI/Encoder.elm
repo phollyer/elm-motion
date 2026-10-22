@@ -11,7 +11,7 @@ module Anim.Internal.Engine.WAAPI.Encoder exposing
     )
 
 import Anim.Extra.TransformOrder as TransformProperty exposing (TransformProperty)
-import Anim.Internal.Builder as Builder exposing (AnimationDirection(..), DiscreteExitProperty)
+import Anim.Internal.Builder as Builder exposing (AnimationDirection(..))
 import Anim.Internal.Builder.PropertyBaselines as PropertyBaselines exposing (PropertyBaselines)
 import Anim.Internal.Engine.Shared.AnimGroups as AnimGroups exposing (AnimGroups)
 import Anim.Internal.Engine.WAAPI.AnimGroup as AnimGroup exposing (AnimGroup, PropertyState)
@@ -21,6 +21,7 @@ import Anim.Internal.Property.Opacity as Opacity
 import Anim.Internal.Property.PerspectiveOrigin as PerspectiveOrigin
 import Anim.Internal.Property.Rotate as Rotate
 import Anim.Internal.Property.Scale as Scale
+import Anim.Internal.Property.Shared.Discrete as Discrete
 import Anim.Internal.Property.Size as Size
 import Anim.Internal.Property.Skew as Skew
 import Anim.Internal.Property.Translate as Translate
@@ -186,8 +187,7 @@ encodeAnimateLike typeTag animGroups touchedAxes processed =
                             Nothing
                             config.updateThrottleMs
                             config.frozenAxes
-                            config.discreteEntryProperties
-                            config.discreteExitProperties
+                            config.discreteConfig
                             effectiveTouchedAxes
                             config.controlledAxes
                             playback.iterations
@@ -266,8 +266,7 @@ encodeRestart iterationsConfig directionConfig animGroup configGroup =
                             Nothing
                             config.updateThrottleMs
                             config.frozenAxes
-                            config.discreteEntryProperties
-                            config.discreteExitProperties
+                            config.discreteConfig
                             config.controlledAxes
                             config.controlledAxes
                             playback.iterations
@@ -312,8 +311,7 @@ encodeProcessedData data =
                             Nothing
                             config.updateThrottleMs
                             config.frozenAxes
-                            config.discreteEntryProperties
-                            config.discreteExitProperties
+                            config.discreteConfig
                             config.controlledAxes
                             config.controlledAxes
                             playback.iterations
@@ -464,15 +462,14 @@ encodeProcessedAnimGroupConfig :
     -> Maybe Bool
     -> Int
     -> Dict.Dict String (List String)
-    -> Dict.Dict String String
-    -> Dict.Dict String Builder.DiscreteExitProperty
+    -> Discrete.Config
     -> Dict.Dict String (Set String)
     -> Dict.Dict String (Set String)
     -> Builder.Iterations
     -> Builder.AnimationDirection
     -> List Builder.ProcessedPropertyConfig
     -> Encode.Value
-encodeProcessedAnimGroupConfig animGroupName targetId propertyState transformOrder_ transformBaseline viewRangeStart viewRangeEnd emitProgress_ updateThrottleMs frozenAxes discreteEntryProperties discreteExitProperties touchedAxes controlledAxes iterations_ direction_ propertyConfigs =
+encodeProcessedAnimGroupConfig animGroupName targetId propertyState transformOrder_ transformBaseline viewRangeStart viewRangeEnd emitProgress_ updateThrottleMs frozenAxes discreteConfig touchedAxes controlledAxes iterations_ direction_ propertyConfigs =
     let
         baseFields =
             [ ( "properties", Encode.list (encodeProcessedPropertyConfig propertyState frozenAxes touchedAxes controlledAxes) propertyConfigs )
@@ -509,10 +506,10 @@ encodeProcessedAnimGroupConfig animGroupName targetId propertyState transformOrd
                 []
 
         discreteEntryField =
-            encodeDiscreteEntryFields discreteEntryProperties
+            encodeDiscreteEntryFields discreteConfig.entry
 
         discreteExitField =
-            encodeDiscreteExitFields discreteExitProperties
+            encodeDiscreteExitFields discreteConfig.exit
 
         willChangeField =
             case Builder.willChangeCompositeWithControlledAxes controlledAxes propertyConfigs of
@@ -619,7 +616,7 @@ encodeDiscreteEntryFields dict =
         ]
 
 
-encodeDiscreteExitFields : Dict.Dict String DiscreteExitProperty -> List ( String, Encode.Value )
+encodeDiscreteExitFields : Discrete.Exit -> List ( String, Encode.Value )
 encodeDiscreteExitFields dict =
     if Dict.isEmpty dict then
         []
@@ -1151,8 +1148,7 @@ encodeScroll builder =
                             (Just emitProgress)
                             config.updateThrottleMs
                             config.frozenAxes
-                            config.discreteEntryProperties
-                            config.discreteExitProperties
+                            config.discreteConfig
                             config.controlledAxes
                             config.controlledAxes
                             playback.iterations
@@ -1240,8 +1236,7 @@ encodeView builder =
                             (Just emitProgress)
                             config.updateThrottleMs
                             config.frozenAxes
-                            config.discreteEntryProperties
-                            config.discreteExitProperties
+                            config.discreteConfig
                             config.controlledAxes
                             config.controlledAxes
                             playback.iterations

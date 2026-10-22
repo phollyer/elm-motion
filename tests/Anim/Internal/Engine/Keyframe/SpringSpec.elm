@@ -16,6 +16,7 @@ import Anim.Internal.Builder as Builder
 import Anim.Internal.Engine.Keyframe.AnimGroup as KeyframeAnimGroup
 import Anim.Internal.Engine.Keyframe.Animation as Animation
 import Anim.Internal.Engine.Keyframe.Generator as Generator
+import Anim.Internal.Property.Shared.Discrete as Discrete
 import Anim.Internal.Property.Translate as Translate
 import Anim.Internal.Unit as InternalUnit
 import Dict
@@ -71,7 +72,7 @@ keyframesFor properties =
     Generator.generateAnimation []
         Builder.Once
         Builder.Normal
-        Generator.emptyDiscreteConfig
+        Discrete.empty
         "test"
         Dict.empty
         processed

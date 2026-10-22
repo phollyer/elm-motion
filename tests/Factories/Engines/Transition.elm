@@ -8,6 +8,7 @@ module Factories.Engines.Transition exposing
 
 import Anim.Engine.Transition as Transition exposing (AnimState, EngineBuilder)
 import Anim.Extra.TransformOrder exposing (TransformProperty)
+import Anim.Property.Opacity as Opacity
 import Anim.Internal.Engine.CSS.CSS as InternalCss
 import Anim.Internal.Engine.CSS.Styles as InternalStyles
 import Anim.Internal.Engine.Shared.AnimGroups as InternalAnimGroups
@@ -19,7 +20,12 @@ type alias Factory builder animState =
     { init : List (builder -> builder) -> animState
     , for : String -> (builder -> builder)
     , animate : animState -> (builder -> builder) -> animState
+    , seedInit : String -> builder -> builder
+    , seedAnimation : String -> builder -> builder
     , attributes : String -> animState -> List (Html.Attribute Never)
+    , startingStyleNodeFor : String -> animState -> Html.Html Never
+    , discreteEntry : String -> String -> builder -> builder
+    , discreteExit : String -> String -> String -> builder -> builder
     , delay : Int -> builder -> builder
     , duration : Int -> builder -> builder
     , transformOrder : List TransformProperty -> builder -> builder
@@ -35,7 +41,12 @@ factory =
     { init = Transition.init
     , for = Transition.for
     , animate = Transition.animate
+    , seedInit = seedInit
+    , seedAnimation = seedAnimation
     , attributes = Transition.attributes
+    , startingStyleNodeFor = Transition.startingStyleNodeFor
+    , discreteEntry = Transition.discreteEntry
+    , discreteExit = Transition.discreteExit
     , delay = Transition.delay
     , duration = Transition.duration
     , transformOrder = Transition.transformOrder
@@ -44,6 +55,19 @@ factory =
     , styleValue = styleValue
     , styleDeclarations = styleDeclarations
     }
+
+
+seedAnimation : String -> EngineBuilder -> EngineBuilder
+seedAnimation animGroup =
+    Transition.for animGroup
+        >> Opacity.begin
+        >> Opacity.to 0.5
+        >> Opacity.end
+
+
+seedInit : String -> EngineBuilder -> EngineBuilder
+seedInit animGroup =
+    Opacity.init animGroup 1
 
 
 transitionString : String -> AnimState -> Maybe String

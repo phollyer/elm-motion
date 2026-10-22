@@ -4,21 +4,10 @@ import Anim.Extra.TransformOrder as TransformOrder exposing (TransformProperty(.
 import Anim.Internal.Builder as Builder
 import Anim.Internal.Engine.Transition.AnimGroup as AnimGroup exposing (AnimGroup)
 import Anim.Internal.Engine.Transition.Styles as TransitionStyles
+import Anim.Internal.Property.Shared.Discrete as Discrete
 import Dict exposing (Dict)
 import Set
 import Shared.Easing as InternalEasing
-
-
-
--- ============================================================
--- TYPES
--- ============================================================
-
-
-type alias DiscreteConfig =
-    { entry : Dict String String
-    , exit : Dict String Builder.DiscreteExitProperty
-    }
 
 
 
@@ -27,7 +16,7 @@ type alias DiscreteConfig =
 -- ============================================================
 
 
-generateAnimation : List TransformProperty -> Bool -> DiscreteConfig -> Dict String (Set.Set String) -> List Builder.ProcessedPropertyConfig -> AnimGroup
+generateAnimation : List TransformProperty -> Bool -> Discrete.Config -> Dict String (Set.Set String) -> List Builder.ProcessedPropertyConfig -> AnimGroup
 generateAnimation transformOrder discreteTransitions discrete controlledAxes processedProps =
     let
         propertyKeysOf : List Builder.ProcessedPropertyConfig -> Set.Set String
@@ -60,7 +49,7 @@ generateAnimation transformOrder discreteTransitions discrete controlledAxes pro
             )
 
 
-generateWithControlledAxes : List TransformProperty -> Dict String (Set.Set String) -> Bool -> DiscreteConfig -> List Builder.ProcessedPropertyConfig -> String
+generateWithControlledAxes : List TransformProperty -> Dict String (Set.Set String) -> Bool -> Discrete.Config -> List Builder.ProcessedPropertyConfig -> String
 generateWithControlledAxes transformOrder controlledAxes discreteTransitions discrete properties =
     let
         animated =

@@ -11,6 +11,7 @@ import Anim.Internal.Property.Opacity as Opacity
 import Anim.Internal.Property.PerspectiveOrigin as PerspectiveOrigin
 import Anim.Internal.Property.Rotate as Rotate
 import Anim.Internal.Property.Scale as Scale
+import Anim.Internal.Property.Shared.Discrete as Discrete
 import Anim.Internal.Property.Size as Size
 import Anim.Internal.Property.Skew as Skew
 import Anim.Internal.Property.Translate as Translate
@@ -28,8 +29,8 @@ import Shared.Spring as SpringSolver
 -- ============================================================
 
 
-init : Builder.DefaultsConfig -> Builder.AnimGroupName -> Dict String Builder.DiscreteEntryProperty -> Dict String Builder.DiscreteExitProperty -> List Builder.PropertyConfig -> AnimGroup
-init defaults animGroupName discreteEntryProps discreteExitProps properties =
+init : Builder.DefaultsConfig -> Builder.AnimGroupName -> Discrete.Config -> List Builder.PropertyConfig -> AnimGroup
+init defaults animGroupName discreteConfig properties =
     let
         processedProps =
             Builder.processProperties defaults animGroupName properties
@@ -41,8 +42,7 @@ init defaults animGroupName discreteEntryProps discreteExitProps properties =
     AnimGroup.init
         |> AnimGroup.setPlayState PlayState.Complete
         |> AnimGroup.setAnimations animations
-        |> AnimGroup.setDiscreteEntry discreteEntryProps
-        |> AnimGroup.setDiscreteExit discreteExitProps
+        |> AnimGroup.setDiscreteConfig discreteConfig
         |> AnimGroup.setWillChange (Builder.willChangeComposite processedProps)
 
 
@@ -57,12 +57,11 @@ generateAnimation :
     -> Builder.AnimationDirection
     -> List TransformProperty
     -> Dict String (Set.Set String)
-    -> Dict String Builder.DiscreteEntryProperty
-    -> Dict String Builder.DiscreteExitProperty
+    -> Discrete.Config
     -> Maybe AnimGroup
     -> List Builder.ProcessedPropertyConfig
     -> AnimGroup
-generateAnimation iterationCount directionConfig transformOrder controlledAxes discreteEntryProps discreteExitProps existingAnimation properties =
+generateAnimation iterationCount directionConfig transformOrder controlledAxes discreteConfig existingAnimation properties =
     let
         adjustedProperties =
             properties
@@ -107,8 +106,7 @@ generateAnimation iterationCount directionConfig transformOrder controlledAxes d
         |> AnimGroup.setAnimationDirection directionConfig
         |> AnimGroup.setCurrentIteration 1
         |> AnimGroup.setTransformOrder transformOrder_
-        |> AnimGroup.setDiscreteEntry discreteEntryProps
-        |> AnimGroup.setDiscreteExit discreteExitProps
+        |> AnimGroup.setDiscreteConfig discreteConfig
         |> AnimGroup.setControlledAxes controlledAxes
         |> AnimGroup.setWillChange (Builder.willChangeCompositeWithControlledAxes controlledAxes adjustedProperties)
 
