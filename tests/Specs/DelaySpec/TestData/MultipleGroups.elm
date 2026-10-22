@@ -4,8 +4,8 @@ import Anim.Builder exposing (AnimBuilder)
 import Anim.Property.Opacity as Opacity
 import Anim.Property.Translate as Translate
 import Factories.Capabilities exposing (WithTiming)
-import Helpers.AnimGroups exposing (animGroup, otherAnimGroup)
 import Specs.DelaySpec.TestData as TD exposing (GroupPropertyTestCase, MultiGroupCase, TestCase(..), TestData, groupPropertyTestCase)
+import Specs.Shared.AnimGroups exposing (animGroup, otherAnimGroup)
 import Specs.Shared.TimingProfile exposing (TimingProfile(..))
 
 

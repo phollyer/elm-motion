@@ -2,9 +2,9 @@ module Specs.InitSpec.TestData.Skew exposing (testData)
 
 import Anim.Builder exposing (AnimBuilder)
 import Anim.Property.Skew as Skew
-import Helpers.AnimGroups exposing (animGroup)
 import Specs.InitSpec.TestData exposing (TestCase(..), TestData)
 import Specs.Shared exposing (NameValuePair)
+import Specs.Shared.AnimGroups exposing (animGroup)
 
 
 testData : TestData (AnimBuilder eng)

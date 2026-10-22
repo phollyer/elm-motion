@@ -6,8 +6,8 @@ import Anim.Property.PerspectiveOrigin as PerspectiveOrigin
 import Anim.Property.Rotate as Rotate
 import Anim.Property.Size as Size
 import Anim.Property.Translate as Translate
-import Helpers.AnimGroups exposing (animGroup, otherAnimGroup)
 import Specs.Shared exposing (NameValuePair)
+import Specs.Shared.AnimGroups exposing (animGroup, otherAnimGroup)
 import Specs.Shared.TimingProfile exposing (TimingProfile(..))
 import Specs.ToSpec.TestData as TD exposing (MultiGroupCase, TestCase(..), TestData)
 

@@ -3,9 +3,9 @@ module Specs.InitSpec.Runner exposing (run)
 import Expect
 import Expectations.Expect as Expect
 import Factories.Engines.Factory as Factory exposing (EngineFactory(..))
-import Helpers.AnimGroups exposing (animGroup)
 import Specs.InitSpec.TestData exposing (..)
 import Specs.Shared exposing (NameValuePair)
+import Specs.Shared.AnimGroups exposing (animGroup)
 import Test exposing (Test, describe, test)
 
 

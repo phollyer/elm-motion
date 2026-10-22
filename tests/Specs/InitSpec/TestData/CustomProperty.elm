@@ -2,9 +2,9 @@ module Specs.InitSpec.TestData.CustomProperty exposing (testData)
 
 import Anim.Builder exposing (AnimBuilder)
 import Anim.Property.Custom as Property
-import Helpers.AnimGroups exposing (animGroup)
 import Specs.InitSpec.TestData exposing (TestCase(..), TestData)
 import Specs.Shared exposing (NameValuePair)
+import Specs.Shared.AnimGroups exposing (animGroup)
 import Specs.Shared.CustomProperty as Custom
 
 

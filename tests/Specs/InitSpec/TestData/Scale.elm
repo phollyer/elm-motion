@@ -2,9 +2,9 @@ module Specs.InitSpec.TestData.Scale exposing (testData)
 
 import Anim.Builder exposing (AnimBuilder)
 import Anim.Property.Scale as Scale
-import Helpers.AnimGroups exposing (animGroup)
 import Specs.InitSpec.TestData exposing (TestCase(..), TestData)
 import Specs.Shared exposing (NameValuePair)
+import Specs.Shared.AnimGroups exposing (animGroup)
 
 
 testData : TestData (AnimBuilder eng)

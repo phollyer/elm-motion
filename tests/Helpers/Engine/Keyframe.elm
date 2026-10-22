@@ -3,7 +3,7 @@ module Helpers.Engine.Keyframe exposing (..)
 import Anim.Builder as Builder
 import Anim.Engine.Keyframe as Keyframe
 import Anim.Property.Translate as Translate
-import Helpers.AnimGroups exposing (animGroup)
+import Specs.Shared.AnimGroups exposing (animGroup)
 
 
 type alias AxisFunction eng =

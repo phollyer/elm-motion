@@ -6,11 +6,11 @@ import Expectations.Expect as Expect
 import Factories.Engines.Factory as Factory exposing (EngineFactory(..))
 import Factories.Engines.Keyframe as Keyframe
 import Factories.Engines.Transition as Transition
-import Helpers.AnimGroups exposing (animGroup)
 import Helpers.Properties as Properties
 import Parsers.Keyframe as KeyframeParser
 import Specs.DelaySpec.TestData exposing (EngineTestCase, MultiGroupTestCase, MultiPropertyTestCase, MultiPropertyTransformOrderTestCase, PropertyTestCase, TestCase(..), TestData)
-import Specs.Shared.TimingProfile as TimingProfile exposing (TimingProfile(..))
+import Specs.Shared.AnimGroups exposing (animGroup)
+import Specs.Shared.TimingProfile as TimingProfile
 import Test exposing (Test, describe, test)
 
 

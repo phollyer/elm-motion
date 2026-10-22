@@ -6,9 +6,9 @@ import Anim.Property.Rotate as Rotate
 import Anim.Property.Scale as Scale
 import Anim.Property.Skew as Skew
 import Anim.Property.Translate as Translate
-import Helpers.AnimGroups exposing (animGroup)
 import Specs.InitSpec.TestData exposing (TestCase(..), TestData)
 import Specs.Shared exposing (NameValuePair)
+import Specs.Shared.AnimGroups exposing (animGroup)
 
 
 testData : TestData (AnimBuilder eng)

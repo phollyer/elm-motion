@@ -3,9 +3,9 @@ module Anim.Engine.Keyframe.Properties.Translate.AxisSpec.AnimateTests exposing 
 import Anim.Engine.Keyframe as Keyframe
 import Anim.Property.Translate as Translate
 import Expect
-import Helpers.AnimGroups exposing (animGroup)
 import Helpers.Engine.Keyframe exposing (..)
 import Html
+import Specs.Shared.AnimGroups exposing (animGroup)
 import Test exposing (Test, describe, test)
 import Test.Html.Query as Query
 import Test.Html.Selector as Selector

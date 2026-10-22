@@ -3,7 +3,7 @@ module Helpers.Engine.Transition exposing (..)
 import Anim.Builder as Builder
 import Anim.Engine.Transition as Transition
 import Anim.Property.Translate as Translate
-import Helpers.AnimGroups exposing (animGroup)
+import Specs.Shared.AnimGroups exposing (animGroup)
 
 
 type alias AxisFunction eng =

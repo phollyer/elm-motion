@@ -6,7 +6,7 @@ import Anim.Property.Rotate as Rotate
 import Anim.Property.Scale as Scale
 import Anim.Property.Skew as Skew
 import Anim.Property.Translate as Translate
-import Helpers.AnimGroups exposing (animGroup)
+import Specs.Shared.AnimGroups exposing (animGroup)
 import Specs.TransformOrderSpec.TestData exposing (TestCase(..), TestData)
 
 
