@@ -1,59 +1,91 @@
 module Specs.DiscretePropertiesSpec.DiscreteExitSpec.TestData exposing
-    ( DiscreteOps
-    , MultiGroupTestCase
-    , MultiPropertyTestCase
-    , PropertyTestCase
+    ( AnimateCase
+    , AnimateTestCase
+    , InitCase
+    , InitTestCase
     , TestCase(..)
     , TestData
+    , buildAnimateTest
+    , buildAnimateTests
+    , buildInitTest
+    , buildInitTests
     )
 
-import Specs.Shared exposing (NameValuePair)
+import Specs.Shared.TimingProfile exposing (TimingProfile)
 
 
-type alias DiscreteOps animBuilder =
-    { for : String -> animBuilder -> animBuilder
-    , discreteEntry : String -> String -> animBuilder -> animBuilder
-    , discreteExit : String -> String -> String -> animBuilder -> animBuilder
-    }
-
-
-type alias TestData animBuilder =
+type alias TestData =
     { description : String
-    , testCases : List (TestCase animBuilder)
+    , testCases : List TestCase
     }
 
 
-type TestCase animBuilder
-    = PropertyTest (PropertyTestCase animBuilder)
-    | MultiPropertyTest (MultiPropertyTestCase animBuilder)
-    | MultiGroupTest (MultiGroupTestCase animBuilder)
+type TestCase
+    = InitTest InitTestCase
+    | AnimateTest AnimateTestCase
 
 
-type alias PropertyTestCase animBuilder =
+type alias InitTestCase =
     { description : String
-    , animGroup : String
-    , initFuncs : List (DiscreteOps animBuilder -> animBuilder -> animBuilder)
-    , propertyPipeline : DiscreteOps animBuilder -> animBuilder -> animBuilder
-    , expected : List NameValuePair
-    , notExpected : List String
+    , timing : TimingProfile
+    , discreteProperty : String
+    , fromValue : String
+    , toValue : String
     }
 
 
-type alias MultiPropertyTestCase animBuilder =
+type alias InitCase =
     { description : String
-    , animGroup : String
-    , initFuncs : List (DiscreteOps animBuilder -> animBuilder -> animBuilder)
-    , propertyPipelines : List (DiscreteOps animBuilder -> animBuilder -> animBuilder)
-    , expected : List NameValuePair
-    , notExpected : List String
+    , discreteProperty : String
+    , fromValue : String
+    , toValue : String
     }
 
 
-type alias MultiGroupTestCase animBuilder =
+type alias AnimateTestCase =
     { description : String
-    , animGroups : List String
-    , initFuncs : List (DiscreteOps animBuilder -> animBuilder -> animBuilder)
-    , propertyPipelines : List (List (DiscreteOps animBuilder -> animBuilder -> animBuilder))
-    , expected : List (List NameValuePair)
-    , notExpected : List (List String)
+    , timing : TimingProfile
+    , discreteProperty : String
+    , fromValue : String
+    , toValue : String
     }
+
+
+type alias AnimateCase =
+    { description : String
+    , discreteProperty : String
+    , fromValue : String
+    , toValue : String
+    }
+
+
+buildInitTests : TimingProfile -> List InitCase -> List TestCase
+buildInitTests timing =
+    List.map (buildInitTest timing)
+
+
+buildInitTest : TimingProfile -> InitCase -> TestCase
+buildInitTest timing c =
+    InitTest
+        { description = c.description
+        , timing = timing
+        , discreteProperty = c.discreteProperty
+        , fromValue = c.fromValue
+        , toValue = c.toValue
+        }
+
+
+buildAnimateTests : TimingProfile -> List AnimateCase -> List TestCase
+buildAnimateTests timing =
+    List.map (buildAnimateTest timing)
+
+
+buildAnimateTest : TimingProfile -> AnimateCase -> TestCase
+buildAnimateTest timing c =
+    AnimateTest
+        { description = c.description
+        , timing = timing
+        , discreteProperty = c.discreteProperty
+        , fromValue = c.fromValue
+        , toValue = c.toValue
+        }
