@@ -8,8 +8,8 @@ testData : TestData
 testData =
     { description = "completed animated output with discreteExit"
     , testCases =
-        TD.buildTests (DurationMs 500) exitCases
-            ++ TD.buildTests (DelayMs 500) exitCases
+        TD.buildAnimateCompleteTests (DurationMs 500) exitCases
+            ++ TD.buildAnimateCompleteTests (DelayMs 500) exitCases
     }
 
 

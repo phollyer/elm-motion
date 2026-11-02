@@ -8,9 +8,9 @@ testData : TestData
 testData =
     { description = "initialized output ignores discreteExit until animate configures it"
     , testCases =
-        TD.buildTests NoTiming exitCases
-            ++ TD.buildTests (DurationMs 500) exitCases
-            ++ TD.buildTests (DelayMs 500) exitCases
+        TD.buildInitTests NoTiming exitCases
+            ++ TD.buildInitTests (DurationMs 500) exitCases
+            ++ TD.buildInitTests (DelayMs 500) exitCases
     }
 
 

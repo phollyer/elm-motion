@@ -33,6 +33,9 @@ runTestCase factory testCase =
         AnimateCompleteTest tc ->
             animateCompleteRunner factory tc
 
+        Animate2Test tc ->
+            animate2Runner factory tc
+
 
 initRunner : EngineFactory animBuilder animState -> ExitTestConfig -> Test
 initRunner factory tc =
@@ -115,6 +118,38 @@ animateCompleteRunner factory tc =
 
                         Transition f_ ->
                             Expect.styles expected f_.attributes animGroup completedState
+
+
+animate2Runner : EngineFactory animBuilder animState -> ExitTestConfig -> Test
+animate2Runner factory tc =
+    test (tc.description ++ TimingProfile.suffix tc.timing) <|
+        \_ ->
+            let
+                f =
+                    Factory.create factory
+
+                animateWithDiscreteExit =
+                    TimingProfile.apply factory tc.timing <|
+                        f.discreteExit tc.discreteProperty tc.fromValue tc.toValue
+                            >> f.seedAnimation animGroup
+
+                state =
+                    Factory.animate2 factory animGroup [] animateWithDiscreteExit animateWithDiscreteExit
+            in
+            case factory of
+                Keyframe f_ ->
+                    Expect.styles
+                        [ NameValuePair tc.discreteProperty (expectedDiscreteValue tc.timing tc.fromValue tc.toValue) ]
+                        f_.attributes
+                        animGroup
+                        state
+
+                Transition f_ ->
+                    Expect.styles
+                        [ NameValuePair tc.discreteProperty tc.toValue ]
+                        f_.attributes
+                        animGroup
+                        state
 
 
 expectedDiscreteValue : TimingProfile.TimingProfile -> String -> String -> String

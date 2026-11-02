@@ -6,6 +6,7 @@ import Factories.Engines.Transition as TransitionFactory
 import Specs.DiscretePropertiesSpec.DiscreteExitSpec.Runner as Runner
 import Specs.DiscretePropertiesSpec.DiscreteExitSpec.TestData exposing (TestData)
 import Specs.DiscretePropertiesSpec.DiscreteExitSpec.TestData.Animate as Animate
+import Specs.DiscretePropertiesSpec.DiscreteExitSpec.TestData.Animate2 as Animate2
 import Specs.DiscretePropertiesSpec.DiscreteExitSpec.TestData.AnimateComplete as AnimateComplete
 import Specs.DiscretePropertiesSpec.DiscreteExitSpec.TestData.Init as Init
 import Test exposing (Test, describe)
@@ -25,5 +26,6 @@ testData : List TestData
 testData =
     [ Init.testData
     , Animate.testData
+    , Animate2.testData
     , AnimateComplete.testData
     ]

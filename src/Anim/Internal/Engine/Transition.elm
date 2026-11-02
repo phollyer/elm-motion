@@ -113,8 +113,65 @@ init propertyInitializers =
 
 
 animate : AnimState -> (EngineBuilder -> EngineBuilder) -> AnimState
-animate =
-    CSS.animate AnimGroup.setPlayState generateAnimGroup insertAnimGroup
+animate ((AnimState state previousGroups) as previousState) build =
+    let
+        nextState =
+            CSS.animate AnimGroup.setPlayState generateAnimGroup insertAnimGroup previousState build
+
+        touchedGroups =
+            Builder.process (build state.builder)
+                |> .groups
+    in
+    settleNoOpRunningGroups touchedGroups previousGroups nextState
+
+
+settleNoOpRunningGroups :
+    AnimGroups Builder.ProcessedAnimGroupConfig
+    -> AnimGroups AnimGroup
+    -> AnimState
+    -> AnimState
+settleNoOpRunningGroups touchedGroups previousGroups (AnimState nextBuilder nextGroups) =
+    let
+        maybeCompleteNoOpGroup :
+            AnimGroupName
+            -> Builder.ProcessedAnimGroupConfig
+            -> AnimGroups AnimGroup
+            -> AnimGroups AnimGroup
+        maybeCompleteNoOpGroup animGroupName config acc =
+            case ( AnimGroups.get animGroupName previousGroups, AnimGroups.get animGroupName acc ) of
+                ( Just previousGroup, Just nextGroup ) ->
+                    if hasAnimateTiming config && didStyleOutputChange previousGroup nextGroup |> not then
+                        AnimGroups.insert animGroupName (AnimGroup.setPlayState PlayState.Complete nextGroup) acc
+
+                    else
+                        acc
+
+                _ ->
+                    acc
+    in
+    AnimState nextBuilder <|
+        AnimGroups.foldl maybeCompleteNoOpGroup nextGroups touchedGroups
+
+
+hasAnimateTiming : Builder.ProcessedAnimGroupConfig -> Bool
+hasAnimateTiming config =
+    (Builder.partitionByMode config.properties).animate
+        |> List.any
+            (\prop ->
+                let
+                    timing =
+                        Builder.processedTimings prop
+                in
+                timing.duration > 0 || timing.delay > 0
+            )
+
+
+didStyleOutputChange : AnimGroup -> AnimGroup -> Bool
+didStyleOutputChange previousGroup nextGroup =
+    AnimGroup.getStyles previousGroup /= AnimGroup.getStyles nextGroup
+        || AnimGroup.getDiscreteEntry previousGroup /= AnimGroup.getDiscreteEntry nextGroup
+        || AnimGroup.getDiscreteExit previousGroup /= AnimGroup.getDiscreteExit nextGroup
+        || AnimGroup.getWillChange previousGroup /= AnimGroup.getWillChange nextGroup
 
 
 generateAnimGroup : List TransformProperty -> EngineBuilder -> AnimGroupName -> Builder.ProcessedAnimGroupConfig -> AnimGroup

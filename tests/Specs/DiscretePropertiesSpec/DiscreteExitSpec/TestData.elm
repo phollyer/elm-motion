@@ -3,8 +3,10 @@ module Specs.DiscretePropertiesSpec.DiscreteExitSpec.TestData exposing
     , ExitTestConfig
     , TestCase(..)
     , TestData
-    , buildTest
-    , buildTests
+    , buildAnimate2Tests
+    , buildAnimateCompleteTests
+    , buildAnimateTests
+    , buildInitTests
     )
 
 import Specs.Shared.TimingProfile exposing (TimingProfile)
@@ -20,6 +22,7 @@ type TestCase
     = InitTest ExitTestConfig
     | AnimateTest ExitTestConfig
     | AnimateCompleteTest ExitTestConfig
+    | Animate2Test ExitTestConfig
 
 
 type alias ExitTestConfig =
@@ -39,17 +42,35 @@ type alias ExitConfig =
     }
 
 
-buildTests : TimingProfile -> List ExitConfig -> List TestCase
-buildTests timing =
-    List.map (buildTest timing)
+buildInitTests : TimingProfile -> List ExitConfig -> List TestCase
+buildInitTests timing =
+    buildTests timing InitTest
 
 
-buildTest : TimingProfile -> ExitConfig -> TestCase
-buildTest timing c =
-    InitTest
-        { description = c.description
-        , timing = timing
-        , discreteProperty = c.discreteProperty
-        , fromValue = c.fromValue
-        , toValue = c.toValue
-        }
+buildAnimateTests : TimingProfile -> List ExitConfig -> List TestCase
+buildAnimateTests timing =
+    buildTests timing AnimateTest
+
+
+buildAnimateCompleteTests : TimingProfile -> List ExitConfig -> List TestCase
+buildAnimateCompleteTests timing =
+    buildTests timing AnimateCompleteTest
+
+
+buildAnimate2Tests : TimingProfile -> List ExitConfig -> List TestCase
+buildAnimate2Tests timing =
+    buildTests timing Animate2Test
+
+
+buildTests : TimingProfile -> (ExitTestConfig -> TestCase) -> List ExitConfig -> List TestCase
+buildTests timing toTestCase =
+    List.map
+        (\c ->
+            toTestCase
+                { description = c.description
+                , timing = timing
+                , discreteProperty = c.discreteProperty
+                , fromValue = c.fromValue
+                , toValue = c.toValue
+                }
+        )
