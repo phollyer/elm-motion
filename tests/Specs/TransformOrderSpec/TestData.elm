@@ -29,7 +29,7 @@ type alias InitTestCase animBuilder =
 
 type alias AnimateTestCase animBuilder =
     { description : String
-    , animateFuncs : animBuilder -> animBuilder
+    , animatePipeline : animBuilder -> animBuilder
     , transformOrder : List TransformProperty
     , expected : String
     }

@@ -110,7 +110,7 @@ animateRunner factory tc =
                         f.animate (f.init []) <|
                             f.for animGroup
                                 >> f.transformOrder tc.transformOrder
-                                >> tc.animateFuncs
+                                >> tc.animatePipeline
                 in
                 case factory of
                     Factory.Keyframe f_ ->
@@ -127,7 +127,7 @@ animateRunner factory tc =
                     state =
                         f.animate (f.init []) <|
                             f.for animGroup
-                                >> tc.animateFuncs
+                                >> tc.animatePipeline
                                 >> f.transformOrder tc.transformOrder
                 in
                 case factory of

@@ -1,6 +1,6 @@
 module Specs.DiscretePropertiesSpec.DiscreteEntrySpec.TestData.Init exposing (testData)
 
-import Specs.DiscretePropertiesSpec.DiscreteEntrySpec.TestData as TD exposing (InitCase, TestCase(..), TestData)
+import Specs.DiscretePropertiesSpec.DiscreteEntrySpec.TestData as TD exposing (EntryConfig, TestCase(..), TestData)
 import Specs.Shared.TimingProfile exposing (TimingProfile(..))
 
 
@@ -8,13 +8,13 @@ testData : TestData
 testData =
     { description = "initialized output with discreteEntry"
     , testCases =
-        TD.buildInitTests NoTiming entryCases
-            ++ TD.buildInitTests (DurationMs 500) entryCases
-            ++ TD.buildInitTests (DelayMs 500) entryCases
+        TD.buildTests NoTiming entryCases
+            ++ TD.buildTests (DurationMs 500) entryCases
+            ++ TD.buildTests (DelayMs 500) entryCases
     }
 
 
-entryCases : List InitCase
+entryCases : List EntryConfig
 entryCases =
     [ { description = "discreteEntry of `display:block` is configured in init"
       , discreteProperty = "display"

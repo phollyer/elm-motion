@@ -1,6 +1,6 @@
 module Specs.DiscretePropertiesSpec.DiscreteEntrySpec.TestData.Animate exposing (testData)
 
-import Specs.DiscretePropertiesSpec.DiscreteEntrySpec.TestData as TD exposing (AnimateCase, TestCase(..), TestData)
+import Specs.DiscretePropertiesSpec.DiscreteEntrySpec.TestData as TD exposing (EntryConfig, TestCase(..), TestData)
 import Specs.Shared.TimingProfile exposing (TimingProfile(..))
 
 
@@ -8,13 +8,13 @@ testData : TestData
 testData =
     { description = "animated output with discreteEntry"
     , testCases =
-        TD.buildAnimateTests NoTiming entryCases
-            ++ TD.buildAnimateTests (DurationMs 500) entryCases
-            ++ TD.buildAnimateTests (DelayMs 500) entryCases
+        TD.buildTests NoTiming entryCases
+            ++ TD.buildTests (DurationMs 500) entryCases
+            ++ TD.buildTests (DelayMs 500) entryCases
     }
 
 
-entryCases : List AnimateCase
+entryCases : List EntryConfig
 entryCases =
     [ { description = "discreteEntry of `display:block` is configured in animate"
       , discreteProperty = "display"

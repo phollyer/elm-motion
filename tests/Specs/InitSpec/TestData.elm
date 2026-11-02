@@ -1,7 +1,6 @@
 module Specs.InitSpec.TestData exposing
-    ( MultiGroupTestCase
-    , MultiPropertyTestCase
-    , PropertyTestCase
+    ( InitTestCase
+    , MultiGroupTestCase
     , TestCase(..)
     , TestData
     )
@@ -16,20 +15,12 @@ type alias TestData animBuilder =
 
 
 type TestCase animBuilder
-    = PropertyTest (PropertyTestCase animBuilder)
-    | MultiPropertyTest (MultiPropertyTestCase animBuilder)
+    = PropertyTest (InitTestCase animBuilder)
+    | MultiPropertyTest (InitTestCase animBuilder)
     | MultiGroupTest (MultiGroupTestCase animBuilder)
 
 
-type alias PropertyTestCase animBuilder =
-    { description : String
-    , initFuncs : List (animBuilder -> animBuilder)
-    , expected : List NameValuePair
-    , notExpected : List String
-    }
-
-
-type alias MultiPropertyTestCase animBuilder =
+type alias InitTestCase animBuilder =
     { description : String
     , initFuncs : List (animBuilder -> animBuilder)
     , expected : List NameValuePair

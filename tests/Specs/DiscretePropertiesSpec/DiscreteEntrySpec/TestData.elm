@@ -1,13 +1,9 @@
 module Specs.DiscretePropertiesSpec.DiscreteEntrySpec.TestData exposing
-    ( AnimateCase
-    , AnimateTestCase
-    , InitCase
-    , InitTestCase
+    ( EntryConfig
+    , EntryTestConfig
     , TestCase(..)
     , TestData
-    , buildAnimateTest
-    , buildAnimateTests
-    , buildInitTests
+    , buildTests
     )
 
 import Specs.Shared.TimingProfile exposing (TimingProfile)
@@ -20,11 +16,11 @@ type alias TestData =
 
 
 type TestCase
-    = InitTest InitTestCase
-    | AnimateTest AnimateTestCase
+    = InitTest EntryTestConfig
+    | AnimateTest EntryTestConfig
 
 
-type alias InitTestCase =
+type alias EntryTestConfig =
     { description : String
     , timing : TimingProfile
     , discreteProperty : String
@@ -32,51 +28,21 @@ type alias InitTestCase =
     }
 
 
-type alias InitCase =
+type alias EntryConfig =
     { description : String
     , discreteProperty : String
     , discreteValue : String
     }
 
 
-type alias AnimateTestCase =
-    { description : String
-    , timing : TimingProfile
-    , discreteProperty : String
-    , discreteValue : String
-    }
+buildTests : TimingProfile -> List EntryConfig -> List TestCase
+buildTests timing =
+    List.map (buildTest timing)
 
 
-type alias AnimateCase =
-    { description : String
-    , discreteProperty : String
-    , discreteValue : String
-    }
-
-
-buildInitTests : TimingProfile -> List InitCase -> List TestCase
-buildInitTests timing =
-    List.map (buildInitTest timing)
-
-
-buildInitTest : TimingProfile -> InitCase -> TestCase
-buildInitTest timing c =
+buildTest : TimingProfile -> EntryConfig -> TestCase
+buildTest timing c =
     InitTest
-        { description = c.description
-        , timing = timing
-        , discreteProperty = c.discreteProperty
-        , discreteValue = c.discreteValue
-        }
-
-
-buildAnimateTests : TimingProfile -> List AnimateCase -> List TestCase
-buildAnimateTests timing =
-    List.map (buildAnimateTest timing)
-
-
-buildAnimateTest : TimingProfile -> AnimateCase -> TestCase
-buildAnimateTest timing c =
-    AnimateTest
         { description = c.description
         , timing = timing
         , discreteProperty = c.discreteProperty

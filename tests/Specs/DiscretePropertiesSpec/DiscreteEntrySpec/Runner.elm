@@ -5,7 +5,7 @@ import Expectations.Expect as Expect
 import Factories.Engines.Factory as Factory exposing (EngineFactory(..))
 import Html
 import Html.Attributes
-import Specs.DiscretePropertiesSpec.DiscreteEntrySpec.TestData exposing (AnimateTestCase, InitTestCase, TestCase(..), TestData)
+import Specs.DiscretePropertiesSpec.DiscreteEntrySpec.TestData exposing (EntryTestConfig, TestCase(..), TestData)
 import Specs.Shared exposing (NameValuePair)
 import Specs.Shared.AnimGroups exposing (animGroup)
 import Specs.Shared.TimingProfile as TimingProfile
@@ -35,7 +35,7 @@ runTestCase factory testCase =
             animateRunner factory tc
 
 
-initRunner : EngineFactory animBuilder animState -> InitTestCase -> Test
+initRunner : EngineFactory animBuilder animState -> EntryTestConfig -> Test
 initRunner factory tc =
     test (tc.description ++ TimingProfile.suffix tc.timing) <|
         \_ ->
@@ -69,7 +69,7 @@ initRunner factory tc =
                     Expect.styles expected f_.attributes animGroup state
 
 
-animateRunner : EngineFactory animBuilder animState -> AnimateTestCase -> Test
+animateRunner : EngineFactory animBuilder animState -> EntryTestConfig -> Test
 animateRunner factory tc =
     test (tc.description ++ TimingProfile.suffix tc.timing) <|
         \_ ->

@@ -3,7 +3,7 @@ module Specs.DiscretePropertiesSpec.DiscreteExitSpec.Runner exposing (run)
 import Expect
 import Expectations.Expect as Expect
 import Factories.Engines.Factory as Factory exposing (EngineFactory(..))
-import Specs.DiscretePropertiesSpec.DiscreteExitSpec.TestData exposing (AnimateCompleteTestCase, AnimateTestCase, InitTestCase, TestCase(..), TestData)
+import Specs.DiscretePropertiesSpec.DiscreteExitSpec.TestData exposing (ExitTestConfig, TestCase(..), TestData)
 import Specs.Shared exposing (NameValuePair)
 import Specs.Shared.AnimGroups exposing (animGroup)
 import Specs.Shared.TimingProfile as TimingProfile
@@ -34,7 +34,7 @@ runTestCase factory testCase =
             animateCompleteRunner factory tc
 
 
-initRunner : EngineFactory animBuilder animState -> InitTestCase -> Test
+initRunner : EngineFactory animBuilder animState -> ExitTestConfig -> Test
 initRunner factory tc =
     test (tc.description ++ TimingProfile.suffix tc.timing) <|
         \_ ->
@@ -60,7 +60,7 @@ initRunner factory tc =
                     Expect.equal Nothing (f_.styleValue animGroup tc.discreteProperty state)
 
 
-animateRunner : EngineFactory animBuilder animState -> AnimateTestCase -> Test
+animateRunner : EngineFactory animBuilder animState -> ExitTestConfig -> Test
 animateRunner factory tc =
     test (tc.description ++ TimingProfile.suffix tc.timing) <|
         \_ ->
@@ -87,7 +87,7 @@ animateRunner factory tc =
                     Expect.styles expected f_.attributes animGroup state
 
 
-animateCompleteRunner : EngineFactory animBuilder animState -> AnimateCompleteTestCase -> Test
+animateCompleteRunner : EngineFactory animBuilder animState -> ExitTestConfig -> Test
 animateCompleteRunner factory tc =
     test (tc.description ++ TimingProfile.suffix tc.timing) <|
         \_ ->

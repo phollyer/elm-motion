@@ -1,6 +1,6 @@
 module Specs.DiscretePropertiesSpec.DiscreteExitSpec.TestData.Animate exposing (testData)
 
-import Specs.DiscretePropertiesSpec.DiscreteExitSpec.TestData as TD exposing (AnimateCase, TestData)
+import Specs.DiscretePropertiesSpec.DiscreteExitSpec.TestData as TD exposing (ExitConfig, TestData)
 import Specs.Shared.TimingProfile exposing (TimingProfile(..))
 
 
@@ -8,13 +8,13 @@ testData : TestData
 testData =
     { description = "animated output with discreteExit"
     , testCases =
-        TD.buildAnimateTests NoTiming exitCases
-            ++ TD.buildAnimateTests (DurationMs 500) exitCases
-            ++ TD.buildAnimateTests (DelayMs 500) exitCases
+        TD.buildTests NoTiming exitCases
+            ++ TD.buildTests (DurationMs 500) exitCases
+            ++ TD.buildTests (DelayMs 500) exitCases
     }
 
 
-exitCases : List AnimateCase
+exitCases : List ExitConfig
 exitCases =
     [ { description = "discreteExit of `display:block->none` is configured in animate"
       , discreteProperty = "display"

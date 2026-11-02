@@ -15,42 +15,42 @@ testData =
     , testCases =
         List.map AnimateTest
             [ { description = "when animated without a specified transform order writes the default transform order"
-              , animateFuncs = animateFuncs
+              , animatePipeline = animatePipeline
               , transformOrder = []
               , expected = "translateX(0px) rotateX(0deg) skewX(0deg) scaleX(0)"
               }
             , { description = "when animated with only Translate declared, writes translate, rotate, skew, scale"
-              , animateFuncs = animateFuncs
+              , animatePipeline = animatePipeline
               , transformOrder = [ Translate ]
               , expected = "translateX(0px) rotateX(0deg) skewX(0deg) scaleX(0)"
               }
             , { description = "when animated with only Rotate declared, writes rotate, translate, skew, scale"
-              , animateFuncs = animateFuncs
+              , animatePipeline = animatePipeline
               , transformOrder = [ Rotate ]
               , expected = "rotateX(0deg) translateX(0px) skewX(0deg) scaleX(0)"
               }
             , { description = "when animated with only Scale declared, writes scale, translate, rotate, skew"
-              , animateFuncs = animateFuncs
+              , animatePipeline = animatePipeline
               , transformOrder = [ Scale ]
               , expected = "scaleX(0) translateX(0px) rotateX(0deg) skewX(0deg)"
               }
             , { description = "when animated with only Skew declared, writes skew, translate, rotate, scale"
-              , animateFuncs = animateFuncs
+              , animatePipeline = animatePipeline
               , transformOrder = [ Skew ]
               , expected = "skewX(0deg) translateX(0px) rotateX(0deg) scaleX(0)"
               }
             , { description = "when animated with Translate, Scale declared, writes translate, scale, rotate, skew"
-              , animateFuncs = animateFuncs
+              , animatePipeline = animatePipeline
               , transformOrder = [ Translate, Scale ]
               , expected = "translateX(0px) scaleX(0) rotateX(0deg) skewX(0deg)"
               }
             , { description = "when animated with Scale, Rotate declared, writes translate, scale, rotate, skew"
-              , animateFuncs = animateFuncs
+              , animatePipeline = animatePipeline
               , transformOrder = [ Scale, Rotate ]
               , expected = "scaleX(0) rotateX(0deg) translateX(0px) skewX(0deg)"
               }
             , { description = "when animated with Scale, Skew, Rotate, Translate declared, writes scale, rotate, translate, skew"
-              , animateFuncs = animateFuncs
+              , animatePipeline = animatePipeline
               , transformOrder = [ Scale, Skew, Rotate, Translate ]
               , expected = "scaleX(0) skewX(0deg) rotateX(0deg) translateX(0px)"
               }
@@ -58,8 +58,8 @@ testData =
     }
 
 
-animateFuncs : AnimBuilder eng -> AnimBuilder eng
-animateFuncs =
+animatePipeline : AnimBuilder eng -> AnimBuilder eng
+animatePipeline =
     Translate.begin
         >> Translate.toX 0
         >> Translate.end
