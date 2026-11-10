@@ -6,7 +6,7 @@ import Specs.Shared.TimingProfile exposing (TimingProfile(..))
 
 testData : TestData
 testData =
-    { description = "repeated animate output with unchanged discreteExit values"
+    { description = "repeated animate while the first exit transition is still running"
     , testCases =
         TD.buildAnimate2Tests (DurationMs 500) exitCases
             ++ TD.buildAnimate2Tests (DelayMs 500) exitCases
@@ -15,7 +15,7 @@ testData =
 
 exitCases : List ExitConfig
 exitCases =
-    [ { description = "re-applying `display:block->none` with unchanged animated values keeps the exit value"
+    [ { description = "re-applying `display:block->none` mid-transition keeps holding the `from` value"
       , discreteProperty = "display"
       , fromValue = "block"
       , toValue = "none"

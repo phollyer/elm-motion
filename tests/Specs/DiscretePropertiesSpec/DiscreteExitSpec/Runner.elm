@@ -36,6 +36,9 @@ runTestCase factory testCase =
         Animate2Test tc ->
             animate2Runner factory tc
 
+        AnimateCompleteAnimateTest tc ->
+            animateCompleteAnimateRunner factory tc
+
 
 initRunner : EngineFactory animBuilder animState -> ExitTestConfig -> Test
 initRunner factory tc =
@@ -145,11 +148,59 @@ animate2Runner factory tc =
                         state
 
                 Transition f_ ->
+                    -- The first transition is still in flight (no transitionend
+                    -- has arrived) so the exit `from` value must be held.
                     Expect.styles
-                        [ NameValuePair tc.discreteProperty tc.toValue ]
+                        [ NameValuePair tc.discreteProperty tc.fromValue ]
                         f_.attributes
                         animGroup
                         state
+
+
+animateCompleteAnimateRunner : EngineFactory animBuilder animState -> ExitTestConfig -> Test
+animateCompleteAnimateRunner factory tc =
+    test (tc.description ++ TimingProfile.suffix tc.timing) <|
+        \_ ->
+            let
+                f =
+                    Factory.create factory
+
+                animateWithDiscreteExit =
+                    TimingProfile.apply factory tc.timing <|
+                        f.discreteExit tc.discreteProperty tc.fromValue tc.toValue
+                            >> f.seedAnimation animGroup
+
+                stateBeforeCompletion =
+                    Factory.animate factory animGroup [] animateWithDiscreteExit
+            in
+            case f.complete animGroup stateBeforeCompletion of
+                Err message ->
+                    Expect.fail message
+
+                Ok completedState ->
+                    let
+                        -- Identical output after completion won't start a new CSS
+                        -- transition, so the group must settle as Complete and
+                        -- render the exit `to` value rather than get stuck Running.
+                        state =
+                            f.animate completedState <|
+                                f.for animGroup
+                                    >> animateWithDiscreteExit
+                    in
+                    case factory of
+                        Keyframe f_ ->
+                            Expect.styles
+                                [ NameValuePair tc.discreteProperty (expectedDiscreteValue tc.timing tc.fromValue tc.toValue) ]
+                                f_.attributes
+                                animGroup
+                                state
+
+                        Transition f_ ->
+                            Expect.styles
+                                [ NameValuePair tc.discreteProperty tc.toValue ]
+                                f_.attributes
+                                animGroup
+                                state
 
 
 expectedDiscreteValue : TimingProfile.TimingProfile -> String -> String -> String

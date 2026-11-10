@@ -140,7 +140,18 @@ settleNoOpRunningGroups touchedGroups previousGroups (AnimState nextBuilder next
         maybeCompleteNoOpGroup animGroupName config acc =
             case ( AnimGroups.get animGroupName previousGroups, AnimGroups.get animGroupName acc ) of
                 ( Just previousGroup, Just nextGroup ) ->
-                    if hasAnimateTiming config && didStyleOutputChange previousGroup nextGroup |> not then
+                    -- A repeat animate with identical output won't trigger a new
+                    -- CSS transition, so no `transitionend` will ever arrive. If
+                    -- the previous transition had already finished we settle the
+                    -- group as Complete so it isn't stuck Running. But if it is
+                    -- still in flight, the browser is mid-transition and will
+                    -- still fire `transitionend` - we must leave it Running,
+                    -- otherwise `discreteExit` snaps to its end value early.
+                    if
+                        hasAnimateTiming config
+                            && not (AnimGroup.isRunning previousGroup)
+                            && not (didStyleOutputChange previousGroup nextGroup)
+                    then
                         AnimGroups.insert animGroupName (AnimGroup.setPlayState PlayState.Complete nextGroup) acc
 
                     else
@@ -166,12 +177,30 @@ hasAnimateTiming config =
             )
 
 
+{-| Did this animate change anything the browser could actually transition?
+
+Only a change in an animated property _value_ (or the discrete config)
+can start a CSS transition and therefore produce a `transitionend`. The
+`transition` shorthand, `transition-behavior` and `will-change` are
+bookkeeping — they can differ between two animates (e.g. a global
+`duration` was set in between) without any transition ever running, so
+they must not stop a no-op animate from being settled as Complete.
+
+-}
 didStyleOutputChange : AnimGroup -> AnimGroup -> Bool
 didStyleOutputChange previousGroup nextGroup =
-    AnimGroup.getStyles previousGroup /= AnimGroup.getStyles nextGroup
-        || AnimGroup.getDiscreteEntry previousGroup /= AnimGroup.getDiscreteEntry nextGroup
-        || AnimGroup.getDiscreteExit previousGroup /= AnimGroup.getDiscreteExit nextGroup
-        || AnimGroup.getWillChange previousGroup /= AnimGroup.getWillChange nextGroup
+    let
+        transitionableStyles group =
+            AnimGroup.getStyles group
+                |> Styles.remove "transition"
+                |> Styles.remove "transition-behavior"
+    in
+    transitionableStyles previousGroup
+        /= transitionableStyles nextGroup
+        || AnimGroup.getDiscreteEntry previousGroup
+        /= AnimGroup.getDiscreteEntry nextGroup
+        || AnimGroup.getDiscreteExit previousGroup
+        /= AnimGroup.getDiscreteExit nextGroup
 
 
 generateAnimGroup : List TransformProperty -> EngineBuilder -> AnimGroupName -> Builder.ProcessedAnimGroupConfig -> AnimGroup

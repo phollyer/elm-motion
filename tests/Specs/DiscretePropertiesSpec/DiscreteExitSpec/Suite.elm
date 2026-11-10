@@ -8,6 +8,7 @@ import Specs.DiscretePropertiesSpec.DiscreteExitSpec.TestData exposing (TestData
 import Specs.DiscretePropertiesSpec.DiscreteExitSpec.TestData.Animate as Animate
 import Specs.DiscretePropertiesSpec.DiscreteExitSpec.TestData.Animate2 as Animate2
 import Specs.DiscretePropertiesSpec.DiscreteExitSpec.TestData.AnimateComplete as AnimateComplete
+import Specs.DiscretePropertiesSpec.DiscreteExitSpec.TestData.AnimateCompleteAnimate as AnimateCompleteAnimate
 import Specs.DiscretePropertiesSpec.DiscreteExitSpec.TestData.Init as Init
 import Test exposing (Test, describe)
 
@@ -28,4 +29,5 @@ testData =
     , Animate.testData
     , Animate2.testData
     , AnimateComplete.testData
+    , AnimateCompleteAnimate.testData
     ]

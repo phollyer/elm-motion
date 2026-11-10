@@ -4,6 +4,7 @@ module Specs.DiscretePropertiesSpec.DiscreteExitSpec.TestData exposing
     , TestCase(..)
     , TestData
     , buildAnimate2Tests
+    , buildAnimateCompleteAnimateTests
     , buildAnimateCompleteTests
     , buildAnimateTests
     , buildInitTests
@@ -23,6 +24,7 @@ type TestCase
     | AnimateTest ExitTestConfig
     | AnimateCompleteTest ExitTestConfig
     | Animate2Test ExitTestConfig
+    | AnimateCompleteAnimateTest ExitTestConfig
 
 
 type alias ExitTestConfig =
@@ -60,6 +62,11 @@ buildAnimateCompleteTests timing =
 buildAnimate2Tests : TimingProfile -> List ExitConfig -> List TestCase
 buildAnimate2Tests timing =
     buildTests timing Animate2Test
+
+
+buildAnimateCompleteAnimateTests : TimingProfile -> List ExitConfig -> List TestCase
+buildAnimateCompleteAnimateTests timing =
+    buildTests timing AnimateCompleteAnimateTest
 
 
 buildTests : TimingProfile -> (ExitTestConfig -> TestCase) -> List ExitConfig -> List TestCase
