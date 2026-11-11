@@ -2,7 +2,7 @@
 
 A comprehensive Elm package for smooth, high-performance DOM animations and scrolling.
 
-(See !important note at the end)
+(See also [important note](#important-note-with-an-apology) at the end)
 
 ## ✨ Highlights
 
@@ -133,8 +133,9 @@ The JavaScript companion bundles [`scroll-timeline-polyfill`](https://github.com
 
 BSD-3-Clause
 
+---
 
-## !Important Note - with an apology
+## Important Note - with an apology
 
 ### A bit of history
 
@@ -158,9 +159,9 @@ I ended up in a rundown hostel type of place for down and outs for a couple of w
 
 I am now trying to stay in Australia permanently. My head has been in a much better place, and I have gone back to hand coding the package myself, using LLM for only simple, time saving biolerplate type work, which is then carefully reviewed.
 
-I have started to re-write the tests myself (see `tests/Specs`). They are in a structure that will allow me to test multiple engines with a single set of test data. Currently the Specs test the Transition and Keyframe engines, more engines will be added. Multiple bugs and design flaws have been fixed. I have also cleaned up some of the library code, with much more work to do there.
+I have started to re-write the tests myself (see [tests/Specs](https://github.com/phollyer/elm-motion/tree/main/tests/Specs)). They are in a structure that will allow me to test multiple engines with a single set of test data for each scenario being tested. Currently the Specs test the Transition and Keyframe engines, more engines will be added. Multiple bugs and design flaws have been fixed. I have also cleaned up some of the library code, with much more work to do there.
 
-It looks like it will be some time before I obtain permission to work in Australia, so I have lots of time to myself. I am, however, spending much of that time now on another project that is my retirement plan. This project does use elm-motion extensively, and so far the Transition engine is working wonderfully.
+It looks like it will be some time before I obtain permission to work in Australia, so I have lots of time to myself. I am, however, spending much of that time now on another project that can provide me with an income. This project does use elm-motion extensively, and so far the Transition engine is working wonderfully.
 
 I will try to keep moving elm-motion forward by spending a couple of days a week on it, and will post updates on [Discourse](https://discourse.elm-lang.org/) as and when there is something to update, but as I do not have permission to work in Australia, and do not know when that may happen, I need to focus on my other project primarily which will offer me an income stream when completed.
 

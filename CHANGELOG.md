@@ -23,6 +23,12 @@ The two version lines are **not kept in lockstep**. The npm companion can ship J
 
 **(npm)** Removed CSS unit `px` defaults - CSS units are completely controlled by Elm, so they are not required.
 
+## [4.0.1] - 2026-11-11 (elm)
+
+### Changed
+
+**(docs)** Update README
+
 
 ## [4.0.0] - 2026-11-11 (elm)
 
@@ -229,6 +235,7 @@ Initial release of the `@phollyer/elm-motion` JavaScript companion. The in-repo 
 - ESM (`elm-motion.mjs`) and standalone browser (IIFE, global `ElmMotion`, `elm-motion.js`) builds, plus TypeScript definitions (`elm-motion.d.ts`), all shipped in `dist/`.
 - `engines` field (`node >= 18`) declared on the published package.
 
+[4.0.1]: https://github.com/phollyer/elm-motion/compare/4.0.1...4.0.0
 [4.0.0]: https://github.com/phollyer/elm-motion/compare/4.0.0...3.0.4
 [3.0.4]: https://github.com/phollyer/elm-motion/compare/3.0.4...3.0.3
 [3.0.3]: https://github.com/phollyer/elm-motion/compare/3.0.3...3.0.2
