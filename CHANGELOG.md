@@ -19,42 +19,57 @@ The two version lines are **not kept in lockstep**. The npm companion can ship J
 
 ## [Unreleased]
 
+### Changed
+
+**(npm)** Removed CSS unit `px` defaults - CSS units are completely controlled by Elm, so they are not required.
+
+
+## [4.0.0] - 2026-11-11 (elm)
+
 ### Fixed
 
-**(elm)** Skew - correct the type annotation for the `by*` functions to correctly declare the `withLiveDelta` engine capability.
-
-**(elm)** Rotate - correct the type annotation for the `by*` functions to correctly declare the `withLiveDelta` engine capability.
+**(elm)** Builder - global timing/easing defaults (`duration`, `delay`, `easing`, `spring`) are now reset after each animate pipeline so they do not leak into subsequent animates that omit them.
 
 **(elm)** Opacity - correct the type annotation for the `by` function to correctly declare the `withLiveDelta` engine capability.
 
+**(elm)** Rotate - correct the type annotation for the `by*` functions to correctly declare the `withLiveDelta` engine capability.
+
 **(elm)** Rotate (Transition & Keyframe engines) - initializing with x or y = 0 resulted in writing z = 0 - now fixed.
+
+**(elm)** Scale - fixed boundary-value handling so edge-case scale inputs no longer produce incorrect output.
+
+**(elm)** Size - untouched sides/axes no longer emit 0 as a default. Therefore they no longer overwrite existing CSS rules. `will-change` and `transition` style attributes no longer emit untouched sides/axes.
+
+**(elm)** Skew - correct the type annotation for the `by*` functions to correctly declare the `withLiveDelta` engine capability.
 
 **(elm)** Skew (Transition & Keyframe engines) - when writing a zero value to only one axis, ensure only that axis is written, not both.
 
+**(elm)** Translate - untouched axes no longer emit 0 as a default. Therefore they no longer overwrite existing CSS rules. Fixed for Transition and Keyframe engines.
+
 **(elm)** initCssUnit* functions in PerspectiveOrigin, Size and Translate now behave correctly.
 
-**(elm)** Translate animations - untouched axes no longer emit 0 as a default. Therefore they no longer overwrite existing CSS rules. Fixed for Transition and Keyframe engines. This is a wip, and will be released when all engines and scenarios are fixed.
+**(elm)** Discrete Properties are now handled correctly for the Keyframe, Transition and Sub Engines when there is no property animation or when the property animation has no duration.
 
-**(JS)** Removed CSS unit `px` defaults - CSS units are completely controlled by Elm, so they are not required.
+**(elm)** Transition/Keyframe engines - `animate` and `retarget` now preserve play state for groups not touched by the current update. Previously, bystander groups could be forced back to `Running`, which could re-emit `discreteExit` `from` values with no completion event path.
+
+**(elm)** Transition engine - repeated `animate` calls with unchanged output now settle correctly after completion, preventing `discreteExit` from getting stuck in a `Running` state when no new browser transition can start.
 
 **(docs)** Updated the Size API docs to explain new behaviour - untouched sides/axes no longer overwrite existing CSS rules.
 
-**(elm)** Size animations - untouched sides/axes no longer emit 0 as a default. Therefore they no longer overwrite existing CSS rules. `will-change` and `transition` style attributes no longer emit untouched sides/axes.
-
 **(docs)** Transition engine - clarify the transition engine requires event listeners to be set up to handle discrete properties correctly.
-
-**(elm)** Discrete Properties are now handled correctly for the Keyframe, Transition and Sub Engines when there is no property animation or when the property animation has no duration.
 
 
 ### Added
 
-**(tooling)** Added test coverage to assert Size animations don't overwrite a users CSS for untouched sides/axes. Added more CSS Unit specs for all applicable properties ensuring all available CSS units are covered.
+**(tooling)** Add `tests/Specs/...`. Start migrating existing tests to this new structure, adding missing scenarios along the way. This new test structure should enable testing multiple engines from single scenario definitions based off of a single set of test data. Currently only the Transition and Keyframe engines are covered with these, more engines will be added in the future.
+
+All the new specs have been handwritten not LLM written - other than helping with boilerplate, and then carefully reviewed. However, this newly defined test structure should be simple for an LLM to follow, so I will take the pragmatic approach as more specs are added, without losing sight of the need to review.
 
 ### Changed
 
-**(docs)** Transition engine - add transofrm order documentation.
-
 **(elm)** Transition engine now supports transform ordering control.
+
+**(docs)** Transition engine - add transform order documentation.
 
 
 ## [3.0.4] - 2026-09-08 (elm)
@@ -214,6 +229,7 @@ Initial release of the `@phollyer/elm-motion` JavaScript companion. The in-repo 
 - ESM (`elm-motion.mjs`) and standalone browser (IIFE, global `ElmMotion`, `elm-motion.js`) builds, plus TypeScript definitions (`elm-motion.d.ts`), all shipped in `dist/`.
 - `engines` field (`node >= 18`) declared on the published package.
 
+[4.0.0]: https://github.com/phollyer/elm-motion/compare/4.0.0...3.0.4
 [3.0.4]: https://github.com/phollyer/elm-motion/compare/3.0.4...3.0.3
 [3.0.3]: https://github.com/phollyer/elm-motion/compare/3.0.3...3.0.2
 [3.0.2]: https://github.com/phollyer/elm-motion/compare/3.0.2...3.0.1
@@ -230,4 +246,3 @@ Initial release of the `@phollyer/elm-motion` JavaScript companion. The in-repo 
 [1.0.1]: https://github.com/phollyer/elm-motion/compare/1.0.0...1.0.1
 [1.0.0]: https://github.com/phollyer/elm-motion/releases/tag/1.0.0
 [1.0.3-npm]: https://www.npmjs.com/package/@phollyer/elm-motion/v/1.0.3
-

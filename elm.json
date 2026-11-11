@@ -3,7 +3,7 @@
     "name": "phollyer/elm-motion",
     "summary": "Smooth moving animation and scrolling for DOM elements",
     "license": "BSD-3-Clause",
-    "version": "3.0.4",
+    "version": "4.0.0",
     "exposed-modules": [
         "Anim.Builder",
         "Anim.Engine.Transition",
@@ -42,7 +42,7 @@
         "elm-community/easing-functions": "2.0.0 <= v < 3.0.0"
     },
     "test-dependencies": {
-        "elm-explorations/test": "2.0.0 <= v < 3.0.0",
-        "elm-community/list-extra": "8.7.0 <= v < 9.0.0"
+        "elm-community/list-extra": "8.7.0 <= v < 9.0.0",
+        "elm-explorations/test": "2.0.0 <= v < 3.0.0"
     }
 }
