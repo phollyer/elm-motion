@@ -24,7 +24,10 @@ type alias Factory builder animState =
     { init : List (builder -> builder) -> animState
     , for : String -> (builder -> builder)
     , animate : animState -> (builder -> builder) -> animState
+    , retarget : animState -> (builder -> builder) -> animState
     , complete : String -> animState -> Result String animState
+    , isRunning : String -> animState -> Maybe Bool
+    , isComplete : String -> animState -> Maybe Bool
     , seedInit : String -> builder -> builder
     , seedAnimation : String -> builder -> builder
     , attributes : String -> animState -> List (Html.Attribute Never)
@@ -45,7 +48,10 @@ factory =
     { init = Keyframe.init
     , for = Keyframe.for
     , animate = Keyframe.animate
+    , retarget = Keyframe.retarget
     , complete = complete
+    , isRunning = Keyframe.isRunning
+    , isComplete = Keyframe.isComplete
     , seedInit = seedInit
     , seedAnimation = seedAnimation
     , attributes = Keyframe.attributes

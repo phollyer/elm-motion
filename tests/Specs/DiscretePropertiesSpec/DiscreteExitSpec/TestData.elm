@@ -1,13 +1,18 @@
 module Specs.DiscretePropertiesSpec.DiscreteExitSpec.TestData exposing
     ( ExitConfig
+    , ExitIsolationConfig
+    , ExitIsolationTestConfig
     , ExitTestConfig
     , TestCase(..)
     , TestData
+    , buildAnimateIsolationTests
     , buildAnimate2Tests
     , buildAnimateCompleteAnimateTests
     , buildAnimateCompleteTests
     , buildAnimateTests
     , buildInitTests
+    , buildNoOpAfterCompleteTests
+    , buildRetargetIsolationTests
     )
 
 import Specs.Shared.TimingProfile exposing (TimingProfile)
@@ -25,6 +30,9 @@ type TestCase
     | AnimateCompleteTest ExitTestConfig
     | Animate2Test ExitTestConfig
     | AnimateCompleteAnimateTest ExitTestConfig
+    | AnimateIsolationTest ExitIsolationTestConfig
+    | RetargetIsolationTest ExitIsolationTestConfig
+    | NoOpAfterCompleteTest ExitIsolationTestConfig
 
 
 type alias ExitTestConfig =
@@ -38,6 +46,27 @@ type alias ExitTestConfig =
 
 type alias ExitConfig =
     { description : String
+    , discreteProperty : String
+    , fromValue : String
+    , toValue : String
+    }
+
+
+type alias ExitIsolationTestConfig =
+    { description : String
+    , timing : TimingProfile
+    , subjectGroup : String
+    , bystanderGroup : String
+    , discreteProperty : String
+    , fromValue : String
+    , toValue : String
+    }
+
+
+type alias ExitIsolationConfig =
+    { description : String
+    , subjectGroup : String
+    , bystanderGroup : String
     , discreteProperty : String
     , fromValue : String
     , toValue : String
@@ -69,6 +98,21 @@ buildAnimateCompleteAnimateTests timing =
     buildTests timing AnimateCompleteAnimateTest
 
 
+buildAnimateIsolationTests : TimingProfile -> List ExitIsolationConfig -> List TestCase
+buildAnimateIsolationTests timing =
+    buildIsolationTests timing AnimateIsolationTest
+
+
+buildRetargetIsolationTests : TimingProfile -> List ExitIsolationConfig -> List TestCase
+buildRetargetIsolationTests timing =
+    buildIsolationTests timing RetargetIsolationTest
+
+
+buildNoOpAfterCompleteTests : TimingProfile -> List ExitIsolationConfig -> List TestCase
+buildNoOpAfterCompleteTests timing =
+    buildIsolationTests timing NoOpAfterCompleteTest
+
+
 buildTests : TimingProfile -> (ExitTestConfig -> TestCase) -> List ExitConfig -> List TestCase
 buildTests timing toTestCase =
     List.map
@@ -76,6 +120,22 @@ buildTests timing toTestCase =
             toTestCase
                 { description = c.description
                 , timing = timing
+                , discreteProperty = c.discreteProperty
+                , fromValue = c.fromValue
+                , toValue = c.toValue
+                }
+        )
+
+
+buildIsolationTests : TimingProfile -> (ExitIsolationTestConfig -> TestCase) -> List ExitIsolationConfig -> List TestCase
+buildIsolationTests timing toTestCase =
+    List.map
+        (\c ->
+            toTestCase
+                { description = c.description
+                , timing = timing
+                , subjectGroup = c.subjectGroup
+                , bystanderGroup = c.bystanderGroup
                 , discreteProperty = c.discreteProperty
                 , fromValue = c.fromValue
                 , toValue = c.toValue

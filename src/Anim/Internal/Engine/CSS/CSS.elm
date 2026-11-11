@@ -168,23 +168,26 @@ animate setPlayState generateData insertData (AnimState state animGroups) transf
                         timing.duration > 0 || timing.delay > 0
                     )
 
-        initialPlayStateFor : AnimGroupName -> PlayState
-        initialPlayStateFor animGroupName =
-            processedAnimData.groups
-                |> AnimGroups.get animGroupName
-                |> Maybe.map
-                    (\config ->
-                        if hasAnimateTiming config then
-                            PlayState.Running
-
-                        else
-                            PlayState.Complete
-                    )
-                |> Maybe.withDefault PlayState.Running
-
+        -- Only groups touched by this animate get a fresh play state.
+        -- Bystander groups must keep theirs, otherwise a Complete group
+        -- (e.g. one holding a `discreteExit` end value) would be dragged
+        -- back to Running with no transition to ever complete it.
         setInitialPlayState : AnimGroups a -> AnimGroups a
         setInitialPlayState groups =
-            AnimGroups.map (\name group -> setPlayState (initialPlayStateFor name) group) groups
+            AnimGroups.map
+                (\name group ->
+                    case AnimGroups.get name processedAnimData.groups of
+                        Just config ->
+                            if hasAnimateTiming config then
+                                setPlayState PlayState.Running group
+
+                            else
+                                setPlayState PlayState.Complete group
+
+                        Nothing ->
+                            group
+                )
+                groups
     in
     AnimState
         { builder =
@@ -223,7 +226,15 @@ retarget setPlayState generateData insertData (AnimState state animGroups) trans
 
         setAllRunning : AnimGroups a -> AnimGroups a
         setAllRunning groups =
-            AnimGroups.map (\_ group -> setPlayState PlayState.Running group) groups
+            AnimGroups.map
+                (\name group ->
+                    if AnimGroups.member name processedAnimData.groups then
+                        setPlayState PlayState.Running group
+
+                    else
+                        group
+                )
+                groups
     in
     AnimState
         { builder =

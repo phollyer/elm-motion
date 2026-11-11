@@ -1025,6 +1025,9 @@ clearAnimData (AnimBuilder data) =
     let
         pb =
             data.playback
+
+        defs =
+            data.defaults
     in
     AnimBuilder
         { data
@@ -1034,6 +1037,19 @@ clearAnimData (AnimBuilder data) =
                     | iterations = Once
                     , animationDirection = Normal
                     , discreteConfig = Discrete.empty
+                }
+
+            -- Timing/easing set via `duration`, `speed`, `delay`, `easing`
+            -- and `spring` apply to the pipeline they were set in only.
+            -- Without this reset they'd leak into every later animate that
+            -- omits them, e.g. turning an intended instant change into a
+            -- timed one.
+            , defaults =
+                { defs
+                    | globalTiming = Nothing
+                    , globalDelay = Nothing
+                    , globalEasing = Nothing
+                    , globalSpring = Nothing
                 }
         }
 

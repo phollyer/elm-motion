@@ -3,7 +3,8 @@ module Specs.DiscretePropertiesSpec.DiscreteExitSpec.Runner exposing (run)
 import Expect
 import Expectations.Expect as Expect
 import Factories.Engines.Factory as Factory exposing (EngineFactory(..))
-import Specs.DiscretePropertiesSpec.DiscreteExitSpec.TestData exposing (ExitTestConfig, TestCase(..), TestData)
+import Html
+import Specs.DiscretePropertiesSpec.DiscreteExitSpec.TestData exposing (ExitIsolationTestConfig, ExitTestConfig, TestCase(..), TestData)
 import Specs.Shared exposing (NameValuePair)
 import Specs.Shared.AnimGroups exposing (animGroup)
 import Specs.Shared.TimingProfile as TimingProfile
@@ -38,6 +39,15 @@ runTestCase factory testCase =
 
         AnimateCompleteAnimateTest tc ->
             animateCompleteAnimateRunner factory tc
+
+        AnimateIsolationTest tc ->
+            animateIsolationRunner factory tc
+
+        RetargetIsolationTest tc ->
+            retargetIsolationRunner factory tc
+
+        NoOpAfterCompleteTest tc ->
+            noOpAfterCompleteRunner factory tc
 
 
 initRunner : EngineFactory animBuilder animState -> ExitTestConfig -> Test
@@ -203,6 +213,141 @@ animateCompleteAnimateRunner factory tc =
                                 state
 
 
+animateIsolationRunner : EngineFactory animBuilder animState -> ExitIsolationTestConfig -> Test
+animateIsolationRunner factory tc =
+    test (tc.description ++ TimingProfile.suffix tc.timing) <|
+        \_ ->
+            let
+                f =
+                    Factory.create factory
+
+                stateAfterSubjectAnimate =
+                    f.init [ f.seedInit tc.subjectGroup, f.seedInit tc.bystanderGroup ]
+                        |> (\s ->
+                                f.animate s <|
+                                    f.for tc.subjectGroup
+                                        >> applyDiscreteExit f tc
+                           )
+            in
+            case completeSubjectWhenTimed tc f stateAfterSubjectAnimate of
+                Err message ->
+                    Expect.fail message
+
+                Ok settledState ->
+                    let
+                        state =
+                            f.animate settledState <|
+                                f.for tc.bystanderGroup
+                                    >> animateBystander f tc
+
+                        expectedSubjectValue =
+                            case factory of
+                                Keyframe _ ->
+                                    tc.fromValue
+
+                                Transition _ ->
+                                    tc.toValue
+                    in
+                    Expect.all
+                        [ \_ -> expectDiscreteStyle f tc state expectedSubjectValue
+                        , \_ -> f.isRunning tc.bystanderGroup state |> Expect.equal (Just True)
+                        ]
+                        ()
+
+
+retargetIsolationRunner : EngineFactory animBuilder animState -> ExitIsolationTestConfig -> Test
+retargetIsolationRunner factory tc =
+    test (tc.description ++ TimingProfile.suffix tc.timing) <|
+        \_ ->
+            let
+                f =
+                    Factory.create factory
+
+                stateAfterSubjectAnimate =
+                    f.init [ f.seedInit tc.subjectGroup, f.seedInit tc.bystanderGroup ]
+                        |> (\s ->
+                                f.animate s <|
+                                    f.for tc.subjectGroup
+                                        >> applyDiscreteExit f tc
+                           )
+            in
+            case completeSubjectWhenTimed tc f stateAfterSubjectAnimate of
+                Err message ->
+                    Expect.fail message
+
+                Ok settledState ->
+                    let
+                        stateAfterBystanderAnimate =
+                            f.animate settledState <|
+                                f.for tc.bystanderGroup
+                                    >> animateBystander f tc
+
+                        state =
+                            f.retarget stateAfterBystanderAnimate <|
+                                f.for tc.bystanderGroup
+                                    >> animateBystander f tc
+
+                        expectedSubjectValue =
+                            case factory of
+                                Keyframe _ ->
+                                    tc.fromValue
+
+                                Transition _ ->
+                                    tc.toValue
+                    in
+                    Expect.all
+                        [ \_ -> expectDiscreteStyle f tc state expectedSubjectValue ]
+                        ()
+
+
+noOpAfterCompleteRunner : EngineFactory animBuilder animState -> ExitIsolationTestConfig -> Test
+noOpAfterCompleteRunner factory tc =
+    test (tc.description ++ TimingProfile.suffix tc.timing) <|
+        \_ ->
+            let
+                f =
+                    Factory.create factory
+
+                stateAfterSubjectAnimate =
+                    f.init [ f.seedInit tc.subjectGroup, f.seedInit tc.bystanderGroup ]
+                        |> (\s ->
+                                f.animate s <|
+                                    f.for tc.subjectGroup
+                                        >> applyDiscreteExit f tc
+                           )
+            in
+            case completeSubjectWhenTimed tc f stateAfterSubjectAnimate of
+                Err message ->
+                    Expect.fail message
+
+                Ok settledState ->
+                    let
+                        state =
+                            f.animate settledState <|
+                                f.for tc.subjectGroup
+                                    >> applyDiscreteExit f tc
+                    in
+                    case tc.timing of
+                        TimingProfile.NoTiming ->
+                            expectDiscreteStyle f tc state tc.toValue
+
+                        _ ->
+                            case factory of
+                                Keyframe _ ->
+                                    Expect.all
+                                        [ \_ -> f.isRunning tc.subjectGroup state |> Expect.equal (Just True)
+                                        , \_ -> expectDiscreteStyle f tc state tc.fromValue
+                                        ]
+                                        ()
+
+                                Transition _ ->
+                                    Expect.all
+                                        [ \_ -> f.isComplete tc.subjectGroup state |> Expect.equal (Just True)
+                                        , \_ -> expectDiscreteStyle f tc state tc.toValue
+                                        ]
+                                        ()
+
+
 expectedDiscreteValue : TimingProfile.TimingProfile -> String -> String -> String
 expectedDiscreteValue timing fromValue toValue =
     case timing of
@@ -214,3 +359,83 @@ expectedDiscreteValue timing fromValue toValue =
 
         TimingProfile.DurationMs _ ->
             fromValue
+
+
+applyDiscreteExit :
+    { a
+        | discreteExit : String -> String -> String -> builder -> builder
+        , seedAnimation : String -> builder -> builder
+        , delay : Int -> builder -> builder
+        , duration : Int -> builder -> builder
+    }
+    -> ExitIsolationTestConfig
+    -> builder
+    -> builder
+applyDiscreteExit f tc =
+    applyTiming tc.timing f <|
+        f.discreteExit tc.discreteProperty tc.fromValue tc.toValue
+            >> f.seedAnimation tc.subjectGroup
+
+
+animateBystander :
+    { a
+        | seedAnimation : String -> builder -> builder
+        , duration : Int -> builder -> builder
+    }
+    -> ExitIsolationTestConfig
+    -> builder
+    -> builder
+animateBystander f tc =
+    f.duration 300
+        >> f.seedAnimation tc.bystanderGroup
+
+
+completeSubjectWhenTimed :
+    ExitIsolationTestConfig
+    -> { a | complete : String -> state -> Result String state }
+    -> state
+    -> Result String state
+completeSubjectWhenTimed tc f state =
+    case tc.timing of
+        TimingProfile.NoTiming ->
+            Ok state
+
+        _ ->
+            f.complete tc.subjectGroup state
+
+
+applyTiming :
+    TimingProfile.TimingProfile
+    ->
+        { a
+            | delay : Int -> builder -> builder
+            , duration : Int -> builder -> builder
+        }
+    -> (builder -> builder)
+    -> (builder -> builder)
+applyTiming timing f builder =
+    case timing of
+        TimingProfile.NoTiming ->
+            builder
+
+        TimingProfile.DelayMs delayMs ->
+            f.delay delayMs
+                >> builder
+
+        TimingProfile.DurationMs durationMs ->
+            f.duration durationMs
+                >> builder
+
+
+expectDiscreteStyle :
+    { a | attributes : String -> state -> List (Html.Attribute Never) }
+    -> ExitIsolationTestConfig
+    -> state
+    -> String
+    -> Expect.Expectation
+expectDiscreteStyle f tc state expectedValue =
+    Expect.styles
+        [ NameValuePair tc.discreteProperty expectedValue ]
+        f.attributes
+        tc.subjectGroup
+        state

@@ -9,6 +9,7 @@ module Factories.Engines.Factory exposing
 import Anim.Extra.TransformOrder exposing (TransformProperty)
 import Factories.Engines.Keyframe as Keyframe
 import Factories.Engines.Transition as Transition
+import Html
 
 
 type EngineFactory animBuilder animState
@@ -18,8 +19,12 @@ type EngineFactory animBuilder animState
 
 type alias Factory animBuilder state =
     { init : List (animBuilder -> animBuilder) -> state
+    , attributes : String -> state -> List (Html.Attribute Never)
     , animate : state -> (animBuilder -> animBuilder) -> state
+    , retarget : state -> (animBuilder -> animBuilder) -> state
     , complete : String -> state -> Result String state
+    , isRunning : String -> state -> Maybe Bool
+    , isComplete : String -> state -> Maybe Bool
     , for : String -> animBuilder -> animBuilder
     , seedInit : String -> animBuilder -> animBuilder
     , seedAnimation : String -> animBuilder -> animBuilder
@@ -28,6 +33,7 @@ type alias Factory animBuilder state =
     , delay : Int -> animBuilder -> animBuilder
     , duration : Int -> animBuilder -> animBuilder
     , transformOrder : List TransformProperty -> animBuilder -> animBuilder
+    , styleValue : String -> String -> state -> Maybe String
     }
 
 
@@ -37,8 +43,12 @@ create factory_ =
         Keyframe f ->
             Factory
                 f.init
+                f.attributes
                 f.animate
+                f.retarget
                 f.complete
+                f.isRunning
+                f.isComplete
                 f.for
                 f.seedInit
                 f.seedAnimation
@@ -47,12 +57,17 @@ create factory_ =
                 f.delay
                 f.duration
                 f.transformOrder
+                f.styleValue
 
         Transition f ->
             Factory
                 f.init
+                f.attributes
                 f.animate
+                f.retarget
                 f.complete
+                f.isRunning
+                f.isComplete
                 f.for
                 f.seedInit
                 f.seedAnimation
@@ -61,6 +76,7 @@ create factory_ =
                 f.delay
                 f.duration
                 f.transformOrder
+                f.styleValue
 
 
 build : Factory a b -> List (a -> a) -> (a -> a) -> b

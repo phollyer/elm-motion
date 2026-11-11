@@ -7,9 +7,12 @@ import Specs.DiscretePropertiesSpec.DiscreteExitSpec.Runner as Runner
 import Specs.DiscretePropertiesSpec.DiscreteExitSpec.TestData exposing (TestData)
 import Specs.DiscretePropertiesSpec.DiscreteExitSpec.TestData.Animate as Animate
 import Specs.DiscretePropertiesSpec.DiscreteExitSpec.TestData.Animate2 as Animate2
+import Specs.DiscretePropertiesSpec.DiscreteExitSpec.TestData.AnimateIsolation as AnimateIsolation
 import Specs.DiscretePropertiesSpec.DiscreteExitSpec.TestData.AnimateComplete as AnimateComplete
 import Specs.DiscretePropertiesSpec.DiscreteExitSpec.TestData.AnimateCompleteAnimate as AnimateCompleteAnimate
 import Specs.DiscretePropertiesSpec.DiscreteExitSpec.TestData.Init as Init
+import Specs.DiscretePropertiesSpec.DiscreteExitSpec.TestData.NoOpAfterComplete as NoOpAfterComplete
+import Specs.DiscretePropertiesSpec.DiscreteExitSpec.TestData.RetargetIsolation as RetargetIsolation
 import Test exposing (Test, describe)
 
 
@@ -30,4 +33,7 @@ testData =
     , Animate2.testData
     , AnimateComplete.testData
     , AnimateCompleteAnimate.testData
+    , AnimateIsolation.testData
+    , RetargetIsolation.testData
+    , NoOpAfterComplete.testData
     ]
