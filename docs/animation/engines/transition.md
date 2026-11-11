@@ -154,6 +154,27 @@ Call `animate` to apply an animation to the current `AnimState`. The browser tra
 
 Starting values in the builder config are ignored — the browser **always** starts CSS Transitions from the element's current computed style, and the Engine cannot override this.
 
+#### Transform Gotcha
+
+When animating transform properties (`Translate`, `Rotate`, `Skew`, `Scale`) on the same `animGroup`, initialize every transform family you plan to animate for that group.
+
+If an `animGroup` is initialized with only one transform family (for example `Scale.init`) and a later animation introduces another family (for example `Rotate`), browser interpolation can become unreliable because transitions start from the current computed transform string.
+
+Use init functions to establish a stable baseline up front:
+
+```elm
+Transition.init
+    [ Translate.initX "card" 0
+    , Rotate.initZ "card" 0
+    , Skew.initX "card" 0
+    , Scale.init "card" 1
+    ]
+```
+
+Animating any combination of the above will then perform as expected.
+
+If all properties are starting their animation from 0 then ommitting all of them in `init` is also fine - it's an all-or-nothing contract.
+
 ??? example "View Source Code"
 
     ```elm
