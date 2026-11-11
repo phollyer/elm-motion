@@ -137,11 +137,17 @@ BSD-3-Clause
 
 ## Important Note - with an apology
 
+Some people in the Elm community are aware of some life problems I have been through, some reached out and tried to help, to these people I give my thanks. The problems I had meant that I was at the lowest point in my life for many months before coming out the other side. Elm gave me something to focus on during that time.
+
+The following is a summary of some of that time in my life and how it related to the development of elm-motion. I post it to be completely transparent and because I think it's the right thing to do.
+
 ### A bit of history
 
 I started working on this package at the start of October 2025, writing and designing it by hand, with very little LLM involvement. This was while I was full-time carer for my mother, she had dementia then full blown Alzheimers. She always stated that she never wanted to go into a nursing home, so looking after her became my job around early 2021.
 
-In December of 2025 she passed away, and I entered into the most stressful time of my life. The bungalow we lived in had been left to my mum to live in rent free until she passed away, and then it was to go to the family of the previous owner for them to sell. They required me to vacate the property by July 1st 2026.
+In December of 2025 she passed away, and I entered into the most stressful time of my life - my reason/purpose for getting up in the morning had gone.
+
+The bungalow we lived in had been left to my mum to live in rent free until she passed away, and then it was to go to the family of the previous owner for them to sell. They required me to vacate the property by July 1st 2026.
 
 Due to not having worked for many years while looking after mum, I was unable to obtain a rental property to live in, and because I didn't fight the family who were now selling the property, the council would not help me either.
 
